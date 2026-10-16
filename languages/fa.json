@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "پی دی اف، JPG یا PNG. حداکثر 5 فایل، هر کدام 5 مگابایت، در مجموع 10 مگابایت. هنگامی که ورودی را ذخیره می کنید، فایل ها ذخیره می شوند.",
   "lang_expense_file_retry": "ورودی ذخیره شد، اما برخی از پیوست ها نمی توانستند ذخیره شوند. این فرم را باز نگه دارید و دوباره ذخیره کنید تا دوباره امتحان کنید.",
   "lang_not_saved": "ذخیره نشده است",
-  "lang_download": "دانلود"
+  "lang_download": "دانلود",
+  "lang_staff_account": "حساب کارمند",
+  "lang_api_integration": "یکپارچه‌سازی API",
+  "lang_allow_shared_phone_number": "اجازه شماره تلفن مشترک",
+  "lang_same_as_branch": "مانند شعبه",
+  "lang_15_character_gstin": "GSTIN با ۱۵ نویسه",
+  "lang_customer_name_phone": "نام مشتری / تلفن"
 }

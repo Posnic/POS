@@ -206,6 +206,25 @@ describe('GSTR-1 B2B export', () => {
     expect(res.data.find((r) => r.ctin === '').inv[0].pos).toBe('03');
   });
 
+  test('explicit delivery state overrides the customer GSTIN state', async () => {
+    rows([
+      {
+        _id: { sales_id: 'INV-POS', ctin: TN, rate: 18 },
+        date: new Date('2026-08-05T00:00:00Z'),
+        customer_state: 'Tamil Nadu',
+        place_of_supply: 'Punjab',
+        invoice_value: 1180,
+        items_value: 1180,
+        igst: 180,
+        cgst: 0,
+        sgst: 0,
+      },
+    ]);
+    const res = await run();
+    expect(res.data[0].inv[0].pos).toBe('03');
+    expect(res.data[0].ctin).toBe(TN);
+  });
+
   test('invoice date is rendered DD-MM-YYYY as the tool expects', async () => {
     rows([
       {

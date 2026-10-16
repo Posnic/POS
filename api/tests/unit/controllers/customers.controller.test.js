@@ -23,6 +23,9 @@
 
 jest.mock('express-async-handler', () => (fn) => fn);
 jest.mock('../../../src/services/customer.service');
+jest.mock('../../../src/services/sale-customer', () => ({
+  recover: jest.fn().mockResolvedValue(),
+}));
 jest.mock('express-validator', () => ({ validationResult: jest.fn() }));
 
 // base.service transitive mock
@@ -44,6 +47,7 @@ jest.mock('../../../src/models/base.model', () => {
     static license = null;
     static loggedUser = null;
     static loggedUserName = '';
+    static getDb = jest.fn().mockResolvedValue({});
   }
   MockBaseModel.prototype.getCollection = mockGetCollection;
   return MockBaseModel;

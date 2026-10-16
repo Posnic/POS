@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG vagy PNG. Legfeljebb 5 fájl, egyenként 5 MB, összesen 10 MB. A fájlok mentésekor kerülnek mentésre a bejegyzés.",
   "lang_expense_file_retry": "A bejegyzés mentett, de néhány mellékletet nem sikerült menteni. Tartsa nyitva ezt az űrlapot, és mentse újra, hogy újra megpróbálkozzon.",
   "lang_not_saved": "Nem mentett",
-  "lang_download": "Letöltés"
+  "lang_download": "Letöltés",
+  "lang_staff_account": "Munkatársi fiók",
+  "lang_api_integration": "API-integráció",
+  "lang_allow_shared_phone_number": "Közös telefonszám engedélyezése",
+  "lang_same_as_branch": "Az üzlettel megegyező",
+  "lang_15_character_gstin": "15 karakteres GSTIN",
+  "lang_customer_name_phone": "Ügyfél neve / telefon"
 }

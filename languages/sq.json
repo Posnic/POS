@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG ose PNG. Deri në 5 skedarë, 5 MB secila, 10 MB gjithsej. Skedarët ruhen kur ruani hyrjen.",
   "lang_expense_file_retry": "Hyrja është ruajtur, por disa bashkëngjitje nuk mund të ruhen. Mbani këtë formular të hapur dhe ruani përsëri për të riprovuar.",
   "lang_not_saved": "Nuk është ruajtur",
-  "lang_download": "Shkarko"
+  "lang_download": "Shkarko",
+  "lang_staff_account": "Llogari punonjësi",
+  "lang_api_integration": "Integrim API",
+  "lang_allow_shared_phone_number": "Lejo numër telefoni të përbashkët",
+  "lang_same_as_branch": "Njësoj si dega",
+  "lang_15_character_gstin": "GSTIN me 15 karaktere",
+  "lang_customer_name_phone": "Emri i klientit / telefoni"
 }

@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG tai PNG. Enintään 5 tiedostoa, 5 Mt kukin, yhteensä 10 Mt. Tiedostot tallennetaan, kun tallennat merkinnän.",
   "lang_expense_file_retry": "Merkintä tallennettu, mutta joitain liitteitä ei voitu tallentaa. Pidä tämä lomake auki ja tallenna uudelleen yrittääksesi uudelleen.",
   "lang_not_saved": "Ei tallennettu",
-  "lang_download": "Lataa"
+  "lang_download": "Lataa",
+  "lang_staff_account": "Työntekijätili",
+  "lang_api_integration": "API-integraatio",
+  "lang_allow_shared_phone_number": "Salli yhteinen puhelinnumero",
+  "lang_same_as_branch": "Sama kuin toimipisteellä",
+  "lang_15_character_gstin": "15 merkin GSTIN",
+  "lang_customer_name_phone": "Asiakkaan nimi / puhelin"
 }

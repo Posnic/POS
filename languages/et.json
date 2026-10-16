@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG või PNG. Kuni 5 faili, igaüks 5 MB, kokku 10 MB. Failid salvestatakse kirje salvestamisel.",
   "lang_expense_file_retry": "Kirje salvestatud, kuid mõnda manust ei õnnestunud salvestada. Hoidke see vorm avatud ja salvestage uuesti proovimiseks.",
   "lang_not_saved": "Ei salvestata",
-  "lang_download": "Allalaadimine"
+  "lang_download": "Allalaadimine",
+  "lang_staff_account": "Töötaja konto",
+  "lang_api_integration": "API-integratsioon",
+  "lang_allow_shared_phone_number": "Luba jagatud telefoninumber",
+  "lang_same_as_branch": "Sama mis filiaalil",
+  "lang_15_character_gstin": "15-märgiline GSTIN",
+  "lang_customer_name_phone": "Kliendi nimi / telefon"
 }

@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG ή PNG. Έως 5 αρχεία, 5 MB το καθένα, 10 MB συνολικά. Τα αρχεία αποθηκεύονται όταν αποθηκεύετε την καταχώρηση.",
   "lang_expense_file_retry": "Η καταχώρηση αποθηκεύτηκε, αλλά ορισμένα συνημμένα δεν ήταν δυνατή η αποθήκευση. Κρατήστε αυτήν τη φόρμα ανοιχτή και αποθηκεύστε ξανά για να δοκιμάσετε ξανά.",
   "lang_not_saved": "Δεν αποθηκεύτηκε",
-  "lang_download": "Κατεβάστε"
+  "lang_download": "Κατεβάστε",
+  "lang_staff_account": "Λογαριασμός υπαλλήλου",
+  "lang_api_integration": "Ενσωμάτωση API",
+  "lang_allow_shared_phone_number": "Να επιτρέπεται κοινός αριθμός τηλεφώνου",
+  "lang_same_as_branch": "Ίδιο με το υποκατάστημα",
+  "lang_15_character_gstin": "GSTIN 15 χαρακτήρων",
+  "lang_customer_name_phone": "Όνομα πελάτη / τηλέφωνο"
 }

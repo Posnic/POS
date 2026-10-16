@@ -4553,5 +4553,15 @@
   "lang_name_or_phone": "नाम वा फोन",
   "lang_save_new_customer": "नयाँ ग्राहक सुरक्षित गर्नुहोस्",
   "lang_saving_customer": "ग्राहक सुरक्षित गर्दै...",
-  "lang_search_customer_or_enter_a_new_name": "ग्राहक खोज्नुहोस् वा नयाँ नाम लेख्नुहोस्"
+  "lang_search_customer_or_enter_a_new_name": "ग्राहक खोज्नुहोस् वा नयाँ नाम लेख्नुहोस्",
+  "lang_staff_account": "कर्मचारी खाता",
+  "lang_api_integration": "API एकीकरण",
+  "lang_allow_shared_phone_number": "साझा फोन नम्बर अनुमति दिनुहोस्",
+  "lang_same_as_branch": "शाखा जस्तै",
+  "lang_15_character_gstin": "१५ अक्षरको GSTIN",
+  "lang_customer_name_phone": "ग्राहकको नाम / फोन",
+  "lang_add_new_customer_details": "नयाँ ग्राहकको विवरण थप्नुहोस्",
+  "lang_address_delivery_optional": "ठेगाना र डेलिभरी (वैकल्पिक)",
+  "lang_place_of_supply_if_different": "आपूर्तिको स्थान (फरक भएमा)",
+  "lang_same_as_customer_branch": "ग्राहक / शाखा जस्तै"
 }

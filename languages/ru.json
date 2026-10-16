@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "PDF, JPG или PNG. До 5 файлов по 5 МБ каждый, всего 10 МБ. Файлы сохраняются при сохранении записи.",
   "lang_expense_file_retry": "Запись сохранена, но некоторые вложения сохранить не удалось. Оставьте эту форму открытой и снова сохраните ее, чтобы повторить попытку.",
   "lang_not_saved": "Не сохранено",
-  "lang_download": "Загрузить"
+  "lang_download": "Загрузить",
+  "lang_staff_account": "Учётная запись сотрудника",
+  "lang_api_integration": "Интеграция API",
+  "lang_allow_shared_phone_number": "Разрешить общий номер телефона",
+  "lang_same_as_branch": "Как у филиала",
+  "lang_15_character_gstin": "GSTIN из 15 символов",
+  "lang_customer_name_phone": "Имя клиента / телефон"
 }

@@ -490,6 +490,21 @@ describe('CustomerService', () => {
       });
     });
 
+    test('an explicit shared-phone opt-in permits a separate customer identity', async () => {
+      repo.findByPhone.mockResolvedValue(makeMockCustomer());
+      repo.create.mockResolvedValue(makeMockCustomer());
+      const result = await service.createCustomer({
+        ...validPayload(),
+        phone: '9876543210',
+        allow_shared_phone: true,
+      });
+      expect(result.status).toBe(true);
+      expect(repo.findByPhone).not.toHaveBeenCalled();
+      expect(repo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ allow_shared_phone: true })
+      );
+    });
+
     test('initializes loyalty when enableLoyalty is true', async () => {
       repo.create.mockResolvedValue(makeMockCustomer());
       const payload = { ...validPayload(), enableLoyalty: true };
@@ -612,7 +627,7 @@ describe('CustomerService', () => {
 
       await service.updateCustomer(CUSTOMER_ID, { phone: '222' });
 
-      expect(repo.findByPhone).toHaveBeenCalledWith('222');
+      expect(repo.findByPhone).toHaveBeenCalledWith('222', CUSTOMER_ID);
     });
 
     test('returns duplicate phone error when another customer has new phone', async () => {
@@ -629,6 +644,32 @@ describe('CustomerService', () => {
         data: null,
         message: 'Another customer with this phone number already exists',
       });
+    });
+
+    test('an existing shared-phone opt-in survives edits that omit the preference', async () => {
+      repo.findById.mockResolvedValue({ ...existing(), allow_shared_phone: true });
+      repo.update.mockResolvedValue({});
+      const result = await service.updateCustomer(CUSTOMER_ID, { phone: '222' });
+      expect(result.status).toBe(true);
+      expect(repo.findByPhone).not.toHaveBeenCalled();
+    });
+
+    test('turning shared-phone permission off restores duplicate checks on a changed phone', async () => {
+      repo.findById.mockResolvedValue({ ...existing(), allow_shared_phone: true });
+      repo.findByPhone.mockResolvedValue({ _id: { toString: () => OTHER_ID } });
+      const result = await service.updateCustomer(CUSTOMER_ID, {
+        phone: '222',
+        allow_shared_phone: false,
+      });
+      expect(result.status).toBe(false);
+    });
+
+    test('revoking sharing checks an unchanged phone against other customers', async () => {
+      repo.findById.mockResolvedValue({ ...existing(), allow_shared_phone: true });
+      repo.findByPhone.mockResolvedValue({ _id: { toString: () => OTHER_ID } });
+      const result = await service.updateCustomer(CUSTOMER_ID, { allow_shared_phone: false });
+      expect(result.status).toBe(false);
+      expect(repo.findByPhone).toHaveBeenCalledWith(existing().phone, CUSTOMER_ID);
     });
 
     test('returns {status:true, data:updatedCustomer} on success', async () => {

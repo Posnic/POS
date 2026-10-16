@@ -1,4 +1,13 @@
 PosnicPro.users = {
+    roleLabel: function (user) {
+        var roleId = user.role_id && (user.role_id.$oid || user.role_id);
+        var role = (PosnicPro.users.rolesCache || []).find(function (entry) { return String(entry._id || entry.id) === String(roleId); });
+        if (user.role_name || role) return user.role_name || role.name;
+        if (user.usertype === 'super_admin') return PosnicPro.i18n.t('lang_owner', 'Owner');
+        if (user.usertype === 'admin') return PosnicPro.i18n.t('lang_adminaccess_title', 'Admin');
+        if (user.usertype === 'api') return PosnicPro.i18n.t('lang_api_integration', 'API integration');
+        return PosnicPro.i18n.t('lang_staff', 'Staff');
+    },
     userAction: 'add',
     showAdd: function () {
         var loader = $(".loader-user");
@@ -94,7 +103,7 @@ PosnicPro.users = {
                 + '<img src="' + esc(img) + '" style="width:84px; height:84px; object-fit:cover; border-radius:50%; flex:0 0 84px; border:1px solid var(--theme-border-color, #e3e7ee);" alt="">'
                 + '<div style="flex:1 1 auto; min-width:0;">'
                 + '<div class="s-doc-stats" id="u_doc_stats">'
-                + '<div class="s-stat"><div class="s-stat-value">' + esc(d.usertype || '\u2014') + '</div><div class="s-stat-label"><lang class="lang_role">Role</lang></div></div>'
+                + '<div class="s-stat"><div class="s-stat-value">' + esc(PosnicPro.users.roleLabel(d)) + '</div><div class="s-stat-label"><lang class="lang_role">Role</lang></div></div>'
                 + '</div>'
                 + '</div></div>'
                 + PosnicPro.listDoc.grid([
@@ -296,7 +305,7 @@ PosnicPro.users = {
                     + '<td><img loading="lazy" decoding="async" src="' + esc(img) + '" style="width:32px; height:32px; object-fit:cover; border-radius:50%;" alt=""></td>'
                     + '<td>' + esc(r.username) + '</td>'
                     + '<td class="us-col-email q-muted">' + esc(r.email || '-') + '</td>'
-                    + '<td class="text-center"><span class="' + roleClass + '">' + esc(r.usertype) + '</span></td>'
+                    + '<td class="text-center"><span class="' + roleClass + '">' + esc(PosnicPro.users.roleLabel(r)) + '</span></td>'
                     + '<td class="text-center">' + status + '</td>'
                     + '</tr>';
             });

@@ -136,6 +136,7 @@ const gstStateCode = (gstin, stateName) => {
     .trim()
     .toLowerCase();
   if (!name) return '';
+  if (/^\d{2}$/.test(name)) return name;
   if (!_gstStateByName) {
     _gstStateByName = new Map();
     try {
@@ -946,7 +947,9 @@ class SalesRepository {
               );
 
               if (perLineGstAmount > 0) {
-                const customerState = (doc.customer_state || '').toString().trim();
+                const customerState = (doc.place_of_supply || doc.customer_state || '')
+                  .toString()
+                  .trim();
                 const branchState = (branchDoc?.state || '').toString().trim();
 
                 const isInterState = require('../helpers/gst-place').isInterState(
@@ -4110,6 +4113,7 @@ class SalesRepository {
         customer_phone: 1,
         customer_email: 1,
         customer_state: 1,
+        place_of_supply: 1,
         customer_country: 1,
         customer_gst_type: 1,
         customer_gst_number: 1,
@@ -4466,6 +4470,7 @@ class SalesRepository {
         customer_phone: 1,
         customer_email: 1,
         customer_state: 1,
+        place_of_supply: 1,
         customer_country: 1,
         customer_gst_type: 1,
         customer_gst_number: 1,
@@ -6348,7 +6353,7 @@ class SalesRepository {
               _id: {
                 item_sales_id: '$sales_id',
                 item_date: '$date',
-                item_customer_state: '$customer_state',
+                item_customer_state: { $ifNull: ['$place_of_supply', '$customer_state'] },
                 item_customer_gst_number: '$customer_gst_number',
                 item_tax: '$items.tax',
                 item_subtotal: '$items_subtotal',
@@ -6398,7 +6403,7 @@ class SalesRepository {
               _id: {
                 return_sales_id: '$sales_id',
                 return_sales_date: '$date',
-                return_customer_state: '$customer_state',
+                return_customer_state: { $ifNull: ['$place_of_supply', '$customer_state'] },
                 // the credit-note rows printed a placeholder GSTIN; carry
                 // the real one so the 9B table shows the actual customer
                 return_customer_gst_number: '$customer_gst_number',
@@ -6502,7 +6507,7 @@ class SalesRepository {
         $and: [
           {
             branch_id: branchId,
-            customer_state: { $not: { $eq: branchState } },
+            $expr: { $ne: [{ $ifNull: ['$place_of_supply', '$customer_state'] }, branchState] },
             customer_gst_type: { $in: ['consumer'] },
           },
           {
@@ -6522,7 +6527,7 @@ class SalesRepository {
               _id: {
                 item_sales_id: '$sales_id',
                 item_date: '$date',
-                item_customer_state: '$customer_state',
+                item_customer_state: { $ifNull: ['$place_of_supply', '$customer_state'] },
                 item_customer_gst_number: '$customer_gst_number',
                 item_tax: '$items.tax',
                 item_subtotal: '$items_subtotal',
@@ -6904,7 +6909,7 @@ class SalesRepository {
         $and: [
           {
             branch_id: new ObjectId(branch_id),
-            customer_state: { $not: { $eq: branch_state } },
+            $expr: { $ne: [{ $ifNull: ['$place_of_supply', '$customer_state'] }, branch_state] },
             customer_gst_type: { $in: ['consumer', 'composite'] },
           },
           {
@@ -6922,7 +6927,7 @@ class SalesRepository {
           {
             $group: {
               _id: {
-                item_customer_state: '$customer_state',
+                item_customer_state: { $ifNull: ['$place_of_supply', '$customer_state'] },
                 customer_gst_type: '$customer_gst_type',
               },
               total_amount: { $sum: '$items_subtotal' },
@@ -7132,6 +7137,7 @@ class SalesRepository {
               },
               date: { $first: '$date' },
               customer_state: { $first: '$customer_state' },
+              place_of_supply: { $first: '$place_of_supply' },
               invoice_value: { $first: '$sales_total' },
               items_value: { $sum: '$items.total_amount' },
               igst: { $sum: '$items.igst_tax' },
@@ -7167,7 +7173,9 @@ class SalesRepository {
             // Invoice value: the sale's own total, not a sum of lines -
             // charges, round-off and bill-level discounts belong in it.
             val: round(Number(row.invoice_value) || 0),
-            pos: gstStateCode(ctin, row.customer_state),
+            pos: row.place_of_supply
+              ? gstStateCode('', row.place_of_supply)
+              : gstStateCode(ctin, row.customer_state),
             rchrg: 'N',
             inv_typ: 'R',
             itms: [],

@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "PDF、JPG、または PNG。最大 5 つのファイル、それぞれ 5 MB、合計で 10 MB です。エントリを保存すると、ファイルが保存されます。",
   "lang_expense_file_retry": "エントリは保存されましたが、一部の添付ファイルを保存できませんでした。このフォームを開いたまま保存し直して、再試行してください。",
   "lang_not_saved": "保存されていません",
-  "lang_download": "ダウンロード"
+  "lang_download": "ダウンロード",
+  "lang_staff_account": "スタッフアカウント",
+  "lang_api_integration": "API連携",
+  "lang_allow_shared_phone_number": "電話番号の共有を許可",
+  "lang_same_as_branch": "店舗と同じ",
+  "lang_15_character_gstin": "15文字のGSTIN",
+  "lang_customer_name_phone": "顧客名 / 電話番号"
 }

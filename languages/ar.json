@@ -4910,5 +4910,11 @@
   "lang_expense_files_help": "PDF أو JPG أو PNG. ما يصل إلى 5 ملفات، 5 ميغابايت لكل منها، إجمالي 10 ميغابايت. يتم حفظ الملفات عندما تقوم بحفظ الإدخال.",
   "lang_expense_file_retry": "تم حفظ الإدخال، ولكن تعذر حفظ بعض المرفقات. أبقِ هذا النموذج مفتوحًا واحفظه مرة أخرى لإعادة المحاولة.",
   "lang_not_saved": "لم يتم حفظها",
-  "lang_download": "تنزيل"
+  "lang_download": "تنزيل",
+  "lang_staff_account": "حساب موظف",
+  "lang_api_integration": "تكامل API",
+  "lang_allow_shared_phone_number": "السماح بمشاركة رقم الهاتف",
+  "lang_same_as_branch": "مثل الفرع",
+  "lang_15_character_gstin": "رقم GSTIN من 15 حرفًا",
+  "lang_customer_name_phone": "اسم العميل / الهاتف"
 }

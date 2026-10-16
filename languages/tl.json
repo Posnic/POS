@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG o PNG. Hanggang sa 5 mga file, 5 MB bawat isa, 10 MB kabuuang. Ang mga file ay nai-save kapag nai-save mo ang entry.",
   "lang_expense_file_retry": "Naka-save ang entry, ngunit ang ilang mga attachment ay hindi mai-save. Panatilihing bukas ang form na ito at i-save muli upang subukang muli.",
   "lang_not_saved": "Hindi nai-save",
-  "lang_download": "I-download"
+  "lang_download": "I-download",
+  "lang_staff_account": "Account ng kawani",
+  "lang_api_integration": "Integrasyon ng API",
+  "lang_allow_shared_phone_number": "Payagan ang pinagsasaluhang numero ng telepono",
+  "lang_same_as_branch": "Katulad ng sangay",
+  "lang_15_character_gstin": "GSTIN na may 15 karakter",
+  "lang_customer_name_phone": "Pangalan ng customer / telepono"
 }

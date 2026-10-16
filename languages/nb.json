@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG eller PNG. Opptil 5 filer, 5 MB hver, 10 MB totalt. Filer lagres når du lagrer oppføringen.",
   "lang_expense_file_retry": "Oppføring lagret, men noen vedlegg kunne ikke lagres. Hold dette skjemaet åpent og lagre igjen for å prøve på nytt.",
   "lang_not_saved": "Ikke lagret",
-  "lang_download": "Last ned"
+  "lang_download": "Last ned",
+  "lang_staff_account": "Ansattkonto",
+  "lang_api_integration": "API-integrasjon",
+  "lang_allow_shared_phone_number": "Tillat delt telefonnummer",
+  "lang_same_as_branch": "Samme som avdelingen",
+  "lang_15_character_gstin": "GSTIN med 15 tegn",
+  "lang_customer_name_phone": "Kundenavn / telefon"
 }

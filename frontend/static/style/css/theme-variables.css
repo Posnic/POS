@@ -3580,3 +3580,16 @@ html:not([data-theme]) .loadingSpinner::after {
 #sales_customer_results { position: relative; }
 #sales_customer_results .autocomplete-suggestions { position: relative !important; top: auto !important; left: auto !important; width: 100% !important; max-height: 180px !important; }
 #sales_customer_add_new { background: transparent; border: 1px solid currentColor; margin: 10px 0; }
+
+/* Direct customer entry alongside item search; optional details stay compact. */
+.sales-search-toolbar .sales-customer-entry { flex:0 1 38%; min-width:180px; margin:0; gap:0; flex-wrap:nowrap; position:relative; }
+.sales-search-toolbar .sales-customer-entry input { width:0; flex:1 1 0; border-radius:5px 0 0 5px; }
+.sales-search-toolbar .sales-customer-btn { height:38px; border-radius:0 5px 5px 0; }
+.sales-customer-search-pop { position:absolute; top:44px; right:0; width:100%; min-width:260px; z-index:1051; padding:8px; background:var(--theme-body-bg); color:var(--theme-text-primary); border:1px solid var(--theme-border-color); border-radius:8px; box-shadow:0 8px 24px #0003; }
+#sales_customer_popup { width:360px; padding:16px; }
+#sales_customer_popup .sales-customer-address { margin:16px 0; }
+#sales_customer_popup .sales-customer-pop-action { display:inline-flex; }
+#sales_customer_add_new { width:100%; text-align:left; border:0; border-top:1px solid var(--theme-border-color); margin:4px 0 0; border-radius:0; }
+.sales-customer-gst[hidden],#sales_customer_search[hidden] { display:none!important; }
+#sales_gst_breakdown { color:var(--theme-text-primary); margin-top:4px; }
+@media(max-width:480px) { .sales-search-toolbar { flex-wrap:wrap; } .sales-search-toolbar #sales_new_item_name { flex-basis:100%; } .sales-search-toolbar .sales-customer-entry { flex-basis:100%; } }

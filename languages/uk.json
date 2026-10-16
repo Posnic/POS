@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG або PNG. До 5 файлів, по 5 МБ кожен, 10 МБ загалом. Файли зберігаються при збереженні запису.",
   "lang_expense_file_retry": "Запис збережено, але деякі вкладення не вдалося зберегти. Зберігайте цю форму відкритою та збережіть її знову, щоб повторити спробу.",
   "lang_not_saved": "Не збережено",
-  "lang_download": "Завантажити"
+  "lang_download": "Завантажити",
+  "lang_staff_account": "Обліковий запис працівника",
+  "lang_api_integration": "Інтеграція API",
+  "lang_allow_shared_phone_number": "Дозволити спільний номер телефону",
+  "lang_same_as_branch": "Як у філії",
+  "lang_15_character_gstin": "GSTIN із 15 символів",
+  "lang_customer_name_phone": "Ім’я клієнта / телефон"
 }

@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "پی ڈی ایف، جے پی جی یا پی این جی۔ 5 فائلیں تک، ہر ایک 5 ایم بی، کل 10 ایم بی۔ جب آپ اندراج محفوظ کرتے ہیں تو فائلیں محفوظ ہوجاتی ہیں۔",
   "lang_expense_file_retry": "انٹری محفوظ ہوئی، لیکن کچھ منسلکات محفوظ نہیں ہوسکے۔ اس فارم کو کھلا رکھیں اور دوبارہ کوشش کرنے کے لیے دوبارہ محفوظ کریں۔",
   "lang_not_saved": "محفوظ نہیں",
-  "lang_download": "ڈاؤن لوڈ"
+  "lang_download": "ڈاؤن لوڈ",
+  "lang_staff_account": "ملازم کا اکاؤنٹ",
+  "lang_api_integration": "API انضمام",
+  "lang_allow_shared_phone_number": "مشترکہ فون نمبر کی اجازت دیں",
+  "lang_same_as_branch": "برانچ جیسا",
+  "lang_15_character_gstin": "15 حروف کا GSTIN",
+  "lang_customer_name_phone": "گاہک کا نام / فون"
 }

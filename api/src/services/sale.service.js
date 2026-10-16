@@ -284,25 +284,33 @@ const processSale = async (
       return { status: false, message: ERROR_MESSAGES.BRANCH_LICENSE_REQUIRED };
     }
 
-    const savedAnswer = (saleId, saleNumber, duplicate = false) => ({
-      status: true,
-      data: {
-        _id: saleId,
-        sales_id: saleId,
-        sale_number: saleNumber,
-        sms: context.branchSettings?.sales_sms || false,
-        whatsapp: context.branchSettings?.whatsapp_receipt || false,
-        print: context.branchSettings?.printall || false,
-        mail: context.branchSettings?.sales_mail || false,
-        waring: 'success',
-        name: (data.customer_name || '').trim(),
-        phone: (data.customer_phone || '').trim(),
-        customer_balance: duplicate ? 0 : customer ? customer.balance || 0 : 0,
-        country_sort: context.branchSettings?.sortname || 'in',
-        ...(duplicate ? { duplicate: true } : {}),
-      },
-      message: 'Sale saved successfully',
-    });
+    const savedAnswer = async (saleId, saleNumber, duplicate = false) => {
+      if (data.create_customer_on_save === true)
+        await require('./sale-customer').finish(
+          await BaseModel.getDb(),
+          { branchId, license: licenseId },
+          saleId
+        );
+      return {
+        status: true,
+        data: {
+          _id: saleId,
+          sales_id: saleId,
+          sale_number: saleNumber,
+          sms: context.branchSettings?.sales_sms || false,
+          whatsapp: context.branchSettings?.whatsapp_receipt || false,
+          print: context.branchSettings?.printall || false,
+          mail: context.branchSettings?.sales_mail || false,
+          waring: 'success',
+          name: (data.customer_name || '').trim(),
+          phone: (data.customer_phone || '').trim(),
+          customer_balance: duplicate ? 0 : customer ? customer.balance || 0 : 0,
+          country_sort: context.branchSettings?.sortname || 'in',
+          ...(duplicate ? { duplicate: true } : {}),
+        },
+        message: 'Sale saved successfully',
+      };
+    };
 
     // A retry returns its committed result before current catalogue changes
     // can invalidate the original, already accepted request.
@@ -313,7 +321,7 @@ const processSale = async (
         String(userId || ''),
         extensionSubmission || submittedPayload
       );
-      if (existing) return savedAnswer(existing._id, existing.sales_id, true);
+      if (existing) return await savedAnswer(existing._id, existing.sales_id, true);
     }
 
     // 2. Check Plan / Max Sales (Skipped for now, assuming valid plan)
@@ -422,12 +430,27 @@ const processSale = async (
       existingSale,
       data.outlet_revision
     );
+    const customerPlan =
+      data.create_customer_on_save === true
+        ? await require('./sale-customer').plan(
+            await BaseModel.getDb(),
+            { branchId, license: licenseId },
+            data
+          )
+        : null;
+    if (customerPlan) data.customer_id = String(customerPlan.id);
     const pricingBranch = context.branchSettings || {};
     const pricingCustomer = data.customer_id
       ? await customerRepository.findById(data.customer_id)
       : null;
     const gstPlace = require('../helpers/gst-place');
     const supplierState = context.branchState || pricingBranch.state || '';
+    if (pricingBranch.indian_gst === 'gst_on') gstPlace.validate(data);
+    const salePlaceOfSupply = gstPlace.placeOfSupply(
+      data,
+      { ...pricingBranch, state: supplierState },
+      pricingCustomer
+    );
     const saleCustomerState = gstPlace.customerState(
       data,
       { ...pricingBranch, state: supplierState },
@@ -669,7 +692,7 @@ const processSale = async (
 
       const indianGstSetting = context.branchSettings?.indian_gst || 'gst_off';
 
-      const interPlace = gstPlace.isInterState(supplierState, saleCustomerState);
+      const interPlace = gstPlace.isInterState(supplierState, salePlaceOfSupply);
       if (indianGstSetting === 'gst_on' && gstValue > 0) {
         if (interPlace) {
           igst_value = gstValue;
@@ -1262,6 +1285,10 @@ const processSale = async (
       referrer_name: customer ? customer.referrer_name : '',
       customer_id: data.customer_id ? new ObjectId(data.customer_id) : null,
       customer_name: (data.customer_name || '').trim(),
+      customer_creation_pending:
+        customerPlan?.pending === true ||
+        (existingSale?.customer_creation_pending === true &&
+          String(existingSale.customer_id) === String(data.customer_id)),
       customer_address: (data.customer_address || '').trim(),
       customer_phone: (data.customer_phone || '').trim(),
       ...(outlet
@@ -1282,6 +1309,7 @@ const processSale = async (
         : {}),
       customer_email: (data.customer_email || '').trim(),
       customer_state: saleCustomerState,
+      place_of_supply: salePlaceOfSupply,
       customer_country: (data.customer_country || '').trim(),
       country_sort: finalCountrySort,
       customer_gst_type: (data.customer_gst_type || '').trim(),
@@ -1445,7 +1473,7 @@ const processSale = async (
         extensionSubmission || submittedPayload,
         finalSaleData
       );
-      if (existing) return savedAnswer(existing._id, existing.sales_id, true);
+      if (existing) return await savedAnswer(existing._id, existing.sales_id, true);
     }
 
     let seatingAttempt = null;
@@ -1463,7 +1491,7 @@ const processSale = async (
         { branchId, license: licenseId },
         { actor: String(userId || ''), request_id: data.idempotencyKey, payload: data }
       );
-      if (existing) return savedAnswer(existing._id, existing.sales_id, true);
+      if (existing) return await savedAnswer(existing._id, existing.sales_id, true);
     }
 
     // Inventory Verification BEFORE Insert (PHP lines 653-690)
@@ -1576,7 +1604,11 @@ const processSale = async (
           if (seatingAttempt?.existing) {
             for (const reservation of stockReservations.values())
               await itemRepository.updateStock(reservation.itemId, reservation.quantity);
-            return savedAnswer(seatingAttempt.existing._id, seatingAttempt.existing.sales_id, true);
+            return await savedAnswer(
+              seatingAttempt.existing._id,
+              seatingAttempt.existing.sales_id,
+              true
+            );
           }
         }
         // If the unique bill-number index catches a one-in-a-million clash,
@@ -1596,7 +1628,7 @@ const processSale = async (
             String(userId || ''),
             extensionSubmission || submittedPayload
           );
-          if (existing) return savedAnswer(existing._id, existing.sales_id, true);
+          if (existing) return await savedAnswer(existing._id, existing.sales_id, true);
         }
         if (seatingAttempt && error.code === 11000) {
           const existing = await seatingDb.collection('sales').findOne({
@@ -1605,7 +1637,7 @@ const processSale = async (
             license: licenseId,
             seating_request_id: seatingAttempt.claim.id,
           });
-          if (existing) return savedAnswer(existing._id, existing.sales_id, true);
+          if (existing) return await savedAnswer(existing._id, existing.sales_id, true);
         }
         throw error;
       }
@@ -2047,7 +2079,7 @@ const processSale = async (
         console.warn('[takeaway] Completion reconciliation pending:', error.message);
       }
     }
-    return savedAnswer(saleId, salePrefixedId);
+    return await savedAnswer(saleId, salePrefixedId);
   } catch (error) {
     console.error('processSale Error:', error);
     if (error.name === 'DocumentNotFoundError') {

@@ -4828,5 +4828,11 @@
   "lang_expense_files_help": "PDF, JPG jew PNG. Sa 5 fajls, 5 MB kull wieħed, total ta' 10 MB. Il-fajls jiġu ffrankati meta tiffranka l-entrata.",
   "lang_expense_file_retry": "Id-dħul salvat, iżda xi annessi ma setgħux jiġu ffrankati. Żomm din il-formola miftuħa u ssalva mill-ġdid biex terġa 'tipprova.",
   "lang_not_saved": "Mhux salvat",
-  "lang_download": "Niżżel"
+  "lang_download": "Niżżel",
+  "lang_staff_account": "Kont tal-persunal",
+  "lang_api_integration": "Integrazzjoni API",
+  "lang_allow_shared_phone_number": "Ħalli numru tat-telefon kondiviż",
+  "lang_same_as_branch": "L-istess bħall-fergħa",
+  "lang_15_character_gstin": "GSTIN ta’ 15-il karattru",
+  "lang_customer_name_phone": "Isem il-klijent / telefon"
 }

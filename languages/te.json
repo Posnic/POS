@@ -4910,5 +4910,11 @@
   "lang_expense_files_help": "పిడిఎఫ్, జెపిజి లేదా పిఎన్జి. 5 ఫైల్స్ వరకు, ఒక్కొక్కటి 5 MB, మొత్తం 10 MB. మీరు ఎంట్రీని సేవ్ చేసినప్పుడు ఫైల్లు సేవ్ చేయబడతాయి.",
   "lang_expense_file_retry": "ఎంట్రీ సేవ్ చేయబడింది, కానీ కొన్ని జోడింపులను సేవ్ చేయలేకపోయింది. ఈ ఫారమ్ను తెరిచి ఉంచండి మరియు తిరిగి ప్రయత్నించడానికి మళ్ళీ సేవ్ చేయండి.",
   "lang_not_saved": "సేవ్ చేయబడలేదు",
-  "lang_download": "డౌన్లోడ్"
+  "lang_download": "డౌన్లోడ్",
+  "lang_staff_account": "సిబ్బంది ఖాతా",
+  "lang_api_integration": "API అనుసంధానం",
+  "lang_allow_shared_phone_number": "ఒకే ఫోన్ నంబర్ వాడటానికి అనుమతించండి",
+  "lang_same_as_branch": "శాఖ మాదిరిగానే",
+  "lang_15_character_gstin": "15 అక్షరాల GSTIN",
+  "lang_customer_name_phone": "కస్టమర్ పేరు / ఫోన్"
 }

@@ -4831,5 +4831,11 @@
   "lang_expense_files_help": "PDF、JPG 或 PNG。最多 5 个文件，每个文件 5 MB，总计 10 MB。保存条目时会保存文件。",
   "lang_expense_file_retry": "条目已保存，但无法保存某些附件。保持此表单处于打开状态，然后再次保存以重试。",
   "lang_not_saved": "未保存",
-  "lang_download": "下載"
+  "lang_download": "下載",
+  "lang_staff_account": "员工账户",
+  "lang_api_integration": "API 集成",
+  "lang_allow_shared_phone_number": "允许共用电话号码",
+  "lang_same_as_branch": "与分店相同",
+  "lang_15_character_gstin": "15位GSTIN",
+  "lang_customer_name_phone": "客户姓名 / 电话"
 }
