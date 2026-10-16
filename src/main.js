@@ -1678,10 +1678,11 @@ const browserCloudAuth = new (require('./browser-cloud-auth').BrowserCloudAuth)(
   website: WEBSITE_API,
   openExternal: (url) => shell.openExternal(url),
 });
-ipcMain.handle('cloud:authorize-browser', async (_event, { intent = 'login' } = {}) => {
+ipcMain.handle('cloud:authorize-browser', async (_event, { intent = 'login', serverUrl } = {}) => {
   try {
+    const website = serverUrl ? cloudServerUrl(serverUrl) : WEBSITE_API;
     const activation = await browserCloudAuth.authorize({
-      intent, machineId: getMachineId(), deviceName: require('os').hostname(),
+      website, intent, machineId: getMachineId(), deviceName: require('os').hostname(),
     });
     // Return to the exact window that started approval, including first-run setup.
     // Focusing is best-effort and must never turn a valid authorization into a failure.
@@ -1696,7 +1697,7 @@ ipcMain.handle('cloud:authorize-browser', async (_event, { intent = 'login' } = 
     } catch (error) {
       console.warn('[Cloud] Could not foreground the authorization window:', error.message);
     }
-    return await connectCloudDevice(activation, 'https://gateway.posnic.com');
+    return await connectCloudDevice(activation, serverUrl ? cloudServerUrl(serverUrl) : 'https://gateway.posnic.com');
   } catch (error) {
     return { ok: false, error: /fetch failed|ENOTFOUND|abort/i.test(error.message)
       ? 'Could not reach Posnic Cloud. Check your internet connection and try again.' : error.message };
@@ -3739,22 +3740,14 @@ ipcMain.handle('cloud:reset-local-shop', async (event) => {
     const answer = await dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender), {
       type: 'warning', title: 'Delete existing local shop data?',
       message: 'Delete this computer’s local shop data and restart setup?',
-      detail: 'Local sales, items, customers, purchases and login data will be permanently deleted. Any changes not synced or backed up will be lost. Cloud records and existing backup files will not be deleted. After restart, sign in to the cloud shop you want to use or enter a new pairing code.',
+      detail: 'A verified recovery copy will be saved before local data is replaced. Unsynced work stays in that copy and will not upload automatically. Hardware settings, cloud records and existing backups are kept. Setup stops if the copy cannot be verified.',
       buttons: ['Keep existing data', 'Delete local data and restart'], defaultId: 0, cancelId: 0, noLink: true,
     });
     if (answer.response !== 1) return { ok: false, cancelled: true };
-    await verify();
-    await reset.stopSync(syncAgentManager);
-    // Disconnect before dropping data so the old shop cannot repopulate it.
-    if (fs.existsSync(CLOUD_CONFIG_FILE)) fs.unlinkSync(CLOUD_CONFIG_FILE);
-    await removeFullAccountData(uri);
-    for (const name of ['cloud-shop-identity.json', '.startup-ready']) {
-      const file = path.join(app.getPath('userData'), name);
-      if (fs.existsSync(file)) fs.unlinkSync(file);
-    }
+    await saveAndResetLocalSetup(true, uri);
     cloudResetUri = null;
-    app.relaunch();
-    app.exit(0);
+    relaunchAfterQuit = true;
+    app.quit();
     return { ok: true };
   } catch (error) {
     return { ok: false, error: 'Could not reset local data: ' + error.message };
@@ -3803,9 +3796,64 @@ function confirmFullAccountRemoval() {
   });
 }
 
+// Only the local setup page can initiate a fresh setup. No business data is synced
+// by these handlers; recovery files stay local and outside the active database.
+let setupExistingShop = false;
+function assertSetupPage(event) {
+  let page;
+  try { page = require('url').fileURLToPath(event.senderFrame.url); } catch { /* refused below */ }
+  if (page !== path.join(__dirname, 'install-wizard.html')) throw new Error('Open setup to continue.');
+}
+ipcMain.handle('install:state', async event => {
+  assertSetupPage(event);
+  return { existing: setupExistingShop, connected: fs.existsSync(CLOUD_CONFIG_FILE) };
+});
+ipcMain.handle('install:continue', async event => {
+  assertSetupPage(event);
+  if (!setupExistingShop || cloudConnectionBusy) return { ok: false };
+  fs.rmSync(path.join(app.getPath('userData'), '.setup-review'), { force: true });
+  setupExistingShop = false;
+  // Restart normal startup so sync and connectors resume only after this choice.
+  relaunchAfterQuit = true;
+  app.quit();
+  return { ok: true };
+});
+async function saveAndResetLocalSetup(keepHardware, resetUri) {
+    if (!mongoDBManager || mongoDBManager.usingExternal) throw new Error('Fresh setup requires this application’s own database.');
+    const uri = resetUri || process.env.MONGODB_URI;
+    await require('./cloud-local-reset').verifyLocalDatabase({ uri, dataPath: mongoDBManager.dataPath, MongoClient: require('mongodb').MongoClient });
+    if (backupManager) backupManager.stopScheduler();
+    await require('./cloud-local-reset').stopSync(syncAgentManager);
+    if (connectorSupervisor) await connectorSupervisor.stopAll();
+    await closeApiServer();
+    if (global.mongooseConnection) await global.mongooseConnection.close(false);
+    const databaseProcess = mongoDBManager.mongoProcess;
+    await mongoDBManager.stop();
+    if (!databaseProcess || (databaseProcess.exitCode === null && databaseProcess.signalCode === null)) throw new Error('The database is still closing. Restart and retry.');
+    await clearRendererStorage();
+    const userData = app.getPath('userData');
+    const recovery = require('./setup-recovery').resetSavedData({ userData, recoveryRoot: path.join(app.getPath('documents'), app.getName() + '-Recovery'), keepHardware: keepHardware });
+    fs.rmSync(path.join(userData, '.setup-review'), { force: true });
+    console.log('[Setup] Recovery copy verified:', recovery);
+}
+ipcMain.handle('install:fresh', async (event, options = {}) => {
+  assertSetupPage(event);
+  if (!setupExistingShop || cloudConnectionBusy || typeof options.keepHardware !== 'boolean') return { ok: false, error: 'Setup is not ready. Please retry.' };
+  cloudConnectionBusy = true;
+  try {
+    await saveAndResetLocalSetup(options.keepHardware);
+    relaunchAfterQuit = true;
+    app.quit();
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, error: error.message + ' Close and reopen the app before retrying.' };
+  } finally { cloudConnectionBusy = false; }
+});
+
 // IPC handler for page navigation from install wizard
 ipcMain.on('load-page', (event, page) => {
   if (page === 'login' && mainWindow) {
+    fs.rmSync(path.join(app.getPath('userData'), '.setup-review'), { force: true });
     redirectToLogin();
   }
 });
@@ -5468,7 +5516,7 @@ function startServer() {
       // must not become an unhandled one.
       try {
         syncAgentManager = new SyncAgentManager({ app });
-        Promise.resolve(syncAgentManager.start()).catch((e) =>
+        if (!fs.existsSync(path.join(app.getPath('userData'), '.setup-review'))) Promise.resolve(syncAgentManager.start()).catch((e) =>
           console.warn('[SyncAgent] failed to start:', e.message)
         );
       } catch (syncErr) {
@@ -5501,7 +5549,7 @@ function startServer() {
         const adopt = fs.existsSync(sevenZip)
           ? { extract: (zip, dest) => extractZip(sevenZip, zip, dest), loadTree: (d) => loadTree(d, d) }
           : {};
-        Promise.resolve(connectorSupervisor.startAll(adopt)).catch((e) =>
+        if (!fs.existsSync(path.join(app.getPath('userData'), '.setup-review'))) Promise.resolve(connectorSupervisor.startAll(adopt)).catch((e) =>
           console.warn('[connectors] failed to start:', e.message)
         );
       } catch (connErr) {
@@ -5523,7 +5571,10 @@ function startServer() {
         await redirectToWizard();
       } else {
         updateStartupStatus('ready', 'Loading Interface...', 'Preparing login screen', 95);
-        await redirectToLogin();
+        if (fs.existsSync(path.join(app.getPath('userData'), '.setup-review'))) {
+          setupExistingShop = true;
+          await redirectToWizard();
+        } else await redirectToLogin();
       }
       if (result.databaseHealth && result.databaseHealth.status !== 'healthy') {
         const health = result.databaseHealth;

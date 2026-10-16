@@ -23,7 +23,8 @@ class BrowserCloudAuth {
     await this.openExternal(this.active.url);
   }
 
-  authorize({ intent = 'login', machineId, deviceName }) {
+  authorize({ intent = 'login', machineId, deviceName, website = this.website }) {
+    const authorizationWebsite = cloudServerUrl(website);
     if (this.active) return Promise.reject(new Error('Browser authorization is already in progress.'));
     if (!['login', 'signup'].includes(intent)) return Promise.reject(new Error('Invalid authorization choice.'));
     return new Promise((resolve, reject) => {
@@ -54,7 +55,7 @@ class BrowserCloudAuth {
         if (!opaque(code)) { res.writeHead(400); res.end('Invalid authorization code.'); return; }
         exchanging = true;
         try {
-          const response = await this.request(`${this.website}/api/desktop/token`, {
+          const response = await this.request(`${authorizationWebsite}/api/desktop/token`, {
             method: 'POST', redirect: 'error', headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ code, codeVerifier, redirectUri }),
             signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]),
@@ -99,7 +100,7 @@ body{min-height:100vh;margin:0;display:grid;place-items:center}main{box-sizing:b
         if (settled) { server.close(); return; }
         redirectUri = `http://127.0.0.1:${server.address().port}/posnic-authorized`;
         try {
-          const response = await this.request(`${this.website}/api/desktop/requests`, {
+          const response = await this.request(`${authorizationWebsite}/api/desktop/requests`, {
             method: 'POST', redirect: 'error', headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ intent, machineId, deviceName, redirectUri, state, codeChallenge }),
             signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]),
@@ -107,7 +108,7 @@ body{min-height:100vh;margin:0;display:grid;place-items:center}main{box-sizing:b
           if (!response.ok) throw new Error('Browser sign-in is unavailable. Check your internet connection or use a pairing code.');
           const result = await response.json();
           const url = new URL(result.authorizationUrl);
-          if (url.origin !== new URL(this.website).origin || url.pathname !== '/api/desktop/authorize'
+          if (url.origin !== new URL(authorizationWebsite).origin || url.pathname !== '/api/desktop/authorize'
               || url.username || url.password || url.hash || !opaque(url.searchParams.get('request'))
               || [...url.searchParams.keys()].length !== 1) throw new Error('The authorization address could not be verified.');
           if (settled) return;

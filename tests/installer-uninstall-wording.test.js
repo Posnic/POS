@@ -51,7 +51,10 @@ test('the uninstaller tells the truth about the data folder', () => {
   const build = require(path.join(ROOT, 'package.json')).build;
   assert.strictEqual(build.nsis.deleteAppDataOnUninstall, false);
   const { uninstall } = branches();
-  assert.match(uninstall, /not deleted|was kept/);
+  assert.match(uninstall, /POSNIC_REMOVAL_SUMMARY/);
+  assert.match(NSH, /Keep business data/);
+  assert.match(NSH, /Keep hardware settings/);
+  assert.match(NSH, /Keep saved backups/);
   assert.ok(!/unless you choose|if you choose/i.test(uninstall), 'the uninstaller promises a choice it does not offer');
 });
 
