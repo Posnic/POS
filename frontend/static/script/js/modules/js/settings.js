@@ -207,7 +207,7 @@ PosnicPro.settings = {
             $('#india_qrmp_row').toggle(!above);
         }
     },
-    taxSystemSave: function () {
+    taxSystemSave: function (done) {
         var values = {
             tax_regime: $('#tax_regime_override').val() || null,
             india_gst_type: $('#india_gst_type').val(),
@@ -216,6 +216,7 @@ PosnicPro.settings = {
             us_resale_certificate: $.trim($('#us_resale_certificate').val())
         };
         PosnicPro.put({ url: 'settings/group/tax', data: JSON.stringify(values) }, function (r) {
+            if (r.type === 'success' && done) { done(); return; }
             PosnicPro.alert(r.type || 'success', r.message || 'Tax system saved');
             PosnicPro.settings.taxSystemLoad();
         }, function (xhr) {
@@ -2178,7 +2179,7 @@ if ($wrapper.length) {
     /* successLabel: what the toast says on success - each Save button names
        its own act ("Module switches saved") instead of the generic server
        line, which reads the same from four different screens. */
-    updateCommonSetting: function (successLabel) {
+    updateCommonSetting: function (successLabel, done) {
         var loader = $(".loader-view-mystore");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var taxDetail = $("#tax_percentage").select2("data");
@@ -2482,9 +2483,10 @@ if ($("#sale_quick_edit").is(":checked")) {
                     }
                 }
             }
-            PosnicPro.alert(response.type,
+            if (response.type !== 'success' || !done) PosnicPro.alert(response.type,
                 (response.type === 'success' && successLabel) ? successLabel : response.message);
             loader.find(".loadingSpinner:first").remove();
+            if (response.type === 'success' && done) done();
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
@@ -2561,6 +2563,7 @@ if ($("#sale_quick_edit").is(":checked")) {
         var on = function (k) { return s[k] !== false; };
 
         $('#v-pills-taxmodule-tab').toggle(on('module_tax_enable'));
+        $('#v-pills-ai-tab').toggle(s.ask_posnic_enabled === true);
         $('#v-pills-credit-tab').toggle(on('module_credit_enable'));
         $('#v-pills-marketingmodule-tab').toggle(on('module_marketing_enable'));
         $('#v-pills-messagingmodule-tab').toggle(on('module_messaging_enable'));
@@ -4986,7 +4989,11 @@ $("#tax_discount_add").submit(function (event) {
         return;
     }
     if ($('#tax_discount_add').valid()) {            // checks form for validity
-        PosnicPro.settings.updateCommonSetting('Core Settings saved');
+        PosnicPro.settings.updateCommonSetting('Core Settings saved', function () {
+            if (PosnicPro.settings._sharingLoaded && PosnicPro.settings._sharingDirty) {
+                PosnicPro.settings.saveSharing();
+            } else PosnicPro.alert('success', PosnicPro.i18n.t('lang_successfully_completed', 'Successfully Completed'));
+        });
     }
 });
 $("#tax_checked_all").click(function () {
@@ -7133,6 +7140,8 @@ PosnicPro.settings.SHARING_KEYS = ['share_customers', 'share_suppliers'];
 
 PosnicPro.settings.loadSharing = function () {
     if (!$('#sharing_fieldset').length) { return; }
+    PosnicPro.settings._sharingLoaded = false;
+    PosnicPro.settings._sharingDirty = false;
     PosnicPro.get({ url: 'settings/group/sharing', data: { level: 'account' } }, function (r) {
         var values = (r && r.data && r.data.values) || {};
         $.each(PosnicPro.settings.SHARING_KEYS, function (i, key) {
@@ -7142,6 +7151,7 @@ PosnicPro.settings.loadSharing = function () {
             $('#set_' + key).prop('checked', PosnicPro.settings._sharingOn(values[key]));
         });
         $('#sharing_status').text('');
+        PosnicPro.settings._sharingLoaded = r && r.type === 'success';
     }, function () {
         $('#sharing_status').text(PosnicPro.i18n.t('lang_could_not_read_the_current_setting', 'Could not read the current setting.'));
     });
@@ -7169,6 +7179,7 @@ PosnicPro.settings.saveSharing = function () {
     PosnicPro.put({ url: 'settings/group/sharing', data: JSON.stringify(payload) }, function (r) {
         $('#sharing_save_btn').prop('disabled', false);
         $('#sharing_status').text(r.type === 'success' ? 'Saved. Applies to every shop.' : '');
+        if (r.type === 'success') PosnicPro.settings._sharingDirty = false;
         PosnicPro.alert(r.type, r.type === 'success' ? 'Sharing saved' : r.message);
     }, function (xhr) {
         $('#sharing_save_btn').prop('disabled', false);
@@ -10176,7 +10187,7 @@ PosnicPro.settings.ai = {
             });
         }, function () { /* kept */ });
     },
-    save: function () {
+    save: function (done) {
         var provider = $('#ai_provider').val() || '';
         var key = String($('#ai_api_key').val() || '');
         var cap = String($('#ai_monthly_cap').val() || '').trim();
@@ -10206,13 +10217,14 @@ PosnicPro.settings.ai = {
                that emptiness through would blank the shop's credential the
                first time anybody changed the limit. */
             if (!key) {
-                PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
+                if (!done) PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
                     'Saved. The AI button now appears on the item screen, beside Description.'));
                 /* The item screen asks once per session whether AI is usable; that
                    answer is now stale, so let it ask again rather than leaving the
                    button hidden until a reload. */
                 if (PosnicPro.items) { PosnicPro.items._aiAvailable = null; }
                 $('#ai_api_key').val('');
+                if (done) done();
                 return;
             }
             PosnicPro.put({
@@ -10220,7 +10232,7 @@ PosnicPro.settings.ai = {
                 data: JSON.stringify({ ai_api_key: key })
             }, function (second) {
                 if (second.type === 'success') {
-                    PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
+                    if (!done) PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
                         'Saved. The AI button now appears on the item screen, beside Description.'));
                     /* The item screen asks once per session whether AI is usable; that
                        answer is now stale, so let it ask again rather than leaving the
@@ -10228,6 +10240,7 @@ PosnicPro.settings.ai = {
                     if (PosnicPro.items) { PosnicPro.items._aiAvailable = null; }
                     $('#ai_api_key').val('');
                     PosnicPro.settings.ai.load();
+                    if (done) done();
                 } else {
                     PosnicPro.alert(second.type, second.message);
                 }
@@ -10342,3 +10355,5 @@ $(document).on('click','#save_captain_tables',function(){
         button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_successfully_completed','Successfully Completed'));
     },function(){button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_could_not_save_table_settings_please_retry', 'Could not save table settings. Please retry.'));});
 });
+
+$(document).on("change", "#sharing_fieldset input", function () { PosnicPro.settings._sharingDirty = true; });

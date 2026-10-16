@@ -160,10 +160,12 @@ test('editor adds and reorders blocks, keeps formats independent, and sends a pa
     dom.window.close();
 });
 
-test('saving printing behaviour does not submit or discard unsaved receipt designs', () => {
+test('saving printing behaviour does not submit or discard unsaved receipt designs', async () => {
     const { dom, w, $, branch } = setup();
     $('body').append('<div id="receipt-print-behaviour"></div><button id="save-print-behaviour"></button><span id="print-behaviour-status"></span>');
     const sent = [];
+    let printerSaves = 0;
+    w.PosnicPro.printSettings = { save: async () => { printerSaves++; return true; } };
     w.PosnicPro.put = (request, done) => {
         const data = JSON.parse(request.data); sent.push(data);
         done({ type: 'success', data: data });
@@ -173,12 +175,28 @@ test('saving printing behaviour does not submit or discard unsaved receipt desig
     $('#rd-block-text').val('New layout text').trigger('input');
     $('#printall').prop('checked', true).trigger('change');
     $('#save-print-behaviour').trigger('click');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(printerSaves, 1);
     assert.deepEqual(sent[0], { printall: 'true', bill_print_copies: '1' });
     assert.match($('#print-behaviour-status').text(), /saved/);
     assert.match($('.rd-status').text(), /Unsaved/);
     $('[data-action="save"]').trigger('click');
     assert.ok(sent[1].receipt_designs.layouts['80'].blocks.some(b => b.text === 'New layout text'));
     assert.equal($('#printall').closest('#receipt-print-behaviour').length, 1);
+    dom.window.close();
+});
+
+test('a failed device printer save prevents a misleading printing-options success', async () => {
+    const { dom, w, $, branch } = setup();
+    $('body').append('<button id="save-print-behaviour"></button><span id="print-behaviour-status"></span>');
+    let writes = 0;
+    w.PosnicPro.printSettings = { save: async () => false };
+    w.PosnicPro.put = () => { writes++; };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('#save-print-behaviour').trigger('click');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(writes, 0);
+    assert.equal($('#save-print-behaviour').prop('disabled'), false);
     dom.window.close();
 });
 

@@ -303,10 +303,15 @@
             status(xhr && xhr.responseJSON && xhr.responseJSON.message || t('Could not save designs. Your changes are still here.'), true);
         });
     }
-    function saveBehaviour() {
+    async function saveBehaviour() {
         var button = $('#save-print-behaviour'), note = $('#print-behaviour-status');
+        if (button.prop('disabled')) return;
         var values = printOptions(), payload = { printall: values.printall, bill_print_copies: values.bill_print_copies };
         button.prop('disabled', true);
+        if (PosnicPro.printSettings && await PosnicPro.printSettings.save() === false) {
+            button.prop('disabled', false);
+            return;
+        }
         PosnicPro.put({ url: 'setting/updateCommonSettings', data: JSON.stringify(payload) }, function (res) {
             button.prop('disabled', false);
             if (res.type !== 'success') { note.text(res.message || PosnicPro.i18n.t('lang_print_save_failed', 'Could not save print settings.')); return; }

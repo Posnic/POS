@@ -79,7 +79,7 @@
             state.sales.map(function (v, i) { return row('sales', v, i); }).join('') + row('invoice', state.invoice) + row('quotation', state.quotation) +
             '</tbody></table></div>' + languageSettings() + '<div class="d-flex align-items-center flex-wrap mb-2"><button type="button" class="btn btn-outline-primary btn-sm mr-2" data-print-refresh>' + esc(PosnicPro.i18n.t('lang_print_refresh_printers', 'Refresh printers')) + '</button>' +
             (desktop() ? '<button type="button" class="btn btn-outline-primary btn-sm mr-2" data-print-add>' + esc(PosnicPro.i18n.t('lang_print_add_sales_printer', 'Add sales printer')) + '</button>' : '') +
-            '<button type="button" class="btn btn-primary btn-sm" data-print-save>' + esc(PosnicPro.i18n.t('lang_print_save_settings', 'Save print settings')) + '</button><span class="small ml-2" role="status" data-print-status></span></div></section>');
+            '<span class="small ml-2" role="status" data-print-status></span></div></section>');
         features(featureState);
     }
     function collect() {
@@ -109,7 +109,8 @@
             }
             mirror(next);
             host.find('[data-print-status]').text(PosnicPro.i18n.t('lang_print_settings_saved', 'Print settings saved.'));
-        } catch (error) { host.find('[data-print-status]').text(error.message); }
+            return true;
+        } catch (error) { host.find('[data-print-status]').text(error.message); return false; }
         finally { button.prop('disabled', false); }
     }
     async function mount(data) {

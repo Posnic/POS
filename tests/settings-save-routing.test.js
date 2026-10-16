@@ -64,3 +64,24 @@ test('the Core Settings form still saves the receipt designer when Receipt Print
         assert.equal(h.requests.length, 1);
     } finally { h.dom.window.close(); }
 });
+
+test('the single Core Save includes changed account sharing only after the branch save succeeds', () => {
+    const h = setup();
+    h.$('#core-tab-print').removeClass('active');
+    let next, sharing = 0;
+    h.w.PosnicPro.alert = () => {};
+    h.w.PosnicPro.i18n = { t: (_key, fallback) => fallback };
+    h.w.PosnicPro.settings.updateCommonSetting = (_label, done) => { next = done; };
+    h.w.PosnicPro.settings.saveSharing = () => { sharing++; };
+    h.w.PosnicPro.settings._sharingLoaded = true;
+    h.w.PosnicPro.settings._sharingDirty = true;
+    h.$('#tax_discount_add').triggerHandler('submit');
+    assert.equal(sharing, 0);
+    next();
+    assert.equal(sharing, 1);
+    h.w.PosnicPro.settings._sharingDirty = false;
+    h.$('#tax_discount_add').triggerHandler('submit');
+    next();
+    assert.equal(sharing, 1, 'unchanged account sharing must not be overwritten');
+    h.dom.window.close();
+});
