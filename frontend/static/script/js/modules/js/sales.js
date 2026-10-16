@@ -12574,12 +12574,12 @@ $(document).on('click', '#sales_customer_add_new', function () {
     });
     var $status = $('#sales_customer_status');
     if (!data.name || $('#sales_new_customer_id').val()) {
-        $status.text('Enter a new customer name first, or select an existing customer.');
+        $status.text(PosnicPro.i18n.t('lang_enter_a_new_customer_name_first_or_select', 'Enter a new customer name first, or select an existing customer.'));
         $('#sales_new_customer_name').trigger('focus');
         return;
     }
     $button.prop('disabled', true);
-    $status.text('Saving customer...');
+    $status.text(PosnicPro.i18n.t('lang_saving', 'Saving ...'));
     PosnicPro.request({method: 'POST', url: 'customers', data: JSON.stringify(data)}, function (response) {
         $button.prop('disabled', false);
         var saved = response.data || {};
@@ -12588,7 +12588,7 @@ $(document).on('click', '#sales_customer_add_new', function () {
             $status.text(response.message || 'Could not save customer. Please check the details.');
             return;
         }
-        $status.text('Customer saved.');
+        $status.text(PosnicPro.i18n.t('lang_customer_saved', 'Customer saved.'));
         PosnicPro.sales.applyCustomerPick(Object.assign({}, data, saved, {id: id}));
         PosnicPro.sales.setCustomerPopup(false, true);
     }, function (xhr) {

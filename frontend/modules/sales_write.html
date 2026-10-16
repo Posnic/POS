@@ -160,15 +160,15 @@
                                 </div>
                             </div>
 
-                            <div id="sales_customer_popup" role="region" aria-label="Customer details" class="toggle-customer-user sales-customer-pop" style="display:none;">
+                            <div id="sales_customer_popup" role="region" aria-label="Customer details" data-t-aria-label="lang_customer_details" class="toggle-customer-user sales-customer-pop" style="display:none;">
                                 <div class="sales-customer-pop-head">
                                     <span class="sales-customer-pop-title"><i
                                             class="feather icon-users mr-1"></i><lang class="lang_customer_details">Customer details</lang></span>
                                     <a href="javascript:void(0)" class="sales-customer-pop-x"
                                         id="sales_customer_pop_close" title="Close" data-t-title="lang_close_title"><lang class="lang_text">&times;</lang></a>
                                 </div>
-                                <label for="sales_new_customer_name">Search customer or enter a new name</label>
-                                <input type="text" id="sales_new_customer_name" placeholder="Name or phone" class="form-control osk-trigger clear-sale-text" maxlength="200" autocomplete="off">
+                                <label for="sales_new_customer_name"><lang class="lang_search_customer_or_enter_a_new_name">Search customer or enter a new name</lang></label>
+                                <input type="text" id="sales_new_customer_name" placeholder="Name or mobile number" data-t-placeholder="lang_name_or_mobile_number" class="form-control osk-trigger clear-sale-text" maxlength="200" autocomplete="off">
                                 <div id="sales_customer_results"></div>
                                 <div id="sales_customer_status" role="status" class="small my-2"></div>
                                 <p class="text-muted"><lang class="lang_bill_customer_details_help">Optional details for this bill. Use Save new customer to save these details as a customer record.</lang></p>
@@ -180,9 +180,9 @@
                                 <div id="sales_recent_customers" style="display:none; max-height:220px; overflow-y:auto;"></div>
                                 <button type="button" data-module="customer" data-access="write"
                                     class="sales-customer-pop-action" id="sales_customer_add_new">
-                                    <i class="feather icon-user-plus mr-2"></i><span>Save new customer</span>
+                                    <i class="feather icon-user-plus mr-2"></i><span><lang class="lang_save_new_customer">Save new customer</lang></span>
                                 </button>
-                                <button type="button" id="sales_customer_done" class="btn btn-primary">Use on this bill</button>
+                                <button type="button" id="sales_customer_done" class="btn btn-primary"><lang class="lang_use_on_this_bill">Use on this bill</lang></button>
                                 <a href="javascript:void(0)" class="sales-customer-pop-action sales-customer-walkin"
                                     id="sales_customer_walkin">
                                     <i class="feather icon-user mr-2"></i><lang class="lang_walk_in_customer">Walk-in customer</lang>
