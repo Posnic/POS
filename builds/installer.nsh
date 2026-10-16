@@ -257,23 +257,23 @@ Function un.PosnicDataPage
   ${NSD_CreateCheckbox} 0 0u 100% 18u "Remove all local data"
   Pop $POSNIC_REMOVE_ALL_CHECK
   ${NSD_OnClick} $POSNIC_REMOVE_ALL_CHECK un.PosnicRemoveAllClick
-  ${NSD_CreateCheckbox} 0 30u 100% 18u "Keep business data"
+  ${NSD_CreateCheckbox} 0 24u 100% 18u "Keep business data"
   Pop $POSNIC_BUSINESS_CHECK
   ${NSD_SetState} $POSNIC_BUSINESS_CHECK $POSNIC_KEEP_BUSINESS
   ${NSD_OnClick} $POSNIC_BUSINESS_CHECK un.PosnicKeepClick
-  ${NSD_CreateLabel} 14u 49u 95% 16u "Sales, stock, customers and pending changes."
+  ${NSD_CreateLabel} 14u 42u 95% 14u "Sales, stock, customers and pending changes."
   Pop $0
-  ${NSD_CreateCheckbox} 0 69u 100% 18u "Keep hardware settings"
+  ${NSD_CreateCheckbox} 0 58u 100% 18u "Keep hardware settings"
   Pop $POSNIC_HARDWARE_CHECK
   ${NSD_SetState} $POSNIC_HARDWARE_CHECK $POSNIC_KEEP_HARDWARE
   ${NSD_OnClick} $POSNIC_HARDWARE_CHECK un.PosnicKeepClick
-  ${NSD_CreateLabel} 14u 88u 95% 16u "Scales, printers and kitchen screens."
+  ${NSD_CreateLabel} 14u 76u 95% 14u "Scales, printers and kitchen screens."
   Pop $0
-  ${NSD_CreateCheckbox} 0 108u 100% 18u "Keep saved backups"
+  ${NSD_CreateCheckbox} 0 94u 100% 18u "Keep saved backups"
   Pop $POSNIC_BACKUPS_CHECK
   ${NSD_SetState} $POSNIC_BACKUPS_CHECK $POSNIC_KEEP_BACKUPS
   ${NSD_OnClick} $POSNIC_BACKUPS_CHECK un.PosnicKeepClick
-  ${NSD_CreateLabel} 0 132u 100% 24u "Cloud data stays unchanged. Unchecked local data is permanently deleted. No extra backup is created."
+  ${NSD_CreateLabel} 0 116u 100% 22u "Cloud data stays unchanged. Unchecked local data is permanently deleted. No extra backup is created."
   Pop $0
   Call un.PosnicSyncRemoveAll
   nsDialogs::Show
