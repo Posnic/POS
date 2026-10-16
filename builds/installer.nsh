@@ -63,6 +63,7 @@ Var POSNIC_KEEP_HARDWARE
 Var POSNIC_KEEP_BACKUPS
 Var POSNIC_BUSINESS_CHECK
 Var POSNIC_HARDWARE_CHECK
+Var POSNIC_REMOVE_ALL_CHECK
 Var POSNIC_BACKUPS_CHECK
 Var POSNIC_REMOVAL_SUMMARY
 Var POSNIC_POWERSHELL
@@ -253,22 +254,60 @@ Function un.PosnicDataPage
   !insertmacro MUI_HEADER_TEXT "Remove Posnic?" "The application will be removed. Choose what to keep."
   nsDialogs::Create 1018
   Pop $0
-  ${NSD_CreateCheckbox} 0 12u 100% 20u "Keep business data"
+  ${NSD_CreateCheckbox} 0 0u 100% 18u "Remove all local data"
+  Pop $POSNIC_REMOVE_ALL_CHECK
+  ${NSD_OnClick} $POSNIC_REMOVE_ALL_CHECK un.PosnicRemoveAllClick
+  ${NSD_CreateCheckbox} 0 30u 100% 18u "Keep business data"
   Pop $POSNIC_BUSINESS_CHECK
   ${NSD_SetState} $POSNIC_BUSINESS_CHECK $POSNIC_KEEP_BUSINESS
-  ${NSD_CreateLabel} 14u 34u 95% 22u "Sales, stock, customers and pending changes."
+  ${NSD_OnClick} $POSNIC_BUSINESS_CHECK un.PosnicKeepClick
+  ${NSD_CreateLabel} 14u 49u 95% 16u "Sales, stock, customers and pending changes."
   Pop $0
-  ${NSD_CreateCheckbox} 0 62u 100% 20u "Keep hardware settings"
+  ${NSD_CreateCheckbox} 0 69u 100% 18u "Keep hardware settings"
   Pop $POSNIC_HARDWARE_CHECK
   ${NSD_SetState} $POSNIC_HARDWARE_CHECK $POSNIC_KEEP_HARDWARE
-  ${NSD_CreateLabel} 14u 84u 95% 22u "Scales, printers and kitchen screens."
+  ${NSD_OnClick} $POSNIC_HARDWARE_CHECK un.PosnicKeepClick
+  ${NSD_CreateLabel} 14u 88u 95% 16u "Scales, printers and kitchen screens."
   Pop $0
-  ${NSD_CreateCheckbox} 0 112u 100% 20u "Keep saved backups"
+  ${NSD_CreateCheckbox} 0 108u 100% 18u "Keep saved backups"
   Pop $POSNIC_BACKUPS_CHECK
   ${NSD_SetState} $POSNIC_BACKUPS_CHECK $POSNIC_KEEP_BACKUPS
-  ${NSD_CreateLabel} 0 145u 100% 36u "Cloud data will not be deleted. Unchecked data is permanently removed from this computer. No extra backup is created."
+  ${NSD_OnClick} $POSNIC_BACKUPS_CHECK un.PosnicKeepClick
+  ${NSD_CreateLabel} 0 132u 100% 24u "Cloud data stays unchanged. Unchecked local data is permanently deleted. No extra backup is created."
   Pop $0
+  Call un.PosnicSyncRemoveAll
   nsDialogs::Show
+FunctionEnd
+
+Function un.PosnicRemoveAllClick
+  Pop $0
+  ${NSD_GetState} $POSNIC_REMOVE_ALL_CHECK $1
+  ${If} $1 == ${BST_CHECKED}
+    StrCpy $1 ${BST_UNCHECKED}
+  ${Else}
+    StrCpy $1 ${BST_CHECKED}
+  ${EndIf}
+  ${NSD_SetState} $POSNIC_BUSINESS_CHECK $1
+  ${NSD_SetState} $POSNIC_HARDWARE_CHECK $1
+  ${NSD_SetState} $POSNIC_BACKUPS_CHECK $1
+FunctionEnd
+
+Function un.PosnicKeepClick
+  Pop $0
+  Call un.PosnicSyncRemoveAll
+FunctionEnd
+
+Function un.PosnicSyncRemoveAll
+  ${NSD_GetState} $POSNIC_BUSINESS_CHECK $1
+  ${NSD_GetState} $POSNIC_HARDWARE_CHECK $2
+  ${NSD_GetState} $POSNIC_BACKUPS_CHECK $3
+  ${If} $1 == ${BST_UNCHECKED}
+  ${AndIf} $2 == ${BST_UNCHECKED}
+  ${AndIf} $3 == ${BST_UNCHECKED}
+    ${NSD_SetState} $POSNIC_REMOVE_ALL_CHECK ${BST_CHECKED}
+  ${Else}
+    ${NSD_SetState} $POSNIC_REMOVE_ALL_CHECK ${BST_UNCHECKED}
+  ${EndIf}
 FunctionEnd
 
 Function un.PosnicDataLeave
