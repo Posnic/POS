@@ -58,8 +58,10 @@ Var POSNIC_BUSINESS_CHECK
 Var POSNIC_HARDWARE_CHECK
 Var POSNIC_BACKUPS_CHECK
 Var POSNIC_REMOVAL_SUMMARY
+Var POSNIC_POWERSHELL
 !include nsDialogs.nsh
 !include LogicLib.nsh
+!include x64.nsh
 ; electron-builder loads custom includes before its assisted UI template.
 ; Our page functions use MUI_HEADER_TEXT while this file is parsed.
 !include MUI2.nsh
@@ -294,12 +296,13 @@ FunctionEnd
 Function un.PosnicApplyData
   IfSilent 0 +2
     Return
-  ${If} $POSNIC_KEEP_BUSINESS == 1
-  ${AndIf} $POSNIC_KEEP_HARDWARE == 1
-  ${AndIf} $POSNIC_KEEP_BACKUPS == 1
-    Return
+  ; NSIS is 32-bit. Its default PowerShell cannot inspect a running 64-bit
+  ; application's executable path, so use the native host for this check.
+  StrCpy $POSNIC_POWERSHELL "$SYSDIR\WindowsPowerShell\v1.0\powershell.exe"
+  ${If} ${RunningX64}
+    StrCpy $POSNIC_POWERSHELL "$WINDIR\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
   ${EndIf}
-  nsExec::ExecToStack '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\setup-data.ps1" -DataRoot "$APPDATA\posnic" -BackupsRoot "$DOCUMENTS\Posnic-Backups" -RecoveryRoot "$DOCUMENTS\Posnic-Recovery" -AppExecutable "$INSTDIR\${APP_EXECUTABLE_FILENAME}" -HardwareManifest "$INSTDIR\resources\setup-hardware-files.json" -KeepBusiness $POSNIC_KEEP_BUSINESS -KeepHardware $POSNIC_KEEP_HARDWARE -KeepBackups $POSNIC_KEEP_BACKUPS'
+  nsExec::ExecToStack '"$POSNIC_POWERSHELL" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\resources\setup-data.ps1" -DataRoot "$APPDATA\posnic" -BackupsRoot "$DOCUMENTS\Posnic-Backups" -RecoveryRoot "$DOCUMENTS\Posnic-Recovery" -AppExecutable "$INSTDIR\${APP_EXECUTABLE_FILENAME}" -HardwareManifest "$INSTDIR\resources\setup-hardware-files.json" -KeepBusiness $POSNIC_KEEP_BUSINESS -KeepHardware $POSNIC_KEEP_HARDWARE -KeepBackups $POSNIC_KEEP_BACKUPS'
   Pop $0
   Pop $1
   ${If} $0 != 0

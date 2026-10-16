@@ -8,6 +8,13 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
+function Get-ExtendedPath([string]$File) {
+  if ($File.StartsWith('\\?\')) { return $File }
+  $full = [IO.Path]::GetFullPath($File)
+  if ($full.StartsWith('\\')) { return '\\?\UNC\' + $full.Substring(2) }
+  return '\\?\' + $full
+}
+
 function Assert-DirectChild([string]$Parent, [string]$Child) {
   $resolvedParent = [IO.Path]::GetFullPath($Parent).TrimEnd('\')
   $resolvedChild = [IO.Path]::GetFullPath($Child).TrimEnd('\')
@@ -18,37 +25,60 @@ function Assert-DirectChild([string]$Parent, [string]$Child) {
   return $resolvedChild
 }
 function Get-RecoveryHash([string]$File) {
-  $stream = [IO.File]::OpenRead($File)
+  $stream = [IO.File]::OpenRead((Get-ExtendedPath $File))
   $digest = [Security.Cryptography.SHA256]::Create()
   try { return [BitConverter]::ToString($digest.ComputeHash($stream)) }
   finally { $stream.Dispose(); $digest.Dispose() }
 }
 function Copy-VerifiedTree([string]$Source, [string]$Destination) {
-  [IO.Directory]::CreateDirectory($Destination) | Out-Null
-  foreach ($entry in Get-ChildItem -LiteralPath $Source -Force) {
+  [IO.Directory]::CreateDirectory((Get-ExtendedPath $Destination)) | Out-Null
+  $directory = New-Object IO.DirectoryInfo (Get-ExtendedPath $Source)
+  foreach ($entry in $directory.EnumerateFileSystemInfos()) {
     if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Recovery cannot follow linked folders.' }
     # These database lock handles are held exclusively by this helper.
     if ($entry.Name -in @('mongod.lock', 'WiredTiger.lock')) { continue }
     $target = Join-Path $Destination $entry.Name
-    if ($entry.PSIsContainer) { Copy-VerifiedTree $entry.FullName $target }
+    if ($entry.Attributes -band [IO.FileAttributes]::Directory) { Copy-VerifiedTree $entry.FullName $target }
     else {
-      [IO.File]::Copy($entry.FullName, $target, $false)
+      [IO.File]::Copy((Get-ExtendedPath $entry.FullName), (Get-ExtendedPath $target), $false)
       if ((Get-RecoveryHash $entry.FullName) -ne (Get-RecoveryHash $target)) {
         throw 'Recovery verification failed. Existing data was not removed.'
       }
     }
   }
 }
+function Assert-UnlinkedTree([IO.FileSystemInfo]$Entry) {
+  if ($Entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked folders cannot be deleted here.' }
+  if ($Entry.Attributes -band [IO.FileAttributes]::Directory) {
+    foreach ($child in $Entry.EnumerateFileSystemInfos()) { Assert-UnlinkedTree $child }
+  }
+}
+function Remove-UnlinkedTree([IO.DirectoryInfo]$Directory) {
+  foreach ($entry in $Directory.EnumerateFileSystemInfos()) {
+    if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked folders cannot be deleted here.' }
+    if ($entry.Attributes -band [IO.FileAttributes]::Directory) { Remove-UnlinkedTree $entry }
+    else {
+      $entry.IsReadOnly = $false
+      $entry.Delete()
+    }
+  }
+  $Directory.Delete()
+}
 function Remove-CheckedTree([string]$Root) {
-  # Check every descendant before Remove-Item can traverse it.
-  if (!(Test-Path -LiteralPath $Root)) { return }
-  $linked = Get-ChildItem -LiteralPath $Root -Recurse -Force | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }
-  if ($linked) { throw 'Linked folders cannot be deleted here.' }
-  Remove-Item -LiteralPath $Root -Recurse -Force
+  # Windows PowerShell's provider cannot reliably remove paths over MAX_PATH.
+  # Validate the entire tree, then use extended paths for the actual removal.
+  $extended = Get-ExtendedPath $Root
+  if (![IO.Directory]::Exists($extended)) { return }
+  $directory = New-Object IO.DirectoryInfo $extended
+  Assert-UnlinkedTree $directory
+  Remove-UnlinkedTree $directory
 }
 if ($LibraryOnly) { return }
 $locks = @()
 try {
+  if ([Environment]::Is64BitOperatingSystem -and ![Environment]::Is64BitProcess) {
+    throw 'Use the native 64-bit PowerShell host so running applications can be checked safely.'
+  }
   $documents = [Environment]::GetFolderPath('MyDocuments')
   $DataRoot = Assert-DirectChild $env:APPDATA $DataRoot
   $BackupsRoot = Assert-DirectChild $documents $BackupsRoot
