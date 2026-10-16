@@ -142,18 +142,18 @@ PosnicPro.settings = {
      * India keeps exactly its current look; the gst_action machinery is
      * untouched. Presentation only, and failure leaves things as they are.
      */
-    applyTaxProfile: function () {
-        PosnicPro.get({ url: 'setting/taxProfile', data: {} }, function (r) {
+    applyTaxProfile: function (country, selector) {
+        var input = $(selector || '#branch_gstin_number');
+        country = country || $('#setting_country').val() || PosnicPro.local.get('country_setting');
+        input.data('tax-country', country).removeData('tax-regex').removeAttr('minlength').attr('maxlength', 100);
+        PosnicPro.get({ url: 'setting/taxProfile', data: { country: country } }, function (r) {
             var p = r && r.data;
-            if (!p || !p.registration) { return; }
-            PosnicPro.settings._taxProfile = p;
+            if (!p || !p.registration || input.data('tax-country') !== country) return;
+            input.data('tax-regex', p.registration.regex || '');
+            input.closest('.form-group').find('label lang').text(p.registration.label);
+            input.attr('placeholder', p.registration.label);
             $('.branch-gstin-hide-show').show();
-            $('.branch-gstin-hide-show label lang').text(p.registration.label);
-            $('#branch_gstin_number').attr('placeholder', 'Enter the ' + p.registration.label);
-            if (!p.registration.regex) {
-                $('#branch_gstin_number').removeAttr('minlength').attr('maxlength', 30);
-            }
-        }, function () { /* presentation only - never disturb the page */ });
+        });
     },
     /*
      * The Tax System card (PURCHASE_TAX_PLAN G6). One GET fills everything:
@@ -2864,24 +2864,21 @@ loadSelectSettingCountry: function (force) {
             PosnicPro.alert(response.type, response.message);
         });
     },
-    loadSelectSettingState: function (id) {
+    loadSelectSettingState: function (id, selectedState) {
+        var request = (this.stateRequest || 0) + 1; this.stateRequest = request;
+        if (selectedState === undefined) selectedState = $('#setting_country').val() === PosnicPro.local.get('country_setting') ? PosnicPro.local.get('state_setting') : '';
         var stateSelect = $('#setting_state');
         var params = {
             url: 'setting/getJSONState',
             data: { id: id }
         };
         PosnicPro.get(params, function (response) {
-            stateSelect.empty();
-            suggestions: $.map(response.data['stateJsonArray'], function (dataItem) {
-                var options;
-                options += '<option value="' + dataItem + '">' + dataItem + ' </option>';
-                stateSelect.append(options).trigger('change');
-            });
-            if (PosnicPro.local.get("country_setting") === PosnicPro.local.get("country_value")) {
-                stateSelect.val(PosnicPro.local.get('state_setting')).trigger('change.select2');
-            } else {
-                $('#setting_state option:eq(0)').prop('selected', true);
-            }
+            if (PosnicPro.settings.stateRequest !== request) return;
+            stateSelect.empty().append(new Option('', ''));
+            (response.data.stateJsonArray || []).forEach(function (state) { stateSelect.append(new Option(state, state)); });
+            var match = Array.from(stateSelect[0].options).find(function (option) { return option.value.trim().toLowerCase() === String(selectedState || '').trim().toLowerCase(); });
+            if (!match && selectedState) stateSelect.append(new Option(selectedState, selectedState));
+            stateSelect.val(match ? match.value : (selectedState || '')).trigger('change.select2');
             (PosnicPro.settings.store_telephone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -4355,11 +4352,7 @@ $("#setting_add").validate({
         pincode: {
             maxlength: 15
         },
-        branch_gstin_number: {
-            gst: true,
-            minlength: 15,
-            maxlength: 15
-        }
+        branch_gstin_number: { branchTaxRegistration: true, maxlength: 100 }
     },
     messages: {
         store_name: {
@@ -4397,10 +4390,7 @@ $("#setting_add").validate({
         pincode: {
             maxlength: "Place should not be more than 15 digits"
         },
-        branch_gstin_number: {
-            minlength: "Gstr must be Atleast 15 Characters long",
-            maxlength: "Gstr should not be more than 15 digits"
-        }
+        branch_gstin_number: { maxlength: "Use no more than 100 characters" }
     }
 });
 jQuery.validator.addMethod("setting_phone_number", function (phone_number, element) {
@@ -4413,12 +4403,11 @@ jQuery.validator.addMethod("setting_phone_number", function (phone_number, eleme
     }
 
 }, "Enter a valid phone number");
-jQuery.validator.addMethod("gst", function (value, element) {
-    if (value !== '') {
-        return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
-    }
-    return true;
-}, "Enter a valid GSTIN");
+jQuery.validator.addMethod("branchTaxRegistration", function (value, element) {
+    if (!value.trim()) return true;
+    var pattern = $(element).data('tax-regex');
+    return !pattern || new RegExp(pattern).test(value.trim());
+}, "Enter a valid tax registration number");
 $("#setting_add").submit(function (event) {
     event.preventDefault();
     if ($('#setting_add').valid()) {          // checks form for validity
@@ -5102,6 +5091,7 @@ $('#setting_country').one('change', function () {
     var countrySelect = $('#setting_country');
     countrySelect.on('select2:select', function (e) {
         var data = e.params.data;
+        PosnicPro.settings.applyTaxProfile($('#setting_country').val());
         PosnicPro.settings.loadSelectSettingState(data.element.attributes['data-setting-id'].value);
         PosnicPro.local.set("country_value", data.id);
     });

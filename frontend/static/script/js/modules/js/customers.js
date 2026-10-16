@@ -795,8 +795,9 @@ PosnicPro.customers = {
             (response.data.stateJsonArray || []).forEach(function (state) {
                 stateSelect.append(new Option(state, state));
             });
-            var found = Array.from(stateSelect[0].options).some(function (option) { return option.value === selectedState; });
-            stateSelect.val(found ? selectedState : '').trigger('change.select2');
+            var match = Array.from(stateSelect[0].options).find(function (option) { return option.value.trim().toLowerCase() === String(selectedState || '').trim().toLowerCase(); });
+            if (!match && selectedState) stateSelect.append(new Option(selectedState, selectedState));
+            stateSelect.val(match ? match.value : (selectedState || '')).trigger('change.select2');
             (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data.countrySortName);
             if (action === 'edit' && savedPhone !== undefined) PosnicPro.customers.setPhone(savedPhone);
         }, function (xhr) {
@@ -841,7 +842,7 @@ PosnicPro.customers = {
                 },
                 gstin_number: {
                     required: true,
-                    gst: true,
+                    customersGst: true,
                     minlength: 15,
                     maxlength: 15
                 }
@@ -884,8 +885,8 @@ PosnicPro.customers = {
             return !!input && input.isValidNumber() === true;
 
         }, "Enter a valid phone number");
-        jQuery.validator.addMethod("gst", function (value, element) {
-            return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
+        jQuery.validator.addMethod("customersGst", function (value, element) {
+            return this.optional(element) || /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
         }, "Enter a valid GSTIN");
 
         $("#customer_add_form").submit(function (event) {

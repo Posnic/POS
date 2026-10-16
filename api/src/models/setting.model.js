@@ -3878,8 +3878,17 @@ class SettingModel extends BaseModel {
    * is CALLED, how its registration number is labelled and shaped, how it
    * displays. Presentation only - rates and math never travel here.
    */
-  async getTaxProfileModel() {
+  async getTaxProfileModel(country) {
     try {
+      // Reference metadata only; this does not read another branch's settings.
+      if (typeof country === 'string' && country.trim()) {
+        const countries = require('../json/countries.json');
+        const entry = countries.countries.find((item) => item.value === country.trim());
+        const { code, profile } = require('../services/tax-profiles').profileForBranch({
+          sortname: entry?.sortname || '',
+        });
+        return { status: true, data: { code, country, registration: profile.registration } };
+      }
       const branchCollection = await this.getCollection();
       const branch = await branchCollection.findOne({
         _id: this.normalizeId(this.branchId),

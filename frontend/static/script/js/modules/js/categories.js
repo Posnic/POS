@@ -1,6 +1,7 @@
 PosnicPro.categories = {
     setCatTileColor: function (color) {
         $('#category_tile_color').val(color || '');
+        $('#category_tile_shapes').css('--record-shape-color', color || 'var(--theme-primary-color)');
         $('#category_tile_swatches .tile-swatch').removeClass('is-picked').attr('aria-pressed', 'false').filter(function () {
             return ($(this).data('color') || '') === (color || '');
         }).addClass('is-picked').attr('aria-pressed', 'true');

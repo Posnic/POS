@@ -573,8 +573,9 @@ PosnicPro.suppliers = {
             (response.data.stateJsonArray || []).forEach(function (state) {
                 stateSelect.append(new Option(state, state));
             });
-            var found = Array.from(stateSelect[0].options).some(function (option) { return option.value === selectedState; });
-            stateSelect.val(found ? selectedState : '').trigger('change.select2');
+            var match = Array.from(stateSelect[0].options).find(function (option) { return option.value.trim().toLowerCase() === String(selectedState || '').trim().toLowerCase(); });
+            if (!match && selectedState) stateSelect.append(new Option(selectedState, selectedState));
+            stateSelect.val(match ? match.value : (selectedState || '')).trigger('change.select2');
             (PosnicPro.suppliers.supplier_phone || { setCountry: function () {} }).setCountry(response.data.countrySortName);
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -618,7 +619,7 @@ PosnicPro.suppliers = {
                 },
                 gstin_number: {
                     required: true,
-                    gst: true,
+                    suppliersGst: true,
                     minlength: 15,
                     maxlength: 15
                 }
@@ -666,8 +667,8 @@ PosnicPro.suppliers = {
             }
 
         }, "Enter a valid phone number");
-        jQuery.validator.addMethod("gst", function (value, element) {
-            return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
+        jQuery.validator.addMethod("suppliersGst", function (value, element) {
+            return this.optional(element) || /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
         }, "Enter a valid GSTIN");
         $("#supplier_add").submit(function (event) {
             event.preventDefault();

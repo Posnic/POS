@@ -1042,6 +1042,7 @@ class BranchModel {
    */
   async createBranch(data, user = {}) {
     try {
+      const regional = require('../services/branch-regional')(data);
       // 1. Check duplicate
       const duplicate = await this.model.findOne({
         branch_name: { $regex: new RegExp(`^${data.name}$`, 'i') },
@@ -1218,6 +1219,7 @@ class BranchModel {
         client_dateformat: 'dd/mm/yyyy',
         server_dateformat: 'd/m/Y',
         dateformat_text: '01/01/2018 -- dd/mm/yyyy',
+        ...regional,
         time_format: 'enable',
         payment_gateway: [],
         online_ordering: onlineOrdering.defaultConfig(),
