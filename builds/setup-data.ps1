@@ -33,33 +33,59 @@ function Assert-DirectChild([string]$Parent, [string]$Child) {
   }
   return $resolvedChild
 }
-function Assert-UnlinkedTree([IO.FileSystemInfo]$Entry) {
-  if ($Entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked folders cannot be deleted here.' }
-  if ($Entry.Attributes -band [IO.FileAttributes]::Directory) {
-    foreach ($child in $Entry.EnumerateFileSystemInfos()) { Assert-UnlinkedTree $child }
+# Keep the per-file loop in compiled code: PowerShell recursion and pipeline
+# calls are disproportionately expensive for node_modules' many tiny files.
+Add-Type -TypeDefinition @"
+using System;
+using System.IO;
+using System.Diagnostics;
+public static class PosnicRemoval {
+  private static readonly Stopwatch progress = Stopwatch.StartNew();
+  private static void Report(string action, string path) {
+    if (progress.ElapsedMilliseconds < 100) return;
+    Console.WriteLine(action + path);
+    progress.Restart();
   }
+  public static void Validate(FileSystemInfo entry) {
+    if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
+      throw new IOException("Linked folders cannot be deleted here.");
+    var directory = entry as DirectoryInfo;
+    if (directory != null)
+      foreach (var child in directory.EnumerateFileSystemInfos()) Validate(child);
+  }
+  public static void Remove(DirectoryInfo directory) {
+    foreach (var entry in directory.EnumerateFileSystemInfos()) {
+      // Check again during removal; never follow a link introduced later.
+      if ((entry.Attributes & FileAttributes.ReparsePoint) != 0)
+        throw new IOException("Linked folders cannot be deleted here.");
+      var childDirectory = entry as DirectoryInfo;
+      if (childDirectory != null) Remove(childDirectory);
+      else {
+        Report("Deleting: ", entry.FullName);
+        if ((entry.Attributes & FileAttributes.ReadOnly) != 0)
+          entry.Attributes &= ~FileAttributes.ReadOnly;
+        entry.Delete();
+      }
+    }
+    Report("Removing folder: ", directory.FullName);
+    directory.Delete();
+  }
+}
+"@
+function Assert-UnlinkedTree([IO.FileSystemInfo]$Entry) {
+  [PosnicRemoval]::Validate($Entry)
 }
 function Remove-UnlinkedTree([IO.DirectoryInfo]$Directory) {
-  foreach ($entry in $Directory.EnumerateFileSystemInfos()) {
-    if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked folders cannot be deleted here.' }
-    if ($entry.Attributes -band [IO.FileAttributes]::Directory) { Remove-UnlinkedTree $entry }
-    else {
-      Write-RemovalProgress ('Deleting: ' + $entry.FullName)
-      $entry.IsReadOnly = $false
-      $entry.Delete()
-    }
-  }
-  Write-RemovalProgress ('Removing folder: ' + $Directory.FullName)
-  $Directory.Delete()
+  [PosnicRemoval]::Remove($Directory)
 }
-function Remove-CheckedTree([string]$Root) {
+function Remove-CheckedTree([string]$Root, [switch]$AlreadyChecked) {
   # Windows PowerShell's provider cannot reliably remove paths over MAX_PATH.
   # Validate the entire tree, then use extended paths for the actual removal.
   $extended = Get-ExtendedPath $Root
   if (![IO.Directory]::Exists($extended)) { return }
   Write-RemovalProgress ('Removing folder: ' + $Root) -Force
   $directory = New-Object IO.DirectoryInfo $extended
-  Assert-UnlinkedTree $directory
+  if (!$AlreadyChecked) { Assert-UnlinkedTree $directory }
   Remove-UnlinkedTree $directory
 }
 if ($LibraryOnly) { return }
@@ -96,7 +122,7 @@ try {
     foreach ($entry in Get-ChildItem -LiteralPath $DataRoot -Force) {
       if ($KeepHardware -eq '1' -and $entry.Name -in $hardwareFiles) { continue }
       if ($KeepBackups -eq '1' -and $entry.Name -eq 'backups') { continue }
-      if ($entry.PSIsContainer) { Remove-CheckedTree $entry.FullName }
+      if ($entry.PSIsContainer) { Remove-CheckedTree $entry.FullName -AlreadyChecked }
       else { Write-RemovalProgress ('Deleting: ' + $entry.Name); Remove-Item -LiteralPath $entry.FullName -Force }
     }
   } elseif ($KeepHardware -eq '0') {
