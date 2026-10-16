@@ -3570,3 +3570,13 @@ html:not([data-theme]) .loadingSpinner::after {
 @media(max-width:767px) { .sales-history-summary { margin-left:0; width:100%; } }
 /* Recovery notice stays in document flow below the fixed dashboard chrome. */
 #offline_recovery_notice{margin-top:84px!important}
+
+/* One compact sale search row; customer actions stay inside its popup. */
+.sales-search-toolbar { flex-wrap: nowrap; gap: 8px; margin-bottom: 12px; }
+.sales-search-toolbar #sales_new_item_name { min-width: 0; }
+.sales-search-toolbar .sales-customer-btn { flex: 0 0 40px; padding: 6px; }
+#sales_customer_popup { width: 440px; max-height: min(640px, 75vh); overflow-y: auto; color: var(--theme-text-primary); }
+#sales_customer_popup #sales_new_customer_name { margin-bottom: 8px; }
+#sales_customer_results { position: relative; }
+#sales_customer_results .autocomplete-suggestions { position: relative !important; top: auto !important; left: auto !important; width: 100% !important; max-height: 180px !important; }
+#sales_customer_add_new { background: transparent; border: 1px solid currentColor; margin: 10px 0; }
