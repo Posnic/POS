@@ -1359,6 +1359,38 @@ test('designer samples include GST, switch to IGST, and respect tax disabled', a
     dom.window.close();
 });
 
+test('zero tax rows are omitted while real small amounts and saved tax labels remain', () => {
+    const { dom, engine, sale, $ } = setup();
+    for (const format of Object.keys(contract.formats)) {
+        sale.tax = 0;
+        sale.receipt_tax_rows = [{ label: 'VAT', amount: 0 }, { label: 'CGST', amount: '0.00' }, { label: 'SGST', amount: 0.000001 }];
+        const totals = () => $('<div>').html(engine.render(sale, format, false)).find('.rd-totals').text();
+        assert.doesNotMatch(totals(), /VAT|CGST|SGST/);
+        sale.receipt_tax_rows = [{ label: 'CGST', amount: 0.02 }, { label: 'SGST', amount: 0.01 }];
+        assert.match(totals(), /CGST.*0.02.*SGST.*0.01/);
+        sale.receipt_tax_rows = [{ label: 'Local sales levy', amount: 2 }];
+        assert.match(totals(), /Local sales levy/);
+    }
+    dom.window.close();
+});
+
+test('sample tax follows country even without the old India GST flag and hides when disabled', async () => {
+    const { dom, w, engine, branch } = setup();
+    let document;
+    engine.print = async html => { document = html; return { success: true }; };
+    for (const [country, label] of [['India', 'CGST 2.5%'], ['South Africa', 'VAT 5%'], ['United Kingdom', 'VAT 5%'], ['Australia', 'GST 5%']]) {
+        Object.assign(branch, { country, indian_gst: 'gst_off', module_tax_enable: true });
+        w.PosnicPro.receiptDesignerEditor.load(branch);
+        await w.PosnicPro.receiptDesignerEditor.printSample();
+        assert.ok(document.includes(label), country);
+        branch.module_tax_enable = false;
+        w.PosnicPro.receiptDesignerEditor.load(branch);
+        await w.PosnicPro.receiptDesignerEditor.printSample();
+        assert.ok(!document.includes(label), country);
+    }
+    dom.window.close();
+});
+
 test('receipt fallback preserves independently saved CGST and SGST amounts', () => {
     const { dom, engine, sale, $ } = setup();
     sale.items[0].cgst_tax = 1.13; sale.items[0].sgst_tax = 1.12;

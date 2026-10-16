@@ -300,13 +300,14 @@
                 var igst = items.reduce(function (n, i) { return n + Number(i.igst_tax || 0); }, 0);
                 var cgst = items.reduce(function (n, i) { return n + Number(i.cgst_tax || 0); }, 0);
                 var sgst = items.reduce(function (n, i) { return n + Number(i.sgst_tax == null ? i.cgst_tax || 0 : i.sgst_tax); }, 0);
-                if (Array.isArray(data.receipt_tax_rows) && data.receipt_tax_rows.length) data.receipt_tax_rows.forEach(function (row) { content += pair(row.label, money(row.amount)); });
+                var hasTaxAmount = function (amount) { return Number.isFinite(Number(amount)) && Number(Number(amount).toFixed(2)) !== 0; };
+                if (Array.isArray(data.receipt_tax_rows) && data.receipt_tax_rows.length) data.receipt_tax_rows.forEach(function (row) { if (hasTaxAmount(row.amount)) content += pair(row.label, money(row.amount)); });
                 else if (igst || cgst || sgst) {
-                    if (igst) content += pair('IGST', money(igst));
-                    if (cgst) content += pair('CGST', money(cgst));
-                    if (sgst) content += pair('SGST', money(sgst));
+                    if (hasTaxAmount(igst)) content += pair('IGST', money(igst));
+                    if (hasTaxAmount(cgst)) content += pair('CGST', money(cgst));
+                    if (hasTaxAmount(sgst)) content += pair('SGST', money(sgst));
                 }
-                else if (Number(data.tax)) content += pair('Tax', money(data.tax));
+                else if (hasTaxAmount(data.tax)) content += pair(contract.taxLabel(data, PosnicPro.local.get('country_setting')), money(data.tax));
                 (data.charges || []).forEach(function (c) { content += pair(c.name || 'Charge', money(Number(c.amount || 0) + Number(c.tax_amount || 0))); });
                 if (Number(data.round_off)) content += pair('Round Off', money(data.round_off));
                 content += pair('Total', money(data.items_total), true);

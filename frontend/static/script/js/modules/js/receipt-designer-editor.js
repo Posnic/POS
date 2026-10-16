@@ -26,11 +26,14 @@
     function changed() { status(t('Unsaved changes')); box.find('[data-action="undo"]').prop('disabled', !undo.length); schedulePreview(); }
     var sampleInterstate = false;
     function sampleTaxEnabled() { return ![false, 'false', 'disable'].includes(branch.module_tax_enable); }
-    function sampleIndianGst() { return ['gst_on', 'enable', true, 'true'].includes(branch.indian_gst) || ['enable', true, 'true'].includes(branch.gst); }
+    function sampleIndianGst() {
+        var country = String(branch.branch_country || branch.country || branch.sortname || PosnicPro.local.get('country_setting') || '').trim().toLowerCase();
+        return country ? ['india', 'in', 'ind'].includes(country) : ['gst_on', 'enable', true, 'true'].includes(branch.indian_gst) || ['enable', true, 'true'].includes(branch.gst);
+    }
     function sample() {
         var item = function (name, price, qty) { return { item_name: name, item_price: price, item_quantity: qty, item_unit: 'ea', total_amount: price * qty, hsn_code: '1234' }; };
         var tax = sampleTaxEnabled() ? 2.25 : 0;
-        var taxRows = !tax ? [] : sampleIndianGst() ? (sampleInterstate ? [{ label: t('IGST') + ' 5%', amount: tax }] : [{ label: t('CGST') + ' 2.5%', amount: 1.13 }, { label: t('SGST') + ' 2.5%', amount: 1.12 }]) : [{ label: t('Tax') + ' 5%', amount: tax }];
+        var taxRows = !tax ? [] : sampleIndianGst() ? (sampleInterstate ? [{ label: t('IGST') + ' 5%', amount: tax }] : [{ label: t('CGST') + ' 2.5%', amount: 1.13 }, { label: t('SGST') + ' 2.5%', amount: 1.12 }]) : [{ label: t(schema.taxLabel(branch, PosnicPro.local.get('country_setting'))) + ' 5%', amount: tax }];
         return Object.assign({}, branch, printOptions(), { receipt_designs: design, sales_id: 'S-000128', created_date: new Date().toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
             customer_name: 'Alex Morgan', customer_phone: '+1 202 555 0148', customer_email: 'alex@example.com', customer_address: '24 Market Street',
             customer_gstin: '', customer_tax_number: layout().blocks.some(function (b) { return b.field === 'customer_tax_number'; }) ? 'TAX-123456' : '',

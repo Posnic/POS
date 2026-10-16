@@ -5,6 +5,29 @@
   else root.PosnicReceiptDesign = factory();
 })(typeof window !== 'undefined' ? window : this, function () {
   'use strict';
+  function taxLabel(data, fallbackCountry) {
+    data = data || {};
+    const country = String(
+      data.branch_country || data.country || data.sortname || fallbackCountry || ''
+    )
+      .trim()
+      .toLowerCase();
+    if (['in', 'ind', 'india', 'au', 'aus', 'australia'].includes(country)) return 'GST';
+    if (
+      [
+        'gb',
+        'gbr',
+        'uk',
+        'united kingdom',
+        'united kingdom of great britain and northern ireland',
+        'za',
+        'zaf',
+        'south africa',
+      ].includes(country)
+    )
+      return 'VAT';
+    return 'Tax';
+  }
   function taxRegistrationLabel(data, fallbackCountry) {
     data = data || {};
     const country = String(
@@ -272,6 +295,7 @@
     return out;
   }
   return {
+    taxLabel: taxLabel,
     taxRegistrationLabel: taxRegistrationLabel,
     formats: formats,
     fields: fields,
