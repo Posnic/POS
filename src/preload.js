@@ -60,10 +60,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // /api/install/* without one, and it is generated per installation rather
   // than shipped in the source.
   install: {
-    credentials: () => ipcRenderer.invoke('install:credentials')
+    credentials: () => ipcRenderer.invoke('install:credentials'),
+    state: () => ipcRenderer.invoke('install:state'),
+    continueExisting: () => ipcRenderer.invoke('install:continue'),
+    startFresh: (options) => ipcRenderer.invoke('install:fresh', options)
   },
   cloud: {
-    authorize: (intent) => ipcRenderer.invoke('cloud:authorize-browser', { intent }),
+    authorize: (intent, serverUrl) => ipcRenderer.invoke('cloud:authorize-browser', { intent, serverUrl }),
     cancelAuthorization: () => ipcRenderer.invoke('cloud:cancel-authorization'),
     reopenAuthorization: () => ipcRenderer.invoke('cloud:reopen-authorization'),
     activate:   (details) => ipcRenderer.invoke('cloud:activate', details),

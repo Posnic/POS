@@ -6,6 +6,34 @@ const { BrowserCloudAuth } = require('../src/browser-cloud-auth');
 const { assertSameShop } = require('../src/cloud-shop-identity');
 const details = { intent: 'login', deviceName: 'Counter', machineId: 'm'.repeat(32) };
 
+test('custom authorization uses only its selected server and does not replace the default', async t => {
+  const urls = [];
+  let initial;
+  const client = new BrowserCloudAuth({
+    fetch: async (url, options) => {
+      urls.push(url);
+      if (url.endsWith('/requests')) {
+        initial = JSON.parse(options.body);
+        return Response.json({ authorizationUrl: new URL('/api/desktop/authorize?request=' + 'r'.repeat(43), url).href });
+      }
+      return Response.json({ deviceToken: 'a'.repeat(64), deviceId: 'counter' });
+    },
+    openExternal: async () => {
+      const callback = new URL(initial.redirectUri);
+      callback.searchParams.set('state', initial.state);
+      callback.searchParams.set('code', 'c'.repeat(43));
+      await fetch(callback);
+    },
+  });
+  t.after(() => client.cancel());
+  await client.authorize({ ...details, website: 'https://customer.example' });
+  await client.authorize(details);
+  assert.deepEqual(urls, [
+    'https://customer.example/api/desktop/requests', 'https://customer.example/api/desktop/token',
+    'https://www.posnic.com/api/desktop/requests', 'https://www.posnic.com/api/desktop/token',
+  ]);
+});
+
 function fixture(t, options = {}) {
   let initial, tokenBody, opened;
   let openedResolve;
@@ -113,6 +141,8 @@ test('successful browser approval restores its initiating window without blockin
     vm.runInNewContext(main.slice(start, end), {
       ipcMain: {handle(_name, callback) {handler = callback;}},
       browserCloudAuth: {authorize: async () => activation},
+      WEBSITE_API: 'https://www.posnic.com',
+      cloudServerUrl: require('../src/cloud-activation').cloudServerUrl,
       getMachineId: () => 'machine', require,
       BrowserWindow: {fromWebContents(value) {
         assert.equal(value, sender);

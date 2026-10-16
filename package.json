@@ -240,7 +240,11 @@
       "src/fonts/NotoSansSC.ttf",
       "src/fonts/NotoSansSC-OFL.txt",
       "src/fonts/NotoSansTC.ttf",
-      "src/fonts/NotoSansTC-OFL.txt"
+      "src/fonts/NotoSansTC-OFL.txt",
+      "src/simple-setup.css",
+      "src/simple-setup.js",
+      "src/setup-recovery.js",
+      "src/setup-hardware-files.json"
     ],
     "extraResources": [
       {
@@ -464,6 +468,14 @@
           "!worker.json",
           "!*.json"
         ]
+      },
+      {
+        "from": "builds/setup-data.ps1",
+        "to": "setup-data.ps1"
+      },
+      {
+        "from": "src/setup-hardware-files.json",
+        "to": "setup-hardware-files.json"
       }
     ],
     "win": {
