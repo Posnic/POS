@@ -60,3 +60,21 @@ test('existing shop choice preserves hardware by default and submits the chosen 
     assert.equal(submitted.keepHardware, false);
   } finally { dom.window.close(); }
 });
+
+test('set up later closes the window without resetting or uninstalling the shop', async () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM(fs.readFileSync(path.join(__dirname, '../src/install-wizard.html'), 'utf8'), { runScripts: 'outside-only' });
+  try {
+    const calls = [];
+    dom.window.electronAPI = {
+      cloud: { cancelAuthorization: async () => calls.push('cancel-browser') },
+      window: { close: async () => calls.push('close-window') },
+      install: { state: async () => ({existing:false}), startFresh: async () => calls.push('RESET') }
+    };
+    dom.window.eval(fs.readFileSync(path.join(__dirname, '../src/simple-setup.js'), 'utf8'));
+    dom.window.document.getElementById('setupLaterBtn').click();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(calls, ['cancel-browser', 'close-window']);
+    assert.equal(dom.window.document.getElementById('setupLaterBtn').closest('.form-section'), null);
+  } finally { dom.window.close(); }
+});

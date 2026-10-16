@@ -201,3 +201,8 @@ body.desktop-window[data-desktop-window="setup"]:has(#stepQuick:not([style*="dis
 #stepQuick input:not([type="checkbox"]), #stepQuick select { min-height:34px; height:34px; }
 #stepQuick .simple-intro { margin-bottom:8px; }
 #stepQuick h2 { font-size:23px; margin-bottom:6px; }
+/* Setup may be left after installation and resumed from the desktop shortcut. */
+.wizard-header::after { display:none; }
+body.desktop-window .wizard-container #setupLaterBtn { background:transparent!important; color:var(--w-muted)!important; border:1px solid var(--w-border)!important; border-radius:6px; padding:4px 10px; min-height:32px; font-size:12px!important; cursor:pointer; }
+#setupLaterBtn span { margin-left:8px; font-size:18px; line-height:1; }
+#setupLaterBtn:focus-visible { outline:2px solid #086fa7; outline-offset:3px; }
