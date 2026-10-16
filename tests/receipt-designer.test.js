@@ -1246,6 +1246,34 @@ test('sale printing sends receipt identity to desktop logging while sample print
     dom.window.close();
 });
 
+test('custom footer text saves, reloads and renders safely on every paper size', () => {
+    const { dom, w, $, branch, sale, engine } = setup();
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    const custom = 'Printed by <Shop> · example.com';
+    $('#rd-branding-text').val(custom).trigger('input');
+    $('[data-action="save"]').trigger('click');
+    const saved = contract.normalize(sent.receipt_designs);
+    assert.equal(saved.brandingText, custom);
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: saved });
+    assert.equal($('#rd-branding-text').val(), custom);
+    sale.receipt_designs = saved;
+    for (const format of Object.keys(contract.formats)) {
+        const footer = $('<div>').html(engine.render(sale, format, false)).find('.rd-branding');
+        assert.equal(footer.text(), custom);
+        assert.equal(footer.children().length, 0);
+    }
+    saved.showBranding = false;
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-branding').length, 0);
+    saved.showBranding = true;
+    saved.brandingText = '   ';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-branding').text(), 'Made with Posnic · posnic.com');
+    assert.throws(() => contract.normalize({ ...saved, brandingText: 'x'.repeat(201) }), /200 characters/);
+    assert.throws(() => contract.normalize({ ...saved, brandingText: {} }), /200 characters/);
+    dom.window.close();
+});
+
 test('store print overrides persist per format without changing branch contact data', () => {
     const { dom, w, $, branch, sale, engine } = setup();
     branch.store_telephone = '+919876543210';
@@ -1268,6 +1296,24 @@ test('store print overrides persist per format without changing branch contact d
     w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: saved });
     $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Store details')).find('.rd-select').trigger('click');
     assert.equal($('[data-prop="phoneText"]').val(), '98765 43210');
+    dom.window.close();
+});
+
+test('missing branch addresses never print placeholder text in any receipt format', () => {
+    const { dom, $, engine, sale, design } = setup();
+    for (const format of Object.keys(contract.formats)) {
+        const store = design.layouts[format].blocks.find(b => b.type === 'store');
+        Object.assign(sale, { printing_address: ' Not provided ', store_address: '' });
+        sale.receipt_designs = design;
+        const address = () => $('<div>').html(engine.render(sale, format, false)).find('.rd-store-contact').text();
+        assert.equal(address(), '');
+        sale.store_address = '12 Market Road';
+        assert.equal(address(), '12 Market Road');
+        store.addressText = 'Receipt address';
+        assert.equal(address(), 'Receipt address');
+        store.addressText = 'Not provided';
+        assert.equal(address(), '12 Market Road');
+    }
     dom.window.close();
 });
 
@@ -1310,6 +1356,38 @@ test('designer samples include GST, switch to IGST, and respect tax disabled', a
     await editor.printSample();
     assert.doesNotMatch(document, /IGST|CGST|SGST/);
     assert.equal($('#rd-sample-tax').length, 0);
+    dom.window.close();
+});
+
+test('zero tax rows are omitted while real small amounts and saved tax labels remain', () => {
+    const { dom, engine, sale, $ } = setup();
+    for (const format of Object.keys(contract.formats)) {
+        sale.tax = 0;
+        sale.receipt_tax_rows = [{ label: 'VAT', amount: 0 }, { label: 'CGST', amount: '0.00' }, { label: 'SGST', amount: 0.000001 }];
+        const totals = () => $('<div>').html(engine.render(sale, format, false)).find('.rd-totals').text();
+        assert.doesNotMatch(totals(), /VAT|CGST|SGST/);
+        sale.receipt_tax_rows = [{ label: 'CGST', amount: 0.02 }, { label: 'SGST', amount: 0.01 }];
+        assert.match(totals(), /CGST.*0.02.*SGST.*0.01/);
+        sale.receipt_tax_rows = [{ label: 'Local sales levy', amount: 2 }];
+        assert.match(totals(), /Local sales levy/);
+    }
+    dom.window.close();
+});
+
+test('sample tax follows country even without the old India GST flag and hides when disabled', async () => {
+    const { dom, w, engine, branch } = setup();
+    let document;
+    engine.print = async html => { document = html; return { success: true }; };
+    for (const [country, label] of [['India', 'CGST 2.5%'], ['South Africa', 'VAT 5%'], ['United Kingdom', 'VAT 5%'], ['Australia', 'GST 5%']]) {
+        Object.assign(branch, { country, indian_gst: 'gst_off', module_tax_enable: true });
+        w.PosnicPro.receiptDesignerEditor.load(branch);
+        await w.PosnicPro.receiptDesignerEditor.printSample();
+        assert.ok(document.includes(label), country);
+        branch.module_tax_enable = false;
+        w.PosnicPro.receiptDesignerEditor.load(branch);
+        await w.PosnicPro.receiptDesignerEditor.printSample();
+        assert.ok(!document.includes(label), country);
+    }
     dom.window.close();
 });
 
