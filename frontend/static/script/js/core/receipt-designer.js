@@ -231,7 +231,11 @@
             if (b.type === 'store') {
                 function storeText(key, fallback) { return String(b[key] || '').trim() || fallback || ''; }
                 var storeName = storeText('nameText', data.branch_name || data.store_name || PosnicPro.local.get('branchname'));
-                var storeAddress = storeText('addressText', plain(data.printing_address || data.store_address || ''));
+                function addressText(value) {
+                    var text = plain(value || '').trim();
+                    return /^(not provided|not available|not set|n\/a|null|undefined)$/i.test(text) ? '' : text;
+                }
+                var storeAddress = addressText(b.addressText) || addressText(data.printing_address) || addressText(data.store_address);
                 var storePhone = storeText('phoneText', data.store_telephone);
                 var storeEmail = storeText('emailText', data.store_email);
                 var storeRegistration = storeText('registrationText', data.branch_gstin_number);
@@ -350,7 +354,7 @@
         }).filter(Boolean);
         rendered = pairFields(rendered);
         var html = sheet ? composeSheet(rendered) : rendered.map(function (b) { return b.html; }).join('');
-        if (designs.showBranding !== false) html += '<section class="rd-block rd-branding" style="text-align:center;font-size:10px">Made with Posnic &middot; posnic.com</section>';
+        if (designs.showBranding !== false) html += '<section class="rd-block rd-branding" style="text-align:center;font-size:10px;white-space:pre-line">' + esc(String(designs.brandingText || '').trim() || 'Made with Posnic · posnic.com') + '</section>';
         if (pendingGoods) html += '<section class="rd-block rd-payment-status">' + esc(label('Payment pending')) + '</section>';
         if (sheet) {
             var notes = '';

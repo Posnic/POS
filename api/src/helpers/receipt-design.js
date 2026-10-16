@@ -120,6 +120,11 @@
       showBranding: value.showBranding !== false,
       layouts: {},
     };
+    if (value.brandingText != null) {
+      if (typeof value.brandingText !== 'string' || value.brandingText.length > 200)
+        throw new Error('Receipt footer text must be at most 200 characters.');
+      out.brandingText = value.brandingText.trim();
+    }
     Object.keys(formats).forEach(function (format) {
       const layout = layoutFor(value, format);
       if (!layout || !Array.isArray(layout.blocks) || layout.blocks.length > 40)

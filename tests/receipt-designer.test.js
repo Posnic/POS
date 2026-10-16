@@ -1246,6 +1246,34 @@ test('sale printing sends receipt identity to desktop logging while sample print
     dom.window.close();
 });
 
+test('custom footer text saves, reloads and renders safely on every paper size', () => {
+    const { dom, w, $, branch, sale, engine } = setup();
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    const custom = 'Printed by <Shop> · example.com';
+    $('#rd-branding-text').val(custom).trigger('input');
+    $('[data-action="save"]').trigger('click');
+    const saved = contract.normalize(sent.receipt_designs);
+    assert.equal(saved.brandingText, custom);
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: saved });
+    assert.equal($('#rd-branding-text').val(), custom);
+    sale.receipt_designs = saved;
+    for (const format of Object.keys(contract.formats)) {
+        const footer = $('<div>').html(engine.render(sale, format, false)).find('.rd-branding');
+        assert.equal(footer.text(), custom);
+        assert.equal(footer.children().length, 0);
+    }
+    saved.showBranding = false;
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-branding').length, 0);
+    saved.showBranding = true;
+    saved.brandingText = '   ';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-branding').text(), 'Made with Posnic · posnic.com');
+    assert.throws(() => contract.normalize({ ...saved, brandingText: 'x'.repeat(201) }), /200 characters/);
+    assert.throws(() => contract.normalize({ ...saved, brandingText: {} }), /200 characters/);
+    dom.window.close();
+});
+
 test('store print overrides persist per format without changing branch contact data', () => {
     const { dom, w, $, branch, sale, engine } = setup();
     branch.store_telephone = '+919876543210';
@@ -1268,6 +1296,24 @@ test('store print overrides persist per format without changing branch contact d
     w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: saved });
     $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Store details')).find('.rd-select').trigger('click');
     assert.equal($('[data-prop="phoneText"]').val(), '98765 43210');
+    dom.window.close();
+});
+
+test('missing branch addresses never print placeholder text in any receipt format', () => {
+    const { dom, $, engine, sale, design } = setup();
+    for (const format of Object.keys(contract.formats)) {
+        const store = design.layouts[format].blocks.find(b => b.type === 'store');
+        Object.assign(sale, { printing_address: ' Not provided ', store_address: '' });
+        sale.receipt_designs = design;
+        const address = () => $('<div>').html(engine.render(sale, format, false)).find('.rd-store-contact').text();
+        assert.equal(address(), '');
+        sale.store_address = '12 Market Road';
+        assert.equal(address(), '12 Market Road');
+        store.addressText = 'Receipt address';
+        assert.equal(address(), 'Receipt address');
+        store.addressText = 'Not provided';
+        assert.equal(address(), '12 Market Road');
+    }
     dom.window.close();
 });
 
