@@ -737,7 +737,7 @@
         <div class="wizard-body">
             <div class="error-message" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
-            
+
             <div class="loading" id="loadingIndicator">
                 <div class="loading-spinner"></div>
                 <p>Setting up your account...</p>
@@ -749,10 +749,10 @@
                         <path d="M14 27l8 8 16-16"/>
                     </svg>
                 </div>
-                
+
                 <h1 class="success-title">🎉 Installation Complete!</h1>
                 <p class="success-subtitle">Your Posnic account has been created successfully</p>
-                
+
                 <div class="success-details">
                     <div class="success-detail-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -868,7 +868,7 @@
                     <div class="mode-progress-text" id="cloudProgressText">Connecting…</div><div id="cloudProgressSub" class="field-hint"></div>
                 </div>
                 <div class="offline-assurance"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="wifi-off" aria-hidden="true" class="lucide lucide-wifi-off"><path d="M12 20h.01"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path><path d="M5 12.859a10 10 0 0 1 5.17-2.69"></path><path d="M19 12.859a10 10 0 0 0-2.007-1.523"></path><path d="M2 8.82a15 15 0 0 1 4.177-2.643"></path><path d="M22 8.82a15 15 0 0 0-11.288-3.764"></path><path d="m2 2 20 20"></path></svg><span>Internet drops? Keep selling after setup. Your till syncs when you're connected again.</span></div>
-                
+
             </div>
 
             <!-- Quick local setup: one form, everything else defaulted -->
@@ -954,7 +954,7 @@
                 <!-- Step 1: User Account Section -->
                 <div class="form-section" id="step1" style="display: none;">
                     <h2>👤 Admin Account (Step 1 of 4)</h2>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label>First Name <span class="required">*</span></label>
@@ -1022,7 +1022,7 @@
                 <!-- Step 2: Store Details Section -->
                 <div class="form-section" id="step2" style="display: none;">
                     <h2>🏪 Store Details (Step 2 of 4)</h2>
-                    
+
                     <div class="form-group">
                         <label>Store/Branch Name <span class="required">*</span></label>
                         <input type="text" id="branchName" name="branchName" required>
@@ -1062,11 +1062,11 @@
                         <div class="help-text" style="margin-left: 30px; margin-bottom: 15px;">
                             Start with pre-configured products and categories for your business type
                         </div>
-                        
+
                         <!-- Business Type Selection -->
                         <div id="businessTypeSection" style="display: none; margin-left: 30px; margin-top: 15px;">
                             <label style="font-weight: 600; margin-bottom: 10px; display: block;">Select Your Business Type:</label>
-                            
+
                             <div style="display: flex; flex-direction: column; gap: 12px;">
                                 <label class="business-type-option" style="display: flex; align-items: center; padding: 12px; background: white; border: 2px solid #dee2e6; border-radius: 6px; cursor: pointer; transition: all 0.3s;">
                                     <input type="radio" name="businessType" value="icecream" style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
@@ -1075,7 +1075,7 @@
                                         <div style="font-size: 13px; color: #6c757d; margin-top: 3px;">Ice cream flavors, toppings, cones, sundaes (15 products)</div>
                                     </div>
                                 </label>
-                                
+
                                 <label class="business-type-option" style="display: flex; align-items: center; padding: 12px; background: white; border: 2px solid #dee2e6; border-radius: 6px; cursor: pointer; transition: all 0.3s;">
                                     <input type="radio" name="businessType" value="cafe" style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
                                     <div>
@@ -1083,7 +1083,7 @@
                                         <div style="font-size: 13px; color: #6c757d; margin-top: 3px;">Coffee, beverages, snacks, groceries (15 products)</div>
                                     </div>
                                 </label>
-                                
+
                                 <label class="business-type-option" style="display: flex; align-items: center; padding: 12px; background: white; border: 2px solid #dee2e6; border-radius: 6px; cursor: pointer; transition: all 0.3s;">
                                     <input type="radio" name="businessType" value="bakery" style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
                                     <div>
@@ -1108,11 +1108,11 @@
                 <!-- Step 3: Database Security Section -->
                 <div class="form-section" id="step3" style="display: none;">
                     <h2>🔐 Database Security (Step 3 of 4)</h2>
-                    
+
                     <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
                         <div style="font-weight: 600; color: #856404; margin-bottom: 5px;">⚠️ Important Security Setup</div>
                         <div style="font-size: 13px; color: #856404;">
-                            Create a secure MongoDB admin user to protect your data. 
+                            Create a secure MongoDB admin user to protect your data.
                             Only this user will be able to access the database.
                         </div>
                     </div>
@@ -1184,11 +1184,11 @@
                 <!-- Step 4: Backup Configuration Section -->
                 <div class="form-section" id="step4" style="display: none;">
                     <h2>💾 Backup Configuration (Step 4 of 4)</h2>
-                    
+
                     <div style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
                         <div style="font-weight: 600; color: #0c5460; margin-bottom: 5px;">💡 Why Backups?</div>
                         <div style="font-size: 13px; color: #0c5460;">
-                            Configure automatic backups to protect your business data. 
+                            Configure automatic backups to protect your business data.
                             Backups run silently in the background and skip duplicates to save space.
                             You can restore any backup if data gets corrupted.
                         </div>
@@ -1268,7 +1268,7 @@
     </div>
 
     <script>
-        
+
         /*
          * This machine's own setup credentials.
          *
@@ -1304,14 +1304,14 @@ const form = document.getElementById('installForm');
                 number: /[0-9]/.test(password),
                 special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
             };
-            
+
             // Update requirement indicators
             document.getElementById('req-length').classList.toggle('met', requirements.length);
             document.getElementById('req-uppercase').classList.toggle('met', requirements.uppercase);
             document.getElementById('req-lowercase').classList.toggle('met', requirements.lowercase);
             document.getElementById('req-number').classList.toggle('met', requirements.number);
             document.getElementById('req-special').classList.toggle('met', requirements.special);
-            
+
             // Update checkmark/cross icons
             Object.keys(requirements).forEach(key => {
                 const element = document.getElementById(`req-${key}`);
@@ -1322,7 +1322,7 @@ const form = document.getElementById('installForm');
                     svg.setAttribute('d', 'M6 18L18 6M6 6l12 12');
                 }
             });
-            
+
             // Calculate strength
             const metCount = Object.values(requirements).filter(Boolean).length;
             passwordStrengthBar.className = 'password-strength-bar';
@@ -1333,10 +1333,10 @@ const form = document.getElementById('installForm');
             } else {
                 passwordStrengthBar.classList.add('strong');
             }
-            
+
             return Object.values(requirements).every(Boolean);
         }
-        
+
         // Real-time password validation
         passwordInput.addEventListener('input', (e) => {
             validatePassword(e.target.value);
@@ -1351,7 +1351,7 @@ const form = document.getElementById('installForm');
         const prevBtn3 = document.getElementById('prevBtn3');
         const countrySelect = document.getElementById('country');
         const stateSelect = document.getElementById('state');
-        
+
         // Database password elements
         const dbPasswordInput = document.getElementById('dbPassword');
         const dbPasswordConfirmInput = document.getElementById('dbPasswordConfirm');
@@ -1854,7 +1854,7 @@ const form = document.getElementById('installForm');
                 const response = await fetch(`${API_BASE}/api/setting/getJSONCountry?name=countries`);
                 const result = await response.json();
                 console.log('Countries API response:', result);
-                
+
                 // API returns {data: {countries: [...]}}
                 const data = result.data || result;
                 countriesData = data.countries || [];
@@ -1888,12 +1888,12 @@ const form = document.getElementById('installForm');
                 const response = await fetch(`${API_BASE}/api/setting/getJSONState?id=${countryId}`);
                 const result = await response.json();
                 console.log('States API response:', result);
-                
+
                 // API returns {data: {stateJsonArray: [...]}}
                 const data = result.data || result;
                 const states = data.stateJsonArray || data.states || [];
                 console.log('States array:', states, 'Length:', states.length);
-                
+
                 stateSelect.innerHTML = '<option value="">Select State</option>';
                 states.forEach((state, index) => {
                     const option = document.createElement('option');
@@ -1975,14 +1975,14 @@ const form = document.getElementById('installForm');
             const selectedOption = e.target.options[e.target.selectedIndex];
             const countryId = selectedOption.dataset.countryId;
             const countryName = e.target.value;
-            
+
             console.log('Country changed:', countryName, 'Country ID:', countryId);
-            
+
             // Auto-set timezone based on country
             const timezone = countryTimezones[countryName] || 'Asia/Kolkata';
             document.getElementById('timezone').value = timezone;
             console.log('Timezone auto-set to:', timezone);
-            
+
             if (countryId) {
                 loadStates(countryId);
             } else {
@@ -1993,7 +1993,7 @@ const form = document.getElementById('installForm');
         // Demo data checkbox toggle
         const loadDemoDataCheckbox = document.getElementById('loadDemoData');
         const businessTypeSection = document.getElementById('businessTypeSection');
-        
+
         loadDemoDataCheckbox.addEventListener('change', (e) => {
             if (e.target.checked) {
                 businessTypeSection.style.display = 'block';
@@ -2039,7 +2039,7 @@ const form = document.getElementById('installForm');
             step1.style.display = 'none';
             step2.style.display = 'block';
             window.scrollTo(0, 0);
-            
+
             // Load countries and states when step 2 is shown
             if (countriesData.length === 0) {
                 await loadCountriesAndStates();
@@ -2063,14 +2063,14 @@ const form = document.getElementById('installForm');
                 number: /[0-9]/.test(password),
                 special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
             };
-            
+
             // Update requirement indicators
             document.getElementById('db-req-length').classList.toggle('met', requirements.length);
             document.getElementById('db-req-uppercase').classList.toggle('met', requirements.uppercase);
             document.getElementById('db-req-lowercase').classList.toggle('met', requirements.lowercase);
             document.getElementById('db-req-number').classList.toggle('met', requirements.number);
             document.getElementById('db-req-special').classList.toggle('met', requirements.special);
-            
+
             // Update checkmark/cross icons
             Object.keys(requirements).forEach(key => {
                 const element = document.getElementById(`db-req-${key}`);
@@ -2083,7 +2083,7 @@ const form = document.getElementById('installForm');
                     }
                 }
             });
-            
+
             // Calculate strength
             const metCount = Object.values(requirements).filter(Boolean).length;
             dbPasswordStrengthBar.className = 'password-strength-bar';
@@ -2094,10 +2094,10 @@ const form = document.getElementById('installForm');
             } else {
                 dbPasswordStrengthBar.classList.add('strong');
             }
-            
+
             return Object.values(requirements).every(Boolean);
         }
-        
+
         // Real-time DB password validation
         dbPasswordInput.addEventListener('input', (e) => {
             validateDBPassword(e.target.value);
@@ -2110,7 +2110,7 @@ const form = document.getElementById('installForm');
                 }
             }
         });
-        
+
         // Check passwords match on confirm input
         dbPasswordConfirmInput.addEventListener('input', (e) => {
             if (e.target.value !== dbPasswordInput.value) {
@@ -2262,16 +2262,16 @@ const form = document.getElementById('installForm');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             // Hide messages
             errorMessage.style.display = 'none';
             successMessage.style.display = 'none';
-            
+
             // Get form data - use email as username
             const email = document.getElementById('email').value.trim();
             const countryElement = document.getElementById('country');
             const selectedOption = countryElement.options[countryElement.selectedIndex];
-            
+
             // Generate a valid MongoDB ObjectId (24 hex characters)
             const generateObjectId = () => {
                 const timestamp = Math.floor(Date.now() / 1000).toString(16).padStart(8, '0');
@@ -2281,16 +2281,16 @@ const form = document.getElementById('installForm');
                 const counter = Array(6).fill(0).map(randomHex).join('');
                 return timestamp + machineId + processId + counter;
             };
-            
+
             // Get demo data settings
             const loadDemoData = document.getElementById('loadDemoData').checked;
             const businessType = loadDemoData ? document.querySelector('input[name="businessType"]:checked')?.value : null;
-            
+
             // Get database credentials
             const dbUsername = document.getElementById('dbUsername').value;
             const dbPassword = document.getElementById('dbPassword').value;
             const dbPasswordConfirm = document.getElementById('dbPasswordConfirm').value;
-            
+
             // Get backup configuration
             const backupConfig = {
                 enabled: backupEnabled.checked,
@@ -2300,7 +2300,7 @@ const form = document.getElementById('installForm');
                 dayOfWeek: parseInt(backupDayOfWeek.value, 10),
                 retentionDays: parseInt(backupRetention.value, 10) || 30
             };
-            
+
             // The API refuses the setup call without this machine's own key.
             await qInstallCreds();
 
@@ -2380,13 +2380,13 @@ const form = document.getElementById('installForm');
                 errorMessage.style.display = 'block';
                 return;
             }
-            
+
             if (!validateDBPassword(dbPassword)) {
                 errorMessage.textContent = 'Database password does not meet security requirements';
                 errorMessage.style.display = 'block';
                 return;
             }
-            
+
             if (dbPassword !== dbPasswordConfirm) {
                 errorMessage.textContent = 'Database passwords do not match';
                 errorMessage.style.display = 'block';
@@ -2445,7 +2445,7 @@ const form = document.getElementById('installForm');
                         console.warn('⚠️ Failed to save backup config:', bcErr);
                         // Don't block installation success on backup config save failure
                     }
-                    
+
                     loadingIndicator.style.display = 'none';
                     finishInstallation(result.data);
                 } else {
