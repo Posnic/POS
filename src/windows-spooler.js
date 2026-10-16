@@ -3,6 +3,24 @@
 const { execFile } = require('child_process');
 const crypto = require('crypto');
 
+async function defaultPrinterName(run = execFile) {
+  const script = `[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$ErrorActionPreference = 'Stop'
+@(Get-CimInstance Win32_Printer | Where-Object { $_.Default } | Select-Object -ExpandProperty Name) | ConvertTo-Json -Compress`;
+  return new Promise((resolve, reject) => run('powershell.exe',
+    ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
+    { windowsHide: true, timeout: 5000, maxBuffer: 128 * 1024, encoding: 'utf8' },
+    (error, stdout) => {
+      if (error) return reject(new Error('Could not read the Windows default printer'));
+      try {
+        const text = stdout.replace(/^\uFEFF/, '').trim();
+        const value = text ? JSON.parse(text) : [];
+        const names = Array.isArray(value) ? value : [value];
+        resolve(names.length === 1 && typeof names[0] === 'string' ? names[0] : null);
+      } catch (_) { reject(new Error('Invalid Windows default printer response')); }
+    }));
+}
+
 function result(printerName, values = {}) {
   return { printerName, jobId: null, state: 'failed', submitted: false,
     error: '', retryable: true, success: false, ...values };
@@ -103,5 +121,5 @@ function createSpooler({ inspect = inspectWindows, platform = process.platform,
 }
 
 const service = createSpooler();
-module.exports = { ...service, createSpooler, result,
+module.exports = { ...service, createSpooler, result, defaultPrinterName,
   documentName: (key, index) => 'Posnic-KOT-' + crypto.createHash('sha256').update(`${key}:${index}`).digest('hex').slice(0, 32) };
