@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../src/install-wizard.html'
 
 test('compact cloud choice, Community setup and pairing remain available', () => {
   const dom = new JSDOM(source), doc = dom.window.document;
-  assert.equal(doc.querySelector('.simple-options').firstElementChild.id, 'chooseCloudBtn');
+  assert.equal(doc.querySelector('.simple-options button').id, 'chooseCloudBtn');
   assert.match(doc.querySelector('#chooseLocalBtn').textContent, /Set up offline/);
   assert.equal(doc.querySelector('#pairDetails').open, false);
   assert.equal(doc.querySelector('#customServerDetails').open, false);

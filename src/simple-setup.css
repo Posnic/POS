@@ -80,3 +80,88 @@ body.desktop-window[data-desktop-window="setup"] { display: flex; flex-direction
   .wizard-body .form-section h2 { font-size: 22px; }
   .wizard-container .form-section > .btn-container, .setup-footer { margin-left: -18px; margin-right: -18px; padding: 15px 18px; }
 }
+
+/* Approved illustrated onboarding. Shared by stock and white-label builds. */
+
+.wizard-container .setup-design{padding:20px 8px;color-scheme:light dark}
+.wizard-container .setup-design .setup{--paper:light-dark(#fff,#20252e);--ink:light-dark(#172b42,#edf3fa);--sub:light-dark(#56677b,#b5c2d2);--line:light-dark(#dce4ec,#414c5b);--blue:light-dark(#0874bc,#75c5ff);--tint:light-dark(#edf7ff,#21374a);--soft:light-dark(#f6f8fb,#282f3b);background:var(--paper);color:var(--ink);font:14px/1.5 'Segoe UI',Arial,sans-serif;max-width:760px;margin:auto;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 12px 38px #0000000a}
+.wizard-container .setup-design *{box-sizing:border-box}
+.wizard-container .setup-design header{padding:22px 28px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.wizard-container .setup-design .brand{font-size:23px;font-weight:600;color:var(--blue);letter-spacing:-.5px}
+.wizard-container .setup-design .step{font-size:12px;color:var(--sub)}
+.wizard-container .setup-design main{padding:28px}
+.wizard-container .setup-design h1{font-size:26px;line-height:1.25;font-weight:600;letter-spacing:-.6px;margin:0 0 8px}
+.wizard-container .setup-design .intro{color:var(--sub);margin:0 0 25px}
+.wizard-container .setup-design .choices{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.wizard-container .setup-design .option{border:1px solid var(--line);border-radius:12px;padding:22px;display:flex;flex-direction:column;min-width:0;background:var(--paper)}
+.wizard-container .setup-design .option.cloud{border-color:var(--blue)}
+.wizard-container .setup-design .graphic{height:98px;display:flex;align-items:center;justify-content:center;gap:13px;background:var(--soft);border-radius:8px;margin-bottom:20px;color:var(--sub)}
+.wizard-container .setup-design .cloud .graphic{background:var(--tint);color:var(--blue)}
+.wizard-container .setup-design .device{display:flex;align-items:center;flex-direction:column;gap:6px;font-size:11px;font-weight:500}
+.wizard-container .setup-design .device svg{width:34px!important;height:34px!important;stroke-width:1.5}
+.wizard-container .setup-design .device{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 10px;min-width:84px;box-shadow:0 3px 8px #00000005}
+.wizard-container .setup-design .graphic{height:132px;gap:10px}
+.wizard-container .setup-design .sync{display:flex;align-items:center;justify-content:center}
+.wizard-container .setup-design .features li{gap:11px;align-items:flex-start}
+.wizard-container .setup-design .features li>svg{width:21px!important;height:21px!important;stroke-width:1.7;margin-top:1px}
+.wizard-container .setup-design .features strong{display:block;font-weight:600;margin-bottom:2px}
+.wizard-container .setup-design .features small{display:block;color:var(--sub);font-size:12px;line-height:1.5}
+.wizard-container .setup-design .graphic>.sync svg{width:23px;height:23px;stroke-width:1.6}
+.wizard-container .setup-design .option h2{font-size:21px;line-height:1.3;margin:0 0 8px;font-weight:600;letter-spacing:-.3px}
+.wizard-container .setup-design .mode{display:flex;align-items:center;gap:7px;font-weight:600;color:var(--blue);font-size:13px;margin-bottom:14px}
+.wizard-container .setup-design .mode svg{width:17px;height:17px}
+.wizard-container .setup-design .local .mode{color:var(--sub)}
+.wizard-container .setup-design .description{margin:0 0 18px;color:var(--sub);min-height:63px}
+.wizard-container .setup-design .features{display:grid;gap:12px;margin:0 0 22px;padding:0;list-style:none}
+.wizard-container .setup-design .features li{display:flex;align-items:flex-start;gap:9px;font-size:13px}
+.wizard-container .setup-design .features svg{width:17px;height:17px;flex:none;margin-top:2px;color:var(--blue)}
+.wizard-container .setup-design .local .features svg{color:var(--sub)}
+.wizard-container .setup-design .provider{font-size:12px;color:var(--sub);border-top:1px solid var(--line);padding-top:14px;margin:auto 0 16px}
+.wizard-container .setup-design button{font:600 14px 'Segoe UI',Arial,sans-serif;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink);padding:12px 14px;min-height:44px;display:flex;align-items:center;justify-content:center;gap:10px}
+.wizard-container .setup-design button svg{width:17px;height:17px}
+.wizard-container .setup-design .primary{background:light-dark(#0874bc,#8bd0ff);color:light-dark(#fff,#102435);border-color:transparent}
+.wizard-container .setup-design button:hover{filter:brightness(.96)}
+.wizard-container .setup-design footer{padding:16px 28px;border-top:1px solid var(--line);background:var(--soft);font-size:12px;color:var(--sub);display:flex;align-items:center;gap:8px}
+.wizard-container .setup-design footer svg{width:16px;height:16px;flex:none}
+.wizard-container .setup-design .back{border:0;padding:0;min-height:32px;color:var(--blue);margin-bottom:18px;justify-content:flex-start;font-weight:500}
+.wizard-container .setup-design .connect{max-width:480px;margin:0 auto;padding:10px 0 20px}
+.wizard-container .setup-design .connect>.primary{width:100%;margin:24px 0 18px}
+.wizard-container .setup-design .cloud-welcome{text-align:center;margin:4px 0 24px}
+.wizard-container .setup-design .cloud-emblem{width:76px;height:76px;border-radius:20px;background:var(--tint);color:var(--blue);display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.wizard-container .setup-design .cloud-emblem svg{width:42px!important;height:42px!important;stroke-width:1.5}
+.wizard-container .setup-design .cloud-wordmark{color:var(--blue);font-size:15px;font-weight:600;letter-spacing:.2px;margin:0 0 8px}
+.wizard-container .setup-design .cloud-welcome .note{max-width:370px;margin:12px auto 0}
+.wizard-container .setup-design .account-panel{border:1px solid var(--line);border-radius:12px;padding:22px;background:var(--paper);margin-bottom:22px}
+.wizard-container .setup-design .account-panel button{width:100%}
+.wizard-container .setup-design .account-label{font-size:13px;font-weight:500;margin:0 0 10px;color:var(--ink)}
+.wizard-container .setup-design .account-divider{display:flex;align-items:center;gap:12px;color:var(--sub);font-size:12px;margin:20px 0}
+.wizard-container .setup-design .account-divider:before,.wizard-container .setup-design .account-divider:after{content:"";height:1px;background:var(--line);flex:1}
+.wizard-container .setup-design .trial{color:var(--blue);border-color:var(--blue);background:var(--tint)}
+.wizard-container .setup-design .account-help{text-align:center;color:var(--sub);font-size:12px;margin:10px 0 0}
+.wizard-container .setup-design .offline-assurance{display:flex;gap:9px;align-items:flex-start;background:var(--soft);border-radius:8px;padding:13px 15px;margin-top:14px;color:var(--sub);font-size:12px}
+.wizard-container .setup-design .offline-assurance svg{flex:none;width:18px!important;height:18px!important;margin-top:1px}
+.wizard-container .setup-design details{border-top:1px solid var(--line);padding:16px 0}
+.wizard-container .setup-design summary{color:var(--blue);font-weight:500;cursor:pointer;min-height:28px}
+.wizard-container .setup-design label{display:block;font-size:13px;margin:12px 0 6px}
+.wizard-container .setup-design input{width:100%;padding:12px;font:14px 'Segoe UI',Arial,sans-serif;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:6px;margin-bottom:12px}
+.wizard-container .setup-design .note{color:var(--sub);font-size:13px}
+.wizard-container .setup-design [hidden]{display:none!important}
+@media(max-width:570px){.wizard-container .setup-design .choices{grid-template-columns:1fr}.wizard-container .setup-design main{padding:22px 18px}.wizard-container .setup-design header{padding:18px}.wizard-container .setup-design .description{min-height:0}.wizard-container .setup-design h1{font-size:24px}.wizard-container .setup-design .graphic{height:85px}}
+
+/* Preserve the approved preview geometry in the native setup shell. */
+body.desktop-window[data-desktop-window="setup"] .wizard-container { max-width:760px !important; }
+.wizard-container .setup-design { --paper:var(--w-card,#fff);--ink:var(--w-text,#172b42);--sub:var(--w-muted,#56677b);--line:var(--w-border,#dce4ec);--blue:#0874bc;--tint:#edf7ff;--soft:var(--w-raised,#f6f8fb);font:14px/1.5 "Segoe UI",Arial,sans-serif;padding:0;color:var(--ink); }
+.wizard-container .setup-design.connect{max-width:480px;margin:0 auto 28px;padding:0;}
+.wizard-container .setup-design .option h2{font-size:21px;line-height:1.3;margin:0 0 8px;}
+.wizard-container .setup-design h2{font-size:26px;line-height:1.25;margin:0 0 8px;}
+.wizard-container .setup-design button{font-weight:600!important;text-transform:none;letter-spacing:0;box-shadow:none;}
+.wizard-container .setup-design .primary{background:#0874bc!important;color:#fff!important;border-color:transparent!important;}
+.wizard-container .setup-design #cloudSignupLink{font-size:14px;color:var(--blue);}
+.wizard-container .setup-design .features strong{display:block;font-size:13px;font-weight:600;}
+.wizard-container .setup-design .features small{display:block;font-size:12px;color:var(--sub);margin:0;}
+:root[data-window-theme="dark"] .wizard-container .setup-design{--paper:#20252e;--ink:#edf3fa;--sub:#b5c2d2;--line:#414c5b;--blue:#75c5ff;--tint:#21374a;--soft:#282f3b;color-scheme:dark;}
+@media(max-width:570px){.wizard-container .setup-design .choices{grid-template-columns:1fr;}.wizard-container .setup-design .description{min-height:0;}}
+body.desktop-window[data-desktop-window="setup"] .wizard-container .setup-design button { font-weight:600!important;border-radius:7px!important; }
+body.desktop-window .wizard-container .setup-design button.primary { background:#0874bc!important;color:#fff!important;border-color:transparent!important; }
+body.desktop-window .wizard-container .setup-design button.trial { background:var(--tint)!important;color:var(--blue)!important;border-color:var(--blue)!important; }
+body.desktop-window .wizard-container .setup-design button.back { border:0!important;background:transparent!important;color:var(--blue)!important;padding:0!important;min-height:32px; }

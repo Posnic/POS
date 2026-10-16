@@ -130,7 +130,7 @@ function wizard(t, cloud) {
   const source = fs.readFileSync(path.join(__dirname, '../src/install-wizard.html'), 'utf8');
   const fn = source.slice(source.indexOf('        async function runCloudSetup('), source.indexOf('        async function initApiBase('));
   const elements = new Map();
-  const document = { getElementById(id) { if (!elements.has(id)) elements.set(id, { style: {}, disabled: false, textContent: '' }); return elements.get(id); } };
+  const document = { querySelector: () => ({ textContent: '' }), getElementById(id) { if (!elements.has(id)) elements.set(id, { style: {}, disabled: false, textContent: '' }); return elements.get(id); } };
   let poll;
   let now = 0;
   const sections = [];
