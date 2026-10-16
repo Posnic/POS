@@ -174,3 +174,30 @@ body.desktop-window .wizard-container .setup-design button.back { border:0!impor
 #stepQuick #qDemoData { flex-shrink:0; }
 :root[data-window-theme="dark"] #stepQuick .setup-field-error { color:#ffb4a9; }
 @media(max-width:570px) { #stepQuick .region-grid { grid-template-columns:1fr; } }
+/* Compact shop form: full setup fits a normal desktop window. */
+body.desktop-window[data-desktop-window="setup"]:has(#stepQuick:not([style*="display: none"])) { padding:12px 20px; }
+.wizard-container:has(#stepQuick:not([style*="display: none"])) { max-width:800px!important; }
+.wizard-container:has(#stepQuick:not([style*="display: none"])) .wizard-header { padding:12px 24px; }
+.wizard-container:has(#stepQuick:not([style*="display: none"])) .wizard-body { padding:16px 24px 0; }
+#stepQuick .quick-grid, #stepQuick .form-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 16px; }
+#stepQuick .region-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 16px; }
+#stepQuick .form-group { margin-bottom:10px; min-width:0; }
+#stepQuick .form-group label { margin-bottom:4px; font-size:13px; }
+#stepQuick input:not([type="checkbox"]), #stepQuick select { min-height:36px; height:36px; padding:6px 10px; font-size:13px; }
+#stepQuick .simple-intro { margin-bottom:14px; }
+#stepQuick h3 { font-size:14px; margin:2px 0 3px; }
+#stepQuick .field-hint { margin:0 0 8px; }
+#stepQuick #offlineDetails { border:0; margin:0; }
+#stepQuick #offlineDetails .form-row { align-items:center; }
+#stepQuick .setup-note { margin:0; font-size:12px; }
+#stepQuick > .btn-container { margin:12px -24px 0; padding:10px 24px; }
+#stepQuick .setup-field-error { margin-top:3px; line-height:1.25; }
+@media(max-width:570px) {
+ #stepQuick .quick-grid, #stepQuick .form-row, #stepQuick .region-grid { grid-template-columns:1fr; }
+}
+.wizard-container:has(#stepQuick:not([style*="display: none"])) .wizard-header { padding-top:8px; padding-bottom:8px; }
+.wizard-container:has(#stepQuick:not([style*="display: none"])) .wizard-body { padding-top:12px; }
+#stepQuick .form-group { margin-bottom:6px; }
+#stepQuick input:not([type="checkbox"]), #stepQuick select { min-height:34px; height:34px; }
+#stepQuick .simple-intro { margin-bottom:8px; }
+#stepQuick h2 { font-size:23px; margin-bottom:6px; }

@@ -875,21 +875,12 @@
             <div class="form-section" id="stepQuick" style="display: none;">
                 <h2>Create your offline shop</h2>
                 <p class="simple-intro">Your account and business data stay on this computer.</p>
-                <div class="form-group">
-                    <label for="qBusinessName">Shop name</label>
-                    <input type="text" id="qBusinessName" autocomplete="organization" placeholder="e.g. Sri Ganesh Stores">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="qEmail">Login email</label>
-                        <input type="email" id="qEmail" autocomplete="username">
-                    </div>
-                    <div class="form-group">
-                        <label for="qPassword">Password</label>
-                        <input type="password" id="qPassword" autocomplete="new-password" minlength="8" placeholder="Minimum 8 characters">
-                    </div>
-                </div>
-
+<div class="quick-grid">
+<div class="form-group"><label for="qBusinessName">Shop name *</label><input id="qBusinessName" autocomplete="organization" placeholder="e.g. Sri Ganesh Stores" required></div>
+<div class="form-group"><label for="qEmail">Login email *</label><input type="email" id="qEmail" autocomplete="username" required></div>
+<div class="form-group"><label for="qPassword">Password *</label><input type="password" id="qPassword" autocomplete="new-password" minlength="8" placeholder="Minimum 8 characters" required></div>
+<div class="form-group"><label for="qConfirmPassword">Confirm password *</label><input type="password" id="qConfirmPassword" autocomplete="new-password" placeholder="Re-enter password" required></div>
+</div>
 <section class="setup-region" aria-labelledby="regionTitle">
 <h3 id="regionTitle">Location &amp; regional settings</h3>
 <p class="field-hint" id="qRegionHint">Check these details for your shop. Device suggestions can be changed.</p>
@@ -897,10 +888,10 @@
 <div class="form-group"><label for="qCountry">Country *</label><select id="qCountry" required><option value="">Select country</option></select></div>
 <div class="form-group"><label for="qState">State / province</label><input id="qState" list="qStateList" autocomplete="address-level1"><datalist id="qStateList"></datalist></div>
 <div class="form-group"><label for="qCity">City / town *</label><input id="qCity" required autocomplete="address-level2"></div>
-<div class="form-group"><label for="qCurrency">Currency *</label><select id="qCurrency" required><option value="">Select currency</option></select></div>
+</div><div class="quick-grid"><div class="form-group"><label for="qCurrency">Currency *</label><select id="qCurrency" required><option value="">Select currency</option></select></div>
 <div class="form-group"><label for="qTimezone">Timezone *</label><input id="qTimezone" list="qTimezoneList" required placeholder="e.g. Asia/Kolkata"><datalist id="qTimezoneList"></datalist></div>
 </div></section>
-<section id="offlineDetails" aria-label="Shop details"><h3>Shop details</h3>
+<section id="offlineDetails" aria-label="Shop details">
                     <div class="form-group"><label for="qAddress">Business address</label><input type="text" id="qAddress" autocomplete="street-address" placeholder="Shop no, street, city"></div>
                 <div class="form-row">
                     <div class="form-group">

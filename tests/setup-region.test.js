@@ -20,7 +20,7 @@ test('regional choices supply the selected country, state, city, currency and ti
   f.country('India');
   assert.equal(f.doc.getElementById('qCurrency').value, 'INR');
   f.set('qState', 'Goa'); f.set('qCity', 'Panaji'); f.set('qTimezone', 'Asia/Kolkata');
-  f.set('qBusinessName', 'Test shop'); f.set('qEmail', 'owner@example.com'); f.set('qPassword', 'test-pass-123');
+  f.set('qBusinessName', 'Test shop'); f.set('qEmail', 'owner@example.com'); f.set('qPassword', 'test-pass-123'); f.set('qConfirmPassword', 'test-pass-123');
   assert.equal(f.api.validate(), true);
   assert.equal(f.api.values().register_countryid, '101');
   assert.equal(f.api.values().register_state, 'Goa');
@@ -47,4 +47,11 @@ test('shop details and demo choice are visible and demo remains opt-in', t => {
   const demo = f.doc.getElementById('qDemoData');
   assert.equal(demo.closest('[hidden],details'), null);
   assert.equal(demo.checked, false);
+});
+
+test('confirmation blocks mismatched passwords and clears after correction', t => {
+ const f=fixture(t); f.country('India');
+ for(const [id,value] of Object.entries({qBusinessName:'Shop',qEmail:'a@example.com',qPassword:'password123',qConfirmPassword:'different',qState:'Goa',qCity:'Panaji',qTimezone:'Asia/Kolkata'})) f.set(id,value);
+ assert.equal(f.api.validate(),false); assert.equal(f.doc.getElementById('qConfirmPasswordError').textContent,'Passwords do not match.');
+ f.set('qConfirmPassword','password123'); assert.equal(f.api.validate(),true); assert.equal(f.doc.getElementById('qError').style.display,'none');
 });

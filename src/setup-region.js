@@ -32,7 +32,7 @@
     }
   } catch (_) { /* Country remains an explicit choice. */ }
   country.addEventListener('change', updateCountry);
-  const ids = ['qBusinessName', 'qEmail', 'qPassword', 'qCountry', 'qState', 'qCity', 'qCurrency', 'qTimezone'];
+  const ids = ['qBusinessName', 'qEmail', 'qPassword', 'qConfirmPassword', 'qCountry', 'qState', 'qCity', 'qCurrency', 'qTimezone'];
   ids.forEach(id => {
     const input = field(id);
     const error = document.createElement('div');
@@ -49,7 +49,8 @@
   }
   function validate() {
     const messages = {};
-    const required = { qBusinessName: 'Enter your shop name.', qEmail: 'Enter your login email.', qPassword: 'Enter a password.',
+    if (field('qConfirmPassword').value && field('qConfirmPassword').value !== field('qPassword').value) messages.qConfirmPassword = 'Passwords do not match.';
+    const required = { qBusinessName: 'Enter your shop name.', qEmail: 'Enter your login email.', qPassword: 'Enter a password.', qConfirmPassword: 'Confirm your password.',
       qCountry: 'Select the country where your shop is located.', qCity: 'Enter your city or town.',
       qCurrency: 'Select your shop currency.', qTimezone: 'Select a valid timezone.' };
     if (field('qState').required) required.qState = 'Enter your state or province.';
@@ -71,6 +72,7 @@
       if (messages[id]) field(id).setAttribute('aria-invalid', 'true'); else field(id).removeAttribute('aria-invalid'); });
     const first = ids.find(id => messages[id]);
     if (first) { field('qError').textContent = 'Please correct the highlighted fields.'; field('qError').style.display = 'block'; field(first).focus(); }
+    if (!first) { field('qError').textContent = ''; field('qError').style.display = 'none'; }
     return !first;
   }
   window.PosnicSetupRegion = { values, validate };
