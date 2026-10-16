@@ -125,3 +125,9 @@
     [dir="rtl"] .record-dialog-small.sidebarshow { left: 0; }
     .record-account-types > div > .row { grid-template-columns: 1fr; }
 }
+
+/* Units is a two-field editor, not a full-height drawer. */
+#infobar-settings-sidebar-unit.record-dialog.sidebarshow {
+    height: fit-content !important;
+    min-height: 0 !important;
+}
