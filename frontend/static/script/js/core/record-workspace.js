@@ -96,6 +96,7 @@
             var index = panels.findIndex(function (p) { return p.contains(input); });
             if (index >= 0) show(index);
         }
+        $(form).on('record-reveal', function (event, input) { reveal(input); });
         form.addEventListener('invalid', function (event) { reveal(event.target); }, true);
         $(form).on('invalid-form.recordWorkspace', function (event, validator) {
             if (validator.errorList.length) reveal(validator.errorList[0].element);
@@ -284,7 +285,7 @@
         initialized = true;
         contacts('customer', 'customer_add_form');
         contacts('supplier', 'supplier_add');
-        ['users', 'branch', 'category', 'customercategory', 'variant', 'tax', 'taxgroup', 'payment', 'denomcash', 'expense', 'tableorder'].forEach(function (name) {
+        ['users', 'branch', 'category', 'customercategory', 'variant', 'unit', 'tax', 'taxgroup', 'payment', 'denomcash', 'expense', 'tableorder'].forEach(function (name) {
             var panel = document.getElementById('infobar-settings-sidebar-' + name);
             decorateDialog(panel);
             if (panel && !['users', 'branch', 'category'].includes(name)) panel.classList.add('record-dialog-small');
@@ -298,8 +299,8 @@
             branch.prepend(identity.parentElement, location.parentElement);
             var branchActions = branch.querySelector('.record-actions');
             if (branchActions) branch.appendChild(branchActions);
-            formTabs(branch, [['lang_shopinfo', 'Branch / Outlet Info'], ['lang_record_setup', 'Registers & setup']], function (child) {
-                return child === identity.parentElement || child === location.parentElement ? 0 : 1;
+            formTabs(branch, [['lang_shopinfo', 'Branch / Outlet Info'], ['lang_record_regional', 'Regional & tax'], ['lang_record_setup', 'Registers & setup']], function (child) {
+                return child === identity.parentElement || child === location.parentElement ? 0 : child.id === 'branch_regional_fields' ? 1 : 2;
             });
         }
         var user = document.getElementById('user_form_upload');

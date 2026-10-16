@@ -55,3 +55,23 @@
     </div>
 </div>
 <!-- End Containerbar -->
+
+<div id="infobar-settings-sidebar-unit" class="infobar-settings-sidebar">
+  <div class="infobar-settings-sidebar-head d-flex w-100 justify-content-between">
+    <h4><lang class="lang_units_title">Units</lang></h4>
+    <a href="javascript:void(0)" class="infobar-settings-close" data-id="unit" aria-label="Close" data-t-aria-label="lang_close_title"><img src="static/images/svg-icon/close.svg" alt="Close"></a>
+  </div>
+  <div class="infobar-settings-sidebar-body"><div class="custom-mode-setting">
+    <form id="unit_editor">
+      <div class="record-grid">
+        <div class="form-group"><label for="unit_page_name"><lang class="lang_name_title">Name</lang> <span class="text-danger">*</span></label><input id="unit_page_name" name="unit_name" class="form-control" maxlength="10" required></div>
+        <div class="form-group"><label for="unit_page_value"><lang class="lang_value_title">Value</lang> <span class="text-danger">*</span></label><input id="unit_page_value" name="unit_value" class="form-control" maxlength="10" required></div>
+      </div>
+      <div id="unit_page_error" class="text-danger" role="alert" style="display:none"></div>
+      <div class="form-row"><div class="form-group"><div class="pull-right">
+        <button type="button" class="btn btn-outline-secondary infobar-settings-close" data-id="unit"><lang class="lang_close_title">Close</lang></button>
+        <button type="submit" class="btn btn-primary"><lang class="lang_save_title">Save</lang></button>
+      </div></div></div>
+    </form>
+  </div></div>
+</div>

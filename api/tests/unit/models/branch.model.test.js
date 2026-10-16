@@ -980,6 +980,8 @@ describe('BranchModel.createBranch', () => {
     expect(r.status).toBe(true);
     expect(r.data.insertId).toBe(branchId.toString());
     expect(mockModel.create.mock.calls[0][0].city).toBe('Kochi');
+    expect(mockModel.create.mock.calls[0][0].branch_gstin_number).toBe('');
+    expect(mockModel.create.mock.calls[0][0].currency_value[0].currency_text).toBe('INR');
   });
 
   test('returns branchList array on success', async () => {

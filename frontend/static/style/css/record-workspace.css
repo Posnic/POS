@@ -82,7 +82,7 @@
 #category_tile_shapes { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
 #category_tile_shapes .tile-shape { display: inline-flex; flex-direction: column; align-items: center; gap: 8px; min-width: 90px; padding: 12px; border: 2px solid transparent; border-radius: 10px; color: var(--theme-text-primary); background: var(--theme-body-bg); }
 #category_tile_shapes .tile-shape.is-picked { border-color: var(--theme-primary-color); }
-.record-shape { display: block; width: 32px; height: 32px; background: var(--theme-primary-color); }
+.record-shape { display: block; width: 32px; height: 32px; background: var(--record-shape-color, var(--theme-primary-color)); }
 .record-shape-square { border-radius: 0; }
 .record-shape-rounded { border-radius: 10px; }
 .record-shape-circle { border-radius: 50%; }
@@ -115,9 +115,11 @@
 .record-account-status .col-md-6 { flex: none; width: auto; max-width: none; padding: 0; text-align: left !important; }
 #user_form_upload:has(#apiMethod:checked) .record-staff-profile,
 #user_form_upload:has(#apiMethod:checked) .profilebox { display: none; }
-#units_doc:has(#unit_page_name) { max-width: 680px; margin-inline: auto; }
-#units_doc:has(#unit_page_name) .s-doc-body { padding: 16px; }
-#units_doc:has(#unit_page_name) .q-sheet { min-height: 0; }
+.record-grid > .form-group > label { display: block; }
+.record-grid .iti { display: block; width: 100%; }
+#supplier_add .record-grid > .form-group:has(#supplier_name) { grid-column: auto; }
+#user_form_upload .record-grid > .form-group:has(#users_email) { grid-column: 1 / -1; }
+#record-sales-panel-0 { max-width: 1200px; }
 @media (max-width: 767.98px) {
     .record-dialog-small.sidebarshow { width: 100vw !important; right: 0; }
     [dir="rtl"] .record-dialog-small.sidebarshow { left: 0; }
