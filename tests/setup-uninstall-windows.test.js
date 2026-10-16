@@ -36,19 +36,17 @@ function fixture(t) {
     { encoding: 'utf8', windowsHide: true });
   } };
 }
-test('Windows uninstaller handles all eight keep combinations and protects unsynced data', { skip: !windows }, t => {
+test('Windows uninstaller handles all eight keep combinations without creating extra backups', { skip: !windows }, t => {
   for (const business of [0, 1]) for (const hardware of [0, 1]) for (const backups of [0, 1]) {
     const f = fixture(t), result = f.run(business, hardware, backups);
     assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /Checking that the application is closed/);
+    if (!business) assert.match(result.stdout, /Removing folder: .*mongodb/);
     assert.equal(fs.existsSync(path.join(f.data, 'mongodb/data/sales.wt')), Boolean(business));
     assert.equal(fs.existsSync(path.join(f.data, 'preferences.json')), Boolean(hardware));
     assert.equal(fs.existsSync(path.join(f.backups, 'saved.json')), Boolean(backups));
     assert.equal(fs.existsSync(path.join(f.data, 'backups/fallback.json')), Boolean(backups));
-    if (!business) {
-      const archive = path.join(f.recovery, fs.readdirSync(f.recovery)[0]);
-      assert.equal(fs.readFileSync(path.join(archive, 'mongodb/data/sales.wt'), 'utf8'), 'offline sale');
-      assert.equal(fs.readFileSync(path.join(archive, 'preferences.json'), 'utf8'), 'printer settings');
-    }
+    assert.equal(fs.existsSync(f.recovery), false);
   }
 });
 
@@ -72,15 +70,7 @@ test('Windows helper refuses a host that cannot inspect 64-bit applications', { 
   assert.equal(fs.existsSync(f.recovery), false);
   assert.equal(fs.readFileSync(path.join(f.data, 'mongodb/data/sales.wt'), 'utf8'), 'offline sale');
 });
-test('Windows recovery failure stops before deleting business data or backups', { skip: !windows }, t => {
-  const f = fixture(t);
-  fs.writeFileSync(f.recovery, 'blocked destination');
-  assert.notEqual(f.run(0, 0, 0).status, 0);
-  assert.equal(fs.readFileSync(path.join(f.data, 'mongodb/data/sales.wt'), 'utf8'), 'offline sale');
-  assert.equal(fs.readFileSync(path.join(f.backups, 'saved.json'), 'utf8'), 'old backup');
-});
-
-test('Windows recovery copies and verifies paths beyond MAX_PATH before removal', { skip: !windows }, t => {
+test('Windows uninstaller removes long paths while retaining hardware without extra copying', { skip: !windows }, t => {
   const f = fixture(t);
   const relative = path.join('api-runtime', 'current', 'node_modules', 'nested-runtime-module-'.repeat(4), 'generated-types-'.repeat(4), 'long-generated-type-name.js');
   const original = path.join(f.data, relative);
@@ -90,13 +80,12 @@ test('Windows recovery copies and verifies paths beyond MAX_PATH before removal'
   assert.ok(original.length > 260);
   const result = f.run(0, 1, 1);
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  const archive = path.join(f.recovery, fs.readdirSync(f.recovery)[0]);
-  assert.equal(fs.readFileSync(path.join(archive, relative), 'utf8'), 'long path recovery fixture');
+  assert.equal(fs.existsSync(f.recovery), false);
   assert.equal(fs.existsSync(original), false);
   assert.equal(fs.readFileSync(path.join(f.data, 'preferences.json'), 'utf8'), 'printer settings');
 });
 
-test('Windows recovery refuses linked directories without deleting business data', { skip: !windows }, t => {
+test('Windows uninstaller refuses linked directories without deleting business data', { skip: !windows }, t => {
   const f = fixture(t);
   fs.symlinkSync(f.backups, path.join(f.data, 'linked-backups'), 'junction');
   assert.notEqual(f.run(0, 0, 0).status, 0);
