@@ -27,8 +27,8 @@ function fixture(t) {
   fs.writeFileSync(path.join(data, 'mongodb/data/sales.wt'), 'offline sale');
   fs.writeFileSync(path.join(data, 'preferences.json'), 'printer settings');
   fs.writeFileSync(path.join(backups, 'saved.json'), 'old backup');
-  return { data, backups, recovery, run(business, hardware, keepBackups, executable = '') {
-    return spawnSync(ps, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script,
+  return { data, backups, recovery, run(business, hardware, keepBackups, executable = '', interpreter = ps) {
+    return spawnSync(interpreter, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script,
       '-DataRoot', data, '-BackupsRoot', backups, '-RecoveryRoot', recovery,
       '-HardwareManifest', path.resolve(__dirname, '../src/setup-hardware-files.json'),
       ...(executable ? ['-AppExecutable', executable] : []),
@@ -54,11 +54,23 @@ test('Windows uninstaller handles all eight keep combinations and protects unsyn
 
 test('Windows uninstaller refuses to change data while its application is running', { skip: !windows }, t => {
   const f = fixture(t);
-  const result = f.run(0, 0, 0, process.execPath);
-  assert.notEqual(result.status, 0);
-  assert.match(result.stdout, /still running/);
+  for (const keep of [0, 1]) {
+    const result = f.run(keep, keep, keep, process.execPath);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stdout, /still running/);
+  }
   assert.equal(fs.readFileSync(path.join(f.data, 'mongodb/data/sales.wt'), 'utf8'), 'offline sale');
   assert.equal(fs.existsSync(f.recovery), false);
+});
+
+test('Windows helper refuses a host that cannot inspect 64-bit applications', { skip: !windows || process.arch !== 'x64' }, t => {
+  const f = fixture(t);
+  const host32 = path.join(process.env.SystemRoot, 'SysWOW64/WindowsPowerShell/v1.0/powershell.exe');
+  const result = f.run(0, 0, 0, process.execPath, host32);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout, /native 64-bit PowerShell/);
+  assert.equal(fs.existsSync(f.recovery), false);
+  assert.equal(fs.readFileSync(path.join(f.data, 'mongodb/data/sales.wt'), 'utf8'), 'offline sale');
 });
 test('Windows recovery failure stops before deleting business data or backups', { skip: !windows }, t => {
   const f = fixture(t);
@@ -66,4 +78,28 @@ test('Windows recovery failure stops before deleting business data or backups', 
   assert.notEqual(f.run(0, 0, 0).status, 0);
   assert.equal(fs.readFileSync(path.join(f.data, 'mongodb/data/sales.wt'), 'utf8'), 'offline sale');
   assert.equal(fs.readFileSync(path.join(f.backups, 'saved.json'), 'utf8'), 'old backup');
+});
+
+test('Windows recovery copies and verifies paths beyond MAX_PATH before removal', { skip: !windows }, t => {
+  const f = fixture(t);
+  const relative = path.join('api-runtime', 'current', 'node_modules', 'nested-runtime-module-'.repeat(4), 'generated-types-'.repeat(4), 'long-generated-type-name.js');
+  const original = path.join(f.data, relative);
+  fs.mkdirSync(path.dirname(original), { recursive: true });
+  fs.writeFileSync(original, 'long path recovery fixture');
+  fs.chmodSync(original, 0o444);
+  assert.ok(original.length > 260);
+  const result = f.run(0, 1, 1);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const archive = path.join(f.recovery, fs.readdirSync(f.recovery)[0]);
+  assert.equal(fs.readFileSync(path.join(archive, relative), 'utf8'), 'long path recovery fixture');
+  assert.equal(fs.existsSync(original), false);
+  assert.equal(fs.readFileSync(path.join(f.data, 'preferences.json'), 'utf8'), 'printer settings');
+});
+
+test('Windows recovery refuses linked directories without deleting business data', { skip: !windows }, t => {
+  const f = fixture(t);
+  fs.symlinkSync(f.backups, path.join(f.data, 'linked-backups'), 'junction');
+  assert.notEqual(f.run(0, 0, 0).status, 0);
+  assert.equal(fs.readFileSync(path.join(f.backups, 'saved.json'), 'utf8'), 'old backup');
+  assert.equal(fs.readFileSync(path.join(f.data, 'mongodb/data/sales.wt'), 'utf8'), 'offline sale');
 });
