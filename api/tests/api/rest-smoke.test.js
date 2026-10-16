@@ -168,7 +168,9 @@ describeIfDb('the REST API, against a real database', () => {
      * branch would not save. It cannot be caught with a mock: the constraint
      * lives in MongoDB, not in the code.
      */
-    const customers = client.db(DB_NAME).collection('customers');
+    // Keep this deliberate legacy-index fixture separate from startup migrations,
+    // which normalize blank emails in the real customers collection asynchronously.
+    const customers = client.db(DB_NAME).collection('customers_legacy_index_fixture');
     await customers.createIndex({ email: 1 }, { unique: true, sparse: true });
 
     await customers.insertOne({ name: 'First', phone: '' });
