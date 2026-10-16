@@ -24,29 +24,6 @@ function Assert-DirectChild([string]$Parent, [string]$Child) {
   }
   return $resolvedChild
 }
-function Get-RecoveryHash([string]$File) {
-  $stream = [IO.File]::OpenRead((Get-ExtendedPath $File))
-  $digest = [Security.Cryptography.SHA256]::Create()
-  try { return [BitConverter]::ToString($digest.ComputeHash($stream)) }
-  finally { $stream.Dispose(); $digest.Dispose() }
-}
-function Copy-VerifiedTree([string]$Source, [string]$Destination) {
-  [IO.Directory]::CreateDirectory((Get-ExtendedPath $Destination)) | Out-Null
-  $directory = New-Object IO.DirectoryInfo (Get-ExtendedPath $Source)
-  foreach ($entry in $directory.EnumerateFileSystemInfos()) {
-    if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Recovery cannot follow linked folders.' }
-    # These database lock handles are held exclusively by this helper.
-    if ($entry.Name -in @('mongod.lock', 'WiredTiger.lock')) { continue }
-    $target = Join-Path $Destination $entry.Name
-    if ($entry.Attributes -band [IO.FileAttributes]::Directory) { Copy-VerifiedTree $entry.FullName $target }
-    else {
-      [IO.File]::Copy((Get-ExtendedPath $entry.FullName), (Get-ExtendedPath $target), $false)
-      if ((Get-RecoveryHash $entry.FullName) -ne (Get-RecoveryHash $target)) {
-        throw 'Recovery verification failed. Existing data was not removed.'
-      }
-    }
-  }
-}
 function Assert-UnlinkedTree([IO.FileSystemInfo]$Entry) {
   if ($Entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked folders cannot be deleted here.' }
   if ($Entry.Attributes -band [IO.FileAttributes]::Directory) {
@@ -82,14 +59,13 @@ try {
   $documents = [Environment]::GetFolderPath('MyDocuments')
   $DataRoot = Assert-DirectChild $env:APPDATA $DataRoot
   $BackupsRoot = Assert-DirectChild $documents $BackupsRoot
-  $RecoveryRoot = Assert-DirectChild $documents $RecoveryRoot
   foreach ($running in Get-Process) {
     try { $runningPath = $running.Path } catch { continue }
     if ($AppExecutable -and $runningPath -and $runningPath -eq $AppExecutable) {
       throw 'The application is still running. Close it before removing data.'
     }
   }
-  if ($RecoveryRoot -eq $BackupsRoot -or $DataRoot -eq $BackupsRoot) { throw 'Recovery must be separate from deleted folders.' }
+  if ($DataRoot -eq $BackupsRoot) { throw 'Data and backup folders must be separate.' }
   $hardwareFiles = Get-Content -LiteralPath $HardwareManifest -Raw | ConvertFrom-Json
   foreach ($name in $hardwareFiles) {
     if ([IO.Path]::GetFileName($name) -ne $name) { throw 'Invalid hardware manifest.' }
@@ -99,12 +75,10 @@ try {
       $lockFile = Join-Path $DataRoot $name
       if (Test-Path -LiteralPath $lockFile) { $locks += [IO.File]::Open($lockFile, 'Open', 'ReadWrite', 'None') }
     }
-    $copyRoot = Join-Path $RecoveryRoot ('recovery-' + [Guid]::NewGuid().ToString('N'))
-    Copy-VerifiedTree $DataRoot $copyRoot
-    [IO.File]::WriteAllText((Join-Path $copyRoot 'recovery-info.txt'), 'Verified local recovery copy. Not restored or uploaded automatically. Restore only with the original Windows account and compatible application version.')
+    # Validate paths before applying the user's explicit deletion choices.
+    Assert-UnlinkedTree (New-Object IO.DirectoryInfo (Get-ExtendedPath $DataRoot))
     foreach ($lock in $locks) { $lock.Dispose() }; $locks = @()
-    # Leave selected hardware files in place; remove all other entries only
-    # after the entire recovery copy has passed hash verification.
+    # No automatic recovery copy: saved backups are controlled independently.
     foreach ($entry in Get-ChildItem -LiteralPath $DataRoot -Force) {
       if ($KeepHardware -eq '1' -and $entry.Name -in $hardwareFiles) { continue }
       if ($KeepBackups -eq '1' -and $entry.Name -eq 'backups') { continue }
