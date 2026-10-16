@@ -187,6 +187,46 @@ describe('SalesService', () => {
     mockRegisterRepositoryInstance.validateSessionOwner.mockResolvedValue({ status: true });
   });
 
+  test.each([
+    ['', undefined, '', false],
+    ['64f8f2f4c2b9c0a1e4b22222', '', '', false],
+    ['64f8f2f4c2b9c0a1e4b22222', '33', '', false],
+    ['64f8f2f4c2b9c0a1e4b22222', ' tamil nadu ', '', false],
+    ['64f8f2f4c2b9c0a1e4b22222', 'Karnataka', '', true],
+    ['64f8f2f4c2b9c0a1e4b22222', '29', '', true],
+    ['64f8f2f4c2b9c0a1e4b22222', '29', '64f8f2f4c2b9c0a1e4b22222', false],
+  ])(
+    'saves GST by customer state (%s, %s, default %s)',
+    async (customer_id, customer_state, default_customer, inter) => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(
+        makeItemDoc({ selling_price: 100, tax: 18, tax_type: 'exclusive' })
+      );
+      const result = await salesService.processSale(
+        makeSaleData({
+          customer_id,
+          customer_state,
+          sales_total: '236',
+          multi_payment: { Cash: 236 },
+        }),
+        '',
+        'Add',
+        makeContext({
+          branchState: 'Tamil Nadu',
+          branchSettings: { sortname: 'IN', indian_gst: 'gst_on', default_customer },
+        })
+      );
+      expect(result.status).toBe(true);
+      const saved = salesRepository.create.mock.calls[0][0];
+      expect(saved.items[0].igst_tax).toBe(inter ? 36 : 0);
+      expect(saved.items[0].cgst_tax).toBe(inter ? 0 : 18);
+      expect(saved.items[0].sgst_tax).toBe(inter ? 0 : 18);
+      expect(saved.items[0].tax_components.map((component) => component.name)).toEqual(
+        inter ? ['IGST'] : ['CGST', 'SGST']
+      );
+      if (!customer_state || default_customer) expect(saved.customer_state).toBe('Tamil Nadu');
+    }
+  );
+
   afterEach(() => {
     process.removeListener(KOT_EVENT, onKotReady);
     consoleErrorSpy.mockRestore();
