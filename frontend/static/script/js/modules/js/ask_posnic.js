@@ -39,7 +39,7 @@ PosnicPro.askposnic = {
         this.loadStatus();
     },
     settingsTab: function (key, focus) {
-        if (!this.admin || ['general', 'knowledge', 'access', 'usage', 'schedules'].indexOf(key) === -1) return;
+        if (!this.enabled || !this.admin || ['general', 'knowledge', 'access', 'usage', 'schedules'].indexOf(key) === -1) return;
         this.activeSettingsTab = key;
         $('[data-ask-tab]').each(function () {
             var active = $(this).attr('data-ask-tab') === key;
@@ -576,10 +576,12 @@ PosnicPro.askposnic = {
         });
         $('#ask_posnic_preferences_form').on('submit', function (event) {
             event.preventDefault();
-            PosnicPro.request({ url: 'ask-posnic/preferences', method: 'PUT', data: JSON.stringify({ own_key_semantic: $('#ask_pref_own_semantic').is(':checked'), own_key_semantic_budget: Number($('#ask_pref_embedding_budget').val()), help_enabled: $('#ask_pref_help').is(':checked'), insights_enabled: $('#ask_pref_insights').is(':checked'), actions_enabled: $('#ask_pref_actions').is(':checked'), store_conversations: $('#ask_pref_history').is(':checked'), retention_days: Number($('#ask_pref_retention').val()), default_period: $('#ask_pref_period').val(), response_language: $('#ask_pref_language').val(), help_instructions: $('#ask_help_instructions').val(), roles: { help: $('#ask_pref_help_roles').val() || [], insights: $('#ask_pref_insight_roles').val() || [], actions: $('#ask_pref_action_roles').val() || [] }, allowed_actions: $('.ask-allowed-action:checked').map(function () { return this.value; }).get() }) }, function (response) {
+            function savePreferences() { PosnicPro.request({ url: 'ask-posnic/preferences', method: 'PUT', data: JSON.stringify({ own_key_semantic: $('#ask_pref_own_semantic').is(':checked'), own_key_semantic_budget: Number($('#ask_pref_embedding_budget').val()), help_enabled: $('#ask_pref_help').is(':checked'), insights_enabled: $('#ask_pref_insights').is(':checked'), actions_enabled: $('#ask_pref_actions').is(':checked'), store_conversations: $('#ask_pref_history').is(':checked'), retention_days: Number($('#ask_pref_retention').val()), default_period: $('#ask_pref_period').val(), response_language: $('#ask_pref_language').val(), help_instructions: $('#ask_help_instructions').val(), roles: { help: $('#ask_pref_help_roles').val() || [], insights: $('#ask_pref_insight_roles').val() || [], actions: $('#ask_pref_action_roles').val() || [] }, allowed_actions: $('.ask-allowed-action:checked').map(function () { return this.value; }).get() }) }, function (response) {
                 if (response && response.type === 'success') { self.loadStatus(); PosnicPro.alert('success', response.message); }
                 else PosnicPro.alert('error', response.message || 'Could not save Ask Posnic settings.');
-            });
+            }); }
+            if (self.activeSettingsTab === 'usage') PosnicPro.settings.ai.save(savePreferences);
+            else savePreferences();
         });
         $('#ask_posnic_schedules').on('click', '.ask-schedule-delete', function () {
             PosnicPro.request({ url: 'ask-posnic/schedules/' + encodeURIComponent($(this).data('id')), method: 'DELETE' }, function (response) { if (response && response.type === 'success') self.loadSchedules(); });

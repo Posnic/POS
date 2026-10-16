@@ -231,7 +231,11 @@
             if (b.type === 'store') {
                 function storeText(key, fallback) { return String(b[key] || '').trim() || fallback || ''; }
                 var storeName = storeText('nameText', data.branch_name || data.store_name || PosnicPro.local.get('branchname'));
-                var storeAddress = storeText('addressText', plain(data.printing_address || data.store_address || ''));
+                function addressText(value) {
+                    var text = plain(value || '').trim();
+                    return /^(not provided|not available|not set|n\/a|null|undefined)$/i.test(text) ? '' : text;
+                }
+                var storeAddress = addressText(b.addressText) || addressText(data.printing_address) || addressText(data.store_address);
                 var storePhone = storeText('phoneText', data.store_telephone);
                 var storeEmail = storeText('emailText', data.store_email);
                 var storeRegistration = storeText('registrationText', data.branch_gstin_number);
@@ -296,13 +300,14 @@
                 var igst = items.reduce(function (n, i) { return n + Number(i.igst_tax || 0); }, 0);
                 var cgst = items.reduce(function (n, i) { return n + Number(i.cgst_tax || 0); }, 0);
                 var sgst = items.reduce(function (n, i) { return n + Number(i.sgst_tax == null ? i.cgst_tax || 0 : i.sgst_tax); }, 0);
-                if (Array.isArray(data.receipt_tax_rows) && data.receipt_tax_rows.length) data.receipt_tax_rows.forEach(function (row) { content += pair(row.label, money(row.amount)); });
+                var hasTaxAmount = function (amount) { return Number.isFinite(Number(amount)) && Number(Number(amount).toFixed(2)) !== 0; };
+                if (Array.isArray(data.receipt_tax_rows) && data.receipt_tax_rows.length) data.receipt_tax_rows.forEach(function (row) { if (hasTaxAmount(row.amount)) content += pair(row.label, money(row.amount)); });
                 else if (igst || cgst || sgst) {
-                    if (igst) content += pair('IGST', money(igst));
-                    if (cgst) content += pair('CGST', money(cgst));
-                    if (sgst) content += pair('SGST', money(sgst));
+                    if (hasTaxAmount(igst)) content += pair('IGST', money(igst));
+                    if (hasTaxAmount(cgst)) content += pair('CGST', money(cgst));
+                    if (hasTaxAmount(sgst)) content += pair('SGST', money(sgst));
                 }
-                else if (Number(data.tax)) content += pair('Tax', money(data.tax));
+                else if (hasTaxAmount(data.tax)) content += pair(contract.taxLabel(data, PosnicPro.local.get('country_setting')), money(data.tax));
                 (data.charges || []).forEach(function (c) { content += pair(c.name || 'Charge', money(Number(c.amount || 0) + Number(c.tax_amount || 0))); });
                 if (Number(data.round_off)) content += pair('Round Off', money(data.round_off));
                 content += pair('Total', money(data.items_total), true);
@@ -350,7 +355,7 @@
         }).filter(Boolean);
         rendered = pairFields(rendered);
         var html = sheet ? composeSheet(rendered) : rendered.map(function (b) { return b.html; }).join('');
-        if (designs.showBranding !== false) html += '<section class="rd-block rd-branding" style="text-align:center;font-size:10px">Made with Posnic &middot; posnic.com</section>';
+        if (designs.showBranding !== false) html += '<section class="rd-block rd-branding" style="text-align:center;font-size:10px;white-space:pre-line">' + esc(String(designs.brandingText || '').trim() || 'Made with Posnic · posnic.com') + '</section>';
         if (pendingGoods) html += '<section class="rd-block rd-payment-status">' + esc(label('Payment pending')) + '</section>';
         if (sheet) {
             var notes = '';

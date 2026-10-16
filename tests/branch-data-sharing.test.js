@@ -122,13 +122,14 @@ test('Settings carries the switches the branch form promised', () => {
   for (const id of ['set_share_customers', 'set_share_suppliers']) {
     assert.ok(new RegExp(`id="${id}"`).test(settingsHtml), `${id} is missing from Settings`);
   }
-  assert.match(settingsHtml, /id="sharing_save_btn"/, 'there is no way to save it');
+  assert.match(settingsHtml, /id="tax_discount_add"/, 'there is no Core Settings save form');
 });
 
-test('it has its OWN save, not the general form save', () => {
-  /* Everything around it writes to this branch. Riding that save would let a
-     screen opened on one shop push that shop's view onto all of them. */
-  assert.match(settingsHtml, /onclick="PosnicPro\.settings\.saveSharing\(\);"/, 'no dedicated save');
+test('the unified button keeps sharing on its own account-level endpoint', () => {
+  assert.doesNotMatch(settingsHtml, /id="sharing_save_btn"/, 'duplicate save button');
+  const submit = blockAt(settingsJs, '$("#tax_discount_add").submit(function (event) {');
+  assert.match(submit, /_sharingLoaded && PosnicPro.settings._sharingDirty/);
+  assert.match(submit, /PosnicPro.settings.saveSharing\(\)/);
   const save = blockAt(settingsJs, 'PosnicPro.settings.saveSharing = function () {');
   assert.match(save, /url: 'settings\/group\/sharing'/, 'it must use the sharing endpoint alone');
   assert.match(save, /level: 'account'/, 'writing at branch level would not share anything');

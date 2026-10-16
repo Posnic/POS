@@ -56,6 +56,29 @@ test('preferences retain form ownership across tabs and save every section', () 
   assert.equal(saved.own_key_semantic, true); assert.deepEqual(saved.allowed_actions, ['stock_count']);
   $('[id^="ask_pref_"],#ask_help_instructions,.ask-allowed-action').each(function () { assert.equal(this.form.id, 'ask_posnic_preferences_form'); });
 });
+
+test('disabled Ask Posnic never loads protected settings tab APIs', () => {
+  const { ui, calls } = setup();
+  ui.showSettings();
+  ui.setEnabled(false);
+  const before = calls.length;
+  for (const tab of ['knowledge', 'usage', 'schedules']) ui.settingsTab(tab);
+  assert.equal(calls.length, before);
+});
+
+test('one AI usage save writes provider settings before assistant preferences', () => {
+  const { $, ui, PosnicPro } = setup();
+  ui.showSettings(); ui.settingsTab('usage');
+  let finishProvider;
+  let preferenceWrites = 0;
+  PosnicPro.settings.ai.save = done => { finishProvider = done; };
+  PosnicPro.request = () => { preferenceWrites++; };
+  $('#ask_posnic_preferences_form').triggerHandler('submit');
+  assert.equal($('#ai_save').length, 0);
+  assert.equal(preferenceWrites, 0);
+  finishProvider();
+  assert.equal(preferenceWrites, 1);
+});
 test('question progress, Enter and new conversation keep the chat usable', () => {
   const { $, ui, PosnicPro } = setup();
   ui.showDataTablePage();

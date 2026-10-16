@@ -949,10 +949,10 @@ class SalesRepository {
                 const customerState = (doc.customer_state || '').toString().trim();
                 const branchState = (branchDoc?.state || '').toString().trim();
 
-                const isInterState =
-                  customerState &&
-                  branchState &&
-                  customerState.toLowerCase() !== branchState.toLowerCase();
+                const isInterState = require('../helpers/gst-place').isInterState(
+                  branchState,
+                  customerState
+                );
 
                 if (isInterState) {
                   cloned.igst_tax = perLineGstAmount;

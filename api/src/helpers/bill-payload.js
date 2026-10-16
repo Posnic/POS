@@ -254,15 +254,7 @@ function taxRows(sale, branch, allocation = null) {
     const taxMinor = money.toMinor(tax, policy);
     const firstHalf = Math.ceil(taxMinor / 2);
     const rate = gstRate(sale);
-    const stateKey = (value) => {
-      const key = String(value || '')
-        .trim()
-        .toLowerCase();
-      const match = require('../json/gst_state_code.json').gststate.find(
-        (row) => row.id === key.padStart(2, '0') || row.value.toLowerCase() === key
-      );
-      return match ? match.id : key;
-    };
+    const { stateKey } = require('./gst-place');
     const supplierState = stateKey(sale.branch_state || branch.state);
     const supplyState = stateKey(sale.place_of_supply || sale.customer_state);
     if (supplierState && supplyState && supplierState !== supplyState) {

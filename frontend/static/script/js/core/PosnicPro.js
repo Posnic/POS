@@ -2955,7 +2955,7 @@ PosnicPro = {
         $('#manage_li_deliverypartners').toggle(on('module_delivery_partners_enable'));
         $('#manage_li_webshop').toggle(on('module_webshop_enable'));
         $('#manage_li_theme').toggle(on('module_themes_enable'));
-        $('#manage_li_ai').toggle(on('ai_enabled') || s.ask_posnic_enabled === true);
+        $('#manage_li_ai').toggle(s.ask_posnic_enabled === true);
         $('[data-ask-entry]').toggle(s.ask_posnic_enabled === true);
         if (PosnicPro.askposnic) PosnicPro.askposnic.setEnabled(s.ask_posnic_enabled === true);
         $('#manage_li_recyclebin').toggle(on('module_recyclebin_enable'));

@@ -125,7 +125,7 @@
                                     <lang class="lang_module_themes">Themes</lang>
                                 </a>
                                 <a class="nav-link mb-2" data-module="branch" data-access="write"
-                                    id="v-pills-ai-tab" data-toggle="pill" href="#v-pills-ai" role="tab"
+                                    id="v-pills-ai-tab" style="display:none" data-toggle="pill" href="#v-pills-ai" role="tab"
                                     aria-controls="v-pills-ai" aria-selected="false"><i
                                         class="feather icon-zap mr-2"></i>
                                     <lang class="lang_ask_posnic">Ask Posnic</lang>
@@ -1260,11 +1260,7 @@
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <button type="button" class="btn btn-outline-primary btn-sm"
-                                            onclick="PosnicPro.settings.taxSystemSave();"><i
-                                                class="feather icon-save mr-1"></i>
-                                            <lang class="lang_save_title">Save</lang>
-                                        </button>
+
                                     </div>
                                 </div>
                             </div>
@@ -1292,7 +1288,7 @@
                                     </div>
                                     <div class="text-right">
                                         <button type="button" class="btn btn-outline-primary btn-sm"
-                                            onclick="PosnicPro.settings.updateCommonSetting('Tax defaults saved');"><i
+                                            onclick="PosnicPro.settings.taxSystemSave(function () { PosnicPro.settings.updateCommonSetting('Tax settings saved'); });"><i
                                                 class="feather icon-save mr-1"></i>
                                             <lang class="lang_save_title">Save</lang>
                                         </button>
@@ -3798,7 +3794,7 @@
                                         <small class="form-text text-muted"><lang class="lang_ai_spent_note">Estimated from what each call reported, at list prices, in your currency at a rounded rate. Live voice is counted by the minute of open line while the call is on. Your provider's dashboard is the final word on the bill.</lang></small>
                                     </div>
 
-                                    <button type="button" class="btn btn-primary" id="ai_save"><lang class="lang_ai_save">Save</lang></button>
+
                                 </div>
                             </div>
                         <h6><lang class="lang_search_by_meaning_with_my_openai_key">Search by meaning with my OpenAI key</lang></h6><div class="form-row"><div class="form-group col-md-8"><div class="custom-control custom-switch"><input class="custom-control-input" type="checkbox" id="ask_pref_own_semantic" form="ask_posnic_preferences_form"><label class="custom-control-label" for="ask_pref_own_semantic"><lang class="lang_search_by_meaning_with_my_openai_key">Search by meaning with my OpenAI key</lang></label></div><small class="text-muted"><lang class="lang_optional_for_own_key_accounts_sends_publis">Optional for own-key accounts. Sends published knowledge and help questions to OpenAI for embeddings, billed to your key. Vectors stay in this installation. Supports up to 5,000 published passages. Cloud managed search uses your managed allowance.</lang></small></div>
@@ -4931,10 +4927,7 @@
                                                             </div>
                                                         </div>
                                                         <div class="d-flex align-items-center" style="gap:10px;">
-                                                            <button type="button" class="btn btn-sm btn-primary" id="sharing_save_btn"
-                                                                onclick="PosnicPro.settings.saveSharing();">
-                                                                <i class="feather icon-save mr-2"></i><lang class="lang_save_sharing">Save sharing</lang>
-                                                            </button>
+
                                                             <small class="text-muted" id="sharing_status"></small>
                                                         </div>
                                                     </fieldset>
@@ -5149,6 +5142,7 @@
                                                             <a class="nav-link active" data-toggle="pill" href="#inv-sub-general" role="tab"><i class="feather icon-sliders mr-2"></i><lang class="lang_common_settings">General</lang></a>
                                                             
                                                         <a class="nav-link" data-toggle="pill" href="#inv-sub-stock" role="tab"><i class="feather icon-box mr-2"></i><lang class="lang_stock_preference">Stock preference</lang></a>
+<a class="nav-link" data-toggle="pill" href="#inv-sub-mobile" role="tab"><i class="feather icon-smartphone mr-2"></i><lang class="lang_mobile_inventory">Mobile inventory</lang></a>
 <a class="nav-link" data-toggle="pill" href="#inv-sub-expiry" role="tab"><i class="feather icon-bell mr-2"></i><lang class="lang_expiry_reminders">Expiry reminders</lang></a>
 </div>
                                                     </div>
@@ -5210,6 +5204,7 @@
  <p><lang class="lang_applies_to_new_items_in_this_branch_existi">Applies to new items in this branch. Existing items keep their stock settings. You can still mark an item sold out manually.</lang></p>
  <button class="btn btn-primary" type="button" id="item_settings_save_stock"><lang class="lang_save_title">Save</lang></button></div></div>
 </div>
+<div class="tab-pane fade" id="inv-sub-mobile" role="tabpanel"><div id="mobile_inventory_settings"></div></div>
 <div class="tab-pane fade" id="inv-sub-expiry" role="tabpanel">
 <div class="card"><div class="card-header"><h5><lang class="lang_expiry_reminders">Expiry reminders</lang></h5></div><div class="card-body">
 <p><lang class="lang_expiry_reminders_help">Reminders appear in the POS bell for products with stock and a saved expiry date. Dates use the shop timezone. No email or WhatsApp messages are sent.</lang></p>
@@ -5251,11 +5246,7 @@
                                                                         a &#8377;200 bill paid as &#8377;100 UPI + &#8377;100 cash.</lang></small>
                                                                 </div>
                                                                 <div class="text-right">
-                                                                    <button type="button" class="btn btn-outline-primary btn-sm"
-                                                                        onclick="PosnicPro.settings.updateCommonSetting('Payment settings saved');"><i
-                                                                            class="feather icon-save mr-1"></i>
-                                                                        <lang class="lang_save_title">Save</lang>
-                                                                    </button>
+
                                                                 </div>
                                                             </div>
                                                             <div class="tab-pane fade" id="pay-sub-modes" role="tabpanel">
@@ -5578,7 +5569,7 @@
                                                         <section class="print-settings-panel">
                                                             <h5><lang class="lang_rd_printing_options">Printing options</lang></h5>
                                                             <div id="receipt-print-behaviour"></div>
-                                                            <button type="button" class="btn btn-primary btn-sm" id="save-print-behaviour"><lang class="lang_save_printing_options">Save printing options</lang></button>
+                                                            <button type="button" class="btn btn-primary btn-sm" id="save-print-behaviour"><lang class="lang_save_title">Save</lang></button>
                                                             <span class="small ml-2" id="print-behaviour-status" role="status"></span>
                                                         </section>
                                                     </div>

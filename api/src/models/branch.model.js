@@ -98,7 +98,7 @@ const branchSchema = new Schema(
     whatsapp_device_id: { type: String, default: '' },
     item_stock_default: { type: String, enum: ['always_available', 'track_quantities'] },
     inventory_policy: {
-      enabled: { type: Boolean, default: false },
+      enabled: { type: Boolean, default: true },
       approvalActions: {
         type: [String],
         enum: ['count', 'receive', 'damage', 'loss'],

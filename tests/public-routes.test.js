@@ -77,6 +77,9 @@ const ALLOWED_ANONYMOUS = {
     '/discovery',
   ],
   'mobile-pos.routes.js': [
+    // Rate-limited discovery exposes only bounded public shop display names.
+    // No identifiers, credentials or business data; pairing still proves access.
+    '/discovery',
     // Pairing is a rate-limited authentication entry point with an expiring,
     // one-use secret; cloud grants also require the approved phone and proof.
     // Discovery proof returns only a nonce MAC for an unexpired random grant,
