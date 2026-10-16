@@ -133,10 +133,11 @@ function wizard(t, cloud) {
   const document = { getElementById(id) { if (!elements.has(id)) elements.set(id, { style: {}, disabled: false, textContent: '' }); return elements.get(id); } };
   let poll;
   let now = 0;
-  const sandbox = { resumeCloudDownload: false, document, window: { showCloudConflict() {}, electronAPI: { cloud } }, API_BASE: 'http://localhost',
+  const sections = [];
+  const sandbox = { showSection: (id) => sections.push(id), resumeCloudDownload: false, document, window: { showCloudConflict() {}, electronAPI: { cloud } }, API_BASE: 'http://localhost',
     Date: { now: () => now }, setTimeout: (fn) => { poll = fn; return 1; }, clearTimeout: () => { poll = null; } };
   vm.runInNewContext(fn, sandbox);
-  return { run: sandbox.runCloudSetup, document, tick: async (elapsed) => { now += elapsed; const fn = poll; poll = null; await fn(); } };
+  return { sections, run: sandbox.runCloudSetup, document, tick: async (elapsed) => { now += elapsed; const fn = poll; poll = null; await fn(); } };
 }
 
 for (const type of ['false', 'rejection', 'status failure', 'no status']) {
@@ -224,3 +225,10 @@ for (const reply of [null, { deviceToken: {}, deviceId: 'device' }, { deviceToke
 }
 
 test('loopback development servers remain available', () => assert.equal(cloudServerUrl('http://127.0.0.1:8080/'), 'http://127.0.0.1:8080'));
+
+test('new cloud account continues directly to shop setup after initial sync', async t => {
+  const harness = wizard(t, { status: async () => ({ sync: { initialSyncComplete: true } }), checkData: async () => ({ ok: true, users: 0 }) });
+  await harness.run(async () => ({ ok: true }), true);
+  await harness.tick(2000);
+  assert.deepEqual(harness.sections, ['stepQuick']);
+});

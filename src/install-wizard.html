@@ -815,7 +815,7 @@
                 <a href="#" id="cloudSignupLink" class="mode-link" style="display:block;margin-top:12px">New to Posnic? Create a cloud account</a>
                 <div id="browserWait" style="display:none;margin:16px 0" role="status" aria-live="polite"><p>Finish approval in your browser. Setup will continue here automatically.</p><div class="btn-container"><button type="button" class="btn btn-secondary" id="reopenBrowserBtn">Open browser again</button><button type="button" class="btn btn-secondary" id="cancelBrowserBtn">Cancel</button></div></div>
                 <input type="hidden" id="cloudServer" value="https://gateway.posnic.com">
-                <details id="pairDetails"><summary>Use a pairing code instead</summary><div class="form-group" id="pairRow"><label for="pairCode">Code from your shop owner</label><input type="text" id="pairCode" placeholder="Enter pairing code" autocomplete="off"><button type="button" class="btn btn-secondary" id="pairBtn">Pair this computer</button></div></details>
+                <details id="pairDetails"><summary>Use a pairing code instead</summary><div class="form-group" id="pairRow"><label for="pairServer">Server address</label><input type="url" id="pairServer" value="https://gateway.posnic.com" required autocomplete="off"><p class="field-hint">Already filled for Posnic Cloud. For your own server, use the address supplied with your code.</p><label for="pairCode">Code from your shop owner</label><input type="text" id="pairCode" placeholder="Enter pairing code" autocomplete="off"><button type="button" class="btn btn-secondary" id="pairBtn">Pair this computer</button></div></details>
                 <details id="customServerDetails"><summary>Connect to a custom server</summary><div class="form-group"><label for="cloudServerVisible">Server URL</label><input type="url" id="cloudServerVisible" placeholder="https://your-server.com" required autocomplete="off"><div class="field-hint">Use the address provided by your administrator.</div></div><button type="button" id="customServerBtn" class="btn btn-secondary">Continue with this server</button></details>
                 <div hidden><a id="cloudServerToggle"></a><div id="cloudServerRow"></div><input id="cloudEmail"><input id="cloudPassword" type="password"><button id="cloudConnectBtn"></button></div>
                 <div id="cloudError" role="alert" style="display:none;color:#b91c1c;margin:12px 0;"></div>
@@ -1636,8 +1636,10 @@ const form = document.getElementById('installForm');
                 document.getElementById('cloudError').style.display = 'block';
                 return;
             }
+            const server = document.getElementById('pairServer');
+            if (!server.reportValidity()) return;
             await runCloudSetup(() => window.electronAPI.cloud.pair({
-                serverUrl: document.getElementById('cloudServer').value.trim(), code,
+                serverUrl: server.value.trim(), code,
             }));
         });
 
@@ -1745,18 +1747,9 @@ const form = document.getElementById('installForm');
                     if (data.users === 0) {
                         progress.style.display = 'none';
                         btn.disabled = false;
-                        errorBox.style.color = '#475569';
-                        errorBox.innerHTML =
-                            'Connected! Your cloud account doesn&#39;t have a store yet. ' +
-                            'Set up your store now, everything will sync to your cloud account automatically.';
-                        errorBox.style.display = 'block';
-                        document.getElementById('cloudConnectBtn').style.display = 'none';
-                        // This button becomes the only way forward, so it has
-                        // to come back out of the disabled state above.
                         backBtn.disabled = false;
-                        backBtn.textContent = 'Set Up My Store →';
-                        backBtn.className = 'btn btn-primary';
-                        backBtn.onclick = () => showSection('stepQuick');
+                        // Continue directly to shop creation for a new cloud account.
+                        showSection('stepQuick');
                         return;
                     }
                     progressText.textContent = '✅ All data downloaded. Opening login…';
