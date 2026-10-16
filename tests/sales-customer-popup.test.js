@@ -13,29 +13,28 @@ function setup(){
  w.eval(source.slice(a,source.indexOf('// Customer popover:',a)));
  return {dom,w,$,calls};
 }
-test('customer icon shares the search row and opens one popup with focus and Escape dismissal',()=>{
+test('customer name stays beside item search and details opens separately',()=>{
  const {dom,w,$}=setup();try{
- assert.equal($('#sales_customer_btn').closest('.sales-search-toolbar').find('#sales_new_item_name').length,1);
- assert.equal($('#sales_customer_popup #sales_new_customer_name').length,1);
- $('#sales_customer_btn').trigger('click');assert.equal($('#sales_customer_btn').attr('aria-expanded'),'true');
- assert.equal(w.document.activeElement.id,'sales_new_customer_name');
- $('#sales_new_customer_name').trigger($.Event('keydown',{key:'Escape'}));
- assert.equal($('#sales_customer_btn').attr('aria-expanded'),'false');assert.equal(w.document.activeElement.id,'sales_customer_btn');
+ w.PosnicPro.sales.updateCustomerGst=()=>{};
+ assert.equal($('#sales_new_customer_name').closest('.sales-search-toolbar').length,1);
+ assert.equal($('#sales_customer_popup #sales_new_customer_name').length,0);
+ $('#sales_new_customer_name').val('Prasad').trigger('input');
+ assert.equal($('#sales_customer_search').prop('hidden'),false);
+ $('#sales_customer_btn').trigger('click');
+ assert.equal($('#sales_customer_btn').attr('aria-expanded'),'true');
+ assert.equal($('#sales_customer_search').prop('hidden'),true);
+ assert.equal(w.document.activeElement.id,'sales_new_customer_phone');
+ $('#sales_new_customer_phone').trigger($.Event('keydown',{key:'Escape'}));
+ assert.equal($('#sales_customer_btn').attr('aria-expanded'),'false');
  }finally{dom.window.close();}
 });
-test('inline customer creation prevents double submission, reports failures, and selects successful record',()=>{
- const {dom,$,calls}=setup();try{
- $('#sales_new_customer_name').val('New customer');$('#sales_new_customer_phone').val('9876543210');
- $('#sales_customer_add_new').trigger('click').trigger('click');assert.equal(calls.length,1);
- assert.equal(calls[0].p.url,'customers');assert.equal(JSON.parse(calls[0].p.data).name,'New customer');
- calls[0].fail({responseJSON:{message:'Phone already exists'}});assert.match($('#sales_customer_status').text(),/Phone already exists/);
- assert.equal($('#sales_customer_add_new').prop('disabled'),false);
- $('#sales_customer_add_new').trigger('click');calls[1].ok({type:'success',data:{customer_id:'abc',name:'New customer'}});
- assert.equal(calls[2].id,'abc');assert.equal($('#sales_customer_btn').attr('aria-expanded'),'false');
- }finally{dom.window.close();}
-});
-test('saving an already linked customer cannot create a duplicate',()=>{
- const {dom,$,calls}=setup();try{
- $('#sales_new_customer_name').val('Existing');$('#sales_new_customer_id').val('abc');$('#sales_customer_add_new').trigger('click');assert.equal(calls.length,0);
+test('entering optional new customer details performs no write before sale save',()=>{
+ const {dom,w,$,calls}=setup();try{
+ w.PosnicPro.sales.updateCustomerGst=()=>{};
+ $('#sales_new_customer_name').val('New customer');$('#sales_customer_add_new').trigger('click');
+ $('#sales_new_customer_phone').val('9876543210');$('#sales_customer_done').trigger('click');
+ assert.equal(calls.length,0);assert.equal($('#sales_new_customer_name').val(),'New customer');
+ assert.equal($('#sales_new_customer_phone').val(),'9876543210');
+ assert.equal($('#sales_customer_btn').attr('aria-expanded'),'false');
  }finally{dom.window.close();}
 });

@@ -428,6 +428,14 @@ class CustomerController extends BaseController {
       return this.sendError(res, 'Search term is required', 400, null);
     }
 
+    await require('../services/sale-customer').recover(
+      await BaseModel.getDb(),
+      {
+        branchId: new ObjectId(branchId),
+        license: new ObjectId(BaseModel.license),
+      },
+      searchTerm
+    );
     const options = { page, limit, branchId };
 
     // Call service
