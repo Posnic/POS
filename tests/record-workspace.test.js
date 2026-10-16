@@ -6,7 +6,7 @@ const { JSDOM } = require('jsdom');
 const root = path.join(__dirname, '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 function fixture() {
-  const files = ['modals/customer_category_add.html', 'modals/variant_add.html', 'modals/tax.html', 'modals/payment.html', 'modals/denomcash.html', 'modals/expense.html', 'modals/tableorder.html', 'modals/user.html', 'modals/customer.html', 'modals/supplier.html', 'modals/branch.html', 'modals/category_add.html', 'modules/branchEdit.html', 'modules/settings_write.html'];
+  const files = ['modules/units.html', 'modals/customer_category_add.html', 'modals/variant_add.html', 'modals/tax.html', 'modals/payment.html', 'modals/denomcash.html', 'modals/expense.html', 'modals/tableorder.html', 'modals/user.html', 'modals/customer.html', 'modals/supplier.html', 'modals/branch.html', 'modals/category_add.html', 'modules/branchEdit.html', 'modules/settings_write.html'];
   const dom = new JSDOM(files.map(p => read('frontend/' + p)).join('\n'), { runScripts: 'outside-only' });
   const w = dom.window;
   w.eval(read('frontend/static/script/js/jquery.min.js'));
@@ -120,5 +120,59 @@ test('email validation accepts plus addressing and long domains', () => {
   const validate=value=>methods.emailExt.call({optional:()=>false},value,{});
   for(const value of ['shop+123@example.com','owner@example.technology']) assert.equal(validate(value),true);
   for(const value of ['bad email@example.com','owner@@example.com','owner@example']) assert.equal(validate(value),false);
+  dom.window.close();
+});
+
+test('new branch exposes regional inputs and Units use a compact dialog', () => {
+  const {w,d,dom}=fixture();
+  w.eval(read('frontend/static/script/js/core/record-workspace.js')); w.PosnicPro.recordWorkspace.init();
+  for (const id of ['branch_currency','branch_timezone','branch_dateformat','branch_tax_number']) {
+    const input=d.getElementById(id); assert.equal(input.form.id,'branch_add_form');
+    assert.equal(input.closest('.record-form-panel').id,'branch_add_form-section-1');
+  }
+  assert.equal(d.getElementById('branch_tax_number').required,false);
+  assert.ok(d.getElementById('infobar-settings-sidebar-unit').classList.contains('record-dialog-small'));
+  dom.window.close();
+});
+test('unrelated checked settings cannot grant user permissions; error opens Access tab', () => {
+  const {w,d,dom}=fixture();
+  w.eval(read('frontend/static/script/js/core/record-workspace.js')); w.PosnicPro.recordWorkspace.init();
+  w.HTMLElement.prototype.scrollIntoView=function(){};
+  w.jQuery.fn.validate=function(){return this;}; w.jQuery.fn.valid=()=>true;
+  w.jQuery.validator={addMethod:()=>{}};
+  const source=read('frontend/static/script/js/modules/js/users.js');
+  const start=source.indexOf('    showPermissionError: function');
+  const end=source.indexOf('    clickApiForm:',start);
+  w.PosnicPro.users=w.eval('({' + source.slice(start,end) + '})');
+  let saves=0; w.PosnicPro.users.userForm=()=>saves++;
+  d.querySelectorAll('#user_form_upload input[type=checkbox]').forEach(n=>n.checked=false);
+  const outside=d.createElement('input'); outside.type='checkbox';outside.checked=true;outside.className='onoffswitch-checkbox';d.body.append(outside);
+  w.PosnicPro.users.clickNormalForm();
+  assert.equal(saves,0);
+  const error=d.getElementById('checkbox_error');
+  assert.match(error.textContent,/Permission/);assert.equal(error.closest('.record-form-panel').hidden,false);
+  d.getElementById('sales_read').checked=true;w.PosnicPro.users.clickNormalForm();assert.equal(saves,1);
+  dom.window.close();
+});
+test('optional branch registration validates using the selected country profile', () => {
+  const {w,d,dom}=fixture();const methods={};w.jQuery.validator={addMethod:(key,fn)=>methods[key]=fn};
+  const source=read('frontend/static/script/js/modules/js/settings.js');
+  w.eval(source.match(/jQuery.validator.addMethod\("branchTaxRegistration",[\s\S]*?\}, "Enter a valid tax registration number"\);/)[0]);
+  const field=d.getElementById('branch_gstin_number');
+  const validate=value=>methods.branchTaxRegistration(value,field);
+  w.jQuery(field).data('tax-regex','^[0-9]{15}$');assert.equal(validate(''),true);assert.equal(validate('bad'),false);assert.equal(validate('123456789012345'),true);
+  w.jQuery(field).data('tax-regex','');assert.equal(validate('GB-ABC-123'),true);
+  dom.window.close();
+});
+
+test('category swatches update every shape preview and clearing restores theme color', () => {
+  const {w,d,dom}=fixture();
+  const source=read('frontend/static/script/js/modules/js/categories.js');
+  const start=source.indexOf('    setCatTileColor:');const end=source.indexOf('    setCatTileShape:',start);
+  const methods=w.eval('({' + source.slice(start,end) + '})');
+  methods.setCatTileColor('#29a1df');
+  assert.equal(d.getElementById('category_tile_shapes').style.getPropertyValue('--record-shape-color'),'#29a1df');
+  assert.equal(d.getElementById('category_tile_color').value,'#29a1df');
+  methods.setCatTileColor('');assert.equal(d.getElementById('category_tile_shapes').style.getPropertyValue('--record-shape-color'),'var(--theme-primary-color)');
   dom.window.close();
 });

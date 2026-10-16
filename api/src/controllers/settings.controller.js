@@ -1260,7 +1260,7 @@ class SettingController extends BaseController {
   async getTaxProfile(req, res) {
     try {
       const settingModel = this.createModelWithContext(req);
-      const result = await settingModel.getTaxProfileModel();
+      const result = await settingModel.getTaxProfileModel(req.query?.country);
       const code = result.status ? 200 : 400;
       return res.status(code).json({
         type: result.status ? 'success' : 'error',

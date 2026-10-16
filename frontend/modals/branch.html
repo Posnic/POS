@@ -7,20 +7,81 @@
         </a>
     </div>
     <div class="infobar-settings-sidebar-body">
-        <div class="custom-mode-setting  loader-branch">            
-            <form id='branch_add_form'> 
+        <div class="custom-mode-setting  loader-branch">
+            <form id='branch_add_form'>
+<section id="branch_regional_fields"><h5><lang class="lang_record_regional">Regional & tax</lang></h5><div class="record-grid"><div class="form-group">
+                                    <label for="branch_currency">
+                                        <lang class="lang_currency_title">Currency </lang> <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-control" name="currency_text" id="branch_currency" required=""></select>
+
+
+                                </div><div class="form-group">
+                                    <label for="branch_currency_type">
+                                        <lang class="lang_choosesize_title">Currency Type</lang>
+                                    </label>
+                                    <select name="currency_type" id="branch_currency_type" class="form-control">
+                                    </select>
+                                </div><div class="form-group">
+                                    <label for="branch_timezone">
+                                        <lang class="lang_timezone_title">Time Zone </lang> <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-control" name="time_zone" id="branch_timezone" required=""></select>
+                                </div><div class="form-group">
+                                    <label for="branch_dateformat">
+                                        <lang class="lang_dateformat_title">Date Format </lang><span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-control" id="branch_dateformat" name="client_dateformat" required="">
+                                        <option name="01/01/2018" value="dd/mm/yyyy" data-id="d/m/Y"
+                                            selected><lang class="lang_01_01_2018_dd_mm_yyyy">01/01/2018 - dd/mm/yyyy</lang></option>
+                                        <option name="2018/01/01" value="yyyy/mm/dd" data-id="Y/m/d">
+                                            <lang class="lang_2018_01_01_yyyy_mm_dd">2018/01/01 - yyyy/mm/dd</lang></option>
+                                        <option name="01/01/2018" value="mm/dd/yyyy" data-id="m/d/Y">
+                                            <lang class="lang_01_01_2018_mm_dd_yyyy">01/01/2018 - mm/dd/yyyy</lang></option>
+                                        <option name="Sun 01/18" value="D mm/dd" data-id="D m/d"><lang class="lang_sun_01_18_day_mm_dd">Sun 01/18 -
+                                            Day mm/dd</lang></option>
+                                        <option name="January 01 2018" value="MM dd yyyy" data-id="M d y">
+                                            <lang class="lang_january_01_2018_mm_dd_yyyy">January 01 2018 - MM dd yyyy</lang></option>
+                                        <option name="01 January 18" value="d MM yy" data-id="d M y"><lang class="lang_01_january_18_d_mm_yy">01
+                                            January 18 - d MM yy</lang></option>
+                                        <option name="Thu 01 January 18" value="D d MM yy"
+                                            data-id="D d M y"><lang class="lang_thu_01_january_18_day_d_mm_yy">Thu 01 January 18 - Day d MM yy</lang></option>
+                                    </select>
+
+
+                                </div><div class="form-group">
+                                    <label for="branch_tax_number" data-toggle="tooltip" title="Gstrin number" data-t-title="lang_gstrin_number" class="label-text-color">
+                                        <lang class="lang_gstr_number">GSTIN Number</lang>
+                                    </label>
+                                    <input type="text" class="form-control" name="branch_gstin_number" id="branch_tax_number" maxlength="100" placeholder="Enter the GSTIN" data-t-placeholder="lang_enter_the_gstin" autocomplete="off">
+                                </div><div class="form-group">
+                                    <label for="branch_printing_address">
+                                        <lang class="lang_printadd_title">Printing Address </lang>
+                                    </label>
+                                    <textarea name="printing_address" class="form-control" id="branch_printing_address" minlength="3" maxlength="500" placeholder="Enter the print address" data-t-placeholder="lang_enter_the_print_address"></textarea>
+                                </div><div class="form-group">
+                                    <label for="branch_website">
+                                        <lang class="lang_website_title">Website </lang>
+                                    </label>
+                                    <input type="text" class="form-control" name="website" id="branch_website" minlength="3" maxlength="50" placeholder="Enter the website" data-t-placeholder="lang_enter_the_website" autocomplete="off">
+                                </div><div class="form-group">
+                                    <label for="branch_pincode">
+                                        <lang class="lang_pincode_title">Pincode </lang>
+                                    </label>
+                                    <input type="text" class="form-control" name="pincode" id="branch_pincode" maxlength="15" placeholder="Enter the pincode" data-t-placeholder="lang_enter_the_pincode" autocomplete="off">
+                                </div></div></section>
                 <div class="form-row">
                     <div class="form-group col-md-12">
                         <label  for="name_branch">
                             <lang class="lang_name_title"> Name </lang>
-                            <span class="text-danger">*</span> 
+                            <span class="text-danger">*</span>
                         </label>
                         <input type="text" class="form-control border-control branch-trigger" name="name" id="name_branch" minlength="3" maxlength="250" placeholder="Enter the name" data-t-placeholder="lang_enter_the_name" required>
                         <input type="hidden" name="id" id="branch_id">
                         <input type="hidden" name="logo" id="branch_logo">
                     </div>
                 </div>
-                <div class="form-row">                        
+                <div class="form-row">
                     <div class="form-group col-md-6">
                         <label for="branch_phone" class="control-label">
                             <lang class="lang_phone_title"> Phone </lang>
@@ -42,7 +103,7 @@
                             <lang class="lang_address_title"> Address </lang>
                             <span class="text-danger">*</span>
                         </label>
-                        <textarea name="address" id="branch_address" 
+                        <textarea name="address" id="branch_address"
                                   class="form-control border-control branch-trigger" minlength="3" maxlength="500" placeholder="Enter the address" data-t-placeholder="lang_enter_the_address"></textarea>
                     </div>
                 </div>
@@ -57,14 +118,14 @@
                     <div class="form-group col-md-6">
                         <label for="branch_state"><lang class="lang_state_title"> State </lang><span class="text-danger">*</span></label>
                         <select class="select2 setState" name="state" data-page="branch_state" id="branch_state" required></select>
-                    </div>                                                    
-                </div> 
+                    </div>
+                </div>
                 <div class="form-row"><div class="form-group col-md-12"><label for="branch_city"><lang class="lang_city_title">City</lang></label><input type="text" id="branch_city" name="city" class="form-control border-control branch-trigger" maxlength="50"></div></div>
-                <div class="form-row">                                                                            
+                <div class="form-row">
                     <div class="form-group col-8">
                         <label class="form-control-placeholder" for="register"><lang class="lang_addregister_title"> Add Register </lang> </label>
                         <div class="register-wrapper">
-                            <div class="register-fields"> 
+                            <div class="register-fields">
                                 <div class="register-input">
                                     <input type="text" id="register[0]" name="branchregister[0]" oninput="validate(this)" class="form-control border-control register_list branch-trigger" minlength="3" maxlength="20">
                                     <span class="remove-field btn-round btn-danger-rgba"><i class="feather icon-trash"></i></span>
@@ -160,7 +221,7 @@
         </a>
     </div>
     <div class="infobar-settings-sidebar-body">
-        <div class="custom-mode-setting loader-profile">            
+        <div class="custom-mode-setting loader-profile">
             <div class="slider-modal-body scroll_width">
                 <div class="row">
                     <div class="col-lg-6 col-sm-12" style="border-right:1px solid #ddd">
@@ -222,8 +283,8 @@
                             </table>
                         </div>
                     </div>
-                    
-                    
+
+
                     <div class="col-lg-6 col-sm-12" style="border-right:1px solid #ddd">
                         <div class="table-responsive">
                             <table class="table table-border table-striped mb-0">
@@ -277,8 +338,8 @@
                             </table>
                         </div>
                     </div>
-                    
-                    
+
+
                 </div>
             </div>
         </div>

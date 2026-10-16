@@ -1859,6 +1859,15 @@ PosnicPro.users = {
         }).join('');
         $('#users_api').val(apikey);
     },
+    showPermissionError: function () {
+        var error = $('#checkbox_error').text(PosnicPro.i18n.t('lang_permission_is_required', 'Permission is required')).addClass('error').attr({ role: 'alert', tabindex: '-1' }).show();
+        var access = $('#click_collapse').closest('.accordion');
+        access.prepend(error);
+        $('#user_form_upload').trigger('record-reveal', [error[0]]);
+        access.find('.collapse').addClass('show');
+        error[0].focus();
+        error[0].scrollIntoView({ block: 'nearest' });
+    },
     clickNormalForm: function () {
 
         $(".user_add").validate({
@@ -1953,12 +1962,12 @@ PosnicPro.users = {
             return this.optional(element) || /^[a-z\s]+$/i.test(value);
         }, "Use letters, numbers and spaces only");
         if ($('.user_add').valid()) {            // checks form for validity
-            var checked = $(".onoffswitch-checkbox:checked").length;
+            var checked = $("#user_form_upload .onoffswitch-checkbox[data-id]:checked, #user_form_upload .pos-action-box:checked").length;
             if (checked > 0) {
                 $("#checkbox_error").text("").removeClass('error');
                 PosnicPro.users.userForm();
             } else {
-                $("#checkbox_error").text("You must check at least 1 box").addClass('error');
+                PosnicPro.users.showPermissionError();
             }
         }
     },
@@ -1985,12 +1994,12 @@ PosnicPro.users = {
                 $("#users_api").css('border-color', 'rgb(249, 97, 109)').focus();
             } else {
                 $("#error_app_name,#error_users_api").hide();
-                var checked = $(".onoffswitch-checkbox:checked").length;
+                var checked = $("#user_form_upload .onoffswitch-checkbox[data-id]:checked, #user_form_upload .pos-action-box:checked").length;
                 if (checked > 0) {
                     $("#checkbox_error").text("").removeClass('error');
                     PosnicPro.users.userForm();
                 } else {
-                    $("#checkbox_error").text("You must check at least 1 box").addClass('error');
+                    PosnicPro.users.showPermissionError();
                 }
 
             }
@@ -2488,11 +2497,14 @@ $("#password_close").click(function (element, errorClass) {
 $("#clicksubmit").click(function () {
     var usertype = $("input[name='usertype']:checked").val();
     if (usertype !== 'api') {
-        $(".user_add").submit();
         PosnicPro.users.clickNormalForm();
     } else {
         PosnicPro.users.clickApiForm();
     }
+});
+$('#user_form_upload').on('submit.recordUser', function (event) {
+    event.preventDefault();
+    $('#clicksubmit').trigger('click');
 });
 $('#click_collapse').click(function () {
     $(this).find('#change_collapse_icon').toggleClass('feather icon-chevron-down feather icon-chevron-up');
