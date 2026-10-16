@@ -730,6 +730,7 @@
     <div class="wizard-container">
         <div class="wizard-header">
             <img src="../builds/512-posnic.png" alt="Posnic" class="wizard-logo">
+            <span class="setup-brand">Posnic</span>
             <p>Point of Sale that never goes down</p>
         </div>
 
@@ -804,6 +805,7 @@
                   <button type="button" class="simple-option" id="chooseLocalBtn"><strong>Set up offline</strong><small>Community edition. No cloud account needed.</small></button>
                 </div>
                 <div hidden><a id="signupLink"></a><a id="choosePairLink"></a></div>
+                <div class="setup-footer" aria-hidden="true"></div>
             </div>
 
             <div class="form-section" id="stepCloud" style="display:none;">
@@ -836,28 +838,27 @@
 
             <!-- Quick local setup: one form, everything else defaulted -->
             <div class="form-section" id="stepQuick" style="display: none;">
-                <h2>🏪 Set Up Your Shop</h2>
+                <h2>Create your offline shop</h2>
+                <p class="simple-intro">Your account and business data stay on this computer.</p>
                 <div class="form-group">
-                    <label>Business Name <span class="required">*</span></label>
+                    <label for="qBusinessName">Shop name</label>
                     <input type="text" id="qBusinessName" autocomplete="organization" placeholder="e.g. Sri Ganesh Stores">
-                </div>
-                <div class="form-group">
-                    <label>Business Address</label>
-                    <input type="text" id="qAddress" autocomplete="street-address" placeholder="Shop no, street, city (optional)">
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Your Email (login) <span class="required">*</span></label>
+                        <label for="qEmail">Login email</label>
                         <input type="email" id="qEmail" autocomplete="username">
                     </div>
                     <div class="form-group">
-                        <label>Password <span class="required">*</span></label>
+                        <label for="qPassword">Password</label>
                         <input type="password" id="qPassword" autocomplete="new-password" minlength="8" placeholder="Minimum 8 characters">
                     </div>
                 </div>
+                <details id="offlineDetails"><summary>Optional shop details</summary>
+                    <div class="form-group"><label for="qAddress">Business address</label><input type="text" id="qAddress" autocomplete="street-address" placeholder="Shop no, street, city"></div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Business Type</label>
+                        <label for="qBusinessType">Business type</label>
                         <select id="qBusinessType">
                             <option value="supermarket" selected>🛒 Supermarket / Kirana Store</option>
                             <option value="textile">🧵 Textile / Garment Shop</option>
@@ -868,22 +869,20 @@
                             <option value="icecream">🍦 Ice Cream Parlour</option>
                         </select>
                     </div>
-                    <div class="form-group" style="display:flex;align-items:end;">
+                    <div class="form-group" hidden>
                         <label style="display:flex;align-items:center;cursor:pointer;margin:0 0 10px 0;">
                             <input type="checkbox" id="qDemoData" style="width:18px;height:18px;margin-right:8px;cursor:pointer;">
                             Load sample data
                         </label>
                     </div>
                 </div>
+                </details>
                 <div id="qError" style="display:none;color:#dc3545;margin:8px 0;"></div>
+                <p class="setup-note">Starts empty, without demo data. You can connect to cloud later in Settings.</p>
                 <div class="btn-container">
-                    <button type="button" class="btn btn-secondary" id="qBackBtn">← Back</button>
-                    <button type="button" class="btn btn-primary" id="qCreateBtn">Create My Store →</button>
+                    <button type="button" class="btn btn-secondary" id="qBackBtn">Back</button>
+                    <button type="button" class="btn btn-primary" id="qCreateBtn">Create shop</button>
                 </div>
-                <p style="font-size:12px;color:#94a3b8;margin-top:14px;">
-                    Database security and daily backups are configured automatically.
-                    You can change any of this later in Settings.
-                </p>
             </div>
 
             <!-- Setup progress: staged, Windows-installer style -->
