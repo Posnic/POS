@@ -731,13 +731,14 @@
         <div class="wizard-header">
             <img src="../builds/512-posnic.png" alt="Posnic" class="wizard-logo">
             <span class="setup-brand">Posnic</span>
+            <button type="button" id="setupLaterBtn" title="Close setup. Open the desktop shortcut whenever you are ready.">Set up later <span aria-hidden="true">×</span></button>
             <p>Point of Sale that never goes down</p>
         </div>
 
         <div class="wizard-body">
             <div class="error-message" id="errorMessage"></div>
             <div class="success-message" id="successMessage"></div>
-            
+
             <div class="loading" id="loadingIndicator">
                 <div class="loading-spinner"></div>
                 <p>Setting up your account...</p>
@@ -749,10 +750,10 @@
                         <path d="M14 27l8 8 16-16"/>
                     </svg>
                 </div>
-                
+
                 <h1 class="success-title">🎉 Installation Complete!</h1>
                 <p class="success-subtitle">Your Posnic account has been created successfully</p>
-                
+
                 <div class="success-details">
                     <div class="success-detail-item">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -797,25 +798,60 @@
             <div class="form-section" id="stepExisting" style="display:none"><h2>Welcome back</h2><p class="simple-intro">Your shop is already on this computer.</p><div class="simple-shop"><strong>Existing shop</strong><small id="existingConnection"></small></div><p id="existingSyncNote"></p><button class="simple-link" id="showFresh" type="button">Start fresh instead</button><div class="btn-container"><button class="btn btn-primary" id="continueExisting" type="button">Continue with this shop</button></div></div>
             <div class="form-section" id="stepFresh" style="display:none"><h2>Start fresh on this computer</h2><p class="simple-intro">Replace the current business data. Your cloud data stays unchanged.</p><label class="simple-check"><input type="checkbox" id="freshKeepHardware" checked><span>Keep this computer’s hardware settings<small>Weighing scales, printers and kitchen screens.</small></span></label><p class="simple-note">We’ll save and verify a recovery copy before replacing your data. Any unsynced work stays in that copy and will not upload automatically.</p><div id="freshStatus" role="status" aria-live="polite"></div><div class="btn-container"><button class="btn btn-secondary" id="freshBack" type="button">Back</button><button class="btn btn-primary" id="startFresh" type="button">Save recovery copy &amp; continue</button></div></div>
             <!-- Cloud enrollment is separate from everyday local staff login. -->
-            <div class="form-section" id="step0" style="display:block;">
-                <h2>Let’s set up your shop</h2>
-                <p class="simple-intro">Choose how you want to get started.</p>
-                <div class="simple-options">
-                  <button type="button" class="simple-option" id="chooseCloudBtn"><strong>Connect to cloud</strong><small>Sign in to your shop. Work offline after setup.</small></button>
-                  <button type="button" class="simple-option" id="chooseLocalBtn"><strong>Set up offline</strong><small>Community edition. No cloud account needed.</small></button>
-                </div>
-                <div hidden><a id="signupLink"></a><a id="choosePairLink"></a></div>
-                <div class="setup-footer" aria-hidden="true"></div>
-            </div>
+<div class="form-section setup-design" id="step0" style="display: block;">
+<h2>How would you like to use Posnic?</h2>
+<p class="intro">Choose the setup that suits your shop.</p>
+<div class="choices simple-options">
+<section class="option cloud">
+<div class="graphic" aria-label="Your till connects to the cloud and can also work offline">
+<span class="device"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="monitor-check" aria-hidden="true" class="lucide lucide-monitor-check"><path d="m9 10 2 2 4-4"></path><rect width="20" height="14" x="2" y="3" rx="2"></rect><path d="M12 17v4"></path><path d="M8 21h8"></path></svg>Your till</span><span class="sync"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-left-right" aria-hidden="true" class="lucide lucide-arrow-left-right"><path d="M8 3 4 7l4 4"></path><path d="M4 7h16"></path><path d="m16 21 4-4-4-4"></path><path d="M20 17H4"></path></svg></span><span class="device"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="cloud" aria-hidden="true" class="lucide lucide-cloud"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>Your cloud</span>
+</div>
+<h2>Cloud connected</h2>
+<div class="mode"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="wifi" aria-hidden="true" class="lucide lucide-wifi"><path d="M12 20h.01"></path><path d="M2 8.82a15 15 0 0 1 20 0"></path><path d="M5 12.859a10 10 0 0 1 14 0"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path></svg>Works online &amp; offline</div>
+<p class="description">Keep selling with or without internet. Your till syncs when the connection returns.</p>
+<ul class="features">
+<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="wifi-off" aria-hidden="true" class="lucide lucide-wifi-off"><path d="M12 20h.01"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path><path d="M5 12.859a10 10 0 0 1 5.17-2.69"></path><path d="M19 12.859a10 10 0 0 0-2.007-1.523"></path><path d="M2 8.82a15 15 0 0 1 4.177-2.643"></path><path d="M22 8.82a15 15 0 0 0-11.288-3.764"></path><path d="m2 2 20 20"></path></svg><span><strong>Keep selling offline</strong><small>No internet? Your till still works.</small></span></li>
+<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="refresh-cw" aria-hidden="true" class="lucide lucide-refresh-cw"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg><span><strong>Sync when connected</strong><small>Updates sync when internet returns.</small></span></li>
+<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="monitor-smartphone" aria-hidden="true" class="lucide lucide-monitor-smartphone"><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8"></path><path d="M10 19v-3.96 3.15"></path><path d="M7 19h5"></path><rect width="6" height="10" x="16" y="12" rx="2"></rect></svg><span><strong>Access your shop online</strong><small>View your shop from other devices.</small></span></li>
+</ul>
+<p class="provider">Use <strong>Posnic Cloud</strong> or <strong>your own server</strong>.<br>Internet needed for the first connection.</p>
+<button class="primary cursor-interaction" id="chooseCloudBtn" type="button">Connect to cloud <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" aria-hidden="true" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button>
+</section>
+<section class="option local">
+<div class="graphic" aria-label="Business data stays on this computer">
+<span class="device"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="monitor" aria-hidden="true" class="lucide lucide-monitor"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg>Your till</span><span class="sync"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" aria-hidden="true" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></span><span class="device"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="hard-drive" aria-hidden="true" class="lucide lucide-hard-drive"><path d="M10 16h.01"></path><path d="M2.212 11.577a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path><path d="M21.946 12.013H2.054"></path><path d="M6 16h.01"></path></svg>Saved here</span>
+</div>
+<h2>Community edition</h2>
+<div class="mode"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="wifi-off" aria-hidden="true" class="lucide lucide-wifi-off"><path d="M12 20h.01"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path><path d="M5 12.859a10 10 0 0 1 5.17-2.69"></path><path d="M19 12.859a10 10 0 0 0-2.007-1.523"></path><path d="M2 8.82a15 15 0 0 1 4.177-2.643"></path><path d="M22 8.82a15 15 0 0 0-11.288-3.764"></path><path d="m2 2 20 20"></path></svg>Offline only</div>
+<p class="description">Run your shop on this computer. No internet connection or cloud account needed.</p>
+<ul class="features">
+<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="wifi-off" aria-hidden="true" class="lucide lucide-wifi-off"><path d="M12 20h.01"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path><path d="M5 12.859a10 10 0 0 1 5.17-2.69"></path><path d="M19 12.859a10 10 0 0 0-2.007-1.523"></path><path d="M2 8.82a15 15 0 0 1 4.177-2.643"></path><path d="M22 8.82a15 15 0 0 0-11.288-3.764"></path><path d="m2 2 20 20"></path></svg><span><strong>No internet needed</strong><small>Set up and sell entirely offline.</small></span></li>
+<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="hard-drive" aria-hidden="true" class="lucide lucide-hard-drive"><path d="M10 16h.01"></path><path d="M2.212 11.577a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path><path d="M21.946 12.013H2.054"></path><path d="M6 16h.01"></path></svg><span><strong>Data stays on this computer</strong><small>Sales, products and customers saved here.</small></span></li>
+<li><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="archive-restore" aria-hidden="true" class="lucide lucide-archive-restore"><rect width="20" height="5" x="2" y="3" rx="1"></rect><path d="M4 8v11a2 2 0 0 0 2 2h2"></path><path d="M20 8v11a2 2 0 0 1-2 2h-2"></path><path d="m9 15 3-3 3 3"></path><path d="M12 12v9"></path></svg><span><strong>You manage your backups</strong><small>Save a copy to keep your data safe.</small></span></li>
+</ul>
+<p class="provider"><strong>No cloud sync</strong> between devices.<br>No online access to your shop.</p>
+<button class="cursor-interaction" id="chooseLocalBtn" type="button">Set up offline <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" aria-hidden="true" class="lucide lucide-arrow-right"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button>
+</section>
+</div>
+<div hidden=""><a id="signupLink"></a><a id="choosePairLink"></a></div><div class="setup-footer" aria-hidden="true"></div></div>
 
-            <div class="form-section" id="stepCloud" style="display:none;">
-                <h2>Connect to Posnic Cloud</h2>
-                <p class="simple-intro">Sign in in your browser, then approve this computer.</p>
-                <button type="button" class="btn btn-primary" id="browserSignInBtn" style="width:100%">Sign in with Posnic in browser</button>
-                <a href="#" id="cloudSignupLink" class="mode-link" style="display:block;margin-top:12px">New to Posnic? Create a cloud account</a>
+            <div class="form-section setup-design connect" id="stepCloud" style="display:none;">
+<button class="back cursor-interaction" id="cloudBackBtn" type="button"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-left" aria-hidden="true" class="lucide lucide-arrow-left"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>Back</button><div class="cloud-welcome">
+<div class="cloud-emblem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="cloud" aria-hidden="true" class="lucide lucide-cloud"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg></div>
+<p class="cloud-wordmark">Posnic Cloud</p>
+<h2>Your shop. Connected.</h2>
+<p class="note">Connect this till to your shop and keep selling online or offline.</p>
+</div><div class="account-panel">
+<p class="account-label">Already have a Posnic account?</p>
+<button class="primary cursor-interaction" id="browserSignInBtn" type="button">Sign in with browser <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-up-right" aria-hidden="true" class="lucide lucide-arrow-up-right"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></button>
+<p class="account-help">Sign in securely, then approve this computer.</p>
+<div class="account-divider">New to Posnic?</div>
+<button class="trial cursor-interaction" id="cloudSignupLink" type="button"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="user-plus" aria-hidden="true" class="lucide lucide-user-plus"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" x2="19" y1="8" y2="14"></line><line x1="22" x2="16" y1="11" y2="11"></line></svg>Create account &amp; start trial</button>
+<p class="account-help">Create your account and approve this computer.<br>Setup continues here automatically.</p>
+</div>
                 <div id="browserWait" style="display:none;margin:16px 0" role="status" aria-live="polite"><p>Finish approval in your browser. Setup will continue here automatically.</p><div class="btn-container"><button type="button" class="btn btn-secondary" id="reopenBrowserBtn">Open browser again</button><button type="button" class="btn btn-secondary" id="cancelBrowserBtn">Cancel</button></div></div>
                 <input type="hidden" id="cloudServer" value="https://gateway.posnic.com">
-                <details id="pairDetails"><summary>Use a pairing code instead</summary><div class="form-group" id="pairRow"><label for="pairCode">Code from your shop owner</label><input type="text" id="pairCode" placeholder="Enter pairing code" autocomplete="off"><button type="button" class="btn btn-secondary" id="pairBtn">Pair this computer</button></div></details>
+                <details id="pairDetails"><summary>Use a pairing code instead</summary><div class="form-group" id="pairRow"><label for="pairServer">Server address</label><input type="url" id="pairServer" value="https://gateway.posnic.com" required autocomplete="off"><p class="field-hint">Already filled for Posnic Cloud. For your own server, use the address supplied with your code.</p><label for="pairCode">Code from your shop owner</label><input type="text" id="pairCode" placeholder="Enter pairing code" autocomplete="off"><button type="button" class="btn btn-secondary" id="pairBtn">Pair this computer</button></div></details>
                 <details id="customServerDetails"><summary>Connect to a custom server</summary><div class="form-group"><label for="cloudServerVisible">Server URL</label><input type="url" id="cloudServerVisible" placeholder="https://your-server.com" required autocomplete="off"><div class="field-hint">Use the address provided by your administrator.</div></div><button type="button" id="customServerBtn" class="btn btn-secondary">Continue with this server</button></details>
                 <div hidden><a id="cloudServerToggle"></a><div id="cloudServerRow"></div><input id="cloudEmail"><input id="cloudPassword" type="password"><button id="cloudConnectBtn"></button></div>
                 <div id="cloudError" role="alert" style="display:none;color:#b91c1c;margin:12px 0;"></div>
@@ -832,29 +868,31 @@
                     <div style="background:#eef0f7;border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px;"><div id="cloudProgBar" style="height:100%;width:2%;background:#3D85C6;transition:width .6s ease;"></div></div>
                     <div class="mode-progress-text" id="cloudProgressText">Connecting…</div><div id="cloudProgressSub" class="field-hint"></div>
                 </div>
-                <p class="field-hint">After the first download, your staff can sign in and sell offline. Cloud and local shops are never merged automatically.</p>
-                <div class="btn-container"><button type="button" class="btn btn-secondary" id="cloudBackBtn">Back</button></div>
+                <div class="offline-assurance"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="wifi-off" aria-hidden="true" class="lucide lucide-wifi-off"><path d="M12 20h.01"></path><path d="M8.5 16.429a5 5 0 0 1 7 0"></path><path d="M5 12.859a10 10 0 0 1 5.17-2.69"></path><path d="M19 12.859a10 10 0 0 0-2.007-1.523"></path><path d="M2 8.82a15 15 0 0 1 4.177-2.643"></path><path d="M22 8.82a15 15 0 0 0-11.288-3.764"></path><path d="m2 2 20 20"></path></svg><span>Internet drops? Keep selling after setup. Your till syncs when you're connected again.</span></div>
+
             </div>
 
             <!-- Quick local setup: one form, everything else defaulted -->
             <div class="form-section" id="stepQuick" style="display: none;">
                 <h2>Create your offline shop</h2>
                 <p class="simple-intro">Your account and business data stay on this computer.</p>
-                <div class="form-group">
-                    <label for="qBusinessName">Shop name</label>
-                    <input type="text" id="qBusinessName" autocomplete="organization" placeholder="e.g. Sri Ganesh Stores">
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="qEmail">Login email</label>
-                        <input type="email" id="qEmail" autocomplete="username">
-                    </div>
-                    <div class="form-group">
-                        <label for="qPassword">Password</label>
-                        <input type="password" id="qPassword" autocomplete="new-password" minlength="8" placeholder="Minimum 8 characters">
-                    </div>
-                </div>
-                <details id="offlineDetails"><summary>Optional shop details</summary>
+<div class="quick-grid">
+<div class="form-group"><label for="qBusinessName">Shop name *</label><input id="qBusinessName" autocomplete="organization" placeholder="e.g. Sri Ganesh Stores" required></div>
+<div class="form-group"><label for="qEmail">Login email *</label><input type="email" id="qEmail" autocomplete="username" required></div>
+<div class="form-group"><label for="qPassword">Password *</label><input type="password" id="qPassword" autocomplete="new-password" minlength="8" placeholder="Minimum 8 characters" required></div>
+<div class="form-group"><label for="qConfirmPassword">Confirm password *</label><input type="password" id="qConfirmPassword" autocomplete="new-password" placeholder="Re-enter password" required></div>
+</div>
+<section class="setup-region" aria-labelledby="regionTitle">
+<h3 id="regionTitle">Location &amp; regional settings</h3>
+<p class="field-hint" id="qRegionHint">Check these details for your shop. Device suggestions can be changed.</p>
+<div class="region-grid">
+<div class="form-group"><label for="qCountry">Country *</label><select id="qCountry" required><option value="">Select country</option></select></div>
+<div class="form-group"><label for="qState">State / province</label><input id="qState" list="qStateList" autocomplete="address-level1"><datalist id="qStateList"></datalist></div>
+<div class="form-group"><label for="qCity">City / town *</label><input id="qCity" required autocomplete="address-level2"></div>
+</div><div class="quick-grid"><div class="form-group"><label for="qCurrency">Currency *</label><select id="qCurrency" required><option value="">Select currency</option></select></div>
+<div class="form-group"><label for="qTimezone">Timezone *</label><input id="qTimezone" list="qTimezoneList" required placeholder="e.g. Asia/Kolkata"><datalist id="qTimezoneList"></datalist></div>
+</div></section>
+<section id="offlineDetails" aria-label="Shop details">
                     <div class="form-group"><label for="qAddress">Business address</label><input type="text" id="qAddress" autocomplete="street-address" placeholder="Shop no, street, city"></div>
                 <div class="form-row">
                     <div class="form-group">
@@ -869,16 +907,16 @@
                             <option value="icecream">🍦 Ice Cream Parlour</option>
                         </select>
                     </div>
-                    <div class="form-group" hidden>
+                    <div class="form-group">
                         <label style="display:flex;align-items:center;cursor:pointer;margin:0 0 10px 0;">
                             <input type="checkbox" id="qDemoData" style="width:18px;height:18px;margin-right:8px;cursor:pointer;">
-                            Load sample data
+                            Load demo products for this business type
                         </label>
                     </div>
                 </div>
-                </details>
-                <div id="qError" style="display:none;color:#dc3545;margin:8px 0;"></div>
-                <p class="setup-note">Starts empty, without demo data. You can connect to cloud later in Settings.</p>
+                </section>
+                <div id="qError" role="alert" style="display:none;color:#dc3545;margin:8px 0;"></div>
+                <p class="setup-note">Leave demo data unchecked to start empty. Review your country, currency and tax settings before your first sale.</p>
                 <div class="btn-container">
                     <button type="button" class="btn btn-secondary" id="qBackBtn">Back</button>
                     <button type="button" class="btn btn-primary" id="qCreateBtn">Create shop</button>
@@ -919,7 +957,7 @@
                 <!-- Step 1: User Account Section -->
                 <div class="form-section" id="step1" style="display: none;">
                     <h2>👤 Admin Account (Step 1 of 4)</h2>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label>First Name <span class="required">*</span></label>
@@ -987,7 +1025,7 @@
                 <!-- Step 2: Store Details Section -->
                 <div class="form-section" id="step2" style="display: none;">
                     <h2>🏪 Store Details (Step 2 of 4)</h2>
-                    
+
                     <div class="form-group">
                         <label>Store/Branch Name <span class="required">*</span></label>
                         <input type="text" id="branchName" name="branchName" required>
@@ -1027,11 +1065,11 @@
                         <div class="help-text" style="margin-left: 30px; margin-bottom: 15px;">
                             Start with pre-configured products and categories for your business type
                         </div>
-                        
+
                         <!-- Business Type Selection -->
                         <div id="businessTypeSection" style="display: none; margin-left: 30px; margin-top: 15px;">
                             <label style="font-weight: 600; margin-bottom: 10px; display: block;">Select Your Business Type:</label>
-                            
+
                             <div style="display: flex; flex-direction: column; gap: 12px;">
                                 <label class="business-type-option" style="display: flex; align-items: center; padding: 12px; background: white; border: 2px solid #dee2e6; border-radius: 6px; cursor: pointer; transition: all 0.3s;">
                                     <input type="radio" name="businessType" value="icecream" style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
@@ -1040,7 +1078,7 @@
                                         <div style="font-size: 13px; color: #6c757d; margin-top: 3px;">Ice cream flavors, toppings, cones, sundaes (15 products)</div>
                                     </div>
                                 </label>
-                                
+
                                 <label class="business-type-option" style="display: flex; align-items: center; padding: 12px; background: white; border: 2px solid #dee2e6; border-radius: 6px; cursor: pointer; transition: all 0.3s;">
                                     <input type="radio" name="businessType" value="cafe" style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
                                     <div>
@@ -1048,7 +1086,7 @@
                                         <div style="font-size: 13px; color: #6c757d; margin-top: 3px;">Coffee, beverages, snacks, groceries (15 products)</div>
                                     </div>
                                 </label>
-                                
+
                                 <label class="business-type-option" style="display: flex; align-items: center; padding: 12px; background: white; border: 2px solid #dee2e6; border-radius: 6px; cursor: pointer; transition: all 0.3s;">
                                     <input type="radio" name="businessType" value="bakery" style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
                                     <div>
@@ -1073,11 +1111,11 @@
                 <!-- Step 3: Database Security Section -->
                 <div class="form-section" id="step3" style="display: none;">
                     <h2>🔐 Database Security (Step 3 of 4)</h2>
-                    
+
                     <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
                         <div style="font-weight: 600; color: #856404; margin-bottom: 5px;">⚠️ Important Security Setup</div>
                         <div style="font-size: 13px; color: #856404;">
-                            Create a secure MongoDB admin user to protect your data. 
+                            Create a secure MongoDB admin user to protect your data.
                             Only this user will be able to access the database.
                         </div>
                     </div>
@@ -1149,11 +1187,11 @@
                 <!-- Step 4: Backup Configuration Section -->
                 <div class="form-section" id="step4" style="display: none;">
                     <h2>💾 Backup Configuration (Step 4 of 4)</h2>
-                    
+
                     <div style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
                         <div style="font-weight: 600; color: #0c5460; margin-bottom: 5px;">💡 Why Backups?</div>
                         <div style="font-size: 13px; color: #0c5460;">
-                            Configure automatic backups to protect your business data. 
+                            Configure automatic backups to protect your business data.
                             Backups run silently in the background and skip duplicates to save space.
                             You can restore any backup if data gets corrupted.
                         </div>
@@ -1233,7 +1271,7 @@
     </div>
 
     <script>
-        
+
         /*
          * This machine's own setup credentials.
          *
@@ -1269,14 +1307,14 @@ const form = document.getElementById('installForm');
                 number: /[0-9]/.test(password),
                 special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
             };
-            
+
             // Update requirement indicators
             document.getElementById('req-length').classList.toggle('met', requirements.length);
             document.getElementById('req-uppercase').classList.toggle('met', requirements.uppercase);
             document.getElementById('req-lowercase').classList.toggle('met', requirements.lowercase);
             document.getElementById('req-number').classList.toggle('met', requirements.number);
             document.getElementById('req-special').classList.toggle('met', requirements.special);
-            
+
             // Update checkmark/cross icons
             Object.keys(requirements).forEach(key => {
                 const element = document.getElementById(`req-${key}`);
@@ -1287,7 +1325,7 @@ const form = document.getElementById('installForm');
                     svg.setAttribute('d', 'M6 18L18 6M6 6l12 12');
                 }
             });
-            
+
             // Calculate strength
             const metCount = Object.values(requirements).filter(Boolean).length;
             passwordStrengthBar.className = 'password-strength-bar';
@@ -1298,10 +1336,10 @@ const form = document.getElementById('installForm');
             } else {
                 passwordStrengthBar.classList.add('strong');
             }
-            
+
             return Object.values(requirements).every(Boolean);
         }
-        
+
         // Real-time password validation
         passwordInput.addEventListener('input', (e) => {
             validatePassword(e.target.value);
@@ -1316,7 +1354,7 @@ const form = document.getElementById('installForm');
         const prevBtn3 = document.getElementById('prevBtn3');
         const countrySelect = document.getElementById('country');
         const stateSelect = document.getElementById('state');
-        
+
         // Database password elements
         const dbPasswordInput = document.getElementById('dbPassword');
         const dbPasswordConfirmInput = document.getElementById('dbPasswordConfirm');
@@ -1380,7 +1418,11 @@ const form = document.getElementById('installForm');
                 goToLogin();
             };
         }
-        document.getElementById('chooseLocalBtn').addEventListener('click', () => showSection('stepQuick'));
+        document.getElementById('chooseLocalBtn').addEventListener('click', () => {
+            document.querySelector('#stepQuick h2').textContent = 'Create your offline shop';
+            document.querySelector('#stepQuick .simple-intro').textContent = 'Your account and business data stay on this computer.';
+            showSection('stepQuick');
+        });
         document.getElementById('qBackBtn').addEventListener('click', () => showSection('step0'));
 
         // ------------------------------------------------------------------
@@ -1493,6 +1535,8 @@ const form = document.getElementById('installForm');
             const qError = document.getElementById('qError');
             qError.style.display = 'none';
 
+            if (!window.PosnicSetupRegion.validate()) return;
+            const region = window.PosnicSetupRegion.values();
             const businessName = document.getElementById('qBusinessName').value.trim();
             const address = document.getElementById('qAddress').value.trim();
             const email = document.getElementById('qEmail').value.trim();
@@ -1540,12 +1584,7 @@ const form = document.getElementById('installForm');
                 register_companyname: businessName,
                 register_address: address,
                 register_fullnumber: '',
-                register_country: 'India',
-                register_countryid: '',
-                register_state: '',
-                register_timezone: 'Asia/Kolkata',
-                register_city: '',
-                register_pincode: '',
+                ...region,
                 register_license: qObjectId(),
                 register_demo: demoData,
                 businessType: businessType || '',
@@ -1636,8 +1675,10 @@ const form = document.getElementById('installForm');
                 document.getElementById('cloudError').style.display = 'block';
                 return;
             }
+            const server = document.getElementById('pairServer');
+            if (!server.reportValidity()) return;
             await runCloudSetup(() => window.electronAPI.cloud.pair({
-                serverUrl: document.getElementById('cloudServer').value.trim(), code,
+                serverUrl: server.value.trim(), code,
             }));
         });
 
@@ -1697,6 +1738,7 @@ const form = document.getElementById('installForm');
             window.showCloudConflict(null);
             btn.disabled = backBtn.disabled = pairBtn.disabled = true;
             document.getElementById('browserSignInBtn').disabled = true;
+            document.getElementById('cloudSignupLink').disabled = true;
             document.getElementById('customServerBtn').disabled = true;
             document.getElementById('browserWait').style.display = browser && !resumeCloudDownload ? 'block' : 'none';
             errorBox.style.display = 'none';
@@ -1707,6 +1749,7 @@ const form = document.getElementById('installForm');
                 clearTimeout(poll);
                 btn.disabled = backBtn.disabled = pairBtn.disabled = false;
                 document.getElementById('browserSignInBtn').disabled = false;
+                document.getElementById('cloudSignupLink').disabled = false;
                 document.getElementById('customServerBtn').disabled = false;
                 document.getElementById('browserWait').style.display = 'none';
                 progress.style.display = 'none';
@@ -1745,18 +1788,11 @@ const form = document.getElementById('installForm');
                     if (data.users === 0) {
                         progress.style.display = 'none';
                         btn.disabled = false;
-                        errorBox.style.color = '#475569';
-                        errorBox.innerHTML =
-                            'Connected! Your cloud account doesn&#39;t have a store yet. ' +
-                            'Set up your store now, everything will sync to your cloud account automatically.';
-                        errorBox.style.display = 'block';
-                        document.getElementById('cloudConnectBtn').style.display = 'none';
-                        // This button becomes the only way forward, so it has
-                        // to come back out of the disabled state above.
                         backBtn.disabled = false;
-                        backBtn.textContent = 'Set Up My Store →';
-                        backBtn.className = 'btn btn-primary';
-                        backBtn.onclick = () => showSection('stepQuick');
+                        // Continue directly to shop creation for a new cloud account.
+                        document.querySelector('#stepQuick h2').textContent = 'Set up your cloud shop';
+                        document.querySelector('#stepQuick .simple-intro').textContent = 'Create your shop and staff login. Your data will sync to your connected cloud account.';
+                        showSection('stepQuick');
                         return;
                     }
                     progressText.textContent = '✅ All data downloaded. Opening login…';
@@ -1818,7 +1854,7 @@ const form = document.getElementById('installForm');
                 const response = await fetch(`${API_BASE}/api/setting/getJSONCountry?name=countries`);
                 const result = await response.json();
                 console.log('Countries API response:', result);
-                
+
                 // API returns {data: {countries: [...]}}
                 const data = result.data || result;
                 countriesData = data.countries || [];
@@ -1852,12 +1888,12 @@ const form = document.getElementById('installForm');
                 const response = await fetch(`${API_BASE}/api/setting/getJSONState?id=${countryId}`);
                 const result = await response.json();
                 console.log('States API response:', result);
-                
+
                 // API returns {data: {stateJsonArray: [...]}}
                 const data = result.data || result;
                 const states = data.stateJsonArray || data.states || [];
                 console.log('States array:', states, 'Length:', states.length);
-                
+
                 stateSelect.innerHTML = '<option value="">Select State</option>';
                 states.forEach((state, index) => {
                     const option = document.createElement('option');
@@ -1939,14 +1975,14 @@ const form = document.getElementById('installForm');
             const selectedOption = e.target.options[e.target.selectedIndex];
             const countryId = selectedOption.dataset.countryId;
             const countryName = e.target.value;
-            
+
             console.log('Country changed:', countryName, 'Country ID:', countryId);
-            
+
             // Auto-set timezone based on country
             const timezone = countryTimezones[countryName] || 'Asia/Kolkata';
             document.getElementById('timezone').value = timezone;
             console.log('Timezone auto-set to:', timezone);
-            
+
             if (countryId) {
                 loadStates(countryId);
             } else {
@@ -1957,7 +1993,7 @@ const form = document.getElementById('installForm');
         // Demo data checkbox toggle
         const loadDemoDataCheckbox = document.getElementById('loadDemoData');
         const businessTypeSection = document.getElementById('businessTypeSection');
-        
+
         loadDemoDataCheckbox.addEventListener('change', (e) => {
             if (e.target.checked) {
                 businessTypeSection.style.display = 'block';
@@ -2003,7 +2039,7 @@ const form = document.getElementById('installForm');
             step1.style.display = 'none';
             step2.style.display = 'block';
             window.scrollTo(0, 0);
-            
+
             // Load countries and states when step 2 is shown
             if (countriesData.length === 0) {
                 await loadCountriesAndStates();
@@ -2027,14 +2063,14 @@ const form = document.getElementById('installForm');
                 number: /[0-9]/.test(password),
                 special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
             };
-            
+
             // Update requirement indicators
             document.getElementById('db-req-length').classList.toggle('met', requirements.length);
             document.getElementById('db-req-uppercase').classList.toggle('met', requirements.uppercase);
             document.getElementById('db-req-lowercase').classList.toggle('met', requirements.lowercase);
             document.getElementById('db-req-number').classList.toggle('met', requirements.number);
             document.getElementById('db-req-special').classList.toggle('met', requirements.special);
-            
+
             // Update checkmark/cross icons
             Object.keys(requirements).forEach(key => {
                 const element = document.getElementById(`db-req-${key}`);
@@ -2047,7 +2083,7 @@ const form = document.getElementById('installForm');
                     }
                 }
             });
-            
+
             // Calculate strength
             const metCount = Object.values(requirements).filter(Boolean).length;
             dbPasswordStrengthBar.className = 'password-strength-bar';
@@ -2058,10 +2094,10 @@ const form = document.getElementById('installForm');
             } else {
                 dbPasswordStrengthBar.classList.add('strong');
             }
-            
+
             return Object.values(requirements).every(Boolean);
         }
-        
+
         // Real-time DB password validation
         dbPasswordInput.addEventListener('input', (e) => {
             validateDBPassword(e.target.value);
@@ -2074,7 +2110,7 @@ const form = document.getElementById('installForm');
                 }
             }
         });
-        
+
         // Check passwords match on confirm input
         dbPasswordConfirmInput.addEventListener('input', (e) => {
             if (e.target.value !== dbPasswordInput.value) {
@@ -2226,16 +2262,16 @@ const form = document.getElementById('installForm');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             // Hide messages
             errorMessage.style.display = 'none';
             successMessage.style.display = 'none';
-            
+
             // Get form data - use email as username
             const email = document.getElementById('email').value.trim();
             const countryElement = document.getElementById('country');
             const selectedOption = countryElement.options[countryElement.selectedIndex];
-            
+
             // Generate a valid MongoDB ObjectId (24 hex characters)
             const generateObjectId = () => {
                 const timestamp = Math.floor(Date.now() / 1000).toString(16).padStart(8, '0');
@@ -2245,16 +2281,16 @@ const form = document.getElementById('installForm');
                 const counter = Array(6).fill(0).map(randomHex).join('');
                 return timestamp + machineId + processId + counter;
             };
-            
+
             // Get demo data settings
             const loadDemoData = document.getElementById('loadDemoData').checked;
             const businessType = loadDemoData ? document.querySelector('input[name="businessType"]:checked')?.value : null;
-            
+
             // Get database credentials
             const dbUsername = document.getElementById('dbUsername').value;
             const dbPassword = document.getElementById('dbPassword').value;
             const dbPasswordConfirm = document.getElementById('dbPasswordConfirm').value;
-            
+
             // Get backup configuration
             const backupConfig = {
                 enabled: backupEnabled.checked,
@@ -2264,7 +2300,7 @@ const form = document.getElementById('installForm');
                 dayOfWeek: parseInt(backupDayOfWeek.value, 10),
                 retentionDays: parseInt(backupRetention.value, 10) || 30
             };
-            
+
             // The API refuses the setup call without this machine's own key.
             await qInstallCreds();
 
@@ -2344,13 +2380,13 @@ const form = document.getElementById('installForm');
                 errorMessage.style.display = 'block';
                 return;
             }
-            
+
             if (!validateDBPassword(dbPassword)) {
                 errorMessage.textContent = 'Database password does not meet security requirements';
                 errorMessage.style.display = 'block';
                 return;
             }
-            
+
             if (dbPassword !== dbPasswordConfirm) {
                 errorMessage.textContent = 'Database passwords do not match';
                 errorMessage.style.display = 'block';
@@ -2409,7 +2445,7 @@ const form = document.getElementById('installForm');
                         console.warn('⚠️ Failed to save backup config:', bcErr);
                         // Don't block installation success on backup config save failure
                     }
-                    
+
                     loadingIndicator.style.display = 'none';
                     finishInstallation(result.data);
                 } else {
@@ -2460,6 +2496,8 @@ const form = document.getElementById('installForm');
             button.click();
         });
     </script>
+<script src="setup-region-data.js"></script>
+<script src="setup-region.js"></script>
 <script src="simple-setup.js"></script>
 </body>
 </html>

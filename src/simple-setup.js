@@ -2,6 +2,12 @@
 // The installer marks manual installs/updates, not ordinary daily launches.
 // Setup never infers cloud deletion from a missing record or copies a profile
 // from another device. The existing sync agent remains responsible for sync.
+// Setup is post-install configuration. Closing uses the normal window action,
+// never uninstall, reset, or rollback; the desktop shortcut opens it again.
+document.getElementById('setupLaterBtn')?.addEventListener('click', async () => {
+  try { await window.electronAPI?.cloud?.cancelAuthorization?.(); }
+  finally { await window.electronAPI?.window?.close?.(); }
+});
 (async () => {
   const api = window.electronAPI?.install;
   if (!api?.state) return;
