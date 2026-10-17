@@ -4729,5 +4729,22 @@
   "lang_print_mode_fast": "Admháil tapa",
   "lang_print_mode_help": "Fast úsáideann leagan amach téacs caighdeánach Úsáideann grafaicí nó téacs gan tacaíocht Dearadh cruinn.",
   "lang_print_sample": "Priontáil sampla",
-  "lang_print_test_submitted": "Tástáil curtha isteach. Seiceáil an páipéar ag an printéir."
+  "lang_print_test_submitted": "Tástáil curtha isteach. Seiceáil an páipéar ag an printéir.",
+  "lang_rooms": "Seomraí",
+  "lang_room_number": "Uimhir an tseomra",
+  "lang_room_order": "Ordú seomra",
+  "lang_room_service_charge": "Táille seirbhíse seomra",
+  "lang_room_charge_agreement": "D'aontaigh aoi leis an táille bhreise seo",
+  "lang_room_destination_required": "Roghnaigh ionad agus cuir isteach uimhir an tseomra.",
+  "lang_room_charge_tax_unavailable": "Níl an cháin muirear seomra ar fáil. Athbhreithnigh na socruithe cánach",
+  "lang_staff_room_orders": "Lig orduithe seomra foirne",
+  "lang_staff_room_prices": "Úsáideann orduithe seomra foirne gnáth-phraghsanna Tá marcáil roghchlár gréasáin agus coimisiún ionaid ar leithligh.",
+  "lang_room_charge_offer": "Táille seomra breise a thairiscint",
+  "lang_charge_name": "Ainm muirear",
+  "lang_apply_default_tax": "Cuir cáin réamhshocraithe",
+  "lang_room_charge_basis": "Céatadán bia tar éis lascainí, roimh cháin. Déan iarratas ach amháin le comhaontú aoi; is féidir leis an bhfoireann é a bhaint as an mbille.",
+  "lang_room_charge_rate": "{0}: {1}% de bhia tar éis lascainí, roimh cháin.",
+  "lang_room_charge_final": "San áireamh ar an mbille deiridh.",
+  "lang_room_orders_enable_help": "Cumasaigh orduithe seomra foirne i Socruithe → Bialann → Óstáin agus ionaid eile.",
+  "lang_room_venue": "Ionad"
 }

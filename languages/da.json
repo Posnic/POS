@@ -4729,5 +4729,22 @@
   "lang_print_mode_fast": "Hurtig modtagelse",
   "lang_print_mode_help": "Fast bruger standard tekstlayout. Grafik eller ikke-understøttet tekst bruger Præcis design.",
   "lang_print_sample": "Udskriv prøve",
-  "lang_print_test_submitted": "Test indsendt. Kontroller papiret på printeren."
+  "lang_print_test_submitted": "Test indsendt. Kontroller papiret på printeren.",
+  "lang_rooms": "Værelser",
+  "lang_room_number": "Værelsesnummer",
+  "lang_room_order": "Værelsesordre",
+  "lang_room_service_charge": "Roomservice gebyr",
+  "lang_room_charge_agreement": "Gæsten accepterede dette tillægsgebyr",
+  "lang_room_destination_required": "Vælg et sted og indtast værelsesnummeret.",
+  "lang_room_charge_tax_unavailable": "Værelsesafgiften er ikke tilgængelig. Gennemgå skatteindstillingerne.",
+  "lang_staff_room_orders": "Tillad ordrer på personalelokaler",
+  "lang_staff_room_prices": "Personaleordrer bruger normale menupriser. Webmenuopmærkning og stedskommission er separate.",
+  "lang_room_charge_offer": "Tilbyd et ekstra værelsesgebyr",
+  "lang_charge_name": "Opladningsnavn",
+  "lang_apply_default_tax": "Anvend standardskat",
+  "lang_room_charge_basis": "Procentdel af mad efter rabatter, før skat. Ansøg kun med gæsteaftale; personalet kan fjerne det fra regningen.",
+  "lang_room_charge_rate": "{0}: {1}% af mad efter rabatter, før skat.",
+  "lang_room_charge_final": "Inkluderet på den endelige regning.",
+  "lang_room_orders_enable_help": "Aktivér bestilling af medarbejderværelser i Indstillinger → Restaurant → Hoteller og andre spillesteder.",
+  "lang_room_venue": "Sted"
 }

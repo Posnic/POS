@@ -4732,5 +4732,22 @@
   "lang_print_mode_fast": "Biên nhận nhanh",
   "lang_print_mode_help": "Nhanh sử dụng bố cục văn bản tiêu chuẩn. Đồ họa hoặc văn bản không được hỗ trợ sử dụng thiết kế chính xác.",
   "lang_print_sample": "In mẫu",
-  "lang_print_test_submitted": "Bài kiểm tra đã nộp. Kiểm tra giấy tại máy in."
+  "lang_print_test_submitted": "Bài kiểm tra đã nộp. Kiểm tra giấy tại máy in.",
+  "lang_rooms": "Phòng",
+  "lang_room_number": "Số phòng",
+  "lang_room_order": "Đặt phòng",
+  "lang_room_service_charge": "Phí dịch vụ phòng",
+  "lang_room_charge_agreement": "Khách đã đồng ý với khoản phụ phí này",
+  "lang_room_destination_required": "Chọn một địa điểm và nhập số phòng.",
+  "lang_room_charge_tax_unavailable": "Thuế phí phòng không có sẵn. Xem lại cài đặt thuế.",
+  "lang_staff_room_orders": "Cho phép đặt phòng nhân viên",
+  "lang_staff_room_prices": "đặt phòng nhân viên sử dụng giá thực đơn bình thường. Đánh dấu menu web và hoa hồng địa điểm là riêng biệt.",
+  "lang_room_charge_offer": "Cung cấp thêm phí phòng",
+  "lang_charge_name": "Tên phí",
+  "lang_apply_default_tax": "Áp dụng thuế mặc định",
+  "lang_room_charge_basis": "Tỷ lệ thực phẩm sau khi giảm giá, trước thuế. Chỉ áp dụng với sự đồng ý của khách; nhân viên có thể xóa nó khỏi hóa đơn.",
+  "lang_room_charge_rate": "{0}: {1}% thực phẩm sau khi giảm giá, trước thuế.",
+  "lang_room_charge_final": "Bao gồm trong hóa đơn cuối cùng.",
+  "lang_room_orders_enable_help": "Bật đơn đặt hàng phòng nhân viên trong Cài đặt “Nhà hàng”” Khách sạn và các địa điểm khác.",
+  "lang_room_venue": "Địa điểm"
 }

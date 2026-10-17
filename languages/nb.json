@@ -4729,5 +4729,22 @@
   "lang_print_mode_fast": "Rask kvittering",
   "lang_print_mode_help": "Fast bruker standard tekstoppsett. Grafikk eller tekst som ikke støttes, bruker nøyaktig design.",
   "lang_print_sample": "Skriv ut prøve",
-  "lang_print_test_submitted": "Test sendt inn. Sjekk papiret på skriveren."
+  "lang_print_test_submitted": "Test sendt inn. Sjekk papiret på skriveren.",
+  "lang_rooms": "Rom",
+  "lang_room_number": "Romnummer",
+  "lang_room_order": "Rombestilling",
+  "lang_room_service_charge": "Romservicegebyr",
+  "lang_room_charge_agreement": "Gjester godtok dette tilleggsgebyret",
+  "lang_room_destination_required": "Velg et sted og skriv inn romnummeret.",
+  "lang_room_charge_tax_unavailable": "Romavgift er ikke tilgjengelig. Gå gjennom skatteinnstillingene.",
+  "lang_staff_room_orders": "Tillat bestillinger på personalrom",
+  "lang_staff_room_prices": "Personalrombestillinger bruker normale menypriser. Markering av nettmeny og stedkommisjon er separate.",
+  "lang_room_charge_offer": "Tilby en ekstra romkostnad",
+  "lang_charge_name": "Ladningsnavn",
+  "lang_apply_default_tax": "Bruk standard skatt",
+  "lang_room_charge_basis": "Prosentandel av mat etter rabatter, før skatt. Søk bare med gjesteavtale; personalet kan fjerne det fra regningen.",
+  "lang_room_charge_rate": "{0}: {1}% mat etter rabatter, før skatt.",
+  "lang_room_charge_final": "Inkludert på den endelige regningen.",
+  "lang_room_orders_enable_help": "Aktiver bestillinger av personalrom i Innstillinger «Restaurant» Hoteller og andre arenaer.",
+  "lang_room_venue": "Sted"
 }

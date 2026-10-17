@@ -4729,5 +4729,22 @@
   "lang_print_mode_fast": "Rýchle prijatie",
   "lang_print_mode_help": "Fast používa štandardné rozloženie textu. Grafika alebo nepodporovaný text používajú Presný dizajn.",
   "lang_print_sample": "Vytlačiť vzorku",
-  "lang_print_test_submitted": "Test predložený. Skontrolujte papier na tlačiarni."
+  "lang_print_test_submitted": "Test predložený. Skontrolujte papier na tlačiarni.",
+  "lang_rooms": "Izby",
+  "lang_room_number": "Číslo izby",
+  "lang_room_order": "Poradie miestnosti",
+  "lang_room_service_charge": "Poplatok za izbovú službu",
+  "lang_room_charge_agreement": "Hostia súhlasili s týmto príplatkom",
+  "lang_room_destination_required": "Vyberte miesto konania a zadajte číslo izby.",
+  "lang_room_charge_tax_unavailable": "Daň za izbu nie je k dispozícii. Skontrolujte daňové nastavenia.",
+  "lang_staff_room_orders": "Povoliť objednávky miestností zamestnancov",
+  "lang_staff_room_prices": "návky personálnych izieb používajú bežné ceny menu. Značenie webového menu a provízia miesta konania sú samostatné",
+  "lang_room_charge_offer": "Ponúknite príplatok za izbu",
+  "lang_charge_name": "Názov poplatku",
+  "lang_apply_default_tax": "Použiť predvolenú daň",
+  "lang_room_charge_basis": "Percento potravín po zľavách, pred zdanením. Prihláste sa len so súhlasom hosťa; personál ho môže odstrániť z účtu.",
+  "lang_room_charge_rate": "{0}: {1}% potravín po zľavách, pred zdanením.",
+  "lang_room_charge_final": "Zahrnuté v konečnom účte.",
+  "lang_room_orders_enable_help": "Povoliť objednávky izieb pre zamestnancov v nastaveniach → Reštaurácia → Hotely a iné miesta.",
+  "lang_room_venue": "Miesto konania"
 }

@@ -4729,5 +4729,22 @@
   "lang_print_mode_fast": "Szybki odbiór",
   "lang_print_mode_help": "Szybko wykorzystuje standardowy układ tekstu. Grafika lub nieobsługiwany tekst używają Dokładny projekt.",
   "lang_print_sample": "Wydrukuj próbkę",
-  "lang_print_test_submitted": "Test przesłany. Sprawdź papier na drukarce."
+  "lang_print_test_submitted": "Test przesłany. Sprawdź papier na drukarce.",
+  "lang_rooms": "Pokoje",
+  "lang_room_number": "Numer pokoju",
+  "lang_room_order": "Porządek pokoju",
+  "lang_room_service_charge": "Opłata za obsługę pokoju",
+  "lang_room_charge_agreement": "Gość wyraził zgodę na tę dodatkową opłatę",
+  "lang_room_destination_required": "Wybierz miejsce i wprowadź numer pokoju.",
+  "lang_room_charge_tax_unavailable": "Podatek od opłaty za pokój jest niedostępny. Przejrzyj ustawienia podatkowe.",
+  "lang_staff_room_orders": "Zezwalaj na zamówienia pokoju dla pracowników",
+  "lang_staff_room_prices": "Zamówienia pokoi dla personelu korzystają z normalnych cen menu. Znaczniki menu internetowego i prowizja miejsca są oddzielne",
+  "lang_room_charge_offer": "Oferuj dodatkową opłatę za pokój",
+  "lang_charge_name": "Nazwa opłaty",
+  "lang_apply_default_tax": "Zastosuj podatek domyślny",
+  "lang_room_charge_basis": "Procent jedzenia po zniżkach, przed opodatkowaniem. Złóż wniosek tylko za zgodą gościa; personel może usunąć go z rachunku.",
+  "lang_room_charge_rate": "{0}: {1}% żywności po rabatach, przed opodatkowaniem.",
+  "lang_room_charge_final": "Zawarte w ostatecznym rachunku.",
+  "lang_room_orders_enable_help": "Włącz zamawianie pokoi dla personelu w Ustawieniach â†„ Restauracja â†” Hotele i inne obiekty.",
+  "lang_room_venue": "Miejsce"
 }

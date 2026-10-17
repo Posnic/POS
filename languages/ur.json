@@ -4732,5 +4732,22 @@
   "lang_print_mode_fast": "تیز رسید",
   "lang_print_mode_help": "فاسٹ معیاری متن ترتیب استعمال کرتا ہے۔ گرافکس یا غیر معاون متن عین مطابق ڈیزائن استعمال کرتے ہیں۔",
   "lang_print_sample": "نمونہ پرنٹ کریں",
-  "lang_print_test_submitted": "ٹیسٹ پیش کیا گیا۔ پرنٹر پر کاغذ چیک کریں۔"
+  "lang_print_test_submitted": "ٹیسٹ پیش کیا گیا۔ پرنٹر پر کاغذ چیک کریں۔",
+  "lang_rooms": "کمرے",
+  "lang_room_number": "کمرے کا نمبر",
+  "lang_room_order": "کمرے کا آرڈر",
+  "lang_room_service_charge": "کمرے سروس چارج",
+  "lang_room_charge_agreement": "مہمان اس اضافی چارج پر اتفاق کیا",
+  "lang_room_destination_required": "ایک مقام منتخب کریں اور کمرے کا نمبر درج کریں۔",
+  "lang_room_charge_tax_unavailable": "کمرے چارج ٹیکس دستیاب نہیں ہے۔ ٹیکس کی ترتیبات کا جائزہ لیں۔",
+  "lang_staff_room_orders": "عملے کے کمرے کے آرڈرز",
+  "lang_staff_room_prices": "اسٹاف روم آرڈرز عام مینو قیمتیں استعمال کرتے ہیں۔ ویب مینو مارک اپ اور وینیو کمیشن الگ ہیں۔",
+  "lang_room_charge_offer": "کمرے کا اضافی چارج پیش کریں",
+  "lang_charge_name": "چارج کا نام",
+  "lang_apply_default_tax": "ڈیفالٹ ٹیکس لگائیں",
+  "lang_room_charge_basis": "ٹیکس سے پہلے، چھوٹ کے بعد کھانے کا فیصد۔ صرف مہمان معاہدے کے ساتھ درخواست دیں۔ عملہ اسے بل سے ہٹا سکتا ہے۔",
+  "lang_room_charge_rate": "{0}: ٹیکس سے پہلے، چھوٹ کے بعد کھانے کا {1} فیصد",
+  "lang_room_charge_final": "حتمی بل میں شامل ہے۔",
+  "lang_room_orders_enable_help": "سیٹنگز → ریستوراں → ہوٹلوں اور دیگر مقامات میں عملے کے کمرے کے آرڈرز کو فعال کریں۔",
+  "lang_room_venue": "مقام"
 }

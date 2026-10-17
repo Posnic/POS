@@ -4811,5 +4811,22 @@
   "lang_print_mode_fast": "Recebimento rápido",
   "lang_print_mode_help": "O Fast usa o layout de texto padrão. Gráficos ou textos não suportados usam o design exato.",
   "lang_print_sample": "Amostra de impressão",
-  "lang_print_test_submitted": "Teste enviado. Verifique o papel na impressora."
+  "lang_print_test_submitted": "Teste enviado. Verifique o papel na impressora.",
+  "lang_rooms": "Salas",
+  "lang_room_number": "Número do quarto",
+  "lang_room_order": "Ordem do quarto",
+  "lang_room_service_charge": "Taxa de serviço de quarto",
+  "lang_room_charge_agreement": "O hóspede concordou com essa taxa adicional",
+  "lang_room_destination_required": "Escolha um local e insira o número do quarto.",
+  "lang_room_charge_tax_unavailable": "O imposto sobre a tarifa do quarto não está disponível. Revise as configurações fiscais.",
+  "lang_staff_room_orders": "Permitir pedidos de quartos para funcionários",
+  "lang_staff_room_prices": "pedidos de quartos dos funcionários usam os preços normais do menu. A marcação do menu da web e a comissão do local são separadas",
+  "lang_room_charge_offer": "Ofereça uma taxa adicional de quarto",
+  "lang_charge_name": "Nome da cobrança",
+  "lang_apply_default_tax": "Aplicar imposto padrão",
+  "lang_room_charge_basis": "Porcentagem de alimentos após descontos, antes de impostos. Inscreva-se somente com o acordo do hóspede; a equipe pode removê-lo da fatura.",
+  "lang_room_charge_rate": "{0}: {1}% de alimentos após descontos, antes de impostos.",
+  "lang_room_charge_final": "Incluído na fatura final.",
+  "lang_room_orders_enable_help": "Habilite pedidos de quartos para funcionários em Configurações → Restaurante → Hotéis e outros locais.",
+  "lang_room_venue": "Local"
 }

@@ -38,7 +38,9 @@ router.get(
       )
       .toArray();
     if (!branches.length) return { connections: {} };
-    const names = [...new Set(branches.map(b => String(b.branch_name || '').trim()).filter(Boolean))];
+    const names = [
+      ...new Set(branches.map((b) => String(b.branch_name || '').trim()).filter(Boolean)),
+    ];
     const addresses = [...new Set(branches.map(cloudAddress))];
     return {
       connections: {
@@ -50,6 +52,10 @@ router.get(
   })
 );
 router.use(protect);
+const attendance = require('../services/captain-attendance');
+router.get('/attendance', wrap(attendance.current));
+router.post('/attendance', limit, wrap(attendance.record));
+router.post('/attendance/settings', limit, wrap(attendance.settings));
 // Only publish the signed-in branch's addresses. A hint never grants access
 // to the peer server; Captain still verifies its session/route proof there.
 router.post(
@@ -349,7 +355,10 @@ router.get(
   '/table-settings',
   wrap(async (req) => {
     const c = await require('../utils/branch-access').context(req);
-    return { cleaningEnabled: require('../services/table-cleaning').enabled(c.branch) };
+    return {
+      tableRequired: c.branch?.captain_allow_unassigned !== true,
+      cleaningEnabled: require('../services/table-cleaning').enabled(c.branch),
+    };
   })
 );
 router.post(
@@ -358,13 +367,23 @@ router.post(
     const { allowed, context, fail } = require('../utils/branch-access');
     if (!allowed(req.user, 'settings')) fail('Settings permission is required.', 403);
     if (typeof req.body?.cleaningEnabled !== 'boolean') fail('Choose a table status.');
+    if (req.body.tableRequired !== undefined && typeof req.body.tableRequired !== 'boolean')
+      fail('Choose a table requirement.');
     const c = await context(req),
       cleaningEnabled = req.body.cleaningEnabled;
     await req.db
       .collection('branches')
       .updateOne(
         { _id: c.branchId, license: c.license },
-        { $set: { captain_table_cleaning: cleaningEnabled, updated_date: new Date() } }
+        {
+          $set: {
+            captain_table_cleaning: cleaningEnabled,
+            ...(req.body.tableRequired === undefined
+              ? {}
+              : { captain_allow_unassigned: !req.body.tableRequired }),
+            updated_date: new Date(),
+          },
+        }
       );
     if (!cleaningEnabled)
       await req.db.collection('tableorder').updateMany(

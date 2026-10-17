@@ -4811,5 +4811,22 @@
   "lang_print_mode_fast": "Ripoti ya haraka",
   "lang_print_mode_help": "Haraka hutumia mpangilio wa kawaida wa maandishi. Picha au maandishi isiyosaidiwa hutumia muundo sahihi.",
   "lang_print_sample": "Sampuli ya kuchapisha",
-  "lang_print_test_submitted": "Mtihani uliwasilishwa. Angalia karatasi kwenye printa."
+  "lang_print_test_submitted": "Mtihani uliwasilishwa. Angalia karatasi kwenye printa.",
+  "lang_rooms": "Vyumba",
+  "lang_room_number": "Nambari ya chumba",
+  "lang_room_order": "Utaratibu wa chumba",
+  "lang_room_service_charge": "Gharama ya huduma ya chumba",
+  "lang_room_charge_agreement": "Mgeni alikubali malipo hii ya ziada",
+  "lang_room_destination_required": "Chagua ukumbi na uingie nambari ya chumba.",
+  "lang_room_charge_tax_unavailable": "Ushuru wa malipo ya chumba haipatikani. Pitia mipangilio ya ushuru.",
+  "lang_staff_room_orders": "Ruhusu maagizo ya chumba cha waf",
+  "lang_staff_room_prices": "Maagizo ya chumba cha wafanyikazi hutumia bei za kawaida za orod Alama ya menyu ya wavuti na tume ya ukumbi ni tofauti.",
+  "lang_room_charge_offer": "Toa malipo ya ziada ya chumba",
+  "lang_charge_name": "Jina la malipo",
+  "lang_apply_default_tax": "Tumia ushuru wa default",
+  "lang_room_charge_basis": "Asilimia ya chakula baada ya punguzo, kabla ya ushuru. Tumia tu na makubaliano ya wageni; wafanyikazi wanaweza kuiondoa kwenye muswada.",
+  "lang_room_charge_rate": "{0}: {1}% ya chakula baada ya punguzo, kabla ya ushuru.",
+  "lang_room_charge_final": "Imejumuishwa kwenye muswada wa mwisho.",
+  "lang_room_orders_enable_help": "Wezesha maagizo ya chumba cha wafanyikazi katika Mipangilio → Mkahawa → Hoteli na maeneo mengine.",
+  "lang_room_venue": "Ukumbi"
 }

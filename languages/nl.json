@@ -4814,5 +4814,22 @@
   "lang_print_mode_fast": "Snelle ontvangst",
   "lang_print_mode_help": "Fast maakt gebruik van een standaard tekstopmaak. Afbeeldingen of niet-ondersteunde tekst gebruiken het Exact-ontwerp.",
   "lang_print_sample": "Voorbeeld afdrukken",
-  "lang_print_test_submitted": "Test ingediend. Controleer het papier op de printer."
+  "lang_print_test_submitted": "Test ingediend. Controleer het papier op de printer.",
+  "lang_rooms": "Kamers",
+  "lang_room_number": "Kamernummer",
+  "lang_room_order": "Kamer bestellen",
+  "lang_room_service_charge": "Roomservicekosten",
+  "lang_room_charge_agreement": "De gast ging akkoord met deze extra vergoeding",
+  "lang_room_destination_required": "Kies een locatie en voer het kamernummer in.",
+  "lang_room_charge_tax_unavailable": "De kamerbelasting is niet beschikbaar. Controleer de belastinginstellingen.",
+  "lang_staff_room_orders": "Bestellingen voor personeelskamers toestaan",
+  "lang_staff_room_prices": "bestellingen van personeelskamers worden de normale menuprijzen gebruikt. De opmaak van het webmenu en de locatiecommissie zijn gescheiden",
+  "lang_room_charge_offer": "Bied een extra kamertoeslag aan",
+  "lang_charge_name": "Naam van de lading",
+  "lang_apply_default_tax": "Standaardbelasting toepassen",
+  "lang_room_charge_basis": "Percentage eten na kortingen, vóór belasting. Alleen aanvragen met instemming van de gasten; het personeel kan dit van de rekening verwijderen.",
+  "lang_room_charge_rate": "{0}: {1}% van het eten na kortingen, vóór belasting.",
+  "lang_room_charge_final": "Inbegrepen op de eindafrekening.",
+  "lang_room_orders_enable_help": "Schakel kamerbestellingen voor medewerkers in Instellingen → Restaurant → Hotels en andere locaties in.",
+  "lang_room_venue": "Locatie"
 }

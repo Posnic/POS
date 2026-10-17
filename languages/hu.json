@@ -4729,5 +4729,22 @@
   "lang_print_mode_fast": "Gyors átvétel",
   "lang_print_mode_help": "A Fast szabványos szövegelrendezést használ. A grafika vagy a nem támogatott szöveg az Exact design funkciót használja.",
   "lang_print_sample": "Minta nyomtatása",
-  "lang_print_test_submitted": "A teszt benyújtva. Ellenőrizze a papírt a nyomtatón."
+  "lang_print_test_submitted": "A teszt benyújtva. Ellenőrizze a papírt a nyomtatón.",
+  "lang_rooms": "Szobák",
+  "lang_room_number": "Szoba száma",
+  "lang_room_order": "Szobaszerrend",
+  "lang_room_service_charge": "Szobaszerviz díja",
+  "lang_room_charge_agreement": "A vendég elfogadta ezt a felár ellenértékét",
+  "lang_room_destination_required": "Válasszon helyszínt, és adja meg a szoba számát.",
+  "lang_room_charge_tax_unavailable": "A szobadíj adója nem áll rendelkezésre. Tekintse át az adóbeállításokat.",
+  "lang_staff_room_orders": "Engedélyezze a személyzet helyiség",
+  "lang_staff_room_prices": "személyzet szobai rendelései a normál menüárakat használják. A webmenü jelölése és a helyszíni jutalék különálló",
+  "lang_room_charge_offer": "Felár ellenében szobafizettek",
+  "lang_charge_name": "Díjnév",
+  "lang_apply_default_tax": "Alapértelmezett adó alkalmazása",
+  "lang_room_charge_basis": "élelmiszer százalékos aránya kedvezmények után, adózás előtt. Csak vendégmegállapodással jelentkezhet; a személyzet eltávolíthatja azt a számlából.",
+  "lang_room_charge_rate": "{0}: Az élelmiszer {1}% -a kedvezmény után, adózás előtt.",
+  "lang_room_charge_final": "A végső számlán szerepel.",
+  "lang_room_orders_enable_help": "Engedélyezze a személyzeti szobarendezést a Beállítások â†„ Étterem â†” Hotelek és egyéb helyszínek menüpontban.",
+  "lang_room_venue": "Helyszín"
 }

@@ -59,7 +59,7 @@ function tableOf(req) {
   if (
     !table ||
     table.startsWith('takeaway:') ||
-    table.length > 40 ||
+    table.length > 200 ||
     Array.from(table).some((c) => c.charCodeAt(0) < 32)
   )
     fail('Choose a table.');
@@ -351,7 +351,7 @@ async function reconcile(db, c, plan) {
         receipt_settled: true,
         // Discounts, taxes and adjustments are already allocated in this bill.
         sale_extra_discount: 0,
-        charges: [],
+        charges: payload.charges || [],
         tax: payload.taxes.reduce((sum, row) => sum + row.amount, 0),
         items: [],
         payment_mode: payment.method,

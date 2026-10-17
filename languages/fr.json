@@ -4811,5 +4811,22 @@
   "lang_print_mode_fast": "Réception rapide",
   "lang_print_mode_help": "Fast utilise une mise en page de texte standard. Les graphiques ou le texte non pris en charge utilisent le design Exact.",
   "lang_print_sample": "Imprimer un échantillon",
-  "lang_print_test_submitted": "Test soumis. Vérifiez le papier sur l'imprimante."
+  "lang_print_test_submitted": "Test soumis. Vérifiez le papier sur l'imprimante.",
+  "lang_rooms": "Chambres",
+  "lang_room_number": "Numéro de chambre",
+  "lang_room_order": "Ordre des chambres",
+  "lang_room_service_charge": "Frais de service de chambre",
+  "lang_room_charge_agreement": "Le client a accepté ces frais supplémentaires",
+  "lang_room_destination_required": "Choisissez un lieu et entrez le numéro de la chambre.",
+  "lang_room_charge_tax_unavailable": "La taxe de séjour n'est pas disponible. Vérifiez les paramètres fiscaux.",
+  "lang_staff_room_orders": "Autoriser les commandes de chambres pour le personnel",
+  "lang_staff_room_prices": "chambres pour le personnel utilisent les prix normaux des menus. Le balisage du menu Web et la commission du lieu sont distincts",
+  "lang_room_charge_offer": "Proposez un supplément de chambre",
+  "lang_charge_name": "Nom de la charge",
+  "lang_apply_default_tax": "Appliquer la taxe par défaut",
+  "lang_room_charge_basis": "Pourcentage de nourriture après remises, avant taxes. Postulez uniquement avec l'accord du client ; le personnel peut le supprimer de la facture.",
+  "lang_room_charge_rate": "{0} : {1} % de la nourriture après les remises, avant taxes.",
+  "lang_room_charge_final": "Inclus dans la facture finale.",
+  "lang_room_orders_enable_help": "Activez les commandes de chambres pour le personnel dans les paramètres « Restaurant », « Hôtels » et autres lieux.",
+  "lang_room_venue": "Lieu"
 }

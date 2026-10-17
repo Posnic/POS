@@ -4732,5 +4732,22 @@
   "lang_print_mode_fast": "快速收貨",
   "lang_print_mode_help": "快速使用標準文本佈局。圖形或不支援的文字使用「精確設計」。",
   "lang_print_sample": "列印樣本",
-  "lang_print_test_submitted": "已提交測試。檢查印表機上的紙張。"
+  "lang_print_test_submitted": "已提交測試。檢查印表機上的紙張。",
+  "lang_rooms": "房間",
+  "lang_room_number": "房間編號",
+  "lang_room_order": "房間順序",
+  "lang_room_service_charge": "客房服務費",
+  "lang_room_charge_agreement": "客人同意支付此額外費用",
+  "lang_room_destination_required": "選擇場地並輸入房間號碼。",
+  "lang_room_charge_tax_unavailable": "客房費稅不適用。檢閱稅捐設定。",
+  "lang_staff_room_orders": "允許員工房間訂單",
+  "lang_staff_room_prices": "員工房間訂單使用正常菜單價格。網頁選單標記和場地佣金分開。",
+  "lang_room_charge_offer": "提供額外房費",
+  "lang_charge_name": "費用名稱",
+  "lang_apply_default_tax": "套用預設稅",
+  "lang_room_charge_basis": "折扣後的食物百分比，稅前。僅在客人同意下申請；工作人員可以將其從賬單中刪除。",
+  "lang_room_charge_rate": "{0}：折扣後的 {1}% 食物，稅前。",
+  "lang_room_charge_final": "包括在最終賬單中。",
+  "lang_room_orders_enable_help": "在「設定」「餐廳」「酒店和其他場地」中啟用員工房間訂單。",
+  "lang_room_venue": "場地"
 }

@@ -4718,5 +4718,22 @@
   "lang_your_own_provider_account": "your own provider account",
   "lang_your_session_has_ended_please_sign_in_ag": "Your session has ended. Please sign in again.",
   "lang_your_time_or_expertise": "Your time or expertise",
-  "lang_yourselecteddetails_title": "Selected details will be deleted"
+  "lang_yourselecteddetails_title": "Selected details will be deleted",
+  "lang_rooms": "Rooms",
+  "lang_room_number": "Room number",
+  "lang_room_order": "Room order",
+  "lang_room_service_charge": "Room service charge",
+  "lang_room_charge_agreement": "Guest agreed to this additional charge",
+  "lang_room_destination_required": "Choose a venue and enter the room number.",
+  "lang_room_charge_tax_unavailable": "The room charge tax is unavailable. Review the tax settings.",
+  "lang_staff_room_orders": "Allow staff room orders",
+  "lang_staff_room_prices": "Staff room orders use normal menu prices. Web menu markup and venue commission are separate.",
+  "lang_room_charge_offer": "Offer an additional room charge",
+  "lang_charge_name": "Charge name",
+  "lang_apply_default_tax": "Apply default tax",
+  "lang_room_charge_basis": "Percentage of food after discounts, before tax. Apply only with guest agreement; staff can remove it from the bill.",
+  "lang_room_charge_rate": "{0}: {1}% of food after discounts, before tax.",
+  "lang_room_charge_final": "Included on the final bill.",
+  "lang_room_orders_enable_help": "Enable staff room orders in Settings → Restaurant → Hotels and other venues.",
+  "lang_room_venue": "Venue"
 }

@@ -4732,5 +4732,22 @@
   "lang_print_mode_fast": "Hızlı makbuz",
   "lang_print_mode_help": "Fast standart metin düzenini kullanır. Grafikler veya desteklenmeyen metinler Tam tasarım kullanır.",
   "lang_print_sample": "Örnek yazdır",
-  "lang_print_test_submitted": "Test gönderildi. Yazıcıdaki kağıdı kontrol edin."
+  "lang_print_test_submitted": "Test gönderildi. Yazıcıdaki kağıdı kontrol edin.",
+  "lang_rooms": "Odalar",
+  "lang_room_number": "Oda numarası",
+  "lang_room_order": "Oda siparişi",
+  "lang_room_service_charge": "Oda servisi ücreti",
+  "lang_room_charge_agreement": "Konuk bu ek ücreti kabul etti",
+  "lang_room_destination_required": "Bir mekan seçin ve oda numarasını girin.",
+  "lang_room_charge_tax_unavailable": "Oda ücreti vergisi mevcut değildir. Vergi ayarlarını gözden geçirin.",
+  "lang_staff_room_orders": "Personel odası siparişlerine izin ver",
+  "lang_staff_room_prices": "Personel odası siparişleri normal menü fiyatlarını kullanır. Web menüsü işaretlemesi ve mekan komisyonu ayrıdır.",
+  "lang_room_charge_offer": "Ek oda ücreti teklif edin",
+  "lang_charge_name": "Ücret adı",
+  "lang_apply_default_tax": "Varsayılan vergi uygula",
+  "lang_room_charge_basis": "İndirimlerden sonra yiyecek yüzdesi, vergi öncesi. Sadece misafir sözleşmesi ile başvurun; personel faturadan kaldırabilir.",
+  "lang_room_charge_rate": "{0}: Vergi öncesi indirimlerden sonra yiyeceklerin {1} %'si.",
+  "lang_room_charge_final": "Son faturaya dahildir.",
+  "lang_room_orders_enable_help": "Ayarlar → Restoran → Oteller ve diğer mekanlarda personel odası siparişlerini etkinleştirin.",
+  "lang_room_venue": "Mekan"
 }

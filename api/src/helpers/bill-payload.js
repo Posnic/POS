@@ -1,5 +1,6 @@
 'use strict';
 
+const Money = require('../utils/currency');
 const { isWalkIn } = require('../utils/walk-in');
 const { fieldAvailable } = require('./receipt-design');
 
@@ -601,6 +602,14 @@ function buildBillPayload(sale = {}, branch = {}, options = {}) {
 
     subTotal,
     taxes: taxRows(sale, branch, allocation),
+    charges: allocation
+      ? Object.entries(allocation.components)
+          .filter(([key]) => key.startsWith('charge:'))
+          .map(([key, minor]) => ({
+            name: key.slice(7),
+            amount: Money.fromMinor(minor, Money.policy(branch)),
+          }))
+      : (sale.charges || []).map((c) => ({ name: c.name, amount: num(c.amount) })),
     discount: num(sale.discount),
     roundOff: num(sale.round_off || sale.sales_round_off),
     total: num(sale.sales_total != null ? sale.sales_total : sale.total),

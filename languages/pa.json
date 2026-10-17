@@ -4729,5 +4729,22 @@
   "lang_print_mode_fast": "ਤੇਜ਼ ਰਸੀਦ",
   "lang_print_mode_help": "ਤੇਜ਼ ਮਿਆਰੀ ਟੈਕਸਟ ਲੇਆਉਟ ਦੀ ਵਰਤੋਂ ਕਰਦਾ ਹੈ ਗ੍ਰਾਫਿਕਸ ਜਾਂ ਅਸਮਰਥਿਤ ਟੈਕਸਟ ਸਹੀ ਡਿਜ਼ਾਈਨ ਦੀ ਵਰਤੋਂ ਕਰਦੇ ਹਨ।",
   "lang_print_sample": "ਨਮੂਨਾ ਪ੍ਰਿੰਟ ਕਰੋ",
-  "lang_print_test_submitted": "ਟੈਸਟ ਜਮ੍ਹਾ ਕੀਤਾ ਗਿਆ. ਪ੍ਰਿੰਟਰ ਤੇ ਕਾਗਜ਼ ਦੀ ਜਾਂਚ ਕਰੋ."
+  "lang_print_test_submitted": "ਟੈਸਟ ਜਮ੍ਹਾ ਕੀਤਾ ਗਿਆ. ਪ੍ਰਿੰਟਰ ਤੇ ਕਾਗਜ਼ ਦੀ ਜਾਂਚ ਕਰੋ.",
+  "lang_rooms": "ਕਮਰੇ",
+  "lang_room_number": "ਕਮਰੇ ਦਾ ਨੰਬਰ",
+  "lang_room_order": "ਕਮਰੇ ਦਾ ਆਦੇਸ਼",
+  "lang_room_service_charge": "ਕਮਰਾ ਸੇਵਾ ਚਾਰਜ",
+  "lang_room_charge_agreement": "ਮਹਿਮਾਨ ਇਸ ਵਾਧੂ ਖਰਚੇ ਲਈ ਸਹਿਮਤ ਹੋਏ",
+  "lang_room_destination_required": "ਇੱਕ ਸਥਾਨ ਚੁਣੋ ਅਤੇ ਕਮਰੇ ਦਾ ਨੰਬਰ ਦਾਖਲ ਕਰੋ।",
+  "lang_room_charge_tax_unavailable": "ਕਮਰੇ ਚਾਰਜ ਟੈਕਸ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਟੈਕਸ ਸੈਟਿੰਗਾਂ ਦੀ ਸਮੀਖਿਆ ਕਰੋ।",
+  "lang_staff_room_orders": "ਸਟਾਫ ਰੂਮ ਆਰਡਰ ਦੀ ਆਗਿਆ ਦਿਓ",
+  "lang_staff_room_prices": "ਸਟਾਫ ਰੂਮ ਆਰਡਰ ਆਮ ਮੀਨੂ ਕੀਮਤਾਂ ਦੀ ਵਰਤੋਂ ਕਰਦੇ ਹਨ. ਵੈੱਬ ਮੀਨੂ ਮਾਰਕਅਪ ਅਤੇ ਸਥਾਨ ਕਮਿਸ਼ਨ ਵੱਖਰੇ ਹਨ",
+  "lang_room_charge_offer": "ਇੱਕ ਵਾਧੂ ਕਮਰੇ ਚਾਰਜ ਦੀ ਪੇਸ਼ਕਸ਼ ਕਰੋ",
+  "lang_charge_name": "ਚਾਰਜ ਦਾ ਨਾਮ",
+  "lang_apply_default_tax": "ਮੂਲ ਟੈਕਸ ਲਾਗੂ ਕਰੋ",
+  "lang_room_charge_basis": "ਛੋਟ ਤੋਂ ਬਾਅਦ ਭੋਜਨ ਦੀ ਪ੍ਰਤੀਸ਼ਤਤਾ, ਟੈਕਸ ਤੋਂ ਪਹਿਲਾਂ. ਸਿਰਫ ਮਹਿਮਾਨ ਸਮਝੌਤੇ ਨਾਲ ਅਰਜ਼ੀ ਦਿਓ; ਸਟਾਫ ਇਸ ਨੂੰ ਬਿੱਲ ਤੋਂ ਹਟਾ ਸਕਦਾ ਹੈ.",
+  "lang_room_charge_rate": "{0}: ਛੋਟ ਤੋਂ ਬਾਅਦ ਭੋਜਨ ਦਾ {1}%, ਟੈਕਸ ਤੋਂ ਪਹਿਲਾਂ।",
+  "lang_room_charge_final": "ਅੰਤਮ ਬਿੱਲ ਤੇ ਸ਼ਾਮਲ.",
+  "lang_room_orders_enable_help": "ਸੈਟਿੰਗਜ਼ → ਰੈਸਟੋਰੈਂਟ → ਹੋਟਲ ਅਤੇ ਹੋਰ ਸਥਾਨਾਂ ਵਿੱਚ ਸਟਾਫ ਰੂਮ ਆਰਡਰ ਨੂੰ ਸਮਰੱਥ ਬਣਾਓ।",
+  "lang_room_venue": "ਸਥਾਨ"
 }

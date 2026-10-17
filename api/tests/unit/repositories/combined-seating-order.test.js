@@ -515,3 +515,129 @@ test('repository save keeps the expected capacity revision when the document pub
     seating_capacity_revision: 'cover-edit-test-permit',
   });
 });
+
+test.each(['', '   ', null, undefined])(
+  'dine-in refuses a missing table (%s) without saving a sale',
+  async (value) => {
+    const result = await submit({
+      kiosk_table_no: value,
+      kiosk_table_id: '',
+      seating_request_id: undefined,
+      dine_type: 'Dine-in',
+    });
+    expect(result).toMatchObject({ status: false, data: { code: 'TABLE_REQUIRED' } });
+    expect(await db.collection('sales').countDocuments()).toBe(0);
+  }
+);
+
+test('takeaway does not require a table', async () => {
+  const result = await submit({
+    kiosk_table_no: '',
+    kiosk_table_id: '',
+    seating_request_id: undefined,
+    dine_type: 'Take away',
+    order: 'Take away',
+  });
+  expect(result.status).toBe(true);
+  expect(await db.collection('sales').countDocuments()).toBe(1);
+});
+
+test('explicit branch opt-in allows a dine-in order without table or pax', async () => {
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { captain_allow_unassigned: true } });
+  const result = await submit({
+    kiosk_table_no: '',
+    kiosk_table_id: '',
+    seating_request_id: undefined,
+    dine_type: 'Dine-in',
+    person_count: 0,
+  });
+  expect(result.status).toBe(true);
+  expect(await db.collection('sales').countDocuments()).toBe(1);
+});
+
+function configureRooms(enabled = true) {
+  const venue = {
+    code: 'hotel',
+    name: 'Our hotel',
+    staff_orders_enabled: enabled,
+    price_adjust_percent: 20,
+    room_charge: { enabled: true, name: 'Room service', percent: 5 },
+  };
+  jest
+    .spyOn(require('../../../src/repositories/settings.repository').prototype, 'resolveGroup')
+    .mockResolvedValue({ status: true, data: { values: { partner_venues: [venue] } } });
+}
+const roomRequest = (extra) => ({
+  seating_request_id: undefined,
+  kiosk_table_no: '',
+  kiosk_table_id: '',
+  person_count: 0,
+  order: 'Room',
+  dine_type: 'Room',
+  venue: 'hotel',
+  unit: '35B',
+  room_charge_accepted: true,
+  room_charge_quote: {percent:5,taxed:false,tax_rate:0},
+  ...extra,
+});
+test('staff room orders store a free room number and separate charge, using house prices', async () => {
+  configureRooms();
+  const result = await submit(roomRequest());
+  if (!result.status) throw new Error(result.message);
+  const sale = await db.collection('sales').findOne({ _id: new ObjectId(result.data.sale_id) });
+  expect(sale.table_number).toBe('Our hotel - 35B');
+  expect(sale.venue.unit).toBe('35B');
+  expect(sale.sales_total).toBe(105);
+  expect(sale.charges[0]).toMatchObject({ source: 'room', amount: 5, percent: 5, tax_amount: 0 });
+  const edited = await repo.updateOrderModel(
+    String(sale._id),
+    sale.items.map((v) => ({ ...v, quantity: 2, item_quantity: 2 })),
+    210,
+    'modified',
+    null,
+    null,
+    null,
+    undefined,
+    undefined,
+    undefined,
+    {}
+  );
+  if (!edited.status) throw new Error(edited.message);
+  const changed = await db.collection('sales').findOne({ _id: sale._id });
+  expect(changed.charges[0].amount).toBe(10);
+  expect(changed.sales_total).toBe(210);
+  const waived = await repo.updateOrderModel(
+    String(sale._id),
+    changed.items,
+    200,
+    'modified',
+    null,
+    null,
+    null,
+    undefined,
+    undefined,
+    undefined,
+    { charges: [] }
+  );
+  if (!waived.status) throw new Error(waived.message);
+  expect((await db.collection('sales').findOne({ _id: sale._id })).sales_total).toBe(200);
+});
+test('room charge requires agreement and room entry is required even when tables are optional', async () => {
+  configureRooms();
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { captain_allow_unassigned: true } });
+  expect((await submit(roomRequest({ unit: ' ' }))).status).toBe(false);
+  const result = await submit(roomRequest({ room_charge_accepted: false }));
+  if (!result.status) throw new Error(result.message);
+  const sale = await db.collection('sales').findOne({ _id: new ObjectId(result.data.sale_id) });
+  expect(sale.sales_total).toBe(100);
+  expect(sale.charges || []).toEqual([]);
+});
+test('staff room ordering is opt-in', async () => {
+  configureRooms(false);
+  expect((await submit(roomRequest())).status).toBe(false);
+  expect(await db.collection('sales').countDocuments({})).toBe(0);
+});

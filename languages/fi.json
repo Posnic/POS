@@ -4729,5 +4729,22 @@
   "lang_print_mode_fast": "Nopea vastaanotto",
   "lang_print_mode_help": "Fast käyttää tavallista tekstiasettelua. Grafiikka tai teksti, jota ei tueta, käyttävät Tarkkaa suunnittelua.",
   "lang_print_sample": "Tulosta näyte",
-  "lang_print_test_submitted": "Testi lähetetty. Tarkista tulostimen paperi."
+  "lang_print_test_submitted": "Testi lähetetty. Tarkista tulostimen paperi.",
+  "lang_rooms": "Huoneet",
+  "lang_room_number": "Huoneen numero",
+  "lang_room_order": "Huonejärjestys",
+  "lang_room_service_charge": "Huonepalvelumaksu",
+  "lang_room_charge_agreement": "Asiakas hyväksyi tämän lisämaksun",
+  "lang_room_destination_required": "Valitse paikka ja kirjoita huoneen numero.",
+  "lang_room_charge_tax_unavailable": "Huonemaksuvero ei ole käytettävissä. Tarkista veroasetukset.",
+  "lang_staff_room_orders": "Salli henkilökunnan huonetilojen tilaukset",
+  "lang_staff_room_prices": "Henkilökunnan huonetilaukset käyttävät normaaleja valikkohintoja. Web-valikkomerkintä ja tapahtumapalvelu ovat erillisiä.",
+  "lang_room_charge_offer": "Tarjoa ylimääräinen huonemaksu",
+  "lang_charge_name": "Maksun nimi",
+  "lang_apply_default_tax": "Käytä oletusveroa",
+  "lang_room_charge_basis": "Ruoan prosenttiosuus alennusten jälkeen, ennen veroja. Hae vain vierassopimuksella; henkilökunta voi poistaa sen laskulta.",
+  "lang_room_charge_rate": "{0}: {1}% elintarvikkeista alennusten jälkeen, ennen veroja.",
+  "lang_room_charge_final": "Sisältyy lopulliseen laskuun.",
+  "lang_room_orders_enable_help": "Ota henkilökunnan huonetilojen tilaukset käyttöön Asetuksissa ”Ravintola” Hotelleissa ja muissa tiloissa.",
+  "lang_room_venue": "Tapahtumapaikka"
 }

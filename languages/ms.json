@@ -4732,5 +4732,22 @@
   "lang_print_mode_fast": "Resit cepat",
   "lang_print_mode_help": "Cepat menggunakan susun atur teks standard. Grafik atau teks yang tidak disokong menggunakan reka bentuk yang tepat.",
   "lang_print_sample": "Cetak sampel",
-  "lang_print_test_submitted": "Ujian dikemukakan. Semak kertas di pencetak."
+  "lang_print_test_submitted": "Ujian dikemukakan. Semak kertas di pencetak.",
+  "lang_rooms": "Bilik",
+  "lang_room_number": "Nombor bilik",
+  "lang_room_order": "Perintah bilik",
+  "lang_room_service_charge": "Caj perkhidmatan bilik",
+  "lang_room_charge_agreement": "Tetamu bersetuju dengan caj tambahan ini",
+  "lang_room_destination_required": "Pilih tempat dan masukkan nombor bilik.",
+  "lang_room_charge_tax_unavailable": "Cukai caj bilik tidak tersedia. Semak tetapan cukai.",
+  "lang_staff_room_orders": "Benarkan pesanan bilik kakitangan",
+  "lang_staff_room_prices": "anan bilik kakitangan menggunakan harga menu biasa. Penanda menu web dan komisen tempat adalah berasingan",
+  "lang_room_charge_offer": "Menawarkan caj bilik tambahan",
+  "lang_charge_name": "Nama caj",
+  "lang_apply_default_tax": "Terapkan cukai lalai",
+  "lang_room_charge_basis": "Peratusan makanan selepas diskaun, sebelum cukai. Memohon hanya dengan perjanjian tetamu; kakitangan boleh mengeluarkannya dari bil.",
+  "lang_room_charge_rate": "{0}: {1}% makanan selepas diskaun, sebelum cukai.",
+  "lang_room_charge_final": "Termasuk pada rang undang-undang akhir.",
+  "lang_room_orders_enable_help": "Dayakan pesanan bilik kakitangan di Tetapan → Restoran → Hotel dan tempat lain.",
+  "lang_room_venue": "Tempat"
 }

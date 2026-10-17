@@ -4811,5 +4811,22 @@
   "lang_print_mode_fast": "Schneller Empfang",
   "lang_print_mode_help": "Fast verwendet das Standard-Textlayout. Grafiken oder nicht unterstützter Text verwenden Exact Design.",
   "lang_print_sample": "Beispiel drucken",
-  "lang_print_test_submitted": "Test eingereicht. Überprüfen Sie das Papier am Drucker."
+  "lang_print_test_submitted": "Test eingereicht. Überprüfen Sie das Papier am Drucker.",
+  "lang_rooms": "Zimmer",
+  "lang_room_number": "Nummer des Zimmers",
+  "lang_room_order": "Bestellung des Zimmers",
+  "lang_room_service_charge": "Gebühr für den Zimmerservice",
+  "lang_room_charge_agreement": "Der Gast stimmte dieser zusätzlichen Gebühr zu",
+  "lang_room_destination_required": "Wählen Sie einen Veranstaltungsort und geben Sie die Zimmernummer ein.",
+  "lang_room_charge_tax_unavailable": "Die Zimmersteuer ist nicht verfügbar. Überprüfen Sie die Steuereinstellungen.",
+  "lang_staff_room_orders": "Erlaube Zimmerbestellungen für Mitarbeiter",
+  "lang_staff_room_prices": "Für Zimmerbestellungen für das Personal gelten die normalen Menüpreise. Das Aufschlag für das Webmenü und die Provision für den Veranstaltungsort sind getrennt",
+  "lang_room_charge_offer": "Bieten Sie eine zusätzliche Zimmergebühr an",
+  "lang_charge_name": "Name der Gebühr",
+  "lang_apply_default_tax": "Standardsteuer anwenden",
+  "lang_room_charge_basis": "Prozentsatz der Lebensmittel nach Abzug der Rabatte, vor Steuern. Bewerben Sie sich nur mit Zustimmung des Gastes; das Personal kann es von der Rechnung streichen.",
+  "lang_room_charge_rate": "{0}: {1}% der Speisen nach Abzug der Rabatte, vor Steuern.",
+  "lang_room_charge_final": "In der Endabrechnung enthalten.",
+  "lang_room_orders_enable_help": "Aktiviere Zimmerbestellungen für Mitarbeiter in den Einstellungen „Restaurant“, Hotels und andere Veranstaltungsorte.",
+  "lang_room_venue": "Veranstaltungsort"
 }
