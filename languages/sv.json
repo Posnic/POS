@@ -4920,5 +4920,22 @@
   "lang_text_style": "Textstil",
   "lang_this_product_is_hidden_from_sales_your_bas": "Denna produkt är dold från försäljning. Din varukorg har inte ändrats.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Detta fönster tillhör en gren. Öppna ett annat uttag från huvudfönstret.",
-  "lang_total_labels": "Totala etiketter"
+  "lang_total_labels": "Totala etiketter",
+  "lang_rooms": "Rum",
+  "lang_room_number": "Rumsnummer",
+  "lang_room_order": "Rumsbeställning",
+  "lang_room_service_charge": "Avgift för rumsservice",
+  "lang_room_charge_agreement": "Gästen godkände denna extra avgift",
+  "lang_room_destination_required": "Välj en plats och ange rumsnumret.",
+  "lang_room_charge_tax_unavailable": "Rumsavgiften är inte tillgänglig. Granska skatteinställningarna.",
+  "lang_staff_room_orders": "Tillåt personalrumsbeställningar",
+  "lang_staff_room_prices": "Personalrumsbeställningar använder normala menypriser. Webbmenymarkering och platskommission är separata.",
+  "lang_room_charge_offer": "Erbjud en extra rumsavgift",
+  "lang_charge_name": "Avgiftsnamn",
+  "lang_apply_default_tax": "Tillämpa standardskatt",
+  "lang_room_charge_basis": "Procentandel mat efter rabatter, före skatt. Ansök endast med gästavtal; personalen kan ta bort det från räkningen.",
+  "lang_room_charge_rate": "{0}: {1}% mat efter rabatter, före skatt.",
+  "lang_room_charge_final": "Ingår i slutfakturan.",
+  "lang_room_orders_enable_help": "Aktivera personalrumsbeställningar i Inställningar ”Restaurang” Hotell och andra lokaler.",
+  "lang_room_venue": "Mötesplats"
 }

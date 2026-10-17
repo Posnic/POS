@@ -4923,5 +4923,22 @@
   "lang_text_style": "Gaya teks",
   "lang_this_product_is_hidden_from_sales_your_bas": "Produk ini tersembunyi dari jualan. Bakul anda belum diubah.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Tetingkap ini tergolong dalam satu cawangan. Buka outlet lain dari tetingkap utama.",
-  "lang_total_labels": "Jumlah label"
+  "lang_total_labels": "Jumlah label",
+  "lang_rooms": "Bilik",
+  "lang_room_number": "Nombor bilik",
+  "lang_room_order": "Perintah bilik",
+  "lang_room_service_charge": "Caj perkhidmatan bilik",
+  "lang_room_charge_agreement": "Tetamu bersetuju dengan caj tambahan ini",
+  "lang_room_destination_required": "Pilih tempat dan masukkan nombor bilik.",
+  "lang_room_charge_tax_unavailable": "Cukai caj bilik tidak tersedia. Semak tetapan cukai.",
+  "lang_staff_room_orders": "Benarkan pesanan bilik kakitangan",
+  "lang_staff_room_prices": "anan bilik kakitangan menggunakan harga menu biasa. Penanda menu web dan komisen tempat adalah berasingan",
+  "lang_room_charge_offer": "Menawarkan caj bilik tambahan",
+  "lang_charge_name": "Nama caj",
+  "lang_apply_default_tax": "Terapkan cukai lalai",
+  "lang_room_charge_basis": "Peratusan makanan selepas diskaun, sebelum cukai. Memohon hanya dengan perjanjian tetamu; kakitangan boleh mengeluarkannya dari bil.",
+  "lang_room_charge_rate": "{0}: {1}% makanan selepas diskaun, sebelum cukai.",
+  "lang_room_charge_final": "Termasuk pada rang undang-undang akhir.",
+  "lang_room_orders_enable_help": "Dayakan pesanan bilik kakitangan di Tetapan → Restoran → Hotel dan tempat lain.",
+  "lang_room_venue": "Tempat"
 }

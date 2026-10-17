@@ -172,7 +172,7 @@ test('a venue drawn on the screen is the venue that gets saved', () => {
   assert.strictEqual(saved.length, 1, 'the row rendered but the save could not read it');
   /* Every field, because each one that fails to round-trip fails silently and
      each one is somebody's money or somebody's dinner. */
-  assert.deepStrictEqual(plain(saved[0]), ROYAL);
+  assert.deepStrictEqual(plain(saved[0]), {...ROYAL, staff_orders_enabled:false, room_charge:{enabled:false,name:'Room service charge',percent:0,taxed:false}});
 });
 
 test('the markup and the commission stay two different numbers', () => {

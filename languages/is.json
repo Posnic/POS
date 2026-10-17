@@ -4920,5 +4920,22 @@
   "lang_text_style": "Textastíll",
   "lang_this_product_is_hidden_from_sales_your_bas": "Þessi vara er falin fyrir sölu. Körfunni hefur ekki verið breytt.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Þessi gluggi tilheyrir einni grein. Opnaðu aðra innstungu frá aðalglugganum.",
-  "lang_total_labels": "Heildarmerki"
+  "lang_total_labels": "Heildarmerki",
+  "lang_rooms": "Herbergin",
+  "lang_room_number": "Herbergisnúmer",
+  "lang_room_order": "Herbergisröð",
+  "lang_room_service_charge": "Herbergisþjónustugjald",
+  "lang_room_charge_agreement": "Gestur samþykkti þetta aukagjald",
+  "lang_room_destination_required": "Veldu staðsetningu og sláðu inn herbergisnúmerið.",
+  "lang_room_charge_tax_unavailable": "Herbergisgjaldaskattur er ekki tiltækur. Farið yfir skattstillingarnar.",
+  "lang_staff_room_orders": "Leyfa pantanir á herbergjum starfsmanna",
+  "lang_staff_room_prices": "Starfsmannaherbergispantanir nota venjulegt matseðilverð. Merking á vefmatseðli og þóknun á vettvangi eru aðskil",
+  "lang_room_charge_offer": "Bjóða upp á viðbótarherbergisgjald",
+  "lang_charge_name": "Heiti hleðslu",
+  "lang_apply_default_tax": "Beita sjálfgefnum skatti",
+  "lang_room_charge_basis": "Hlutfall matar eftir afslætti, fyrir skatta. Sækja aðeins um með samkomulagi gesta; starfsfólk getur fjarlægt það úr frumvarpinu.",
+  "lang_room_charge_rate": "{0}: {1}% af mat eftir afslætti, fyrir skatta.",
+  "lang_room_charge_final": "Innifalið í endanlegu frumvarpinu.",
+  "lang_room_orders_enable_help": "Virkja herbergjapantanir starfsfólks í Stillingar → Veitingastaður → Hótel og aðrir staðir.",
+  "lang_room_venue": "Vettvangur"
 }

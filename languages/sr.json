@@ -4920,5 +4920,22 @@
   "lang_text_style": "Stil teksta",
   "lang_this_product_is_hidden_from_sales_your_bas": "Ovaj proizvod je skriven od prodaje. Vaša korpa nije promenjena.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Ovaj prozor pripada jednoj grani. Otvorite drugu utičnicu iz glavnog prozora.",
-  "lang_total_labels": "Ukupno oznaka"
+  "lang_total_labels": "Ukupno oznaka",
+  "lang_rooms": "Sobe",
+  "lang_room_number": "Broj sobe",
+  "lang_room_order": "Redosled sobe",
+  "lang_room_service_charge": "Naknada za poslugu u sobu",
+  "lang_room_charge_agreement": "Gost je pristao na ovu dodatnu naknadu",
+  "lang_room_destination_required": "Izaberite mesto i unesite broj sobe.",
+  "lang_room_charge_tax_unavailable": "Porez na naknadu za sobu nije dostupan. Pregledajte poreska podešavanja.",
+  "lang_staff_room_orders": "Dozvolite narudžbe soba osoblja",
+  "lang_staff_room_prices": "udžbe soba osoblja koriste normalne cene menija. Označavanje veb menija i provizija mesta su odvojeni",
+  "lang_room_charge_offer": "Ponudite dodatnu naknadu za sobu",
+  "lang_charge_name": "Naziv naplate",
+  "lang_apply_default_tax": "Primenite podrazumevani porez",
+  "lang_room_charge_basis": "Procenat hrane nakon popusta, pre oporezivanja. Prijavite se samo uz dogovor gosta; osoblje ga može ukloniti sa računa.",
+  "lang_room_charge_rate": "{0}: {1}% hrane nakon popusta, pre oporezivanja.",
+  "lang_room_charge_final": "Uključeno u konačni račun.",
+  "lang_room_orders_enable_help": "Omogućite naručivanje soba osoblja u Podešavanjima → Restoran → Hoteli i druga mesta.",
+  "lang_room_venue": "Mesto održavanja"
 }

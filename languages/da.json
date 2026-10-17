@@ -4920,5 +4920,22 @@
   "lang_text_style": "Tekstformat",
   "lang_this_product_is_hidden_from_sales_your_bas": "Dette produkt er skjult for salg. Din kurv er ikke blevet ændret.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Dette vindue tilhører en gren. Åbn en anden stikkontakt fra hovedvinduet.",
-  "lang_total_labels": "Etiketter i alt"
+  "lang_total_labels": "Etiketter i alt",
+  "lang_rooms": "Værelser",
+  "lang_room_number": "Værelsesnummer",
+  "lang_room_order": "Værelsesordre",
+  "lang_room_service_charge": "Roomservice gebyr",
+  "lang_room_charge_agreement": "Gæsten accepterede dette tillægsgebyr",
+  "lang_room_destination_required": "Vælg et sted og indtast værelsesnummeret.",
+  "lang_room_charge_tax_unavailable": "Værelsesafgiften er ikke tilgængelig. Gennemgå skatteindstillingerne.",
+  "lang_staff_room_orders": "Tillad ordrer på personalelokaler",
+  "lang_staff_room_prices": "Personaleordrer bruger normale menupriser. Webmenuopmærkning og stedskommission er separate.",
+  "lang_room_charge_offer": "Tilbyd et ekstra værelsesgebyr",
+  "lang_charge_name": "Opladningsnavn",
+  "lang_apply_default_tax": "Anvend standardskat",
+  "lang_room_charge_basis": "Procentdel af mad efter rabatter, før skat. Ansøg kun med gæsteaftale; personalet kan fjerne det fra regningen.",
+  "lang_room_charge_rate": "{0}: {1}% af mad efter rabatter, før skat.",
+  "lang_room_charge_final": "Inkluderet på den endelige regning.",
+  "lang_room_orders_enable_help": "Aktivér bestilling af medarbejderværelser i Indstillinger → Restaurant → Hoteller og andre spillesteder.",
+  "lang_room_venue": "Sted"
 }

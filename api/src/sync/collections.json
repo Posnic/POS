@@ -131,7 +131,8 @@
     "library_releases": "Private package grants, artifacts and single-use tokens belong to the registry authority, not shop-data replication.",
     "registry_accounts": "Registry identities, request budgets and sessions remain with their issuing registry; they must not be inherited by POS tills.",
     "registry_rate_limits": "Registry identities, request budgets and sessions remain with their issuing registry; they must not be inherited by POS tills.",
-    "registry_sessions": "Registry identities, request budgets and sessions remain with their issuing registry; they must not be inherited by POS tills."
+    "registry_sessions": "Registry identities, request budgets and sessions remain with their issuing registry; they must not be inherited by POS tills.",
+    "shifts": "Attendance and cash-shift records belong to the recording till. Mobile attendance requires that local till; generic replication cannot arbitrate concurrent open shifts."
   },
   "undecided": {
     "_note": "Shop data that today stays where it was written. Each needs a decision and, if synced, a check that rows carry branch_id and license and that deletes leave a tombstone. Until decided, a till and the cloud can disagree on these exactly as they did on tables.",

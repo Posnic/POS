@@ -4920,5 +4920,22 @@
   "lang_text_style": "Styl textu",
   "lang_this_product_is_hidden_from_sales_your_bas": "Tento produkt je skrytý před prodejem. Váš košík nebyl změněn.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Toto okno patří jedné větvi. Otevřete další zásuvku z hlavního okna.",
-  "lang_total_labels": "Celkem štítků"
+  "lang_total_labels": "Celkem štítků",
+  "lang_rooms": "Pokoje",
+  "lang_room_number": "Číslo pokoje",
+  "lang_room_order": "Objednávka pokojů",
+  "lang_room_service_charge": "Poplatek za pokojovou službu",
+  "lang_room_charge_agreement": "Host souhlasil s tímto dodatečným poplatkem",
+  "lang_room_destination_required": "Vyberte místo a zadejte číslo místnosti.",
+  "lang_room_charge_tax_unavailable": "Daň z poplatku za pokoj není k dispozici. Zkontrolujte nastavení daně.",
+  "lang_staff_room_orders": "Povolit objednávky místností zaměstnanců",
+  "lang_staff_room_prices": "Objednávky pokojů pro zaměstnance používají běžné ceny menu. Značení webových nabídek a provize místa konání jsou oddělené.",
+  "lang_room_charge_offer": "Nabídka za příplatek za pokoj",
+  "lang_charge_name": "Název poplatku",
+  "lang_apply_default_tax": "Použít výchozí daň",
+  "lang_room_charge_basis": "Procento potravin po slevách, před zdaněním. Přihlaste se pouze se souhlasem hosta; zaměstnanci jej mohou odstranit z účtu.",
+  "lang_room_charge_rate": "{0}: {1}% potravin po slevách, před zdaněním.",
+  "lang_room_charge_final": "Zahrnuto na konečném účtu.",
+  "lang_room_orders_enable_help": "Povolte objednávky pokojů zaměstnanců v Nastavení „Restaurace“ — Hotely a dalších místech.",
+  "lang_room_venue": "Místo konání"
 }

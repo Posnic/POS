@@ -308,7 +308,7 @@
                     if (hasTaxAmount(sgst)) content += pair('SGST', money(sgst));
                 }
                 else if (hasTaxAmount(data.tax)) content += pair(contract.taxLabel(data, PosnicPro.local.get('country_setting')), money(data.tax));
-                (data.charges || []).forEach(function (c) { content += pair(c.name || 'Charge', money(Number(c.amount || 0) + Number(c.tax_amount || 0))); });
+                (data.charges || []).forEach(function (c) { content += pair(c.name || 'Charge', money(Number(c.amount || 0))); });
                 if (Number(data.round_off)) content += pair('Round Off', money(data.round_off));
                 content += pair('Total', money(data.items_total), true);
                 if (!beforePayment && data.sales_id) {

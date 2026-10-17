@@ -96,6 +96,16 @@ function normalizeVenue(input) {
        skip the ones that matter. */
     ask_floor: input.ask_floor === true,
 
+    staff_orders_enabled: input.staff_orders_enabled === true,
+    room_charge: {
+      enabled: input.room_charge?.enabled === true,
+      name:
+        String(input.room_charge?.name || 'Room service charge')
+          .trim()
+          .slice(0, 60) || 'Room service charge',
+      percent: clampPercent(input.room_charge?.percent, 0),
+      taxed: input.room_charge?.taxed === true,
+    },
     enabled: input.enabled !== false,
   };
 }

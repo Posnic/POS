@@ -5001,5 +5001,22 @@
   "lang_text_style": "نمط النص",
   "lang_this_product_is_hidden_from_sales_your_bas": "هذا المنتج مخفي عن المبيعات. لم يتم تغيير سلتك.",
   "lang_this_window_belongs_to_one_branch_open_ano": "تنتمي هذه النافذة إلى فرع واحد. افتح منفذًا آخر من النافذة الرئيسية.",
-  "lang_total_labels": "إجمالي التسميات"
+  "lang_total_labels": "إجمالي التسميات",
+  "lang_rooms": "الغرف",
+  "lang_room_number": "رقم الغرفة",
+  "lang_room_order": "طلب غرفة",
+  "lang_room_service_charge": "رسوم خدمة الغرف",
+  "lang_room_charge_agreement": "وافق الضيف على هذه الرسوم الإضافية",
+  "lang_room_destination_required": "اختر مكانًا وأدخل رقم الغرفة.",
+  "lang_room_charge_tax_unavailable": "ضريبة رسوم الغرفة غير متوفرة. راجع إعدادات الضرائب.",
+  "lang_staff_room_orders": "السماح بطلبات غرف الموظفين",
+  "lang_staff_room_prices": "تستخدم طلبات غرف الموظفين أسعار القائمة العادية. ترميز قائمة الويب ولجنة المكان منفصلان.",
+  "lang_room_charge_offer": "عرض رسوم غرفة إضافية",
+  "lang_charge_name": "اسم الشحنة",
+  "lang_apply_default_tax": "تطبيق الضريبة الافتراضية",
+  "lang_room_charge_basis": "نسبة الطعام بعد الخصومات، قبل الضرائب. لا تنطبق إلا بموافقة الضيف؛ يمكن للموظفين إزالتها من الفاتورة.",
+  "lang_room_charge_rate": "{0}: {1}% من الطعام بعد الخصومات، قبل الضرائب.",
+  "lang_room_charge_final": "مدرج في الفاتورة النهائية.",
+  "lang_room_orders_enable_help": "قم بتمكين طلبات غرف الموظفين في الإعدادات → Restaurant → الفنادق والأماكن الأخرى.",
+  "lang_room_venue": "المكان"
 }
