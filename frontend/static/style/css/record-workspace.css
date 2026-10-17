@@ -2,7 +2,8 @@
 .record-dialog.sidebarshow {
     width: min(820px, calc(100vw - 64px)) !important;
     max-width: none !important;
-    height: auto;
+    height: fit-content !important;
+    min-height: 0 !important;
     max-height: calc(100dvh - 64px);
     bottom: auto;
     top: 32px;
@@ -131,3 +132,6 @@
     height: fit-content !important;
     min-height: 0 !important;
 }
+
+#user_password_change_row { grid-column: 1 / -1; }
+#user_password_change_row[hidden] { display: none !important; }

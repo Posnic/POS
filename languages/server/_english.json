@@ -1636,6 +1636,9 @@
     "src/controllers/users.controller.js",
     "src/repositories/user.repository.js"
   ],
+  "Password must contain between 5 and 20 characters": [
+    "src/models/user.model.js"
+  ],
   "Password reset is not configured for this shop. Please contact support.": [
     "src/models/setting.model.js"
   ],
@@ -1653,7 +1656,8 @@
     "src/models/setting.model.js"
   ],
   "Passwords do not match": [
-    "src/models/setting.model.js"
+    "src/models/setting.model.js",
+    "src/models/user.model.js"
   ],
   "Payment Gateway Updated": [
     "src/models/setting.model.js"
