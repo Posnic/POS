@@ -2505,6 +2505,16 @@ function createWindow(showStartupLoader = !isWarmStartup()) {
 // Redirect to installation wizard for first time setup
 async function redirectToWizard() {
   if (mainWindow) {
+    // Use the current display's usable area (already adjusted for Windows DPI
+    // scaling and taskbar), rather than leaving setup in the fixed 800px shell.
+    if (!mainWindow.isMaximized()) {
+      const area = electron.screen.getDisplayMatching(mainWindow.getBounds()).workArea;
+      const width = Math.min(1200, area.width - 24);
+      const height = Math.min(960, area.height - 24);
+      mainWindow.setMinimumSize(Math.min(760, width), Math.min(540, height));
+      mainWindow.setBounds({ x: area.x + Math.floor((area.width - width) / 2),
+        y: area.y + Math.floor((area.height - height) / 2), width, height });
+    }
     await mainWindow.loadFile('src/install-wizard.html');
     if (!mainWindow.isVisible()) mainWindow.show();
     mainWindow.focus();

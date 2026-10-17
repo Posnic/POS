@@ -156,3 +156,11 @@ test('successful browser approval restores its initiating window without blockin
     assert.deepEqual(calls, focusFails ? ['restore','show','connect'] : ['restore','show','focus','connect']);
   }
 });
+
+test('signup returns through the same approval callback as login', async t => {
+  const f = fixture(t), done = f.client.authorize({ ...details, intent: 'signup' });
+  await f.opening;
+  assert.equal(f.initial.intent, 'signup');
+  assert.equal((await f.callback()).status, 200);
+  assert.equal((await done).deviceId, 'test-device');
+});

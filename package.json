@@ -243,6 +243,8 @@
       "src/fonts/NotoSansTC-OFL.txt",
       "src/simple-setup.css",
       "src/simple-setup.js",
+      "src/setup-region.js",
+      "src/setup-region-data.js",
       "src/setup-recovery.js",
       "src/setup-hardware-files.json"
     ],
