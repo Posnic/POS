@@ -2236,6 +2236,7 @@ const getTablesWithActiveOrders = async (branchId) => {
     let hasTakeaway = false;
     let takeaway = null;
     const takeawayOrders = [];
+    const unassignedOrders = [];
 
     const remember = (key, res) => {
       const was = detail.get(key);
@@ -2274,6 +2275,15 @@ const getTablesWithActiveOrders = async (branchId) => {
       } else if (tNum !== '') {
         tables.push(tNum);
         remember(tNum, res);
+      } else {
+        for (const sale of res.sales || [])
+          unassignedOrders.push({
+            sale_id: String(sale.id),
+            number: String(sale.number || sale.id),
+            since: sale.since ? new Date(sale.since).toISOString() : null,
+            amount: Number(sale.amount) || 0,
+            payment_status: sale.payment_status,
+          });
       }
     });
     takeaway = detail.get('__takeaway__') || null;
@@ -2309,6 +2319,7 @@ const getTablesWithActiveOrders = async (branchId) => {
       data: {
         tables: uniqueTables,
         has_takeaway: hasTakeaway,
+        unassigned_orders: unassignedOrders,
         takeaway_orders: takeawayOrders.sort(
           (a, b) =>
             String(a.since || '').localeCompare(String(b.since || '')) ||

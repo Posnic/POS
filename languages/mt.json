@@ -4920,5 +4920,22 @@
   "lang_text_style": "Stil tat-test",
   "lang_this_product_is_hidden_from_sales_your_bas": "Dan il-prodott huwa moħbi mill-bejgħ. Il-basket tiegħek ma nbidlitx.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Din it-tieqa tappartjeni għal fergħa waħda. Iftaħ żbokk ieħor mit-tieqa prinċipali.",
-  "lang_total_labels": "Tikketti totali"
+  "lang_total_labels": "Tikketti totali",
+  "lang_rooms": "Kmamar",
+  "lang_room_number": "Numru tal-kamra",
+  "lang_room_order": "Ordni tal-kamra",
+  "lang_room_service_charge": "Ħlas tas-servizz tal-kamra",
+  "lang_room_charge_agreement": "Il-klijent qabel ma' din il-ħlas addizzjonali",
+  "lang_room_destination_required": "Agħżel post u daħħal in-numru tal-kamra.",
+  "lang_room_charge_tax_unavailable": "It-taxxa fuq it-tariffa tal-kamra mhix disponibbli. Irrevedi l-issettjar tat-taxxa.",
+  "lang_staff_room_orders": "Tippermetti ordnijiet tal-kamra tal-pers",
+  "lang_staff_room_prices": "Ordnijiet tal-kamra tal-persunal jużaw prezzijiet normali tal-menu Il-markup tal-menu tal-web u l-kummissjoni tal-post huma separati",
+  "lang_room_charge_offer": "Offri ħlas addizzjonali għall-kamra",
+  "lang_charge_name": "Isem tat-taxxa",
+  "lang_apply_default_tax": "Applika t-taxxa default",
+  "lang_room_charge_basis": "Perċentwal ta' ikel wara skontijiet, qabel it-taxxa. Applika biss bi ftehim mistieden; il-persunal jista 'jneħħih mill-polza.",
+  "lang_room_charge_rate": "{0}: {1}% tal-ikel wara l-iskontijiet, qabel it-taxxa.",
+  "lang_room_charge_final": "Inkluż fuq il-polza finali.",
+  "lang_room_orders_enable_help": "Ippermetti ordnijiet tal-kamra tal-persunal f'Settings → Restaurant → Lukandi u postijiet oħra.",
+  "lang_room_venue": "Post"
 }

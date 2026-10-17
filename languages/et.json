@@ -4920,5 +4920,22 @@
   "lang_text_style": "Tekstiil",
   "lang_this_product_is_hidden_from_sales_your_bas": "See toode on müügi eest varjatud. Teie ostukorvi pole muudetud.",
   "lang_this_window_belongs_to_one_branch_open_ano": "See aken kuulub ühele harule. Avage peaaknast teine väljalaskeava.",
-  "lang_total_labels": "Sildid kokku"
+  "lang_total_labels": "Sildid kokku",
+  "lang_rooms": "Toad",
+  "lang_room_number": "Toa number",
+  "lang_room_order": "Ruumide järjekord",
+  "lang_room_service_charge": "Toateeninduse tasu",
+  "lang_room_charge_agreement": "Külaline nõustus selle lisatasuga",
+  "lang_room_destination_required": "Valige koht ja sisestage toa number.",
+  "lang_room_charge_tax_unavailable": "Toatasu maks pole saadaval. Vaadake üle maksuseaded.",
+  "lang_staff_room_orders": "Luba töötajate ruumide tellimusi",
+  "lang_staff_room_prices": "Töötajate ruumide tellimisel kasutatakse tavalisi menüühindu. Veebimenüü märgistus ja toimumiskoha komisjon on eraldi",
+  "lang_room_charge_offer": "Paku lisatasu eest",
+  "lang_charge_name": "Tasu nimi",
+  "lang_apply_default_tax": "Rakenda vaikimaksu",
+  "lang_room_charge_basis": "Toidu protsent pärast allahindlusi, enne maksustamist. Kandideerige ainult külalise kokkuleppel; töötajad saavad selle arvelt eemaldada.",
+  "lang_room_charge_rate": "{0}: {1}% toidust pärast allahindlusi, enne maksustamist.",
+  "lang_room_charge_final": "Lisatud lõplikule arvele.",
+  "lang_room_orders_enable_help": "Luba töötajate ruumide tellimused jaotises Seaded → Restoran → Hotellid ja muud paigad.",
+  "lang_room_venue": "Toimumiskoht"
 }

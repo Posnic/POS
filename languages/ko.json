@@ -4923,5 +4923,22 @@
   "lang_text_style": "텍스트 스타일",
   "lang_this_product_is_hidden_from_sales_your_bas": "이 제품은 판매되지 않습니다.장바구니가 변경되지 않았습니다.",
   "lang_this_window_belongs_to_one_branch_open_ano": "이 창은 한 지점에 속합니다.메인 윈도우에서 다른 콘센트를 여세요.",
-  "lang_total_labels": "전체 라벨"
+  "lang_total_labels": "전체 라벨",
+  "lang_rooms": "객실",
+  "lang_room_number": "방 번호",
+  "lang_room_order": "객실 주문",
+  "lang_room_service_charge": "룸 서비스 요금",
+  "lang_room_charge_agreement": "게스트가 이 추가 요금에 동의했습니다.",
+  "lang_room_destination_required": "장소를 선택하고 객실 번호를 입력하세요.",
+  "lang_room_charge_tax_unavailable": "객실 요금은 부과되지 않습니다.세금 설정을 검토하세요",
+  "lang_staff_room_orders": "직원 객실 주문 허용",
+  "lang_staff_room_prices": "직원실 주문은 일반 메뉴 가격을 사용합니다.웹 메뉴 마크업과 장소 수수료는 별개입니다",
+  "lang_room_charge_offer": "추가 객실 요금을 제공하세요.",
+  "lang_charge_name": "요금 이름",
+  "lang_apply_default_tax": "기본세 적용",
+  "lang_room_charge_basis": "할인 후, 세전 식품의 비율.투숙객 동의가 있는 경우에만 신청하세요. 직원이 청구서에서 해당 금액을 삭제할 수 있습니다.",
+  "lang_room_charge_rate": "{0}: 할인 후 식재료의 {1}% (세금 미포함)",
+  "lang_room_charge_final": "최종 청구서에 포함되어 있습니다.",
+  "lang_room_orders_enable_help": "설정 → 레스토랑 → 호텔 및 기타 장소에서 직원 객실 주문을 활성화하세요.",
+  "lang_room_venue": "장소"
 }

@@ -3704,6 +3704,10 @@ PosnicPro.kotorder = {
     },
 
     renderPersons: function () {
+        PosnicPro.kotorder.tableRequired = true;
+        PosnicPro.get({url:'captain/v1/table-settings'}, function(data) {
+            PosnicPro.kotorder.tableRequired = data.tableRequired !== false;
+        });
         let personsHtml = '';
         let targetPersonCount = (typeof PosnicPro.kotorder.kotPersonCount === 'number' && PosnicPro.kotorder.kotPersonCount > 0)
             ? PosnicPro.kotorder.kotPersonCount
@@ -3899,12 +3903,8 @@ PosnicPro.kotorder = {
                     $(this).find('strong').css('color', '#6c757d');
                 });
 
-                // Auto-proceed for Take Away using the shared kotOrderNext flow
-                // so that new and edit KOT flows behave consistently.
-                if (PosnicPro.kotorder && typeof PosnicPro.kotorder.kotOrderNext === 'function') {
-                    PosnicPro.kotorder.kotOrderType = dineType;   
-                    PosnicPro.kotorder.kotOrderNext(); 
-                }
+                // Keep selections on this screen until the explicit Next click.
+                PosnicPro.kotorder.kotOrderType = dineType;
             } else {
                 $('#kot_dinein_label')
                     .addClass('active btn-info')
@@ -4024,7 +4024,7 @@ PosnicPro.kotorder = {
             }
         }
 
-        if (dineType === 'Dine-in' && (!tableNumber || tableNumber === '')) {
+        if (dineType === 'Dine-in' && PosnicPro.kotorder.tableRequired !== false && (!tableNumber || tableNumber === '')) {
             PosnicPro.alert('warning', PosnicPro.i18n.t('lang_select_a_table', 'Select a table.'));
             return;
         }

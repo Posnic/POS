@@ -4920,5 +4920,22 @@
   "lang_text_style": "سبک متن",
   "lang_this_product_is_hidden_from_sales_your_bas": "این محصول از فروش پنهان است. سبد خرید شما تغییر نکرده است.",
   "lang_this_window_belongs_to_one_branch_open_ano": "این پنجره متعلق به یک شاخه است. یک خروجی دیگر را از پنجره اصلی باز کنید.",
-  "lang_total_labels": "مجموع برچسب ها"
+  "lang_total_labels": "مجموع برچسب ها",
+  "lang_rooms": "اتاقها",
+  "lang_room_number": "شماره اتاق",
+  "lang_room_order": "سفارش اتاق",
+  "lang_room_service_charge": "هزینه خدمات اتاق",
+  "lang_room_charge_agreement": "مهمان با این هزینه اضافی موافقت کرد",
+  "lang_room_destination_required": "محل برگزاری را انتخاب کنید و شماره اتاق را وارد کنید.",
+  "lang_room_charge_tax_unavailable": "مالیات هزینه اتاق در دسترس نیست. تنظیمات مالیاتی را مرور کنید.",
+  "lang_staff_room_orders": "اجازه سفارشات اتاق کارکنان",
+  "lang_staff_room_prices": "سفارشات اتاق کارکنان از قیمت منوی معمولی استفاده می کنند. نشانه گذاری منوی وب و کمیسیون محل جداگانه هستند.",
+  "lang_room_charge_offer": "هزینه اتاق اضافی ارائه دهید",
+  "lang_charge_name": "نام شارژ",
+  "lang_apply_default_tax": "اعمال مالیات پیش فرض",
+  "lang_room_charge_basis": "درصد مواد غذایی پس از تخفیف، قبل از مالیات. فقط با موافقت مهمان درخواست کنید؛ کارکنان می توانند آن را از صورتحساب حذف کنند.",
+  "lang_room_charge_rate": "{0}: {1} درصد مواد غذایی پس از تخفیف، قبل از مالیات.",
+  "lang_room_charge_final": "در صورتحساب نهایی گنجانده شده است.",
+  "lang_room_orders_enable_help": "سفارشات اتاق کارکنان را در تنظیمات «رستوران» هتل ها و سایر مکان ها فعال کنید.",
+  "lang_room_venue": "محل برگزاری"
 }

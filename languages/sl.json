@@ -4920,5 +4920,22 @@
   "lang_text_style": "Besedilni slog",
   "lang_this_product_is_hidden_from_sales_your_bas": "Ta izdelek je skrit pred prodajo. Vaša košarica ni bila spremenjena.",
   "lang_this_window_belongs_to_one_branch_open_ano": "To okno pripada eni veji. Odprite drugo vtičnico iz glavnega okna.",
-  "lang_total_labels": "Skupaj oznak"
+  "lang_total_labels": "Skupaj oznak",
+  "lang_rooms": "Sobe",
+  "lang_room_number": "Številka sobe",
+  "lang_room_order": "Vrstni red sobe",
+  "lang_room_service_charge": "Cena sobne postrežbe",
+  "lang_room_charge_agreement": "Gostje se strinjajo s tem doplačilom",
+  "lang_room_destination_required": "Izberite prizorišče in vnesite številko sobe.",
+  "lang_room_charge_tax_unavailable": "Davek na sobo ni na voljo. Preglejte davčne nastavitve.",
+  "lang_staff_room_orders": "Dovoli naročila sob za osebje",
+  "lang_staff_room_prices": "Naročila sob za osebje uporabljajo običajne cene menija. Oznaka spletnega menija in provizija prizorišča sta ločena",
+  "lang_room_charge_offer": "Ponudite doplačilo sobe",
+  "lang_charge_name": "Ime polnilnika",
+  "lang_apply_default_tax": "Uporabi privzeti davek",
+  "lang_room_charge_basis": "Odstotek hrane po popustih, pred davkom. Prijavite se samo s soglasjem gosta; osebje ga lahko odstrani iz računa.",
+  "lang_room_charge_rate": "{0}: {1}% hrane po popustu, pred davkom.",
+  "lang_room_charge_final": "Vključeno v končni račun.",
+  "lang_room_orders_enable_help": "Omogočite naročanje sob za osebje v nastavitvah → Restavracija → Hoteli in druga prizorišča.",
+  "lang_room_venue": "Prizorišče"
 }

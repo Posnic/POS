@@ -39,6 +39,15 @@ function applyMoney(sale, view, branch, side) {
     round_off: amount(components.adjustment),
     sales_total: amount(side.totalMinor),
   });
+  if (Array.isArray(sale.charges))
+    view.charges = Object.entries(components)
+      .filter(([key]) => key.startsWith('charge:'))
+      .map(([key, minor]) => ({
+        name: key.slice(7),
+        amount: amount(minor),
+        tax_amount: 0,
+        source: 'allocated',
+      }));
   view.items_subtotal = view.sales_sub_total;
   view.items_total = amount(side.totalMinor - (components.adjustment || 0));
   if ('subtotal' in sale) view.subtotal = view.sales_sub_total;

@@ -87,9 +87,29 @@ async function list(req) {
     'channels',
     { branchId: c.branchId, licenseId: c.license }
   );
+  const roomVenues = require('../utils/partner-venues')
+    .normalizeVenues(feedback.status === true ? feedback.data?.values?.partner_venues : [])
+    .filter((v) => v.enabled && v.staff_orders_enabled);
+  if (roomVenues.some((v) => v.room_charge.enabled && v.room_charge.taxed)) {
+    const tax = ObjectId.isValid(String(c.branch?.default_tax || ''))
+      ? await req.db.collection('grouptax').findOne({
+          _id: new ObjectId(String(c.branch.default_tax)),
+          branch_id: c.branchId,
+          license: c.license,
+        })
+      : null;
+    for (const venue of roomVenues)
+      if (venue.room_charge.taxed) {
+        venue.room_charge.tax_rate = tax ? Number(tax.rate) : null;
+        venue.room_charge.tax_available =
+          !!tax && Number.isFinite(Number(tax.rate)) && Number(tax.rate) >= 0;
+      }
+  }
   return {
     orderFeedback:
       feedback.status === true && feedback.data?.values?.restaurant_playful_feedback === true,
+    tableRequired: c.branch?.captain_allow_unassigned !== true,
+    roomVenues,
     cleaningEnabled: require('./table-cleaning').enabled(c.branch),
     canManage: allowed(req.user, 'settings'),
     canMerge: allowed(req.user, 'sales', 'merge'),

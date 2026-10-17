@@ -5001,5 +5001,22 @@
   "lang_text_style": "टेक्स्ट स्टाइल",
   "lang_this_product_is_hidden_from_sales_your_bas": "यह उत्पाद बिक्री से छिपा हुआ है। आपका बास्केट बदला नहीं गया है।",
   "lang_this_window_belongs_to_one_branch_open_ano": "यह विंडो एक शाखा की है। मुख्य विंडो से दूसरा आउटलेट खोलें।",
-  "lang_total_labels": "कुल लेबल"
+  "lang_total_labels": "कुल लेबल",
+  "lang_rooms": "कमरे",
+  "lang_room_number": "रूम नंबर",
+  "lang_room_order": "रूम ऑर्डर",
+  "lang_room_service_charge": "रूम सर्विस चार्ज",
+  "lang_room_charge_agreement": "अतिथि ने इस अतिरिक्त शुल्क के लिए सहमति दी",
+  "lang_room_destination_required": "एक स्थान चुनें और कमरा नंबर दर्ज करें.",
+  "lang_room_charge_tax_unavailable": "रूम चार्ज टैक्स उपलब्ध नहीं है। टैक्स सेटिंग की समीक्षा",
+  "lang_staff_room_orders": "स्टाफ़ रूम ऑर्डर की अनुमति दें.",
+  "lang_staff_room_prices": "स्टाफ़ रूम के ऑर्डर में मेनू की सामान्य कीमतों का उपयोग किया जाता है। वेब मेनू मार्कअप और वेन्यू कमीशन अलग-अलग हैं",
+  "lang_room_charge_offer": "रूम का अतिरिक्त शुल्क दें.",
+  "lang_charge_name": "शुल्क का नाम",
+  "lang_apply_default_tax": "डिफ़ॉल्ट टैक्स लागू करें",
+  "lang_room_charge_basis": "छूट के बाद खाने का प्रतिशत, टैक्स से पहले। केवल अतिथि अनुबंध के साथ आवेदन करें; कर्मचारी इसे बिल से हटा सकते हैं.",
+  "lang_room_charge_rate": "{0}: छूट के बाद भोजन का {1}%, टैक्स से पहले.",
+  "lang_room_charge_final": "अंतिम बिल में शामिल है.",
+  "lang_room_orders_enable_help": "होटल और अन्य स्थानों की सेटिंग में स्टाफ़ रूम ऑर्डर सक्षम करें.",
+  "lang_room_venue": "वेन्यू"
 }

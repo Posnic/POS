@@ -4920,5 +4920,22 @@
   "lang_text_style": "Estilo ng teksto",
   "lang_this_product_is_hidden_from_sales_your_bas": "Ang produktong ito ay nakatago mula sa mga benta. Hindi pa binago ang iyong basket.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Ang window na ito ay kabilang sa isang sangay. Buksan ang isa pang outlet mula sa pangunahing window.",
-  "lang_total_labels": "Kabuuang mga label"
+  "lang_total_labels": "Kabuuang mga label",
+  "lang_rooms": "Mga silid",
+  "lang_room_number": "Numero ng kuwarto",
+  "lang_room_order": "Order ng kuwarto",
+  "lang_room_service_charge": "Singil sa serbisyo sa kuwarto",
+  "lang_room_charge_agreement": "Sumang-ayon ang guest sa karagdagang bayad na ito",
+  "lang_room_destination_required": "Pumili ng lugar at ipasok ang numero ng kuwarto.",
+  "lang_room_charge_tax_unavailable": "Hindi magagamit ang buwis sa singil sa kuwarto. Suriin ang mga setting ng buwis.",
+  "lang_staff_room_orders": "Payagan ang mga order ng silid ng kawani",
+  "lang_staff_room_prices": "order ng staff room ay gumagamit ng mga normal na presyo ng menu. Ang markup ng web menu at komisyon ng lugar ay hiwalay.",
+  "lang_room_charge_offer": "Mag-alok ng karagdagang bayad sa kuwarto",
+  "lang_charge_name": "Pangalan ng singil",
+  "lang_apply_default_tax": "Ilapat ang default na buwis",
+  "lang_room_charge_basis": "Porsyento ng pagkain pagkatapos ng mga diskwento, bago ang buwis. Mag-apply lamang sa kasunduan sa panauhin; maaaring alisin ito ng kawani mula sa bill.",
+  "lang_room_charge_rate": "{0}: {1}% ng pagkain pagkatapos ng mga diskwento, bago ang buwis.",
+  "lang_room_charge_final": "Kasama sa pangwakas na panukalang panukalang.",
+  "lang_room_orders_enable_help": "Paganahin ang mga order ng kuwarto ng staff sa Mga Setting → Restaurant → Hotel at iba pang mga lugar.",
+  "lang_room_venue": "Lugar"
 }

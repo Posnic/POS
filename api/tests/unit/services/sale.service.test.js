@@ -2321,6 +2321,23 @@ describe('SalesService', () => {
   // ── getTablesWithActiveOrders ─────────────────────────────────────────────
 
   describe('getTablesWithActiveOrders', () => {
+    test('unassigned dine-in orders remain individually visible', async () => {
+      salesRepository.aggregate.mockResolvedValue([
+        {
+          dine_type: 'Dine-in',
+          table_number: '',
+          sales: [
+            { id: 'one', number: '101', amount: 100, payment_status: 'Unpaid' },
+            { id: 'two', number: '102', amount: 50, payment_status: 'Unpaid' },
+          ],
+        },
+      ]);
+      const result = await salesService.getTablesWithActiveOrders(BRANCH_ID);
+      expect(result.data.unassigned_orders.map((row) => row.sale_id)).toEqual(['one', 'two']);
+      expect(result.data.tables).toEqual([]);
+      expect(result.data.has_takeaway).toBe(false);
+    });
+
     test('keeps takeaway identities and payment status separate while retaining old summary', async () => {
       salesRepository.aggregate.mockResolvedValue([
         {

@@ -5001,5 +5001,22 @@
   "lang_text_style": "Stile del testo",
   "lang_this_product_is_hidden_from_sales_your_bas": "Questo prodotto è nascosto alle vendite. Il tuo carrello non è stato modificato.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Questa finestra appartiene a un ramo. Apri un'altra presa dalla finestra principale.",
-  "lang_total_labels": "Etichette totali"
+  "lang_total_labels": "Etichette totali",
+  "lang_rooms": "Camere",
+  "lang_room_number": "Numero della camera",
+  "lang_room_order": "Ordine della camera",
+  "lang_room_service_charge": "Costo del servizio in camera",
+  "lang_room_charge_agreement": "L'ospite ha accettato questo costo aggiuntivo",
+  "lang_room_destination_required": "Scegli una sede e inserisci il numero della camera.",
+  "lang_room_charge_tax_unavailable": "La tassa sulla camera non è disponibile. Controlla le impostazioni fiscali.",
+  "lang_staff_room_orders": "Consenti al personale di ordinare le camere",
+  "lang_staff_room_prices": "Gli ordini delle camere per il personale utilizzano i normali prezzi del menu. Il markup del menu Web e la commissione sulla sede sono separati",
+  "lang_room_charge_offer": "Offri un costo aggiuntivo per la camera",
+  "lang_charge_name": "Nome dell'addebito",
+  "lang_apply_default_tax": "Applica l'imposta predefinita",
+  "lang_room_charge_basis": "Percentuale di cibo al netto degli sconti, al lordo delle tasse. Richiedila solo previo accordo con il cliente; il personale può rimuoverla dalla fattura.",
+  "lang_room_charge_rate": "{0}: {1}% del cibo al netto degli sconti, tasse escluse.",
+  "lang_room_charge_final": "Incluso nella fattura finale.",
+  "lang_room_orders_enable_help": "Abilita l'ordine delle camere per il personale nelle Impostazioni → Ristorante → Hotel e altre sedi.",
+  "lang_room_venue": "Sede"
 }
