@@ -288,3 +288,52 @@ test('mobile inventory defaults on, preserves explicit off and existing approval
   assert.equal((await inventory.catalogue(req)).rows.length, 1);
   assert.equal((await db.collection('items').findOne({ _id: row._id })).available_quantity, 10);
 });
+
+test('availability duplicate review, alternates, restore, audit, retry, conflict and stock preservation', async () => {
+  const availability = require('../src/services/item-availability');
+  const mapItem = require('../src/services/mobile-pos').mapItem;
+  await db
+    .collection('items')
+    .updateOne({ _id: row._id }, { $set: { barcode_id: '123', selling_price: 10, tax: 10 } });
+  const other = {
+    ...row,
+    _id: new ObjectId(),
+    name: 'Other beans',
+    barcodes: ['123'],
+    selling_price: 20,
+  };
+  await db.collection('items').insertOne(other);
+  req.query.q = '123';
+  let page = await inventory.catalogue(req);
+  assert.equal(page.rows.length, 2);
+  assert.notEqual(page.rows[0].price, page.rows[1].price);
+  assert.ok(page.rows.every((i) => i.availableForSale));
+  req.body = {
+    id: 'availability-test-001',
+    changes: [{ itemId: String(row._id), available: false, revision: '' }],
+  };
+  assert.equal((await availability.change(req)).results[0].state, 'confirmed');
+  await availability.change(req);
+  let hidden = await db.collection('items').findOne({ _id: row._id });
+  assert.equal(mapItem(hidden).active, false);
+  assert.equal(hidden.available_quantity, 10);
+  assert.equal(hidden.availability_history.length, 1);
+  assert.equal(hidden.availability_history[0].actor, String(req.user._id));
+  assert.equal(await db.collection('stocklogs').countDocuments(), 0);
+  page = await inventory.catalogue(req);
+  assert.equal(page.rows.length, 2);
+  req.body = {
+    id: 'availability-test-002',
+    changes: [{ itemId: String(row._id), available: true, revision: '' }],
+  };
+  assert.equal((await availability.change(req)).results[0].state, 'conflict');
+  req.body.changes[0].revision = hidden.availability_revision;
+  await availability.change(req);
+  hidden = await db.collection('items').findOne({ _id: row._id });
+  assert.equal(mapItem(hidden).active, true);
+  assert.equal(hidden.availability_history.length, 2);
+  assert.equal(hidden.available_quantity, 10);
+  req.user.usertype = 'staff';
+  req.user.access = { item: { read: true, write: false } };
+  await assert.rejects(availability.change(req), { status: 403 });
+});

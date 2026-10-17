@@ -52,6 +52,12 @@ function resolve({
   const monetary = Money.policy(branch);
   const round = (value) => Money.fromMinor(Money.toMinor(value, monetary), monetary);
   const name = product.name || product.item_name || 'Item';
+  if (product.available_for_sale === false && !previous)
+    fail(
+      'item_hidden',
+      `${name} is hidden from sales. Remove this basket line or ask an authorised user to restore the product.`,
+      { itemId: String(product._id) }
+    );
   const old = previous?.pricing;
   // Only a stored snapshot may preserve a historical price. Clients cannot
   // install one: adapters read previous from the persisted order.
