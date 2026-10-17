@@ -23,7 +23,7 @@
     } catch (error) { status.textContent = error.message; }
     finally {
       remove.disabled = keep.disabled = false;
-      remove.textContent = 'Delete local data and restart';
+      remove.textContent = 'Save recovery copy & restart';
     }
   };
 })();

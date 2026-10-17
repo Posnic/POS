@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { JSDOM } = require('jsdom');
 const source = fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js/sales.js'), 'utf8');
-const start = source.indexOf('    loadHistory: function (page) {');
+const start = source.indexOf('    paintHistorySummary: function (summary) {');
 const end = source.indexOf('    renderHistoryPager:', start);
 const method = source.slice(start, end).trim().replace(/,$/, '');
 
@@ -83,6 +83,8 @@ for (const exporting of [false, true]) {
             } })
         };
         const script = fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js/report_payment.js'), 'utf8');
+        const helper = script.indexOf('    recordedUser: function');
+        win.eval('PosnicPro.paymentreport = {' + script.slice(helper, script.indexOf('    showDataTablePage:', helper)) + '};');
         const first = script.indexOf('    paymentransactionTable: function');
         const last = script.indexOf('    paymentransactionexport:', first);
         win.eval('PosnicPro.paymentransaction = {' + script.slice(first, last).trim().replace(/,$/, '') + '};');

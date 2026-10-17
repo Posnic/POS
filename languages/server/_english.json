@@ -238,6 +238,9 @@
   "Below referral minimum spend": [
     "src/services/loyalty.service.js"
   ],
+  "Bill correction saved.": [
+    "src/services/paid-bill-edit.js"
+  ],
   "Branch Data Exported": [
     "src/models/branch.model.js"
   ],
@@ -429,6 +432,9 @@
   ],
   "Choose a purchase order to prepare a supplier message about availability or remaining delivery quantities. Review and confirm to save the text in Ask Posnic. You can then copy it into your normal messaging workflow.": [
     "src/controllers/ask-posnic.controller.js"
+  ],
+  "Choose a saved customer for customer credit.": [
+    "src/services/sale.service.js"
   ],
   "Choose a supplier": [
     "src/repositories/purchase-order.repository.js"
@@ -815,6 +821,11 @@
   "Error: ": [
     "src/repositories/sale.repository.js"
   ],
+  "Exact numeric search must be on or off": [
+    "src/controllers/settings.controller.js",
+    "src/models/setting.model.js",
+    "src/repositories/settings.repository.js"
+  ],
   "Expense Data Exported": [
     "src/models/expense.model.js"
   ],
@@ -1157,6 +1168,9 @@
   ],
   "Item not found in inventory": [
     "src/models/inventory.model.js"
+  ],
+  "Item not found or selling price is held. Review it in Edit prices.": [
+    "src/repositories/item.repository.js"
   ],
   "Item updated": [
     "src/repositories/item.repository.js"
@@ -1622,6 +1636,9 @@
     "src/controllers/users.controller.js",
     "src/repositories/user.repository.js"
   ],
+  "Password must contain between 5 and 20 characters": [
+    "src/models/user.model.js"
+  ],
   "Password reset is not configured for this shop. Please contact support.": [
     "src/models/setting.model.js"
   ],
@@ -1639,7 +1656,8 @@
     "src/models/setting.model.js"
   ],
   "Passwords do not match": [
-    "src/models/setting.model.js"
+    "src/models/setting.model.js",
+    "src/models/user.model.js"
   ],
   "Payment Gateway Updated": [
     "src/models/setting.model.js"
@@ -1885,6 +1903,9 @@
   ],
   "Review the basket before checkout.": [
     "src/controllers/ask-posnic.controller.js"
+  ],
+  "Review the paid bill correction before saving.": [
+    "src/services/sale.service.js"
   ],
   "Review the remaining work before confirming.": [
     "src/controllers/ask-posnic.controller.js"

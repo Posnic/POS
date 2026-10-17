@@ -25,11 +25,11 @@ test('saved sales reach the designer without legacy DOM or barcode canvas for ev
   }
 });
 
-function printMethod(render) {
+function printMethod(render, receiptLog) {
   const source = read('src/hardware-manager.js');
   const start = source.indexOf('  async printHTML(');
   return vm.runInNewContext('({' + source.slice(start, source.indexOf('\n  async getDefaultPrinter', start)) + '}).printHTML', {
-    require: name => name === './escpos-unicode' ? { renderDesignedReceipt: render } : name === './receipt-fast' ? require('../src/receipt-fast') : require(name),
+    require: name => name === './receipt-log' ? receiptLog : name === './escpos-unicode' ? { renderDesignedReceipt: render } : name === './receipt-fast' ? require('../src/receipt-fast') : require(name),
     console: { error() {}, log() {} },
     Buffer,
     BrowserWindow: function () { throw Error('Must not use driver printing for thermal design'); },
@@ -47,18 +47,33 @@ test('designed thermal copies use RAW once each, with distinct delivery identiti
   assert.notEqual(calls[0][3].jobId, calls[1][3].jobId);
 });
 
+test('thermal System Default resolves to the actual default before RAW submission', async () => {
+  const calls = [];
+  const method = printMethod(async () => Buffer.from('receipt'));
+  const ctx = { _resolvePrinterName: async () => '', getDefaultPrinter: async () => ({ name: 'Reception' }),
+    sendRawToPrinter: async name => { calls.push(name); return { success: true }; } };
+  assert.equal((await method.call(ctx, '', { thermalRaster: true, pageSize: '80mm' })).success, true);
+  assert.deepEqual(calls, ['Reception']);
+  ctx.getDefaultPrinter = async () => null;
+  const failed = await method.call(ctx, '', { thermalRaster: true, pageSize: '80mm' });
+  assert.equal(failed.success, false);
+  assert.match(failed.error, /Choose a sales receipt printer/);
+  assert.equal(calls.length, 1);
+});
+
 test('capture-only renders the actual receipt but submits no copies and reports no delivery', async () => {
   const { DiagnosticSession } = require('../src/diagnostic-session');
   const session = new DiagnosticSession(); session.start(); session.setCapture(true);
-  let preview, submits = 0;
+  let preview, submits = 0, records = 0;
   session.setPreview = html => { preview = html; };
   try {
-    const result = await printMethod(async () => Buffer.from('raster')).call({
+    const result = await printMethod(async () => Buffer.from('raster'), { record: () => records++ }).call({
       diagnostic: () => session, _resolvePrinterName: async () => 'Counter',
       sendRawToPrinter: async () => { submits++; },
-    }, '<article>Tea</article>', { thermalRaster: true, pageSize: '80mm', copies: 3 });
+    }, '<article>Tea</article>', { thermalRaster: true, pageSize: '80mm', copies: 3, receiptLog: { saleId: 'CAPTURE' } });
     assert.equal(result.success, false); assert.equal(result.diagnosticOnly, true);
     assert.equal(submits, 0); assert.equal(preview, '<article>Tea</article>');
+    assert.equal(records, 0);
     assert.equal(JSON.stringify(session.report()).includes('<article>'), false);
   } finally { session.stop(); }
 });
@@ -80,4 +95,44 @@ test('fast mode skips Chromium and submits each copy only once', async () => {
   const result = await method.call({ _resolvePrinterName: async () => 'Counter', sendRawToPrinter: async (_printer, bytes) => { calls++; assert.ok(bytes.toString('ascii').includes('Cash Rs. 500.00')); return { success: true }; } }, '', { thermalRaster: true, pageSize: '80mm', copies: 2, fastReceiptLines: ['Cash Rs. 500.00'] });
   assert.equal(result.success, true);
   assert.equal(calls, 2);
+});
+
+
+test('designer receipts record successful and failed copy outcomes with the bill identity', async () => {
+  const records = [];
+  const method = printMethod(async () => Buffer.from('receipt'), { record: row => records.push(row) });
+  let copies = 0;
+  const result = await method.call({ _resolvePrinterName: async () => 'Counter', sendRawToPrinter: async () => ++copies === 1 ? { success: true, jobId: 'a'.repeat(64) } : { success: false, error: 'Printer offline', jobId: 'b'.repeat(64) } }, '', {
+    thermalRaster: true, pageSize: '80mm', copies: 2, receiptLog: { saleId: 'TEST-LOG-1', total: 10, title: 'Receipt' }
+  });
+  assert.equal(result.success, false);
+  assert.equal(records.length, 1);
+  assert.equal(records[0].saleId, 'TEST-LOG-1');
+  assert.equal(records[0].total, 10);
+  assert.equal(records[0].printers.length, 2);
+  assert.equal(records[0].printers[0].status, 'success');
+  assert.equal(records[0].printers[1].reason, 'Printer offline');
+  assert.equal(records[0].printers[1].jobId, 'b'.repeat(64));
+  assert.ok(records[0].ms >= 0);
+});
+
+test('designer render failures are logged and log failures never change print success', async () => {
+  const records = [];
+  const opts = { thermalRaster: true, pageSize: '80mm', printerName: 'Counter', receiptLog: { saleId: 'TEST-LOG-2' } };
+  const ctx = { _resolvePrinterName: async () => 'Counter', sendRawToPrinter: async () => ({ success: true }) };
+  const failed = await printMethod(async () => { throw Error('Raster failed'); }, { record: row => records.push(row) }).call(ctx, '', opts);
+  assert.equal(failed.success, false);
+  assert.equal(records[0].printers[0].reason, 'Raster failed');
+  const ok = await printMethod(async () => Buffer.from('receipt'), { record: () => { throw Error('Disk full'); } }).call(ctx, '', opts);
+  assert.equal(ok.success, true);
+});
+
+test('a later copy throwing preserves both the accepted copy and failure in receipt history', async () => {
+  let entry, copies = 0;
+  const method = printMethod(async () => Buffer.from('receipt'), { record: row => { entry = row; } });
+  const result = await method.call({ _resolvePrinterName: async () => 'Counter', sendRawToPrinter: async () => { if (++copies === 2) throw Error('Queue unavailable'); return { success: true }; } }, '', { thermalRaster: true, pageSize: '80mm', copies: 2, receiptLog: { saleId: 'COPY-FAILURE' } });
+  assert.equal(result.success, false);
+  assert.deepEqual(Array.from(entry.printers, p => p.status), ['success', 'failed']);
+  assert.equal(entry.printers[1].name, 'Counter');
+  assert.equal(entry.printers[1].reason, 'Queue unavailable');
 });

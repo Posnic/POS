@@ -131,10 +131,20 @@
 
                         <div class="col-xs-12 col-md-6 col-lg-6 col-xl-6 mobile-hide" id="items_view_hide">
                             <div class="row">
-                                <div class="col-12 input-group bootstrap-touchspin" style="padding-right: 18px;">
+                                <div class="col-12 input-group bootstrap-touchspin sales-search-toolbar" style="padding-right: 18px;">
                                     <input type="text" placeholder="Find item name, sku or barcode" data-t-placeholder="lang_find_item_name_sku_or_barcode_2"
                                         name="sales_new_item_name" id="sales_new_item_name"
                                         class="form-control border-control osk-trigger">
+
+                                    <div class="sales-customer-entry">
+                                      <input type="text" id="sales_new_customer_name" aria-label="Customer name" data-t-aria-label="lang_customer_name" placeholder="Customer name / phone" data-t-placeholder="lang_customer_name_phone" class="form-control osk-trigger clear-sale-text" maxlength="200" autocomplete="off">
+                                      <button type="button" id="sales_customer_btn" class="btn btn-outline-primary toggle-user-input sales-customer-btn" aria-expanded="false" aria-controls="sales_customer_popup" aria-label="Customer details" data-t-aria-label="lang_customer_details"><i class="feather icon-sliders"></i></button>
+                                      <div id="sales_customer_search" class="sales-customer-search-pop" hidden>
+                                        <div id="sales_customer_results"></div>
+                                        <div id="sales_recent_customers"></div>
+                                        <button type="button" id="sales_customer_add_new" class="sales-customer-pop-action"><i class="feather icon-user-plus mr-2"></i><lang class="lang_add_new_customer_details">Add new customer details</lang></button>
+                                      </div>
+                                    </div>
 
                                     <!-- Camera scan (Loyverse study L3): shown only where the
                                          browser has BarcodeDetector - sales.js gates it. -->
@@ -154,43 +164,33 @@
                                         data-toggle="tooltip" title="Quick sale - just an amount" data-t-title="lang_quick_sale_just_an_amount">
                                         <i class="feather icon-zap"></i>
                                     </a>
-                                    <span class="input-group-btn" id="employee_box">
-                                        <span id="sales_customer_btn"
-                                            class="btn btn-primary-rgba toggle-user-input sales-customer-btn"
-                                            data-toggle="tooltip" data-placement="top"
-                                            title="Walk-in customer. Click to choose or add" data-t-title="lang_walk_in_customer_click_to_choose_or_add"
-                                            data-original-title="Walk-in customer. Click to choose or add">
-                                            <i class="feather icon-user"></i>
-                                            <span id="sales_customer_btn_label"
-                                                class="sales-customer-label"><lang class="lang_walk_in">Walk-in</lang></span>
-                                        </span>
-                                    </span>
+
                                 </div>
                             </div>
 
-                            <div class="toggle-customer-user sales-customer-pop" style="display:none;">
+                            <div id="sales_customer_popup" role="region" aria-label="Customer details" data-t-aria-label="lang_customer_details" class="toggle-customer-user sales-customer-pop" style="display:none;">
                                 <div class="sales-customer-pop-head">
                                     <span class="sales-customer-pop-title"><i
-                                            class="feather icon-users mr-1"></i><lang class="lang_choose_customer_2">Choose customer</lang></span>
+                                            class="feather icon-users mr-1"></i><lang class="lang_customer_details">Customer details</lang></span>
                                     <a href="javascript:void(0)" class="sales-customer-pop-x"
                                         id="sales_customer_pop_close" title="Close" data-t-title="lang_close_title"><lang class="lang_text">&times;</lang></a>
                                 </div>
-                                <div class="input-group bootstrap-touchspin sales-customer-search-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text sales-customer-search-ic"><i
-                                                class="feather icon-search"></i></span>
-                                    </div>
-                                    <input type="text" id="sales_new_customer_name" placeholder="Search name or phone…" data-t-placeholder="lang_search_name_or_phone"
-                                        class="form-control border-control osk-trigger clear-sale-text" required
-                                        autocomplete="off">
+                                <div id="sales_customer_detail_name" class="mb-3"></div>
+                                <div id="sales_customer_status" role="status" class="small my-2"></div>
+                                <label><lang class="lang_phone">Phone:</lang><input type="tel" name="sales_new_customer_phone" id="sales_new_customer_phone" class="form-control" maxlength="40"></label>
+                                <label><lang class="lang_email">Email:</lang><input type="email" name="sales_new_customer_email" id="sales_new_customer_email" class="form-control" maxlength="254"></label>
+                                <div class="sales-customer-gst" hidden>
+                                  <label for="sales_customer_state_select"><lang class="lang_state_title">State</lang></label>
+                                  <input type="hidden" id="sales_new_customer_state"><select id="sales_customer_state_select" class="form-control"><option value=""><lang class="lang_same_as_branch">Same as branch</lang></option></select>
+                                  <label class="mt-2" for="sales_new_customer_gst_number"><lang class="lang_gstin">GSTIN</lang> <span class="text-muted"><lang class="lang_optional">(optional)</lang></span></label>
+                                  <input id="sales_new_customer_gst_number" class="form-control" maxlength="15" placeholder="15-character GSTIN" data-t-placeholder="lang_15_character_gstin">
+                                  <p id="sales_customer_gst_hint" class="small mt-2" role="status"></p>
                                 </div>
-                                <!-- Recency (owner feedback): the last 10 customers picked
-                                     on this till, rendered from a localStorage LRU. -->
-                                <div id="sales_recent_customers" style="display:none; max-height:220px; overflow-y:auto;"></div>
-                                <a data-module="customer" data-access="write" href="#/sales/customers/new"
-                                    class="sales-customer-pop-action" id="sales_customer_add_new">
-                                    <i class="feather icon-user-plus mr-2"></i><lang class="lang_add_new_customer">Add new customer</lang>
-                                </a>
+                                <details class="sales-customer-address"><summary><lang class="lang_address_delivery_optional">Address &amp; delivery (optional)</lang></summary>
+                                  <div class="sales-customer-gst" hidden><label for="sales_place_of_supply_select"><lang class="lang_place_of_supply_if_different">Place of supply (if different)</lang></label><input type="hidden" id="sales_place_of_supply"><select id="sales_place_of_supply_select" class="form-control"><option value=""><lang class="lang_same_as_customer_branch">Same as customer / branch</lang></option></select></div>
+                                  <textarea name="sales_new_customer_address" id="sales_new_customer_address" aria-label="Customer address" data-t-aria-label="lang_rd_customer_address" class="form-control mt-2" maxlength="500" rows="2"></textarea>
+                                </details>
+                                <button type="button" id="sales_customer_done" class="btn btn-primary"><lang class="lang_done">Done</lang></button>
                                 <a href="javascript:void(0)" class="sales-customer-pop-action sales-customer-walkin"
                                     id="sales_customer_walkin">
                                     <i class="feather icon-user mr-2"></i><lang class="lang_walk_in_customer">Walk-in customer</lang>
@@ -478,7 +478,7 @@
                                                 <td class="discount-percentage-line-heigth return_discount_hide pay_amount_total"
                                                     id="return_tax">
                                                     <lang class="lang_module_tax">Tax </lang>
-                                                    <span class="pull-right">+ <span id="tax">0.00</span></span>
+                                                    <span class="pull-right">+ <span id="tax">0.00</span><span id="sales_gst_breakdown" class="small d-block"></span></span>
                                                 </td>
                                             </tr>
 
@@ -677,13 +677,8 @@
                     <input type="hidden" name="grand_total" id="grand_total"
                         class="form-control amount-input sales_price_fields" disabled="disabled" />
                     <input name="sales_new_customer_id" id="sales_new_customer_id" type="hidden">
-                    <input name="sales_new_customer_phone" id="sales_new_customer_phone" type="hidden">
-                    <input name="sales_new_customer_address" id="sales_new_customer_address" type="hidden">
-                    <input name="sales_new_customer_email" id="sales_new_customer_email" type="hidden">
-                    <input name="sales_new_customer_state" id="sales_new_customer_state" type="hidden" />
                     <input name="sales_new_customer_country" id="sales_new_customer_country" type="hidden" />
                     <input name="sales_new_customer_gst_type" id="sales_new_customer_gst_type" type="hidden" />
-                    <input name="sales_new_customer_gst_number" id="sales_new_customer_gst_number" type="hidden" />
                     <input name="customer_current_balance" id="customer_current_balance" type="hidden" />
                     <input name="sales_new_customer_partial_balance" id="sales_new_customer_partial_balance"
                         type="hidden" />

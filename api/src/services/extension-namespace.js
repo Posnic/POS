@@ -185,7 +185,29 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
       )
     )
       fail('extension_result_invalid', 422);
-    const sequence = (row.effectSequence || 0) + 1;
+    // Older sync agents copied item replay fences between installations while
+    // namespace counters stayed local. Raise the counter once, before claiming
+    // a NEW command. Never renumber a pending command: some of its effects may
+    // already have committed. Item receipts and stock remain untouched.
+    let sequenceFloor = row.effectSequence || 0;
+    if (row.localStockFenceVersion !== 1) {
+      const field = `extension_stock_streams.${key._id}.sequence`;
+      const cursor = db.collection('items').find(
+        {
+          license: key.license,
+          [field]: { $exists: true },
+          $or: [{ branch_id: key.branch_id }, { 'branch_access.branch_id': key.branch_id }],
+        },
+        { projection: { [field]: 1 } }
+      );
+      for await (const item of cursor) {
+        const receiptSequence = item.extension_stock_streams?.[key._id]?.sequence;
+        if (!Number.isSafeInteger(receiptSequence) || receiptSequence < 0)
+          fail('extension_stock_receipt_invalid');
+        sequenceFloor = Math.max(sequenceFloor, receiptSequence);
+      }
+    }
+    const sequence = sequenceFloor + 1;
     if (!Number.isSafeInteger(sequence)) fail('extension_sequence_exhausted');
     const locked = await namespaces.updateOne(
       {
@@ -200,6 +222,7 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
       {
         $set: {
           effectSequence: sequence,
+          localStockFenceVersion: 1,
           pending: {
             sequence,
             operationId,

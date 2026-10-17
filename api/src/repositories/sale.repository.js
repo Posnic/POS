@@ -1,3 +1,4 @@
+const { recordedUserName } = require('../utils/recorded-user-name');
 const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
 const pricingAuthority = require('../services/pricing-authority');
 const Money = require('../utils/currency');
@@ -136,6 +137,7 @@ const gstStateCode = (gstin, stateName) => {
     .trim()
     .toLowerCase();
   if (!name) return '';
+  if (/^\d{2}$/.test(name)) return name;
   if (!_gstStateByName) {
     _gstStateByName = new Map();
     try {
@@ -296,7 +298,7 @@ class SalesRepository {
     return Model.paginate(filter, options);
   }
 
-  async getLegacyDetails(id, { SaleModel } = {}) {
+  async getLegacyDetails(id, { SaleModel, snapshot } = {}) {
     try {
       if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return { status: false, data: null, message: 'Invalid sale id' };
@@ -315,7 +317,7 @@ class SalesRepository {
         ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
       };
 
-      let saleDoc = await salesCollection.findOne(filter);
+      let saleDoc = snapshot || (await salesCollection.findOne(filter));
 
       // Fallback for deleted sales: if the sale is not present in the live
       // `sales` collection, try to load a backup copy from the
@@ -326,6 +328,8 @@ class SalesRepository {
         const recycleFilter = {
           _id: saleObjectId,
           document_name: 'sales',
+          body_discarded: { $ne: true },
+          ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
           ...(BaseModel.license ? { license: BaseModel.license } : {}),
         };
 
@@ -944,13 +948,15 @@ class SalesRepository {
               );
 
               if (perLineGstAmount > 0) {
-                const customerState = (doc.customer_state || '').toString().trim();
+                const customerState = (doc.place_of_supply || doc.customer_state || '')
+                  .toString()
+                  .trim();
                 const branchState = (branchDoc?.state || '').toString().trim();
 
-                const isInterState =
-                  customerState &&
-                  branchState &&
-                  customerState.toLowerCase() !== branchState.toLowerCase();
+                const isInterState = require('../helpers/gst-place').isInterState(
+                  branchState,
+                  customerState
+                );
 
                 if (isInterState) {
                   cloned.igst_tax = perLineGstAmount;
@@ -1597,6 +1603,7 @@ class SalesRepository {
             null;
         } else {
           dateSource =
+            doc.settled_at ||
             doc.date ||
             doc.created_date ||
             doc.createdAt ||
@@ -1612,6 +1619,17 @@ class SalesRepository {
             normalized.created_date = formatDate(doc.created_date || doc.createdAt || dateSource, {
               timeZone: tz,
             });
+            // A paid receipt carries the saved settlement clock, not the kitchen's
+            // order clock or the time a later correction/reprint was requested.
+            normalized.receipt_date = formatDate(
+              (process === 'PartialReturn' || process === 'FullReturn' ? dateSource : null) ||
+                doc.settled_at ||
+                (normalized.payment_status === 'Paid' ? doc.date : null) ||
+                doc.created_date ||
+                doc.createdAt ||
+                dateSource,
+              { timeZone: tz }
+            );
             normalized.receipt_date_order = 'mdy';
           }
         }
@@ -1892,7 +1910,7 @@ class SalesRepository {
           }
         }
 
-        const stockLogStatus = !!(branchSettings && branchSettings.stock_management_log);
+        const stockLogStatus = [true, 'true'].includes(branchSettings?.stock_management_log);
 
         const items = Array.isArray(doc.items) ? doc.items : [];
         const salesIdentifier = doc.sales_id || doc.invoice_number || (saleId && saleId.toString());
@@ -1909,7 +1927,7 @@ class SalesRepository {
                   ? item.quantity
                   : 0;
             const itemQty = Number(quantity || 0);
-            if (!itemQty || itemQty <= 0) continue;
+            if (!Number.isFinite(itemQty) || itemQty <= 0) continue;
 
             let itemObjectId = null;
             if (
@@ -1926,23 +1944,24 @@ class SalesRepository {
             if (!itemObjectId) continue;
 
             const itemFilter = {
-              _id: itemObjectId,
+              _id: { $eq: itemObjectId },
             };
             if (licenseId) {
-              itemFilter.license = licenseId;
+              itemFilter.license = { $eq: licenseId };
             }
 
             const itemDoc = await itemsCollection.findOne(itemFilter);
-            if (!itemDoc) continue;
+            if (!itemDoc || ![true, 'true'].includes(itemDoc.track_inventory)) continue;
 
             const openingBalance = Number(itemDoc.available_quantity || 0);
             const availableQuantity = openingBalance + itemQty;
 
-            // PHP checks: $itemdocuments['track_inventory'] === true (boolean or string 'true')
-            if (
-              stockLogStatus &&
-              (itemDoc.track_inventory === true || itemDoc.track_inventory === 'true')
-            ) {
+            // Restore tracked stock even when the optional stock log is disabled.
+            await itemsCollection.updateOne(itemFilter, {
+              $inc: { available_quantity: itemQty },
+              $set: { updated_date: now },
+            });
+            if (stockLogStatus) {
               const countStr = String(itemQty);
 
               await stockLogsRepository.createStockLog({
@@ -1961,12 +1980,6 @@ class SalesRepository {
                 action: 'Add',
                 changed_by_userid: BaseModel.loggedUser,
                 changed_by: BaseModel.loggedUserName || 'System',
-              });
-
-              await itemsCollection.updateOne(itemFilter, {
-                $set: {
-                  available_quantity: availableQuantity,
-                },
               });
             }
           } catch (e) {
@@ -4090,6 +4103,7 @@ class SalesRepository {
         branch_name: 1,
         user_id: 1,
         user_name: 1,
+        'origin.actor_name': 1,
         sales_id: 1,
         date: 1,
         items: 1,
@@ -4101,6 +4115,7 @@ class SalesRepository {
         customer_phone: 1,
         customer_email: 1,
         customer_state: 1,
+        place_of_supply: 1,
         customer_country: 1,
         customer_gst_type: 1,
         customer_gst_number: 1,
@@ -4162,6 +4177,10 @@ class SalesRepository {
         .lean();
 
       const list = (Array.isArray(rawList) ? rawList : []).map((row) => {
+        row = {
+          ...row,
+          user_name: recordedUserName(row.user_name, row.created_by, row.origin?.actor_name),
+        };
         if (!row.captain_payments?.length || row.payment_status !== 'Paid') return row;
         const digits = row.captain_transfer_allocation?.currencyDigits;
         return {
@@ -4446,6 +4465,7 @@ class SalesRepository {
         branch_name: 1,
         user_id: 1,
         user_name: 1,
+        'origin.actor_name': 1,
         sales_id: 1,
         date: 1,
         items: 1,
@@ -4457,6 +4477,7 @@ class SalesRepository {
         customer_phone: 1,
         customer_email: 1,
         customer_state: 1,
+        place_of_supply: 1,
         customer_country: 1,
         customer_gst_type: 1,
         customer_gst_number: 1,
@@ -4514,7 +4535,10 @@ class SalesRepository {
         .limit(limit)
         .lean();
 
-      const list = Array.isArray(rawList) ? rawList : [];
+      const list = (Array.isArray(rawList) ? rawList : []).map((row) => ({
+        ...row,
+        user_name: recordedUserName(row.user_name, row.created_by, row.origin?.actor_name),
+      }));
 
       const total = await Model.countDocuments(filters);
 
@@ -6339,7 +6363,7 @@ class SalesRepository {
               _id: {
                 item_sales_id: '$sales_id',
                 item_date: '$date',
-                item_customer_state: '$customer_state',
+                item_customer_state: { $ifNull: ['$place_of_supply', '$customer_state'] },
                 item_customer_gst_number: '$customer_gst_number',
                 item_tax: '$items.tax',
                 item_subtotal: '$items_subtotal',
@@ -6389,7 +6413,7 @@ class SalesRepository {
               _id: {
                 return_sales_id: '$sales_id',
                 return_sales_date: '$date',
-                return_customer_state: '$customer_state',
+                return_customer_state: { $ifNull: ['$place_of_supply', '$customer_state'] },
                 // the credit-note rows printed a placeholder GSTIN; carry
                 // the real one so the 9B table shows the actual customer
                 return_customer_gst_number: '$customer_gst_number',
@@ -6493,7 +6517,7 @@ class SalesRepository {
         $and: [
           {
             branch_id: branchId,
-            customer_state: { $not: { $eq: branchState } },
+            $expr: { $ne: [{ $ifNull: ['$place_of_supply', '$customer_state'] }, branchState] },
             customer_gst_type: { $in: ['consumer'] },
           },
           {
@@ -6513,7 +6537,7 @@ class SalesRepository {
               _id: {
                 item_sales_id: '$sales_id',
                 item_date: '$date',
-                item_customer_state: '$customer_state',
+                item_customer_state: { $ifNull: ['$place_of_supply', '$customer_state'] },
                 item_customer_gst_number: '$customer_gst_number',
                 item_tax: '$items.tax',
                 item_subtotal: '$items_subtotal',
@@ -6895,7 +6919,7 @@ class SalesRepository {
         $and: [
           {
             branch_id: new ObjectId(branch_id),
-            customer_state: { $not: { $eq: branch_state } },
+            $expr: { $ne: [{ $ifNull: ['$place_of_supply', '$customer_state'] }, branch_state] },
             customer_gst_type: { $in: ['consumer', 'composite'] },
           },
           {
@@ -6913,7 +6937,7 @@ class SalesRepository {
           {
             $group: {
               _id: {
-                item_customer_state: '$customer_state',
+                item_customer_state: { $ifNull: ['$place_of_supply', '$customer_state'] },
                 customer_gst_type: '$customer_gst_type',
               },
               total_amount: { $sum: '$items_subtotal' },
@@ -7123,6 +7147,7 @@ class SalesRepository {
               },
               date: { $first: '$date' },
               customer_state: { $first: '$customer_state' },
+              place_of_supply: { $first: '$place_of_supply' },
               invoice_value: { $first: '$sales_total' },
               items_value: { $sum: '$items.total_amount' },
               igst: { $sum: '$items.igst_tax' },
@@ -7158,7 +7183,9 @@ class SalesRepository {
             // Invoice value: the sale's own total, not a sum of lines -
             // charges, round-off and bill-level discounts belong in it.
             val: round(Number(row.invoice_value) || 0),
-            pos: gstStateCode(ctin, row.customer_state),
+            pos: row.place_of_supply
+              ? gstStateCode('', row.place_of_supply)
+              : gstStateCode(ctin, row.customer_state),
             rchrg: 'N',
             inv_typ: 'R',
             itms: [],

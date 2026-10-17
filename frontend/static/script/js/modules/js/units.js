@@ -4,7 +4,7 @@
  * here"). Same API the settings tab used (setting/getUnitAll, addUnit upserts
  * on unit_id, deleteUnit), but the page follows LIST_PAGE_UX_STANDARD.md:
  * the row opens the unit in the right pane, the pane owns Edit/Delete, and
- * the editor is an inline strip IN the pane - no slide-over, no modal.
+ * short create/edit forms use the shared compact record dialog.
  */
 PosnicPro.units = {
     _page: 1,
@@ -221,32 +221,17 @@ PosnicPro.units = {
             $('#units_doc_items').html(PosnicPro.i18n.t('lang_could_not_load_the_items_for_this_unit', 'Could not load the items for this unit.'));
         });
     },
-    /* The editor is the pane itself: two fields and Save. An empty id is a
-       new unit; addUnit upserts on unit_id, same as the old settings flow. */
+    // Use the same compact dialog as other short record forms.
     openEditor: function (id) {
-        var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var u = id ? PosnicPro.units._find(id) : null;
-        if (id && !u) { return; }
-        PosnicPro.listDoc.open({
-            key: 'units',
-            id: id || 'new',
-            title: u ? 'Edit · ' + u.unit_name : 'New unit',
-            actions: '',
-            body: '<div class="form-row">'
-                + '<div class="form-group col-md-7"><label for="unit_page_name">Name <span class="text-danger">*</span></label>'
-                + '<input id="unit_page_name" type="text" maxlength="10" class="form-control border-control" value="' + esc(u ? u.unit_name : '') + '" placeholder="e.g. Kg, Litre, Box"></div>'
-                + '<div class="form-group col-md-5"><label for="unit_page_value">Value <span class="text-danger">*</span></label>'
-                + '<input id="unit_page_value" type="text" maxlength="10" class="form-control border-control" value="' + esc(u ? u.unit_value : '') + '" placeholder="e.g. 1"></div>'
-                + '</div>'
-                + '<div class="text-danger" id="unit_page_error" style="display:none; margin-bottom:10px;"></div>'
-                + '<div>'
-                + '<button type="button" class="btn btn-sm btn-primary" onclick="PosnicPro.units.save(\'' + esc(id || '') + '\');">' + (u ? PosnicPro.i18n.t('lang_refresh_title', 'Update') : PosnicPro.i18n.t('lang_save_title', 'Save')) + '</button> '
-                + '<button type="button" class="btn btn-sm btn-light border" onclick="'
-                + (id ? 'hasher.setHash(\'units/' + esc(id) + '\'); PosnicPro.units.openDoc(\'' + esc(id) + '\');'
-                    : 'PosnicPro.listDoc.close(\'units\'); hasher.setHash(\'units\');')
-                + '">Cancel</button>'
-                + '</div>'
+        if (id && !u) return;
+        $('#unit_page_name').val(u ? u.unit_name : '');
+        $('#unit_page_value').val(u ? u.unit_value : '');
+        $('#unit_page_error').empty().hide();
+        $('#unit_editor').off('submit.units').on('submit.units', function (event) {
+            event.preventDefault(); PosnicPro.units.save(id || '');
         });
+        PosnicPro.showAddModal('unit');
         setTimeout(function () { $('#unit_page_name').focus(); }, 100);
     },
     save: function (id) {
@@ -267,6 +252,7 @@ PosnicPro.units = {
         }, function (response) {
             PosnicPro.alert(response.type, response.message);
             if (response.type !== 'success') { return; }
+            PosnicPro.HideSideBarModal();
             /* The item form's unit dropdown feeds off the same list. */
             if (PosnicPro.items && PosnicPro.items.loadSelectUnit) { PosnicPro.items.loadSelectUnit(); }
             PosnicPro.units.loadList(null, function () {

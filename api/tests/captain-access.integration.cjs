@@ -905,7 +905,7 @@ test('paired transfer completion conserves totals and replays the same destinati
  } finally {await db.collection('users').updateOne({_id:staff._id},{$unset:{'access.sales.merge':''}});}
 });
 
-test('public discovery exposes only a single Captain shop and its configured address', async () => {
+test('public discovery exposes display names and does not guess between different addresses', async () => {
   await db
     .collection('branches')
     .updateOne({ _id: branch._id }, { $set: { captain_fallback_url: 'https://shop.example/api' } });
@@ -924,7 +924,7 @@ test('public discovery exposes only a single Captain shop and its configured add
   await db.collection('branches').insertOne(extra);
   try {
     assert.deepEqual(await (await fetch(base + '/captain/v1/discovery')).json(), {
-      connections: {},
+      connections: { shopName: 'Test shop · Other', cloud: null },
     });
   } finally {
     await db.collection('branches').deleteOne({ _id: extra._id });

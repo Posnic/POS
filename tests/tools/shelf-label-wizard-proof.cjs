@@ -1,0 +1,95 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const ROOT = path.resolve(__dirname, '../..');
+const puppeteer = require(path.join(ROOT, 'api/node_modules/puppeteer'));
+const THEME = process.env.SHELF_LABEL_THEME || 'github';
+const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label-wizard');
+
+(async () => {
+  fs.mkdirSync(OUT, { recursive: true });
+  const browser = await puppeteer.launch({ headless: true, ...(process.env.PROOF_BROWSER ? { executablePath: process.env.PROOF_BROWSER } : {}) });
+  try {
+    const page = await browser.newPage(), errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.setViewport({ width: 1200, height: 900, deviceScaleFactor: 1 });
+    const html = fs.readFileSync(path.join(ROOT, 'frontend/modules/items.html'), 'utf8').replace(/\r\n/g, '\n');
+    const start = html.indexOf('<style>\n#view_print_lable');
+    const end = html.indexOf('<!-- Bulk price update -->', start);
+    assert.ok(start >= 0 && end > start);
+    await page.setContent('<body style="background:#f5f7fb">' + html.slice(start, end) + '</body>');
+    const styles = fs.readdirSync(path.join(ROOT, 'frontend/public/style')).find(name => /^dashboard\..*\.css$/.test(name));
+    await page.evaluate(theme => { document.documentElement.dataset.theme = theme; document.body.dataset.theme = theme; }, THEME);
+    // Load real theme first; the module's scoped style must win just as it does in the application.
+    await page.addStyleTag({ path: path.join(ROOT, 'frontend/public/style', styles) });
+    await page.addStyleTag({ path: path.join(ROOT, 'frontend/static/style/css/theme-variables.css') });
+    await page.addStyleTag({ content: html.slice(start + 7, html.indexOf('</style>', start)) });
+    for (const script of ['jquery.min.js', 'popper.min.js', 'bootstrap.min.js', 'JsBarcode.all.min.js']) await page.addScriptTag({ path: path.join(ROOT, 'frontend/static/script/js', script) });
+    await page.evaluate(() => {
+      const products = Array.from({ length: 36 }, (_, i) => ({ _id: String(i), name: ['Dairy Milk', 'Dairy Milk Daim', 'Washing-up liquid', 'Kitchen foil'][i % 4] + (i > 3 ? ' ' + i : ''), barcode_id: '7622202828256', category_id: 'chocolate', label_price: 1.75, label_currency_digits: 2 }));
+      window.PosnicPro = { items: {}, listFilter: { legacyFilters: () => ({}) }, i18n: { t: (key, fallback) => fallback }, local: { get: key => ({ branchname: 'Top Discount and DIY Store', currencySign: '£' })[key] }, get: (params, done) => {
+        if (params.url.startsWith('categories')) return done({ suggestions: [{ id: 'chocolate', name: 'Chocolate' }] });
+        const filters = JSON.parse(params.data.filters), regex = filters.$or && new RegExp(filters.$or[0].name.$regex, 'i');
+        const list = products.filter(item => (!filters.category_id || item.category_id === filters.category_id) && (!regex || regex.test(item.name) || regex.test(item.barcode_id)));
+        const start = (params.data.page - 1) * params.data.limit;
+        setTimeout(() => done({ type: 'success', data: { list: list.slice(start, start + params.data.limit), total: list.length, total_pages: Math.ceil(list.length / params.data.limit) } }), 5);
+      } };
+      window.printJobs = [];
+      window.printJS = job => window.printJobs.push(job);
+    });
+    await page.addScriptTag({ path: path.join(ROOT, 'frontend/static/script/js/core/shelf-labels.js') });
+    const legacy = fs.readFileSync(path.join(ROOT, 'frontend/static/script/js/modules/js/items.js'), 'utf8');
+    await page.evaluate(() => { window.db = { printLableValues: { put: () => Promise.resolve() } }; });
+    await page.addScriptTag({ content: legacy.slice(legacy.indexOf('var updateLabelPreview ='), legacy.indexOf("$('#bar-fontSize').change")) });
+    await page.evaluate(() => { $('#view_print_lable').on('shown.bs.modal', () => { window.labelShown = true; }); PosnicShelfLabels.open(); });
+    await page.waitForSelector('#view_print_lable.show');
+    await page.waitForFunction(() => window.labelShown);
+    await page.waitForFunction(() => $('#sl-products input[type=checkbox]').length === 30);
+    assert.equal(await page.$eval('#sl-products', el => el.querySelectorAll('input[type=checkbox]:checked').length), 0);
+    assert.equal(await page.$eval('#sl-next-step', el => el.disabled), true);
+    await page.screenshot({ path: path.join(OUT, '01-products-empty.png') });
+    const colours = await page.evaluate(() => { const css = selector => getComputedStyle(document.querySelector(selector)); return { heading: css('#sl-title').color, panel: css('.sl-panel').backgroundColor, header: css('.sl-header').backgroundColor, muted: css('.sl-header .sl-muted').color, input: css('#sl-search').backgroundColor }; });
+    assert.equal(colours.panel, colours.header);
+    assert.notEqual(colours.heading, colours.header);
+    assert.notEqual(colours.muted, colours.header);
+    console.log(THEME, colours);
+    await page.click('#sl-all');
+    await page.waitForFunction(() => $('#sl-selection-count').text().startsWith('36 products'));
+    await page.click('#sl-products input[type=checkbox]');
+    assert.equal(await page.$eval('#sl-all', el => el.indeterminate), true);
+    await page.click('#sl-clear');
+    assert.equal(await page.$eval('#sl-products', el => el.querySelectorAll('input[type=checkbox]:checked').length), 0);
+    for (let i = 0; i < 3; i++) await page.click(`#sl-products .sl-product-row:nth-child(${i + 1}) input[type=checkbox]`);
+    await page.screenshot({ path: path.join(OUT, '02-products-selected.png') });
+    await page.click('#sl-next-step');
+    await page.waitForFunction(() => !document.querySelector('[data-sl-panel="1"]').hidden);
+    await page.select('#font', 'Arial');
+    await page.$eval('#bar-fontSize', el => { el.value = 12; el.dispatchEvent(new Event('change', { bubbles: true })); });
+    await page.screenshot({ path: path.join(OUT, '03-layout.png') });
+    await page.click('#sl-next-step');
+    await page.waitForFunction(() => !document.querySelector('[data-sl-panel="2"]').hidden);
+    assert.equal(await page.$eval('#sl-preview', el => el.querySelectorAll('.sl-label').length), 3);
+    assert.equal(await page.$eval('#sl-preview .sl-label p', el => getComputedStyle(el).color), 'rgb(0, 0, 0)');
+    const paper = await page.$eval('#sl-preview .sl-sheet', el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height }));
+    assert.ok(Math.abs(paper.width / paper.height - 210 / 297) < 0.005);
+    await page.screenshot({ path: path.join(OUT, '04-a4-preview.png') });
+    await page.click('#sl-next-step');
+    await page.screenshot({ path: path.join(OUT, '05-print.png') });
+    await page.click('#sl-print');
+    assert.equal(await page.evaluate(() => printJobs.length), 1);
+    assert.equal(await page.evaluate(() => (printJobs[0].printable.match(/class="sl-label"/g) || []).length), 3);
+    // A real print-to-PDF render verifies page breaks independently of DOM-only geometry tests.
+    const job = await page.evaluate(() => printJobs[0]);
+    const printed = await browser.newPage();
+    await printed.setContent('<style>' + job.style + '</style>' + job.printable);
+    await printed.pdf({ path: path.join(OUT, 'a4-print-proof.pdf'), preferCSSPageSize: true, printBackground: true });
+    await printed.close();
+    await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
+    await page.evaluate(() => PosnicShelfLabels.open());
+    await page.waitForFunction(() => $('#sl-products input[type=checkbox]').length === 30);
+    assert.ok(await page.evaluate(() => document.querySelector('.sl-wizard').getBoundingClientRect().right <= innerWidth));
+    await page.screenshot({ path: path.join(OUT, '06-mobile-products.png') });
+    assert.deepEqual(errors, []);
+    console.log('PASS: empty initial selection, selecting/unticking/clearing, four steps, A4 preview, matching print markup, print PDF, mobile layout; no browser errors. Synthetic product fixtures; no physical printer used.');
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode = 1; });

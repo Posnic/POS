@@ -1002,7 +1002,9 @@ class SalesController extends BaseController {
       // Enrich the context with branch-specific settings via the service
       context = await salesService.enrichSaleContext(context);
 
-      const result = await salesService.processSale(payload, id, 'Edit', context);
+      const result = payload.paid_bill_correction
+        ? await require('../services/paid-bill-edit').amend(req, payload, context)
+        : await salesService.processSale(payload, id, 'Edit', context);
 
       if (!result || typeof result !== 'object') {
         return this.error(res, ERROR_MESSAGES.FAILED_TO_UPDATE_SALE_UNEXPECTED, 500);
@@ -1039,6 +1041,12 @@ class SalesController extends BaseController {
       // PHP sales.php::edit() forwards the model message directly.
       return this.success(res, result.data, result.message || SUCCESS_MESSAGES.SALE_UPDATED, 200);
     } catch (error) {
+      // Paid-bill correction uses branch-access errors with a numeric status.
+      // Return expected refusals to the till instead of masking them as a 500.
+      const status = error.statusCode || error.status;
+      if (Number.isInteger(status) && status >= 400 && status < 500) {
+        return this.error(res, error.message, status);
+      }
       next(error);
     }
   }
@@ -1153,6 +1161,14 @@ class SalesController extends BaseController {
         total_pages: totalPages,
         total,
       };
+
+      if (req.query.include_summary === 'true') {
+        // Reuse the fully scoped and filtered history query, including session restrictions.
+        payload.summary = await require('../services/sales-history-summary')(
+          SaleModel,
+          filter
+        ).catch(() => null);
+      }
 
       return this.success(res, payload, SUCCESS_MESSAGES.SALES_RETRIEVED, 200);
     } catch (error) {

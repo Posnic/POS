@@ -954,5 +954,11 @@
   "Enable Recycle Bin before deleting sales": "سیلز کو حذف کرنے سے پہلے ری سائیکل بن",
   "Only super admins can change the sale hard-delete setting": "صرف سپر ایڈمنز ہی سیل ہارڈ ڈیلیٹ کی ترتیب تبدیل کرسکتے ہیں",
   "Finish the pending payment correction before closing this register.": "اس رجسٹر کو بند کرنے سے پہلے زیر التواء ادائیگی کی اصلاح",
-  "Finish the pending payment correction first.": "پہلے زیر التواء ادائیگی کی اصلاح ختم کریں۔"
+  "Finish the pending payment correction first.": "پہلے زیر التواء ادائیگی کی اصلاح ختم کریں۔",
+  "Bill correction saved.": "بل اصلاح محفوظ ہوگئی۔",
+  "Review the paid bill correction before saving.": "بچت سے پہلے ادا شدہ بل اصلاح کا جائزہ لیں۔",
+  "Choose a saved customer for customer credit.": "کسٹمر کریڈٹ کے لئے محفوظ کردہ گاہک کا انتخاب",
+  "Exact numeric search must be on or off": "عین مطابق عددی تلاش آن یا بند ہونی چاہئے",
+  "Item not found or selling price is held. Review it in Edit prices.": "آئٹم نہیں ملا یا فروخت کی قیمت رکھی گئی ہے۔ قیمتیں ترمیم میں اس کا جائزہ لیں۔",
+  "Password must contain between 5 and 20 characters": "پاس ورڈ میں 5 سے 20 حروف کے درمیان ہونا ضروری ہے"
 }

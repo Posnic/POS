@@ -24,7 +24,7 @@ test('moving focus between Desktop items must not hide the item before its click
   const { w, fab, trigger, opened } = await menu(t);
   const items = [...fab.querySelectorAll('[role=menuitem]')];
   assert.equal(items.find(x => x.textContent === 'Hardware Manager').textContent, 'Hardware Manager');
-  const targets = ['settings/app', 'hardware', 'hardware:kot', 'backup', 'update', 'cloud', 'log', 'about'];
+  const targets = ['settings/app', 'hardware', 'hardware:kot', 'hardware:screen', 'hardware:sound', 'backup', 'update', 'cloud', 'log', 'about'];
   for (let i = 0; i < items.length; i++) {
     trigger.click();
     // Chromium delivers focusout while activeElement is temporarily body.
@@ -59,4 +59,20 @@ test('the application log viewer can read its log through the guarded bridge', (
   const { isTrustedFrame } = require('../src/ipc-guard');
   assert.equal(isTrustedFrame({ url: 'file:///C:/app/resources/app.asar/src/log-viewer.html' }), true);
   assert.equal(isTrustedFrame({ url: 'https://example.com/log-viewer.html' }), false);
+});
+
+const read = name => fs.readFileSync(path.join(__dirname, '..', name), 'utf8');
+test('desktop recovery tools remain independent of the app renderer', () => {
+  const main = read('src/main.js');
+  assert.match(main, /recoveryMenu.label = 'Help && Recovery'/);
+  assert.match(main, /recoveryMenu.submenu.unshift\(\.\.\.recoveryItems/);
+  for (const handler of ['openHardwareManager', 'openBackupManager', 'openCloudManager', 'openUpdateManager', 'openLogFolder']) assert.match(main, new RegExp(handler + '\\('));
+  assert.match(main, /accelerator: 'CmdOrCtrl\+R'/);
+});
+
+test('web browsers do not get desktop controls', () => {
+  const dom = new JSDOM('', { runScripts: 'outside-only' });
+  dom.window.eval(script);
+  assert.equal(dom.window.document.querySelector('#posnic-desktop-fab'), null);
+  dom.window.close();
 });

@@ -100,8 +100,9 @@ describe('CustomerModel — this.fields: unique constraints', () => {
     expect(cm.fields.email.unique).toBe(true);
   });
 
-  test('phone has unique:true', () => {
-    expect(cm.fields.phone.unique).toBe(true);
+  test('shared phone numbers are controlled by explicit opt-in, not a global unique constraint', () => {
+    expect(cm.fields.phone.unique).not.toBe(true);
+    expect(cm.fields.allow_shared_phone.default).toBe(false);
   });
 });
 

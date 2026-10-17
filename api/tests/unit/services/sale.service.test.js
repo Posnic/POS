@@ -187,6 +187,46 @@ describe('SalesService', () => {
     mockRegisterRepositoryInstance.validateSessionOwner.mockResolvedValue({ status: true });
   });
 
+  test.each([
+    ['', undefined, '', false],
+    ['64f8f2f4c2b9c0a1e4b22222', '', '', false],
+    ['64f8f2f4c2b9c0a1e4b22222', '33', '', false],
+    ['64f8f2f4c2b9c0a1e4b22222', ' tamil nadu ', '', false],
+    ['64f8f2f4c2b9c0a1e4b22222', 'Karnataka', '', true],
+    ['64f8f2f4c2b9c0a1e4b22222', '29', '', true],
+    ['64f8f2f4c2b9c0a1e4b22222', '29', '64f8f2f4c2b9c0a1e4b22222', true],
+  ])(
+    'saves GST by customer state (%s, %s, default %s)',
+    async (customer_id, customer_state, default_customer, inter) => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(
+        makeItemDoc({ selling_price: 100, tax: 18, tax_type: 'exclusive' })
+      );
+      const result = await salesService.processSale(
+        makeSaleData({
+          customer_id,
+          customer_state,
+          sales_total: '236',
+          multi_payment: { Cash: 236 },
+        }),
+        '',
+        'Add',
+        makeContext({
+          branchState: 'Tamil Nadu',
+          branchSettings: { sortname: 'IN', indian_gst: 'gst_on', default_customer },
+        })
+      );
+      expect(result.status).toBe(true);
+      const saved = salesRepository.create.mock.calls[0][0];
+      expect(saved.items[0].igst_tax).toBe(inter ? 36 : 0);
+      expect(saved.items[0].cgst_tax).toBe(inter ? 0 : 18);
+      expect(saved.items[0].sgst_tax).toBe(inter ? 0 : 18);
+      expect(saved.items[0].tax_components.map((component) => component.name)).toEqual(
+        inter ? ['IGST'] : ['CGST', 'SGST']
+      );
+      if (!customer_state) expect(saved.customer_state).toBe('Tamil Nadu');
+    }
+  );
+
   afterEach(() => {
     process.removeListener(KOT_EVENT, onKotReady);
     consoleErrorSpy.mockRestore();
@@ -271,6 +311,103 @@ describe('SalesService', () => {
       expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
       expect(mockItemRepositoryInstance.updateStock).not.toHaveBeenCalled();
     });
+  });
+
+  test('name-only customers save a bill snapshot without a customer record', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    const result = await salesService.processSale(
+      makeSaleData({ customer_id: '', customer_name: 'Bharat visitor', customer_email: '' }),
+      '',
+      'Add',
+      makeContext()
+    );
+    expect(result.status).toBe(true);
+    expect(salesRepository.create.mock.calls[0][0]).toMatchObject({
+      customer_id: null,
+      customer_name: 'Bharat visitor',
+      customer_email: '',
+    });
+    expect(mockCustomerRepositoryInstance.findById).not.toHaveBeenCalled();
+  });
+
+  test('auto-create is finalized only after a successful sale write', async () => {
+    const helper = require('../../../src/services/sale-customer');
+    const id = new (require('mongodb').ObjectId)();
+    const plan = jest.spyOn(helper, 'plan').mockResolvedValue({ id, pending: true });
+    const finish = jest.spyOn(helper, 'finish').mockResolvedValue();
+    try {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+      const result = await salesService.processSale(
+        makeSaleData({ customer_id: '', create_customer_on_save: true }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result.status).toBe(true);
+      expect(salesRepository.create.mock.calls[0][0].customer_creation_pending).toBe(true);
+      expect(String(salesRepository.create.mock.calls[0][0].customer_id)).toBe(String(id));
+      expect(finish.mock.invocationCallOrder[0]).toBeGreaterThan(
+        salesRepository.create.mock.invocationCallOrder[0]
+      );
+    } finally {
+      plan.mockRestore();
+      finish.mockRestore();
+    }
+  });
+  test('a rejected sale never materializes the planned customer', async () => {
+    const helper = require('../../../src/services/sale-customer');
+    const plan = jest
+      .spyOn(helper, 'plan')
+      .mockResolvedValue({ id: new (require('mongodb').ObjectId)(), pending: true });
+    const finish = jest.spyOn(helper, 'finish').mockResolvedValue();
+    try {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(null);
+      const result = await salesService.processSale(
+        makeSaleData({ customer_id: '', create_customer_on_save: true }),
+        '',
+        'Add',
+        makeContext()
+      );
+      expect(result.status).toBe(false);
+      expect(finish).not.toHaveBeenCalled();
+    } finally {
+      plan.mockRestore();
+      finish.mockRestore();
+    }
+  });
+  test('delivery state overrides customer state for GST without changing the customer snapshot', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(
+      makeItemDoc({ tax: 18, tax_type: 'exclusive' })
+    );
+    const result = await salesService.processSale(
+      makeSaleData({
+        customer_state: 'Tamil Nadu',
+        place_of_supply: 'Karnataka',
+        sales_total: '236',
+        multi_payment: { Cash: 236 },
+      }),
+      '',
+      'Add',
+      makeContext({
+        branchState: 'Tamil Nadu',
+        branchSettings: { sortname: 'IN', indian_gst: 'gst_on' },
+      })
+    );
+    expect(result.status).toBe(true);
+    const saved = salesRepository.create.mock.calls[0][0];
+    expect(saved.items[0].igst_tax).toBe(36);
+    expect(saved.customer_state).toBe('Tamil Nadu');
+    expect(saved.place_of_supply).toBe('Karnataka');
+  });
+  test('name-only customers cannot create a credit account implicitly', async () => {
+    const result = await salesService.processSale(
+      makeSaleData({ customer_id: '', customer_name: 'Visitor', partial_check: 'true' }),
+      '',
+      'Add',
+      makeContext()
+    );
+    expect(result.status).toBe(false);
+    expect(salesRepository.create).not.toHaveBeenCalled();
   });
 
   describe('tax-inclusive full-payment integrity', () => {
@@ -1316,6 +1453,97 @@ describe('SalesService', () => {
       afterAll(async () => {
         await connection?.close();
         await server?.stop();
+      });
+
+      test('removing a paid Captain item and paying UPI cannot replace the collected total', async () => {
+        await connection.db.dropDatabase();
+        const { ObjectId } = require('mongodb');
+        const sale = {
+          _id: new ObjectId(SALE_ID),
+          branch_id: new ObjectId(BRANCH_ID),
+          license: new ObjectId(LICENSE_ID),
+          sales_id: 'TEST-0027',
+          payment_status: 'Paid',
+          sale_process: 'KOT',
+          sales_total: 357,
+          paid_amount: 357,
+          partial_balance: 357,
+          payment_pending: 0,
+          payment_mode: 'Mixed',
+          multi_payment: { UPI: 299.96, Cash: 57.04 },
+          captain_payment_plan: 'test-paid-plan',
+          items: [
+            {
+              item_id: '64f8f2f4c2b9c0a1e4b11112',
+              item_name: 'Baby Corn 65',
+              item_quantity: 1,
+              item_price: 180,
+              tax: 5,
+            },
+            {
+              item_id: ITEM_ID,
+              item_name: 'Blackcurrant Mojito',
+              item_quantity: 1,
+              item_price: 160,
+              tax: 5,
+            },
+          ],
+        };
+        await connection.db.collection('sales').insertOne(sale);
+        const journal = {
+          _id: sale.captain_payment_plan,
+          state: 'paid',
+          payments: [{ amountMinor: 35700 }],
+        };
+        await connection.db.collection('captain_payment_plans').insertOne(journal);
+        BaseModel.getDb.mockResolvedValue(connection.db);
+        salesRepository.getById.mockImplementation(() => Model.findById(SALE_ID));
+        const result = await salesService.processSale(
+          makeSaleData({
+            sales_total: '168',
+            payment_mode: 'UPI',
+            multi_payment: { UPI: 168 },
+            items: [makeItemPayload({ item_quantity: '1', sale_inline_item_price: 160, tax: 5 })],
+          }),
+          SALE_ID,
+          'Edit',
+          makeContext()
+        );
+        expect(result.status).toBe(false);
+        expect(result.message).toMatch(/already paid.*Return items/);
+        expect(await connection.db.collection('sales').findOne({ _id: sale._id })).toEqual(sale);
+        expect(
+          await connection.db.collection('captain_payment_plans').findOne({ _id: journal._id })
+        ).toEqual(journal);
+        mockItemRepositoryInstance.findItemById.mockResolvedValue(
+          makeItemDoc({ selling_price: 160, tax: 5, tax_type: 'exclusive', track_inventory: false })
+        );
+        const prepared = await salesService.processSale(
+          makeSaleData({
+            sales_total: '168',
+            payment_mode: 'UPI',
+            multi_payment: { UPI: 168 },
+            items: [
+              makeItemPayload({
+                item_quantity: '1',
+                sale_inline_item_price: 160,
+                tax: 5,
+                tax_type: 'exclusive',
+              }),
+            ],
+          }),
+          SALE_ID,
+          'Edit',
+          makeContext(),
+          { preparePaidEdit: true }
+        );
+        expect(prepared.status).toBe(true);
+        expect(prepared.data.sales_total).toBe(168);
+        expect(prepared.data.items).toHaveLength(1);
+        expect(await connection.db.collection('sales').findOne({ _id: sale._id })).toEqual(sale);
+        expect(salesRepository.save).not.toHaveBeenCalled();
+        expect(mockItemRepositoryInstance.updateStock).not.toHaveBeenCalled();
+        expect(mockRegisterRepositoryInstance.updateSaleRegisterEntry).not.toHaveBeenCalled();
       });
 
       test.each(['KOT', 'Hold'])(

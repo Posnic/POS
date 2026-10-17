@@ -954,5 +954,11 @@
   "Enable Recycle Bin before deleting sales": "在删除销售之前启用回收站",
   "Only super admins can change the sale hard-delete setting": "只有超级管理员才能更改销售硬删除设置",
   "Finish the pending payment correction before closing this register.": "在关闭此登记册之前，完成待处理的付款更正。",
-  "Finish the pending payment correction first.": "首先完成待处理的付款更正。"
+  "Finish the pending payment correction first.": "首先完成待处理的付款更正。",
+  "Bill correction saved.": "账单更正已保存。",
+  "Review the paid bill correction before saving.": "在保存之前，请查看已付账单的更正。",
+  "Choose a saved customer for customer credit.": "选择已保存的客户作为客户积分。",
+  "Exact numeric search must be on or off": "精确数字搜索必须开启或关闭",
+  "Item not found or selling price is held. Review it in Edit prices.": "未找到商品或保留销售价格。在 “编辑价格” 中查看。",
+  "Password must contain between 5 and 20 characters": "密码必须包含 5 到 20 个字符"
 }

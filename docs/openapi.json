@@ -3094,6 +3094,31 @@
         "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
       }
     },
+    "/business/v1/insights": {
+      "get": {
+        "summary": "query",
+        "operationId": "get_business_v1_insights",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
     "/business/v1/items": {
       "get": {
         "summary": "cloud",
@@ -3679,7 +3704,7 @@
     },
     "/captain/v1/discovery": {
       "get": {
-        "summary": "branch",
+        "summary": "addresses",
         "operationId": "get_captain_v1_discovery",
         "tags": [
           "Captain access"
@@ -8272,6 +8297,151 @@
         }
       }
     },
+    "/expenses/{id}/attachments": {
+      "get": {
+        "summary": "list",
+        "operationId": "get_expenses_id_attachments",
+        "tags": [
+          "Expenses"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "add",
+        "operationId": "post_expenses_id_attachments",
+        "tags": [
+          "Expenses"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/expenses/{id}/attachments/{attId}": {
+      "get": {
+        "summary": "read",
+        "operationId": "get_expenses_id_attachments_attId",
+        "tags": [
+          "Expenses"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "remove",
+        "operationId": "delete_expenses_id_attachments_attId",
+        "tags": [
+          "Expenses"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/expenses": {
       "get": {
         "summary": "getAll",
@@ -12237,6 +12407,84 @@
         }
       }
     },
+    "/items/{id}/details": {
+      "put": {
+        "summary": "edit",
+        "operationId": "put_items_id_details",
+        "tags": [
+          "Items"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectid"
+            },
+            "description": "Invalid item ID format"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "Item name cannot be empty"
+                  },
+                  "selling_price": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Selling price must be a positive number"
+                  },
+                  "company_price": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Company price must be a positive number"
+                  },
+                  "available_quantity": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Available quantity must be a non-negative number"
+                  },
+                  "barcode_id": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Barcode cannot exceed 100 characters"
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "description": "Description cannot exceed 2000 characters"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/kitchen/devices/pair": {
       "post": {
         "summary": "pair",
@@ -12705,6 +12953,29 @@
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
+    "/mobile/v1/discovery": {
+      "get": {
+        "summary": "Boolean",
+        "operationId": "get_mobile_v1_discovery",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/mobile/v1/enrolment-proof": {
       "post": {
         "summary": "hex",
@@ -12751,6 +13022,29 @@
           }
         },
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile/v1/availability-status": {
+      "get": {
+        "summary": "availability",
+        "operationId": "get_mobile_v1_availability_status",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
       }
     },
     "/mobile/v1/inventory/policy": {
@@ -12819,6 +13113,30 @@
             "description": "Server error"
           }
         }
+      }
+    },
+    "/mobile/v1/inventory/availability": {
+      "post": {
+        "summary": "availability",
+        "operationId": "post_mobile_v1_inventory_availability",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
       }
     },
     "/mobile/v1/inventory/items/{id}/history": {

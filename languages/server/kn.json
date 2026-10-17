@@ -954,5 +954,11 @@
   "Enable Recycle Bin before deleting sales": "ಮಾರಾಟವನ್ನು ಅಳಿಸುವ ಮೊದಲು ಮರುಬಳಕೆ ಬಿನ್ ಸಕ್ರಿಯ",
   "Only super admins can change the sale hard-delete setting": "ಸೂಪರ್ ಅಡ್ಮಿನ್ಗಳು ಮಾತ್ರ ಮಾರಾಟ ಹಾರ್ಡ್-ಡಿಲೀಟ್ ಸೆಟ್ಟಿಂಗ್ ಅನ್ನು ಬದಲಾಯಿಸಬಹುದು",
   "Finish the pending payment correction before closing this register.": "ಈ ರಿಜಿಸ್ಟರ್ ಅನ್ನು ಮುಚ್ಚುವ ಮೊದಲು ಬಾಕಿ ಪಾವತಿ ತಿದ್ದುಪಡಿ ಮುಗಿಸಿ.",
-  "Finish the pending payment correction first.": "ಬಾಕಿ ಇರುವ ಪಾವತಿ ತಿದ್ದುಪಡಿಯನ್ನು ಮೊದಲು ಮುಗಿಸಿ."
+  "Finish the pending payment correction first.": "ಬಾಕಿ ಇರುವ ಪಾವತಿ ತಿದ್ದುಪಡಿಯನ್ನು ಮೊದಲು ಮುಗಿಸಿ.",
+  "Bill correction saved.": "ಬಿಲ್ ತಿದ್ದುಪಡಿ ಉಳಿಸಲಾಗಿದೆ.",
+  "Review the paid bill correction before saving.": "ಉಳಿಸುವ ಮೊದಲು ಪಾವತಿಸಿದ ಬಿಲ್ ತಿದ್ದುಪಡಿಯನ್ನು ಪರಿಶೀಲಿಸಿ.",
+  "Choose a saved customer for customer credit.": "ಗ್ರಾಹಕ ಕ್ರೆಡಿಟ್ಗಾಗಿ ಉಳಿಸಿದ ಗ್ರಾಹಕರನ್ನು ಆರಿಸಿ.",
+  "Exact numeric search must be on or off": "ನಿಖರವಾದ ಸಂಖ್ಯಾ ಹುಡುಕಾಟ ಆನ್ ಅಥವಾ ಆಫ್ ಆಗಿರಬೇಕು",
+  "Item not found or selling price is held. Review it in Edit prices.": "ಐಟಂ ಕಂಡುಬಂದಿಲ್ಲ ಅಥವಾ ಮಾರಾಟದ ಬೆಲೆ ನಡೆಯುತ್ತದೆ. ಸಂಪಾದಿಸಿ ಬೆಲೆಗಳಲ್ಲಿ ಅದನ್ನು ಪರಿಶೀಲಿಸಿ.",
+  "Password must contain between 5 and 20 characters": "ಪಾಸ್ವರ್ಡ್ 5 ರಿಂದ 20 ಅಕ್ಷರಗಳ ನಡುವೆ ಇರಬೇಕು"
 }

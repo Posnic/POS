@@ -111,3 +111,28 @@ test('cash entry separates bill allocation, handed cash and live change in singl
  w.document.querySelector('[data-action=exact-cash]').click();assert.equal(w.document.querySelector('[data-tender=Cash][data-field=received]').value,'300');assert.match(summary(),/0.00/);
  } finally {w.close();}
 });
+
+for (const mode of ['browser', 'desktop', 'off', 'print-error']) test('payment auto print transport: '+mode, async () => {
+ const dom=new JSDOM('<body></body>',{url:'https://shop.invalid',runScripts:'outside-only'}),w=dom.window;
+ w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
+ if(mode==='desktop') w.electronAPI={};
+ const records=[],prints=[],alerts=[];
+ const plan={id:'plan',currency:'₹',totalMinor:10000,paidMinor:0,dueMinor:10000,enabled:true,version:0,methods:['Cash'],guests:[{name:'Bill',totalMinor:10000,paid:false}]};
+ const doc={items_total:100,payment_mode:'Cash',receipt_settled:true};
+ w.PosnicPro={local:{get:()=> 'branch'},alert:(...a)=>alerts.push(a),receiptDesigner:{printSale:async(...a)=>{prints.push(a);if(mode==='print-error')throw Error('Printer unavailable');}},post:(o,ok)=>{
+  const b=JSON.parse(o.data);if(o.url.endsWith('/record')){records.push(b);ok({...plan,dueMinor:0,confirmed:b.request_id,payments:[{...b,id:b.request_id}],...(mode==='browser'||mode==='print-error'?{browserReceipt:doc}:{})});}else ok(plan);
+ }};
+ for(const f of ['captain-money.js','captain-payments.js'])w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/core',f),'utf8'));
+ w.addEventListener('captain:payment-recorded',e=>e.preventDefault());
+ await w.CaptainPayments.open('1');
+ w.document.querySelector('[data-action=record]').click();w.document.querySelector('[data-action=record]').click();
+ await new Promise(r=>setImmediate(r));
+ assert.equal(records.length,1);
+ assert.equal(records[0].receiptDelivery,mode==='desktop'?undefined:'browser');
+ assert.equal(prints.length,mode==='browser'||mode==='print-error'?1:0);
+ if(prints.length){assert.equal(prints[0][0],doc);assert.equal(prints[0][3].preserveWorkspace,true);}
+ assert.equal(w.document.querySelector('#captain-payments').open,false);
+ assert.equal(w.document.querySelector('[data-action=record]'),null,'printing cannot resubmit payment');
+ if(mode==='print-error')assert.match(alerts[0][1],/Printer unavailable/);
+ dom.window.close();
+});

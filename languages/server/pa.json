@@ -954,5 +954,11 @@
   "Enable Recycle Bin before deleting sales": "ਵਿਕਰੀ ਮਿਟਾਉਣ ਤੋਂ ਪਹਿਲਾਂ ਰੀਸਾਈਕਲ ਬਿਨ ਸਮਰੱਥ",
   "Only super admins can change the sale hard-delete setting": "ਸਿਰਫ ਸੁਪਰ ਐਡਮਿਨ ਹੀ ਵਿਕਰੀ ਹਾਰਡ-ਡਿਲੀਟ ਸੈਟਿੰਗ ਨੂੰ ਬਦਲ ਸਕਦੇ ਹਨ",
   "Finish the pending payment correction before closing this register.": "ਇਸ ਰਜਿਸਟਰ ਨੂੰ ਬੰਦ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਬਾਕੀ ਭੁਗਤਾਨ ਸੁਧਾਰ ਨੂੰ ਪੂਰਾ",
-  "Finish the pending payment correction first.": "ਪਹਿਲਾਂ ਬਕਾਇਆ ਭੁਗਤਾਨ ਸੁਧਾਰ ਨੂੰ ਪੂਰਾ ਕਰੋ।"
+  "Finish the pending payment correction first.": "ਪਹਿਲਾਂ ਬਕਾਇਆ ਭੁਗਤਾਨ ਸੁਧਾਰ ਨੂੰ ਪੂਰਾ ਕਰੋ।",
+  "Bill correction saved.": "ਬਿਲ ਸੁਧਾਰ ਸੁਰੱਖਿਅਤ ਕੀਤਾ ਗਿਆ।",
+  "Review the paid bill correction before saving.": "ਬਚਤ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਭੁਗਤਾਨ ਕੀਤੇ ਬਿੱਲ ਸੁਧਾਰ ਦੀ",
+  "Choose a saved customer for customer credit.": "ਗਾਹਕ ਕ੍ਰੈਡਿਟ ਲਈ ਇੱਕ ਸੁਰੱਖਿਅਤ ਗਾਹਕ ਦੀ ਚੋਣ ਕਰੋ।",
+  "Exact numeric search must be on or off": "ਸਹੀ ਸੰਖਿਆਤਮਕ ਖੋਜ ਚਾਲੂ ਜਾਂ ਬੰਦ ਹੋਣੀ ਚਾਹੀਦੀ ਹੈ",
+  "Item not found or selling price is held. Review it in Edit prices.": "ਆਈਟਮ ਨਹੀਂ ਮਿਲੀ ਜਾਂ ਵੇਚਣ ਦੀ ਕੀਮਤ ਰੱਖੀ ਜਾਂਦੀ ਹੈ. ਸੰਪਾਦਿਤ ਕੀਮਤਾਂ ਵਿੱਚ ਇਸਦੀ ਸਮੀਖਿਆ ਕਰੋ।",
+  "Password must contain between 5 and 20 characters": "ਪਾਸਵਰਡ ਵਿੱਚ 5 ਤੋਂ 20 ਅੱਖਰਾਂ ਦੇ ਵਿਚਕਾਰ ਹੋਣੇ ਚਾਹੀਦੇ ਹਨ"
 }

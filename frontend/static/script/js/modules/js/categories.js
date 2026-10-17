@@ -1,15 +1,16 @@
 PosnicPro.categories = {
     setCatTileColor: function (color) {
         $('#category_tile_color').val(color || '');
-        $('#category_tile_swatches .tile-swatch').removeClass('is-picked').filter(function () {
+        $('#category_tile_shapes').css('--record-shape-color', color || 'var(--theme-primary-color)');
+        $('#category_tile_swatches .tile-swatch').removeClass('is-picked').attr('aria-pressed', 'false').filter(function () {
             return ($(this).data('color') || '') === (color || '');
-        }).addClass('is-picked');
+        }).addClass('is-picked').attr('aria-pressed', 'true');
     },
     setCatTileShape: function (shape) {
         $('#category_tile_shape').val(shape || '');
-        $('#category_tile_shapes .tile-shape').removeClass('is-picked').filter(function () {
+        $('#category_tile_shapes .tile-shape').removeClass('is-picked').attr('aria-pressed', 'false').filter(function () {
             return ($(this).data('shape') || '') === (shape || '');
-        }).addClass('is-picked');
+        }).addClass('is-picked').attr('aria-pressed', 'true');
     },
     categoryAction: 'add',
     showAdd: function () {

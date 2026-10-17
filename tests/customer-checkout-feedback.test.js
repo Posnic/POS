@@ -93,3 +93,39 @@ test('price list uses explicit item selection, clears stale IDs and refuses unre
   w.PosnicPro.pricelists.save();assert.equal(requests.length,1);
  } finally {dom.window.close();}
 });
+
+
+test('typing a bill-only name clears the selected account and personal details without creating a customer', () => {
+ const fields=['id','name','phone','email','address','state','country','gst_type','gst_number','partial_balance'];
+ const {dom,w,$}=env(fields.map(f=>'<input id="sales_new_customer_'+f+'" value="old">').join('')+'<input id="customer_current_balance" value="50">');
+ try {
+  w.PosnicPro.local.set=()=>{};
+  let cleared=0;w.PosnicPro.loyalty={tillClear:()=>cleared++};
+  w.PosnicPro.sales.refreshCustomerAccount=()=>{};
+  const a=sales.indexOf('// A typed name is a sale snapshot');
+  w.eval(sales.slice(a,sales.indexOf("$('#sales_new_customer_name').click",a)));
+  $('#sales_new_customer_name').val('Bharat visitor').trigger('input');
+  assert.equal($('#sales_new_customer_name').val(),'Bharat visitor');
+  for(const f of fields.filter(f=>f!=='name')) assert.equal($('#sales_new_customer_'+f).val(),'');
+  assert.equal($('#customer_current_balance').val(),'');assert.equal(cleared,1);
+  $('#sales_new_customer_phone').val('12345');
+  $('#sales_new_customer_name').val('Bharat visitor 2').trigger('input');
+  assert.equal($('#sales_new_customer_phone').val(),'12345','bill-only details survive further typing');
+ } finally {dom.window.close();}
+});
+
+
+test('a late default-customer lookup cannot replace a typed or chosen customer', () => {
+ const source=fs.readFileSync('frontend/static/script/js/core/PosnicPro.js','utf8');
+ const start=source.indexOf('defaultcustomerSet: function () {');
+ const callback=source.indexOf('PosnicPro.get(params, function (response)',start);
+ const end=source.indexOf("}, function () { /* same: absent default",callback);
+ const {dom,w,$}=env('<input id="sales_new_customer_name" value="Typed customer"><input id="sales_new_customer_id" value="chosen">');
+ try {
+  w.PosnicPro.local.set=()=>{};
+  w.PosnicPro.get=(_p,done)=>done({type:'success',data:{customer:{customer_id:'default',customer_name:'Walk-in'}}});
+  w.eval('var params={};'+source.slice(callback,end)+'});');
+  assert.equal($('#sales_new_customer_name').val(),'Typed customer');
+  assert.equal($('#sales_new_customer_id').val(),'chosen');
+ } finally {dom.window.close();}
+});

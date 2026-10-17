@@ -353,3 +353,56 @@ test('common Sales settings save persists fields and unrelated saves preserve th
   branch = await db.collection('branches').findOne({_id:ctx.branchId});
   expect(branch.sales_search_display_fields).toBe(null);
 });
+
+test('Core Settings exact numeric toggle survives reload and controls real Sales queries', async () => {
+  const SettingModel = require('../../src/models/setting.model');
+  const SettingsRepository = require('../../src/repositories/settings.repository');
+  const model = new SettingModel();
+  model.setContext({...ctx,user:{_id:new ObjectId(),username:'Test',access:{}}});
+  const settings = new SettingsRepository();
+  const branchReader = new Branch.BranchModel();
+  branchReader.model = {
+    findById: (id) => ({lean: () => db.collection('branches').findOne({_id: new ObjectId(String(id))})}),
+  };
+  await db.collection('branches').updateOne({_id:ctx.branchId}, {$set:{online_ordering:{store_id:'TEST'}}});
+  for (const itemid of ['11','110','111']) {
+    await seed({itemid,barcode_id:'CODE'+itemid,track_inventory:false});
+  }
+  const search = async () => (await repo.getOnlineItemsAjaxList({query:'11'},ctx)).data.map(row => row.itemid).sort();
+  const reload = async () => (await branchReader.getBranchDetails(String(ctx.branchId))).data;
+  expect((await reload()).sales_exact_numeric_codes).toBe(false);
+  expect(await search()).toEqual(['11','110','111']);
+  // Include an existing grouped override: a legacy-only write would leave Sales stale.
+  await settings.saveGroup('preferences',{sales_exact_numeric_codes:false},ctx);
+  expect((await model.updateCommonSettings({sales_exact_numeric_codes:true})).status).toBe(true);
+  expect((await reload()).sales_exact_numeric_codes).toBe(true);
+  expect(await search()).toEqual(['11']);
+  await model.updateCommonSettings({sales_prefix:'TEST'});
+  expect((await reload()).sales_exact_numeric_codes).toBe(true);
+  expect(await search()).toEqual(['11']);
+  expect((await model.updateCommonSettings({sales_exact_numeric_codes:'false'})).status).toBe(false);
+  expect((await reload()).sales_exact_numeric_codes).toBe(true);
+  expect((await model.updateCommonSettings({sales_exact_numeric_codes:false})).status).toBe(true);
+  expect((await reload()).sales_exact_numeric_codes).toBe(false);
+  expect(await search()).toEqual(['11','110','111']);
+});
+
+
+test('availability hides primary and alternate duplicates from desktop sales but retains admin and stock', async () => {
+  const a = await seed({ selling_price: 10, available_quantity: 4, track_inventory: false });
+  const b = await seed({ name: 'Premium milk', barcode_id: 'other', barcodes: [code], selling_price: 20, available_quantity: 8, track_inventory: false });
+  const scan = async () => (await repo.getOnlineItemsAjaxList({ query: code, type: 'barcode' }, ctx)).data;
+  expect((await scan()).length).toBe(2);
+  const availability = require('../../src/services/item-availability');
+  const inventory = require('../../src/services/mobile-inventory');
+  const user = new ObjectId();
+  const req = { db, user: { _id: user, usertype: 'owner' }, tenantContext: { licenseId: String(ctx.licenseId), branchId: String(ctx.branchId) }, query: { barcode: code }, body: { id: 'desktop-hide-001', changes: [{ itemId: String(b._id), available: false, revision: '' }] } };
+  await availability.change(req);
+  expect((await scan()).map(i => i.item_id)).toEqual([String(a._id)]);
+  expect((await repo.getOnlineItemsAjaxList({ query: 'Premium' }, ctx)).data).toHaveLength(0);
+  expect((await inventory.catalogue(req)).rows).toHaveLength(2);
+  expect((await db.collection('items').findOne({ _id: b._id })).available_quantity).toBe(8);
+  req.body = { id: 'desktop-restore-001', changes: [{ itemId: String(b._id), available: true, revision: 'desktop-hide-001' }] };
+  await availability.change(req);
+  expect((await scan()).length).toBe(2);
+});

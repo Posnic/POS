@@ -1,4 +1,18 @@
 /* Theme Variables CSS - Dynamic theming support */
+.expense-supporting-files {
+    background: var(--theme-card-bg);
+    color: var(--theme-text-primary);
+    border: 1px solid var(--theme-border-color);
+    border-radius: 8px;
+    padding: 16px;
+}
+.expense-supporting-files small,
+.expense-supporting-files label {
+    color: var(--theme-text-secondary);
+}
+.expense-supporting-files .border {
+    border-color: var(--theme-border-color) !important;
+}
 
 /* Self-hosted DM Sans (variable font) - served same-origin from /static/fonts
    so browser privacy/ad-block extensions and CDN blockers can NEVER stop the
@@ -3407,3 +3421,175 @@ html:not([data-theme]) .loadingSpinner::after {
 [data-theme="brown"]     { --theme-font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, 'Segoe UI', Roboto, sans-serif; }
 [data-theme="warmnight"] { --theme-font-family: 'Source Sans 3', 'Source Sans Pro', -apple-system, 'Segoe UI', Roboto, sans-serif; }
 [data-theme="dark"]      { --theme-font-family: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, sans-serif; }
+
+/* Payment corrections use paired theme tokens, including selected/focused
+   choices. Generic outline-button rules otherwise paint blue text on blue. */
+#payment-correction .modal-content,
+#paid-bill-review .modal-content {
+    background: var(--theme-card-bg) !important;
+    color: var(--theme-text-primary) !important;
+    border: 1px solid var(--theme-border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+#payment-correction .modal-dialog { max-width: 780px; }
+#payment-correction .modal-header,
+#paid-bill-review .modal-header {
+    background: var(--theme-card-bg) !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--theme-border-color) !important;
+    padding: 20px 24px;
+    align-items: center;
+    gap: 16px;
+}
+#payment-correction .modal-header h4,
+#paid-bill-review .modal-header h4,
+#paid-bill-review .modal-header lang {
+    color: var(--theme-text-primary) !important;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+#payment-correction .pc-bill {
+    display: block;
+    margin-top: 4px;
+    color: var(--theme-text-muted) !important;
+    font-size: 14px;
+}
+#payment-correction .modal-body,
+#paid-bill-review .modal-body {
+    padding: 20px 24px;
+    border: 0;
+    max-height: 65vh;
+    overflow-y: auto;
+}
+#payment-correction .pc-summary {
+    padding: 14px 16px;
+    background: var(--theme-body-bg);
+    border: 1px solid var(--theme-border-color);
+    border-radius: 8px;
+    color: var(--theme-text-secondary);
+    line-height: 1.7;
+}
+#payment-correction .pc-summary strong { color: var(--theme-text-primary); }
+#payment-correction .pc-note { font-size: 14px; margin-bottom: 20px; }
+#payment-correction h5 { font-size: 16px; font-weight: 600; }
+#payment-correction .pc-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin: 12px 0 20px;
+}
+#payment-correction .pc-reasons { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+#payment-correction .btn,
+#paid-bill-review .btn { min-height: 48px; min-width: 48px; white-space: normal; }
+#payment-correction .pc-choice {
+    position: relative;
+    min-height: 58px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-color) !important;
+    background: var(--theme-card-bg) !important;
+    color: var(--theme-text-primary) !important;
+    font-size: 15px;
+    line-height: 1.4;
+    box-shadow: none !important;
+    overflow-wrap: anywhere;
+}
+#payment-correction .pc-choice:hover {
+    background: var(--theme-table-row-hover) !important;
+    border-color: var(--theme-primary-color) !important;
+}
+#payment-correction .pc-choice[aria-pressed="true"],
+#payment-correction .pc-choice[aria-pressed="true"]:hover,
+#payment-correction .pc-choice[aria-pressed="true"]:focus {
+    background: var(--theme-btn-primary-bg) !important;
+    color: var(--theme-btn-primary-text) !important;
+    border-color: var(--theme-btn-primary-bg) !important;
+    font-weight: 600;
+}
+#payment-correction .pc-choice[aria-pressed="true"]::after {
+    content: '\2713';
+    position: absolute;
+    top: 5px;
+    right: 7px;
+    font-size: 13px;
+    color: inherit;
+}
+#payment-correction .btn:focus-visible,
+#paid-bill-review .btn:focus-visible {
+    outline: 2px solid var(--theme-primary-color);
+    outline-offset: 3px;
+}
+#payment-correction .pc-amounts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+#payment-correction .pc-amounts label { min-width: 0; }
+#payment-correction input { min-height: 48px; font-size: 18px; }
+#payment-correction .pc-other { width: 100%; }
+#payment-correction .pc-review { font-size: 16px; line-height: 1.7; }
+#payment-correction .modal-footer,
+#paid-bill-review .modal-footer {
+    padding: 16px 24px;
+    border: 0;
+    border-top: 1px solid var(--theme-border-color);
+    background: var(--theme-card-bg);
+}
+#payment-correction .btn-light,
+#paid-bill-review .btn-light {
+    background: var(--theme-body-bg) !important;
+    color: var(--theme-text-primary) !important;
+    border: 1px solid var(--theme-border-color) !important;
+}
+#payment-correction .btn-primary,
+#paid-bill-review .btn-primary {
+    background: var(--theme-btn-primary-bg) !important;
+    color: var(--theme-btn-primary-text) !important;
+    border-color: var(--theme-btn-primary-bg) !important;
+}
+#payment-correction [hidden] { display: none !important; }
+@media (max-width: 575px) {
+    #payment-correction .modal-dialog { margin: 12px; }
+    #payment-correction .modal-header, #payment-correction .modal-body, #payment-correction .modal-footer { padding: 16px; }
+    #payment-correction .pc-reasons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #payment-correction .pc-choice { padding: 12px 20px; font-size: 14px; }
+}
+
+/* Direct, optional customer entry; theme colours come from the form controls. */
+.sales-customer-entry { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:10px 0; }
+.sales-customer-entry label { margin:0; }
+.sales-customer-entry input { flex:1 1 200px; max-width:360px; min-width:0; }
+.sales-customer-pop label { display:block; width:100%; margin-bottom:10px; }
+
+.sales-customer-entry + .sales-customer-pop { position:relative; top:auto; right:auto; width:520px; max-width:100%; margin:0 0 12px; }
+
+/* Keep the history summary beside the date shortcuts without squeezing them. */
+.sales-history-topline { display:flex; align-items:center; flex-wrap:wrap; gap:8px 24px; }
+.sales-history-summary { display:flex; flex-wrap:wrap; gap:10px 22px; margin-left:auto; padding:8px 0; color:var(--theme-text-primary); }
+.sales-history-stat { display:inline-flex; align-items:baseline; gap:7px; white-space:nowrap; }
+.sales-history-stat > span { color:var(--theme-text-secondary); }
+.sales-history-stat strong { font-variant-numeric:tabular-nums; }
+@media(max-width:767px) { .sales-history-summary { margin-left:0; width:100%; } }
+/* Recovery notice stays in document flow below the fixed dashboard chrome. */
+#offline_recovery_notice{margin-top:84px!important}
+
+/* One compact sale search row; customer actions stay inside its popup. */
+.sales-search-toolbar { flex-wrap: nowrap; gap: 8px; margin-bottom: 12px; }
+.sales-search-toolbar #sales_new_item_name { min-width: 0; }
+.sales-search-toolbar .sales-customer-btn { flex: 0 0 40px; padding: 6px; }
+#sales_customer_popup { width: 440px; max-height: min(640px, 75vh); overflow-y: auto; color: var(--theme-text-primary); }
+#sales_customer_popup #sales_new_customer_name { margin-bottom: 8px; }
+#sales_customer_results { position: relative; }
+#sales_customer_results .autocomplete-suggestions { position: relative !important; top: auto !important; left: auto !important; width: 100% !important; max-height: 180px !important; }
+#sales_customer_add_new { background: transparent; border: 1px solid currentColor; margin: 10px 0; }
+
+/* Direct customer entry alongside item search; optional details stay compact. */
+.sales-search-toolbar .sales-customer-entry { flex:0 1 38%; min-width:180px; margin:0; gap:0; flex-wrap:nowrap; position:relative; }
+.sales-search-toolbar .sales-customer-entry input { width:0; flex:1 1 0; border-radius:5px 0 0 5px; }
+.sales-search-toolbar .sales-customer-btn { height:38px; border-radius:0 5px 5px 0; }
+.sales-customer-search-pop { position:absolute; top:44px; right:0; width:100%; min-width:260px; z-index:1051; padding:8px; background:var(--theme-body-bg); color:var(--theme-text-primary); border:1px solid var(--theme-border-color); border-radius:8px; box-shadow:0 8px 24px #0003; }
+#sales_customer_popup { width:360px; padding:16px; }
+#sales_customer_popup .sales-customer-address { margin:16px 0; }
+#sales_customer_popup .sales-customer-pop-action { display:inline-flex; }
+#sales_customer_add_new { width:100%; text-align:left; border:0; border-top:1px solid var(--theme-border-color); margin:4px 0 0; border-radius:0; }
+.sales-customer-gst[hidden],#sales_customer_search[hidden] { display:none!important; }
+#sales_gst_breakdown { color:var(--theme-text-primary); margin-top:4px; }
+@media(max-width:480px) { .sales-search-toolbar { flex-wrap:wrap; } .sales-search-toolbar #sales_new_item_name { flex-basis:100%; } .sales-search-toolbar .sales-customer-entry { flex-basis:100%; } }

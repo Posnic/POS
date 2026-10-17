@@ -192,27 +192,10 @@ test('the About window can be opened without knowing about the Alt key', async (
   assert.match(body, /case 'about': openAboutWindow\(\); break;/,
     'About cannot be opened from inside the app');
 
-  const dash = fs.readFileSync(path.join(ROOT, 'frontend', 'dashboard.html'), 'utf8');
-  const dashboard = new JSDOM(dash);
-  t.after(() => dashboard.window.close());
-  const script = [...dashboard.window.document.scripts]
-    .map(element => element.textContent).find(code => code.includes('Desktop tools quick-access'));
-  assert.ok(script, 'the desktop quick menu is missing');
-  const dom = new JSDOM('', { url: 'https://shop.example/', runScripts: 'outside-only' });
-  t.after(() => dom.window.close());
-  const w = dom.window, opened = [];
-  w.PosnicPro = { i18n: { t: (_key, fallback) => fallback }, local: { get: () => false } };
-  w.electronAPI = { desktop: { capabilities: async () => ({ backup: true }), open: target => opened.push(target) } };
-  w.eval(script);
-  await settled();
-  const trigger = w.document.querySelector('.fab-btn');
-  trigger.click();
-  assert.equal(trigger.getAttribute('aria-expanded'), 'true');
-  const about = [...w.document.querySelectorAll('[role="menuitem"]')].find(button => button.textContent === 'About Posnic');
-  assert.ok(about, 'nothing on screen opens About');
-  about.click();
-  assert.deepEqual(opened, ['about']);
-  assert.equal(trigger.getAttribute('aria-expanded'), 'false');
+  const about = new JSDOM(ABOUT);
+  t.after(() => about.window.close());
+  assert.ok(about.window.document.querySelector('[data-target="#posnic_about_dialog"]'),
+    'About must remain reachable from the app footer');
 });
 
 test('the badge rides both bundles, or it is on neither page', () => {

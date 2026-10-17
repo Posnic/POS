@@ -20,7 +20,8 @@ PosnicPro.customers = {
         $('#customer_reset').show();
         $('.customer_edit_reset').hide();
         $('#customer_country').val(PosnicPro.local.get("country_setting")).trigger('change.select2');
-        PosnicPro.local.set('edit_customer_state', PosnicPro.local.get("state_setting"));        
+        PosnicPro.local.set('edit_customer_state', PosnicPro.local.get("state_setting"));
+        $('#customer_city').val(PosnicPro.local.get("city_setting") || "");
         PosnicPro.customers.addCustomerButton();
         $('.add_new_tooltip').tooltip("hide");
         if (PosnicPro.customers.customerAction === 'edit') {
@@ -420,6 +421,7 @@ PosnicPro.customers = {
                 url += '/' + $('#customer_id').val();
             }
             var formData = PosnicPro.getFormData($('#customer_add_form'));
+            formData.allow_shared_phone = $('#customer_shared_phone').prop('checked');
             var phoneInput = PosnicPro.customers.customer_phone;
             formData.phone = $('#customer_phone').val().trim() && phoneInput ? phoneInput.getNumber() : '';
             delete formData.full;
@@ -606,6 +608,7 @@ PosnicPro.customers = {
                 $('#customer_email').val(data.email);
                 $('#customer_address').val(data.address);
                 $('#customer_city').val(data.city);
+                $('#customer_shared_phone').prop('checked', data.allow_shared_phone === true);
                 $('#customer_country').val(data.country).trigger('change.select2');
                 $('#customer_category').val(data.category_id).trigger("change");
                 $('#customer_referrer_name').val(data.referrer_name);
@@ -771,32 +774,32 @@ PosnicPro.customers = {
         PosnicPro.customers.loadSelectCustomerState(PosnicPro.local.get('countryid'), 'clear');
         $('#customer_add_form')[0].reset();
         $('#customer_country').val(PosnicPro.local.get("country_setting")).trigger('change.select2');
-        PosnicPro.local.set('edit_customer_state', PosnicPro.local.get("state_setting"));        
+        PosnicPro.local.set('edit_customer_state', PosnicPro.local.get("state_setting"));
+        $('#customer_city').val(PosnicPro.local.get("city_setting") || "");
         $('.error_customer').css('display', 'none')
     },
     loadSelectCustomerState: function (id, action, savedPhone) {
         var stateSelect = $('#customer_state');
+        var request = (PosnicPro.customers.stateRequest || 0) + 1;
+        PosnicPro.customers.stateRequest = request;
+        var selectedState = action === 'edit' ? PosnicPro.local.get('edit_customer_state') :
+            (action === 'add' || action === 'clear') ? PosnicPro.local.get('state_setting') : '';
         var params = {
             url: 'setting/getJSONState',
             data: {id: id}
         };
         PosnicPro.get(params, function (response) {
+            if (PosnicPro.customers.stateRequest !== request) return;
             stateSelect.empty();
-            suggestions: $.map(response.data['stateJsonArray'], function (dataItem) {
-                var options;
-                options += '<option value="' + dataItem + '">' + dataItem + ' </option>';
-                stateSelect.append(options).trigger('change');
+            stateSelect.append(new Option('', ''));
+            (response.data.stateJsonArray || []).forEach(function (state) {
+                stateSelect.append(new Option(state, state));
             });
-
-            if (PosnicPro.local.get('edit_customer_state') !== '' && action === 'edit') {
-                stateSelect.val(PosnicPro.local.get('edit_customer_state')).trigger('change.select2');
-                (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
-                if (action === 'edit' && savedPhone !== undefined) PosnicPro.customers.setPhone(savedPhone);
-            } else {
-                $('#customer_state option:eq(0)').prop('selected', true);
-                (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
-                if (action === 'edit' && savedPhone !== undefined) PosnicPro.customers.setPhone(savedPhone);
-            }
+            var match = Array.from(stateSelect[0].options).find(function (option) { return option.value.trim().toLowerCase() === String(selectedState || '').trim().toLowerCase(); });
+            if (!match && selectedState) stateSelect.append(new Option(selectedState, selectedState));
+            stateSelect.val(match ? match.value : (selectedState || '')).trigger('change.select2');
+            (PosnicPro.customers.customer_phone || { setCountry: function () {} }).setCountry(response.data.countrySortName);
+            if (action === 'edit' && savedPhone !== undefined) PosnicPro.customers.setPhone(savedPhone);
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
@@ -839,7 +842,7 @@ PosnicPro.customers = {
                 },
                 gstin_number: {
                     required: true,
-                    gst: true,
+                    customersGst: true,
                     minlength: 15,
                     maxlength: 15
                 }
@@ -882,8 +885,8 @@ PosnicPro.customers = {
             return !!input && input.isValidNumber() === true;
 
         }, "Enter a valid phone number");
-        jQuery.validator.addMethod("gst", function (value, element) {
-            return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
+        jQuery.validator.addMethod("customersGst", function (value, element) {
+            return this.optional(element) || /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
         }, "Enter a valid GSTIN");
 
         $("#customer_add_form").submit(function (event) {

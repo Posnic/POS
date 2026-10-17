@@ -1,4 +1,5 @@
 'use strict';
+const inventoryEnabled = require('../utils/mobile-inventory-policy');
 
 // Mobile writes have a durable intent before any effects. Each effect has its
 // own stable identity, so a lost response or process restart can resume safely
@@ -13,7 +14,7 @@ const { fail } = require('../utils/branch-access');
 const { allowed } = require('../utils/mobile-pos-access');
 const canConnect = (user, branch) =>
   allowed(user, 'sales') ||
-  (allowed(user, 'item', 'read') && (!branch || branch.inventory_policy?.enabled === true));
+  (allowed(user, 'item', 'read') && (!branch || inventoryEnabled(branch)));
 const minor = (n) => Math.round(Number(n || 0) * 100);
 function canonical(v) {
   if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
@@ -106,6 +107,7 @@ function mapItem(row, options = {}) {
     price: Number.isSafeInteger(price) && price >= 0 && price <= 99999999999 ? price : 0,
     code: /^\d{1,6}$/.test(code) ? code : '',
     barcode: String(row.barcode_id || ''),
+    barcodes: require('../utils/item-barcodes').codes(row),
     category: String(row.category_name || 'Items'),
     visual: typeof row.icon === 'string' && row.icon ? row.icon : '■',
     ...(image
@@ -122,6 +124,9 @@ function mapItem(row, options = {}) {
     taxBps: Number.isInteger(taxBps) ? Math.min(10000, Math.max(0, taxBps)) : 0,
     taxInclusive: row.tax_type === 'inclusive',
     active:
+      row.available_for_sale !== false &&
+      !row.is_deleted &&
+      ![1, '1', true].includes(row.del_status) &&
       row.activate !== false &&
       row.active !== false &&
       row.status !== 'inactive' &&
@@ -220,7 +225,7 @@ async function bootstrap(req) {
     upiAccounts: c.config.upiAccounts,
     defaultUpiAccountId: c.config.defaultUpiAccountId || undefined,
     capabilities: {
-      inventory: c.branch.inventory_policy?.enabled === true && allowed(req.user, 'item', 'read'),
+      inventory: inventoryEnabled(c.branch) && allowed(req.user, 'item', 'read'),
       saleSync: true,
       devicePairing: true,
       tillPrint: true,

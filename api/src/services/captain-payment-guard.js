@@ -1,7 +1,9 @@
 'use strict';
 const { ObjectId } = require('mongodb');
 const message =
-  'This order has Captain payments. Open payment details to collect the remaining balance.';
+  'This bill has a Captain payment record. Ordinary sale edits cannot overwrite it. Open payment details to review the recorded payments.';
+const paidMessage =
+  'This bill is already paid through Captain. Use Return items to remove items, or Correct payment to change the payment method.';
 async function mutable(db, sale) {
   if (sale?.payment_correction_pending)
     throw Object.assign(new Error('Finish the pending payment correction first.'), { status: 409 });
@@ -26,12 +28,15 @@ async function mutable(db, sale) {
     else delete sale.captain_payment_plan;
     return;
   }
-  const operation = await plans.findOne(
-    { _id: id, purpose: 'order-restructure' },
-    { projection: { _id: 1 } }
-  );
+  const operation = await plans.findOne({ _id: id }, { projection: { purpose: 1, state: 1 } });
   throw Object.assign(
-    new Error(operation ? 'This order is being updated. Please retry.' : message),
+    new Error(
+      operation?.purpose === 'order-restructure'
+        ? 'This order is being updated. Please retry.'
+        : operation?.state === 'paid'
+          ? paidMessage
+          : message
+    ),
     { status: 409, statusCode: 409 }
   );
 }

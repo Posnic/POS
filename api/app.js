@@ -82,6 +82,7 @@ const cspDirectives = {
   'script-src-attr': ["'self'", "'unsafe-inline'"],
   'connect-src': ["'self'"],
   'img-src': [
+    'blob:', // Authenticated Cash Book receipt previews.
     "'self'",
     'data:',
     // Product images are normalised to same-origin /uploads/ paths, so 'self'
@@ -107,6 +108,7 @@ const cspDirectives = {
   // Allow previews and embedded documents that use data: or same-origin
   // URLs inside <iframe> elements (purchase/sales attachment previews).
   'frame-src': [
+    'blob:', // PDFs fetched through the permission-checked attachment API.
     "'self'",
     'data:',
     'https://dev-upload-pro.s3.ap-south-1.amazonaws.com',
@@ -121,6 +123,7 @@ const cspDirectives = {
   // Older user agents may still consult child-src for nested browsing
   // contexts; mirror frame-src for safety.
   'child-src': [
+    'blob:',
     "'self'",
     'data:',
     'https://dev-upload-pro.s3.ap-south-1.amazonaws.com',

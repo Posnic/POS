@@ -221,110 +221,14 @@ PosnicPro.items = {
             }
         });
     },
-    openNewItemEditor: function () {
-        var itemSettings = {};
-        try { itemSettings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) {}
-        if (itemSettings.item_editor_v2 !== true || !PosnicPro.items_v2) return false;
-        PosnicPro.items_v2.showAdd();
-        return true;
-    },
     showAdd: function () {
-        if (PosnicPro.items.openNewItemEditor()) return;
-        PosnicPro.items.aiRefresh();
-        // Clear the previous item's nutrition before opening a fresh form.
-        PosnicPro.itemPlate.wire();
-        PosnicPro.itemPlate.aiRefresh();
-        PosnicPro.itemPlate.clear();
-        var loader = $(".loader-item");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.HideSideBarModal();
-        // A fresh form belongs to no family.
-        $('#item_family_strip').hide().find('.family-chips').html('');
-        PosnicPro.items._family = null;
-        PosnicPro.items.renderModifierGroups([]);
-        $('#item_discount').hide();
-        $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
-        PosnicPro.collapseMenuForWorkspace();
-        $(".vertical-menu li a").removeClass("active");
-        PosnicPro.showAddModal('item');
-        $('.page_loader,#osk-container').hide();
-        $('.page-title-box,#items_new,#item_variant_header').show();
-        $('#v-pills-inventory-tab,#view_items_page,.item_new_shortcut').addClass('active');
-        $('#v-pills-inventory').addClass('show active');
-        $('#v-pills-purchase-tab').removeClass('active');
-        $('#v-pills-purchase').removeClass('show active');
-        $("#items_mfg_date").val('');
-        $("#items_expiry_date").val('');
-        $('#item_upload_image_status').val('no');
-        // IC1c: a fresh entry starts with the essentials; the collapsed
-        // sections open on demand (and always open on edit).
-        // Owner: these sections stay open - nothing on the form hides behind a click.
-        PosnicPro.items.applyHardwareGates();
-        PosnicPro.items.applyTaxGate();
-        PosnicPro.items.addItemButton();
-        $('#items_reset').show();
-        $('.items_edit_reset').hide();
-        if (PosnicPro.items.itemAction === 'edit') {
-            PosnicPro.items.itemClearForm();
-        }
-        PosnicPro.items.itemAction = 'add';
-        PosnicPro.itemDayparts.set([]);
-        PosnicPro.itemStockPreference.load(null, function (preference) {
-            if (PosnicPro.items.itemAction !== 'add' || !preference) return;
-            $('#item_track_inventory').prop('checked', preference === 'track_quantities').trigger('change');
-        });
-        PosnicPro.itemTranslations.reset();
-        
-        // Apply discount from selected category
-        setTimeout(function() {
-            var selectedOption = $('.items_category').find('option:selected')[0];
-            if (selectedOption) {
-                console.log('triggerAddNew: Applying discount from category');
-                PosnicPro.items.applyCategoryDiscount(selectedOption);
-            }
-        }, 500);
+        PosnicPro.items_v2.showAdd();
     },
     showClone: function (id) {
-        var loader = $(".loader-item");
-        loader.find(".loadingSpinner:first").remove();
-        PosnicPro.items.cloneItem(id);
+        PosnicPro.items_v2.showClone(id);
     },
     showEdit: function (id) {
-        PosnicPro.items.aiRefresh();
-        /* Cleared here too: the read below fills it from the saved dish, and
-           if that read is slow or fails the boxes must not still be showing
-           whatever was open a moment ago. */
-        PosnicPro.itemPlate.wire();
-        PosnicPro.itemPlate.aiRefresh();
-        PosnicPro.itemPlate.clear();
-        var loader = $(".loader-item");
-        loader.find(".loadingSpinner:first").remove();
-        $('#product_without_variant').prop('checked', true);
-        $('#product_with_variant').prop('checked', false);
-
-        $('#show_variant_fields').hide();
-        $('#show_price_fields,#sku_card_col').show();
-        $("#load_price_fields").html('');
-        $("#show-hide-item-discount").show();
-        $('#item_variant_header').hide();
-
-        PosnicPro.showEditModal('items');
-        PosnicPro.items.applyHardwareGates();
-        // Editing is a see-everything visit: open the collapsed sections so
-        // stored description/images/dates/flags are never hidden state.
-        $('#item_details_collapse, #item_extras_collapse').collapse('show');
-        PosnicPro.items.editItem(id);
-        $('#item_discount').show();
-        $('#v-pills-inventory-tab').addClass('active');
-        $('#v-pills-inventory').addClass('show active');
-        $('#items_reset').hide();
-        $('.items_edit_reset').show();
-        // The record id rides data-id; overwriting the DOM id broke every
-        // later #items_edit_reset selector.
-        $('.items_edit_reset').attr('data-id', id);
-        $('.error_item').css('display', 'none');
-        PosnicPro.items.itemAction = 'edit';
+        PosnicPro.items_v2.showEdit(id);
     },
     showDelete: function (id) {
         PosnicPro.deleteTableRowData(id, 'items');
@@ -978,25 +882,8 @@ PosnicPro.items = {
         PosnicPro.items.loadList(1);
     },
     triggerAddNew: function () {
-        PosnicPro.items.showAdd();
-        $('#item_variant_header').hide();
-        $('#show_variant_fields').hide();
-        $('#show_price_fields,#sku_card_col').show();
-        $('#product_without_variant').prop('checked', true);
-        $('#product_with_variant').prop('checked', false);
-        $('#show_variant_fields').hide();
-        $('#show_price_fields,#sku_card_col').show();
-        $("#load_price_fields").html('');
-        $("#show-hide-item-discount").show();
-        if ($('#sales_new_item_name').val() !== '') {
-            var itemname = $('#sales_new_item_name').val();
-            PosnicPro.items.itemStatus = 'salespage';
-        } else {
-            itemname = $('#receiving_add_item_name').val();
-            PosnicPro.items.itemStatus = 'receivingpage';
-        }
-        $('#items_name').val(itemname);
-
+        var itemname = $('#sales_new_item_name').val() || $('#receiving_add_item_name').val() || '';
+        PosnicPro.items_v2.showAdd(itemname);
     },
     /*
      * Modifier groups on the item form (V2): Restaurant-mode only. The
@@ -1848,6 +1735,9 @@ PosnicPro.items = {
     },
     /*Edit item dsetails*/
     editItem: function (id) {
+        return PosnicPro.items_v2.showEdit(id);
+    },
+    _legacyEditItem: function (id) {
         var loader = $(".loader-item");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
@@ -2748,6 +2638,9 @@ PosnicPro.items = {
     },
     /*Clone item details*/
     cloneItem: function (id) {
+        return PosnicPro.items_v2.showClone(id);
+    },
+    _legacyCloneItem: function (id) {
         var loader = $(".loader-item");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         $(".infobar-settings-sidebar-overlay").css({"background": "rgba(0,0,0,0.4)", "position": "fixed"});
@@ -2919,147 +2812,21 @@ PosnicPro.items = {
     },
 
     printLableView: function (id) {
-        var loader = $(".loader-label-item");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
-        $("#mfg_checkbox").prop("checked", false);
-        $('#mfg-date-value').attr('disabled', 'disabled');
-        $("#exp_checkbox").prop("checked", false);
-        $('#exp-date-value').attr('disabled', 'disabled');
-        PosnicPro.get('items/' + id, function (response) {
-            if (response.type === 'success') {
-                var data = response.data;
-                var currency = PosnicPro.local.get('currencySign');
-                PosnicPro.record_id = data.barcode_id;
-                let items_mfg_date = data.items_mfg_date !== null ? data.items_mfg_date : '';
-                let items_expiry_date = data.items_expiry_date !== null ? data.items_expiry_date : '';
-                items_mfg_date = items_mfg_date.split(' ')[0];
-                items_expiry_date = items_expiry_date.split(' ')[0];
-                $('#userInput').val(data.barcode_id);
-                $('#branch-value').val(data.name);
-                $('#branch-name').text(data.name);
-                $('#price-name').text('PRICE' + " " + currency + " " + data.selling_price);
-                $('#mrp-price').text('MRP' + " " + currency + " " + data.mrp_price);
-                $('#price-value').val('PRICE' + " " + currency + " " + data.selling_price);
-                $('#mrp-price-value').val('MRP' + " " + currency + " " + data.mrp_price);
-                $('#mfg-date-value').val('MFG DATE' + " " + items_mfg_date);
-                $('#exp-date-value').val('EXP DATE' + " " + items_expiry_date);
-                $('#view_print_lable').modal('show');
-                loader.find(".loadingSpinner:first").remove();
-                newBarcode();
-            } else {
-                PosnicPro.alert(response.type, response.message);
-            }
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
-        });
+        PosnicShelfLabels.open(id);
     },
 
     mfgCheckbox: function (checked) {
-        if (checked) {
-            $("#mfg_checkbox").prop("checked", true);
-            $('#mfg-date-value').removeAttr('disabled');
-            $("#mfg-date").text($('#mfg-date-value').val());
-        } else {
-            $("#mfg_checkbox").prop("checked", false);
-            $('#mfg-date-value').attr('disabled', 'disabled');
-            $("#mfg-date").text('');
-        }
+        $('#mfg_checkbox').prop('checked', !!checked);
+        PosnicShelfLabels.refresh();
     },
 
     expCheckbox: function (checked) {
-        if (checked) {
-            $("#exp_checkbox").prop("checked", true);
-            $('#exp-date-value').removeAttr('disabled');
-            $("#exp-date").text($('#exp-date-value').val());
-        } else {
-            $("#exp_checkbox").prop("checked", false);
-            $('#exp-date-value').attr('disabled', 'disabled');
-            $("#exp-date").text('');
-        }
+        $('#exp_checkbox').prop('checked', !!checked);
+        PosnicShelfLabels.refresh();
     },
 
     printLabelBarcode: function () {
-        var labelWidth = $('#document_width').val();   // in inches
-        var labelHeight = $('#document_height').val(); // in inches
-
-        // Create a copy of the print preview for printing
-        var printContent = document.getElementById("print-preview").cloneNode(true);
-        printContent.id = 'print-content-copy';
-
-        // Get current settings
-        var fontFamily = $('#font').val();
-        var textAlign = $(".text-align.btn-primary").val() || 'center';
-        var backgroundColor = $('#background-color').val();
-
-        // Apply exact dimensions and styling for printing
-        var printStyle =
-            "@page { " +
-            "size: " + labelWidth + "in " + labelHeight + "in; " +
-            "margin: 0; " +
-            "} " +
-
-            "html, body { " +
-            "margin: 0; " +
-            "padding: 0; " +
-            "width: " + labelWidth + "in; " +
-            "height: " + labelHeight + "in; " +
-            "font-family: " + fontFamily + "; " +
-            "} " +
-
-            "#print-content-copy { " +
-            "width: " + labelWidth + "in !important; " +
-            "height: " + labelHeight + "in !important; " +
-            "padding: 2px; " +
-            "box-sizing: border-box; " +
-            "border: none; " +
-            "background: " + backgroundColor + "; " +
-            "} " +
-
-            "#print-content-copy > div { " +
-            "width: 100% !important; " +
-            "height: 100% !important; " +
-            "display: flex !important; " +
-            "flex-direction: column !important; " +
-            "justify-content: center !important; " +
-            "align-items: center !important; " +
-            "} " +
-
-            "#print-content-copy p { " +
-            "margin: 0 !important; " +
-            "font-family: " + fontFamily + " !important; " +
-            "text-align: " + textAlign + " !important; " +
-            "} " +
-
-            "#print-content-copy svg { " +
-            "display: block !important; " +
-            "margin: 2px auto !important; " +
-            "max-width: 100% !important; " +
-            "max-height: 100px !important; " +
-            "} " +
-
-            ".fontfamily { " +
-            "font-family: " + fontFamily + " !important; " +
-            "text-align: " + textAlign + " !important; " +
-            "}";
-
-        // Use PrintJS to print with exact dimensions
-        printJS({
-            printable: printContent.outerHTML,
-            type: 'raw-html',
-            style: printStyle,
-            scanStyles: false
-        });
-
-        // $('#view_print_lable').modal('hide');
-        //
-        // Navigate back to barcode view if needed
-        // let parts = window.location.hash.split('/');
-        // if (parts.length > 1) {
-        //     PosnicPro.items.showBarcode(parts[1]);
-        // }
-
-        return false;
+        return PosnicShelfLabels.print(false);
     },
 
     /*
@@ -5166,12 +4933,14 @@ $(document).ready(function () {
     });
 
     $(".text-align").click(function () {
+        if (window.PosnicShelfLabels && $(this).closest('#view_print_lable').length) return;
         $(".text-align").removeClass("btn-primary");
         $(this).addClass("btn-primary");
         newBarcode();
     });
 
     $(".font-option").click(function () {
+        if (window.PosnicShelfLabels && $(this).closest('#view_print_lable').length) return;
         if ($(this).hasClass("btn-primary")) {
             $(this).removeClass("btn-primary");
         } else {
@@ -5270,54 +5039,9 @@ $(document).ready(function () {
    a 1000-char field no receipt renders rich. */
 
 // Update preview function to work with existing system
-var updateLabelPreview = function() {
-    $("#branch-name").text($('#branch-value').val());
-    $("#price-name").text($('#price-value').val());
-    $("#mrp-price").text($('#mrp-price-value').val());
-    $("#address-name").text($('#address-value').val());
+var updateLabelPreview = function () { if (window.PosnicShelfLabels) window.PosnicShelfLabels.refresh(); };
 
-    if ($('#mfg_checkbox').is(':checked')) {
-        $("#mfg-date").text($('#mfg-date-value').val());
-    } else {
-        $("#mfg-date").text('');
-    }
-
-    if ($('#exp_checkbox').is(':checked')) {
-        $("#exp-date").text($('#exp-date-value').val());
-    } else {
-        $("#exp-date").text('');
-    }
-};
-
-function updatePreviewDimensions() {
-    var labelWidth = parseFloat($('#document_width').val()) || 1.96;
-    var labelHeight = parseFloat($('#document_height').val()) || 1.18;
-
-    // Update dimension display
-    $('#preview-width').text(labelWidth);
-    $('#preview-height').text(labelHeight);
-
-    // Calculate scaled dimensions for preview (max 300px width for screen display)
-    var maxPreviewWidth = 300;
-    var aspectRatio = labelHeight / labelWidth;
-
-    var previewWidth = Math.min(maxPreviewWidth, labelWidth * 96); // 96 DPI conversion
-    var previewHeight = previewWidth * aspectRatio;
-
-    // Apply dimensions to preview container
-    $('#preview-container').css({
-        'width': previewWidth + 'px',
-        'height': previewHeight + 'px'
-    });
-
-    // Adjust font sizes based on preview size
-    var fontScale = previewWidth / 200; // Scale factor based on 200px base
-    var baseFontSize = Math.max(8, 12 * fontScale);
-
-    $('#print-preview').css({
-        'font-size': baseFontSize + 'px'
-    });
-}
+function updatePreviewDimensions() { if (window.PosnicShelfLabels) window.PosnicShelfLabels.refresh(); }
 
 function updateSliderLimits() {
     var docWidth = parseFloat($('#document_width').val()) || 1.96;
@@ -5332,7 +5056,7 @@ function updateSliderLimits() {
     $('#bar-height').attr('max', maxBarHeight);
 
     // Update rangeslider if it exists
-    if ($.fn.rangeslider) {
+    if ($.fn.rangeslider && $('#bar-width').is('input[type="range"]') && $('#bar-height').is('input[type="range"]')) {
         $('#bar-width').rangeslider('destroy').rangeslider({
             polyfill: false,
             rangeClass: 'rangeslider',
@@ -5405,39 +5129,9 @@ var newBarcode = function () {
         "font-size": fontSize + 'px'
     });
 
-    // Generate barcode with current settings - reuse labelSettings
-    $("#labelBarcode").JsBarcode(barcodeValue, {
-        "format": labelSettings.format,
-        "background": backgroundColor,
-        "lineColor": lineColor,
-        "fontSize": fontSize,
-        "height": labelSettings.height,
-        "width": labelSettings.width,
-        "margin": labelSettings.margin,
-        "textMargin": labelSettings.textMargin,
-        "displayValue": "true",
-        "font": labelSettings.font,
-        "textAlign": labelSettings.textAlign,
-        "marginTop": labelSettings.margin_top,
-        "marginBottom": labelSettings.margin_bottom,
-        "marginLeft": labelSettings.margin_left,
-        "marginRight": labelSettings.margin_right,
-        "fontOptions": $(".font-option.btn-primary").map(function () {
-            return this.value;
-        }).get().join(" "),
-        "valid": function (valid) {
-            if (valid) {
-                $("#labelBarcode").show();
-                $("#invalid").hide();
-            } else {
-                $("#labelBarcode").hide();
-                $("#invalid").show();
-            }
-        }
-    });
-
     // Update preview content
     updateLabelPreview();
+    if (window.PosnicShelfLabels) window.PosnicShelfLabels.refresh();
 };
 
 
@@ -6449,3 +6143,59 @@ $(document).ready(function () {
         PosnicPro.items.refreshCreateSummary();
     }).on('reset', function () { setTimeout(function () { PosnicPro.items.refreshCreateSummary(); }, 0); });
 });
+
+
+// Inventory review includes hidden products; sales endpoints exclude them.
+PosnicPro.items.availability = function () {
+    $('#product-availability-dialog').remove();
+    var modal = $('<div class="modal fade" id="product-availability-dialog" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><lang class="lang_product_availability">Product availability</lang></h5><button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">×</button></div><div class="modal-body"><form><label><lang class="lang_scan_barcode_or_search_products">Scan barcode or search products</lang></label><div class="input-group"><input class="form-control" aria-label="Scan barcode or search products" data-t-aria-label="lang_scan_barcode_or_search_products"><div class="input-group-append"><button class="btn btn-primary" type="submit"><i class="feather icon-search"></i> Search</button></div></div></form><p class="mt-3">Hidden products retain stock, receipts and history. Select the records explicitly; nothing is merged or deleted.</p><div class="availability-status" role="status"></div><div class="availability-rows"></div><div class="availability-preview"></div></div><div class="modal-footer"><button class="btn btn-outline-primary availability-review" type="button"><lang class="lang_review_changes">Review changes</lang></button><button class="btn btn-primary availability-confirm" type="button" hidden><lang class="lang_confirm_changes">Confirm changes</lang></button></div></div></div></div>').appendTo('body');
+    var rows = [], changes = [], requestId = '', busy = false, permitted = false;
+    var status = modal.find('.availability-status'), list = modal.find('.availability-rows');
+    function load(after) {
+        PosnicPro.get('mobile/v1/inventory/catalogue?kind=items&q=' + encodeURIComponent(modal.find('input').first().val() || '') + (after ? '&after=' + after : ''), function (page) {
+            if (!Array.isArray(page.rows)) { status.text(PosnicPro.i18n.t('lang_could_not_load_products', 'Could not load products.')); return; }
+            permitted = page.permissions && page.permissions.write;
+            rows = rows.concat(page.rows);
+            if (page.next) { load(page.next); return; }
+            list.empty(); status.text(PosnicPro.i18n.t('lang_server_catalogue_offline_tills_receive_cha', 'Server catalogue. Offline tills receive changes when they reconnect.'));
+            var prices = new Set(rows.map(function (r) { return Math.round(r.price * (r.taxInclusive ? 1 : 1 + r.taxBps / 10000)); }));
+            if (prices.size > 1) $('<p class="font-weight-bold text-warning"><lang class="lang_different_selling_prices_check_carefully">Different selling prices. Check carefully</lang></p>').appendTo(list);
+            rows.forEach(function (r) {
+                var card = $('<div class="border rounded p-3 mb-2"></div>').appendTo(list);
+                if (r.image && /^(https?:\/\/|\/uploads\/)/.test(r.image)) $('<img width="48" height="48" class="mr-2" alt="">').attr('src', r.image).appendTo(card);
+                $('<strong></strong>').text(r.name).appendTo(card);
+                $('<p></p>').text('SKU: ' + (r.sku || '—') + ' · Barcode: ' + [r.barcode].concat(r.barcodes || []).filter(Boolean).join(', ')).appendTo(card);
+                $('<p></p>').text('Price including tax: ' + (Math.round(r.price * (r.taxInclusive ? 1 : 1 + r.taxBps / 10000)) / 100).toFixed(2) + ' · Stock: ' + (r.quantity === null ? '—' : r.quantity / 1000) + ' ' + r.unit + ' · Supplier: ' + (r.supplierName || '—')).appendTo(card);
+                var label = $('<label class="d-flex align-items-center"></label>').appendTo(card);
+                $('<input type="checkbox" class="mr-2">').attr('data-item-id', r.id).prop('checked', r.availableForSale !== false).prop('disabled', !permitted).appendTo(label);
+                label.append(document.createTextNode('Available for sale'));
+            });
+        }, function () { status.text(PosnicPro.i18n.t('lang_could_not_reach_server_no_changes_confirme', 'Could not reach server. No changes confirmed.')); });
+    }
+    modal.find('form').on('submit', function (e) { e.preventDefault(); if (busy) return; rows = []; changes = []; modal.find('.availability-preview').empty(); modal.find('.availability-confirm').prop('hidden', true); load(''); });
+    modal.find('.availability-review').on('click', function () {
+        if (busy || !permitted) return;
+        changes = []; var preview = modal.find('.availability-preview').empty();
+        rows.forEach(function (r) {
+            var available = list.find('input[data-item-id="' + r.id + '"]').prop('checked');
+            if (available !== (r.availableForSale !== false)) {
+                changes.push({itemId:r.id, available:available, revision:r.availabilityRevision || ''});
+                $('<p class="font-weight-bold"></p>').text(r.name + ' · ' + r.sku + ' · ' + r.id + ': ' + (r.availableForSale === false ? PosnicPro.i18n.t('lang_hidden', 'Hidden') : PosnicPro.i18n.t('lang_available', 'Available')) + ' → ' + (available ? PosnicPro.i18n.t('lang_available', 'Available') : PosnicPro.i18n.t('lang_hidden', 'Hidden'))).appendTo(preview);
+            }
+        });
+        requestId = 'availability-' + Array.from(crypto.getRandomValues(new Uint8Array(16))).map(function (v) { return v.toString(16).padStart(2, '0'); }).join('');
+        modal.find('.availability-confirm').prop('hidden', !changes.length);
+        status.text(changes.length ? PosnicPro.i18n.t('lang_review_exactly_these_changes_then_confirm', 'Review exactly these changes, then confirm.') : PosnicPro.i18n.t('lang_no_changes_selected', 'No changes selected.'));
+    });
+    modal.find('.availability-confirm').on('click', function () {
+        if (busy || !changes.length || !permitted) return;
+        busy = true; modal.find('button,input').prop('disabled', true); status.text('Waiting for server confirmation…');
+        PosnicPro.post({url:'mobile/v1/inventory/availability', data:JSON.stringify({id:requestId, changes:changes})}, function (result) {
+            busy = false; modal.find('button,input').prop('disabled', false);
+            if (!Array.isArray(result.results)) { status.text(PosnicPro.i18n.t('lang_not_confirmed_retry_the_same_request', 'Not confirmed. Retry the same request.')); return; }
+            status.text(result.results.some(function (r) { return r.state !== 'confirmed'; }) ? 'Some records changed meanwhile. Search again and review those records.' : 'Server confirmed. Refresh sales catalogues on connected tills. Offline tills must reconnect.');
+            modal.find('.availability-confirm').prop('hidden', true); list.empty(); modal.find('.availability-preview').empty();
+        }, function () { busy = false; modal.find('button,input').prop('disabled', false); status.text(PosnicPro.i18n.t('lang_not_confirmed_retry_the_same_change_will_n', 'Not confirmed. Retry; the same change will not be applied twice.')); });
+    });
+    modal.modal('show');
+};

@@ -1,4 +1,5 @@
 const pricingAuthority = require('../services/pricing-authority');
+const sellingPriceHold = require('../utils/selling-price-hold');
 const itemText = require('../utils/item-localization');
 const gtin = require('../utils/gtin');
 const { searchPattern } = require('../utils/safe-search');
@@ -614,8 +615,8 @@ class ItemRepository extends BaseModel {
         skipped += 1;
         continue;
       }
-      await collection.updateOne(
-        { _id: it._id },
+      const priceResult = await collection.updateOne(
+        { _id: it._id, ...(field === 'selling_price' ? sellingPriceHold.writable(newV, now) : {}) },
         {
           $set: {
             [field]: newV,
@@ -625,6 +626,10 @@ class ItemRepository extends BaseModel {
           },
         }
       );
+      if (!priceResult.modifiedCount) {
+        skipped += 1;
+        continue;
+      }
       updated += 1;
       priceRows.push({
         item_id: it._id,
@@ -682,7 +687,9 @@ class ItemRepository extends BaseModel {
       data: { updated, total: items.length, skipped, batch_id: batchId },
       message:
         `Updated ${updated} of ${items.length} item(s)` +
-        (skipped ? `, skipped ${skipped} that would break MRP or cost` : ''),
+        (skipped
+          ? `, skipped ${skipped} due to price rules or a selling-price hold. Review held prices in Edit prices.`
+          : ''),
     };
   }
 
@@ -1193,8 +1200,8 @@ class ItemRepository extends BaseModel {
         skipped += 1;
         continue;
       }
-      await collection.updateOne(
-        { _id: it._id },
+      const priceResult = await collection.updateOne(
+        { _id: it._id, ...sellingPriceHold.writable(newV, now) },
         {
           $set: {
             selling_price: newV,
@@ -1204,6 +1211,10 @@ class ItemRepository extends BaseModel {
           },
         }
       );
+      if (!priceResult.modifiedCount) {
+        skipped += 1;
+        continue;
+      }
       updated += 1;
       priceRows.push({
         item_id: it._id,
@@ -1258,7 +1269,9 @@ class ItemRepository extends BaseModel {
       data: { updated, total: items.length, skipped, noCost, batch_id: batchId },
       message:
         `Set ${mode === 'markup' ? 'markup' : 'margin'} ${margin}% on ${updated} of ${items.length} item(s)` +
-        (skipped ? `, skipped ${skipped} that would exceed MRP` : '') +
+        (skipped
+          ? `, skipped ${skipped} due to price rules or a selling-price hold. Review held prices in Edit prices.`
+          : '') +
         (noCost ? `, ${noCost} have no cost price` : ''),
     };
   }
@@ -2196,6 +2209,10 @@ class ItemRepository extends BaseModel {
         };
       }
 
+      // Additional details must not reset stock that may have changed since creation.
+      const writesQuantity = Object.prototype.hasOwnProperty.call(data, 'available_quantity');
+      if (!writesQuantity) delete updateData.available_quantity;
+
       // Update existing item
       const itemObjectId = new ObjectId(id);
 
@@ -2204,6 +2221,8 @@ class ItemRepository extends BaseModel {
         _id: itemObjectId,
         license: licenseObjectId,
       });
+      if (sellingPriceHold.active(existingItem, updateData.selling_price))
+        return { status: false, message: sellingPriceHold.message };
 
       // Omitted alternate codes are retained. Check them as well if the item
       // is being saved into a different branch or repairing old duplicates.
@@ -2220,10 +2239,15 @@ class ItemRepository extends BaseModel {
         if (retainedClash) return { status: 'exist', message: retainedClash.message, data: null };
       }
 
-      await collection.updateOne(
-        { _id: itemObjectId, license: licenseObjectId },
+      const itemWrite = await collection.updateOne(
+        {
+          _id: itemObjectId,
+          license: licenseObjectId,
+          ...sellingPriceHold.writable(updateData.selling_price),
+        },
         { $set: updateData }
       );
+      if (!itemWrite.matchedCount) return { status: false, message: sellingPriceHold.message };
 
       // Record any tracked change against the item's history. Best effort.
       await this.logItemChanges(
@@ -2249,7 +2273,7 @@ class ItemRepository extends BaseModel {
 
       // Create stock log for EDIT Item (mirrors PHP item_model.php: always log
       // when track_inventory is true; do not gate on branch stock_management).
-      if (existingItem && existingItem.track_inventory === true) {
+      if (writesQuantity && existingItem && existingItem.track_inventory === true) {
         const stockLogsRepository = new StockLogsRepository();
         const openingBalance = existingItem.available_quantity || 0;
         const newBalance = updateData.available_quantity || 0;
@@ -2839,6 +2863,16 @@ class ItemRepository extends BaseModel {
           { barcode_id: itemBarcodes.normalize(query) },
           { barcodes: itemBarcodes.normalize(query) },
         ];
+      } else if (
+        regex &&
+        /^\d+$/.test(query) &&
+        searchPreferences.sales_exact_numeric_codes === true
+      ) {
+        searchConditions = require('../helpers/sales-search-fields').exactNumericCodes(
+          query,
+          searchPreferences.sales_search_fields
+        );
+        if (!searchConditions.length) return { status: true, data: [], message: 'success' };
       } else if (regex && Array.isArray(searchPreferences.sales_search_fields)) {
         searchConditions = require('../helpers/sales-search-fields').conditions(
           searchPreferences.sales_search_fields,
@@ -2899,6 +2933,7 @@ class ItemRepository extends BaseModel {
           { del_status: { $nin: [1, '1', true] } },
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
+          { available_for_sale: { $ne: false } },
           type === 'barcode' ? null : stockCondition,
           ...(categoryId ? [{ category_id: new ObjectId(categoryId) }] : []),
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
@@ -3092,6 +3127,7 @@ class ItemRepository extends BaseModel {
           { del_status: { $nin: [1, '1', true] } },
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
+          { available_for_sale: { $ne: false } },
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ],
       };
@@ -3818,6 +3854,7 @@ class ItemRepository extends BaseModel {
         ...(Object.keys(demoClause).length ? [demoClause] : []),
         { del_status: { $nin: [1, '1', true] } },
         { item_status: { $ne: ITEM_STATUS.INSTANT } },
+        { available_for_sale: { $ne: false } },
         {
           $or: [{ available_quantity: { $gt: 0 } }, { negative_stock: true }],
         },
@@ -3892,6 +3929,7 @@ class ItemRepository extends BaseModel {
         $and: [
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
+          { available_for_sale: { $ne: false } },
           {
             selling_price: {
               $gte: parseInt(startingPrice, 10) || 0,
@@ -5735,6 +5773,7 @@ class ItemRepository extends BaseModel {
       const filter = {
         'branch_access.branch_id': branchObjectId,
         item_status: { $ne: ITEM_STATUS.INSTANT },
+        available_for_sale: { $ne: false },
       };
 
       const items = await collection
@@ -5817,10 +5856,18 @@ class ItemRepository extends BaseModel {
       }
       set.updated_date = new Date();
       const result = await collection.updateOne(
-        { _id: objectId, ...require('../utils/record-scope').scope(context) },
+        {
+          _id: objectId,
+          ...require('../utils/record-scope').scope(context),
+          ...(set.selling_price !== undefined ? sellingPriceHold.writable(set.selling_price) : {}),
+        },
         { $set: set }
       );
-      if (!result.matchedCount) return { status: false, message: 'Item not found' };
+      if (!result.matchedCount)
+        return {
+          status: false,
+          message: 'Item not found or selling price is held. Review it in Edit prices.',
+        };
       return { status: true, message: 'Item updated' };
     } catch (error) {
       console.error('Error in ItemRepository.quickPatch:', error);
@@ -6356,6 +6403,7 @@ class ItemRepository extends BaseModel {
             : {},
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: ITEM_STATUS.INSTANT } },
+          { available_for_sale: { $ne: false } },
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ].filter((f) => Object.keys(f).length > 0),
       };
@@ -6602,6 +6650,11 @@ class ItemRepository extends BaseModel {
 
   async priceGrid(query = {}, context = {}) {
     const filter = this.priceGridScope(context);
+    filter.branch_id = {
+      $in: require('../services/price-scope')
+        .selected(context, query.branches)
+        .map((v) => new ObjectId(v)),
+    };
     const search = String(query.search || '')
       .trim()
       .slice(0, 100);
@@ -6612,7 +6665,11 @@ class ItemRepository extends BaseModel {
         { itemid: { $regex: literal, $options: 'i' } },
       ];
     }
-    const categories = require('../utils/price-category-filter')(query.category);
+    const categories = await require('../services/price-scope').categoryFilter(
+      context,
+      query.category,
+      require('../services/price-scope').selected(context, query.branches)
+    );
     if (categories) filter.category_id = categories;
     const page = Math.max(1, Math.min(100000, Math.floor(Number(query.page) || 1)));
     const pageSize = [10, 25, 50, 100].includes(Number(query.pageSize))
@@ -6630,6 +6687,8 @@ class ItemRepository extends BaseModel {
             selling_price: 1,
             company_price: 1,
             mrp_price: 1,
+            branch_id: 1,
+            selling_price_hold_until: 1,
           },
         })
         .sort({ name: 1, _id: 1 })
@@ -6692,14 +6751,17 @@ class ItemRepository extends BaseModel {
         continue;
       }
       const now = new Date();
-      const result = await collection.updateOne(filter, {
-        $set: {
-          selling_price: price,
-          updated_date: now,
-          updated_by: context.userName || '',
-          updated_by_id: context.userId || null,
-        },
-      });
+      const result = await collection.updateOne(
+        { ...filter, ...sellingPriceHold.writable(price, now) },
+        {
+          $set: {
+            selling_price: price,
+            updated_date: now,
+            updated_by: context.userName || '',
+            updated_by_id: context.userId || null,
+          },
+        }
+      );
       if (!result.modifiedCount) {
         conflicts.push(row.id);
         continue;
@@ -7524,7 +7586,14 @@ class ItemRepository extends BaseModel {
             updated_by: userName,
             updated_by_id: userId,
           };
-          await collection.updateOne({ _id: matched._id }, { $set: setFields });
+          const itemWrite = await collection.updateOne(
+            { _id: matched._id, ...sellingPriceHold.writable(setFields.selling_price) },
+            { $set: setFields }
+          );
+          if (!itemWrite.matchedCount) {
+            importNotes.push(`${updateData.name}: ${sellingPriceHold.message}`);
+            continue;
+          }
           updatedIds.push(matched._id);
           writtenId = matched._id;
           // A re-import that changed any tracked field is history like any other.

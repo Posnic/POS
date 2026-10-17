@@ -1,0 +1,137 @@
+/* Shared record editor. Closed drawers keep width zero; only open editors expand. */
+.record-dialog.sidebarshow {
+    width: min(820px, calc(100vw - 64px)) !important;
+    max-width: none !important;
+    height: fit-content !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 64px);
+    bottom: auto;
+    top: 32px;
+    right: max(32px, calc((100vw - 820px) / 2));
+    border: 1px solid var(--theme-border-color);
+    border-radius: 16px;
+    box-shadow: 0 20px 70px rgba(0, 0, 0, .24) !important;
+    overflow-y: auto;
+    transition: none !important;
+    color: var(--theme-text-primary);
+}
+.record-dialog .infobar-settings-sidebar-head {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    padding: 18px 28px;
+    background: var(--theme-card-bg);
+    border-bottom: 1px solid var(--theme-border-color);
+}
+.record-dialog .infobar-settings-sidebar-head h4 { color: var(--theme-text-primary); font-weight: 600; }
+.record-dialog .infobar-settings-sidebar-body { padding-bottom: 0; background: var(--theme-card-bg); }
+.record-dialog .custom-mode-setting { padding: 24px 28px 0 !important; }
+.record-dialog .profilebox { padding: 0 0 16px; text-align: left !important; }
+.record-dialog .profilebox img { width: 64px !important; height: 64px !important; object-fit: contain; }
+.record-dialog #user_image_upload { width: 64px !important; height: 64px !important; }
+.record-dialog .card-footer:empty { display: none; }
+.record-dialog .profilebox .profilename { display: inline-flex; margin-left: 12px; }
+.record-dialog .form-control, .record-dialog .custom-select,
+.record-branch-page .form-control, .record-sales .form-control {
+    min-height: 44px;
+    border-radius: 8px;
+    color: var(--theme-text-primary);
+    background: var(--theme-card-bg);
+    border-color: var(--theme-border-color);
+}
+.record-dialog .select2-container { width: 100% !important; min-width: 0; }
+.record-dialog .select2-selection { min-height: 44px; border-radius: 8px; }
+.record-dialog .form-control::placeholder { color: var(--theme-text-muted) !important; opacity: 1; }
+.record-form-panel[hidden] { display: none !important; }
+.record-dialog .record-form-panel { min-height: 0; }
+.record-dialog label { color: var(--theme-text-primary); }
+.record-dialog .accordion .btn-link { color: var(--theme-text-primary) !important; }
+.record-dialog .form-group { margin-bottom: 20px; }
+.record-section { margin: 0 0 24px; }
+.record-section > h5 { margin: 0 0 18px; font-weight: 600; color: var(--theme-text-primary); }
+.record-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 22px; }
+.record-grid > .form-group { width: 100%; max-width: none; padding: 0; flex: none; min-width: 0; }
+.record-grid > .form-group:has(textarea), .record-grid > .form-group:has(input[name="name"]) { grid-column: 1 / -1; }
+.record-details { border-top: 1px solid var(--theme-border-color); padding: 18px 0; }
+.record-details summary { color: var(--theme-primary-color); font-weight: 500; cursor: pointer; }
+.record-details[open] summary { margin-bottom: 20px; }
+.record-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--theme-card-bg) !important;
+    border-top: 1px solid var(--theme-border-color);
+    padding: 16px 0 !important;
+    margin: 24px 0 0 !important;
+    z-index: 3;
+}
+.record-actions > .form-group { margin: 0; padding: 0; width: 100%; max-width: none; }
+.record-actions .pull-right { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; float: none; }
+.record-actions .btn { min-height: 44px; border-radius: 8px; }
+.record-dialog .btn-outline-danger.infobar-settings-close { color: var(--theme-text-secondary); border-color: var(--theme-border-color); }
+.record-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--theme-border-color); margin-bottom: 24px; }
+.record-tabs button { background: transparent; color: var(--theme-text-secondary); border: 0; border-bottom: 2px solid transparent; padding: 14px 18px; }
+.record-tabs button[aria-selected="true"] { color: var(--theme-primary-color); border-bottom-color: var(--theme-primary-color); }
+.record-sales-panel:not([hidden]) { display: flex; flex-wrap: wrap; gap: 8px 0; }
+.record-sales-panel[hidden] { display: none !important; }
+.record-sales-panel > .form-group { padding: 16px; border-bottom: 1px solid var(--theme-border-color); margin: 0; }
+.record-sales-panel fieldset { width: 100%; background: var(--theme-card-bg); box-shadow: none; }
+.record-sales-panel > fieldset label { padding: 6px 0; }
+.record-branch-page .contentbar { width: 100%; max-width: none; margin: 0; }
+.record-branch-page .record-section { background: var(--theme-card-bg); border: 1px solid var(--theme-border-color); border-radius: 12px; padding: 24px; }
+.record-branch-page .profilebox img { max-width: 80px; max-height: 80px; }
+.record-branch-page .record-details { padding: 20px 24px; background: var(--theme-card-bg); margin-bottom: 20px; border-radius: 12px; }
+#category_tile_shapes { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+#category_tile_shapes .tile-shape { display: inline-flex; flex-direction: column; align-items: center; gap: 8px; min-width: 90px; padding: 12px; border: 2px solid transparent; border-radius: 10px; color: var(--theme-text-primary); background: var(--theme-body-bg); }
+#category_tile_shapes .tile-shape.is-picked { border-color: var(--theme-primary-color); }
+.record-shape { display: block; width: 32px; height: 32px; background: var(--record-shape-color, var(--theme-primary-color)); }
+.record-shape-square { border-radius: 0; }
+.record-shape-rounded { border-radius: 10px; }
+.record-shape-circle { border-radius: 50%; }
+.record-shape-diamond { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+#category_tile_swatches .tile-swatch { width: 32px; height: 32px; border: 2px solid var(--theme-border-color); border-radius: 7px; margin: 4px; color: var(--theme-text-primary); }
+#category_tile_swatches .tile-swatch.is-picked { outline: 2px solid var(--theme-primary-color); outline-offset: 2px; }
+[dir="rtl"] .record-dialog.sidebarshow { left: max(32px, calc((100vw - 820px) / 2)); right: auto; }
+@media (max-width: 767.98px) {
+    .record-dialog.sidebarshow { width: 100vw !important; height: auto; max-height: 100dvh; top: 0; right: 0; border-radius: 0; }
+    [dir="rtl"] .record-dialog.sidebarshow { left: 0; right: auto; }
+    .record-dialog .custom-mode-setting { padding: 20px 18px 0 !important; }
+    .record-dialog .infobar-settings-sidebar-head { padding: 14px 18px; }
+    .record-grid { grid-template-columns: 1fr; }
+    .record-sales-panel > .form-group { width: 100%; max-width: 100%; flex: 0 0 100%; }
+    .record-tabs button { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .record-dialog { transition: none !important; } }
+.record-dialog-small.sidebarshow { width: min(560px, calc(100vw - 48px)) !important; right: max(24px, calc((100vw - 560px) / 2)); }
+[dir="rtl"] .record-dialog-small.sidebarshow { left: max(24px, calc((100vw - 560px) / 2)); right: auto; }
+.record-dialog .card-footer { background: var(--theme-card-bg); border: 0; padding: 0; }
+.record-dialog .custom-mode-setting { background: var(--theme-card-bg); }
+.record-account-types { margin: 0 0 20px !important; }
+.record-account-types > div > .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.record-account-types .col-md-6 { width: 100%; max-width: none; padding: 12px 16px; text-align: left !important; border: 1px solid var(--theme-border-color); border-radius: 10px; }
+.record-account-types .col-md-6:has(input:checked) { border-color: var(--theme-primary-color); background: var(--theme-body-bg); }
+.record-account-types label { margin-bottom: 0; cursor: pointer; }
+.record-account-types .example { margin: 0; }
+.record-account-status { margin: 16px 0 0 !important; padding: 0; }
+.record-account-status > .row { margin: 0; gap: 24px; }
+.record-account-status .col-md-6 { flex: none; width: auto; max-width: none; padding: 0; text-align: left !important; }
+#user_form_upload:has(#apiMethod:checked) .record-staff-profile,
+#user_form_upload:has(#apiMethod:checked) .profilebox { display: none; }
+.record-grid > .form-group > label { display: block; }
+.record-grid .iti { display: block; width: 100%; }
+#supplier_add .record-grid > .form-group:has(#supplier_name) { grid-column: auto; }
+#user_form_upload .record-grid > .form-group:has(#users_email) { grid-column: 1 / -1; }
+#record-sales-panel-0 { max-width: 1200px; }
+@media (max-width: 767.98px) {
+    .record-dialog-small.sidebarshow { width: 100vw !important; right: 0; }
+    [dir="rtl"] .record-dialog-small.sidebarshow { left: 0; }
+    .record-account-types > div > .row { grid-template-columns: 1fr; }
+}
+
+/* Units is a two-field editor, not a full-height drawer. */
+#infobar-settings-sidebar-unit.record-dialog.sidebarshow {
+    height: fit-content !important;
+    min-height: 0 !important;
+}
+
+#user_password_change_row { grid-column: 1 / -1; }
+#user_password_change_row[hidden] { display: none !important; }

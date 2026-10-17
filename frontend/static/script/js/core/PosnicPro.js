@@ -469,6 +469,8 @@ PosnicPro = {
                 PosnicPro.local.set('defaultcustomer', JSON.stringify(response.data['customer']));
                 $('.default-customer-id').val(responseData['customer_id']);
                 $('.default-customer-name').val(responseData['customer_name']);
+                // Do not replace a customer typed or selected while this lookup was pending.
+                if ($.trim($('#sales_new_customer_name').val() || '')) return;
                 $('#sales_new_customer_id').val(responseData['customer_id']);
                 $('#sales_new_customer_name').val(responseData['customer_name']);
                 $('#sales_new_customer_address').val(responseData['customer_address']);
@@ -568,6 +570,7 @@ PosnicPro = {
         });
     },
     setBranchDropdownOption: function (data) {
+        PosnicPro.renderBranchSwitcher(data);
         var allbranch = [];
         var branchOption = [];
         var dashboardBranchOption = [];
@@ -589,11 +592,11 @@ PosnicPro = {
             AllbranchOption += '<option name="selectall" value="' + allbranch + '">selectall</option><option name="removeall" value="' + allbranch + '">removeall</option>';
             $('.dropdown-cursor-pointer').attr("disabled", false).css({ cursor: 'pointer' });
             $('#dropdownMenuLink').addClass('dropdown-toggle');
-            document.getElementById("dropdownMenuLink").disabled = false;
+            if (document.getElementById("dropdownMenuLink")) document.getElementById("dropdownMenuLink").disabled = false;
         } else if ($("#change_branch_list").is(":empty")) {
             $('.dropdown-cursor-pointer').attr("disabled", false).css({ cursor: 'auto' });
             $('#dropdownMenuLink').removeClass('dropdown-toggle');
-            document.getElementById("dropdownMenuLink").disabled = true;
+            if (document.getElementById("dropdownMenuLink")) document.getElementById("dropdownMenuLink").disabled = true;
         }
         var listBranch = AllbranchOption.concat(branchOption);
         $('.load-branch').html(listBranch);
@@ -611,6 +614,28 @@ PosnicPro = {
         var branch_id = PosnicPro.local.get('branch_id_set');
         $("#branch_name option[value='" + branch_id + "']").attr("selected", true);
         $(".select-current-branches").select2().val(branch_id).trigger("change");
+    },
+    renderBranchSwitcher: function (data) {
+        var current = String(PosnicPro.local.get('branch_id_set') || '');
+        var list = $('#header_branch_list').empty();
+        var seen = {};
+        var branches = (data || []).filter(function (branch) {
+            var id = String(branch.id || '');
+            if (!id || seen[id]) return false;
+            seen[id] = true;
+            return true;
+        });
+        $('#header_branch_switcher').prop('hidden', branches.length < 2 || (typeof billingWindowId !== 'undefined' && !!billingWindowId));
+        $('#header_current_branch').text(PosnicPro.local.get('branchname') || 'Branch');
+        branches.forEach(function (branch) {
+            var active = String(branch.id) === current;
+            if (active) $('#header_current_branch').text(branch.branch_name);
+            var item = $('<button type="button" class="dropdown-item" style="white-space:normal"></button>')
+                .text(branch.branch_name || 'Branch').prop('disabled', active).toggleClass('active', active);
+            if (active) item.attr('aria-current', 'true');
+            item.on('click', function () { PosnicPro.branches.showChange(String(branch.id)); });
+            list.append(item);
+        });
     },
     getBranchTaxList: function () {
         var data = {
@@ -2727,7 +2752,7 @@ PosnicPro = {
     PAPER: {
         '58': { css: '58mm', content: '48mm', label: '58mm roll', font: 10, small: 9 },
         '80': { css: '80mm', content: '72mm', label: '80mm roll', font: 12, small: 10 },
-        '112': { css: '112mm', content: '104mm', label: '112 mm thermal (TVS RP 4200)', font: 12, small: 10 },
+        '112': { css: '112mm', content: '104mm', label: '112 mm thermal', font: 12, small: 10 },
         'a4': { css: 'A4', content: 'auto', label: 'A4 sheet', t: 'lang_a4_sheet', font: 13, small: 11 }
     },
 
@@ -2930,7 +2955,7 @@ PosnicPro = {
         $('#manage_li_deliverypartners').toggle(on('module_delivery_partners_enable'));
         $('#manage_li_webshop').toggle(on('module_webshop_enable'));
         $('#manage_li_theme').toggle(on('module_themes_enable'));
-        $('#manage_li_ai').toggle(on('ai_enabled') || s.ask_posnic_enabled === true);
+        $('#manage_li_ai').toggle(s.ask_posnic_enabled === true);
         $('[data-ask-entry]').toggle(s.ask_posnic_enabled === true);
         if (PosnicPro.askposnic) PosnicPro.askposnic.setEnabled(s.ask_posnic_enabled === true);
         $('#manage_li_recyclebin').toggle(on('module_recyclebin_enable'));

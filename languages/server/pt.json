@@ -954,5 +954,11 @@
   "Enable Recycle Bin before deleting sales": "Ative a lixeira antes de excluir as vendas",
   "Only super admins can change the sale hard-delete setting": "Somente superadministradores podem alterar a configuração de exclusão forçada da venda",
   "Finish the pending payment correction before closing this register.": "Conclua a correção do pagamento pendente antes de fechar este registro.",
-  "Finish the pending payment correction first.": "Conclua primeiro a correção do pagamento pendente."
+  "Finish the pending payment correction first.": "Conclua primeiro a correção do pagamento pendente.",
+  "Bill correction saved.": "Correção da fatura salva.",
+  "Review the paid bill correction before saving.": "Revise a correção da fatura paga antes de salvar.",
+  "Choose a saved customer for customer credit.": "Escolha um cliente salvo para obter crédito ao cliente.",
+  "Exact numeric search must be on or off": "A pesquisa numérica exata deve estar ativada ou desativada",
+  "Item not found or selling price is held. Review it in Edit prices.": "O item não foi encontrado ou o preço de venda foi mantido. Revise-o em Editar preços.",
+  "Password must contain between 5 and 20 characters": "A senha deve conter entre 5 e 20 caracteres"
 }

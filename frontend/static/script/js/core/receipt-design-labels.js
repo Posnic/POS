@@ -1,7 +1,8 @@
 /* Receipt designer labels are explicit so the language catalog can extract them. */
 PosnicPro.receiptDesignLabel = function (value) {
     switch (value) {
-    case "112 mm thermal (TVS RP 4200)": return PosnicPro.i18n.t('lang_rd_112_mm_thermal', '112 mm thermal (TVS RP 4200)');
+    case "Item column heading": return PosnicPro.i18n.t('lang_rd_item_column_heading', 'Item column heading');
+    case "112 mm thermal": return PosnicPro.i18n.t('lang_rd_112_mm_thermal', '112 mm thermal');
     case "Show business email": return PosnicPro.i18n.t('lang_rd_show_business_email', 'Show business email');
     case "Show item row numbers": return PosnicPro.i18n.t('lang_rd_show_item_row_numbers', 'Show item row numbers');
     case "Custom left label": return PosnicPro.i18n.t('lang_rd_left_label', 'Custom left label');
@@ -121,6 +122,8 @@ PosnicPro.receiptDesignLabel = function (value) {
     case "Order source": return PosnicPro.i18n.t('lang_rd_order_source', 'Order source');
     case "Order type": return PosnicPro.i18n.t('lang_ordertype_title', 'Order type');
     case "PNG, JPEG or WebP. Up to 5 MB.": return PosnicPro.i18n.t('lang_rd_png_jpeg_or_webp_up_to_5_mb_', 'PNG, JPEG or WebP. Up to 5 MB.');
+    case "S.No": return PosnicPro.i18n.t('lang_rd_serial_number', 'S.No');
+    case "Show payment method": return PosnicPro.i18n.t('lang_rd_show_payment_method', 'Show payment method');
     case "Payment": return PosnicPro.i18n.t('lang_payment', 'Payment');
     case "Payments / credits": return PosnicPro.i18n.t('lang_rd_payments_credits', 'Payments / credits');
     case "Please keep this receipt for your records.": return PosnicPro.i18n.t('lang_rd_please_keep_this_receipt_for_your_records_', 'Please keep this receipt for your records.');

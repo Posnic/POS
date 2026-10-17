@@ -121,6 +121,17 @@
             </div>
             <div class="infobar">
                 <ul class="list-inline mb-0">
+                    <li class="list-inline-item" id="header_branch_switcher" hidden>
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-link dropdown-toggle" id="header_branch_button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Switch branch" data-t-aria-label="lang_switch_branch">
+                                <i class="feather icon-git-branch" aria-hidden="true"></i>
+                                <span id="header_current_branch" style="display:inline-block;max-width:180px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;white-space:nowrap"></span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right" id="header_branch_list"
+                                aria-labelledby="header_branch_button" style="max-height:320px;overflow-y:auto;max-width:360px"></div>
+                        </div>
+                    </li>
                     <li class="list-inline-item mobile-hide">
                         <div class="languagebar ">
                             <div class="dropdown">

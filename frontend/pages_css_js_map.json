@@ -32,6 +32,7 @@
             "static/style/css/component.css",
             "static/style/plugins/sweet-alert2/sweetalert2.min.css",
             "static/pages/lock-screen.css",
+            "static/style/css/record-workspace.css",
             "static/style/css/rtl.css"
         ],
         "js": [
@@ -107,6 +108,7 @@
             "static/script/js/modules/js/expenses.js",
             "static/script/js/core/dish-facts.js",
             "static/script/js/core/nutrition-pass.js",
+            "static/script/js/core/shelf-labels.js",
             "static/script/js/modules/js/items.js",
             "static/script/js/modules/js/expiry-reminders.js",
             "static/script/js/modules/js/item-settings-report.js",
@@ -127,6 +129,7 @@
             "../api/src/helpers/sale-payment-summary.js",
             "static/script/js/modules/js/restaurant-sale-details.js",
             "static/script/js/modules/js/sales.js",
+            "static/script/js/modules/js/payment-correction.js",
             "static/script/js/modules/js/order-recovery.js",
             "static/script/js/modules/js/business-approval.js",
             "static/script/js/modules/js/sales_view.js",
@@ -176,7 +179,8 @@
             "static/script/js/core/order-alert.js",
             "static/script/js/core/kitchen-call.js",
             "static/script/js/core/online-order-watch.js",
-            "static/script/js/core/request-dock.js"
+            "static/script/js/core/request-dock.js",
+            "static/script/js/core/record-workspace.js"
         ]
     },
     "login": {
@@ -400,7 +404,6 @@
         "static/script/js/modules/js/report_sales.js",
         "static/script/js/modules/js/report_pricesettings.js",
         "static/script/js/modules/js/price-editor.js",
-        "static/script/js/modules/js/payment-correction.js",
         "static/script/js/modules/js/report_kot.js",
         "static/script/js/modules/js/report_suppliers.js",
         "static/script/js/modules/js/report_taxdiscount.js",

@@ -21,11 +21,51 @@ PosnicPro.branches = {
         $('#branch_id').val('');
         $('#branch_country').val(PosnicPro.local.get("country_setting")).trigger('change.select2');
         PosnicPro.local.set('edit_branch_state', PosnicPro.local.get("state_setting"));
+        $('#branch_city').val(PosnicPro.local.get("city_setting") || "");
         var countryDetail = $('#branch_country').select2("data");
         if (PosnicPro.branches.branchAction === 'edit') {
             PosnicPro.branches.branchClearform();
         }
         PosnicPro.branches.branchAction = 'add';
+        PosnicPro.branches.loadRegionalDefaults();
+    },
+    loadRegionalDefaults: function () {
+        var generation = (this.regionalRequest || 0) + 1;
+        this.regionalRequest = generation;
+        $('#branchSubmitForm').prop('disabled', true);
+        var get = function (url, data) {
+            return new Promise(function (resolve, reject) { PosnicPro.get({ url: url, data: data || {} }, resolve, reject); });
+        };
+        Promise.all([
+            get('branches/getBranchDetails', { id: PosnicPro.local.get('branch_id_set') }),
+            get('setting/getJSONCurrency'), get('setting/getJSONTimeZone')
+        ]).then(function (responses) {
+            if (PosnicPro.branches.regionalRequest !== generation) return;
+            var shop = responses[0].data;
+            var currencies = responses[1].data.currency;
+            var select = $('#branch_currency').empty();
+            currencies.forEach(function (unit) { select.append(new Option(unit.value, unit.value)); });
+            select.val(shop.currency_text);
+            var changeCurrency = function () {
+                var unit = currencies.find(function (item) { return item.value === select.val(); });
+                if (!unit) return;
+                $('#branch_currency_type').empty().append(new Option(unit.symbol, unit.symbol), new Option(unit.text, unit.text));
+            };
+            select.off('change.regional').on('change.regional', changeCurrency);
+            changeCurrency();
+            $('#branch_currency_type').val(shop.currency_type);
+            var timezone = $('#branch_timezone').empty();
+            responses[2].data.forEach(function (zone) { timezone.append(new Option(zone.value, zone.text)); });
+            if (!Array.from(timezone[0].options).some(function (option) { return option.value === shop.time_zone; })) timezone.append(new Option(shop.time_zone, shop.time_zone));
+            timezone.val(shop.time_zone);
+            $('#branch_dateformat').val(shop.client_dateformat || 'dd/mm/yyyy');
+            $('#branch_tax_number,#branch_printing_address,#branch_website,#branch_pincode').val('');
+            PosnicPro.settings.applyTaxProfile($('#branch_country').val(), '#branch_tax_number');
+            $('#branchSubmitForm').prop('disabled', false);
+        }).catch(function () {
+            if (PosnicPro.branches.regionalRequest !== generation) return;
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_settings_please_retry', 'Could not load settings. Please retry.'));
+        });
     },
     /*
      * Edit is a FULL PAGE now (modules/branchEdit.html): branch identity,
@@ -47,35 +87,39 @@ PosnicPro.branches = {
         PosnicPro.branches.loadFullEdit(id);
     },
     loadFullEdit: function (id) {
+        var request = (this.editRequest || 0) + 1; this.editRequest = request;
+        var save = $('#setting_add button[type=submit]').prop('disabled', true);
+        $('#setting_add').validate().resetForm();
+        PosnicPro.settings.stateRequest = (PosnicPro.settings.stateRequest || 0) + 1;
         PosnicPro.branchSignature.mount('#branch-signature-settings', { branchId: id });
         // Option lists first (idempotent - they repopulate by id wherever the
         // controls live), then this branch's values over them.
-        PosnicPro.settings.loadSelectSettingCountry();
-        PosnicPro.settings.loadSelectSettingCurrency();
-        PosnicPro.settings.timeZone();
-        PosnicPro.get({ url: 'branches/getBranchDetails', data: { id: id } }, function (response) {
-            if (response.type !== 'success') { PosnicPro.alert(response.type, response.message); return; }
-            var d = response.data;
-            PosnicPro.record_id = id;
-            $('#edit_branch_target,#be_logo_target').val(id);
-            $('#be_page_branch_name').text(d.branch_name || '');
-            $('#store_name').val(d.branch_name);
-            $('#store_email').val(d.store_email);
-            PosnicPro.settings.store_telephone.setNumber(d.store_telephone || '');
-            $('#store_alternativephone').val(d.store_alternativephone);
-            $('#store_address').val(d.store_address);
-            $('#printing_address').val(d.printing_address);
-            $('#city').val(d.city);
-            $('#pincode').val(d.pincode);
-            $('#website').val(d.website);
-            $('#branch_gstin_number').val(d.branch_gstin_number);
-            // Selects fill after their (async) option lists land.
-            setTimeout(function () {
+        $.when(PosnicPro.settings.loadSelectSettingCountry(),
+            PosnicPro.settings.loadSelectSettingCurrency(), PosnicPro.settings.timeZone()).done(function () {
+            if (PosnicPro.branches.editRequest !== request) return;
+            PosnicPro.get({ url: 'branches/getBranchDetails', data: { id: id } }, function (response) {
+                if (PosnicPro.branches.editRequest !== request) return;
+                if (response.type !== 'success') { PosnicPro.alert(response.type, response.message); return; }
+                var d = response.data;
+                PosnicPro.record_id = id;
+                $('#edit_branch_target,#be_logo_target').val(id);
+                $('#be_page_branch_name').text(d.branch_name || '');
+                $('#store_name').val(d.branch_name);
+                $('#store_email').val(d.store_email);
+                $('#branch_upi_id').val(d.branch_upi_id || '');
+                $('#branch_upi_name').val(d.branch_upi_name || '');
+                PosnicPro.settings.store_telephone.setNumber(d.store_telephone || '');
+                $('#store_alternativephone').val(d.store_alternativephone);
+                $('#store_address').val(d.store_address);
+                $('#printing_address').val(d.printing_address);
+                $('#city').val(d.city);
+                $('#pincode').val(d.pincode);
+                $('#website').val(d.website);
+                $('#branch_gstin_number').val(d.branch_gstin_number);
+                // All reference lists are ready before selecting saved values.
                 $('#setting_country').val(d.country).trigger('change.select2');
-                PosnicPro.settings.loadSelectSettingState(d.country_id);
-                setTimeout(function () {
-                    $('#setting_state').val(d.state).trigger('change.select2');
-                }, 400);
+                PosnicPro.settings.loadSelectSettingState(d.country_id, d.state || '');
+                PosnicPro.settings.applyTaxProfile(d.country);
                 $('#currency_setting').val(d.currency_text).trigger('change.select2');
                 var cv = (d.currency_value && d.currency_value[0]) || { currency_text: 'INR', currency_sign: '₹' };
                 $('#currencyText').val(cv.currency_sign);
@@ -88,18 +132,19 @@ PosnicPro.branches = {
                 $('#storedate').val(d.client_dateformat).trigger('change.select2');
                 $('#serverdate').val(d.server_dateformat);
                 $('#dateText').val(d.dateformat_text);
-            }, 600);
-            var image_path = (d.logo && d.logo !== 'store.png') ? d.logo : 'static/images/default/store.png';
-            $('#previewing').attr('src', image_path);
-            $('#setting_logo_value').val(d.logo || 'store.png');
-            $('#be_register_rows').empty();
-            $.each(d.register || [], function (i, r) {
-                var name = (r && (r.register_name || r.name)) || (typeof r === 'string' ? r : '');
-                if (name) { PosnicPro.branches.beAddRegisterRow(name); }
+                var image_path = (d.logo && d.logo !== 'store.png') ? d.logo : 'static/images/default/store.png';
+                $('#previewing').attr('src', image_path);
+                $('#setting_logo_value').val(d.logo || 'store.png');
+                $('#be_register_rows').empty();
+                save.prop('disabled', false);
+                $.each(d.register || [], function (i, r) {
+                    var name = (r && (r.register_name || r.name)) || (typeof r === 'string' ? r : '');
+                    if (name) { PosnicPro.branches.beAddRegisterRow(name); }
+                });
+            }, function (xhr) {
+                var response = jQuery.parseJSON(xhr.responseText);
+                PosnicPro.alert(response.type, response.message);
             });
-        }, function (xhr) {
-            var response = jQuery.parseJSON(xhr.responseText);
-            PosnicPro.alert(response.type, response.message);
         });
     },
     beAddRegisterRow: function (name) {
@@ -192,6 +237,23 @@ PosnicPro.branches = {
                 + (current ? '' : PosnicPro.listDoc.link('Switch to this branch', "PosnicPro.branches.showChange('" + esc(id) + "');")));
         }, function () {
             PosnicPro.listDoc.body('branches', '<div class="text-danger p-3"><lang class="lang_could_not_open_this_branch">Could not open this branch.</lang></div>');
+        });
+    },
+    showChange: function (id) {
+        if (!id || String(id) === String(PosnicPro.local.get('branch_id_set'))) { return; }
+        if (typeof billingWindowId !== 'undefined' && billingWindowId) {
+            PosnicPro.alert('warning', PosnicPro.i18n.t('lang_this_window_belongs_to_one_branch_open_ano', 'This window belongs to one branch. Open another outlet from the main window.'));
+            return;
+        }
+        PosnicPro.local.set('changebranchid', id);
+        return db.currentregister.get('1').then(function (record) {
+            if ((record && record.register_status === 'open') || PosnicPro.local.get('userRegisterStatus') === 'Open') {
+                $('#branch_register_swipe').modal('show');
+                return;
+            }
+            PosnicPro.settings.listBranchName(id);
+        }, function () {
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_check_the_current_register_pleas', 'Could not check the current register. Please retry before switching branches.'));
         });
     },
     /* The name the OLD table machinery answered to - settings flows still
@@ -497,6 +559,7 @@ PosnicPro.branches = {
             if (response.type === 'success') {
                 $('#branches_new').modal('show');
                 data = response.data;
+                PosnicPro.local.set('edit_branch_state', data.state);
                 PosnicPro.branches.loadSelectBranchState(data.country_id, 'edit');
                 PosnicPro.record_id = id;
                 $('#branch_id').val(PosnicPro.record_id);
@@ -505,6 +568,7 @@ PosnicPro.branches = {
                 PosnicPro.branches.branch_phone.setNumber(data.store_telephone || '');
                 $('#branch_email').val(data.store_email);
                 $('#branch_address').val(data.store_address);
+                $('#branch_city').val(data.city || '');
                 $('#branch_country').val(data.country).trigger('change.select2');
                 PosnicPro.local.set('edit_branch_state', data.state);
                 $('#branch_title').text(PosnicPro.i18n.t('lang_action_edit', 'Edit'));
@@ -606,11 +670,13 @@ PosnicPro.branches = {
         PosnicPro.branches.sharingRow(true);
     },
     branchClearform: function () {
+        PosnicPro.branches.loadRegionalDefaults();
         PosnicPro.branches.loadSelectBranchState(PosnicPro.local.get('countryid'), 'clear');
         $('#branch_add_form')[0].reset();
         $('.register-wrapper .register-fields .register-input:nth-child(n+2)').remove();
         $('#branch_country').val(PosnicPro.local.get("country_setting")).trigger('change.select2');
         PosnicPro.local.set('edit_branch_state', PosnicPro.local.get("state_setting"));
+        $('#branch_city').val(PosnicPro.local.get("city_setting") || "");
         $('#branch_address').html('');
         $('.error_branch').css('display', 'none');
         var $lastChild = $('.register-input:last-child');
@@ -618,25 +684,25 @@ PosnicPro.branches = {
     },
     loadSelectBranchState: function (id, action) {
         var stateSelect = $('#branch_state');
+        var request = (PosnicPro.branches.stateRequest || 0) + 1;
+        PosnicPro.branches.stateRequest = request;
+        var selectedState = action === 'edit' ? PosnicPro.local.get('edit_branch_state') :
+            (action === 'add' || action === 'clear') ? PosnicPro.local.get('state_setting') : '';
         var params = {
             url: 'setting/getJSONState',
             data: {id: id}
         };
         PosnicPro.get(params, function (response) {
+            if (PosnicPro.branches.stateRequest !== request) return;
             stateSelect.empty();
-            suggestions: $.map(response.data['stateJsonArray'], function (dataItem) {
-                var options;
-                options += '<option value="' + dataItem + '">' + dataItem + ' </option>';
-                stateSelect.append(options).trigger('change');
+            stateSelect.append(new Option('', ''));
+            (response.data.stateJsonArray || []).forEach(function (state) {
+                stateSelect.append(new Option(state, state));
             });
-
-            if (PosnicPro.local.get('edit_branch_state') !== '' && action === 'edit') {
-                stateSelect.val(PosnicPro.local.get('edit_branch_state')).trigger('change.select2');
-                (PosnicPro.branches.branch_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
-            } else {
-                $('#branch_state option:eq(0)').prop('selected', true);
-                (PosnicPro.branches.branch_phone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
-            }
+            var match = Array.from(stateSelect[0].options).find(function (option) { return option.value.trim().toLowerCase() === String(selectedState || '').trim().toLowerCase(); });
+            if (!match && selectedState) stateSelect.append(new Option(selectedState, selectedState));
+            stateSelect.val(match ? match.value : (selectedState || '')).trigger('change.select2');
+            (PosnicPro.branches.branch_phone || { setCountry: function () {} }).setCountry(response.data.countrySortName);
         });
     },
     validForm: function () {
@@ -680,6 +746,7 @@ PosnicPro.branches = {
                 state: {
                     required: true
                 },
+                branch_gstin_number: { branchTaxRegistration: true, maxlength: 100 },
                 "branchregister[0]": {
                     minlength: 3,
                     maxlength: 20
@@ -806,6 +873,7 @@ $('#branch_country').one('change', function () {
     var countrySelect = $('#branch_country');
     countrySelect.on('select2:select', function (e) {
         var data = e.params.data;
+        PosnicPro.settings.applyTaxProfile(countrySelect.val(), '#branch_tax_number');
         PosnicPro.branches.loadSelectBranchState(data.element.attributes['data-setting-id'].value, 'onChange');
     });
 });

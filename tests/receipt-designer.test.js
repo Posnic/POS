@@ -17,7 +17,7 @@ function setup() {
     w.eval(read('src/receipt-page-layout.js'));
     w.eval(read('frontend/static/script/js/core/receipt-designer.js'));
     w.eval(read('frontend/static/script/js/modules/js/receipt-designer-editor.js'));
-    const branch = { branch_name: 'My Shop', logo: pixel, print_logoimg: true, footer_print: 'Thanks <b>again</b>', footer_qr_url: 'https://example.com/shop', footer_image: pixel, table_options: false };
+    const branch = { customer_print: false, branch_name: 'My Shop', logo: pixel, print_logoimg: true, footer_print: 'Thanks <b>again</b>', footer_qr_url: 'https://example.com/shop', footer_image: pixel, table_options: false };
     const design = w.PosnicPro.receiptDesigner.defaults(branch);
     // Existing saved designs keep their legacy layout; default templates are tested separately.
     for (const l of Object.values(design.layouts)) for (const b of l.blocks) {
@@ -29,6 +29,21 @@ function setup() {
         items: [{ item_name: 'Cup <em>large</em>', item_price: 12, item_quantity: 2, item_unit: 'ea', total_amount: 24 }], items_subtotal: 24, items_total: 26, tax: 2 };
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
 }
+
+test('paid receipts use settlement time on every paper format and keep it on reprint', () => {
+    const { dom, engine, sale, $ } = setup();
+    Object.assign(sale, { payment_status: 'Paid', created_date: '14/10/2026 8:50 AM',
+        receipt_date: '14/10/2026 9:05 AM', updated_date: '14/10/2026 10:30 AM' });
+    for (const format of Object.keys(contract.formats)) {
+        const first = engine.render(sale, format, false);
+        const text = $('<div>').html(first).text();
+        assert.match(text, /9:05 AM/);
+        assert.doesNotMatch(text, /8:50 AM|10:30 AM/);
+        assert.equal(engine.render(sale, format, false), first);
+    }
+    assert.equal(sale.created_date, '14/10/2026 8:50 AM');
+    dom.window.close();
+});
 
 test('canonical receipt lines supply both displayed quantities and total quantity', () => {
     const { dom, engine, sale, $ } = setup();
@@ -145,10 +160,12 @@ test('editor adds and reorders blocks, keeps formats independent, and sends a pa
     dom.window.close();
 });
 
-test('saving printing behaviour does not submit or discard unsaved receipt designs', () => {
+test('saving printing behaviour does not submit or discard unsaved receipt designs', async () => {
     const { dom, w, $, branch } = setup();
     $('body').append('<div id="receipt-print-behaviour"></div><button id="save-print-behaviour"></button><span id="print-behaviour-status"></span>');
     const sent = [];
+    let printerSaves = 0;
+    w.PosnicPro.printSettings = { save: async () => { printerSaves++; return true; } };
     w.PosnicPro.put = (request, done) => {
         const data = JSON.parse(request.data); sent.push(data);
         done({ type: 'success', data: data });
@@ -158,12 +175,28 @@ test('saving printing behaviour does not submit or discard unsaved receipt desig
     $('#rd-block-text').val('New layout text').trigger('input');
     $('#printall').prop('checked', true).trigger('change');
     $('#save-print-behaviour').trigger('click');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(printerSaves, 1);
     assert.deepEqual(sent[0], { printall: 'true', bill_print_copies: '1' });
     assert.match($('#print-behaviour-status').text(), /saved/);
     assert.match($('.rd-status').text(), /Unsaved/);
     $('[data-action="save"]').trigger('click');
     assert.ok(sent[1].receipt_designs.layouts['80'].blocks.some(b => b.text === 'New layout text'));
     assert.equal($('#printall').closest('#receipt-print-behaviour').length, 1);
+    dom.window.close();
+});
+
+test('a failed device printer save prevents a misleading printing-options success', async () => {
+    const { dom, w, $, branch } = setup();
+    $('body').append('<button id="save-print-behaviour"></button><span id="print-behaviour-status"></span>');
+    let writes = 0;
+    w.PosnicPro.printSettings = { save: async () => false };
+    w.PosnicPro.put = () => { writes++; };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('#save-print-behaviour').trigger('click');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(writes, 0);
+    assert.equal($('#save-print-behaviour').prop('disabled'), false);
     dom.window.close();
 });
 
@@ -182,7 +215,7 @@ test('FSSAI prints from current branch details on all formats and an explicit fi
         sale.branch_fssai_number = '   ';
         assert.equal(render().find('.rd-field-fssai').length, 0);
         sale.branch_fssai_number = '12345678901234'; sale.table_options = false;
-        assert.doesNotMatch(render().text(), /12345678901234/);
+        assert.match(render().text(), /12345678901234/, 'Indian food retailers retain their configured licence without restaurant mode');
         sale.table_options = true;
     }
     dom.window.close();
@@ -227,6 +260,9 @@ test('country changes hide FSSAI controls and blocks without deleting saved lice
         assert.equal(sent.receipt_designs.layouts['80'].blocks.filter(b => b.field === 'fssai').length, 1);
     }
     branch.table_options = false;
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('[data-field="fssai"]').length, 1, 'Configured Indian food licence remains available');
+    branch.branch_fssai_number = '';
     w.PosnicPro.receiptDesignerEditor.load(branch);
     assert.equal($('[data-field="fssai"]').length, 0);
     assert.equal($('#branch_fssai_number').closest('.form-group').css('display'), 'none');
@@ -394,7 +430,7 @@ test('editor saves half-width fields and compact items independently by format a
     assert.equal(sent.receipt_designs.defaultFormat, '80');
     assert.equal(sent.receipt_designs.layouts['80'].blocks.some(b => b.type === 'qr'), false, 'Standard templates do not restore obsolete legacy customizations');
     assert.equal(sent.receipt_designs.layouts['80'].blocks.find(b => b.type === 'items').itemLayout, 'columns');
-    assert.equal(sent.receipt_designs.layouts['80'].blocks.filter(b => b.field?.startsWith('customer_')).length, 5);
+    assert.equal(sent.receipt_designs.layouts['80'].blocks.filter(b => b.field?.startsWith('customer_')).length, 4);
     assert.match($('iframe[title="Receipt design preview"]').attr('srcdoc'), /Tax ID:<\/strong> TAX-123456/, 'Adding a tax field has sample data to preview');
     $('[data-format="a4"]').trigger('click');
     $('.rd-select').filter((_i, e) => $(e).text() === 'ItemsRequired').trigger('click');
@@ -1131,7 +1167,7 @@ test('RP 4200 migrates saved 80 mm content independently and keeps email and row
     const output = $('<div>').html(engine.render(sale, '112', false));
     assert.equal(output.find('[data-receipt-design]').attr('data-receipt-design'), '112');
     assert.doesNotMatch(output.text(), /shop@example.com/);
-    assert.deepEqual(output.find('.rd-row-number').map((i, e) => $(e).text()).get(), ['1. ', '2. ']);
+    assert.deepEqual(output.find('tbody .rd-row-number').map((i, e) => $(e).text()).get(), ['1', '2']);
     saved.layouts['112'].blocks.find(b => b.type === 'store').showEmail = true;
     assert.match($('<div>').html(engine.render(sale, '112', false)).text(), /shop@example.com/);
     dom.window.close();
@@ -1150,5 +1186,330 @@ test('fast text preserves rendered payment allocations and rounding; graphics an
         assert.doesNotMatch(lines.join('\n'), /secret/);
         assert.equal(engine.fastLines('<div class="rd-document">தமிழ்</div>'), null);
         assert.equal(engine.fastLines('<div class="rd-document"><img src="logo.png">Shop</div>'), null);
+    } finally { dom.window.close(); }
+});
+
+
+test('custom product and bill labels survive normalization on every paper size, with removable branding', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const format of Object.keys(contract.formats)) {
+        design.layouts[format].blocks.find(b => b.type === 'items').heading = 'Product <name>';
+        design.layouts[format].blocks.find(b => b.type === 'transaction').labelText = 'Invoice No.';
+    }
+    sale.receipt_designs = contract.normalize(design);
+    for (const format of Object.keys(contract.formats)) {
+        const out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('thead th').first().text(), 'Product <name>');
+        assert.match(out.find('.rd-block-transaction').text(), /Invoice No.*S128/);
+        assert.equal(out.find('.rd-branding').length, 1);
+        assert.equal(out.find('name').length, 0);
+    }
+    sale.receipt_designs.showBranding = false;
+    sale.receipt_designs = contract.normalize(sale.receipt_designs);
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-branding').length, 0);
+    dom.window.close();
+});
+
+test('first-time designs include customer details and greeting but preserve explicit customer opt-out', () => {
+    const { dom, engine } = setup();
+    const fresh = engine.defaults({});
+    for (const layout of Object.values(fresh.layouts)) {
+        assert.ok(layout.blocks.some(b => b.field === 'customer_name'));
+        assert.ok(layout.blocks.some(b => b.field === 'customer_phone'));
+        assert.ok(!layout.blocks.some(b => b.field === 'customer_email'));
+        assert.ok(layout.blocks.some(b => b.text === 'Thank you! Visit again.'));
+    }
+    assert.ok(!engine.defaults({customer_print:'false'}).layouts['80'].blocks.some(b => b.field === 'customer_name'));
+    dom.window.close();
+});
+
+test('four-inch fixed columns give HSN its own column and keep quantity totals aligned', () => {
+    const { dom, engine, sale, design, $ } = setup();
+    for (const format of ['58', '80', '112']) {
+        design.layouts[format].blocks = [{ type: 'items', itemLayout: 'columns', hsn: true }, { type: 'field', field: 'total_quantity' }];
+    }
+    sale.items[0].hsncode = '12345678';
+    sale.items.push({ item_name: 'Without HSN', item_price: 2, item_quantity: 1, total_amount: 2 });
+    const output = $('<div>').html(engine.render(sale, '112', false));
+    assert.deepEqual(output.find('thead th').map((_i, el) => $(el).text()).get(), ['Item name', 'HSN', 'Rate', 'Qty', 'Amount']);
+    assert.equal(output.find('tbody tr').first().children().length, 5);
+    assert.equal(output.find('.rd-hsn').first().text(), '12345678');
+    assert.equal(output.find('.rd-hsn').last().text(), '');
+    assert.equal(output.find('.rd-total-quantity td').first().attr('colspan'), '3');
+    assert.equal(output.find('.rd-total-quantity .rd-number').text(), '3');
+    assert.equal(output.find('col').toArray().reduce((sum, el) => sum + parseFloat(el.style.width), 0), 100);
+    for (const format of ['58', '80']) {
+        const narrow = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(narrow.find('thead th').length, 4);
+        assert.match(narrow.find('.rd-line-detail').text(), /HSN\/SAC: 12345678/);
+    }
+    design.layouts['112'].blocks[0].hsn = false;
+    const hidden = $('<div>').html(engine.render(sale, '112', false));
+    assert.equal(hidden.find('thead th').length, 4);
+    assert.doesNotMatch(hidden.text(), /12345678|HSN\/SAC/);
+    dom.window.close();
+});
+
+test('sale printing sends receipt identity to desktop logging while sample printing does not', async () => {
+    const { dom, w, engine, sale } = setup();
+    const sent = [];
+    w.PosnicPro.resolveReceiptPrinter = () => 'Counter';
+    w.PosnicPro.afterPrint = () => {};
+    w.electronAPI = { printer: { print: async (_html, options) => { sent.push(options); return { success: true }; } } };
+    await engine.printSale(sale, '80');
+    assert.equal(sent[0].receiptLog.saleId, sale.sales_id);
+    assert.equal(sent[0].receiptLog.total, sale.items_total);
+    await engine.print('<article>Sample</article>', '80', { sample: true });
+    assert.equal(sent[1].receiptLog, null);
+    dom.window.close();
+});
+
+test('custom footer text saves, reloads and renders safely on every paper size', () => {
+    const { dom, w, $, branch, sale, engine } = setup();
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    const custom = 'Printed by <Shop> · example.com';
+    $('#rd-branding-text').val(custom).trigger('input');
+    $('[data-action="save"]').trigger('click');
+    const saved = contract.normalize(sent.receipt_designs);
+    assert.equal(saved.brandingText, custom);
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: saved });
+    assert.equal($('#rd-branding-text').val(), custom);
+    sale.receipt_designs = saved;
+    for (const format of Object.keys(contract.formats)) {
+        const footer = $('<div>').html(engine.render(sale, format, false)).find('.rd-branding');
+        assert.equal(footer.text(), custom);
+        assert.equal(footer.children().length, 0);
+    }
+    saved.showBranding = false;
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-branding').length, 0);
+    saved.showBranding = true;
+    saved.brandingText = '   ';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-branding').text(), 'Made with Posnic · posnic.com');
+    assert.throws(() => contract.normalize({ ...saved, brandingText: 'x'.repeat(201) }), /200 characters/);
+    assert.throws(() => contract.normalize({ ...saved, brandingText: {} }), /200 characters/);
+    dom.window.close();
+});
+
+test('store print overrides persist per format without changing branch contact data', () => {
+    const { dom, w, $, branch, sale, engine } = setup();
+    branch.store_telephone = '+919876543210';
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Store details')).find('.rd-select').trigger('click');
+    $('[data-prop="phoneText"]').val('98765 43210').trigger('input');
+    $('[data-prop="nameText"]').val('Receipt shop').trigger('input');
+    $('[data-prop="addressText"]').val('First line\nSecond line').trigger('input');
+    $('[data-action="save"]').trigger('click');
+    const saved = contract.normalize(sent.receipt_designs);
+    assert.equal(saved.layouts['80'].blocks.find(b => b.type === 'store').phoneText, '98765 43210');
+    assert.equal(saved.layouts['112'].blocks.find(b => b.type === 'store').phoneText, undefined);
+    assert.equal(sent.store_telephone, undefined);
+    assert.equal(branch.store_telephone, '+919876543210');
+    Object.assign(sale, { receipt_designs: saved, store_telephone: branch.store_telephone });
+    assert.match($('<div>').html(engine.render(sale, '80', false)).find('.rd-store').text(), /98765 43210/);
+    assert.doesNotMatch($('<div>').html(engine.render(sale, '80', false)).find('.rd-store').text(), /\+91/);
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: saved });
+    $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Store details')).find('.rd-select').trigger('click');
+    assert.equal($('[data-prop="phoneText"]').val(), '98765 43210');
+    dom.window.close();
+});
+
+test('missing branch addresses never print placeholder text in any receipt format', () => {
+    const { dom, $, engine, sale, design } = setup();
+    for (const format of Object.keys(contract.formats)) {
+        const store = design.layouts[format].blocks.find(b => b.type === 'store');
+        Object.assign(sale, { printing_address: ' Not provided ', store_address: '' });
+        sale.receipt_designs = design;
+        const address = () => $('<div>').html(engine.render(sale, format, false)).find('.rd-store-contact').text();
+        assert.equal(address(), '');
+        sale.store_address = '12 Market Road';
+        assert.equal(address(), '12 Market Road');
+        store.addressText = 'Receipt address';
+        assert.equal(address(), 'Receipt address');
+        store.addressText = 'Not provided';
+        assert.equal(address(), '12 Market Road');
+    }
+    dom.window.close();
+});
+
+test('store visibility, empty overrides, escaping and validation apply to every format', () => {
+    const { dom, $, engine, sale, design } = setup();
+    sale.store_telephone = '+919876543210';
+    for (const format of Object.keys(contract.formats)) {
+        const store = design.layouts[format].blocks.find(b => b.type === 'store');
+        Object.assign(store, { nameText: '<b>Shop</b>', phoneText: '   ', addressText: 'New address', registrationText: 'CUSTOM123' });
+        sale.receipt_designs = contract.normalize(design);
+        let output = $('<div>').html(engine.render(sale, format, false)).find('.rd-store');
+        assert.equal(output.find('h1').text(), '<b>Shop</b>');
+        assert.equal(output.find('h1 b').length, 0);
+        assert.match(output.text(), /\+919876543210/);
+        assert.match(output.text(), /CUSTOM123/);
+        Object.assign(store, { showName: false, showAddress: false, showPhone: false, showEmail: false, showRegistration: false });
+        sale.receipt_designs = contract.normalize(design);
+        output = $('<div>').html(engine.render(sale, format, false)).find('.rd-store');
+        assert.equal(output.text(), '');
+    }
+    design.layouts['80'].blocks.find(b => b.type === 'store').phoneText = '1'.repeat(101);
+    assert.throws(() => contract.normalize(design), /too long/);
+    dom.window.close();
+});
+
+test('designer samples include GST, switch to IGST, and respect tax disabled', async () => {
+    const { dom, w, $, engine, branch } = setup();
+    Object.assign(branch, { indian_gst: 'gst_on', country: 'India', module_tax_enable: true });
+    let document;
+    engine.print = async html => { document = html; return { success: true }; };
+    const editor = w.PosnicPro.receiptDesignerEditor;
+    editor.load(branch);
+    await editor.printSample();
+    assert.match(document, /CGST 2.5%/); assert.match(document, /SGST 2.5%/);
+    assert.match($('<div>').html(document).text(), /47.25/);
+    $('#rd-sample-tax').val('inter').trigger('change');
+    await editor.printSample();
+    assert.match(document, /IGST 5%/); assert.doesNotMatch(document, /CGST|SGST/);
+    branch.module_tax_enable = false; editor.load(branch);
+    await editor.printSample();
+    assert.doesNotMatch(document, /IGST|CGST|SGST/);
+    assert.equal($('#rd-sample-tax').length, 0);
+    dom.window.close();
+});
+
+test('zero tax rows are omitted while real small amounts and saved tax labels remain', () => {
+    const { dom, engine, sale, $ } = setup();
+    for (const format of Object.keys(contract.formats)) {
+        sale.tax = 0;
+        sale.receipt_tax_rows = [{ label: 'VAT', amount: 0 }, { label: 'CGST', amount: '0.00' }, { label: 'SGST', amount: 0.000001 }];
+        const totals = () => $('<div>').html(engine.render(sale, format, false)).find('.rd-totals').text();
+        assert.doesNotMatch(totals(), /VAT|CGST|SGST/);
+        sale.receipt_tax_rows = [{ label: 'CGST', amount: 0.02 }, { label: 'SGST', amount: 0.01 }];
+        assert.match(totals(), /CGST.*0.02.*SGST.*0.01/);
+        sale.receipt_tax_rows = [{ label: 'Local sales levy', amount: 2 }];
+        assert.match(totals(), /Local sales levy/);
+    }
+    dom.window.close();
+});
+
+test('sample tax follows country even without the old India GST flag and hides when disabled', async () => {
+    const { dom, w, engine, branch } = setup();
+    let document;
+    engine.print = async html => { document = html; return { success: true }; };
+    for (const [country, label] of [['India', 'CGST 2.5%'], ['South Africa', 'VAT 5%'], ['United Kingdom', 'VAT 5%'], ['Australia', 'GST 5%']]) {
+        Object.assign(branch, { country, indian_gst: 'gst_off', module_tax_enable: true });
+        w.PosnicPro.receiptDesignerEditor.load(branch);
+        await w.PosnicPro.receiptDesignerEditor.printSample();
+        assert.ok(document.includes(label), country);
+        branch.module_tax_enable = false;
+        w.PosnicPro.receiptDesignerEditor.load(branch);
+        await w.PosnicPro.receiptDesignerEditor.printSample();
+        assert.ok(!document.includes(label), country);
+    }
+    dom.window.close();
+});
+
+test('receipt fallback preserves independently saved CGST and SGST amounts', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.items[0].cgst_tax = 1.13; sale.items[0].sgst_tax = 1.12;
+    const text = $('<div>').html(engine.render(sale, '112', false)).text();
+    assert.match(text, /CGST.*1.13/); assert.match(text, /SGST.*1.12/);
+    sale.receipt_tax_rows = [{ label: 'IGST 5%', amount: 2.25 }];
+    const saved = $('<div>').html(engine.render(sale, '112', false)).text();
+    assert.match(saved, /IGST 5%/); assert.doesNotMatch(saved, /CGST|SGST/);
+    dom.window.close();
+});
+
+test('pre-save receipt states that the number is pending and final receipt removes that notice', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.sales_id = '';
+    assert.match($('<div>').html(engine.render(sale, '112', true)).text(), /Receipt number is assigned after saving/);
+    sale.sales_id = 'INV-123';
+    const saved = $('<div>').html(engine.render(sale, '112', false));
+    assert.equal(saved.find('.rd-pending-number').length, 0);
+    assert.match(saved.text(), /INV-123/);
+    dom.window.close();
+});
+
+test('store FSSAI control is limited to Indian restaurants and configured food businesses', () => {
+    const { dom, w, $, branch } = setup();
+    for (const [country, restaurant, licence, allowed] of [
+        ['India', true, '', true], ['IN', false, '12345678901234', true],
+        ['India', false, '', false], ['United Kingdom', true, '12345678901234', false],
+        ['', true, '12345678901234', false], ['United States', false, '', false]
+    ]) {
+        Object.assign(branch, { country, table_options: restaurant, branch_fssai_number: licence });
+        w.PosnicPro.receiptDesignerEditor.load(branch);
+        $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Store details')).find('.rd-select').trigger('click');
+        assert.equal($('[data-prop="fssaiInHeader"]').length, allowed ? 1 : 0, country + '/' + restaurant + '/' + licence);
+        assert.equal($('[data-field="fssai"]').length, allowed ? 1 : 0);
+        assert.equal(contract.fieldAvailable('table', branch), restaurant, 'food licence does not enable restaurant fields');
+    }
+    dom.window.close();
+});
+
+test('serial numbers occupy a separate optional column on every format and layout', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    for (const format of Object.keys(contract.formats)) for (const layout of ['columns', 'compact', 'detailed']) {
+        const items = design.layouts[format].blocks.find(b => b.type === 'items');
+        Object.assign(items, { showRowNumbers: true, itemLayout: layout, hsn: true });
+        let out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('thead th').first().text(), 'S.No');
+        assert.equal(out.find('tbody tr').first().children().first().text(), '1');
+        assert.match(out.find('tbody tr').first().children().eq(1).text(), /^Cup/);
+        assert.equal(out.find('col').length, out.find('thead th').length);
+        items.showRowNumbers = false;
+        out = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(out.find('.rd-row-number').length, 0);
+    }
+    dom.window.close();
+});
+
+test('payment method preference survives save and reload independently per format', () => {
+    const { dom, w, $, branch } = setup();
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    const selectTotals = () => $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Totals')).find('.rd-select').trigger('click');
+    selectTotals();
+    assert.equal($('[data-prop="showPaymentMethod"]').prop('checked'), true);
+    $('[data-prop="showPaymentMethod"]').prop('checked', false).trigger('change');
+    $('[data-action="save"]').trigger('click');
+    const saved = contract.normalize(sent.receipt_designs);
+    assert.equal(saved.layouts['80'].blocks.find(b => b.type === 'totals').showPaymentMethod, false);
+    assert.equal(saved.layouts['112'].blocks.find(b => b.type === 'totals').showPaymentMethod, true);
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: saved });
+    selectTotals();
+    assert.equal($('[data-prop="showPaymentMethod"]').prop('checked'), false);
+    dom.window.close();
+});
+
+test('hiding payment method removes cash and card without hiding totals or balance due', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    Object.assign(sale, { payment_mode: 'Card', partial_check: true, partial_balance: 10, payment_pending: 16 });
+    for (const format of Object.keys(contract.formats)) {
+        const totals = design.layouts[format].blocks.find(b => b.type === 'totals');
+        assert.match($('<div>').html(engine.render(sale, format, false)).text(), /Card/);
+        totals.showPaymentMethod = false;
+        let output = $('<div>').html(engine.render(sale, format, false));
+        assert.doesNotMatch(output.text(), /Card/);
+        assert.match(output.text(), /Balance due/);
+        assert.match(output.text(), /26\.00/);
+        sale.payment_mode = 'Cash';
+        output = $('<div>').html(engine.render(sale, format, false));
+        assert.doesNotMatch(output.text(), /Cash/);
+        sale.payment_mode = 'Card';
+    }
+    dom.window.close();
+});
+
+test('GBP and EUR receipts stay on Fast receipt without raster fallback', () => {
+    const {dom, engine} = setup();
+    try {
+      const lines = engine.fastLines('<section class="rd-document"><p>Total \u00a31.50</p><p>Cash \u00a32.00</p><p>Change \u00a30.50</p><p>Total \u20ac3.00</p></section>');
+      assert.ok(lines);
+      const bytes = require('../src/receipt-fast').renderFastReceipt(lines, '80').toString('ascii');
+      assert.match(bytes, /Total GBP 1.50/); assert.match(bytes, /Cash GBP 2.00/);
+      assert.match(bytes, /Change GBP 0.50/); assert.match(bytes, /Total EUR 3.00/);
     } finally { dom.window.close(); }
 });

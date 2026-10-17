@@ -1018,12 +1018,11 @@
             (function () {
                 if (!window.electronAPI || !window.electronAPI.desktop) return;
                 const style = document.createElement('style');
-                // Colors ride the app's theme variables (Config -> Appearance)
-                // with brand-blue fallbacks for pages without a theme.
+                // Keep the familiar green shortcut; the menu follows the app theme.
                 style.textContent =
                     '#posnic-desktop-fab{position:fixed;bottom:18px;right:18px;z-index:99990;font-family:inherit}' +
-                    '#posnic-desktop-fab .fab-btn{background:var(--theme-card-bg,#fff);' +
-                    'color:var(--theme-text-primary,#16203a);border:1px solid var(--theme-border-color,#d5dfed);border-radius:8px;' +
+                    '#posnic-desktop-fab .fab-btn{background:#15803d;' +
+                    'color:#fff;border:1px solid #15803d;border-radius:24px;' +
                     'height:46px;min-width:46px;padding:0 14px;display:flex;align-items:center;justify-content:center;' +
                     'font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.10)}' +
                     '#posnic-desktop-fab .fab-label{white-space:nowrap;margin-inline-start:8px}' +
@@ -1099,6 +1098,8 @@
                     if (PosnicPro.userACL && PosnicPro.userACL.branch && PosnicPro.userACL.branch.write) addItem(PosnicPro.i18n.t('lang_desktop_app', 'App Settings'), 'app', 'settings', true);
                     addItem(PosnicPro.i18n.t('lang_hardware_manager', 'Hardware Manager'), 'hardware', 'printer');
                     if (['enable', 'true', true].includes(PosnicPro.local.get('table_options'))) addItem(PosnicPro.i18n.t('lang_desktop_kitchen', 'Kitchen Printing'), 'hardware:kot', 'clipboard');
+                    addItem(PosnicPro.i18n.t('lang_desktop_kitchen_screen', 'Kitchen screen'), 'hardware:screen', 'monitor');
+                    addItem(PosnicPro.i18n.t('lang_desktop_kitchen_sound', 'Kitchen sound'), 'hardware:sound', 'volume-2');
                     if (caps.backup) addItem(PosnicPro.i18n.t('lang_desktop_backups', 'Backup & Recovery'), 'backup', 'database');
                     addItem(PosnicPro.i18n.t('lang_desktop_update_recovery', 'Updates & recovery'), 'update', 'download-cloud');
                     addItem(PosnicPro.i18n.t('lang_desktop_cloudsync', 'Cloud Sync'), 'cloud', 'cloud');

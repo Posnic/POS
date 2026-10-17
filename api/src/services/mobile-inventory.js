@@ -1,4 +1,5 @@
 'use strict';
+const inventoryEnabled = require('../utils/mobile-inventory-policy');
 
 // Inventory uses the existing item balance and stocklogs. The effect marker is
 // written atomically with the balance, so a retry cannot apply a line twice.
@@ -25,8 +26,8 @@ const revision = (row) =>
 const wall = (c) => ({ license: c.license, branch_id: c.branchId });
 async function access(req, write = false) {
   const c = await mobile.context(req, Boolean(req.handsetDevice));
-  if (req.handsetDevice && c.branch.inventory_policy?.enabled !== true)
-    mobile.fail('Enable mobile inventory in Core Settings → Items/Inventory.', 403);
+  if (req.handsetDevice && !inventoryEnabled(c.branch))
+    mobile.fail('Enable mobile inventory in Core Settings → Inventory → Mobile inventory.', 403);
   if (write && req.handsetDevice) {
     const scope = req.body?.scope;
     if (
@@ -64,7 +65,9 @@ function item(row) {
     categoryId: String(row.category_id || ''),
     supplierId: String(row.supplier_id || ''),
     supplierName: String(row.supplier_name || ''),
-    sku: String(row.sku || row.item_code || ''),
+    sku: String(row.sku || row.item_code || row.itemid || ''),
+    availableForSale: row.available_for_sale !== false,
+    availabilityRevision: row.availability_revision || '',
     minimum: Number(row.reorder_point || 0),
     expires: row.items_expiry_date || null,
   };
@@ -77,6 +80,7 @@ async function catalogue(req) {
     mobile.fail('Supplier access is required.', 403);
   const filter = kind === 'items' ? wall(c) : withBranchScope({ license: c.license }, c.branchId);
   filter.is_deleted = { $ne: true };
+  filter.del_status = { $nin: [1, '1', true] };
   if (req.query?.after) filter._id = { $gt: oid(req.query.after) };
   const q = String(req.query?.q || '')
     .trim()
@@ -86,9 +90,14 @@ async function catalogue(req) {
     filter.$or = [
       { name: { $regex: escaped, $options: 'i' } },
       { barcode_id: q },
+      { barcodes: q },
       { plu_code: q },
       { sku: q },
     ];
+  }
+  if (kind === 'items' && req.query?.barcode) {
+    const barcode = String(req.query.barcode).trim().slice(0, 512);
+    filter.$or = [{ barcode_id: barcode }, { barcodes: barcode }];
   }
   const projection =
     kind === 'items' ? undefined : { name: 1, category_name: 1, supplier_name: 1, status: 1 };
@@ -497,7 +506,7 @@ async function policy(req) {
   if (req.method === 'POST') {
     if (!canManage) mobile.fail('An administrator must change inventory policy.', 403);
     const actions = req.body?.approvalActions;
-    const enabled = req.body?.enabled ?? c.branch.inventory_policy?.enabled === true;
+    const enabled = req.body?.enabled ?? inventoryEnabled(c.branch);
     if (
       typeof enabled !== 'boolean' ||
       !Array.isArray(actions) ||
@@ -519,11 +528,13 @@ async function policy(req) {
   }
   return {
     canManage,
-    enabled: c.branch.inventory_policy?.enabled === true,
+    enabled: inventoryEnabled(c.branch),
     approvalActions: permissions(req, c).approvalActions,
   };
 }
 module.exports = {
+  access,
+  item,
   catalogue,
   history,
   prepare,

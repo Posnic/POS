@@ -954,5 +954,11 @@
   "Enable Recycle Bin before deleting sales": "Aktivera papperskorgen innan du tar bort försäljning",
   "Only super admins can change the sale hard-delete setting": "Endast superadministratörer kan ändra inställningen för hård radering av försäljning",
   "Finish the pending payment correction before closing this register.": "Slutför den väntande betalningskorrigeringen innan du stänger detta register.",
-  "Finish the pending payment correction first.": "Slutför den väntande betalningskorrigeringen först."
+  "Finish the pending payment correction first.": "Slutför den väntande betalningskorrigeringen först.",
+  "Bill correction saved.": "Räkningskorrigering sparad.",
+  "Review the paid bill correction before saving.": "Granska korrigeringen av betalda räkningar innan du sparar.",
+  "Choose a saved customer for customer credit.": "Välj en sparad kund för kundkredit.",
+  "Exact numeric search must be on or off": "Exakt numerisk sökning måste vara på eller av",
+  "Item not found or selling price is held. Review it in Edit prices.": "Varan hittades inte eller försäljningspriset hålls. Granska det i Redigera priser.",
+  "Password must contain between 5 and 20 characters": "Lösenordet måste innehålla mellan 5 och 20 tecken"
 }

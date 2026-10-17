@@ -580,6 +580,16 @@ class SettingController extends BaseController {
       settingsService.setModel(settingModel);
 
       const data = req.body;
+      if (
+        data.sales_exact_numeric_codes !== undefined &&
+        typeof data.sales_exact_numeric_codes !== 'boolean'
+      ) {
+        return res.status(400).json({
+          type: 'error',
+          message: 'Exact numeric search must be on or off',
+          data: null,
+        });
+      }
 
       /*
        * Prefixes: 1-6 characters. The old exactly-3 rule rejected the
@@ -1250,7 +1260,7 @@ class SettingController extends BaseController {
   async getTaxProfile(req, res) {
     try {
       const settingModel = this.createModelWithContext(req);
-      const result = await settingModel.getTaxProfileModel();
+      const result = await settingModel.getTaxProfileModel(req.query?.country);
       const code = result.status ? 200 : 400;
       return res.status(code).json({
         type: result.status ? 'success' : 'error',

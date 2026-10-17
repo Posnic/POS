@@ -954,5 +954,11 @@
   "Enable Recycle Bin before deleting sales": "Paganahin ang Recycle Bin bago tanggalin ang mga",
   "Only super admins can change the sale hard-delete setting": "Tanging mga super admin ang maaaring baguhin ang setting ng sale hard-delete",
   "Finish the pending payment correction before closing this register.": "Tapusin ang nakabinbing pagwawasto ng pagbabayad bago isara ang rehistro na",
-  "Finish the pending payment correction first.": "Tapusin muna ang nakabinbing pagwawasto ng pagbabayad."
+  "Finish the pending payment correction first.": "Tapusin muna ang nakabinbing pagwawasto ng pagbabayad.",
+  "Bill correction saved.": "Nai-save ang pagwawasto ng Bill.",
+  "Review the paid bill correction before saving.": "Suriin ang bayad na pagwawasto ng bayad na bayad bago i-save",
+  "Choose a saved customer for customer credit.": "Pumili ng isang naka-save na customer para sa kredito ng customer.",
+  "Exact numeric search must be on or off": "Dapat na naka-on o off ang eksaktong paghahanap sa numero",
+  "Item not found or selling price is held. Review it in Edit prices.": "Hindi natagpuan ang item o ang presyo ng pagbebenta ay hawakan. Suriin ito sa I-edit ang mga presyo.",
+  "Password must contain between 5 and 20 characters": "Dapat maglaman ng password sa pagitan ng 5 at 20 character"
 }

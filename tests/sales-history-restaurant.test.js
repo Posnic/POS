@@ -25,6 +25,30 @@ function setup(enabled = true, rows = null) {
  w.eval(settings.slice(saveStart, settings.indexOf("$(document).on('click', '#v-pills-tableorder-tab, #manage_sec_tableorder'", saveStart)));
  return { w, $, requests, alerts, close: () => w.close() };
 }
+test('first history request is today, while explicit All time survives refresh and pagination', () => {
+ const x = setup(false, []);
+ try {
+  x.w.jQuery = x.$;
+  x.w.eval(fs.readFileSync(path.join(root, 'frontend/static/script/js/core/list-filter.js'), 'utf8'));
+  x.w.PosnicPro.listSort.mount = () => {};
+  const begin = sales.indexOf('    mountHistoryFilters: function');
+  const end = sales.indexOf('    mountRestaurantHistory: function', begin);
+  x.w.eval('PosnicPro.sales.mountHistoryFilters = ({' + sales.slice(begin, end) + '}).mountHistoryFilters;');
+  x.w.PosnicPro.listFilter.request = (key, p, cb) => { x.requests.push(p.data); cb({data:{list:[],total:0}}); };
+  x.w.PosnicPro.sales.loadHistory(1);
+  const filter = JSON.parse(x.requests[0].filters);
+  const expected = x.w.PosnicPro.listFilter.legacyFilters('sales', {dateKey:'date'});
+  assert.equal(x.w.PosnicPro.listFilter._mounted.sales.state.preset, 'today');
+  assert.ok(filter.date, 'first request must include a date bound');
+  assert.deepEqual(filter.date, JSON.parse(JSON.stringify(expected.date)));
+  assert.equal(x.$('#sales_quick_dates [data-sales-date=today]').attr('aria-pressed'), 'true');
+  x.$('#sales_quick_dates [data-sales-date=all]').trigger('click');
+  x.w.PosnicPro.sales.loadHistory(2);
+  assert.equal(JSON.parse(x.requests.at(-1).filters).date, undefined);
+  assert.equal(x.requests.at(-1).page, 2);
+ } finally { x.close(); }
+});
+
 test('restaurant table column and combined filters drive the paginated request; clear resets both', () => {
  const x = setup(); const s = x.w.PosnicPro.sales; s.mountRestaurantHistory(); s.loadHistory(1);
  assert.match(x.$('#sales_list_rows thead').text(), /Table/);
@@ -134,4 +158,21 @@ test('retail filters share one panel and selected choices wait for Apply', () =>
  assert.equal(x.requests.at(-1).order_device,'till-1');
  assert.ok(x.$('#sales_active_filters').text().includes('Till one'));
  x.close();
+});
+
+test('history totals use the full filtered response, show dynamic methods and safely render labels',()=>{
+ const x=setup();const s=x.w.PosnicPro.sales;
+ x.w.PosnicPro.listFilter.request=(key,p,cb)=>{x.requests.push(p.data);cb({data:{list:[],summary:{count:32,cancelled:1,currencies:[{currencyCode:'INR',currencyDigits:2,total:1250,payments:[{method:'Cash',amount:500},{method:'<img src=x>',amount:750}]}]}}});};
+ s.loadHistory(2);assert.equal(x.requests.at(-1).include_summary,'true');
+ const text=x.$('#sales_history_summary').text();assert.match(text,/Sales32/);assert.match(text,/1,250.00/);assert.match(text,/CashINR 500.00/);assert.match(text,/Cancelled1/);assert.equal(x.$('#sales_history_summary img').length,0);
+ s.paintHistorySummary({count:0,cancelled:0,currencies:[]});assert.doesNotMatch(x.$('#sales_history_summary').text(),/1,250/);x.close();
+});
+
+test('a slow previous filter response cannot replace the newest history totals',()=>{
+ const x=setup();const callbacks=[];
+ x.w.PosnicPro.listFilter.request=(key,p,cb)=>callbacks.push(cb);
+ x.w.PosnicPro.sales.loadHistory(1);x.w.PosnicPro.sales.loadHistory(1);
+ callbacks[1]({data:{list:[],summary:{count:2,cancelled:0,currencies:[]}}});
+ callbacks[0]({data:{list:[],summary:{count:99,cancelled:0,currencies:[]}}});
+ assert.match(x.$('#sales_history_summary').text(),/Sales2/);assert.doesNotMatch(x.$('#sales_history_summary').text(),/99/);x.close();
 });

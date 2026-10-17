@@ -205,15 +205,7 @@ function trimRate(value) {
   return String(Math.round(value * 100) / 100);
 }
 
-/**
- * The tax rows.
- *
- * An Indian shop's paper shows CGST and SGST as two halves, which is what an
- * intra-state bill is, and that is very nearly every table in a restaurant -
- * the guest is sitting in the same state as the kitchen. An inter-state sale
- * is not something that happens at a table, and it settles at the counter
- * where the shop's own template runs and knows better than this does.
- */
+/* Receipt tax rows prefer the saved allocation/components, then legacy GST data. */
 function taxRows(sale, branch, allocation = null) {
   if (allocation)
     return Object.entries(allocation.components)
@@ -225,15 +217,51 @@ function taxRows(sale, branch, allocation = null) {
           require('../utils/currency').policy(branch)
         ),
       }));
+  // Reprints use recorded tax components, never the branch's current tax setting.
+  const recorded = new Map();
+  for (const line of (Array.isArray(sale?.items) ? sale.items : []).filter(billable)) {
+    const components =
+      Array.isArray(line.tax_components) && line.tax_components.length
+        ? line.tax_components
+        : ['igst', 'cgst', 'sgst', 'utgst'].map((name) => ({
+            name: name.toUpperCase(),
+            amount: line[name + '_tax'],
+          }));
+    for (const component of components) {
+      const amount = num(component.amount);
+      if (amount > 0 && component.name)
+        recorded.set(component.name, (recorded.get(component.name) || 0) + amount);
+    }
+  }
+  if (recorded.size) {
+    const money = require('../utils/currency');
+    const policy = money.policy(branch || {});
+    let cumulative = 0;
+    let assignedMinor = 0;
+    return Array.from(recorded, ([label, amount]) => {
+      cumulative += amount;
+      const totalMinor = money.toMinor(cumulative, policy);
+      const row = { label, amount: money.fromMinor(totalMinor - assignedMinor, policy) };
+      assignedMinor = totalMinor;
+      return row;
+    });
+  }
   const tax = num(sale && sale.tax);
   if (tax <= 0) return [];
   const indian = String((branch && branch.indian_gst) || '').toLowerCase();
-  if (indian && indian !== 'disable' && indian !== 'false' && indian !== '0') {
+  if (['gst_on', 'enable', 'true', '1'].includes(indian)) {
     const money = require('../utils/currency');
     const policy = money.policy(branch || {});
     const taxMinor = money.toMinor(tax, policy);
     const firstHalf = Math.ceil(taxMinor / 2);
     const rate = gstRate(sale);
+    const { stateKey } = require('./gst-place');
+    const supplierState = stateKey(sale.branch_state || branch.state);
+    const supplyState = stateKey(sale.place_of_supply || sale.customer_state);
+    if (supplierState && supplyState && supplierState !== supplyState) {
+      return [{ label: 'IGST' + (rate === null ? '' : ' ' + trimRate(rate) + '%'), amount: tax }];
+    }
+
     /*
      * THE RATE, BESIDE THE AMOUNT.
      *
@@ -259,7 +287,11 @@ function taxRows(sale, branch, allocation = null) {
     const shown = rate === null ? '' : ' ' + trimRate(rate / 2) + '%';
     return [
       { label: 'CGST' + shown, amount: money.fromMinor(firstHalf, policy) },
-      { label: 'SGST' + shown, amount: money.fromMinor(taxMinor - firstHalf, policy) },
+      {
+        label:
+          (['04', '25', '26', '31', '35', '38'].includes(supplierState) ? 'UTGST' : 'SGST') + shown,
+        amount: money.fromMinor(taxMinor - firstHalf, policy),
+      },
     ];
   }
   return [{ label: 'Tax', amount: tax }];

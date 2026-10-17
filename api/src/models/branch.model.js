@@ -100,7 +100,7 @@ const branchSchema = new Schema(
     whatsapp_device_id: { type: String, default: '' },
     item_stock_default: { type: String, enum: ['always_available', 'track_quantities'] },
     inventory_policy: {
-      enabled: { type: Boolean, default: false },
+      enabled: { type: Boolean, default: true },
       approvalActions: {
         type: [String],
         enum: ['count', 'receive', 'damage', 'loss'],
@@ -110,7 +110,6 @@ const branchSchema = new Schema(
     stock_management: { type: Boolean, default: false },
     stock_management_log: { type: Boolean, default: false },
     sale_inline_editor: { type: Boolean, default: false },
-    item_editor_v2: { type: Boolean, default: false },
     printall: { type: Boolean, default: false },
     enable_notification_reminders: { type: Boolean, default: false },
     enable_email_reminders: { type: Boolean, default: false },
@@ -121,7 +120,7 @@ const branchSchema = new Schema(
     sms_max_retries: { type: String },
     roundOff: { type: Boolean, default: false },
     sales_mail: { type: Boolean, default: false },
-    customer_print: { type: Boolean, default: false },
+    customer_print: { type: Boolean, default: true },
     print_logoimg: { type: Boolean, default: false },
     print_sale_notes: { type: Boolean, default: false },
     receipt_barcode: { type: Boolean, default: false },
@@ -240,6 +239,7 @@ const branchSchema = new Schema(
      * a series for. A shop turns it on, ideally on the first of its own year.
      * See utils/bill-number.js.
      */
+    sales_exact_numeric_codes: { type: Boolean, default: false },
     sales_search_fields: { type: Array, default: null },
     sales_search_display_fields: { type: Array, default: null },
     bill_number_reset: { type: String, default: '' },
@@ -381,6 +381,7 @@ class BranchModel {
       roundOff: { type: 'String', select: true },
       sales_mail: { type: 'String', select: true },
       sales_prefix: { type: 'String', select: true },
+      sales_exact_numeric_codes: { type: 'Boolean', select: true, defaultValue: false },
       sales_search_fields: { type: 'Array', select: true },
       sales_search_display_fields: { type: 'Array', select: true },
       bill_number_reset: { type: 'String', select: true },
@@ -397,7 +398,6 @@ class BranchModel {
       ssl_tls_type: { type: 'String', select: true },
       state: { type: 'String', select: true },
       sale_inline_editor: { type: 'String', select: true },
-      item_editor_v2: { type: 'Boolean', select: true },
       stock_management: { type: 'String', select: true },
       stock_management_log: { type: 'String', select: true },
       store_address: { type: 'String', select: true },
@@ -1044,6 +1044,7 @@ class BranchModel {
    */
   async createBranch(data, user = {}) {
     try {
+      const regional = require('../services/branch-regional')(data);
       // 1. Check duplicate
       const duplicate = await this.model.findOne({
         branch_name: { $regex: new RegExp(`^${data.name}$`, 'i') },
@@ -1138,6 +1139,7 @@ class BranchModel {
         country: data.country,
         country_id: data.country_id,
         state: data.state,
+        city: typeof data.city === 'string' ? data.city.trim().slice(0, 50) : '',
         store_address: data.address?.trim(),
         store_email: data.email?.trim(),
         store_telephone: data.phone?.trim(),
@@ -1166,7 +1168,7 @@ class BranchModel {
         whatsapp_receipt: false,
         roundOff: false,
         sales_mail: false,
-        customer_print: false,
+        customer_print: true,
         print_logoimg: false,
         print_sale_notes: false,
         receipt_barcode: false,
@@ -1219,6 +1221,7 @@ class BranchModel {
         client_dateformat: 'dd/mm/yyyy',
         server_dateformat: 'd/m/Y',
         dateformat_text: '01/01/2018 -- dd/mm/yyyy',
+        ...regional,
         time_format: 'enable',
         payment_gateway: [],
         online_ordering: onlineOrdering.defaultConfig(),
@@ -1577,6 +1580,7 @@ class BranchModel {
         country: data.country,
         country_id: data.country_id,
         state: data.state,
+        ...(typeof data.city === 'string' ? { city: data.city.trim().slice(0, 50) } : {}),
         store_address: data.address?.trim(),
         store_email: data.email?.trim(),
         store_telephone: data.phone?.trim(),

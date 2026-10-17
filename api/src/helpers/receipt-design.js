@@ -5,6 +5,29 @@
   else root.PosnicReceiptDesign = factory();
 })(typeof window !== 'undefined' ? window : this, function () {
   'use strict';
+  function taxLabel(data, fallbackCountry) {
+    data = data || {};
+    const country = String(
+      data.branch_country || data.country || data.sortname || fallbackCountry || ''
+    )
+      .trim()
+      .toLowerCase();
+    if (['in', 'ind', 'india', 'au', 'aus', 'australia'].includes(country)) return 'GST';
+    if (
+      [
+        'gb',
+        'gbr',
+        'uk',
+        'united kingdom',
+        'united kingdom of great britain and northern ireland',
+        'za',
+        'zaf',
+        'south africa',
+      ].includes(country)
+    )
+      return 'VAT';
+    return 'Tax';
+  }
   function taxRegistrationLabel(data, fallbackCountry) {
     data = data || {};
     const country = String(
@@ -30,7 +53,7 @@
   const formats = {
     58: { name: '58 mm thermal', width: 58, content: 48, font: 10 },
     80: { name: '80 mm thermal', width: 80, content: 72, font: 12 },
-    112: { name: '112 mm thermal (TVS RP 4200)', width: 112, content: 104, font: 12 },
+    112: { name: '112 mm thermal', width: 112, content: 104, font: 12 },
     a4: { name: 'A4', width: 210, height: 297, content: 186, font: 12 },
     a5: { name: 'A5', width: 148, height: 210, content: 124, font: 11 },
     letter: { name: 'US Letter', width: 215.9, height: 279.4, content: 191.9, font: 12 },
@@ -54,18 +77,17 @@
   };
   const restaurant = ['table', 'order_type', 'covers', 'steward', 'session', 'fssai', 'source'];
   function fieldAvailable(field, branch = {}) {
-    if (!restaurant.includes(field)) return true;
-    if (![true, 'true', 'enable'].includes(branch.table_options)) return false;
-    // The outlet's country determines licensing, never its currency, language
-    // or customer's address. Missing country information does not imply India.
-    return (
-      field !== 'fssai' ||
-      ['INDIA', 'IN', 'IND'].includes(
-        String(branch.country || '')
-          .trim()
-          .toUpperCase()
-      )
-    );
+    const restaurantEnabled = [true, 'true', 'enable'].includes(branch.table_options);
+    if (field === 'fssai') {
+      const country = String(branch.branch_country || branch.country || '')
+        .trim()
+        .toUpperCase();
+      // A saved food licence also supports food retailers without restaurant workflows.
+      const foodBusiness =
+        restaurantEnabled || Boolean(String(branch.branch_fssai_number || '').trim());
+      return ['INDIA', 'IN', 'IND'].includes(country) && foodBusiness;
+    }
+    return !restaurant.includes(field) || restaurantEnabled;
   }
   const types = [
     'store',
@@ -115,7 +137,17 @@
       throw new Error('Choose a valid receipt format.');
     if (JSON.stringify(value).length > 1800000)
       throw new Error('Receipt images are too large. Use smaller images.');
-    const out = { version: 1, defaultFormat: value.defaultFormat, layouts: {} };
+    const out = {
+      version: 1,
+      defaultFormat: value.defaultFormat,
+      showBranding: value.showBranding !== false,
+      layouts: {},
+    };
+    if (value.brandingText != null) {
+      if (typeof value.brandingText !== 'string' || value.brandingText.length > 200)
+        throw new Error('Receipt footer text must be at most 200 characters.');
+      out.brandingText = value.brandingText.trim();
+    }
     Object.keys(formats).forEach(function (format) {
       const layout = layoutFor(value, format);
       if (!layout || !Array.isArray(layout.blocks) || layout.blocks.length > 40)
@@ -143,6 +175,11 @@
             throw new Error('Choose full or half width for a field.');
         }
         if (block.type === 'items') {
+          if (block.heading != null) {
+            if (typeof block.heading !== 'string' || block.heading.length > 40)
+              throw new Error('Item heading must be at most 40 characters.');
+            b.heading = block.heading.trim();
+          }
           b.hsn = block.hsn === true;
           b.showRowNumbers = block.showRowNumbers === true;
           if (block.lineStyle != null) {
@@ -154,6 +191,7 @@
           if (!['detailed', 'compact', 'columns'].includes(b.itemLayout))
             throw new Error('Choose a valid item layout.');
         }
+        if (block.type === 'totals') b.showPaymentMethod = block.showPaymentMethod !== false;
         if (block.type === 'items' && block.nameMaxChars != null) {
           b.nameMaxChars = Number(block.nameMaxChars);
           if (!Number.isInteger(b.nameMaxChars) || b.nameMaxChars < 8 || b.nameMaxChars > 80)
@@ -175,6 +213,25 @@
                 throw new Error('Choose a valid receipt date or time format.');
               b[key] = block[key];
             }
+          }
+        }
+        if (block.type === 'store') {
+          for (const [key, max] of Object.entries({
+            nameText: 200,
+            addressText: 1000,
+            phoneText: 100,
+            emailText: 200,
+            registrationText: 100,
+            fssaiText: 100,
+          })) {
+            if (block[key] != null) {
+              if (typeof block[key] !== 'string' || block[key].length > max)
+                throw new Error('Store receipt text is too long.');
+              if (block[key].trim()) b[key] = block[key].trim();
+            }
+          }
+          for (const key of ['showName', 'showAddress', 'showPhone', 'showRegistration']) {
+            if (block[key] === false) b[key] = false;
           }
         }
         if (block.type === 'store' && block.fssaiInHeader === true) b.fssaiInHeader = true;
@@ -238,6 +295,7 @@
     return out;
   }
   return {
+    taxLabel: taxLabel,
     taxRegistrationLabel: taxRegistrationLabel,
     formats: formats,
     fields: fields,

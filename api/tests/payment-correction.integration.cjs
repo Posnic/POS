@@ -104,3 +104,24 @@ test('refund and edit locks prevent a correction starting against another operat
   await db.collection('sales').updateOne({_id:saleId},{$unset:{return_refund_lock:''},$set:{captain_edit_until:new Date(Date.now()+60000)}});
   await assert.rejects(service.save(r),/edit/);
 });
+
+
+test('Captain mixed 357 payment can become UPI 357 but cannot become the edited 168 total', async () => {
+  const items = [{name: 'Baby Corn 65', item_quantity: 1, item_total: 189}, {name: 'Blackcurrant Mojito', item_quantity: 1, item_total: 168}];
+  await db.collection('sales').updateOne({_id:saleId}, {$set:{items, sales_total:357, items_total:357,
+    paid_amount:357, partial_balance:357, payment_mode:'Mixed', multi_payment:{UPI:299.96,Cash:57.04},
+    captain_payment_plan:'paid-test-plan'}});
+  const journal = {_id:'paid-test-plan',state:'paid',payments:[{amountMinor:35700,allocations:{[String(saleId)]:35700}}]};
+  await db.collection('captain_payment_plans').insertOne(journal);
+  await db.collection('cashregister').updateOne({_id:registerId}, {$set:{register_sales:[{sales_id:saleId,register_amount:357,register_paymentmode:'Mixed',multi_payment:{UPI:299.96,Cash:57.04}}]}});
+  const wrong=await request([{method:'UPI',amount:168}]);
+  await assert.rejects(service.save(wrong), /Amounts must equal/);
+  const right=await request([{method:'UPI',amount:357}]);
+  await service.save(right);
+  const saved=await db.collection('sales').findOne({_id:saleId});
+  assert.deepEqual(summary.rows(saved), [{method:'UPI',amount:357}]);
+  assert.equal(saved.sales_total,357); assert.equal(saved.paid_amount,357); assert.deepEqual(saved.items,items);
+  assert.deepEqual(await db.collection('captain_payment_plans').findOne({_id:journal._id}),journal);
+  assert.deepEqual((await db.collection('cashregister').findOne({_id:registerId})).register_sales[0].multi_payment,{UPI:357});
+  assert.equal(saved.payment_corrections.length,1);
+});

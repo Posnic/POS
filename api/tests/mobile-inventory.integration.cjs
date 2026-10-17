@@ -173,9 +173,9 @@ test('inventory-only staff can enroll without gaining selling permission', async
     .updateOne({ _id: row.branch_id }, { $set: { module_mobile_pos_enable: false } });
   await assert.rejects(inventory.catalogue(req), { status: 403 });
 });
-test('approval policy is administrator-only and persists explicit opt-in', async () => {
+test('approval policy is administrator-only and persists selected approval actions', async () => {
   assert.deepEqual((await inventory.policy(req)).approvalActions, []);
-  assert.equal((await inventory.policy(req)).enabled, false);
+  assert.equal((await inventory.policy(req)).enabled, true);
   req.method = 'POST';
   req.body = { enabled: true, approvalActions: ['damage'] };
   assert.deepEqual((await inventory.policy(req)).approvalActions, ['damage']);
@@ -193,16 +193,14 @@ test('stock history reads the shared desktop audit and remains branch scoped', a
   assert.equal(history.rows[0].opening, '10');
   assert.equal(history.rows[0].closing, '15');
   assert.equal(history.rows[0].reason, 'Mobile inventory receive');
-  await db
-    .collection('stocklogs')
-    .insertOne({
-      _id: new ObjectId(),
-      view_item_id: row._id,
-      license: row.license,
-      branch_id: new ObjectId(),
-      created_date: new Date(),
-      process: 'Other branch',
-    });
+  await db.collection('stocklogs').insertOne({
+    _id: new ObjectId(),
+    view_item_id: row._id,
+    license: row.license,
+    branch_id: new ObjectId(),
+    created_date: new Date(),
+    process: 'Other branch',
+  });
   assert.equal((await inventory.history(req)).rows.length, 1);
 });
 test('catalogue is fully paged, including categories and suppliers from the server', async () => {
@@ -266,4 +264,76 @@ test('null lines and case-variant duplicate ObjectIds are rejected before writin
     { itemId: String(row._id).toUpperCase(), quantity: 1000 },
   ];
   assert.throws(() => inventory.validate(body), { status: 400 });
+});
+
+test('mobile inventory defaults on, preserves explicit off and existing approval choices', async () => {
+  req.method = 'GET';
+  assert.equal((await inventory.policy(req)).enabled, true);
+  req.handsetDevice = 'test-phone';
+  assert.equal((await inventory.catalogue(req)).rows.length, 1);
+  await db.collection('branches').updateOne(
+    { _id: row.branch_id },
+    {
+      $set: { inventory_policy: { enabled: false, approvalActions: ['count'] } },
+    }
+  );
+  assert.equal((await inventory.policy(req)).enabled, false);
+  assert.deepEqual((await inventory.policy(req)).approvalActions, ['count']);
+  await assert.rejects(inventory.catalogue(req), { status: 403 });
+  req.method = 'POST';
+  req.body = { approvalActions: ['count'] };
+  assert.equal((await inventory.policy(req)).enabled, false);
+  req.body.enabled = true;
+  assert.equal((await inventory.policy(req)).enabled, true);
+  assert.equal((await inventory.catalogue(req)).rows.length, 1);
+  assert.equal((await db.collection('items').findOne({ _id: row._id })).available_quantity, 10);
+});
+
+test('availability duplicate review, alternates, restore, audit, retry, conflict and stock preservation', async () => {
+  const availability = require('../src/services/item-availability');
+  const mapItem = require('../src/services/mobile-pos').mapItem;
+  await db
+    .collection('items')
+    .updateOne({ _id: row._id }, { $set: { barcode_id: '123', selling_price: 10, tax: 10 } });
+  const other = {
+    ...row,
+    _id: new ObjectId(),
+    name: 'Other beans',
+    barcodes: ['123'],
+    selling_price: 20,
+  };
+  await db.collection('items').insertOne(other);
+  req.query.q = '123';
+  let page = await inventory.catalogue(req);
+  assert.equal(page.rows.length, 2);
+  assert.notEqual(page.rows[0].price, page.rows[1].price);
+  assert.ok(page.rows.every((i) => i.availableForSale));
+  req.body = {
+    id: 'availability-test-001',
+    changes: [{ itemId: String(row._id), available: false, revision: '' }],
+  };
+  assert.equal((await availability.change(req)).results[0].state, 'confirmed');
+  await availability.change(req);
+  let hidden = await db.collection('items').findOne({ _id: row._id });
+  assert.equal(mapItem(hidden).active, false);
+  assert.equal(hidden.available_quantity, 10);
+  assert.equal(hidden.availability_history.length, 1);
+  assert.equal(hidden.availability_history[0].actor, String(req.user._id));
+  assert.equal(await db.collection('stocklogs').countDocuments(), 0);
+  page = await inventory.catalogue(req);
+  assert.equal(page.rows.length, 2);
+  req.body = {
+    id: 'availability-test-002',
+    changes: [{ itemId: String(row._id), available: true, revision: '' }],
+  };
+  assert.equal((await availability.change(req)).results[0].state, 'conflict');
+  req.body.changes[0].revision = hidden.availability_revision;
+  await availability.change(req);
+  hidden = await db.collection('items').findOne({ _id: row._id });
+  assert.equal(mapItem(hidden).active, true);
+  assert.equal(hidden.availability_history.length, 2);
+  assert.equal(hidden.available_quantity, 10);
+  req.user.usertype = 'staff';
+  req.user.access = { item: { read: true, write: false } };
+  await assert.rejects(availability.change(req), { status: 403 });
 });

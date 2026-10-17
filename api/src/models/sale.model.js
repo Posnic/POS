@@ -400,6 +400,8 @@ const saleSchema = new mongoose.Schema(
       trim: true,
     },
     customer_phone: String,
+    place_of_supply: { type: String, trim: true },
+    customer_creation_pending: { type: Boolean, default: false },
     customer_email: {
       type: String,
       trim: true,
@@ -719,6 +721,7 @@ const saleSchema = new mongoose.Schema(
 
     payment_correction_pending: { type: mongoose.Schema.Types.Mixed },
     payment_corrections: { type: [mongoose.Schema.Types.Mixed], default: undefined },
+    paid_bill_corrections: { type: [mongoose.Schema.Types.Mixed], default: undefined },
     captain_payment_plan: { type: String },
     seating_capacity_revision: { type: String },
     captain_transfer_allocation: { type: mongoose.Schema.Types.Mixed },
@@ -1147,6 +1150,7 @@ class LegacySaleModel {
     customer_phone: { type: 'String', select: true },
     customer_email: { type: 'String', select: true },
     customer_state: { type: 'String', select: true },
+    place_of_supply: { type: 'String', select: true },
     customer_country: { type: 'String', select: true },
     customer_gst_type: { type: 'String', select: true },
     customer_gst_number: { type: 'String', select: true },

@@ -265,7 +265,7 @@ test('partially paid history keeps a settlement action and shows the remaining b
   $('body').append('<div id="sales_doc"></div><div id="sales_list_rows"></div>');
   const bill = { _id: 'abc', sales_id: 'QA-PARTIAL', payment_status: 'Partialy Paid', sales_total: 100,
     sales_sub_total: 100, partial_balance: 40, payment_pending: 60, items: [] };
-  for (const name of ['buildSaleSheet', 'renderSaleDoc', 'loadHistory']) {
+  for (const name of ['buildSaleSheet', 'renderSaleDoc', 'paintHistorySummary', 'loadHistory']) {
     const start = source.indexOf('    ' + name + ': function');
     const end = source.indexOf('\n    },', start);
     win.eval('PosnicPro.sales.' + name + ' = ' + source.slice(source.indexOf('function', start), end + 6) + ';');

@@ -954,5 +954,11 @@
   "Enable Recycle Bin before deleting sales": "විකුණුම් මකා දැමීමට පෙර ප්රතිචක්රීකරණ බින්",
   "Only super admins can change the sale hard-delete setting": "සුපිරි පරිපාලකයන්ට පමණක් විකිණීමේ හාඩ්-ඩ්රයිට් සැකසුම වෙනස් කළ හැකිය",
   "Finish the pending payment correction before closing this register.": "මෙම ලේඛනය වසා දැමීමට පෙර කල් පවතින ගෙවීම් නිවැරදි කිරීම අවසන් කරන්න.",
-  "Finish the pending payment correction first.": "පළමුව කල් පවතින ගෙවීම් නිවැරදි කිරීම අවසන් කරන්න."
+  "Finish the pending payment correction first.": "පළමුව කල් පවතින ගෙවීම් නිවැරදි කිරීම අවසන් කරන්න.",
+  "Bill correction saved.": "බිල් නිවැරදි කිරීම සුරකින ලදී.",
+  "Review the paid bill correction before saving.": "ඉතිරි කිරීමට පෙර ගෙවූ බිල්පත් නිවැරදි කිරීම සමාලෝචනය කරන්න.",
+  "Choose a saved customer for customer credit.": "පාරිභෝගික ණය සඳහා සුරකින ගනුදෙනුකරුවෙකු තෝරන්න.",
+  "Exact numeric search must be on or off": "නිශ්චිත සංඛ්යාත්මක සෙවීම සක්රිය හෝ අක්රිය කළ යුතුය",
+  "Item not found or selling price is held. Review it in Edit prices.": "අයිතමය සොයාගත නොහැකි හෝ විකුණුම් මිල රඳවා ඇත. මිල ගණන් සංස්කරණය කිරීමේ දී එය සමාලෝචනය කරන්න.",
+  "Password must contain between 5 and 20 characters": "මුරපදය අක්ෂර 5 ත් 20 ත් අතර ප්රමාණයක් අඩංගු විය යුතුය"
 }

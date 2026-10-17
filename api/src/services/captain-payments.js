@@ -169,19 +169,117 @@ function view(plan, options) {
 }
 // Every effect is derived from the durable payment journal. Replaying repairs
 // an interrupted write without incrementing money, touching stock or reprinting.
+function paymentReceipt(plan, c, payment) {
+  const monetary = Money.snapshot(plan.snapshot);
+  const factor = monetary.factor;
+  const selected = payment.guests.map((index) => plan.guests[index]);
+  const guest = {
+    index: 0,
+    name: selected.map((g) => g.name).join(', '),
+    totalMinor: payment.amountMinor,
+    components: {},
+    lines: selected.flatMap((g) => g.lines),
+  };
+  for (const g of selected)
+    for (const [key, amount] of Object.entries(g.components))
+      guest.components[key] = (guest.components[key] || 0) + amount;
+  // A collection receipt reflects this payment, even for a partial bill.
+  const receiptSale = { ...plan.sales[0], date: payment.at };
+  const payload = billForGuest(plan.snapshot, guest, c.branch, receiptSale, hash(payment.id), {
+    combineItems: false,
+  });
+  // The shared designer expects numeric quantities/rates, even for an equal
+  // guest share. Keep the allocated money, never reuse the full sale rows.
+  payload.items = payload.items.map((item, index) => {
+    const line = guest.lines[index];
+    const qty = (Number(line.quantity) * line.weight) / line.weightTotal;
+    return { ...item, qty, rate: qty ? item.amount / qty : 0 };
+  });
+  payload.items = require('../helpers/combine-bill-lines')(
+    guest.lines.map((line) => line.bill_source || {}),
+    payload.items,
+    monetary
+  );
+  const bill = buildBillPayload(receiptSale, c.branch);
+  payload.title = bill.title;
+  payload.billNo = bill.billNo;
+  payload.footer = bill.footer;
+  payload.footerImage = bill.footerImage;
+  payload.footerImageCaption = bill.footerImageCaption;
+  payload.receiptDocument = receiptDocument(receiptSale, c.branch, payload);
+  Object.assign(payload.receiptDocument, {
+    receipt_settled: true,
+    // Discounts, taxes and adjustments are already allocated in this bill.
+    sale_extra_discount: 0,
+    charges: payload.charges || [],
+    tax: payload.taxes.reduce((sum, row) => sum + row.amount, 0),
+    items: [],
+    payment_mode: payment.method,
+    // This receipt covers this collection, not earlier payments on the sale.
+    multi_payment: {},
+    captain_payments: [],
+    partial_check: false,
+    partial_balance: 0,
+    payment_pending: 0,
+    ...(payment.tenders
+      ? {
+          multi_payment: Object.fromEntries(
+            payment.tenders.map((tender) => [tender.method, tender.amountMinor / factor])
+          ),
+        }
+      : {}),
+    paid_amount: payment.amountMinor / factor,
+    received_amount: payment.receivedMinor / factor,
+    change_amount: payment.changeMinor / factor,
+  });
+  payload.extras = [
+    { label: 'Payment', value: payment.method },
+    {
+      label: 'Received',
+      value: (payment.receivedMinor / factor).toFixed(monetary.currencyDigits),
+    },
+    { label: 'Change', value: (payment.changeMinor / factor).toFixed(monetary.currencyDigits) },
+    { label: 'Staff', value: payment.staffName },
+  ];
+  return payload;
+}
+function recordView(plan, c, input) {
+  const payment = plan.payments.find((p) => p.id === input.request_id);
+  return {
+    ...view(plan, c.options),
+    confirmed: input.request_id,
+    ...(payment?.printReceipt && payment.receiptDelivery === 'browser'
+      ? { browserReceipt: paymentReceipt(plan, c, payment).receiptDocument }
+      : {}),
+  };
+}
 async function reconcile(db, c, plan) {
   const monetary = Money.snapshot(plan.snapshot),
     factor = monetary.factor;
   const payments = plan.payments || [];
   if (!payments.length) return;
   for (const sale of plan.sales) {
-    const corrected = await db
-      .collection('sales')
-      .findOne(
-        { ...baseFilter(c), _id: sale._id },
-        { projection: { payment_corrections: 1, payment_correction_pending: 1 } }
-      );
-    if (corrected?.payment_corrections?.length || corrected?.payment_correction_pending) continue;
+    const corrected = await db.collection('sales').findOne(
+      { ...baseFilter(c), _id: sale._id },
+      {
+        projection: {
+          payment_corrections: 1,
+          paid_bill_corrections: 1,
+          payment_correction_pending: 1,
+        },
+      }
+    );
+    if (
+      corrected?.paid_bill_corrections?.length ||
+      corrected?.payment_correction_pending?.kind === 'paid-bill-edit'
+    )
+      return;
+    if (
+      corrected?.payment_corrections?.length ||
+      corrected?.paid_bill_corrections?.length ||
+      corrected?.payment_correction_pending
+    )
+      continue;
     const multi = {};
     let paid = 0;
     for (const payment of payments) {
@@ -212,6 +310,7 @@ async function reconcile(db, c, plan) {
         captain_payment_plan: plan._id,
         payment_correction_pending: { $exists: false },
         'payment_corrections.0': { $exists: false },
+        'paid_bill_corrections.0': { $exists: false },
         $or: [
           { captain_payment_version: { $exists: false } },
           { captain_payment_version: { $lte: plan.version } },
@@ -264,6 +363,11 @@ async function reconcile(db, c, plan) {
     if (!update.matchedCount) {
       const current = await db.collection('sales').findOne({ ...baseFilter(c), _id: sale._id });
       if (
+        current?.paid_bill_corrections?.length ||
+        current?.payment_correction_pending?.kind === 'paid-bill-edit'
+      )
+        return;
+      if (
         current?.captain_payment_plan !== plan._id ||
         current.captain_payment_version < plan.version
       )
@@ -308,79 +412,12 @@ async function reconcile(db, c, plan) {
     }
   }
   let receiptPending = false;
-  if (payments.some((p) => p.printReceipt)) {
+  if (payments.some((p) => p.printReceipt && p.receiptDelivery !== 'browser')) {
     const queue = require('../repositories/print-job.repository').queuePrintJob;
     for (const payment of payments) {
       if (!payment.printReceipt) continue;
-      const selected = payment.guests.map((index) => plan.guests[index]);
-      const guest = {
-        index: 0,
-        name: selected.map((g) => g.name).join(', '),
-        totalMinor: payment.amountMinor,
-        components: {},
-        lines: selected.flatMap((g) => g.lines),
-      };
-      for (const g of selected)
-        for (const [key, amount] of Object.entries(g.components))
-          guest.components[key] = (guest.components[key] || 0) + amount;
-      // A collection receipt reflects this payment, even for a partial bill.
-      const receiptSale = { ...plan.sales[0], date: payment.at };
-      const payload = billForGuest(plan.snapshot, guest, c.branch, receiptSale, hash(payment.id), {
-        combineItems: false,
-      });
-      // The shared designer expects numeric quantities/rates, even for an equal
-      // guest share. Keep the allocated money, never reuse the full sale rows.
-      payload.items = payload.items.map((item, index) => {
-        const line = guest.lines[index];
-        const qty = (Number(line.quantity) * line.weight) / line.weightTotal;
-        return { ...item, qty, rate: qty ? item.amount / qty : 0 };
-      });
-      payload.items = require('../helpers/combine-bill-lines')(
-        guest.lines.map((line) => line.bill_source || {}),
-        payload.items,
-        monetary
-      );
-      const bill = buildBillPayload(receiptSale, c.branch);
-      payload.title = bill.title;
-      payload.billNo = bill.billNo;
-      payload.footer = bill.footer;
-      payload.footerImage = bill.footerImage;
-      payload.footerImageCaption = bill.footerImageCaption;
-      payload.receiptDocument = receiptDocument(receiptSale, c.branch, payload);
-      Object.assign(payload.receiptDocument, {
-        receipt_settled: true,
-        // Discounts, taxes and adjustments are already allocated in this bill.
-        sale_extra_discount: 0,
-        charges: payload.charges || [],
-        tax: payload.taxes.reduce((sum, row) => sum + row.amount, 0),
-        items: [],
-        payment_mode: payment.method,
-        // This receipt covers this collection, not earlier payments on the sale.
-        multi_payment: {},
-        captain_payments: [],
-        partial_check: false,
-        partial_balance: 0,
-        payment_pending: 0,
-        ...(payment.tenders
-          ? {
-              multi_payment: Object.fromEntries(
-                payment.tenders.map((tender) => [tender.method, tender.amountMinor / factor])
-              ),
-            }
-          : {}),
-        paid_amount: payment.amountMinor / factor,
-        received_amount: payment.receivedMinor / factor,
-        change_amount: payment.changeMinor / factor,
-      });
-      payload.extras = [
-        { label: 'Payment', value: payment.method },
-        {
-          label: 'Received',
-          value: (payment.receivedMinor / factor).toFixed(monetary.currencyDigits),
-        },
-        { label: 'Change', value: (payment.changeMinor / factor).toFixed(monetary.currencyDigits) },
-        { label: 'Staff', value: payment.staffName },
-      ];
+      if (payment.receiptDelivery === 'browser') continue;
+      const payload = paymentReceipt(plan, c, payment);
       const copies = Math.max(1, Math.min(3, Number(c.branch.bill_print_copies) || 1));
       for (let copy = 1; copy <= copies; copy++) {
         const result = await queue({
@@ -555,7 +592,7 @@ async function record(req) {
   if (previous) {
     if (previous.signature !== signature) fail('This payment request was already used.', 409);
     await reconcile(db, c, plan);
-    return { ...view(plan, c.options), confirmed: input.request_id };
+    return recordView(plan, c, input);
   }
   if (!Number.isSafeInteger(input.version) || input.version !== plan.version)
     fail('Another payment changed this bill. Refresh before collecting more.', 409);
@@ -629,6 +666,9 @@ async function record(req) {
     guests: indexes,
     amountMinor: amount,
     printReceipt: c.options.printReceipt,
+    // Only authenticated POS collection can opt into a browser dialog. Phones keep the counter queue.
+    receiptDelivery:
+      req.captainPaymentDesktop && input.receiptDelivery === 'browser' ? 'browser' : 'queue',
     receivedMinor: input.receivedMinor,
     changeMinor: input.receivedMinor - amount,
     method: input.method,
@@ -662,6 +702,6 @@ async function record(req) {
       fail('Another payment changed this bill. Refresh before collecting more.', 409);
   } else plan = await plans.findOne({ _id: plan._id, ...baseFilter(c) });
   await reconcile(db, c, plan);
-  return { ...view(plan, c.options), confirmed: input.request_id };
+  return recordView(plan, c, input);
 }
 module.exports = { settings, validateSettings, scope, prepare, release, record, reconcile, view };

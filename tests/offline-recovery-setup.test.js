@@ -199,8 +199,11 @@ async function install(mode) {
   };
   for (const script of [...doc.querySelectorAll('script:not([src])')]) w.eval(script.textContent);
   await flush();
+  for (const file of ['setup-region-data.js', 'setup-region.js']) w.eval(read('src/' + file));
   if (mode === 'quick') {
-    for (const [id, value] of Object.entries({ qBusinessName: 'Test shop', qEmail: 'owner@example.test', qPassword: 'Owner-password-26' })) doc.getElementById(id).value = value;
+    doc.getElementById('qCountry').value = 'India';
+    doc.getElementById('qCountry').dispatchEvent(new w.Event('change'));
+    for (const [id, value] of Object.entries({ qBusinessName: 'Test shop', qEmail: 'owner@example.test', qPassword: 'Owner-password-26', qConfirmPassword: 'Owner-password-26', qState: 'Goa', qCity: 'Panaji', qTimezone: 'Asia/Kolkata' })) doc.getElementById(id).value = value;
     doc.getElementById('qCreateBtn').click();
   } else {
     for (const [id, value] of Object.entries({ email: 'owner@example.test', password: 'Owner-password-26', branchName: 'Test shop', address: 'Test address', dbPassword: 'Strong-database-26!', dbPasswordConfirm: 'Strong-database-26!' })) doc.getElementById(id).value = value;

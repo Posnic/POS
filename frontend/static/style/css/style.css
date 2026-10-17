@@ -20931,6 +20931,8 @@ mark {
   left: 60px;
 }
 
+html.is-electron .topbar { top: var(--titlebar-h, 44px); }
+
 .topbar-mobile {
   display: none;
   background-color: #ffffff;
@@ -21009,6 +21011,7 @@ mark {
   background-color: #ffffff;
   padding: 15px 30px;
   position: fixed;
+    top: 0;
   z-index: 9;
   left: 250px;
   right: 0;

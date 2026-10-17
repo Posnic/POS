@@ -944,6 +944,7 @@ describe('BranchModel.createBranch', () => {
     name: 'New Branch',
     country: 'IN',
     state: 'KL',
+    city: '  Kochi  ',
     email: 'test@test.com',
     phone: '9999999999',
     register: ['Main Register'],
@@ -978,6 +979,9 @@ describe('BranchModel.createBranch', () => {
     const r = await bm.createBranch(data, user);
     expect(r.status).toBe(true);
     expect(r.data.insertId).toBe(branchId.toString());
+    expect(mockModel.create.mock.calls[0][0].city).toBe('Kochi');
+    expect(mockModel.create.mock.calls[0][0].branch_gstin_number).toBe('');
+    expect(mockModel.create.mock.calls[0][0].currency_value[0].currency_text).toBe('INR');
   });
 
   test('returns branchList array on success', async () => {
@@ -1067,6 +1071,13 @@ describe('BranchModel.updateBranch', () => {
     const spy = jest.spyOn(bm, 'updateBranchNameInCollections').mockResolvedValue();
     await bm.updateBranch(id.toString(), data, user);
     expect(spy).toHaveBeenCalledTimes(1);
+    expect(mockModel.findOneAndUpdate.mock.calls[0][1].$set).not.toHaveProperty('city');
+  });
+
+  test('saves a supplied city without changing legacy requests that omit it', async () => {
+    mockModel.findOneAndUpdate.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
+    await bm.updateBranch(validId(), { ...data, city: '  Kochi  ' }, user);
+    expect(mockModel.findOneAndUpdate.mock.calls[0][1].$set.city).toBe('Kochi');
   });
 
   test('an existing register keeps its register_id across edits; new names get new ids', async () => {

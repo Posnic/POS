@@ -1,4 +1,4 @@
-/* Isolated opt-in route: #/items_v2/new. No existing item or sale handlers are replaced. */
+/* Default item creator, also available through the #/items_v2/new alias. */
 (function (root) {
     'use strict';
     function assess(f) {
@@ -22,7 +22,8 @@
     }
     if (typeof module === 'object' && module.exports) { module.exports = { assess: assess, payload: payload }; return; }
     var P = root.PosnicPro, $ = root.jQuery;
-    var businessContext = null, capabilities = {};
+    var businessContext = null, capabilities = {}, savedItemId = null, editing = false, savedBranch = null;
+    var existingItem = null, editBaseline = null, editSequence = 0;
     function readCapabilities() {
         var settings = {};
         try { settings = JSON.parse(P.local.get('general_settings') || '{}'); } catch (_) {}
@@ -106,16 +107,22 @@
         P.itemsV2Details.update(capabilities, selected('iv2-kind'));
         var f = fields(), a = assess(f), named = !!f.name.trim(), tracked = f.kind !== 'service' && f.stock === 'tracked';
         show('iv2-restaurant', capabilities.restaurant && f.kind !== 'service'); show('iv2-online', capabilities.online);
+        var copySource = value('iv2-copy-source');
+        show('iv2-copy-notice', !!copySource && !saved);
+        text('iv2-copy-notice', P.i18n.t('lang_iv2_copy_notice', 'Copy of {name}. This is a new, unsaved item. The original item will not change.').replace('{name}', copySource));
         var noun = f.kind === 'dish' ? 'dish' : f.kind === 'service' ? 'service' : 'item';
-        text('iv2-title', 'Create ' + noun); text('iv2-name-label', noun.charAt(0).toUpperCase() + noun.slice(1) + ' name');
+        text('iv2-title', copySource ? P.i18n.t('lang_iv2_create_copy', 'Create a copy') : (editing ? PosnicPro.i18n.t('lang_edit_title', 'Edit') : PosnicPro.i18n.t('lang_po_create', 'Create')).trim() + ' ' + noun); text('iv2-name-label', noun.charAt(0).toUpperCase() + noun.slice(1) + ' name');
+        document.querySelector('#items_v2 .iv2-heading p').textContent = editing ? P.i18n.t('lang_iv2_edit_hint', 'Add details to your saved item, then save your changes.') : P.i18n.t('lang_start_with_a_name_we_ll_help_you_get_it_re', 'Start with a name. We’ll help you get it ready to sell.');
         document.getElementById('iv2-name').placeholder = f.kind === 'dish' ? 'e.g. Tea, Chicken biryani, Butter naan' : f.kind === 'service' ? 'e.g. Haircut, Delivery, Repair' : 'e.g. Mineral water, Blue shirt';
-        if (!busy && !saved) text('iv2-save', 'Save ' + noun + ' →');
+        if (!busy && !saved) text('iv2-save', copySource ? P.i18n.t('lang_iv2_save_copy', 'Save as new item') + ' →' : editing ? P.i18n.t('lang_iv2_save_changes', 'Save changes') + ' →' : 'Save ' + noun + ' →');
         var details = P.itemsV2Details.status();
         if (details.hsn) f.taxRate = details.tax;
         var price = Number(f.price);
         show('iv2-zero-price', (attempted || touched.has('iv2-price')) && price === 0 && !f.openPrice);
         show('iv2-quantity-row', tracked && !f.family);
-        document.getElementById('iv2-quantity').disabled = !tracked || f.family;
+        document.getElementById('iv2-quantity').disabled = editing || !tracked || f.family;
+        document.getElementById('iv2-has-variants').disabled = editing;
+        if (editing) show('iv2-quantity-row', false);
         show('iv2-zero-stock', (attempted || touched.has('iv2-quantity')) && tracked && Number(f.quantity) === 0);
         document.querySelector('#items_v2 input[name="iv2-stock"][value="tracked"]').disabled = f.kind === 'service' || busy || saved;
         text('iv2-stock-note', tracked ? (f.zeroStock === 'negative' ? PosnicPro.i18n.t('lang_for_this_item_only_sales_can_take_its_stoc', 'For this item only: sales can take its stock below zero.') : PosnicPro.i18n.t('lang_stock_tracking_applies_to_this_item_only', 'Stock tracking applies to this item only.')) : 'This item can be sold without an opening stock quantity.');
@@ -127,6 +134,8 @@
         var note = !named ? 'Give your item a name to begin.' : a.error ? a.error : a.later ? 'Add stock before looking for this item in sale search.' : f.openPrice ? 'The cashier enters the price when selling.' : !price ? 'This item will sell at zero. You can edit the price later.' : tracked ? 'Opening stock: ' + a.quantity + '. Your stock choice will be saved.' : 'No stock count needed. Save it and start selling.';
         var panel = document.getElementById('iv2-readiness');
         if (a.error && !attempted) { title = P.i18n.t('lang_iv2_taking_shape', 'Your item is taking shape'); note = P.i18n.t('lang_iv2_optional_hint', 'Enter the essentials. Optional tabs can wait.'); }
+        if (editing && !a.error) note = P.i18n.t('lang_iv2_edit_stock_note', 'Changes update this item. Stock quantities stay unchanged.');
+        if (editing) text('iv2-summary-stock', P.i18n.t('lang_iv2_stock_unchanged', 'Stock quantities unchanged'));
         panel.dataset.state = a.error && !attempted ? 'neutral' : a.error || a.later ? 'attention' : 'ready';
         panel.querySelector('strong').textContent = title; panel.querySelector('p').textContent = note;
         document.getElementById('iv2-check-name').dataset.done = String(named);
@@ -146,14 +155,17 @@
         P.get({ url: 'setting/getTaxAll', data: { tax_group: 'all' } }, function (r) {
             taxLoading = false;
             if (!r || !Array.isArray(r.data)) { show('iv2-tax-error', true); return; }
-            var select = document.getElementById('iv2-tax'); select.replaceChildren(new Option('No tax', ''));
+            var select = document.getElementById('iv2-tax'), previousTax = editing ? select.selectedOptions[0] && select.selectedOptions[0].cloneNode(true) : null; select.replaceChildren(new Option('No tax', ''));
             r.data.forEach(function (tax) { var option = new Option(tax.tax_name, tax.tax_id); option.dataset.name = tax.tax_name; option.dataset.rate = tax.tax_value; select.add(option); });
-            var def = P.local.get('default_tax_id');
+            var def = editing && previousTax ? previousTax.value : P.local.get('default_tax_id');
+            if (editing && previousTax && !Array.from(select.options).some(function(o){return o.value===previousTax.value;})) select.add(previousTax);
             if (def && Array.from(select.options).some(function (o) { return o.value === String(def); })) select.value = def;
             select.disabled = busy || saved; taxReady = true; render();
         }, function () { taxLoading = false; show('iv2-tax-error', true); });
     }
     function reset() {
+        busy = false; editing = false; savedItemId = null; savedBranch = null; existingItem = null; editBaseline = null; editSequence++;
+        document.getElementById('iv2-copy-source').value = '';
         P.itemsV2Workspace.reset(); touched.clear();
         document.getElementById('iv2-form').reset(); P.itemsV2Details.reset(); applyBusinessContext(); saved = false; attempted = false;
         document.getElementById('iv2-fields').disabled = false;
@@ -168,6 +180,7 @@
         if (event) event.preventDefault();
         if (busy || saved) return false;
         if (P.aclLoaded && P.aclLoaded() && !P.checkAccess('item', 'write')) { fail('You don’t have permission to create items.'); return false; }
+        if (editing && savedBranch !== P.local.get('branch_id_set')) { fail(P.i18n.t('lang_iv2_edit_branch_changed', 'The active branch changed. Open the item again before editing.')); return false; }
         attempted = true; render();
         if (!P.itemsV2Workspace.ready()) { fail(P.i18n.t('lang_iv2_draft_lists', 'Some draft selections are unavailable. Reload to retry, or discard the draft before saving.')); return false; }
         var f = fields(), a = assess(f);
@@ -188,11 +201,30 @@
         function unlock() { busy = false; document.getElementById('iv2-fields').disabled = false; document.getElementById('iv2-save').disabled = false; text('iv2-save', 'Save item →'); render(); }
         P.itemsV2Details.upload().then(function(){
         Object.assign(data, P.itemsV2Details.data());
-        P.request({ url: f.family ? 'items/createFamily' : 'items', method: 'POST', data: JSON.stringify(f.family ? P.itemsV2Details.family(data) : data) }, function (r) {
+        var requestData = Object.assign({}, data);
+        if (editing && existingItem && editBaseline) {
+            var changes = {};
+            Object.keys(requestData).forEach(function(k){if(JSON.stringify(requestData[k]) !== JSON.stringify(editBaseline[k])) changes[k]=requestData[k];});
+            // Preserve stored fields that are hidden or not represented in this editor.
+            requestData = Object.assign({}, existingItem, {sku_id:existingItem.itemid, inventory:existingItem.track_inventory,
+                hsn_code:existingItem.hsncode, hsn_description:existingItem.hsndescription, position:existingItem.sort_order,
+                cover_image:existingItem.image, image:existingItem.multi_image || []}, changes);
+            ['_id','id','branch_id','branch_access','license','created_date','updated_date'].forEach(function(k){delete requestData[k];});
+        }
+        if (editing) delete requestData.available_quantity;
+        P.request({ url: editing ? 'items/' + encodeURIComponent(savedItemId) + '/details' : f.family ? 'items/createFamily' : 'items', method: editing ? 'PUT' : 'POST', data: JSON.stringify(f.family ? P.itemsV2Details.family(requestData) : requestData) }, function (r) {
             unlock();
             if (!r || r.type !== 'success') { fail(r && r.message || 'Couldn’t save. Your entries are still here.'); return; }
             saved = true; document.getElementById('iv2-fields').disabled = true; document.getElementById('iv2-save').disabled = true; text('iv2-save', 'Saved');
-            var id = r.data && (r.data.id || r.data._id || r.data.created && r.data.created[0]);
+            var id = editing ? savedItemId : r.data && (r.data.id || r.data._id || r.data.created && r.data.created[0]);
+            if (editing && existingItem) { existingItem = Object.assign({}, existingItem, requestData, {itemid:requestData.sku_id,track_inventory:requestData.inventory,hsncode:requestData.hsn_code,hsndescription:requestData.hsn_description,sort_order:requestData.position,multi_image:requestData.image,image:requestData.cover_image}); editBaseline = Object.assign({}, data); }
+            savedItemId = id; savedBranch = P.local.get('branch_id_set');
+            if (!f.family && r.data) {
+                if (r.data.itemid != null) document.getElementById('iv2-sku').value = r.data.itemid;
+                if (typeof r.data.track_inventory === 'boolean') document.querySelector('#items_v2 [name="iv2-stock"][value="' + (r.data.track_inventory ? 'tracked' : 'untracked') + '"]').checked = r.data.track_inventory;
+            }
+            document.getElementById('iv2-copy-source').value = '';
+            show('iv2-copy-notice', false);
             P.itemsV2Workspace.saved(data, id, a, f.family);
         }, function (xhr) {
             unlock(); var message = 'Couldn’t confirm the save. Check your item list before trying again.';
@@ -229,31 +261,80 @@
         document.getElementById('iv2-name').addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); document.getElementById('iv2-price').focus(); } });
         document.getElementById('iv2-price').addEventListener('keydown', function (event) { if (event.key === 'Enter') { event.preventDefault(); if (selected('iv2-stock') === 'tracked') document.getElementById('iv2-quantity').focus(); else save(); } });
     }
-    function open() {
-        if (P.HideSideBarModal) P.HideSideBarModal();
-        $('.page_loader,#osk-container').hide(); $('#items_v2').show();
-        capabilities = readCapabilities();
-        P.itemsV2Details.init();
-        P.itemsV2Workspace.init({refresh:render,reset:reset,duplicate:function () {
+    function prepareCopy() {
+
+            var originalName = value('iv2-name');
+            document.getElementById('iv2-copy-source').value = originalName;
+            var suffix = ' (' + P.i18n.t('lang_iv2_copy_suffix', 'copy') + ')';
+            document.getElementById('iv2-name').value = originalName.slice(0, Math.max(0, 200 - suffix.length)) + suffix;
+            busy = false; editing = false; savedItemId = null; savedBranch = null; existingItem = null; editBaseline = null; editSequence++;
             P.itemsV2Workspace.reset(); saved=false; attempted=false; touched.clear();
             document.getElementById('iv2-fields').disabled=false; document.getElementById('iv2-save').disabled=false;
             ['iv2-sku','iv2-barcode','iv2-gtin','iv2-plu','iv2-alt-barcodes','iv2-quantity'].forEach(function(id){document.getElementById(id).value='';});
             document.querySelectorAll('#items_v2 [name="iv2-zero-stock"]').forEach(function(e){e.checked=false;});
-            P.itemsV2Details.duplicate(); render(); document.getElementById('iv2-name').focus();
-        }});
+            P.itemsV2Details.duplicate(); render();
+            var nameInput = document.getElementById('iv2-name'); nameInput.focus(); nameInput.select();
+            nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    function open(initialName) {
+        if (editing) reset();
+        if (P.HideSideBarModal) P.HideSideBarModal();
+        $('.page_loader,#osk-container').hide(); $('#items_v2').show();
+        capabilities = readCapabilities();
+        P.itemsV2Details.init();
+        P.itemsV2Workspace.init({refresh:render,reset:reset,edit:function () {
+            if (!savedItemId || savedBranch !== P.local.get('branch_id_set')) return;
+            editing = true; saved = false; attempted = false;
+            document.getElementById('iv2-copy-source').value = '';
+            document.getElementById('iv2-fields').disabled = false; document.getElementById('iv2-save').disabled = false;
+            P.itemsV2Workspace.edit(); render();
+        },duplicate:prepareCopy        });
         show('iv2-tax-field', capabilities.tax); document.getElementById('iv2-tax-type').hidden = !capabilities.tax;
         if (!bound) applyBusinessContext();
         if (capabilities.restaurant) loadRestaurantOptions();
         bind(); document.querySelectorAll('#items_v2 .iv2-currency').forEach(function (el) { el.textContent = P.local.get('currencySign') || ''; });
         if (!taxReady) { document.getElementById('iv2-tax-type').value = P.local.get('tax_type') === 'exclusive' ? 'exclusive' : 'inclusive'; loadTax(); }
         P.get({ url: 'categories/getCategoryAjaxList', data: 'query=' }, function (r) {
-            var select = document.getElementById('iv2-category'), previous = select.value;
+            var select = document.getElementById('iv2-category'), previous = select.value, previousOption = select.selectedOptions[0] && select.selectedOptions[0].cloneNode(true);
             select.replaceChildren(new Option('No category', ''));
-            ((r && r.suggestions) || []).forEach(function (c) { var option = new Option(c.name, c.id); option.dataset.name = c.name; select.add(option); }); select.value = previous;
+            ((r && r.suggestions) || []).forEach(function (c) { var option = new Option(c.name, c.id); option.dataset.name = c.name; select.add(option); }); if(previousOption && !Array.from(select.options).some(function(o){return o.value===previous;})) select.add(previousOption); select.value = previous;
         }, function () { /* category is optional */ });
+        if (typeof initialName === 'string') {
+            reset();
+            document.getElementById('iv2-name').value = initialName;
+            document.getElementById('iv2-name').dispatchEvent(new Event('input', { bubbles: true }));
+        }
         render(); document.getElementById('iv2-name').focus();
     }
-    P.items_v2 = { showAdd: open, showDataTablePage: open, setBusinessContext: function (category) {
+    function showEdit(id, duplicate) {
+        open(); reset();
+        var sequence = ++editSequence, branch = P.local.get('branch_id_set');
+        editing = true; savedItemId = String(id); savedBranch = branch; busy = true;
+        P.itemsV2Workspace.edit(); render();
+        document.getElementById('iv2-fields').disabled = true; document.getElementById('iv2-save').disabled = true; text('iv2-save', 'Loading…');
+        function failed(message) { if(sequence!==editSequence)return; busy=true; fail(message || 'Could not load this item. Open it again to retry.'); document.getElementById('iv2-fields').disabled=true; document.getElementById('iv2-save').disabled=true; }
+        P.get({url:'items/getItemDetails',data:{id:id}}, function(r) {
+            if(sequence!==editSequence || branch!==P.local.get('branch_id_set'))return;
+            if(!r || r.type!=='success' || !r.data)return failed(r&&r.message);
+            var item = r.data; existingItem = item;
+            function set(id,v){var e=document.getElementById('iv2-'+id);if(e)e.value=v==null?'':v;}
+            function choice(name,v){document.querySelectorAll('#items_v2 [name="iv2-'+name+'"]').forEach(function(e){e.checked=e.value===v;});}
+            choice('kind',item.item_kind==='service'?'service':'product');choice('stock',item.track_inventory?'tracked':'untracked');choice('zero-stock',item.negative_stock?'negative':'later');
+            set('name',item.name);set('price',item.selling_price);set('cost',item.company_price);set('quantity',Math.max(0,Number(item.available_quantity)||0));set('sku',item.itemid);set('barcode',item.barcode_id);set('description',item.description);set('tax-type',item.tax_type||'inclusive');set('diet',item.diet);
+            document.getElementById('iv2-confirm-zero').checked=Number(item.selling_price)===0;
+            document.getElementById('iv2-orderable').checked=!!item.ecommerce;document.getElementById('iv2-menu').checked=item.show_on_menu!==false;
+            function select(id,v,name,rate){var e=document.getElementById('iv2-'+id),o=new Option(name||'',String(v||''));o.dataset.name=name||'';o.dataset.rate=rate||0;e.add(o);e.value=String(v||'');}
+            select('category',item.category_id,item.category_name);select('tax',item.tax_id,item.tax_name,item.tax);
+            ['periods','modifiers'].forEach(function(key){var box=document.getElementById('iv2-'+key),values=item[key==='periods'?'daypart_ids':'modifier_group_ids']||[];values.forEach(function(v){if(!Array.from(box.querySelectorAll('input')).some(function(e){return e.value===v;})){var label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=v;label.append(input,document.createTextNode(v));box.append(label);}});box.querySelectorAll('input').forEach(function(e){e.checked=values.includes(e.value);});});
+            P.itemsV2Details.load(item);busy=false;document.getElementById('iv2-fields').disabled=false;document.getElementById('iv2-save').disabled=false;render();
+            var f=fields();editBaseline=Object.assign(payload(f),P.itemsV2Details.data());
+            if(capabilities.restaurant){editBaseline.diet=value('iv2-diet');editBaseline.daypart_ids=checkedValues('iv2-periods');editBaseline.modifier_group_ids=checkedValues('iv2-modifiers');editBaseline.show_on_menu=document.getElementById('iv2-menu').checked;}
+            if(capabilities.online)editBaseline.ecommerce=document.getElementById('iv2-orderable').checked;
+            document.getElementById('iv2-tab-basics').click();document.getElementById('iv2-name').focus();
+            if (duplicate) prepareCopy();
+        },function(){failed();});
+    }
+    P.items_v2 = { showEdit: showEdit, showClone: function(id){showEdit(id,true);}, showAdd: open, showDataTablePage: open, setBusinessContext: function (category) {
         businessContext = ['restaurant', 'retail', 'service'].includes(category) ? category : null;
         if (bound) { capabilities = readCapabilities(); reset(); if (capabilities.restaurant) loadRestaurantOptions(); }
     } };

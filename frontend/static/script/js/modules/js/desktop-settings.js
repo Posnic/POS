@@ -5,7 +5,7 @@
     var api = window.electronAPI, backup = window.electron;
     var revision = {}, states = {}, kitchenRunning = false;
     var sections = {
-        devices: ['Devices & Printing', 'Printer connections and accessories on this computer.'],
+        hardware: ['Devices & Printing', 'Printer connections and accessories on this computer.'],
         app: ['App Settings', 'Choose how Posnic starts on this computer.'],
         updates: ['Software Updates', 'Update preferences for this installation.'],
         backups: ['Backup & Recovery', 'Protect the local shop database with scheduled backups.'],
@@ -119,8 +119,8 @@
         case "saved": return PosnicPro.i18n.t('lang_desktop_saved', 'Settings saved.');
         case "working": return PosnicPro.i18n.t('lang_desktop_working', 'Working…');
         case "unsaved": return PosnicPro.i18n.t('lang_rd_unsaved_changes', 'Unsaved changes');
-        case "devices": return PosnicPro.i18n.t('lang_desktop_devices', 'Devices & Printing');
-        case "devices_help": return PosnicPro.i18n.t('lang_desktop_devices_help', 'Printer connections and accessories on this computer.');
+        case "hardware": return PosnicPro.i18n.t('lang_desktop_devices', 'Devices & Printing');
+        case "hardware_help": return PosnicPro.i18n.t('lang_desktop_devices_help', 'Printer connections and accessories on this computer.');
         case "app": return PosnicPro.i18n.t('lang_desktop_app', 'App Settings');
         case "app_help": return PosnicPro.i18n.t('lang_desktop_app_help', 'Choose how Posnic starts on this computer.');
         case "updates": return PosnicPro.i18n.t('lang_desktop_updates', 'Software Updates');
@@ -159,7 +159,7 @@
     }
     async function content(key) {
         var data, html, printers;
-        if (key === 'devices') {
+        if (key === 'hardware') {
             var loaded = await Promise.all([api.cashDrawer.loadConfig(), api.printer.list()]);
             data = loaded[0] || {}; printers = loaded[1] || []; states[key] = data;
             return card(t('receipts', 'Receipts and documents'), '<p>' + esc(t('print_location', 'Choose printers, paper and copies in Core Settings → Print → Printer Settings.')) + '</p>' + button('print-settings', t('printer_settings', 'Printer Settings')) + ' ' + open('hardware:receipt', t('test_printers', 'Test printers & view print history'))) +

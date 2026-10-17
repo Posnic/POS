@@ -954,5 +954,11 @@
   "Enable Recycle Bin before deleting sales": "Ενεργοποίηση κάδου ανακύκλωσης πριν διαγράψετε τις πωλήσεις",
   "Only super admins can change the sale hard-delete setting": "Μόνο οι σούπερ διαχειριστές μπορούν να αλλάξουν τη ρύθμιση σκληρής διαγραφής πώλησης",
   "Finish the pending payment correction before closing this register.": "Ολοκληρώστε την εκκρεμή διόρθωση πληρωμής πριν κλείσετε αυτό το μητρώο.",
-  "Finish the pending payment correction first.": "Ολοκληρώστε πρώτα την εκκρεμή διόρθωση πληρωμής."
+  "Finish the pending payment correction first.": "Ολοκληρώστε πρώτα την εκκρεμή διόρθωση πληρωμής.",
+  "Bill correction saved.": "Η διόρθωση λογαριασμού αποθηκεύτηκε.",
+  "Review the paid bill correction before saving.": "Ελέγξτε τη διόρθωση του πληρωμένου λογαριασμού πριν από την αποθήκευση.",
+  "Choose a saved customer for customer credit.": "Επιλέξτε έναν αποθηκευμένο πελάτη για πίστωση πελάτη.",
+  "Exact numeric search must be on or off": "Η ακριβής αριθμητική αναζήτηση πρέπει να είναι ενεργοποιημένη ή απενεργοποιημένη",
+  "Item not found or selling price is held. Review it in Edit prices.": "Το αντικείμενο δεν βρέθηκε ή διατηρείται η τιμή πώλησης. Ελέγξτε το στην Επεξεργασία τιμών.",
+  "Password must contain between 5 and 20 characters": "Ο κωδικός πρόσβασης πρέπει να περιέχει μεταξύ 5 και 20 χαρακτήρων"
 }

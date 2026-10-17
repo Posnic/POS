@@ -1,6 +1,7 @@
 PosnicPro.settings = {
     /* which reference lists have been fetched this session */
     _refLoaded: {},
+    _refPending: {},
 
     /*
      * ORDERS PER TABLE: one number, typed through two controls.
@@ -142,18 +143,18 @@ PosnicPro.settings = {
      * India keeps exactly its current look; the gst_action machinery is
      * untouched. Presentation only, and failure leaves things as they are.
      */
-    applyTaxProfile: function () {
-        PosnicPro.get({ url: 'setting/taxProfile', data: {} }, function (r) {
+    applyTaxProfile: function (country, selector) {
+        var input = $(selector || '#branch_gstin_number');
+        country = country || $('#setting_country').val() || PosnicPro.local.get('country_setting');
+        input.data('tax-country', country).removeData('tax-regex').removeAttr('minlength').attr('maxlength', 100);
+        PosnicPro.get({ url: 'setting/taxProfile', data: { country: country } }, function (r) {
             var p = r && r.data;
-            if (!p || !p.registration) { return; }
-            PosnicPro.settings._taxProfile = p;
+            if (!p || !p.registration || input.data('tax-country') !== country) return;
+            input.data('tax-regex', p.registration.regex || '');
+            input.closest('.form-group').find('label lang').text(p.registration.label);
+            input.attr('placeholder', p.registration.label);
             $('.branch-gstin-hide-show').show();
-            $('.branch-gstin-hide-show label lang').text(p.registration.label);
-            $('#branch_gstin_number').attr('placeholder', 'Enter the ' + p.registration.label);
-            if (!p.registration.regex) {
-                $('#branch_gstin_number').removeAttr('minlength').attr('maxlength', 30);
-            }
-        }, function () { /* presentation only - never disturb the page */ });
+        });
     },
     /*
      * The Tax System card (PURCHASE_TAX_PLAN G6). One GET fills everything:
@@ -207,7 +208,7 @@ PosnicPro.settings = {
             $('#india_qrmp_row').toggle(!above);
         }
     },
-    taxSystemSave: function () {
+    taxSystemSave: function (done) {
         var values = {
             tax_regime: $('#tax_regime_override').val() || null,
             india_gst_type: $('#india_gst_type').val(),
@@ -216,6 +217,7 @@ PosnicPro.settings = {
             us_resale_certificate: $.trim($('#us_resale_certificate').val())
         };
         PosnicPro.put({ url: 'settings/group/tax', data: JSON.stringify(values) }, function (r) {
+            if (r.type === 'success' && done) { done(); return; }
             PosnicPro.alert(r.type || 'success', r.message || 'Tax system saved');
             PosnicPro.settings.taxSystemLoad();
         }, function (xhr) {
@@ -415,7 +417,7 @@ PosnicPro.settings = {
                             '<a data-module = "branch" data-access = "write" data-toggle="tooltip" title="Restore" data-t-title="lang_restore_title" href="#/settings/' + row._id + '/restore" data-id="settings/' + row._id + '/restore" class="point-cursor mobile_tooltip"><i class="feather icon-repeat"></i></a>' +
                             '</div>' +
                             '<div data-toolbar="user-options" class="btn btn-round btn-primary-rgba round-pad" id="onclick-toolbar_' + i + '"><i class="feather icon-more-vertical-"></i></div>';
-                        var updateDate = PosnicPro.convertDate(row.string_date);
+                        var updateDate = PosnicPro.convertDate(row.document_backup_date || row.string_date || row.date || row.created_date);
                         if (tableName === 'sales') {
                             var trow = '<tr> <td><input type="checkbox" class="sales-row-id" id="' + row._id + '" name="id[]" value="' + row._id + '" onclick="PosnicPro.checkboxSelectOne(this,\'sales\');"></td> <td scope="row">' + row_no + '</td>  <td>' + row.sales_id + '</td> <td>' + updateDate + '</td> <td>' + row.customer_name + '</td> <td class="text-center"><span class="badge badge-success-inverse">' + row.sale_process + '</span></td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.sales_total + '</span></td> <td><span>' + action + ' </span></td> </tr>';
                         } else if (tableName === 'receivings') {
@@ -570,7 +572,7 @@ PosnicPro.settings = {
     },
     /*store details Add/Update function*/
     generalSetting: function (value) {
-        if ($('#store_name').val() !== '' && $('#store_telephone').val() !== '' && PosnicPro.validateEmail($('#store_email').val()) && $('#setting_country').val() !== '' && $('#setting_state').val() !== '' && $('#currency').val() !== '' && $('#time_zone').val() !== '' && $('#storedate').val() !== '' && $('#store_address').val() !== '' && $('#printing_address').val() !== '') {
+        if ($('#setting_add').valid()) {
             var loader = $(".loader-view-generalsetting");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
             var currency = $('#currency_type').val();
@@ -602,6 +604,7 @@ PosnicPro.settings = {
                 data: JSON.stringify(Object.assign(formData, timezoneValue, countryId, registers))
             };
             PosnicPro.put(params, function (response) {
+                loader.find(".loadingSpinner:first").remove();
                 if (response.type === 'success' && !editingCurrent) {
                     loader.find(".loadingSpinner:first").remove();
                     PosnicPro.alert(response.type, response.message);
@@ -619,6 +622,8 @@ PosnicPro.settings = {
                     $('.display-currency').text(currency);
                     $('#setting_status').val("Yes");
                     PosnicPro.local.set("country_setting", response.data.country);
+                    PosnicPro.local.set("state_setting", response.data.state || "");
+                    PosnicPro.local.set("city_setting", response.data.city || "");
                     PosnicPro.local.set('countryid', response.data['country_id']);
                     PosnicPro.local.set('countryname', '');
                     PosnicPro.local.set('statename', '');
@@ -648,7 +653,6 @@ PosnicPro.settings = {
                         staff_roster_enable: response.data['staff_roster_enable'] !== false,
                         cash_register_enable: response.data['cash_register_enable'] !== false,
                         module_tax_enable: response.data['module_tax_enable'] !== false,
-                        item_editor_v2: response.data.item_editor_v2 === true,
                         module_credit_enable: response.data['module_credit_enable'] !== false,
                         module_marketing_enable: response.data['module_marketing_enable'] !== false,
                         module_messaging_enable: response.data['module_messaging_enable'] !== false,
@@ -709,6 +713,7 @@ PosnicPro.settings = {
                 }
                 PosnicPro.alert(response.type, response.message);
             }, function (xhr) {
+                loader.find(".loadingSpinner:first").remove();
                 var response = jQuery.parseJSON(xhr.responseText);
                 PosnicPro.alert(response.type, response.message);
             });
@@ -830,7 +835,6 @@ PosnicPro.settings = {
                 PosnicPro.settings.loadSelectSettingState(country_id);
                 PosnicPro.record_id = id;
                 PosnicPro.roundoff = data.roundOff;
-                $('#item_editor_v2').prop('checked', data.item_editor_v2 === true);
                 // Hidden when the module is off OR nothing is configured.
                 (data.cash_register_enable === false || data.register.length === 0)
                     ? $('.cashRegisterModule').css('display', 'none')
@@ -875,6 +879,7 @@ PosnicPro.settings = {
                     .off('change.salesSearch').on('change.salesSearch', function () {
                         $('[name="sales_search_fields"]').prop('disabled', !this.checked);
                     }).triggerHandler('change.salesSearch');
+                $('#sales_exact_numeric_codes').prop('checked', data.sales_exact_numeric_codes === true);
                 var searchFields = data.sales_search_fields || ['name', 'sku', 'barcode', 'plu'];
                 var displayFields = data.sales_search_display_fields || ['sku', 'category', 'price', 'stock', 'image'];
                 $('[name="sales_search_fields"]').each(function () { this.checked = searchFields.indexOf(this.value) >= 0; });
@@ -1016,7 +1021,6 @@ PosnicPro.settings = {
                     staff_roster_enable: data.staff_roster_enable !== false,
                     cash_register_enable: data.cash_register_enable !== false,
                     module_tax_enable: data.module_tax_enable !== false,
-                    item_editor_v2: data.item_editor_v2 === true,
                     module_credit_enable: data.module_credit_enable !== false,
                     module_marketing_enable: data.module_marketing_enable !== false,
                     module_messaging_enable: data.module_messaging_enable !== false,
@@ -1493,6 +1497,7 @@ if ($wrapper.length) {
                 PosnicPro.local.set("country_value", data.country);
                 PosnicPro.local.set("country_setting", data.country);
                 PosnicPro.local.set("state_setting", data.state);
+                PosnicPro.local.set("city_setting", data.city || "");
                 $('#setting_country').val(data.country).trigger('change.select2');
                 let stateId = $("#setting_country option[value='" + data.country + "']").data("setting-id");
                 PosnicPro.local.set("currency_setting", data.currency);
@@ -1543,6 +1548,8 @@ if ($wrapper.length) {
         });
     },
     resetEditButton: function (id) {
+        var target = $('#edit_branch_target').val();
+        if (target) { PosnicPro.branches.loadFullEdit(target); return; }
         var branch_id = PosnicPro.local.get('branch_id_set');
         PosnicPro.settings.viewSettings(branch_id);
     },
@@ -2180,7 +2187,7 @@ if ($wrapper.length) {
     /* successLabel: what the toast says on success - each Save button names
        its own act ("Module switches saved") instead of the generic server
        line, which reads the same from four different screens. */
-    updateCommonSetting: function (successLabel) {
+    updateCommonSetting: function (successLabel, done) {
         var loader = $(".loader-view-mystore");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var taxDetail = $("#tax_percentage").select2("data");
@@ -2210,6 +2217,7 @@ if ($wrapper.length) {
                 discount_percentage: $('#discount_percentage').val(),
                 discount_amount: $('#discount_amount').val(),
                 sales_prefix: $('#sales_prefix').val(),
+                sales_exact_numeric_codes: $('#sales_exact_numeric_codes').is(':checked'),
                 sales_search_fields: $('#sales_search_custom_fields').is(':checked')
                     ? $('[name="sales_search_fields"]:checked').map(function () { return this.value; }).get() : null,
                 sales_search_display_fields: $('#sales_search_custom_display').is(':checked')
@@ -2254,7 +2262,6 @@ if ($wrapper.length) {
                 stock_management: ($('#stock_management').is(":checked")) ? 'true' : 'false',
                 printall: ($('#printall').is(":checked")) ? 'true' : 'false',
                 roundOff: ($('#decimal_Round').is(":checked")) ? 'true' : 'false',
-                item_editor_v2: $('#item_editor_v2').is(':checked'),
                 receipt_barcode: ($('#receipt_barcode').is(":checked")) ? 'true' : 'false',
                 sales_sms: ($('#sales_sms').is(":checked")) ? 'true' : 'false',
                 auto_sms: ($('#auto_sms').is(":checked")) ? 'true' : 'false',
@@ -2435,7 +2442,6 @@ if ($("#sale_quick_edit").is(":checked")) {
                     staff_roster_enable: $('#staff_roster_enable').is(':checked'),
                     cash_register_enable: $('#cash_register_enable').is(':checked'),
                     module_tax_enable: $('#module_tax_enable').is(':checked'),
-                    item_editor_v2: $('#item_editor_v2').is(':checked'),
                     module_credit_enable: $('#module_credit_enable').is(':checked'),
                     module_marketing_enable: $('#module_marketing_enable').is(':checked'),
                     module_messaging_enable: $('#module_messaging_enable').is(':checked'),
@@ -2485,9 +2491,10 @@ if ($("#sale_quick_edit").is(":checked")) {
                     }
                 }
             }
-            PosnicPro.alert(response.type,
+            if (response.type !== 'success' || !done) PosnicPro.alert(response.type,
                 (response.type === 'success' && successLabel) ? successLabel : response.message);
             loader.find(".loadingSpinner:first").remove();
+            if (response.type === 'success' && done) done();
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
@@ -2564,6 +2571,7 @@ if ($("#sale_quick_edit").is(":checked")) {
         var on = function (k) { return s[k] !== false; };
 
         $('#v-pills-taxmodule-tab').toggle(on('module_tax_enable'));
+        $('#v-pills-ai-tab').toggle(s.ask_posnic_enabled === true);
         $('#v-pills-credit-tab').toggle(on('module_credit_enable'));
         $('#v-pills-marketingmodule-tab').toggle(on('module_marketing_enable'));
         $('#v-pills-messagingmodule-tab').toggle(on('module_messaging_enable'));
@@ -2672,8 +2680,9 @@ if ($("#sale_quick_edit").is(":checked")) {
         PosnicPro.post(params, function (response) {
             if (response.type === 'success') {
                 $("#v-pills-dashboard-tab,#v-pills-sales-tab,#v-pills-inventory-tab,#v-pills-purchase-tab,#v-pills-customer-tab,#v-pills-report-tab,#v-pills-manage-tab,#v-pills-branch-tab").removeClass("active");
-                PosnicPro.getBranchTaxList();
                 PosnicPro.local.set("branch_id_set", id);
+                PosnicPro.getBranchTaxList();
+                PosnicPro.getBranchDropdownOption();
                 $(document).trigger('posnic:branch-changed');
                 // Cached items carry the OLD branch's stock and pricing.
                 if (PosnicPro.sales && PosnicPro.sales.itemCache) {
@@ -2751,7 +2760,11 @@ if ($("#sale_quick_edit").is(":checked")) {
                 $("#view_config_page").removeClass('active');
                 $("#v-pills-dashboard-tab").addClass('active');
                 $("#v-pills-dashboard-tab").addClass('active show');
-                hasher.setHash('branches');
+                if (hasher.getHash() === 'branches') {
+                    PosnicPro.branches.loadList();
+                } else {
+                    hasher.setHash('branches');
+                }
                 PosnicPro.alert('success', PosnicPro.i18n.t('lang_branch_changed', 'Branch changed'));
             }
             return false;
@@ -2834,8 +2847,10 @@ loadSelectSettingCountry: function (force) {
             racing inside the in-flight window, both passing a guard that
             asked whether options existed yet - they did not, so both
             fetched and both appended, forever. */
-        if (!force && PosnicPro.settings._refLoaded.country) { return; }
+        if (!force && PosnicPro.settings._refLoaded.country) { return PosnicPro.settings._refPending.country.promise(); }
         PosnicPro.settings._refLoaded.country = true;
+        var ready = $.Deferred();
+        PosnicPro.settings._refPending.country = ready;
         var countrySelect = $('.setCountry');
         var params = {
             url: 'setting/getJSONCountry',
@@ -2849,31 +2864,37 @@ loadSelectSettingCountry: function (force) {
                 countrySelect.append(option).select2();
             });
             countrySelect.val(PosnicPro.local.get("country_setting")).trigger('change.select2');
+            ready.resolve();
         }, function (xhr) {
             /* a failed fetch must not lock the list out for the session */
             PosnicPro.settings._refLoaded.country = false;
+            ready.reject();
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
         });
+        return ready.promise();
     },
-    loadSelectSettingState: function (id) {
+    loadSelectSettingState: function (id, selectedState) {
+        var request = (this.stateRequest || 0) + 1; this.stateRequest = request;
+        if (selectedState === undefined) selectedState = $('#setting_country').val() === PosnicPro.local.get('country_setting') ? PosnicPro.local.get('state_setting') : '';
         var stateSelect = $('#setting_state');
+        // Display the saved state immediately, even while the country list is loading.
+        stateSelect.empty().append(new Option('', ''));
+        if (selectedState) stateSelect.append(new Option(selectedState, selectedState));
+        stateSelect.val(selectedState || '').trigger('change.select2');
+        var initialState = stateSelect.val();
         var params = {
             url: 'setting/getJSONState',
             data: { id: id }
         };
         PosnicPro.get(params, function (response) {
-            stateSelect.empty();
-            suggestions: $.map(response.data['stateJsonArray'], function (dataItem) {
-                var options;
-                options += '<option value="' + dataItem + '">' + dataItem + ' </option>';
-                stateSelect.append(options).trigger('change');
-            });
-            if (PosnicPro.local.get("country_setting") === PosnicPro.local.get("country_value")) {
-                stateSelect.val(PosnicPro.local.get('state_setting')).trigger('change.select2');
-            } else {
-                $('#setting_state option:eq(0)').prop('selected', true);
-            }
+            if (PosnicPro.settings.stateRequest !== request) return;
+            if (stateSelect.val() !== initialState) selectedState = stateSelect.val();
+            stateSelect.empty().append(new Option('', ''));
+            (response.data.stateJsonArray || []).forEach(function (state) { stateSelect.append(new Option(state, state)); });
+            var match = Array.from(stateSelect[0].options).find(function (option) { return option.value.trim().toLowerCase() === String(selectedState || '').trim().toLowerCase(); });
+            if (!match && selectedState) stateSelect.append(new Option(selectedState, selectedState));
+            stateSelect.val(match ? match.value : (selectedState || '')).trigger('change.select2');
             (PosnicPro.settings.store_telephone || { setCountry: function () {} }).setCountry(response.data['countrySortName']);
         }, function (xhr) {
             var response = jQuery.parseJSON(xhr.responseText);
@@ -2889,8 +2910,10 @@ loadSelectSettingCountry: function (force) {
      * options across four navigation cycles). Pass true to force a reload.
      */
 loadSelectSettingCurrency: function (force) {
-        if (!force && PosnicPro.settings._refLoaded.currency) { return; }
+        if (!force && PosnicPro.settings._refLoaded.currency) { return PosnicPro.settings._refPending.currency.promise(); }
         PosnicPro.settings._refLoaded.currency = true;
+        var ready = $.Deferred();
+        PosnicPro.settings._refPending.currency = ready;
         var currencySelect = $('#currency_setting');
         var params = {
             url: 'setting/getJSONCurrency'
@@ -2903,12 +2926,7 @@ loadSelectSettingCurrency: function (force) {
                 currencySelect.append(option).trigger('change');
             });
             currencySelect.val(PosnicPro.local.get("currency_setting")).trigger('change.select2');
-            currencySelect.trigger({
-                type: 'select2:select',
-                params: {
-                    data: response
-                }
-            }).on('select2:select', function (e) {
+            currencySelect.off('select2:select.settingCurrency').on('select2:select.settingCurrency', function (e) {
                 let data = e.params.data;
                 $('#currencyText').val(data.element.attributes['data-currency-symbol'].value);
                 $('#currencyTextname').val(data.element.attributes['data-currency-text'].value);
@@ -2918,10 +2936,14 @@ loadSelectSettingCurrency: function (force) {
                     " <option id=" + data.element.attributes['data-currency-symbol'].value + '" value="' + data.element.attributes['data-currency-symbol'].value + '">Symbol( ' + data.element.attributes['data-currency-symbol'].value + ' )</option>';
                 $('#currency_type').append(currencyDataOPtion);
             });
+            ready.resolve();
         }, function (xhr) {
+            PosnicPro.settings._refLoaded.currency = false;
+            ready.reject();
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
         });
+        return ready.promise();
     },
     /*
      * Reference data loads ONCE. Countries, currencies and timezones do not
@@ -2932,8 +2954,10 @@ loadSelectSettingCurrency: function (force) {
      * options across four navigation cycles). Pass true to force a reload.
      */
     timeZone: function (force) {
-        if (!force && PosnicPro.settings._refLoaded.timezone) { return; }
+        if (!force && PosnicPro.settings._refLoaded.timezone) { return PosnicPro.settings._refPending.timezone.promise(); }
         PosnicPro.settings._refLoaded.timezone = true;
+        var ready = $.Deferred();
+        PosnicPro.settings._refPending.timezone = ready;
         var timezoneSelect = $('#time_zone');
         var params = {
             url: 'setting/getJSONTimeZone'
@@ -2947,10 +2971,14 @@ loadSelectSettingCurrency: function (force) {
             });
             let timezone = PosnicPro.timeZone();
             timezoneSelect.val(timezone).trigger('change.select2');
+            ready.resolve();
         }, function (xhr) {
+            PosnicPro.settings._refLoaded.timezone = false;
+            ready.reject();
             var response = jQuery.parseJSON(xhr.responseText);
             PosnicPro.alert(response.type, response.message);
         });
+        return ready.promise();
     },
     paymentKey: function () {
         var loader = $(".loader-qrsetting");
@@ -4302,6 +4330,13 @@ $("#textlocal_setting").submit(function (event) {
     }
 });
 $("#setting_add").validate({
+    // Include inactive tabs and Select2 source selects in validation.
+    ignore: 'input[type="hidden"], :disabled',
+    errorPlacement: function (error, element) {
+        var select = element.next('.select2');
+        var phone = element.closest('.iti');
+        error.insertAfter(select.length ? select : (phone.length ? phone : element));
+    },
     highlight: function (element, errorClass) {
         $(element).css("border-color", "#f9616d");
     },
@@ -4309,6 +4344,12 @@ $("#setting_add").validate({
         $(element).css("border-color", "#eae8e8");
     },
     rules: {
+        setting_country: { required: true },
+        setting_state: { required: true },
+        currency_setting: { required: true },
+        currency_type: { required: true },
+        time_zone: { required: true },
+        storedate: { required: true },
         store_name: {
             required: true,
             minlength: 3,
@@ -4347,11 +4388,7 @@ $("#setting_add").validate({
         pincode: {
             maxlength: 15
         },
-        branch_gstin_number: {
-            gst: true,
-            minlength: 15,
-            maxlength: 15
-        }
+        branch_gstin_number: { branchTaxRegistration: true, maxlength: 100 }
     },
     messages: {
         store_name: {
@@ -4389,10 +4426,7 @@ $("#setting_add").validate({
         pincode: {
             maxlength: "Place should not be more than 15 digits"
         },
-        branch_gstin_number: {
-            minlength: "Gstr must be Atleast 15 Characters long",
-            maxlength: "Gstr should not be more than 15 digits"
-        }
+        branch_gstin_number: { maxlength: "Use no more than 100 characters" }
     }
 });
 jQuery.validator.addMethod("setting_phone_number", function (phone_number, element) {
@@ -4405,12 +4439,11 @@ jQuery.validator.addMethod("setting_phone_number", function (phone_number, eleme
     }
 
 }, "Enter a valid phone number");
-jQuery.validator.addMethod("gst", function (value, element) {
-    if (value !== '') {
-        return /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
-    }
-    return true;
-}, "Enter a valid GSTIN");
+jQuery.validator.addMethod("branchTaxRegistration", function (value, element) {
+    if (!value.trim()) return true;
+    var pattern = $(element).data('tax-regex');
+    return !pattern || new RegExp(pattern).test(value.trim());
+}, "Enter a valid tax registration number");
 $("#setting_add").submit(function (event) {
     event.preventDefault();
     if ($('#setting_add').valid()) {          // checks form for validity
@@ -4984,7 +5017,11 @@ $("#tax_discount_add").submit(function (event) {
         return;
     }
     if ($('#tax_discount_add').valid()) {            // checks form for validity
-        PosnicPro.settings.updateCommonSetting('Core Settings saved');
+        PosnicPro.settings.updateCommonSetting('Core Settings saved', function () {
+            if (PosnicPro.settings._sharingLoaded && PosnicPro.settings._sharingDirty) {
+                PosnicPro.settings.saveSharing();
+            } else PosnicPro.alert('success', PosnicPro.i18n.t('lang_successfully_completed', 'Successfully Completed'));
+        });
     }
 });
 $("#tax_checked_all").click(function () {
@@ -5090,6 +5127,7 @@ $('#setting_country').one('change', function () {
     var countrySelect = $('#setting_country');
     countrySelect.on('select2:select', function (e) {
         var data = e.params.data;
+        PosnicPro.settings.applyTaxProfile($('#setting_country').val());
         PosnicPro.settings.loadSelectSettingState(data.element.attributes['data-setting-id'].value);
         PosnicPro.local.set("country_value", data.id);
     });
@@ -7131,6 +7169,8 @@ PosnicPro.settings.SHARING_KEYS = ['share_customers', 'share_suppliers'];
 
 PosnicPro.settings.loadSharing = function () {
     if (!$('#sharing_fieldset').length) { return; }
+    PosnicPro.settings._sharingLoaded = false;
+    PosnicPro.settings._sharingDirty = false;
     PosnicPro.get({ url: 'settings/group/sharing', data: { level: 'account' } }, function (r) {
         var values = (r && r.data && r.data.values) || {};
         $.each(PosnicPro.settings.SHARING_KEYS, function (i, key) {
@@ -7140,6 +7180,7 @@ PosnicPro.settings.loadSharing = function () {
             $('#set_' + key).prop('checked', PosnicPro.settings._sharingOn(values[key]));
         });
         $('#sharing_status').text('');
+        PosnicPro.settings._sharingLoaded = r && r.type === 'success';
     }, function () {
         $('#sharing_status').text(PosnicPro.i18n.t('lang_could_not_read_the_current_setting', 'Could not read the current setting.'));
     });
@@ -7167,6 +7208,7 @@ PosnicPro.settings.saveSharing = function () {
     PosnicPro.put({ url: 'settings/group/sharing', data: JSON.stringify(payload) }, function (r) {
         $('#sharing_save_btn').prop('disabled', false);
         $('#sharing_status').text(r.type === 'success' ? 'Saved. Applies to every shop.' : '');
+        if (r.type === 'success') PosnicPro.settings._sharingDirty = false;
         PosnicPro.alert(r.type, r.type === 'success' ? 'Sharing saved' : r.message);
     }, function (xhr) {
         $('#sharing_save_btn').prop('disabled', false);
@@ -10188,7 +10230,7 @@ PosnicPro.settings.ai = {
             });
         }, function () { /* kept */ });
     },
-    save: function () {
+    save: function (done) {
         var provider = $('#ai_provider').val() || '';
         var key = String($('#ai_api_key').val() || '');
         var cap = String($('#ai_monthly_cap').val() || '').trim();
@@ -10218,13 +10260,14 @@ PosnicPro.settings.ai = {
                that emptiness through would blank the shop's credential the
                first time anybody changed the limit. */
             if (!key) {
-                PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
+                if (!done) PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
                     'Saved. The AI button now appears on the item screen, beside Description.'));
                 /* The item screen asks once per session whether AI is usable; that
                    answer is now stale, so let it ask again rather than leaving the
                    button hidden until a reload. */
                 if (PosnicPro.items) { PosnicPro.items._aiAvailable = null; }
                 $('#ai_api_key').val('');
+                if (done) done();
                 return;
             }
             PosnicPro.put({
@@ -10232,7 +10275,7 @@ PosnicPro.settings.ai = {
                 data: JSON.stringify({ ai_api_key: key })
             }, function (second) {
                 if (second.type === 'success') {
-                    PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
+                    if (!done) PosnicPro.alert('success', PosnicPro.i18n.t('lang_ai_saved',
                         'Saved. The AI button now appears on the item screen, beside Description.'));
                     /* The item screen asks once per session whether AI is usable; that
                        answer is now stale, so let it ask again rather than leaving the
@@ -10240,6 +10283,7 @@ PosnicPro.settings.ai = {
                     if (PosnicPro.items) { PosnicPro.items._aiAvailable = null; }
                     $('#ai_api_key').val('');
                     PosnicPro.settings.ai.load();
+                    if (done) done();
                 } else {
                     PosnicPro.alert(second.type, second.message);
                 }
@@ -10355,3 +10399,5 @@ $(document).on('click','#save_captain_tables',function(){
         button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_successfully_completed','Successfully Completed'));
     },function(){button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_could_not_save_table_settings_please_retry', 'Could not save table settings. Please retry.'));});
 });
+
+$(document).on("change", "#sharing_fieldset input", function () { PosnicPro.settings._sharingDirty = true; });

@@ -17,6 +17,8 @@
     }
   }
 }
+html.is-electron .topbar { top: var(--titlebar-h, 44px); }
+
 .topbar-mobile {
     display: none;
     background-color: $white;
@@ -80,6 +82,7 @@
     background-color: $topbar-bg-color;
     padding: 15px 30px;
     position: fixed;
+    top: 0;
     z-index: 9;
     left: 250px;
     right: 0;

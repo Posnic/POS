@@ -44,6 +44,7 @@ PosnicPro.listFilter = {
         { key: 'all', label: 'All time', t: 'lang_all_time_2' },
         { key: 'today', label: 'Today', t: 'lang_this_day' },
         { key: 'yesterday', label: 'Yesterday', t: 'lang_yesterday' },
+        { key: 'lastweek', label: 'Last week', t: 'lang_last_week' },
         { key: 'week', label: 'This week', t: 'lang_roster_thisweek' },
         { key: 'month', label: 'This month', t: 'lang_this_month_2' },
         { key: 'year', label: 'This year', t: 'lang_this_year' },
@@ -72,6 +73,11 @@ PosnicPro.listFilter = {
                 // getDay(): 0 = Sunday. Monday-start means Sunday counts as day 7.
                 d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
                 return { from: s(d), to: e(today) };
+            case 'lastweek':
+                d = new Date(today);
+                d.setDate(d.getDate() - ((d.getDay() + 6) % 7) - 7);
+                var lastSunday = new Date(d); lastSunday.setDate(d.getDate() + 6);
+                return { from: s(d), to: e(lastSunday) };
             case 'month':
                 d = new Date(today.getFullYear(), today.getMonth(), 1);
                 return { from: s(d), to: e(today) };
@@ -306,9 +312,11 @@ PosnicPro.listFilter = {
             }
             return existing;
         }
+        var initialPreset = cfg.defaultPreset || 'all';
+        var initialRange = LF.range(initialPreset);
         LF._mounted[key] = {
             cfg: cfg,
-            state: { search: '', field: 'all', exact: false, preset: 'all', from: null, to: null, extra: {} }
+            state: { search: '', field: 'all', exact: false, preset: initialPreset, from: initialRange.from, to: initialRange.to, extra: {} }
         };
         LF.render(key);
         return LF._mounted[key];

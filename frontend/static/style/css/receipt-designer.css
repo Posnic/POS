@@ -1,6 +1,10 @@
 #receipt-designer { --rd-border: #dce3ee; --rd-soft: #f5f7fb; --rd-ink: #203047; color: var(--rd-ink); }
 #receipt-designer * { box-sizing: border-box; }
 .card:has(#core-tab-print.active) > .card-footer { display: none; }
+.card:has(#core-tab-inventory.active #inv-sub-stock.active) > .card-footer,
+.card:has(#core-tab-inventory.active #inv-sub-expiry.active) > .card-footer,
+.card:has(#core-tab-inventory.active #inv-sub-mobile.active) > .card-footer,
+.card:has(#core-tab-payments.active #pay-sub-gateway.active) > .card-footer { display: none; }
 #receipt-designer button, #receipt-designer input, #receipt-designer select, #receipt-designer textarea { font: inherit; }
 #receipt-designer button:focus-visible, #receipt-designer input:focus-visible, #receipt-designer select:focus-visible, #receipt-designer textarea:focus-visible { outline: 3px solid #8bb6ff; outline-offset: 2px; }
 .rd-topbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin: 0 0 12px; }

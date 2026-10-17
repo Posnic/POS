@@ -954,5 +954,11 @@
   "Enable Recycle Bin before deleting sales": "Omogočite koš za odpadke pred brisanjem prodaje",
   "Only super admins can change the sale hard-delete setting": "Samo super skrbniki lahko spremenijo nastavitev trdega brisanja prodaje",
   "Finish the pending payment correction before closing this register.": "Pred zaprtjem registra dokončajte nečakajoči popravek plačila.",
-  "Finish the pending payment correction first.": "Najprej dokončajte nečakani popravek plačila."
+  "Finish the pending payment correction first.": "Najprej dokončajte nečakani popravek plačila.",
+  "Bill correction saved.": "Popravek računa je shranjen.",
+  "Review the paid bill correction before saving.": "Pred varčevanjem preglejte popravek plačanega računa.",
+  "Choose a saved customer for customer credit.": "Izberite shranjeno stranko za kredit stranke.",
+  "Exact numeric search must be on or off": "Natančno številsko iskanje mora biti vklopljeno ali izklopljeno",
+  "Item not found or selling price is held. Review it in Edit prices.": "Artikel ni najden ali prodajna cena je zadržana. Preglejte ga v Uredi cene.",
+  "Password must contain between 5 and 20 characters": "Geslo mora vsebovati od 5 do 20 znakov"
 }
