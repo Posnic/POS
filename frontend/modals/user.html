@@ -97,6 +97,12 @@
                         </label>
                         <input type="text" class="form-control border-control user-text-clear" name="name" id="users_name"  minlength="3" maxlength="250" placeholder="Enter the username" data-t-placeholder="lang_enter_the_username" autocomplete="off" required>                        
                     </div>
+                    <div class="form-group col-md-12" id="user_password_change_row" hidden>
+                        <label for="user_change_password">
+                            <input type="checkbox" id="user_change_password" onchange="PosnicPro.users.setPasswordEditing(this.checked)">
+                            <lang class="lang_changepassword_title">Change Password</lang>
+                        </label>
+                    </div>
                     <div class="form-group col-md-12">
                         <label for="users_password">
                             <lang class="lang_enterpassword_title">Password</lang>
@@ -107,7 +113,7 @@
                         <input type="hidden" name="id" id="users_id">
                     </div>
                     <div class="form-group col-md-12">
-                        <label for="users_password">
+                        <label for="users_retype_password">
                             <lang class="lang_retypepassword_title">Retype Password </lang>
                             <span class="text-danger">*</span>
                         </label>

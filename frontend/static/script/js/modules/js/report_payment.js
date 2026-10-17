@@ -1,4 +1,9 @@
 PosnicPro.paymentreport = {
+    recordedUser: function (row) {
+        return [row.user_name, row.created_by, row.origin && row.origin.actor_name].find(function (value) {
+            return typeof value === 'string' && value.trim() && !/^(undefined|null|\[object Object\])$/i.test(value.trim());
+        }) || '—';
+    },
     showDataTablePage: function () {
         var loader = $(".loader-sales-payment-report");
         loader.find(".loadingSpinner:first").remove();
@@ -190,7 +195,7 @@ PosnicPro.paymentransaction = {
                             let DateFormat = moment(update_timeStamp_value).tz(timeZone).format('YYYY/MM/DD LT');
                             let updateDate = PosnicPro.convertDate(DateFormat);
                             let row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                            let trow = '<tr> <td scope="row">' + row_no + '</td>  <td>' + row.sales_id + '</td> <td>' + updateDate + '</td> <td>' + row.user_name + '</td> <td>' + row.payment_mode + '</td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + (row.report_amount ?? row.items_total) + '</span></td></tr>';
+                            let trow = '<tr> <td scope="row">' + row_no + '</td>  <td>' + row.sales_id + '</td> <td>' + updateDate + '</td> <td>' + $('<span>').text(PosnicPro.paymentreport.recordedUser(row)).html() + '</td> <td>' + row.payment_mode + '</td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + (row.report_amount ?? row.items_total) + '</span></td></tr>';
                             $('#view_paymentransaction').children('tbody').append(trow);
                             var digits = Number.isInteger(row.currencyDigits) && row.currencyDigits >= 0 && row.currencyDigits <= 4 ? row.currencyDigits : 2;
                             $('#view_paymentransaction tbody tr:last span.number').number(true, digits);
@@ -204,7 +209,7 @@ PosnicPro.paymentransaction = {
                             let DateFormat = moment(update_timeStamp_value).tz(timeZone).format('YYYY/MM/DD LT');
                             let date = PosnicPro.convertDate(DateFormat);
                             let id = val.sales_id;
-                            let customer = val.user_name;
+                            let customer = PosnicPro.paymentreport.recordedUser(val);
                             let mode = val.payment_mode;
                             let total = val.report_amount ?? val.items_total;
                             paymentsalereportexportdata.push({SaleId: id, Date: date, UserName: customer, PaymentMethod: mode, Amount: total});
@@ -300,7 +305,7 @@ PosnicPro.paymentreturntransaction = {
                             let DateFormat = moment(update_timeStamp_value).tz(timeZone).format('YYYY/MM/DD LT');
                             let updateDate = PosnicPro.convertDate(DateFormat);
                             let row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
-                            let trow = '<tr> <td scope="row">' + row_no + '</td>  <td>' + row.sales_id + '</td> <td>' + updateDate + '</td> <td>' + row.user_name + '</td> <td>' + row.payment_mode + '</td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.items_return_total + '</span></td></tr>';
+                            let trow = '<tr> <td scope="row">' + row_no + '</td>  <td>' + row.sales_id + '</td> <td>' + updateDate + '</td> <td>' + $('<span>').text(PosnicPro.paymentreport.recordedUser(row)).html() + '</td> <td>' + row.payment_mode + '</td> <td class="text-right">' + currency + '&nbsp;<span class="number">' + row.items_return_total + '</span></td></tr>';
                             $('#view_paymentreturntransaction').children('tbody').append(trow);
                             $('span.number').number(true, 2);
                         }
@@ -313,7 +318,7 @@ PosnicPro.paymentreturntransaction = {
                             let DateFormat = moment(update_timeStamp_value).tz(timeZone).format('YYYY/MM/DD LT');
                             let date = PosnicPro.convertDate(DateFormat);
                             let id = val.sales_id;
-                            let customer = val.user_name;
+                            let customer = PosnicPro.paymentreport.recordedUser(val);
                             let mode = val.payment_mode;
                             let total = val.items_return_total;
                             paymentsalereportexportdata.push({SaleId: id, Date: date, UserName: customer, PaymentMethod: mode, Amount: total});
