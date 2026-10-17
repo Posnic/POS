@@ -959,6 +959,5 @@
   "Review the paid bill correction before saving.": "保存する前に、支払い済み請求書の修正を確認してください。",
   "Choose a saved customer for customer credit.": "顧客クレジット用の保存済み顧客を選択してください。",
   "Exact numeric search must be on or off": "完全数値検索はオンまたはオフにする必要があります",
-  "Item not found or selling price is held. Review it in Edit prices.": "商品が見つからない、または販売価格が保留になっています。「価格の編集」で確認してください。",
-  "Password must contain between 5 and 20 characters": "パスワードは5文字から20文字以内でなければなりません"
+  "Item not found or selling price is held. Review it in Edit prices.": "商品が見つからない、または販売価格が保留になっています。「価格の編集」で確認してください。"
 }
