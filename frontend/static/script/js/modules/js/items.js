@@ -6143,3 +6143,59 @@ $(document).ready(function () {
         PosnicPro.items.refreshCreateSummary();
     }).on('reset', function () { setTimeout(function () { PosnicPro.items.refreshCreateSummary(); }, 0); });
 });
+
+
+// Inventory review includes hidden products; sales endpoints exclude them.
+PosnicPro.items.availability = function () {
+    $('#product-availability-dialog').remove();
+    var modal = $('<div class="modal fade" id="product-availability-dialog" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Product availability</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close">×</button></div><div class="modal-body"><form><label>Scan barcode or search products</label><div class="input-group"><input class="form-control" aria-label="Scan barcode or search products"><div class="input-group-append"><button class="btn btn-primary" type="submit"><i class="feather icon-search"></i> Search</button></div></div></form><p class="mt-3">Hidden products retain stock, receipts and history. Select the records explicitly; nothing is merged or deleted.</p><div class="availability-status" role="status"></div><div class="availability-rows"></div><div class="availability-preview"></div></div><div class="modal-footer"><button class="btn btn-outline-primary availability-review" type="button">Review changes</button><button class="btn btn-primary availability-confirm" type="button" hidden>Confirm changes</button></div></div></div></div>').appendTo('body');
+    var rows = [], changes = [], requestId = '', busy = false, permitted = false;
+    var status = modal.find('.availability-status'), list = modal.find('.availability-rows');
+    function load(after) {
+        PosnicPro.get('mobile/v1/inventory/catalogue?kind=items&q=' + encodeURIComponent(modal.find('input').first().val() || '') + (after ? '&after=' + after : ''), function (page) {
+            if (!Array.isArray(page.rows)) { status.text('Could not load products.'); return; }
+            permitted = page.permissions && page.permissions.write;
+            rows = rows.concat(page.rows);
+            if (page.next) { load(page.next); return; }
+            list.empty(); status.text('Server catalogue. Offline tills receive changes when they reconnect.');
+            var prices = new Set(rows.map(function (r) { return Math.round(r.price * (r.taxInclusive ? 1 : 1 + r.taxBps / 10000)); }));
+            if (prices.size > 1) $('<p class="font-weight-bold text-warning">Different selling prices — check carefully</p>').appendTo(list);
+            rows.forEach(function (r) {
+                var card = $('<div class="border rounded p-3 mb-2"></div>').appendTo(list);
+                if (r.image && /^(https?:\/\/|\/uploads\/)/.test(r.image)) $('<img width="48" height="48" class="mr-2" alt="">').attr('src', r.image).appendTo(card);
+                $('<strong></strong>').text(r.name).appendTo(card);
+                $('<p></p>').text('SKU: ' + (r.sku || '—') + ' · Barcode: ' + [r.barcode].concat(r.barcodes || []).filter(Boolean).join(', ')).appendTo(card);
+                $('<p></p>').text('Price including tax: ' + (Math.round(r.price * (r.taxInclusive ? 1 : 1 + r.taxBps / 10000)) / 100).toFixed(2) + ' · Stock: ' + (r.quantity === null ? '—' : r.quantity / 1000) + ' ' + r.unit + ' · Supplier: ' + (r.supplierName || '—')).appendTo(card);
+                var label = $('<label class="d-flex align-items-center"></label>').appendTo(card);
+                $('<input type="checkbox" class="mr-2">').attr('data-item-id', r.id).prop('checked', r.availableForSale !== false).prop('disabled', !permitted).appendTo(label);
+                label.append(document.createTextNode('Available for sale'));
+            });
+        }, function () { status.text('Could not reach server. No changes confirmed.'); });
+    }
+    modal.find('form').on('submit', function (e) { e.preventDefault(); if (busy) return; rows = []; changes = []; modal.find('.availability-preview').empty(); modal.find('.availability-confirm').prop('hidden', true); load(''); });
+    modal.find('.availability-review').on('click', function () {
+        if (busy || !permitted) return;
+        changes = []; var preview = modal.find('.availability-preview').empty();
+        rows.forEach(function (r) {
+            var available = list.find('input[data-item-id="' + r.id + '"]').prop('checked');
+            if (available !== (r.availableForSale !== false)) {
+                changes.push({itemId:r.id, available:available, revision:r.availabilityRevision || ''});
+                $('<p class="font-weight-bold"></p>').text(r.name + ' · ' + r.sku + ' · ' + r.id + ': ' + (r.availableForSale === false ? 'Hidden' : 'Available') + ' → ' + (available ? 'Available' : 'Hidden')).appendTo(preview);
+            }
+        });
+        requestId = 'availability-' + Array.from(crypto.getRandomValues(new Uint8Array(16))).map(function (v) { return v.toString(16).padStart(2, '0'); }).join('');
+        modal.find('.availability-confirm').prop('hidden', !changes.length);
+        status.text(changes.length ? 'Review exactly these changes, then confirm.' : 'No changes selected.');
+    });
+    modal.find('.availability-confirm').on('click', function () {
+        if (busy || !changes.length || !permitted) return;
+        busy = true; modal.find('button,input').prop('disabled', true); status.text('Waiting for server confirmation…');
+        PosnicPro.post({url:'mobile/v1/inventory/availability', data:JSON.stringify({id:requestId, changes:changes})}, function (result) {
+            busy = false; modal.find('button,input').prop('disabled', false);
+            if (!Array.isArray(result.results)) { status.text('Not confirmed. Retry the same request.'); return; }
+            status.text(result.results.some(function (r) { return r.state !== 'confirmed'; }) ? 'Some records changed meanwhile. Search again and review those records.' : 'Server confirmed. Refresh sales catalogues on connected tills. Offline tills must reconnect.');
+            modal.find('.availability-confirm').prop('hidden', true); list.empty(); modal.find('.availability-preview').empty();
+        }, function () { busy = false; modal.find('button,input').prop('disabled', false); status.text('Not confirmed. Retry; the same change will not be applied twice.'); });
+    });
+    modal.modal('show');
+};
