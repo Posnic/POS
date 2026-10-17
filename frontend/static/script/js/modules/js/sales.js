@@ -7611,7 +7611,7 @@ PosnicPro.sales.itemCache = {
         }
         PosnicPro.get('items/' + id, function (response) {
             if (response.type === 'success') {
-                if (response.data.available_for_sale === false) { PosnicPro.alert('error', 'This product is hidden from sales. Your basket has not been changed.'); return; }
+                if (response.data.available_for_sale === false) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_this_product_is_hidden_from_sales_your_bas', 'This product is hidden from sales. Your basket has not been changed.')); return; }
                 PosnicPro.sales.itemCache._map[id] = { at: Date.now(), json: JSON.stringify(response.data) };
                 onData(JSON.parse(JSON.stringify(response.data)));
             } else {

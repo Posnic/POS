@@ -959,5 +959,6 @@
   "Review the paid bill correction before saving.": "Перегляньте виправлення оплаченого рахунку перед збереженням.",
   "Choose a saved customer for customer credit.": "Виберіть збереженого клієнта для кредиту клієнта.",
   "Exact numeric search must be on or off": "Точний числовий пошук повинен бути увімкненим або вимкненим",
-  "Item not found or selling price is held. Review it in Edit prices.": "Товар не знайдено або ціна продажу збережена. Перегляньте його в розділі Редагувати ціни."
+  "Item not found or selling price is held. Review it in Edit prices.": "Товар не знайдено або ціна продажу збережена. Перегляньте його в розділі Редагувати ціни.",
+  "Password must contain between 5 and 20 characters": "Пароль повинен містити від 5 до 20 символів"
 }

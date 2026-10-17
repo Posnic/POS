@@ -53,7 +53,10 @@ async function change(req) {
         results.push({ itemId: x.itemId, state: 'conflict', item: inventory.item(row) });
         continue;
       }
-      const lastAt = Math.max(0, ...(row.availability_history || []).map(e => +new Date(e.at) || 0));
+      const lastAt = Math.max(
+        0,
+        ...(row.availability_history || []).map((e) => +new Date(e.at) || 0)
+      );
       const at = new Date(Math.max(Date.now(), lastAt + 1));
       const result = await items.updateOne(
         {

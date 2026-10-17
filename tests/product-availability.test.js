@@ -13,7 +13,7 @@ test('desktop availability previews exact changes and retries the same identity 
     { id: 'b'.repeat(24), name: 'Premium milk', sku: 'B', barcodes: ['123'], price: 200, taxInclusive: true, quantity: 8000, unit: 'each', availableForSale: true },
   ];
   const writes = [];
-  const pos = { items: {}, get: (url, cb) => cb({ rows, permissions: { write: true } }),
+  const pos = { i18n: { t: (key, fallback) => fallback }, items: {}, get: (url, cb) => cb({ rows, permissions: { write: true } }),
     post: (request, ok, fail) => { writes.push(JSON.parse(request.data)); if (writes.length === 1) fail(); else ok({ results: [{ state: 'confirmed' }] }); } };
   const source = fs.readFileSync('frontend/static/script/js/modules/js/items.js', 'utf8');
   vm.runInNewContext(source.slice(source.indexOf('PosnicPro.items.availability = function')), { PosnicPro: pos, $, document: dom.window.document, crypto: webcrypto, Uint8Array });

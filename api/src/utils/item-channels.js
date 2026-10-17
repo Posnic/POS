@@ -158,7 +158,7 @@ function availableOn(item, channel, nowMins) {
  */
 function channelFilter(channel) {
   const wanted = normalizeTarget(channel);
-  if (!wanted) return {};
+  if (!wanted) return { available_for_sale: { $ne: false } };
   return { available_for_sale: { $ne: false }, channel_off: { $ne: wanted } };
 }
 
