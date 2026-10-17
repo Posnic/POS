@@ -46,8 +46,12 @@ beforeEach(() => jest.clearAllMocks());
 describe('clockIn', () => {
   test('mobile shifts are never closed at a guessed time, even after overnight', async () => {
     const col = makeCollection();
-    col.findOne.mockResolvedValue({ _id: 'mobile', source: 'captain', status: SHIFT_STATUS.OPEN,
-      clock_in: new Date(Date.now() - 30 * 60 * 60 * 1000) });
+    col.findOne.mockResolvedValue({
+      _id: 'mobile',
+      source: 'captain',
+      status: SHIFT_STATUS.OPEN,
+      clock_in: new Date(Date.now() - 30 * 60 * 60 * 1000),
+    });
     expect((await makeRepo(col).clockIn({})).statusCode).toBe(409);
     expect(col.updateOne).not.toHaveBeenCalled();
     expect(col.insertOne).not.toHaveBeenCalled();

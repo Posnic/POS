@@ -579,7 +579,7 @@ const roomRequest = (extra) => ({
   venue: 'hotel',
   unit: '35B',
   room_charge_accepted: true,
-  room_charge_quote: {percent:5,taxed:false,tax_rate:0},
+  room_charge_quote: { percent: 5, taxed: false, tax_rate: 0 },
   ...extra,
 });
 test('staff room orders store a free room number and separate charge, using house prices', async () => {
