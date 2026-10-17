@@ -18,7 +18,7 @@ async function read(req) {
   if (
     typeof table !== 'string' ||
     !table.trim() ||
-    table.length > 40 ||
+    table.length > 200 ||
     Array.from(table).some((ch) => ch.charCodeAt(0) < 32)
   )
     fail('Choose a table.');

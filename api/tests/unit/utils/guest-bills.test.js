@@ -216,3 +216,22 @@ test('translated names survive guest bill splitting without menu descriptions', 
   expect(bill.items[0].translations).toEqual([{ locale: 'nl', name: 'Soep' }]);
   expect(bill.items[0].name).toBe('Soup');
 });
+
+test('room charges remain named and split exactly without becoming rounding', () => {
+  const sale = {
+    _id: 'room-sale',
+    sales_total: 105.9,
+    sales_sub_total: 100,
+    tax: 0.9,
+    items: [{ name: 'Meal', item_quantity: 1, unit_price: 100, item_tax: 0 }],
+    charges: [{ name: 'Room service', amount: 5, tax_amount: 0.9, source: 'room' }],
+  };
+  const snapshot = snapshotFrom([sale], {}, 'Hotel - 35B');
+  expect(snapshot.totalMinor).toBe(10590);
+  expect(snapshot.labels['charge:Room service']).toBe('Room service');
+  expect(snapshot.lines[0].components.find((c) => c.key === 'adjustment').minor).toBe(0);
+  const guests = split(snapshot, { guests: ['A', 'B'], mode: 'equal' });
+  expect(guests.reduce((sum, g) => sum + g.totalMinor, 0)).toBe(10590);
+  const bill = billForGuest(snapshot, guests[0], {}, sale, 'room-bill');
+  expect(bill.charges).toEqual([{ name: 'Room service', amount: 2.5 }]);
+});

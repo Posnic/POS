@@ -1312,6 +1312,7 @@ describe('SalesRepository', () => {
       const result = await salesRepository.createOnlineOrder(
         {
           branch: FAKE_BRANCH,
+          kiosk_table_no: 'T1',
           items: [{ item_id: FAKE_ITEM, item_quantity: 2, item_price: 45 }],
         },
         { staffOrder: true }
@@ -1352,6 +1353,7 @@ describe('SalesRepository', () => {
         const result = await salesRepository.createOnlineOrder(
           {
             branch: FAKE_BRANCH,
+            kiosk_table_no: 'T1',
             items: [{ item_id: FAKE_ITEM, item_quantity: 2, item_price: entered }],
           },
           { staffOrder: true }

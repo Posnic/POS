@@ -5001,5 +5001,22 @@
   "lang_text_style": "Gaya teks",
   "lang_this_product_is_hidden_from_sales_your_bas": "Produk ini tersembunyi dari penjualan. Keranjang Anda belum diubah.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Jendela ini milik satu cabang. Buka outlet lain dari jendela utama.",
-  "lang_total_labels": "Total label"
+  "lang_total_labels": "Total label",
+  "lang_rooms": "Kamar",
+  "lang_room_number": "Nomor kamar",
+  "lang_room_order": "Pesanan kamar",
+  "lang_room_service_charge": "Biaya layanan kamar",
+  "lang_room_charge_agreement": "Tamu menyetujui biaya tambahan ini",
+  "lang_room_destination_required": "Pilih tempat dan masukkan nomor kamar.",
+  "lang_room_charge_tax_unavailable": "Pajak biaya kamar tidak tersedia. Tinjau pengaturan pajak.",
+  "lang_staff_room_orders": "Izinkan pesanan ruang staf",
+  "lang_staff_room_prices": "Pesanan kamar staf menggunakan harga menu normal. Markup menu web dan komisi venue terpisah.",
+  "lang_room_charge_offer": "Menawarkan biaya kamar tambahan",
+  "lang_charge_name": "Nama tagihan",
+  "lang_apply_default_tax": "Terapkan pajak default",
+  "lang_room_charge_basis": "Persentase makanan setelah diskon, sebelum pajak. Terapkan hanya dengan persetujuan tamu; staf dapat menghapusnya dari tagihan.",
+  "lang_room_charge_rate": "{0}: {1}% makanan setelah diskon, sebelum pajak.",
+  "lang_room_charge_final": "Termasuk pada tagihan akhir.",
+  "lang_room_orders_enable_help": "Aktifkan pemesanan kamar staf di Pengaturan “Restoran” Hotel dan tempat lainnya.",
+  "lang_room_venue": "Tempat"
 }

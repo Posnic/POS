@@ -46,6 +46,7 @@ function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
       });
       for (const key of Object.keys(allocation.components))
         if (key.startsWith('tax:')) labels[key] = key.slice(4);
+        else if (key.startsWith('charge:')) labels[key] = key.slice(7);
       totalMinor += allocation.totalMinor;
       continue;
     }
@@ -73,6 +74,13 @@ function snapshotFrom(sales, branch, table, { allowZero = false } = {}) {
       const key = 'tax:' + tax.label;
       labels[key] = tax.label;
       components.push({ key, amount: minor(tax.amount), weights: taxBasis });
+    }
+    for (const charge of payload.charges || []) {
+      const key = 'charge:' + charge.name;
+      labels[key] = charge.name;
+      const existing = components.find((c) => c.key === key);
+      if (existing) existing.amount += minor(charge.amount);
+      else components.push({ key, amount: minor(charge.amount), weights });
     }
     const total = minor(payload.total);
     if (total < 0) throw problem('Refunds cannot be split as unpaid guest bills.', 422);
@@ -156,6 +164,9 @@ function billForGuest(snapshot, guest, branch, sale, batchId, options = {}) {
     })),
     subTotal: value('base'),
     discount: -value('discount'),
+    charges: Object.entries(guest.components)
+      .filter(([key]) => key.startsWith('charge:'))
+      .map(([key, n]) => ({ name: snapshot.labels[key] || key.slice(7), amount: n / factor })),
     roundOff: value('adjustment'),
     total: guest.totalMinor / factor,
     taxes: Object.entries(guest.components)
@@ -197,7 +208,7 @@ function createService(deps = {}) {
       !/^[a-f\d]{24}$/i.test(branchId) ||
       !table ||
       (!saleId && table.startsWith('takeaway:')) ||
-      table.length > 40 ||
+      table.length > 200 ||
       Array.from(table).some((character) => character.charCodeAt(0) < 32)
     )
       throw problem('Choose a branch and table.');

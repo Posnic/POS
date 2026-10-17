@@ -4920,5 +4920,22 @@
   "lang_text_style": "Styl tekstu",
   "lang_this_product_is_hidden_from_sales_your_bas": "Ten produkt jest ukryty przed sprzedażą. Twój koszyk nie został zmieniony.",
   "lang_this_window_belongs_to_one_branch_open_ano": "To okno należy do jednej gałęzi. Otwórz kolejne gniazdko z głównego okna.",
-  "lang_total_labels": "Wszystkie etykiety"
+  "lang_total_labels": "Wszystkie etykiety",
+  "lang_rooms": "Pokoje",
+  "lang_room_number": "Numer pokoju",
+  "lang_room_order": "Porządek pokoju",
+  "lang_room_service_charge": "Opłata za obsługę pokoju",
+  "lang_room_charge_agreement": "Gość wyraził zgodę na tę dodatkową opłatę",
+  "lang_room_destination_required": "Wybierz miejsce i wprowadź numer pokoju.",
+  "lang_room_charge_tax_unavailable": "Podatek od opłaty za pokój jest niedostępny. Przejrzyj ustawienia podatkowe.",
+  "lang_staff_room_orders": "Zezwalaj na zamówienia pokoju dla pracowników",
+  "lang_staff_room_prices": "Zamówienia pokoi dla personelu korzystają z normalnych cen menu. Znaczniki menu internetowego i prowizja miejsca są oddzielne",
+  "lang_room_charge_offer": "Oferuj dodatkową opłatę za pokój",
+  "lang_charge_name": "Nazwa opłaty",
+  "lang_apply_default_tax": "Zastosuj podatek domyślny",
+  "lang_room_charge_basis": "Procent jedzenia po zniżkach, przed opodatkowaniem. Złóż wniosek tylko za zgodą gościa; personel może usunąć go z rachunku.",
+  "lang_room_charge_rate": "{0}: {1}% żywności po rabatach, przed opodatkowaniem.",
+  "lang_room_charge_final": "Zawarte w ostatecznym rachunku.",
+  "lang_room_orders_enable_help": "Włącz zamawianie pokoi dla personelu w Ustawieniach → Restauracja → Hotele i inne obiekty.",
+  "lang_room_venue": "Miejsce"
 }

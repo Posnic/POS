@@ -4920,5 +4920,22 @@
   "lang_text_style": "Teksto stilius",
   "lang_this_product_is_hidden_from_sales_your_bas": "Šis produktas yra paslėptas nuo pardavimų. Jūsų krepšelis nebuvo pakeistas.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Šis langas priklauso vienai šakai. Atidarykite kitą lizdą iš pagrindinio lango.",
-  "lang_total_labels": "Iš viso etikečių"
+  "lang_total_labels": "Iš viso etikečių",
+  "lang_rooms": "Kambariai",
+  "lang_room_number": "Kambario numeris",
+  "lang_room_order": "Kambarių tvarka",
+  "lang_room_service_charge": "Kambarių aptarnavimo mokestis",
+  "lang_room_charge_agreement": "Svečias sutiko su šiuo papildomu mokesčiu",
+  "lang_room_destination_required": "Pasirinkite vietą ir įveskite kambario numerį.",
+  "lang_room_charge_tax_unavailable": "Kambario mokesčio mokestis nėra galimas. Peržiūrėkite mokesčių nustatymus.",
+  "lang_staff_room_orders": "Leisti užsakyti personalo kambarį",
+  "lang_staff_room_prices": "Darbuotojų kambarių užsakymams taikomos įprastos meniu kainos. Žiniatinklio meniu žymėjimas ir vietos komisija yra atskir",
+  "lang_room_charge_offer": "Siūlykite papildomą mokestį už kambarį",
+  "lang_charge_name": "Mokesčio pavadinimas",
+  "lang_apply_default_tax": "Taikyti numatytąjį mokestį",
+  "lang_room_charge_basis": "Maisto procentas po nuolaidų, neatskaičius mokesčių. Kreipkitės tik su svečiu susitarimu; darbuotojai gali jį pašalinti iš sąskaitos.",
+  "lang_room_charge_rate": "{0}: {1}% maisto po nuolaidų, neatskaičius mokesčių.",
+  "lang_room_charge_final": "Įtraukta į galutinę sąskaitą.",
+  "lang_room_orders_enable_help": "Įgalinti personalo kambarių užsakymus Nustatymai → Restoranas → Viešbučiai ir kitos vietos.",
+  "lang_room_venue": "Vieta"
 }

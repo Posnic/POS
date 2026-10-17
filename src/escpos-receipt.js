@@ -898,6 +898,7 @@ function renderSale(sale, options = {}, renderer) {
   if (sale.totalQty) r.pairAtColumn('Total Qty', String(sale.totalQty), r.qtyColumn);
   if (sale.subTotal != null) r.pair('Subtotal', money(sale.subTotal));
   for (const t of sale.taxes || []) r.pair(t.label, money(t.amount));
+  for (const c of sale.charges || []) r.pair(c.name || 'Charge', money(c.amount));
   if (sale.discount) r.pair('Discount', '-' + money(sale.discount));
   if (sale.roundOff) r.pair('Round off', money(sale.roundOff));
 
