@@ -959,5 +959,6 @@
   "Review the paid bill correction before saving.": "Farið yfir leiðréttingu greidds reiknings áður en vistað er.",
   "Choose a saved customer for customer credit.": "Veldu vistaðan viðskiptavin fyrir inneign viðskiptavina.",
   "Exact numeric search must be on or off": "Nákvæm talnaleit verður að vera kveikt eða slökkt",
-  "Item not found or selling price is held. Review it in Edit prices.": "Hlutur fannst ekki eða söluverð er haldið. Skoðaðu það í Breyta verði."
+  "Item not found or selling price is held. Review it in Edit prices.": "Hlutur fannst ekki eða söluverð er haldið. Skoðaðu það í Breyta verði.",
+  "Password must contain between 5 and 20 characters": "Lykilorð verður að innihalda á milli 5 og 20 stafi"
 }

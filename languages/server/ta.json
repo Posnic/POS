@@ -959,5 +959,6 @@
   "Review the paid bill correction before saving.": "சேமிப்பதற்கு முன் கட்டண பில் திருத்தத்தை மதிப்பாய்வு செய்யவும்.",
   "Choose a saved customer for customer credit.": "வாடிக்கையாளர் கடனுக்கு சேமிக்கப்பட்ட வாடிக்கையாளரைத் தேர்வு",
   "Exact numeric search must be on or off": "சரியான எண் தேடல் இயக்கப்பட்டிருக்க வேண்டும் அல்லது முடக்கப்பட வேண்டும்",
-  "Item not found or selling price is held. Review it in Edit prices.": "பொருள் கண்டுபிடிக்கப்படவில்லை அல்லது விற்பனை விலை நடைபெறுகிறது. விலைகளைத் திருத்து இல் மதிப்பாய்வு செய்யவும்."
+  "Item not found or selling price is held. Review it in Edit prices.": "பொருள் கண்டுபிடிக்கப்படவில்லை அல்லது விற்பனை விலை நடைபெறுகிறது. விலைகளைத் திருத்து இல் மதிப்பாய்வு செய்யவும்.",
+  "Password must contain between 5 and 20 characters": "கடவுச்சொல்லில் 5 முதல் 20 எழுத்துக்கள் வரை இருக்க வேண்டும்"
 }

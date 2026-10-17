@@ -6148,18 +6148,18 @@ $(document).ready(function () {
 // Inventory review includes hidden products; sales endpoints exclude them.
 PosnicPro.items.availability = function () {
     $('#product-availability-dialog').remove();
-    var modal = $('<div class="modal fade" id="product-availability-dialog" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Product availability</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close">×</button></div><div class="modal-body"><form><label>Scan barcode or search products</label><div class="input-group"><input class="form-control" aria-label="Scan barcode or search products"><div class="input-group-append"><button class="btn btn-primary" type="submit"><i class="feather icon-search"></i> Search</button></div></div></form><p class="mt-3">Hidden products retain stock, receipts and history. Select the records explicitly; nothing is merged or deleted.</p><div class="availability-status" role="status"></div><div class="availability-rows"></div><div class="availability-preview"></div></div><div class="modal-footer"><button class="btn btn-outline-primary availability-review" type="button">Review changes</button><button class="btn btn-primary availability-confirm" type="button" hidden>Confirm changes</button></div></div></div></div>').appendTo('body');
+    var modal = $('<div class="modal fade" id="product-availability-dialog" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><lang class="lang_product_availability">Product availability</lang></h5><button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">×</button></div><div class="modal-body"><form><label><lang class="lang_scan_barcode_or_search_products">Scan barcode or search products</lang></label><div class="input-group"><input class="form-control" aria-label="Scan barcode or search products" data-t-aria-label="lang_scan_barcode_or_search_products"><div class="input-group-append"><button class="btn btn-primary" type="submit"><i class="feather icon-search"></i> Search</button></div></div></form><p class="mt-3">Hidden products retain stock, receipts and history. Select the records explicitly; nothing is merged or deleted.</p><div class="availability-status" role="status"></div><div class="availability-rows"></div><div class="availability-preview"></div></div><div class="modal-footer"><button class="btn btn-outline-primary availability-review" type="button"><lang class="lang_review_changes">Review changes</lang></button><button class="btn btn-primary availability-confirm" type="button" hidden><lang class="lang_confirm_changes">Confirm changes</lang></button></div></div></div></div>').appendTo('body');
     var rows = [], changes = [], requestId = '', busy = false, permitted = false;
     var status = modal.find('.availability-status'), list = modal.find('.availability-rows');
     function load(after) {
         PosnicPro.get('mobile/v1/inventory/catalogue?kind=items&q=' + encodeURIComponent(modal.find('input').first().val() || '') + (after ? '&after=' + after : ''), function (page) {
-            if (!Array.isArray(page.rows)) { status.text('Could not load products.'); return; }
+            if (!Array.isArray(page.rows)) { status.text(PosnicPro.i18n.t('lang_could_not_load_products', 'Could not load products.')); return; }
             permitted = page.permissions && page.permissions.write;
             rows = rows.concat(page.rows);
             if (page.next) { load(page.next); return; }
-            list.empty(); status.text('Server catalogue. Offline tills receive changes when they reconnect.');
+            list.empty(); status.text(PosnicPro.i18n.t('lang_server_catalogue_offline_tills_receive_cha', 'Server catalogue. Offline tills receive changes when they reconnect.'));
             var prices = new Set(rows.map(function (r) { return Math.round(r.price * (r.taxInclusive ? 1 : 1 + r.taxBps / 10000)); }));
-            if (prices.size > 1) $('<p class="font-weight-bold text-warning">Different selling prices — check carefully</p>').appendTo(list);
+            if (prices.size > 1) $('<p class="font-weight-bold text-warning"><lang class="lang_different_selling_prices_check_carefully">Different selling prices. Check carefully</lang></p>').appendTo(list);
             rows.forEach(function (r) {
                 var card = $('<div class="border rounded p-3 mb-2"></div>').appendTo(list);
                 if (r.image && /^(https?:\/\/|\/uploads\/)/.test(r.image)) $('<img width="48" height="48" class="mr-2" alt="">').attr('src', r.image).appendTo(card);
@@ -6170,7 +6170,7 @@ PosnicPro.items.availability = function () {
                 $('<input type="checkbox" class="mr-2">').attr('data-item-id', r.id).prop('checked', r.availableForSale !== false).prop('disabled', !permitted).appendTo(label);
                 label.append(document.createTextNode('Available for sale'));
             });
-        }, function () { status.text('Could not reach server. No changes confirmed.'); });
+        }, function () { status.text(PosnicPro.i18n.t('lang_could_not_reach_server_no_changes_confirme', 'Could not reach server. No changes confirmed.')); });
     }
     modal.find('form').on('submit', function (e) { e.preventDefault(); if (busy) return; rows = []; changes = []; modal.find('.availability-preview').empty(); modal.find('.availability-confirm').prop('hidden', true); load(''); });
     modal.find('.availability-review').on('click', function () {
@@ -6180,22 +6180,22 @@ PosnicPro.items.availability = function () {
             var available = list.find('input[data-item-id="' + r.id + '"]').prop('checked');
             if (available !== (r.availableForSale !== false)) {
                 changes.push({itemId:r.id, available:available, revision:r.availabilityRevision || ''});
-                $('<p class="font-weight-bold"></p>').text(r.name + ' · ' + r.sku + ' · ' + r.id + ': ' + (r.availableForSale === false ? 'Hidden' : 'Available') + ' → ' + (available ? 'Available' : 'Hidden')).appendTo(preview);
+                $('<p class="font-weight-bold"></p>').text(r.name + ' · ' + r.sku + ' · ' + r.id + ': ' + (r.availableForSale === false ? PosnicPro.i18n.t('lang_hidden', 'Hidden') : PosnicPro.i18n.t('lang_available', 'Available')) + ' → ' + (available ? PosnicPro.i18n.t('lang_available', 'Available') : PosnicPro.i18n.t('lang_hidden', 'Hidden'))).appendTo(preview);
             }
         });
         requestId = 'availability-' + Array.from(crypto.getRandomValues(new Uint8Array(16))).map(function (v) { return v.toString(16).padStart(2, '0'); }).join('');
         modal.find('.availability-confirm').prop('hidden', !changes.length);
-        status.text(changes.length ? 'Review exactly these changes, then confirm.' : 'No changes selected.');
+        status.text(changes.length ? PosnicPro.i18n.t('lang_review_exactly_these_changes_then_confirm', 'Review exactly these changes, then confirm.') : PosnicPro.i18n.t('lang_no_changes_selected', 'No changes selected.'));
     });
     modal.find('.availability-confirm').on('click', function () {
         if (busy || !changes.length || !permitted) return;
         busy = true; modal.find('button,input').prop('disabled', true); status.text('Waiting for server confirmation…');
         PosnicPro.post({url:'mobile/v1/inventory/availability', data:JSON.stringify({id:requestId, changes:changes})}, function (result) {
             busy = false; modal.find('button,input').prop('disabled', false);
-            if (!Array.isArray(result.results)) { status.text('Not confirmed. Retry the same request.'); return; }
+            if (!Array.isArray(result.results)) { status.text(PosnicPro.i18n.t('lang_not_confirmed_retry_the_same_request', 'Not confirmed. Retry the same request.')); return; }
             status.text(result.results.some(function (r) { return r.state !== 'confirmed'; }) ? 'Some records changed meanwhile. Search again and review those records.' : 'Server confirmed. Refresh sales catalogues on connected tills. Offline tills must reconnect.');
             modal.find('.availability-confirm').prop('hidden', true); list.empty(); modal.find('.availability-preview').empty();
-        }, function () { busy = false; modal.find('button,input').prop('disabled', false); status.text('Not confirmed. Retry; the same change will not be applied twice.'); });
+        }, function () { busy = false; modal.find('button,input').prop('disabled', false); status.text(PosnicPro.i18n.t('lang_not_confirmed_retry_the_same_change_will_n', 'Not confirmed. Retry; the same change will not be applied twice.')); });
     });
     modal.modal('show');
 };
