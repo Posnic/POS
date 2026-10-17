@@ -314,7 +314,7 @@
         if (user) {
             var profile = section(user, 'lang_vieweditprofile_title', 'Profile Details');
             profile.parentElement.classList.add('record-staff-profile');
-            moveFields(user, profile, ['users_firstname', 'users_lastname', 'users_name', 'users_email', 'users_password', 'users_retype_password']);
+            moveFields(user, profile, ['users_firstname', 'users_lastname', 'users_name', 'users_email', 'user_change_password', 'users_password', 'users_retype_password']);
             user.prepend(profile.parentElement);
             var photo = user.querySelector('.profilebox');
             if (photo) user.prepend(photo);
