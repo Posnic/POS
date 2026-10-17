@@ -439,10 +439,16 @@
   "Choose a supplier": [
     "src/repositories/purchase-order.repository.js"
   ],
+  "Choose a table first.": [
+    "src/repositories/sale.repository.js"
+  ],
   "Choose a table with enough seats.": [
     "src/repositories/sale.repository.js"
   ],
   "Choose a valid Take Away order and branch": [
+    "src/repositories/sale.repository.js"
+  ],
+  "Choose an enabled venue and enter a room number (up to 40 characters).": [
     "src/repositories/sale.repository.js"
   ],
   "Choose discount or markup quotation pricing.": [
@@ -1924,6 +1930,9 @@
   ],
   "Role not found": [
     "src/repositories/role.repository.js"
+  ],
+  "Room settings could not be loaded. Try again.": [
+    "src/repositories/sale.repository.js"
   ],
   "SSO authentication successful": [
     "src/services/user.service.js"

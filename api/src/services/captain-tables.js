@@ -92,13 +92,11 @@ async function list(req) {
     .filter((v) => v.enabled && v.staff_orders_enabled);
   if (roomVenues.some((v) => v.room_charge.enabled && v.room_charge.taxed)) {
     const tax = ObjectId.isValid(String(c.branch?.default_tax || ''))
-      ? await req.db
-          .collection('grouptax')
-          .findOne({
-            _id: new ObjectId(String(c.branch.default_tax)),
-            branch_id: c.branchId,
-            license: c.license,
-          })
+      ? await req.db.collection('grouptax').findOne({
+          _id: new ObjectId(String(c.branch.default_tax)),
+          branch_id: c.branchId,
+          license: c.license,
+        })
       : null;
     for (const venue of roomVenues)
       if (venue.room_charge.taxed) {

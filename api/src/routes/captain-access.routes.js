@@ -371,20 +371,18 @@ router.post(
       fail('Choose a table requirement.');
     const c = await context(req),
       cleaningEnabled = req.body.cleaningEnabled;
-    await req.db
-      .collection('branches')
-      .updateOne(
-        { _id: c.branchId, license: c.license },
-        {
-          $set: {
-            captain_table_cleaning: cleaningEnabled,
-            ...(req.body.tableRequired === undefined
-              ? {}
-              : { captain_allow_unassigned: !req.body.tableRequired }),
-            updated_date: new Date(),
-          },
-        }
-      );
+    await req.db.collection('branches').updateOne(
+      { _id: c.branchId, license: c.license },
+      {
+        $set: {
+          captain_table_cleaning: cleaningEnabled,
+          ...(req.body.tableRequired === undefined
+            ? {}
+            : { captain_allow_unassigned: !req.body.tableRequired }),
+          updated_date: new Date(),
+        },
+      }
+    );
     if (!cleaningEnabled)
       await req.db.collection('tableorder').updateMany(
         { branch_id: c.branchId, license: c.license, service_state: 'cleaning' },

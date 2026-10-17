@@ -4936,6 +4936,6 @@
   "lang_room_charge_basis": "Pārtikas procentuālais daudzums pēc atlaidēm pirms nodokļiem. Piesakieties tikai ar viesu vienošanos; darbinieki to var noņemt no rēķina.",
   "lang_room_charge_rate": "{0}: {1}% no pārtikas pēc atlaidēm, pirms nodokļiem.",
   "lang_room_charge_final": "Iekļauts galīgajā rēķinā.",
-  "lang_room_orders_enable_help": "Iespējojiet personāla numuru pasūtījumus sadaļā Iestatījumi â†“ Restorāns â†” Viesnīcas un citās vietās.",
+  "lang_room_orders_enable_help": "Iespējojiet personāla numuru pasūtījumus sadaļā Iestatījumi → Restorāns → Viesnīcas un citās vietās.",
   "lang_room_venue": "Norises vieta"
 }

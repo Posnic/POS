@@ -4936,6 +4936,6 @@
   "lang_room_charge_basis": "élelmiszer százalékos aránya kedvezmények után, adózás előtt. Csak vendégmegállapodással jelentkezhet; a személyzet eltávolíthatja azt a számlából.",
   "lang_room_charge_rate": "{0}: Az élelmiszer {1}% -a kedvezmény után, adózás előtt.",
   "lang_room_charge_final": "A végső számlán szerepel.",
-  "lang_room_orders_enable_help": "Engedélyezze a személyzeti szobarendezést a Beállítások â†„ Étterem â†” Hotelek és egyéb helyszínek menüpontban.",
+  "lang_room_orders_enable_help": "Engedélyezze a személyzeti szobarendezést a Beállítások → Étterem → Hotelek és egyéb helyszínek menüpontban.",
   "lang_room_venue": "Helyszín"
 }

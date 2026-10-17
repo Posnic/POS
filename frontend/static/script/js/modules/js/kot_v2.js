@@ -854,7 +854,25 @@
         await refresh();
         if (d.saleId && P.kotPrint) P.kotPrint.afterSave(d.saleId);
     }
-    const roomText = text => P.i18n.t({"Rooms": "lang_rooms", "Venue": "lang_room_venue", "Room number": "lang_room_number", "Room order": "lang_room_order", "Room service charge": "lang_room_service_charge", "Guest agreed to this additional charge": "lang_room_charge_agreement", "Choose a venue and enter the room number.": "lang_room_destination_required", "The room charge tax is unavailable. Review the tax settings.": "lang_room_charge_tax_unavailable", "Allow staff room orders": "lang_staff_room_orders", "Staff room orders use normal menu prices. Web menu markup and venue commission are separate.": "lang_staff_room_prices", "Offer an additional room charge": "lang_room_charge_offer", "Charge name": "lang_charge_name", "Apply default tax": "lang_apply_default_tax", "Percentage of food after discounts, before tax. Apply only with guest agreement; staff can remove it from the bill.": "lang_room_charge_basis", "{0}: {1}% of food after discounts, before tax.": "lang_room_charge_rate", "Included on the final bill.": "lang_room_charge_final", "Enable staff room orders in Settings → Restaurant → Hotels and other venues.": "lang_room_orders_enable_help"}[text], text);
+    const roomText = text => { switch (text) {
+case "Rooms": return P.i18n.t("lang_rooms", "Rooms");
+case "Venue": return P.i18n.t("lang_room_venue", "Venue");
+case "Room number": return P.i18n.t("lang_room_number", "Room number");
+case "Room order": return P.i18n.t("lang_room_order", "Room order");
+case "Room service charge": return P.i18n.t("lang_room_service_charge", "Room service charge");
+case "Guest agreed to this additional charge": return P.i18n.t("lang_room_charge_agreement", "Guest agreed to this additional charge");
+case "Choose a venue and enter the room number.": return P.i18n.t("lang_room_destination_required", "Choose a venue and enter the room number.");
+case "The room charge tax is unavailable. Review the tax settings.": return P.i18n.t("lang_room_charge_tax_unavailable", "The room charge tax is unavailable. Review the tax settings.");
+case "Allow staff room orders": return P.i18n.t("lang_staff_room_orders", "Allow staff room orders");
+case "Staff room orders use normal menu prices. Web menu markup and venue commission are separate.": return P.i18n.t("lang_staff_room_prices", "Staff room orders use normal menu prices. Web menu markup and venue commission are separate.");
+case "Offer an additional room charge": return P.i18n.t("lang_room_charge_offer", "Offer an additional room charge");
+case "Charge name": return P.i18n.t("lang_charge_name", "Charge name");
+case "Apply default tax": return P.i18n.t("lang_apply_default_tax", "Apply default tax");
+case "Percentage of food after discounts, before tax. Apply only with guest agreement; staff can remove it from the bill.": return P.i18n.t("lang_room_charge_basis", "Percentage of food after discounts, before tax. Apply only with guest agreement; staff can remove it from the bill.");
+case "{0}: {1}% of food after discounts, before tax.": return P.i18n.t("lang_room_charge_rate", "{0}: {1}% of food after discounts, before tax.");
+case "Included on the final bill.": return P.i18n.t("lang_room_charge_final", "Included on the final bill.");
+case "Enable staff room orders in Settings \u2192 Restaurant \u2192 Hotels and other venues.": return P.i18n.t("lang_room_orders_enable_help", "Enable staff room orders in Settings → Restaurant → Hotels and other venues.");
+default: return text; } };
     async function newRoomOrder() {
         if (resolveDraftBeforeSwitch(() => newRoomOrder())) return;
         const floor = await api('get', 'captain/v1/tables', { branchId: branch() });
@@ -873,7 +891,7 @@
             const v = venues.find(v => v.code === modal.querySelector('[name=venue]').value);
             const rule = v?.room_charge;
             modal.querySelector('[data-room-rate]').textContent = rule?.enabled && rule.percent > 0
-                ? (roomText('{0}: {1}% of food after discounts, before tax.').replace('{0}', rule.name).replace('{1}', rule.percent) + (rule.taxed ? ' + ' + P.i18n.t('lang_tax', 'Tax') + ' ' + (rule.tax_rate ?? '') + '%' : '')) : '';
+                ? (roomText('{0}: {1}% of food after discounts, before tax.').replace('{0}', rule.name).replace('{1}', rule.percent) + (rule.taxed ? ' + ' + P.i18n.t('lang_tax', 'Tax:') + ' ' + (rule.tax_rate ?? '') + '%' : '')) : '';
             modal.querySelector('[data-room-agreement]').hidden = !(rule?.enabled && rule.percent > 0);
             modal.querySelector('[name=acceptCharge]').checked = false;
         };
