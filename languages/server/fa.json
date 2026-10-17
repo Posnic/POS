@@ -959,5 +959,6 @@
   "Review the paid bill correction before saving.": "قبل از صرفه جویی، اصلاح قبض پرداخت شده را بررسی کنید.",
   "Choose a saved customer for customer credit.": "مشتری ذخیره شده را برای اعتبار مشتری انتخاب کنید.",
   "Exact numeric search must be on or off": "جستجوی عددی دقیق باید روشن یا خاموش باشد",
-  "Item not found or selling price is held. Review it in Edit prices.": "مورد یافت نشد یا قیمت فروش حفظ شده است. آن را در ویرایش قیمت ها مرور کنید."
+  "Item not found or selling price is held. Review it in Edit prices.": "مورد یافت نشد یا قیمت فروش حفظ شده است. آن را در ویرایش قیمت ها مرور کنید.",
+  "Password must contain between 5 and 20 characters": "رمز عبور باید حاوی بین 5 تا 20 کاراکتر باشد"
 }

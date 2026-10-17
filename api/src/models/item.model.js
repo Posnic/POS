@@ -196,6 +196,9 @@ const itemSchema = new mongoose.Schema(
     menu_marks: { type: [String], default: [] },
 
     license: { type: mongoose.Schema.Types.ObjectId, ref: 'License' },
+    available_for_sale: { type: Boolean, default: true },
+    availability_revision: String,
+    availability_history: [mongoose.Schema.Types.Mixed],
     is_active: { type: Boolean, default: true },
   },
   {
@@ -285,6 +288,8 @@ class ItemModel {
     unit_id: { type: 'String', select: true },
     track_inventory: { type: 'Boolean', select: true },
     ecommerce: { type: 'Boolean', select: true },
+    available_for_sale: { type: 'Boolean', select: true },
+    availability_revision: { type: 'String', select: true },
     show_on_menu: { type: 'Boolean', select: true },
     channel_off: { type: 'Array', select: true },
     channel_hours: { type: 'Object', select: true },

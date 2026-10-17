@@ -2933,6 +2933,7 @@ class ItemRepository extends BaseModel {
           { del_status: { $nin: [1, '1', true] } },
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
+          { available_for_sale: { $ne: false } },
           type === 'barcode' ? null : stockCondition,
           ...(categoryId ? [{ category_id: new ObjectId(categoryId) }] : []),
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
@@ -3126,6 +3127,7 @@ class ItemRepository extends BaseModel {
           { del_status: { $nin: [1, '1', true] } },
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
+          { available_for_sale: { $ne: false } },
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ],
       };
@@ -3852,6 +3854,7 @@ class ItemRepository extends BaseModel {
         ...(Object.keys(demoClause).length ? [demoClause] : []),
         { del_status: { $nin: [1, '1', true] } },
         { item_status: { $ne: ITEM_STATUS.INSTANT } },
+        { available_for_sale: { $ne: false } },
         {
           $or: [{ available_quantity: { $gt: 0 } }, { negative_stock: true }],
         },
@@ -3926,6 +3929,7 @@ class ItemRepository extends BaseModel {
         $and: [
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
+          { available_for_sale: { $ne: false } },
           {
             selling_price: {
               $gte: parseInt(startingPrice, 10) || 0,
@@ -5769,6 +5773,7 @@ class ItemRepository extends BaseModel {
       const filter = {
         'branch_access.branch_id': branchObjectId,
         item_status: { $ne: ITEM_STATUS.INSTANT },
+        available_for_sale: { $ne: false },
       };
 
       const items = await collection
@@ -6398,6 +6403,7 @@ class ItemRepository extends BaseModel {
             : {},
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: ITEM_STATUS.INSTANT } },
+          { available_for_sale: { $ne: false } },
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ].filter((f) => Object.keys(f).length > 0),
       };

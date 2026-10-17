@@ -112,6 +112,8 @@ function normalizeItemChannels(item) {
  * @returns {{available: boolean, reason: string, window: object|null}}
  */
 function availableOn(item, channel, nowMins) {
+  if (item?.available_for_sale === false)
+    return { available: false, reason: 'hidden_from_sales', window: null };
   const wanted = normalizeTarget(channel);
   if (!wanted) return { available: true, reason: '', window: null };
 
@@ -156,8 +158,8 @@ function availableOn(item, channel, nowMins) {
  */
 function channelFilter(channel) {
   const wanted = normalizeTarget(channel);
-  if (!wanted) return {};
-  return { channel_off: { $ne: wanted } };
+  if (!wanted) return { available_for_sale: { $ne: false } };
+  return { available_for_sale: { $ne: false }, channel_off: { $ne: wanted } };
 }
 
 /**

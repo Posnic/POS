@@ -107,6 +107,7 @@ function mapItem(row, options = {}) {
     price: Number.isSafeInteger(price) && price >= 0 && price <= 99999999999 ? price : 0,
     code: /^\d{1,6}$/.test(code) ? code : '',
     barcode: String(row.barcode_id || ''),
+    barcodes: require('../utils/item-barcodes').codes(row),
     category: String(row.category_name || 'Items'),
     visual: typeof row.icon === 'string' && row.icon ? row.icon : '■',
     ...(image
@@ -123,6 +124,9 @@ function mapItem(row, options = {}) {
     taxBps: Number.isInteger(taxBps) ? Math.min(10000, Math.max(0, taxBps)) : 0,
     taxInclusive: row.tax_type === 'inclusive',
     active:
+      row.available_for_sale !== false &&
+      !row.is_deleted &&
+      ![1, '1', true].includes(row.del_status) &&
       row.activate !== false &&
       row.active !== false &&
       row.status !== 'inactive' &&

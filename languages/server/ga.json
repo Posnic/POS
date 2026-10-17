@@ -959,5 +959,6 @@
   "Review the paid bill correction before saving.": "Déan athbhreithniú ar an gceartú bille íoctha",
   "Choose a saved customer for customer credit.": "Roghnaigh custaiméir shábháilte le haghaidh creidmheasa",
   "Exact numeric search must be on or off": "Caithfidh cuardach uimhriúil cruinn a bheith ar nó as",
-  "Item not found or selling price is held. Review it in Edit prices.": "Mír nach bhfuarthas nó coimeádtar praghas díola. Déan athbhreithniú air i Eagar praghsanna"
+  "Item not found or selling price is held. Review it in Edit prices.": "Mír nach bhfuarthas nó coimeádtar praghas díola. Déan athbhreithniú air i Eagar praghsanna",
+  "Password must contain between 5 and 20 characters": "Caithfidh idir 5 agus 20 carachtar a bheith i bhfocal faire"
 }

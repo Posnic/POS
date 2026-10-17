@@ -7603,6 +7603,7 @@ PosnicPro.sales.itemCache = {
     TTL_MS: 60 * 1000,
     _map: {},
     get: function (id, onData) {
+        if ((PosnicPro.sales.hiddenProducts || []).includes(String(id))) { PosnicPro.alert('error', 'This product is hidden from sales. Refresh the catalogue or ask an authorised user to restore it.'); return; }
         var hit = PosnicPro.sales.itemCache._map[id];
         if (hit && (Date.now() - hit.at) < PosnicPro.sales.itemCache.TTL_MS) {
             onData(JSON.parse(hit.json));
@@ -7610,6 +7611,7 @@ PosnicPro.sales.itemCache = {
         }
         PosnicPro.get('items/' + id, function (response) {
             if (response.type === 'success') {
+                if (response.data.available_for_sale === false) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_this_product_is_hidden_from_sales_your_bas', 'This product is hidden from sales. Your basket has not been changed.')); return; }
                 PosnicPro.sales.itemCache._map[id] = { at: Date.now(), json: JSON.stringify(response.data) };
                 onData(JSON.parse(JSON.stringify(response.data)));
             } else {
@@ -13733,3 +13735,25 @@ $(document).on('focusin click', '#sales_new input[name="addSalesLineItemQty"], #
         if (document.activeElement === input && !input.disabled && !input.readOnly) input.select();
     }, 0);
 });
+
+
+// Read-only invalidation; never remove or alter existing basket lines.
+(function () {
+    var pending = false, revision = null;
+    function checkAvailability() {
+        if (pending || document.hidden || !PosnicPro.sales || !PosnicPro.sales.itemCache || !$('#sales:visible').length) return;
+        pending = true;
+        PosnicPro.get('mobile/v1/availability-status', function (r) {
+            pending = false;
+            if (!Array.isArray(r.hidden) || typeof r.revision !== 'string') return;
+            PosnicPro.sales.hiddenProducts = r.hidden;
+            if (revision !== r.revision) {
+                revision = r.revision;
+                PosnicPro.sales.itemCache.clear();
+                if (PosnicPro.sales.itemsMenu) PosnicPro.sales.itemsMenu.onlineProductList('');
+            }
+        }, function () { pending = false; });
+    }
+    setInterval(checkAvailability, 15000);
+    window.addEventListener('focus', checkAvailability);
+})();

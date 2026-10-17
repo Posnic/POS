@@ -959,5 +959,6 @@
   "Review the paid bill correction before saving.": "Pitia marekebisho ya bili iliyolipwa kabla ya kuokoa.",
   "Choose a saved customer for customer credit.": "Chagua mteja aliyehifadhiwa kwa mkopo wa wateja.",
   "Exact numeric search must be on or off": "Utafutaji halisi wa nambari lazima uwe wawa au kuzima",
-  "Item not found or selling price is held. Review it in Edit prices.": "Bidhaa haijapatikana au bei ya kuuza kinashikiliwa. Ipitia katika Hariri bei."
+  "Item not found or selling price is held. Review it in Edit prices.": "Bidhaa haijapatikana au bei ya kuuza kinashikiliwa. Ipitia katika Hariri bei.",
+  "Password must contain between 5 and 20 characters": "Nenosiri lazima iwe na kati ya herufi 5 na 20"
 }
