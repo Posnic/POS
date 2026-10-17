@@ -1012,7 +1012,160 @@
                                         }
                                     });
             </script>
-        <!-- Desktop configuration is in Manage > Settings. Recovery remains in Electron. -->
+        <script>
+            // Desktop tools quick-access (Electron only). Same actions as the
+            // File menu and tray - this is the discoverable, in-app door.
+            (function () {
+                if (!window.electronAPI || !window.electronAPI.desktop) return;
+                const style = document.createElement('style');
+                // Keep the familiar green shortcut; the menu follows the app theme.
+                style.textContent =
+                    '#posnic-desktop-fab{position:fixed;bottom:18px;right:18px;z-index:99990;font-family:inherit}' +
+                    '#posnic-desktop-fab .fab-btn{background:#15803d;' +
+                    'color:#fff;border:1px solid #15803d;border-radius:24px;' +
+                    'height:46px;min-width:46px;padding:0 14px;display:flex;align-items:center;justify-content:center;' +
+                    'font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.10)}' +
+                    '#posnic-desktop-fab .fab-label{white-space:nowrap;margin-inline-start:8px}' +
+                    '#posnic-desktop-fab button:focus-visible{outline:2px solid var(--theme-primary-color,#506fe4);outline-offset:-3px}' +
+                    '#posnic-desktop-fab .fab-menu{display:none;position:absolute;bottom:48px;right:0;' +
+                    'background:var(--theme-card-bg,#fff);border:1px solid var(--theme-border-color,#e6e6e6);' +
+                    'border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px;min-width:250px;max-width:calc(100vw - 36px);max-height:calc(100vh - 90px);overflow:auto}' +
+                    '#posnic-desktop-fab.open .fab-menu{display:block}' +
+                    '#posnic-desktop-fab .fab-menu button{display:flex;gap:12px;align-items:center;width:100%;text-align:start;background:none;' +
+                    'border:none;border-radius:5px;padding:10px 12px;font:inherit;font-size:13px;color:var(--theme-text-primary,#16203a);cursor:pointer}' +
+                    '#posnic-desktop-fab .fab-menu button:hover{background:var(--theme-menu-active-bg,#f0f2ff);' +
+                    'color:var(--theme-menu-active-text,inherit)}';
+                document.head.appendChild(style);
+
+                const fab = document.createElement('div');
+                fab.id = 'posnic-desktop-fab';
+                fab.innerHTML = '<div class="fab-menu" id="posnic-desktop-menu" role="menu"></div><button type="button" class="fab-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="posnic-desktop-menu" title="Desktop tools" data-t-title="lang_desktop_tools"><i class="feather icon-monitor" aria-hidden="true"></i><span class="fab-label"><lang class="lang_desktop">Desktop</lang></span><span id="posnic-sync-dot"></span></button>';
+                document.body.appendChild(fab);
+
+                const dotStyle = document.createElement('style');
+                dotStyle.textContent =
+                    '#posnic-sync-dot{display:none;width:9px;height:9px;border-radius:50%;margin-left:8px;' +
+                    'vertical-align:middle;display:inline-block}' +
+                    '#posnic-sync-dot.on{background:#4ade80;box-shadow:0 0 5px #4ade80}' +
+                    '#posnic-sync-dot.off{background:#f87171;box-shadow:0 0 5px #f87171}' +
+                    '#posnic-sync-dot.none{display:none}';
+                document.head.appendChild(dotStyle);
+
+                // Live cloud sync indicator on the button (only when activated)
+                const syncDot = fab.querySelector('#posnic-sync-dot');
+                const refreshSyncDot = async () => {
+                    try {
+                        const status = await window.electronAPI.cloud.status();
+                        if (!status.connected) { syncDot.className = 'none'; return; }
+                        syncDot.className = status.sync && status.sync.online ? 'on' : 'off';
+                    } catch (e) { syncDot.className = 'none'; }
+                };
+                refreshSyncDot();
+                setInterval(refreshSyncDot, 30000);
+
+                const menu = fab.querySelector('.fab-menu');
+                const trigger = fab.querySelector('.fab-btn');
+                const closeMenu = () => { fab.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); };
+                const updateDesktopToolVisibility = () => {
+                    const working = /^#\/(?:kot(?:_v2)?(?:\/|$)|sales\/(?:new(?:\/|$)|[^/]+\/(?:edit|hold)(?:\/|$)))/.test(location.hash);
+                    fab.hidden = working;
+                    if (working) closeMenu();
+                };
+                window.addEventListener('hashchange', updateDesktopToolVisibility);
+                updateDesktopToolVisibility();
+                const addItem = (label, target, icon, settings) => {
+                    const b = document.createElement('button');
+                    b.type = 'button'; b.setAttribute('role', 'menuitem');
+                    const glyph = document.createElement('i'); glyph.className = 'feather icon-' + icon; glyph.setAttribute('aria-hidden', 'true');
+                    b.appendChild(glyph); b.appendChild(document.createTextNode(label));
+                    b.addEventListener('click', async () => {
+                        closeMenu();
+                        if (settings) hasher.setHash('settings/' + target);
+                        else {
+                            try {
+                                const opened = await window.electronAPI.desktop.open(target);
+                                if (opened === false || (opened && opened.ok === false)) throw new Error('Desktop action unavailable');
+                            } catch (error) {
+                                console.error('[Desktop tools] Could not open ' + target, error);
+                                PosnicPro.alert('error', PosnicPro.i18n.t('lang_request_failed', 'Request failed'));
+                            }
+                        }
+                    });
+                    menu.appendChild(b);
+                };
+
+                window.electronAPI.desktop.capabilities().then((caps) => {
+                    if (PosnicPro.userACL && PosnicPro.userACL.branch && PosnicPro.userACL.branch.write) addItem(PosnicPro.i18n.t('lang_desktop_app', 'App Settings'), 'app', 'settings', true);
+                    addItem(PosnicPro.i18n.t('lang_hardware_manager', 'Hardware Manager'), 'hardware', 'printer');
+                    if (['enable', 'true', true].includes(PosnicPro.local.get('table_options'))) addItem(PosnicPro.i18n.t('lang_desktop_kitchen', 'Kitchen Printing'), 'hardware:kot', 'clipboard');
+                    addItem(PosnicPro.i18n.t('lang_kitchen_display', 'Kitchen Display'), 'hardware:screen', 'monitor');
+                    addItem(PosnicPro.i18n.t('lang_kitchen_sound', 'Kitchen sound'), 'hardware:sound', 'volume-2');
+                    if (caps.backup) addItem(PosnicPro.i18n.t('lang_desktop_backups', 'Backup & Recovery'), 'backup', 'database');
+                    addItem(PosnicPro.i18n.t('lang_desktop_update_recovery', 'Updates & recovery'), 'update', 'download-cloud');
+                    addItem(PosnicPro.i18n.t('lang_desktop_cloudsync', 'Cloud Sync'), 'cloud', 'cloud');
+                    addItem(PosnicPro.i18n.t('lang_desktop_view_logs', 'View application logs'), 'log', 'file-text');
+                    addItem(PosnicPro.i18n.t('lang_about_posnic', 'About Posnic'), 'about', 'info');
+                }).catch(() => {});
+
+                fab.querySelector('.fab-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    fab.classList.toggle('open');
+                    trigger.setAttribute('aria-expanded', String(fab.classList.contains('open')));
+                    if (fab.classList.contains('open')) menu.querySelector('button')?.focus();
+                });
+                fab.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') { closeMenu(); trigger.focus(); e.preventDefault(); }
+                    const items = Array.from(menu.querySelectorAll('button'));
+                    if (!items.length || !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+                    e.preventDefault(); fab.classList.add('open'); trigger.setAttribute('aria-expanded', 'true');
+                    const at = items.indexOf(document.activeElement);
+                    const next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : e.key === 'ArrowDown' ? (at + 1) % items.length : (at + items.length - 1) % items.length;
+                    items[next].focus();
+                });
+                document.addEventListener('click', (e) => { if (!fab.contains(e.target)) closeMenu(); });
+                // Chromium can run a microtask between blur and focus. At that
+                // point activeElement is body, even when focus is moving to a
+                // different menu item. Hiding the menu then cancels its click.
+                fab.addEventListener('focusout', (e) => {
+                    if (!fab.contains(e.relatedTarget)) closeMenu();
+                });
+
+                // --- Tray branch switching ---------------------------------
+                // Mirror the header's branch dropdown into the tray menu, and
+                // run the app's own switch flow (incl. open-register guard)
+                // when a branch is picked from the tray.
+                if (window.electronAPI.tray) {
+                    const harvestBranches = () => {
+                        const items = document.querySelectorAll('#change_branch_list a[data-id]');
+                        if (!items.length) return;
+                        const branches = Array.from(items).map((a) => ({
+                            id: a.getAttribute('data-id'),
+                            name: (a.textContent || '').trim()
+                        })).filter((b) => b.id && b.name);
+                        const currentName = (document.querySelector('.branch-name, #current_branch_name')?.textContent || '').trim() || null;
+                        if (branches.length) {
+                            window.electronAPI.tray.setBranches({ branches, currentName });
+                        }
+                    };
+                    const list = () => document.getElementById('change_branch_list');
+                    const arm = () => {
+                        const el = list();
+                        if (!el) return setTimeout(arm, 2000);
+                        new MutationObserver(harvestBranches).observe(el, { childList: true, subtree: true });
+                        harvestBranches();
+                    };
+                    arm();
+
+                    window.electronAPI.tray.onSwitchBranch((id) => {
+                        if (window.PosnicPro?.branches?.showChange) {
+                            PosnicPro.branches.showChange(id);
+                        } else {
+                            window.location.hash = '#/branches/' + id + '/change';
+                        }
+                    });
+                }
+            })();
+        </script>
         <script>
         /* Static-asset service worker (web / LAN counters only). The desktop
            shell is skipped: its assets are local files owned by the installer
