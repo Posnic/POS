@@ -65,7 +65,9 @@ function item(row) {
     categoryId: String(row.category_id || ''),
     supplierId: String(row.supplier_id || ''),
     supplierName: String(row.supplier_name || ''),
-    sku: String(row.sku || row.item_code || ''),
+    sku: String(row.sku || row.item_code || row.itemid || ''),
+    availableForSale: row.available_for_sale !== false,
+    availabilityRevision: row.availability_revision || '',
     minimum: Number(row.reorder_point || 0),
     expires: row.items_expiry_date || null,
   };
@@ -78,6 +80,7 @@ async function catalogue(req) {
     mobile.fail('Supplier access is required.', 403);
   const filter = kind === 'items' ? wall(c) : withBranchScope({ license: c.license }, c.branchId);
   filter.is_deleted = { $ne: true };
+  filter.del_status = { $nin: [1, '1', true] };
   if (req.query?.after) filter._id = { $gt: oid(req.query.after) };
   const q = String(req.query?.q || '')
     .trim()
@@ -87,9 +90,14 @@ async function catalogue(req) {
     filter.$or = [
       { name: { $regex: escaped, $options: 'i' } },
       { barcode_id: q },
+      { barcodes: q },
       { plu_code: q },
       { sku: q },
     ];
+  }
+  if (kind === 'items' && req.query?.barcode) {
+    const barcode = String(req.query.barcode).trim().slice(0, 512);
+    filter.$or = [{ barcode_id: barcode }, { barcodes: barcode }];
   }
   const projection =
     kind === 'items' ? undefined : { name: 1, category_name: 1, supplier_name: 1, status: 1 };
@@ -525,6 +533,8 @@ async function policy(req) {
   };
 }
 module.exports = {
+  access,
+  item,
   catalogue,
   history,
   prepare,

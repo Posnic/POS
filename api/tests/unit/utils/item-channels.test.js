@@ -40,9 +40,19 @@ describe('an item is sold everywhere unless it says otherwise', () => {
     /* $ne rather than an $in on a list of channels: absent has to mean
        included, or a shop with two hundred items sells nothing until it has
        edited all of them. */
-    expect(channelFilter('online')).toEqual({ channel_off: { $ne: 'online' } });
-    expect(channelFilter('')).toEqual({});
+    expect(channelFilter('online')).toEqual({
+      available_for_sale: { $ne: false },
+      channel_off: { $ne: 'online' },
+    });
+    expect(channelFilter('')).toEqual({ available_for_sale: { $ne: false } });
   });
+});
+
+test('global availability overrides every channel without changing channel configuration', () => {
+  for (const channel of ['', 'online', 'kiosk', 'pos']) {
+    expect(availableOn({ available_for_sale: false }, channel).available).toBe(false);
+    expect(availableOn({ available_for_sale: true }, channel).available).toBe(true);
+  }
 });
 
 describe('per-channel hours', () => {

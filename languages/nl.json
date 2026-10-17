@@ -4996,5 +4996,20 @@
   "lang_add_new_customer_details": "Nieuwe klantgegevens toevoegen",
   "lang_address_delivery_optional": "Adres en bezorging (optioneel)",
   "lang_place_of_supply_if_different": "Plaats van levering (indien afwijkend)",
-  "lang_same_as_customer_branch": "Gelijk aan klant / vestiging"
+  "lang_same_as_customer_branch": "Gelijk aan klant / vestiging",
+  "lang_available": "Beschikbaar",
+  "lang_confirm_changes": "Wijzigingen bevestigen",
+  "lang_could_not_load_products": "Kon producten niet laden.",
+  "lang_could_not_reach_server_no_changes_confirme": "Kon de server niet bereiken. Geen wijzigingen bevestigd.",
+  "lang_different_selling_prices_check_carefully": "Verschillende verkoopprijzen. Controleer dit zorgvuldig",
+  "lang_hidden": "Verborgen",
+  "lang_no_changes_selected": "Geen wijzigingen geselecteerd.",
+  "lang_not_confirmed_retry_the_same_change_will_n": "Niet bevestigd. Probeer het opnieuw; dezelfde wijziging wordt niet twee keer toegepast.",
+  "lang_not_confirmed_retry_the_same_request": "Niet bevestigd. Probeer hetzelfde verzoek opnieuw.",
+  "lang_product_availability": "Beschikbaarheid van het product",
+  "lang_review_changes": "Wijzigingen bekijken",
+  "lang_review_exactly_these_changes_then_confirm": "Controleer precies deze wijzigingen en bevestig ze.",
+  "lang_scan_barcode_or_search_products": "Barcodes scannen of producten zoeken",
+  "lang_server_catalogue_offline_tills_receive_cha": "Servercatalogus. Offline kassa's worden gewijzigd wanneer ze opnieuw verbinding maken.",
+  "lang_this_product_is_hidden_from_sales_your_bas": "Dit product is verborgen voor verkoop. Je winkelmandje is niet gewijzigd."
 }
