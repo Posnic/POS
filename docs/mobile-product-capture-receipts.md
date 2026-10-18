@@ -39,9 +39,10 @@ Mobile: 131 unit tests, 69 browser tests, TypeScript and formatting checks.
 API: product concurrency, crash recovery, alternate/hidden duplicates, scope,
 permissions, decimal/zero opening, references, receipt-profile validation and an
 HTTP create -> fresh catalogue -> sell -> retry -> print-job integration test.
-Existing mobile inventory tests pass (20). Five full-application browser cases
-in mobile-pos.integration.cjs require MOBILE_FULL_APP and were not run by the
-ordinary API suite; the separate mobile browser suite is not a substitute.
+Existing mobile inventory tests pass (20). All 28 mobile-pos integration cases
+also pass with MOBILE_FULL_APP, the actual web build and Playwright enabled,
+including real login, optional PIN, offline cash sale/reconnect and cloud authorization.
+Eight focused product/receipt integration cases pass separately.
 Gateway: real temporary MongoDB and local HTTP/file transfers exercise large
 catalogues, alternate images, cloud/till/other-till transfer and tenant refusal.
 Physical Bluetooth/USB printers and iPhone system printing require device tests.

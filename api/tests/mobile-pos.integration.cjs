@@ -569,20 +569,9 @@ test(
       await page.getByRole('textbox', { name: 'Username', exact: true }).fill(user.username);
       await page.getByRole('textbox', { name: 'Password', exact: true }).fill('test-password');
       await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-      try {
-        await page
-          .getByRole('textbox', { name: 'PIN', exact: true })
-          .fill('4829', { timeout: 8000 });
-      } catch (e) {
-        console.log('MOBILE UI:', await page.locator('body').innerText());
-        await page.screenshot({
-          path: path.resolve(__dirname, '../../tmp/mobile-pos-signin-error.png'),
-        });
-        throw e;
-      }
-      await page.getByRole('textbox', { name: 'Confirm PIN', exact: true }).fill('4829');
-      await page.getByRole('button', { name: 'Save', exact: true }).click();
       const product = page.getByTestId('item-' + String(item._id));
+      await expect(product).toBeVisible();
+      await expect(page.getByRole('textbox', { name: 'PIN', exact: true })).toHaveCount(0);
       await expect(product.locator('img')).toHaveAttribute('src', /^data:image\/png/);
       await page.getByTestId('item-' + String(item._id)).click();
       const before = await db.collection('sales').countDocuments();
@@ -689,8 +678,8 @@ test('branch payments migrate legacy data and mobile settings cannot overwrite f
 
 for (const useLocal of [false, true])
   test(
-    'account-first mobile UI reaches PIN using ' +
-      (useLocal ? 'the authenticated LAN till' : 'the cloud shop'),
+    'account-first mobile UI opens Sell without mandatory PIN ' +
+      (useLocal ? 'with a nearby LAN till advertised' : 'with only the cloud shop'),
     { skip: !process.env.MOBILE_PREVIEW_DIR || !process.env.MOBILE_PLAYWRIGHT_PATH },
     async () => {
       const { chromium, expect } = require(
@@ -773,11 +762,13 @@ for (const useLocal of [false, true])
         await page.goto(base.replace(/\/api$/, '/'));
         await expect(page.getByTestId('server-input')).toHaveCount(0);
         await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-        await expect(page.getByRole('textbox', { name: 'PIN', exact: true })).toBeVisible({
+        await expect(page.getByTestId('item-' + String(item._id))).toBeVisible({
           timeout: 15000,
         });
+        await expect(page.getByRole('textbox', { name: 'PIN', exact: true })).toHaveCount(0);
         assert.equal(request.intent, 'login');
-        assert.equal(pairedAt, useLocal ? '192.168.50.4' : 'mobile-test.example');
+        // Cloud sign-in retains its approved internet authority; LAN is an explicit later switch.
+        assert.equal(pairedAt, 'mobile-test.example');
       } finally {
         await browser.close();
       }
