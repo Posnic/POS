@@ -235,6 +235,36 @@ describe('SalesService', () => {
   });
 
   describe('fixed-price admission', () => {
+    test.each([true, false])(
+      'sale-only cart price respects host permission (%s)',
+      async (allowed) => {
+        const item = makeItemDoc();
+        mockItemRepositoryInstance.findItemById.mockResolvedValue(item);
+        const result = await salesService.processSale(
+          makeSaleData({
+            items: [makeItemPayload({ sale_inline_item_price: '70' })],
+            sales_total: '140',
+            allowCounterPriceOverride: true,
+          }),
+          '',
+          'Add',
+          makeContext({ allowCounterPriceOverride: allowed })
+        );
+        expect(result.status).toBe(allowed);
+        expect(item.selling_price).toBe(100);
+        if (allowed) {
+          const saved = salesRepository.create.mock.calls[0][0];
+          expect(saved.items[0].pricing).toMatchObject({
+            selling_price: 70,
+            catalogue_price: 100,
+            source: 'counter_override',
+          });
+        } else {
+          expect(salesRepository.create).not.toHaveBeenCalled();
+        }
+      }
+    );
+
     test.each(['undefined', 'null', '', '  ', null, undefined])(
       'desktop missing inline override %j uses and validates the selling-price field',
       async (inline) => {
