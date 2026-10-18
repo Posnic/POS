@@ -959,5 +959,6 @@
   "Review the paid bill correction before saving.": "Kaydetmeden önce ödenen fatura düzeltmesini gözden geçirin.",
   "Choose a saved customer for customer credit.": "Müşteri kredisi için kaydedilmiş bir müşteri seçin.",
   "Exact numeric search must be on or off": "Tam sayısal arama açık veya kapalı olmalıdır",
-  "Item not found or selling price is held. Review it in Edit prices.": "Ürün bulunamadı veya satış fiyatı tutuldu. Fiyatları düzenle bölümünde inceleyin."
+  "Item not found or selling price is held. Review it in Edit prices.": "Ürün bulunamadı veya satış fiyatı tutuldu. Fiyatları düzenle bölümünde inceleyin.",
+  "Password must contain between 5 and 20 characters": "Şifre 5 ile 20 karakter arasında olmalıdır"
 }

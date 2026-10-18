@@ -633,16 +633,35 @@
             Number(saved.unit_price ?? saved.item_base_price ?? saved.item_price ?? 0) * line.quantity,
         );
     }
+    async function reviewLatestOrder() {
+        const d = state.draft;
+        if (!d.saleId) { pendingSendReview(); return; }
+        const latest = await api('get', 'sales/' + d.saleId);
+        const accepted = new Set((latest.items || []).map((l) => l.line_id));
+        d.items = d.items.filter((l) => !accepted.has(l.line_id));
+        delete d.intent;
+        state.sale = latest;
+        persist();
+        render();
+        notify('Latest order loaded. Review the remaining dishes before sending.');
+    }
     function pendingSendReview(afterRecovery) {
         if (!state.draft?.intent) return false;
-        dialog(P.i18n.t('lang_review_this_round', 'Review this round'),
-            '<p>' + esc(P.i18n.t('lang_submission_resolve_first', 'Resolve the previous submission before sending changes.')) + '</p>',
+        const modal = dialog(P.i18n.t('lang_review_this_round', 'Review this round'),
+            '<p>' + esc(P.i18n.t('lang_submission_resolve_first', 'Resolve the previous submission before sending changes.')) + '</p>' +
+                (state.draft.saleId ? button('Review latest order', 'reviewPendingOrder') : ''),
             async (_, modal) => {
                 await send();
                 if (state.draft?.intent) return;
                 modal.close();
                 if (afterRecovery) afterRecovery();
             }, P.i18n.t('lang_retry_saved_send', 'Retry saved send'));
+        const review = modal.querySelector('[data-action=reviewPendingOrder]');
+        if (review) review.onclick = () => {
+            if (modal.querySelector('[type=submit]').disabled) return;
+            modal.close();
+            run(reviewLatestOrder);
+        };
         return true;
     }
     function customer() {
@@ -810,7 +829,7 @@
                 notify(error.message);
                 return;
             }
-            if (d.saleId && error.message === 'order_changed') {
+            if (d.saleId && ['order_changed', 'The seating group changed. Refresh this order.'].includes(error.message)) {
                 // This is an explicit refusal, not an unknown network outcome.
                 // Reconcile accepted line IDs before unlocking the remaining draft.
                 const latest = await api('get', 'sales/' + d.saleId);
@@ -1252,16 +1271,7 @@ default: return text; } };
             else if (a === 'offmenu') await offmenu();
             else if (a === 'send') await send();
             else if (a === 'rebase') {
-                const d = state.draft;
-                if (!d.saleId) { pendingSendReview(); return; }
-                const latest = await api('get', 'sales/' + d.saleId);
-                const accepted = new Set((latest.items || []).map((l) => l.line_id));
-                d.items = d.items.filter((l) => !accepted.has(l.line_id));
-                delete d.intent;
-                state.sale = latest;
-                persist();
-                render();
-                notify('Latest order loaded. Review the remaining dishes before sending.');
+                await reviewLatestOrder();
             } else if (a === 'discard') {
                 if (state.draft.intent)
                     throw new Error(

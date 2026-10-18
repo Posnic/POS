@@ -959,5 +959,6 @@
   "Review the paid bill correction before saving.": "Revisa la corrección de las facturas pagadas antes de ahorrar.",
   "Choose a saved customer for customer credit.": "Elige un cliente guardado para el crédito del cliente.",
   "Exact numeric search must be on or off": "La búsqueda numérica exacta debe estar activada o desactivada",
-  "Item not found or selling price is held. Review it in Edit prices.": "No se encontró el artículo o se retuvo el precio de venta. Revísalo en Editar precios."
+  "Item not found or selling price is held. Review it in Edit prices.": "No se encontró el artículo o se retuvo el precio de venta. Revísalo en Editar precios.",
+  "Password must contain between 5 and 20 characters": "La contraseña debe contener entre 5 y 20 caracteres"
 }

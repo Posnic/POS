@@ -216,3 +216,45 @@ test('completed paid receipts target one sale and reprint its payment without mo
     service.read({ ...r, tenantContext: { branchId: new ObjectId(), licenseId: license } })
   ).rejects.toMatchObject({ status: 403 });
 });
+
+test('remote paid projections allow read-only bills and reject inconsistent amounts', async () => {
+  const projection = {
+    dine_type: 'Take away',
+    floor_lifecycle: true,
+    payment_status: 'Paid',
+    captain_payment_plan: 'remote',
+    captain_payment_version: 1,
+    paid_amount: 105,
+    balance: 0,
+    payment_pending: 0,
+    captain_payments: [{ id: 'p1', amount: 105 }],
+  };
+  const request = { ...req(), query: { saleId: String(sale._id), receipt: 'true' } };
+  await db
+    .collection('sales')
+    .updateOne({ _id: sale._id }, { $set: { ...projection, floor_closed_at: new Date() } });
+  expect(await service.read(request)).toMatchObject({
+    paidMinor: 10500,
+    dueMinor: 0,
+    collectEnabled: false,
+  });
+  for (const change of [
+    { paid_amount: 100 },
+    { balance: 1 },
+    { payment_pending: 1 },
+    { captain_payment_version: 0 },
+    { captain_payments: [{ id: 'p1', amount: 100 }] },
+    {
+      captain_payments: [
+        { id: 'same', amount: 50 },
+        { id: 'same', amount: 55 },
+      ],
+    },
+  ]) {
+    await db
+      .collection('sales')
+      .updateOne({ _id: sale._id }, { $set: { ...projection, ...change } });
+    await expect(service.read(request)).rejects.toMatchObject({ status: 409 });
+  }
+  expect(await db.collection('captain_payment_plans').countDocuments()).toBe(0);
+});

@@ -959,5 +959,6 @@
   "Review the paid bill correction before saving.": "ఆదా చేయడానికి ముందు చెల్లించిన బిల్లు దిద్దుబాటును సమీక్షించండి.",
   "Choose a saved customer for customer credit.": "కస్టమర్ క్రెడిట్ కోసం సేవ్ చేసిన కస్టమర్ను ఎంచుకోండి.",
   "Exact numeric search must be on or off": "ఖచ్చితమైన సంఖ్యా శోధన తప్పనిసరిగా ఆన్ లేదా ఆఫ్ ఉండాలి",
-  "Item not found or selling price is held. Review it in Edit prices.": "వస్తువు కనుగొనబడలేదు లేదా అమ్మకపు ధర జరుగుతుంది. ధరలను సవరించడంలో సమీక్షించండి."
+  "Item not found or selling price is held. Review it in Edit prices.": "వస్తువు కనుగొనబడలేదు లేదా అమ్మకపు ధర జరుగుతుంది. ధరలను సవరించడంలో సమీక్షించండి.",
+  "Password must contain between 5 and 20 characters": "పాస్వర్డ్లో 5 నుండి 20 అక్షరాల మధ్య ఉండాలి"
 }
