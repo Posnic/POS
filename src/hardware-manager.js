@@ -557,6 +557,7 @@ class HardwareManager {
     const started = Date.now();
     diagnostics?.record('print.request', { trace, format: options.pageSize, printer: options.printerName, copies: options.copies, bytes: Buffer.byteLength(String(htmlContent || '')) });
     try {
+      if (options.exactPageSize && !options.printerName) throw new Error('Choose a printer before printing labels.');
       // Designed rolls use the same raw queue as Hardware Manager's test.
       // A text-only thermal driver may accept HTML/GDI and still feed blank paper.
       // Render the complete design before submitting; never fall back after RAW acceptance.
@@ -598,8 +599,14 @@ class HardwareManager {
       };
 
       // Get pageSize from options or default to 80mm (3inch)
-      const sizeKey = (options.pageSize || '80mm').toLowerCase();
-      const pageSize = paperSizes[sizeKey] || paperSizes['80mm'];
+      const customSize = options.pageSize && typeof options.pageSize === 'object';
+      if (customSize && (!Number.isInteger(options.pageSize.width) || !Number.isInteger(options.pageSize.height) ||
+          options.pageSize.width < 15000 || options.pageSize.width > 300000 || options.pageSize.height < 15000 || options.pageSize.height > 1000000)) {
+        throw new Error('Invalid custom print dimensions.');
+      }
+      const sizeKey = customSize ? 'custom' : (options.pageSize || '80mm').toLowerCase();
+      const pageSize = customSize ? { width: options.pageSize.width, height: options.pageSize.height,
+        windowWidth: Math.ceil(options.pageSize.width / 25400 * 96) } : { ...(paperSizes[sizeKey] || paperSizes['80mm']) };
 
       /*
        * Where the document is going to be loaded from, decided before the
@@ -675,7 +682,8 @@ class HardwareManager {
         printBackground: true,
         scaleFactor: 100,
         margins: { marginType: 'none' },
-        pageSize: pageSize,
+        pageSize: { width: pageSize.width, height: pageSize.height },
+        ...(customSize ? { landscape: options.landscape === true } : {}),
         copies: Math.max(1, parseInt(options.copies, 10) || 1)
       };
 
@@ -689,11 +697,22 @@ class HardwareManager {
         diagnostics.record('print.result', { trace, diagnosticOnly: true, submitted: false, stage: 'captured' });
         return { success: false, diagnosticOnly: true, error: 'Receipt captured for diagnostics. Nothing was sent to the printer.' };
       }
+      // Shelf sheets retain their physical layout through PDF at actual size.
+      // This is the primary A4 path, never a retry after an ambiguous submission.
+      if (options.exactPageSize && pageSize.width === 210000 && pageSize.height === 297000) {
+        const pdf = await printWindow.webContents.printToPDF({
+          pageSize: 'A4', preferCSSPageSize: true, printBackground: true,
+          margins: { top: 0, bottom: 0, left: 0, right: 0 }
+        });
+        return await require('./print-pdf').printPdfDocument(pdf, {
+          printerName: deviceName, paperSize: 'a4', copies: 1
+        });
+      }
       diagnostics?.record('print.submit', { trace, printer: deviceName, format: sizeKey });
       let result = await this._sendPrintJob(printWindow, printOpts);
       diagnostics?.record('print.result', { trace, success: result.success, message: result.error, retryable: result.retryable, submitted: result.submitted });
 
-      if (!result.success && result.retryable !== false) {
+      if (!result.success && result.retryable !== false && !options.exactPageSize) {
         console.warn('Print failed with receipt page size, retrying with printer defaults:', result.error || 'unknown');
         const fallbackOpts = {
           silent: printOpts.silent,
@@ -705,7 +724,7 @@ class HardwareManager {
         result = await this._sendPrintJob(printWindow, fallbackOpts);
       }
 
-      if (!result.success && result.retryable !== false) {
+      if (!result.success && result.retryable !== false && !options.exactPageSize) {
         console.warn('Electron print failed, retrying through PDF fallback:', result.error || 'unknown');
         result = await this._printViaPdfFallback(printWindow, deviceName, options);
       }

@@ -4109,6 +4109,10 @@ PosnicPro.sales.guardDiscountApproval = function (params, proceed, checkedPendin
     }
     var data;
     try { data = JSON.parse(params.data); } catch (e) { proceed(); return; }
+    if (data && PosnicPro.sales.lineEdit._priceApprovalToken) {
+        data.price_override_approval_token = PosnicPro.sales.lineEdit._priceApprovalToken;
+        params.data = JSON.stringify(data);
+    }
     if (!data || !PosnicPro.sales._manualDiscountOn(data)) { proceed(); return; }
     if (PosnicPro.posCan('discount_apply')) {
         var pos = PosnicPro.userACL && PosnicPro.userACL.pos;
@@ -6733,7 +6737,10 @@ PosnicPro.sales.lineEdit = {
     _id: null,
     open: function (itemId) {
         if (PosnicPro.local.get('sale_quick_edit') === 'disable') { return; }
-        var go = function () { PosnicPro.sales.lineEdit._show(itemId); };
+        var go = function (approval) {
+            PosnicPro.sales.lineEdit._priceApprovalToken = approval && approval.approval_token;
+            PosnicPro.sales.lineEdit._show(itemId);
+        };
         if (PosnicPro.posCan && !(PosnicPro.posCan('price_override') && PosnicPro.posCan('discount_apply'))) {
             PosnicPro.requireManagerApproval('price_override',
                 { prompt: 'Editing a line needs a manager\'s approval.' }, go);

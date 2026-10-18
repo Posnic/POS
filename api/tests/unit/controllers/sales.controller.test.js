@@ -361,6 +361,53 @@ describe('SalesController', () => {
   });
 
   describe('create', () => {
+    test.each([true, false])(
+      'counter price permission comes from staff access (%s)',
+      async (allowed) => {
+        const res = mockRes();
+        await ctrl.create(
+          mockReq({
+            user: adminUser({
+              usertype: 'cashier',
+              role: 'cashier',
+              access: { pos: { price_override: allowed } },
+            }),
+            body: {
+              allowCounterPriceOverride: true,
+              items: [{ item_id: VALID_ID, item_quantity: 1 }],
+            },
+          }),
+          res,
+          mockNext()
+        );
+        expect(salesService.processSale.mock.calls[0][3].allowCounterPriceOverride).toBe(allowed);
+      }
+    );
+
+    test('price approval must be signed, current and bound to this cashier and action', () => {
+      const { signApproval } = require('../../../src/utils/approval-token.util');
+      const req = mockReq({
+        user: adminUser({
+          usertype: 'cashier',
+          role: 'cashier',
+          access: { pos: { price_override: false } },
+        }),
+      });
+      for (const [claims, allowed] of [
+        [{ action: 'price_override', cashier_user_id: VALID_ID }, true],
+        [{ action: 'discount_apply', cashier_user_id: VALID_ID }, false],
+        [{ action: 'price_override', cashier_user_id: 'other' }, false],
+        [{ action: 'price_override', cashier_user_id: VALID_ID, exp: Date.now() - 1000 }, false],
+      ]) {
+        expect(
+          ctrl.canOverrideCounterPrice(req, { price_override_approval_token: signApproval(claims) })
+        ).toBe(allowed);
+      }
+      expect(ctrl.canOverrideCounterPrice(req, { price_override_approval_token: 'forged' })).toBe(
+        false
+      );
+    });
+
     test('200 success', async () => {
       const res = mockRes();
       const next = mockNext();

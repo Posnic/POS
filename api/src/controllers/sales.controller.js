@@ -696,6 +696,14 @@ class SalesController extends BaseController {
     return !isApprovedFor(token, 'discount_apply', req.user && req.user._id);
   }
 
+  canOverrideCounterPrice(req, payload = {}) {
+    if (!req.user?._id) return false;
+    const token = payload.price_override_approval_token || payload.approval_token;
+    return (
+      canPos(req.user, 'price_override') || isApprovedFor(token, 'price_override', req.user._id)
+    );
+  }
+
   async buildSaleContext(req) {
     const { branch_id, branch_name } = this.resolveBranchContext(req);
     const user = req.user || {};
@@ -798,6 +806,7 @@ class SalesController extends BaseController {
 
       // Build Context for Service
       const context = await this.buildSaleContext(req);
+      context.allowCounterPriceOverride = this.canOverrideCounterPrice(req, payload);
 
       // Delegate core Add / Hold business logic to salesService.processSale,
       // which is a line-by-line port of PHP sales_model::salesInsertUpdate.
@@ -1001,6 +1010,7 @@ class SalesController extends BaseController {
       // salesInsertUpdate parity for $process = 'Edit').
       // Enrich the context with branch-specific settings via the service
       context = await salesService.enrichSaleContext(context);
+      context.allowCounterPriceOverride = this.canOverrideCounterPrice(req, payload);
 
       const result = payload.paid_bill_correction
         ? await require('../services/paid-bill-edit').amend(req, payload, context)

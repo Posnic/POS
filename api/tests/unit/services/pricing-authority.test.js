@@ -27,6 +27,16 @@ test('inclusive water stays 30 including tax, including after quantity changes',
 test('a channel label does not authorize an arbitrary price', () => {
   expect(() => quote({ channel: 'online', submitted: 60 })).toThrow(/does not match/);
 });
+test('counter override cannot bypass an outlet, price list or other channel', () => {
+  for (const context of [
+    { channel: 'online' },
+    { outlet: { id: 'room', markup_percent: 20 } },
+    { priceList: { _id: 'wholesale', percent_off: 10 } },
+    { venue: { code: 'hotel', price_adjust_percent: 20 } },
+  ]) {
+    expect(() => quote({ ...context, allowCounterPriceOverride: true, submitted: 70 })).toThrow();
+  }
+});
 test('configured outlet and customer prices are enforced', () => {
   expect(quote({ outlet: { id: 'room', markup_percent: 20 }, submitted: 54 }).source).toBe(
     'outlet'

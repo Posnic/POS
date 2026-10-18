@@ -49,7 +49,7 @@ test('the real designer previews A4, prints the same sheets and restores its lay
     const { dom, w, $, getPrint, next, selectAll } = setup();
     w.PosnicShelfLabels.open(); await tick();
     assert.equal($('#sl-products input[type=checkbox]:checked').length, 0);
-    await selectAll(); next();
+    await selectAll(); $('#sl-batch').val(30); next();
     $('#sl-paper').val('a4').trigger('change');
     assert.equal($('#sl-sample .sl-label').length, 1);
     next();
@@ -177,5 +177,86 @@ test('design controls work without legacy direct event bindings and restore the 
     assert.equal($('#view_print_lable .text-align[value=right]').hasClass('btn-primary'), true);
     assert.equal($('#view_print_lable .font-option[value=bold]').hasClass('btn-primary'), true);
     assert.equal($('#sl-products input[type=checkbox]:checked').length, 0);
+    dom.window.close();
+});
+
+
+test('desktop labels use a chosen printer and exact roll dimensions without a browser dialog', async () => {
+    const { dom, w, $, next, getPrint } = setup();
+    const sent = [];
+    w.electronAPI = { printer: {
+        list: async () => [{ name: 'POS-80C' }, { name: 'Brother A4' }],
+        print: async (html, options) => { sent.push({ html, options }); return { success: true }; }
+    } };
+    w.PosnicShelfLabels.open('0'); await tick();
+    assert.equal($('#sl-batch').val(), '5');
+    assert.equal($('#sl-desktop-printer').prop('hidden'), false);
+    next(); $('#sl-paper').val('roll').trigger('change'); await tick(); next(); next();
+    await w.PosnicShelfLabels.print(true);
+    assert.equal(sent.length, 0, 'must not borrow the receipt/default printer');
+    $('#sl-printer').val('POS-80C');
+    await w.PosnicShelfLabels.print(true);
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].options.printerName, 'POS-80C');
+    assert.deepEqual(JSON.parse(JSON.stringify(sent[0].options.pageSize)), { width: 63000, height: 33000 });
+    assert.equal(sent[0].options.exactPageSize, true);
+    assert.equal(sent[0].options.silent, true);
+    assert.equal(sent[0].options.landscape, false);
+    assert.equal(getPrint(), undefined);
+    assert.equal(new JSDOM(sent[0].html).window.document.querySelectorAll('.sl-label').length, 1);
+    assert.match($('#sl-status').text(), /Sent 1 label/);
+    assert.equal(w.localStorage.getItem('posnic.shelf-label-printer.roll'), 'POS-80C');
+    dom.window.close();
+});
+
+test('desktop A4 keeps sheet dimensions and does not retry a failed submission through browser printing', async () => {
+    const { dom, w, $, next, selectAll, getPrint } = setup();
+    const sent = [];
+    w.electronAPI = { printer: { list: async () => [{ name: 'Brother A4' }], print: async (html, options) => {
+        sent.push({html, options}); return { success: false, error: 'Printer offline' };
+    } } };
+    w.PosnicShelfLabels.open(); await tick(); await selectAll(); next();
+    $('#sl-paper').val('a4').trigger('change'); await tick(); next(); next();
+    $('#sl-printer').val('Brother A4');
+    await w.PosnicShelfLabels.print(false);
+    assert.equal(sent.length, 1);
+    assert.deepEqual(JSON.parse(JSON.stringify(sent[0].options.pageSize)), { width: 210000, height: 297000 });
+    assert.equal(new JSDOM(sent[0].html).window.document.querySelectorAll('.sl-label').length, 5);
+    assert.match($('#sl-status').text(), /Printer offline/);
+    assert.equal(getPrint(), undefined);
+    dom.window.close();
+});
+
+
+test('thermal labels explicitly opt into raw raster printing and stop at the first failed label', async () => {
+    const { dom, w, $, next } = setup(); const sent = [];
+    w.electronAPI = { printer: { list: async () => [{ name: 'POS-80C' }], print: async (html, options) => {
+        sent.push({html,options}); return sent.length === 1 ? {success:true} : {success:false,error:'Disconnected'};
+    } } };
+    w.PosnicShelfLabels.open('0'); await tick(); next();
+    $('#sl-paper').val('roll').trigger('change'); await tick();
+    $('#sl-products input[type=number]').first().val(3).trigger('change');
+    next(); next(); $('#sl-printer').val('POS-80C'); $('#sl-print-method').val('thermal');
+    await w.PosnicShelfLabels.print(false);
+    assert.equal(sent.length,2);
+    assert.equal(sent[0].options.thermalRaster,true);
+    assert.equal(sent[0].options.pageSize,'80mm');
+    assert.match(sent[0].html,/data-receipt-design="80"/);
+    assert.equal(new JSDOM(sent[0].html).window.document.querySelectorAll('.sl-label').length,1);
+    assert.match($('#sl-status').text(),/1 earlier label/);
+    dom.window.close();
+});
+
+test('thermal preview shows roll edges and keeps print content within the print head', async () => {
+    const { dom, w, $, next } = setup(); const sent=[];
+    w.electronAPI={printer:{list:async()=>[{name:'POS-80C'}],print:async(html,options)=>{sent.push({html,options});return {success:true};}}};
+    w.PosnicShelfLabels.open('0'); await tick(); next();
+    $('#sl-paper').val('roll').trigger('change'); await tick(); $('#sl-width').val(72);
+    next(); next(); $('#sl-printer').val('POS-80C'); $('#sl-print-method').val('thermal').trigger('change');
+    assert.match($('#sl-print-sample').attr('aria-label'),/80 mm roll, 72 mm printable/);
+    assert.match($('#sl-print-sample style').text(),/justify-content:flex-start/);
+    await w.PosnicShelfLabels.print(true);
+    assert.match(sent[0].html,/justify-content:flex-start/);
+    assert.match(sent[0].html,/width:72mm/);
     dom.window.close();
 });
