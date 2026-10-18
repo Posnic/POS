@@ -8734,6 +8734,43 @@ class SalesRepository {
         };
       }
 
+      // Preserve idempotent recovery, but never create a new dine-in ticket
+      // without a destination, including requests from older handsets.
+      const requestedService = String(order || dine_type || data.fulfilment || 'Dine-in')
+        .trim()
+        .toLowerCase()
+        .replace(/[\s_-]+/g, '');
+      const requestedTable = kiosk_table_no ?? table;
+      const hasTable =
+        ['string', 'number'].includes(typeof requestedTable) &&
+        String(requestedTable).trim() !== '';
+      if (
+        staffOrder &&
+        !['takeaway', 'pickup', 'delivery'].includes(requestedService) &&
+        !hasTable &&
+        !venue &&
+        branchDoc?.captain_allow_unassigned !== true
+      ) {
+        return {
+          status: false,
+          message: 'Choose a table first.',
+          data: { code: 'TABLE_REQUIRED' },
+        };
+      }
+
+      if (staffOrder && requestedService === 'room') {
+        const scoped = await new (require('./settings.repository'))().resolveGroup('channels', {
+          branchId: branchObjectId,
+          licenseId: branchDoc.license,
+        });
+        if (scoped.status !== true)
+          return {
+            status: false,
+            message: 'Room settings could not be loaded. Try again.',
+            data: null,
+          };
+        venues = partnerVenues.normalizeVenues(scoped.data?.values?.partner_venues);
+      }
       const servicePoint = partnerVenues.resolveServicePoint(
         { table: String(kiosk_table_no || table || '').trim(), venue, unit },
         venues
@@ -8744,6 +8781,22 @@ class SalesRepository {
           message: 'Venue pricing is unavailable. Refresh the menu or contact the restaurant.',
           data: { state: 'pricing_rule_unavailable' },
         };
+      const staffRoom = staffOrder && requestedService === 'room';
+      if (
+        staffRoom &&
+        (!servicePoint.venue?.staff_orders_enabled ||
+          !String(unit || '').trim() ||
+          String(unit).trim().length > 40 ||
+          Array.from(String(unit)).some((ch) => ch.charCodeAt(0) < 32) ||
+          servicePoint.label.length > 200)
+      )
+        return {
+          status: false,
+          message: 'Choose an enabled venue and enter a room number (up to 40 characters).',
+          data: { code: 'ROOM_REQUIRED' },
+        };
+      // Staff room menus use house prices; web venue markup remains a separate policy.
+      if (staffRoom) servicePoint.venue = { ...servicePoint.venue, price_adjust_percent: 0 };
       /* Where the food actually goes, as the customer confirmed it. Null for
          the shop's own floor, which needs no address. */
       const deliverTo = partnerVenues.confirmDestination(servicePoint, destination || {});
@@ -8790,7 +8843,7 @@ class SalesRepository {
        * string reading in item.repository.js is for SETTINGS values, which are
        * a different shape from a different writer.
        */
-      const runsTableService = branchDoc.table_options === true;
+      const runsTableService = branchDoc.table_options === true && !staffRoom;
       const openTableLimit = Number(branchDoc.table_order_limit ?? 1);
       const wantsTable = String(servicePoint.label || kiosk_table_no || table || '').trim();
       const seating = require('../services/seating-claims');
@@ -8963,8 +9016,19 @@ class SalesRepository {
          offer on the food, and a shop that ends up paying somebody to collect
          an order has been given a rule it did not write. */
       const afterCoupon = Math.max(0, round(foodTotal - couponDiscount));
+      const roomCharge = staffRoom
+        ? await require('../services/room-charge').create(
+            db,
+            servicePoint.venue,
+            data.room_charge_accepted,
+            Math.max(0, afterCoupon - totalTax),
+            branchDoc,
+            data.room_charge_quote
+          )
+        : null;
+      const roomChargeTotal = roomCharge ? roomCharge.amount + roomCharge.tax_amount : 0;
       const rounded = require('../services/sale-header').roundSaleTotal(
-        round(afterCoupon + deliveryFee),
+        round(afterCoupon + deliveryFee + roomChargeTotal),
         branchDoc.roundOff,
         monetary.currencyDigits
       );
@@ -9238,8 +9302,9 @@ class SalesRepository {
            A hotel room says the hotel and the room; the shop's own table says
            the table, exactly as it always did. */
         table_number: servicePoint.label || kiosk_table_no || '',
-        table_id: kiosk_table_id || '',
+        table_id: staffRoom ? '' : kiosk_table_id || '',
         venue: deliverTo,
+        ...(roomCharge ? { charges: [roomCharge] } : {}),
         venue_commission: venueCommission,
         delivery_fee: deliveryFee,
         person_count: person_count || 0,
@@ -9250,7 +9315,7 @@ class SalesRepository {
         round_off: rounded.roundOff,
         sales_round_off: rounded.roundOff,
         sales_sub_total: subtotal,
-        tax: totalTax,
+        tax: totalTax + (roomCharge?.tax_amount || 0),
         discount: round(itemDiscountTotal + discountAmt + couponDiscount),
         extra_discount: discountAmt,
         /*
@@ -9486,7 +9551,8 @@ class SalesRepository {
           items: saleItems,
           subtotal,
           discount: round(itemDiscountTotal + discountAmt),
-          tax: totalTax,
+          tax: totalTax + (roomCharge?.tax_amount || 0),
+          ...(roomCharge ? { charges: [roomCharge] } : {}),
           delivery_fee: deliveryFee,
           total: finalTotal,
           /* Echoed back so the confirmation screen can say "we will bring it
@@ -10573,6 +10639,11 @@ class SalesRepository {
           item_transfer: true,
           total_amount: doc.sales_total || doc.total || 0,
           subtotal: doc.sales_sub_total || doc.subtotal || 0,
+          charges: (doc.charges || []).map((c) => ({
+            name: c.name,
+            amount: c.amount,
+            tax_amount: c.tax_amount,
+          })),
           tax: doc.tax || 0,
           discount: doc.discount || 0,
           pricing_preview: true,
@@ -10728,13 +10799,21 @@ class SalesRepository {
       if (charges !== undefined && preview)
         throw new Error('Charges cannot be changed in an item preview.');
       const savedCharges = Array.isArray(orderDoc.charges) ? orderDoc.charges : [];
-      const normalizedCharges =
+      let normalizedCharges =
         charges === undefined
           ? savedCharges
           : [
-              ...savedCharges.filter((c) => c.source === 'outlet'),
+              ...savedCharges.filter(
+                (c) =>
+                  c.source === 'outlet' ||
+                  (c.source === 'room' &&
+                    Array.isArray(charges) &&
+                    charges.some((v) => v?.source === 'room'))
+              ),
               ...(await require('../services/sale-charges').normalizeSaleCharges(
-                Array.isArray(charges) ? charges.filter((c) => c?.source !== 'outlet') : charges,
+                Array.isArray(charges)
+                  ? charges.filter((c) => !['outlet', 'room'].includes(c?.source))
+                  : charges,
                 savedCharges.filter((c) => c.source !== 'outlet'),
                 {
                   branchSettings: shop || {},
@@ -11309,6 +11388,16 @@ class SalesRepository {
       }
       if (extraDiscountAmount > itemsSub) extraDiscountAmount = itemsSub;
 
+      if (!orderDoc.captain_transfer_allocation)
+        normalizedCharges = normalizedCharges.map((c) =>
+          c.source === 'room'
+            ? require('../services/room-charge').recalculate(
+                c,
+                status === 'cancelled' ? 0 : Math.max(0, itemsSub - taxTotal - extraDiscountAmount),
+                shop
+              )
+            : c
+        );
       const chargeTotal = normalizedCharges.reduce(
         (sum, charge) => sum + Number(charge.amount || 0),
         0

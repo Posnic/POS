@@ -4920,5 +4920,22 @@
   "lang_text_style": "Teksta stils",
   "lang_this_product_is_hidden_from_sales_your_bas": "Šis produkts ir paslēpts no pārdošanas. Jūsu grozs nav mainīts.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Šis logs pieder vienai filiālei. No galvenā loga atveriet citu kontaktligzdu.",
-  "lang_total_labels": "Kopējais etiķešu skaits"
+  "lang_total_labels": "Kopējais etiķešu skaits",
+  "lang_rooms": "Istabas",
+  "lang_room_number": "Istabas numurs",
+  "lang_room_order": "Istabu kārtība",
+  "lang_room_service_charge": "Apkalpošanas numurā maksa",
+  "lang_room_charge_agreement": "Viesis piekrita šai papildmaksai",
+  "lang_room_destination_required": "Izvēlieties norises vietu un ievadiet numura numuru.",
+  "lang_room_charge_tax_unavailable": "Numura maksas nodoklis nav pieejams. Pārskatiet nodokļu iestatījumus.",
+  "lang_staff_room_orders": "Atļaut personāla telpas pasūtījumus",
+  "lang_staff_room_prices": "Personāla telpu pasūtījumos tiek izmantotas parastās ēdienkartes cenas. Tīmekļa izvēlnes atzīme un norises vietas komisija ir atsevišķ",
+  "lang_room_charge_offer": "Piedāvājiet par papildu numura maksu",
+  "lang_charge_name": "Maksas nosaukums",
+  "lang_apply_default_tax": "Pielietot noklusējuma nodokli",
+  "lang_room_charge_basis": "Pārtikas procentuālais daudzums pēc atlaidēm pirms nodokļiem. Piesakieties tikai ar viesu vienošanos; darbinieki to var noņemt no rēķina.",
+  "lang_room_charge_rate": "{0}: {1}% no pārtikas pēc atlaidēm, pirms nodokļiem.",
+  "lang_room_charge_final": "Iekļauts galīgajā rēķinā.",
+  "lang_room_orders_enable_help": "Iespējojiet personāla numuru pasūtījumus sadaļā Iestatījumi → Restorāns → Viesnīcas un citās vietās.",
+  "lang_room_venue": "Norises vieta"
 }

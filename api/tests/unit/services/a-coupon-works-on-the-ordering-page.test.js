@@ -169,7 +169,9 @@ describe('the order is where the money is decided', () => {
   test('and it cannot make the shop pay the customer', () => {
     expect(order).toMatch(/Math\.max\(0, round\(foodTotal - couponDiscount\)\)/);
     /* On the food, not on the delivery fee. */
-    expect(order).toMatch(/roundSaleTotal\(\s*round\(afterCoupon \+ deliveryFee\)/);
+    expect(order).toMatch(
+      /roundSaleTotal\(\s*round\(afterCoupon \+ deliveryFee \+ roomChargeTotal\)/
+    );
   });
 
   test('the redemption is recorded only after the order exists', () => {

@@ -4923,5 +4923,22 @@
   "lang_text_style": "ટેક્સ્ટ શૈલી",
   "lang_this_product_is_hidden_from_sales_your_bas": "આ ઉત્પાદન વેચાણથી છુપાયેલું છે. તમારી ટોપલી બદલવામાં આવી નથી.",
   "lang_this_window_belongs_to_one_branch_open_ano": "આ વિંડો એક શાખાની છે. મુખ્ય વિંડોમાંથી બીજું આઉટલેટ ખોલો.",
-  "lang_total_labels": "કુલ લેબલ્સ"
+  "lang_total_labels": "કુલ લેબલ્સ",
+  "lang_rooms": "રૂમ",
+  "lang_room_number": "રૂમ નંબર",
+  "lang_room_order": "રૂમ ઓર્ડર",
+  "lang_room_service_charge": "રૂમ સર્વિસ ચાર્જ",
+  "lang_room_charge_agreement": "મહેમાન આ વધારાના ચાર્જ માટે સંમત થયા",
+  "lang_room_destination_required": "સ્થળ પસંદ કરો અને રૂમ નંબર દાખલ કરો.",
+  "lang_room_charge_tax_unavailable": "રૂમ ચાર્જ ટેક્સ ઉપલબ્ધ નથી. કર સેટિંગ્સની સમીક્ષા કરો.",
+  "lang_staff_room_orders": "સ્ટાફ રૂમ ઓર્ડરની મંજૂરી આપો",
+  "lang_staff_room_prices": "સ્ટાફ રૂમ ઓર્ડર સામાન્ય મેનુ ભાવોનો ઉપયોગ કરે છે. વેબ મેનૂ માર્કઅપ અને સ્થળ કમિશન અલગ છે",
+  "lang_room_charge_offer": "વધારાનો રૂમ ચાર્જ ઓફર કરો",
+  "lang_charge_name": "ચાર્જ નામ",
+  "lang_apply_default_tax": "ડિફૉલ્ટ ટેક્સ લાગુ કરો",
+  "lang_room_charge_basis": "ક્સ પહેલાં, ડિસ્કાઉન્ટ પછી ખોરાકની ટકાવારી. ફક્ત મહેમાન કરાર સાથે જ અરજી કરો; સ્ટાફ તેને બિલમાંથી દૂર કરી શકે છે.",
+  "lang_room_charge_rate": "{0}: ટેક્સ પહેલાં, ડિસ્કાઉન્ટ પછી ખોરાકનો {1}%.",
+  "lang_room_charge_final": "અંતિમ બિલ પર શામેલ છે.",
+  "lang_room_orders_enable_help": "સેટિંગ્સ → રેસ્ટોરન્ટ → હોટેલ્સ અને અન્ય સ્થળોમાં સ્ટાફ રૂમ ઓર્ડર સક્ષમ કરો.",
+  "lang_room_venue": "સ્થળ"
 }

@@ -4923,5 +4923,22 @@
   "lang_text_style": "文字风格",
   "lang_this_product_is_hidden_from_sales_your_bas": "该产品隐藏在销售范围内。您的购物篮未更改。",
   "lang_this_window_belongs_to_one_branch_open_ano": "此窗口属于一个分支。从主窗口打开另一个插座。",
-  "lang_total_labels": "标签总数"
+  "lang_total_labels": "标签总数",
+  "lang_rooms": "房间",
+  "lang_room_number": "房间号",
+  "lang_room_order": "房间订单",
+  "lang_room_service_charge": "客房服务费",
+  "lang_room_charge_agreement": "房客同意这笔额外费用",
+  "lang_room_destination_required": "选择场地并输入房间号。",
+  "lang_room_charge_tax_unavailable": "房费税不可用。查看税收设置。",
+  "lang_staff_room_orders": "允许员工订购房间",
+  "lang_staff_room_prices": "员工房间的订单使用正常的菜单价格。网络菜单标记和场地佣金是分开的",
+  "lang_room_charge_offer": "提供额外的房费",
+  "lang_charge_name": "收费名称",
+  "lang_apply_default_tax": "应用默认税",
+  "lang_room_charge_basis": "折扣后、税前食物的百分比。仅在房客同意的情况下申请；工作人员可以将其从账单中删除。",
+  "lang_room_charge_rate": "{0}：折扣后、税前食品的 {1}%。",
+  "lang_room_charge_final": "包含在最终账单中。",
+  "lang_room_orders_enable_help": "在 “设置” “餐厅” “酒店和其他场所” 中启用员工房间订单。",
+  "lang_room_venue": "地点"
 }

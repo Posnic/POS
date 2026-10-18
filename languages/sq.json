@@ -4920,5 +4920,22 @@
   "lang_text_style": "Stili i tekstit",
   "lang_this_product_is_hidden_from_sales_your_bas": "Ky produkt është i fshehur nga shitjet. Shporta juaj nuk është ndryshuar.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Kjo dritare i përket një degë. Hapni një prizë tjetër nga dritarja kryesore.",
-  "lang_total_labels": "Totali i etiketave"
+  "lang_total_labels": "Totali i etiketave",
+  "lang_rooms": "Dhomat",
+  "lang_room_number": "Numri i dhomës",
+  "lang_room_order": "Rendi i dhomës",
+  "lang_room_service_charge": "Tarifa e shërbimit të dhomës",
+  "lang_room_charge_agreement": "Mysafiri pranoi këtë pagesë shtesë",
+  "lang_room_destination_required": "Zgjidhni një vend dhe futni numrin e dhomës.",
+  "lang_room_charge_tax_unavailable": "Taksa e tarifës së dhomës nuk është e disponueshme. Rishikoni cilësimet e taksave.",
+  "lang_staff_room_orders": "Lejoni porositë e dhomës së",
+  "lang_staff_room_prices": "Porositë e dhomave të stafit përdorin çmimet normale të men Shënimi i menusë në internet dhe komisioni i vendit janë të ndara",
+  "lang_room_charge_offer": "Ofroni një tarifë shtesë për dhomë",
+  "lang_charge_name": "Emri i ngarkesës",
+  "lang_apply_default_tax": "Aplikoni tatimin e parazgjed",
+  "lang_room_charge_basis": "Përqindja e ushqimit pas zbritjeve, para tatimit. Aplikoni vetëm me marrëveshjen e mysafirëve; stafi mund ta heqë atë nga fatura.",
+  "lang_room_charge_rate": "{0}: {1}% e ushqimit pas zbritjeve, para taksave.",
+  "lang_room_charge_final": "Përfshirë në projektligjin përfundimtar.",
+  "lang_room_orders_enable_help": "Aktivizoni porositë e dhomave të stafit në Cilësimet → Restorant → Hotele dhe vende të tjera.",
+  "lang_room_venue": "Vendi"
 }

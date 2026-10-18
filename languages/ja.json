@@ -4923,5 +4923,22 @@
   "lang_text_style": "テキストスタイル",
   "lang_this_product_is_hidden_from_sales_your_bas": "この商品は販売対象外です。カートは変更されていません。",
   "lang_this_window_belongs_to_one_branch_open_ano": "このウィンドウは1つの支店に属しています。メインウィンドウから別のコンセントを開けてください。",
-  "lang_total_labels": "合計ラベル数"
+  "lang_total_labels": "合計ラベル数",
+  "lang_rooms": "部屋",
+  "lang_room_number": "部屋番号",
+  "lang_room_order": "ルームオーダー",
+  "lang_room_service_charge": "ルームサービス料",
+  "lang_room_charge_agreement": "ゲストはこの追加料金に同意しました。",
+  "lang_room_destination_required": "会場を選択し、部屋番号を入力します。",
+  "lang_room_charge_tax_unavailable": "ルームチャージ税はご利用いただけません。税金設定を見直してください。",
+  "lang_staff_room_orders": "スタッフルームの注文を許可する",
+  "lang_staff_room_prices": "スタッフルームの注文には通常のメニュー価格が適用されます。ウェブメニューのマークアップと会場のコミッションは別です",
+  "lang_room_charge_offer": "追加のルームチャージを申し込んでください。",
+  "lang_charge_name": "チャージ名",
+  "lang_apply_default_tax": "デフォルト税を適用",
+  "lang_room_charge_basis": "割引後、税引き前の食品の割合。お客様の同意がある場合のみお申し込みください。スタッフは請求書から削除できます。",
+  "lang_room_charge_rate": "{0}: 割引後、税抜きのお食事の {1}%",
+  "lang_room_charge_final": "最終請求書に含まれています。",
+  "lang_room_orders_enable_help": "設定 → レストラン → のホテルやその他の施設でスタッフルームの注文を有効にします。",
+  "lang_room_venue": "会場"
 }

@@ -49,6 +49,8 @@ class ShiftRepository {
    * behaviour, e.g. the 409 on double clock-in).
    */
   async _autoCloseIfStale(collection, shift, now) {
+    // Mobile attendance requires an explicit clock-out or manager correction.
+    if (shift.source === 'captain') return null;
     const clockIn = shift.clock_in instanceof Date ? shift.clock_in : new Date(shift.clock_in);
     const ageMin = Math.round((now.getTime() - clockIn.getTime()) / 60000);
     if (!(ageMin > STALE_SHIFT_AFTER_MINUTES)) return null;

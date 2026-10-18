@@ -99,7 +99,9 @@ describe('the table limit asks whether there are tables', () => {
   );
 
   test('a shop that does not run table service is never refused for a table', () => {
-    expect(REPO).toMatch(/const runsTableService = branchDoc\.table_options === true;/);
+    expect(REPO).toMatch(
+      /const runsTableService = branchDoc\.table_options === true && !staffRoom;/
+    );
     expect(REPO).toMatch(/if \(runsTableService && openTableLimit > 0 && wantsTable\)/);
   });
 

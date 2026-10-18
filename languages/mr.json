@@ -4923,5 +4923,22 @@
   "lang_text_style": "पाठ्य शैली",
   "lang_this_product_is_hidden_from_sales_your_bas": "हे उत्पादन विक्रीपासून लपलेले आहे. तुमची बास्केट बदलली गेली नाही.",
   "lang_this_window_belongs_to_one_branch_open_ano": "ही विंडो एका शाखेची आहे. मुख्य विंडोमधून आणखी एक आउटलेट",
-  "lang_total_labels": "एकूण लेबल"
+  "lang_total_labels": "एकूण लेबल",
+  "lang_rooms": "खोल्या",
+  "lang_room_number": "खोली क्रमांक",
+  "lang_room_order": "खोली ऑर्डर",
+  "lang_room_service_charge": "खोली सेवा शुल्क",
+  "lang_room_charge_agreement": "अतिथी या अतिरिक्त शुल्कास",
+  "lang_room_destination_required": "ठिकाण निवडा आणि खोली नंबर प्रविष्ट करा",
+  "lang_room_charge_tax_unavailable": "रूम शुल्क कर उपलब्ध नाही. कर सेटिंग्जचे पुनरावलो",
+  "lang_staff_room_orders": "स्टाफ रूम ऑर्डरची",
+  "lang_staff_room_prices": "स्टाफ रूम ऑर्डरमध्ये सामान्य मेनू किं वेब मेनू मार्कअप आणि वेन्यू कमिशन वेगळे",
+  "lang_room_charge_offer": "अतिरिक्त खोली शुल्क दे",
+  "lang_charge_name": "शुल्क नाव",
+  "lang_apply_default_tax": "डीफॉल्ट कर ला",
+  "lang_room_charge_basis": "कर आधी सवलतीनंतर अन्नाची टक्केवारी केवळ अतिथी करारासह अर्ज करा; कर्मचारी ते बिलमधून काढू",
+  "lang_room_charge_rate": "{0}: कर आधी सवलतीनंतर अन्नाचे {1}%.",
+  "lang_room_charge_final": "अंतिम बिलमध्ये समाविष्ट आहे.",
+  "lang_room_orders_enable_help": "सेटिंग्ज → रेस्टॉरंट → हॉटेल आणि इतर ठिकाणांमध्ये स्टाफ रूम ऑर्ड",
+  "lang_room_venue": "ठिकाण"
 }

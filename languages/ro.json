@@ -4920,5 +4920,22 @@
   "lang_text_style": "Stilul textului",
   "lang_this_product_is_hidden_from_sales_your_bas": "Acest produs este ascuns vânzărilor. Coșul dvs. nu a fost schimbat.",
   "lang_this_window_belongs_to_one_branch_open_ano": "Această fereastră aparține unei ramuri. Deschideți o altă priză din fereastra principală.",
-  "lang_total_labels": "Total etichete"
+  "lang_total_labels": "Total etichete",
+  "lang_rooms": "Camere",
+  "lang_room_number": "Numărul camerei",
+  "lang_room_order": "Comanda camerei",
+  "lang_room_service_charge": "Taxa de room service",
+  "lang_room_charge_agreement": "Oaspeții au fost de acord cu această taxă suplimentară",
+  "lang_room_destination_required": "Alegeți un loc și introduceți numărul camerei.",
+  "lang_room_charge_tax_unavailable": "Taxa pentru cameră nu este disponibilă. Examinați setările fiscale.",
+  "lang_staff_room_orders": "Permiteți comenzile camerei personalului",
+  "lang_staff_room_prices": "enzile camerelor de personal utilizează prețuri normale ale meniului. Marcarea meniului web și comisionul locației sunt separate.",
+  "lang_room_charge_offer": "Oferă un cost suplimentar pentru cameră",
+  "lang_charge_name": "Numele taxei",
+  "lang_apply_default_tax": "Aplicați taxa implicită",
+  "lang_room_charge_basis": "Procentul de alimente după reduceri, înainte de impozitare. Aplicați numai cu acordul oaspeților; personalul îl poate elimina din factură.",
+  "lang_room_charge_rate": "{0}: {1}% din produsele alimentare după reduceri, înainte de impozitare.",
+  "lang_room_charge_final": "Inclus în factura finală.",
+  "lang_room_orders_enable_help": "Activați comenzile camerelor personalului în Setări „Restaurant”” Hoteluri și alte locații.",
+  "lang_room_venue": "Locul de desfășurare"
 }
