@@ -381,14 +381,14 @@
         if (!desktop) return;
         var paper = $('#sl-paper').val(), saved = '';
         try { saved = root.localStorage.getItem('posnic.shelf-label-printer.' + paper) || ''; } catch (_) {}
-        $('#sl-printer').empty().append($('<option>').val('').text('Choose a printer'));
+        $('#sl-printer').empty().append($('<option>').val('').text(PosnicPro.i18n.t('lang_choose_a_printer', 'Choose a printer')));
         try {
             var printers = await printer.list();
             if ($('#sl-paper').val() !== paper) return;
             printers.forEach(function (p) { $('#sl-printer').append($('<option>').val(p.name).text(p.displayName || p.name)); });
             if (printers.some(function (p) { return p.name === saved; })) $('#sl-printer').val(saved);
             try { if (paper === 'roll' && root.localStorage.getItem('posnic.shelf-label-method.' + paper) === 'thermal') { $('#sl-print-method').val('thermal'); $('#sl-thermal-help').prop('hidden', false); } } catch (_) {}
-        } catch (_) { $('#sl-status').text('Could not load printers. Check the connection and refresh printers.'); }
+        } catch (_) { $('#sl-status').text(PosnicPro.i18n.t('lang_could_not_load_printers_check_the_connecti', 'Could not load printers. Check the connection and refresh printers.')); }
     }
     function init() {
         if (!root.jQuery || !root.document) return;
