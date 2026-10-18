@@ -306,3 +306,22 @@ test('blocked draft exposes review latest order directly without resending accep
   assert.equal(h.sale.items.length,2);
  } finally {setup.failure=false;h.close();}
 });
+
+
+test('seating rejection unlocks the retained round after reading the current sale', async () => {
+ const h=setup();
+ try {
+  h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');
+  h.search()({item_id:'rice',selling_price:150,item_name:'Sambar Rice'},1,()=>{});
+  const key=h.app.state.draft.key;
+  setup.failure=true;setup.failureResponse={message:'The seating group changed. Refresh this order.'};
+  await h.click('send');
+  assert.equal(h.app.state.draft.intent,undefined);
+  assert.notEqual(h.app.state.draft.key,key);
+  assert.equal(h.app.state.draft.items.length,1);
+  assert.equal(h.app.state.draft.items[0].name,'Sambar Rice');
+  assert.equal(h.calls.filter(c=>c.method==='post').length,1);
+  await h.click('discard');assert.equal(h.app.state.draft,null);
+  assert.equal(h.sale.items.length,1);
+ } finally {setup.failure=false;setup.failureResponse=undefined;h.close();}
+});
