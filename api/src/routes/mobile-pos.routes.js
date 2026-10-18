@@ -127,6 +127,9 @@ router.post(
 );
 router.use(protect);
 const inventory = require('../services/mobile-inventory');
+router.get('/products/options', wrap(require('../services/mobile-products').options));
+router.get('/products/lookup', wrap(require('../services/mobile-products').lookup));
+router.post('/products', wrap(require('../services/mobile-products').create));
 router.get('/availability-status', wrap(require('../services/item-availability').status));
 router.get('/inventory/policy', wrap(inventory.policy));
 router.post('/inventory/policy', wrap(inventory.policy));
@@ -383,7 +386,7 @@ router.post(
       payload = require('../helpers/bill-payload').buildBillPayload(sale, c.branch);
       payload.payments = [
         {
-          label: sale.payment_mode === 'Upi' ? 'UPI (staff confirmed)' : 'Cash',
+          label: intent.sale.payment.method === 'upi' ? 'UPI (staff confirmed)' : sale.payment_mode || intent.sale.payment.method,
           amount:
             intent.sale.payment.method === 'cash'
               ? intent.sale.payment.received / 100
@@ -391,6 +394,13 @@ router.post(
         },
       ];
       if (intent.sale.payment.method === 'cash') payload.change = intent.sale.payment.change / 100;
+      payload.title = 'RECEIPT';
+      if (payload.receiptDocument) Object.assign(payload.receiptDocument, {
+        receipt_settled: true,
+        payment_mode: sale.payment_mode || intent.sale.payment.method,
+        received_amount: intent.sale.payment.method === 'cash' ? intent.sale.payment.received / 100 : intent.sale.total / 100,
+        change_amount: intent.sale.payment.method === 'cash' ? intent.sale.payment.change / 100 : 0,
+      });
     } else
       payload = {
         storeName: c.branch.branch_name || 'Posnic',
