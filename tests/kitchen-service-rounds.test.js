@@ -34,6 +34,19 @@ const sale = () => ({
     { timestamp: '2026-09-27T08:25:00Z', items: [line(1)] },
   ],
 });
+test('both kitchen displays prefer the saved takeaway number, then token, then sale reference', () => {
+  const { project } = require('../api/src/services/kitchen-board');
+  const order = Object.assign(sale(), { dine_type: 'Take away', sales_id: 'SID-9N33-27-0028', token_id: '3', takeaway_number: 2 });
+  for (const display of [tickets, project]) {
+    assert.equal(display(order)[0].orderNumber, '2');
+    const legacy = { ...order };
+    delete legacy.takeaway_number;
+    assert.equal(display(legacy)[0].orderNumber, '3');
+    delete legacy.token_id;
+    assert.equal(display(legacy)[0].orderNumber, 'SID-9N33-27-0028');
+    assert.equal(display(order)[0].id, 's1:c0');
+  }
+});
 test('later additions retain their own kitchen clock and service identity', () => {
   const order = sale();
   order.kitchen_service = { c0i0: { quantity: 2, at: '2026-09-27T08:20:00Z' } };

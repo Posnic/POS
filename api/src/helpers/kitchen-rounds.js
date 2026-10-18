@@ -220,7 +220,7 @@ function tickets(sale, settings = {}) {
             table: String(sale.table_number || ''),
             outlet: String(sale.outlet_snapshot?.name || ''),
             roomReference: String(sale.room_reference || ''),
-            orderNumber: String(sale.sales_id || sale.token_id || ''),
+            orderNumber: String(sale.takeaway_number || sale.token_id || sale.sales_id || ''),
             takeaway:
               String(sale.fulfilment || sale.dine_type || '')
                 .toLowerCase()
