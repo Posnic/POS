@@ -32,6 +32,12 @@ async function listOrders(args){
  const preparation=o=>o.reviewStatus==='changed-order'?'changed':o.handover?'handed-over':o.packing?'packed':o.lines.every(l=>matched.has(l.sku))?'ready':'needs-matching';
  return {orders:result.records.map(r=>({order:r.data,revision:r.revision,preparation:preparation(r.data)})),next:result.next,total:result.total,settingsRevision:state.revision};
 }
+async function orderKeys(args){
+ const input=args.input||{};if(Object.keys(input).some(k=>!['after','limit'].includes(k)))fail('hktv_orders_query_invalid',422);
+ const {store,state}=await context(args),result=await store.keys(input);
+ const importStatus=input.after?undefined:await (args.getImportStatus||require('./extension-hktv-import-status').readImportStatus)({db:args.db,scope:args.scope,storeCode:state.state.storeCode}).catch(()=>({state:'unavailable'}));
+ return {...result,settingsRevision:state.revision,...(importStatus?{importStatus}:{})};
+}
 async function orderOptions(args){
  const input=args.input||{};
  if(Object.keys(input).some(k=>!['skuAfter','skuSearch','limit'].includes(k)))fail('hktv_orders_query_invalid',422);
@@ -142,4 +148,4 @@ async function readMappingWorkbook(args){
  if(state.state.mappingStorage!=='records-v1')fail('hktv_mapping_storage_not_active',503);
  return {...await require('./extension-product-link-workbook').readWorkbook(input.base64),settingsRevision:state.revision};
 }
-module.exports={readMappingWorkbook,readMapping,saveMapping,previewMappings,orderOptions,listOrders,readOrder,orderHistory,commandOrder,cloudStore};
+module.exports={orderKeys,readMappingWorkbook,readMapping,saveMapping,previewMappings,orderOptions,listOrders,readOrder,orderHistory,commandOrder,cloudStore};

@@ -310,7 +310,7 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       }));
     } catch (error) { respondError(res, error); }
   });
-  for (const [route,method] of [['mapping','readMapping'],['mapping-save','saveMapping'],['mapping-preview','previewMappings'],['mapping-workbook','readMappingWorkbook'],['options','orderOptions'],['list','listOrders'],['detail','readOrder'],['history','orderHistory'],['command','commandOrder']]) {
+  for (const [route,method] of [['mapping','readMapping'],['mapping-save','saveMapping'],['mapping-preview','previewMappings'],['mapping-workbook','readMappingWorkbook'],['options','orderOptions'],['keys','orderKeys'],['list','listOrders'],['detail','readOrder'],['history','orderHistory'],['command','commandOrder']]) {
     router.post('/:extensionId/hktv-orders/'+route, async (req,res) => {
       try {
         res.json(await require('../services/extension-hktv-orders')[method]({db:req.db,...req.extension,input:req.body}));

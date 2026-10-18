@@ -23,6 +23,7 @@
     "hktvMappingWorkbook",
     "hktvOrderOptions",
     "hktvOrders",
+    "hktvOrderKeys",
     "hktvOrder",
     "hktvOrderHistory",
     "hktvOrderCommand",
