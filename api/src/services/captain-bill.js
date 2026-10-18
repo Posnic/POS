@@ -5,6 +5,37 @@ const { snapshotFrom } = require('./guest-bill.service');
 const Money = require('../utils/currency');
 const { ObjectId } = require('mongodb');
 
+function confirmedPaidProjection(sale, total, monetary) {
+  if (
+    sale.payment_status !== 'Paid' ||
+    sale.payment_correction_pending ||
+    !Number.isInteger(sale.captain_payment_version) ||
+    sale.captain_payment_version < 1 ||
+    ['balance', 'payment_pending'].some(
+      (key) => sale[key] == null || !Number.isFinite(Number(sale[key])) || Number(sale[key]) !== 0
+    ) ||
+    !Number.isFinite(Number(sale.paid_amount)) ||
+    Money.toMinor(sale.paid_amount, monetary) !== total ||
+    !Array.isArray(sale.captain_payments) ||
+    !sale.captain_payments.length
+  )
+    return false;
+  const ids = new Set();
+  let sum = 0;
+  for (const payment of sale.captain_payments) {
+    if (
+      !payment.id ||
+      ids.has(payment.id) ||
+      !Number.isFinite(Number(payment.amount)) ||
+      Number(payment.amount) <= 0
+    )
+      return false;
+    ids.add(payment.id);
+    sum += Money.toMinor(payment.amount, monetary);
+  }
+  return Number.isSafeInteger(sum) && sum === total;
+}
+
 async function read(req) {
   if (!req.user || !allowed(req.user, 'sales')) fail('Permission is required.', 403);
   const c = await context(req);
@@ -57,21 +88,28 @@ async function read(req) {
   if (plans.some((plan) => plan.purpose === 'order-restructure'))
     fail('This order is being updated. Please retry.', 409);
   let paidMinor = 0;
+  let projectedReceipt = false;
   for (const sale of sales) {
     const total = snapshotFrom([sale], c.branch, table.trim(), { allowZero: true }).totalMinor;
     let paid;
     if (sale.captain_payment_plan) {
       // The journal is authoritative even if a payment's sale projection was interrupted.
       const plan = plans.find((row) => String(row._id) === String(sale.captain_payment_plan));
-      if (!plan)
+      if (!plan && confirmedPaidProjection(sale, total, monetary)) {
+        // Journals remain at the payment authority. Synced completed receipts
+        // are readable, but must never enable collection on another server.
+        paid = total;
+        projectedReceipt = true;
+      } else if (!plan)
         fail(
           'Payment status is not confirmed. Retry this request; do not collect the money again.',
           409
         );
-      paid = (plan.payments || []).reduce(
-        (sum, payment) => sum + Number(payment.allocations?.[String(sale._id)] || 0),
-        0
-      );
+      if (plan)
+        paid = (plan.payments || []).reduce(
+          (sum, payment) => sum + Number(payment.allocations?.[String(sale._id)] || 0),
+          0
+        );
     } else
       paid =
         sale.payment_status === 'Paid'
@@ -85,7 +123,8 @@ async function read(req) {
     ...snapshot,
     paidMinor,
     dueMinor: snapshot.totalMinor - paidMinor,
-    collectEnabled: !receipt && require('./captain-payments').settings(c.branch).enabled,
+    collectEnabled:
+      !receipt && !projectedReceipt && require('./captain-payments').settings(c.branch).enabled,
     orderIds: sales.map((sale) => String(sale._id)),
     serverTime: new Date().toISOString(),
   };
