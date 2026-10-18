@@ -11,3 +11,16 @@ test('different extension, missing permission, unknown key and cross-store conne
 });
 test('changed tracking reference during retrieval refuses a stale label',async()=>{const x=setup();x.args.readState.mockResolvedValueOnce(x.state).mockResolvedValueOnce({state:{...x.state.state,orders:[{...x.order,trackingId:'999'}]},busy:false});await expect(readWaybill(x.args)).rejects.toThrow('changed_refresh_required');});
 test('cancelled orders and oversized provider HTML are not returned',async()=>{const x=setup();x.order.status='CANCELLED';await expect(readWaybill(x.args)).rejects.toThrow();x.order.status='CONFIRMED';x.reader.printWaybills.mockResolvedValue({code:'success',data:'<html>'+'.'.repeat(2*1024*1024)});await expect(readWaybill(x.args)).rejects.toThrow('response_invalid');});
+
+test('records waybill rejects a revision change during retrieval',async()=>{
+ const x=setup();x.state.state.orderStorage='records-v1';x.state.state.orders=[];
+ const read=jest.fn().mockResolvedValueOnce({data:x.order,revision:7}).mockResolvedValueOnce({data:x.order,revision:8});
+ x.args.getStore=jest.fn().mockResolvedValue({read});
+ await expect(readWaybill(x.args)).rejects.toThrow('changed_refresh_required');
+ expect(read).toHaveBeenCalledWith(x.order.key);
+ expect(x.args.getStore).toHaveBeenCalledWith({db:x.args.db,scope:x.args.scope,storeCode:'STORE'});
+});
+test('provider proposal arriving during label generation invalidates old label',async()=>{
+ const x=setup();x.args.readState.mockResolvedValueOnce(x.state).mockResolvedValueOnce({state:{...x.state.state,orders:[{...x.order,proposed:{trackingId:'replacement'}}]}});
+ await expect(readWaybill(x.args)).rejects.toThrow('changed_refresh_required');
+});

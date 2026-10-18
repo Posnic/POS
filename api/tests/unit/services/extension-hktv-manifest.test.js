@@ -5,3 +5,17 @@ test('daily collection groups multiple orders and numbers cartons across the bat
 test('changed labels, mixed destinations and inconsistent quantities cannot enter the manifest',()=>{for(const mutate of [x=>x.state.orders[0].trackingId='NEW',x=>x.state.orders[0].lines[0].quantity=3,x=>x.state.orders[0].proposed={},x=>x.state.orders[0].status='CANCELLED']){const x=fixture();mutate(x);expect(()=>manifest(x.state,x.input)).toThrow();}const x=fixture(),second=structuredClone(x.state.orders[0]);second.key='b'.repeat(64);second.warehouseId='W2';second.packing.warehouseId='W2';x.state.orders.push(second);x.input.orderKeys.push(second.key);expect(()=>manifest(x.state,x.input)).toThrow('separate_destinations');});
 test('Excel output preserves waybill leading zeros and uses numeric declared values',async()=>{const x=fixture();x.state.settings.company='=HYPERLINK("unsafe")';const r=await readManifest({db:{},scope:{},descriptor:{id:'posnic.hktvmall-gogox'},actor:{permissions:['read']},input:x.input,readState:async()=>({revision:3,state:x.state})});const workbook=new ExcelJS.Workbook();await workbook.xlsx.load(Buffer.from(r.base64,'base64'));const sheet=workbook.getWorksheet(1);expect(sheet.getCell('C9').value).toBe('0012345');expect(sheet.getCell('F9').value).toBe(12);expect(typeof sheet.getCell('B2').value).toBe('string');expect(sheet.pageSetup.fitToWidth).toBe(1);});
 test('stale workspace revision and another extension cannot export a manifest',async()=>{const x=fixture(),args={db:{},scope:{},descriptor:{id:'posnic.hktvmall-gogox'},actor:{permissions:['read']},input:x.input,readState:async()=>({revision:4,state:x.state})};await expect(readManifest(args)).rejects.toThrow('changed_refresh');args.descriptor.id='other.extension';await expect(readManifest(args)).rejects.toThrow('forbidden');});
+
+test.each(['html','xlsx'])('records manifest checks each selected revision for %s',async format=>{
+ const x=fixture(),order=x.state.orders[0];x.state.orderStorage='records-v1';x.state.orders=[];x.input.format=format;
+ const args={db:{},scope:{},descriptor:{id:'posnic.hktvmall-gogox'},actor:{permissions:['read']},input:x.input,readState:async()=>({revision:3,state:x.state}),getStore:async()=>({read:async()=>({data:order,revision:7})})};
+ await expect(readManifest(args)).rejects.toThrow('changed_refresh');
+ x.input.expectedOrderRevisions={[order.key]:7};
+ const result=await readManifest(args);expect(format==='html'?result.html:result.base64).toBeTruthy();
+ let reads=0;args.getStore=async()=>({read:async()=>({data:order,revision:++reads===1?7:8})});
+ await expect(readManifest(args)).rejects.toThrow('changed_refresh');
+});
+test('storage cutover during a legacy manifest invalidates the document',async()=>{
+ const x=fixture();x.input.format='html';let reads=0;
+ await expect(readManifest({db:{},scope:{},descriptor:{id:'posnic.hktvmall-gogox'},actor:{permissions:['read']},input:x.input,readState:async()=>({revision:3,state:++reads===1?x.state:{...x.state,orderStorage:'records-v1'}}),getStore:async()=>({read:async()=>({data:x.state.orders[0],revision:1})})})).rejects.toThrow('changed_refresh');
+});
