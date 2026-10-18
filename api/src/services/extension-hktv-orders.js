@@ -21,7 +21,7 @@ async function context(args){
 }
 async function listOrders(args){
  const input=args.input||{};
- if(Object.keys(input).some(k=>!['after','limit','search','status','preparation','warehouseId','dateFrom','dateTo','collection'].includes(k)))fail('hktv_orders_query_invalid',422);
+ if(Object.keys(input).some(k=>!['after','limit','search','status','preparation','warehouseId','dateFrom','dateTo','collection','destination'].includes(k)))fail('hktv_orders_query_invalid',422);
  const {store,state}=await context(args);
  const mappedSkus=state.state.mappingStorage==='records-v1'?await store.mappings.keys():(state.state.mappings||[]).map(m=>m.sku);
  const result=await store.list({...input,mappedSkus});
