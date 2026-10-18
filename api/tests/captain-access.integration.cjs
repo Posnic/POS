@@ -497,6 +497,12 @@ test('Captain scoped sessions cannot access Mobile POS or administration', async
     originalUrl: '/api/sales/getListKot',
   };
   await access.verifySession(request, staff);
+  await access.verifySession({ ...request, originalUrl: '/api/captain/v1/attendance' }, staff);
+  await access.verifySession({ ...request, originalUrl: '/api/captain/v1/attendance/settings' }, staff);
+  await assert.rejects(
+    () => access.verifySession({ ...request, originalUrl: '/api/captain/v1/attendance/report' }, staff),
+    (e) => e.code === 'CAPTAIN_SCOPE'
+  );
   await assert.rejects(
     () => access.verifySession({ ...request, originalUrl: '/api/mobile/v1/sales' }, staff),
     (e) => e.code === 'CAPTAIN_SCOPE'

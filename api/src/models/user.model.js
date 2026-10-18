@@ -1040,6 +1040,20 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
     const verify_password = data.check_password;
     let password = '';
     if (verify_password === 'yes' && data.usertype !== 'api') {
+      if (
+        typeof data.password !== 'string' ||
+        data.password.length < 5 ||
+        data.password.length > 20
+      ) {
+        return {
+          status: false,
+          data: null,
+          message: 'Password must contain between 5 and 20 characters',
+        };
+      }
+      if (data.retype_password !== undefined && data.retype_password !== data.password) {
+        return { status: false, data: null, message: 'Passwords do not match' };
+      }
       // PHP: 'password' => 'trim|base64_encode' filter applied first
       const base64Password = Buffer.from(data.password).toString('base64');
       password = await bcrypt.hash(base64Password, 12);
@@ -1335,6 +1349,13 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       updated_by_id: context.user._id,
       license: context.license,
     };
+
+    // updateOne does not run the save hook. Explicit resets must persist the
+    // hash and invalidate older sessions; ordinary edits preserve credentials.
+    if (id && verify_password === 'yes' && data.usertype !== 'api') {
+      updateData.password = password;
+      updateData.passwordChangedAt = new Date();
+    }
 
     // Existing API credentials are write-only: a blank edit keeps the key.
     if (id && data.usertype === 'api' && !appKey.trim()) delete updateData.apikey;

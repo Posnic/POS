@@ -149,7 +149,7 @@ test('and a shop with no tables never reaches the query either', () => {
    * runs table service, so a retail counter whose printed code carried a
    * segment refused a customer with "Table 5 already has an open order".
    */
-  assert.match(SALE_REPO, /const runsTableService = branchDoc\.table_options === true;/);
+  assert.match(SALE_REPO, /const runsTableService = branchDoc\.table_options === true && !staffRoom;/);
   assert.match(SALE_REPO, /if \(runsTableService && openTableLimit > 0 && wantsTable\) \{/);
 });
 

@@ -8794,6 +8794,13 @@ PosnicPro.salesChannels = {
             '<div class="form-group col-md-1 text-right">' +
             '<button type="button" class="btn btn-outline-danger btn-sm remove-partner-venue" aria-label="' + t('lang_remove_venue', 'Remove venue') + '"><i class="feather icon-trash-2" aria-hidden="true"></i></button>' +
             '</div>' +
+            '<div class="col-12 border-top pt-2"><label><input type="checkbox" class="venue-staff"' + (v.staff_orders_enabled ? ' checked' : '') + '> ' + t('lang_staff_room_orders', 'Allow staff room orders') + '</label>' +
+            '<p class="small text-muted">' + t('lang_staff_room_prices', 'Staff room orders use normal menu prices. Web menu markup and venue commission are separate.') + '</p>' +
+            '<label><input type="checkbox" class="venue-charge-enabled"' + (v.room_charge?.enabled ? ' checked' : '') + '> ' + t('lang_room_charge_offer', 'Offer an additional room charge') + '</label>' +
+            '<div class="form-row"><label class="col-md-6">' + t('lang_charge_name', 'Charge name') + '<input class="form-control venue-charge-name" maxlength="60" value="' + safe(v.room_charge?.name || 'Room service charge') + '"></label>' +
+            '<label class="col-md-3">%<input class="form-control venue-charge-percent" type="number" min="0" max="100" step="0.01" value="' + (Number(v.room_charge?.percent) || 0) + '"></label>' +
+            '<label class="col-md-3"><input type="checkbox" class="venue-charge-taxed"' + (v.room_charge?.taxed ? ' checked' : '') + '> ' + t('lang_apply_default_tax', 'Apply default tax') + '</label></div>' +
+            '<p class="small text-muted">' + t('lang_room_charge_basis', 'Percentage of food after discounts, before tax. Apply only with guest agreement; staff can remove it from the bill.') + '</p></div>' +
             '<div class="col-12"><small class="text-muted venue-link"></small></div>' +
             '</div></div></div>';
     },
@@ -9012,6 +9019,13 @@ PosnicPro.salesChannels = {
                 address: String($row.find('.venue-address').val() || '').trim(),
                 delivery_note: String($row.find('.venue-note').val() || '').trim(),
                 ask_floor: $row.find('.venue-ask-floor').is(':checked'),
+                staff_orders_enabled: $row.find('.venue-staff').is(':checked'),
+                room_charge: {
+                    enabled: $row.find('.venue-charge-enabled').is(':checked'),
+                    name: String($row.find('.venue-charge-name').val() || 'Room service charge').trim(),
+                    percent: Number($row.find('.venue-charge-percent').val()) || 0,
+                    taxed: $row.find('.venue-charge-taxed').is(':checked')
+                },
                 enabled: true
             });
         });
@@ -10374,13 +10388,14 @@ $(document).on('shown.bs.tab', '#captaintables-tab-line', function () {
     $('#save_captain_tables').prop('disabled',true);
     PosnicPro.get({url:'captain/v1/table-settings'},function(data){
         $('#captain_table_cleaning').prop('checked',data.cleaningEnabled === true);
+        $('#captain_allow_unassigned').prop('checked',data.tableRequired === false);
         $('#save_captain_tables').prop('disabled',false);
         $('#captain_tables_message').empty();
     },function(){ $('#captain_tables_message').text(PosnicPro.i18n.t('lang_could_not_load_table_settings_please_retry', 'Could not load table settings. Please retry.')); });
 });
 $(document).on('click','#save_captain_tables',function(){
     var button=$(this).prop('disabled',true);
-    PosnicPro.post({url:'captain/v1/table-settings',processData:false,data:JSON.stringify({cleaningEnabled:$('#captain_table_cleaning').is(':checked')})},function(){
+    PosnicPro.post({url:'captain/v1/table-settings',processData:false,data:JSON.stringify({cleaningEnabled:$('#captain_table_cleaning').is(':checked'),tableRequired:!$('#captain_allow_unassigned').is(':checked')})},function(){
         button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_successfully_completed','Successfully Completed'));
     },function(){button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_could_not_save_table_settings_please_retry', 'Could not save table settings. Please retry.'));});
 });

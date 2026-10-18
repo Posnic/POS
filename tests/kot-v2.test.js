@@ -11,7 +11,7 @@ function setup(){
  const sale={_id:'a'.repeat(24),table_number:'6',dine_type:'Dine-in',person_count:2,updated_date:'2026-10-05T06:00:00Z',created_date:'2026-10-05T06:00:00Z',payment_status:'Unpaid',sale_process:'KOT',sales_total:60,items:[{item_id:'tea',line_id:'original',item_name:'Tea',item_quantity:2,item_price:30}],restaurant_details:{rounds:[{id:'c0',items:[{id:'c0i0',line_key:'original',product:'tea',name:'Tea',quantity:2,served:0,remaining:2}]}]}};
  let search;
  w.PosnicPro={i18n:{t:(_,fallback)=>fallback},local:{get:k=>({table_options:'enable',branch_id_set:'b',username:'owner',currencySign:'₹'}[k])},escapeHtml:s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),HideSideBarModal(){},alert:(_,m)=>errors.push(m),restaurantFeedback:{apply(){},load(){},play:k=>effects.push(k)},kot:{bindProductSearch:(_,callback)=>search=callback,editLine:(l,q)=>({product_id:l.item_id,line_id:l.line_id,quantity:q??l.item_quantity,price:l.item_price}),},kotWorkspace:{editPayload:(s,items)=>({order_id:s._id,items,seen_at:s.updated_date})}};
- for(const method of ['get','post','put'])w.PosnicPro[method]=(o,done,fail)=>{const body=typeof o.data==='string'?JSON.parse(o.data):o.data;calls.push({method,url:o.url,body});if(setup.failure&&method==='post'){fail({responseJSON:setup.failureResponse||{message:'Offline'}});return;}let data={};if(o.url==='captain/v1/tables')data={tables:[{id:'t6',tableorder_value:'6',status:'occupied',orders:[{id:sale._id}]},{id:'t7',tableorder_value:'7',status:'available',orders:[]}]};else if(o.url==='sales')data={list:sale.payment_status==='Paid'&&!sale.floor_lifecycle?[]:[sale],total:1};else if(o.url==='sales/'+sale._id)data=JSON.parse(JSON.stringify(sale));else if(o.url==='items/instantItemTax')data={id:'tax',rate:5,name:'GST'};else if(o.url==='items/instanceItemInsert')data={id:'instant',selling_price:25};done({type:'success',data});};
+ for(const method of ['get','post','put'])w.PosnicPro[method]=(o,done,fail)=>{const body=typeof o.data==='string'?JSON.parse(o.data):o.data;calls.push({method,url:o.url,body});if(setup.failure&&method==='post'){fail({responseJSON:setup.failureResponse||{message:'Offline'}});return;}let data={};if(o.url==='captain/v1/tables')data={roomVenues:setup.roomVenues||[],tables:[{id:'t6',tableorder_value:'6',status:'occupied',orders:[{id:sale._id}]},{id:'t7',tableorder_value:'7',status:'available',orders:[]}]};else if(o.url==='sales')data={list:sale.payment_status==='Paid'&&!sale.floor_lifecycle?[]:[sale],total:1};else if(o.url==='sales/'+sale._id)data=JSON.parse(JSON.stringify(sale));else if(o.url==='items/instantItemTax')data={id:'tax',rate:5,name:'GST'};else if(o.url==='items/instanceItemInsert')data={id:'instant',selling_price:25};done({type:'success',data});};
  w.eval(source);const app=w.PosnicPro.kot_v2;
  const click=async a=>{w.document.querySelector('[data-action="'+a+'"]').click();await flush();};
  return {dom,w,app,calls,effects,errors,sale,click,search:()=>search,close:()=>dom.window.close()};
@@ -211,7 +211,7 @@ test('takeaway opens with guest count focused and selected, and add-again and di
  try {
  const selected=[];h.w.HTMLInputElement.prototype.select=function(){selected.push(this);};
  h.app.showDataTablePage();await flush();await h.click('takeaway');
- let input=h.w.document.querySelector('dialog [name=guests]');assert.equal(input.value,'0');assert.equal(h.w.document.activeElement,input);assert.ok(selected.includes(input));
+ let input=h.w.document.querySelector('dialog [name=guests]');assert.equal(input.value,'');assert.equal(h.w.document.activeElement,input);assert.ok(selected.includes(input));
  h.w.document.querySelector('dialog').close();h.app.state.selected=h.sale._id;await h.app.refresh();
  await h.click('again');input=h.w.document.querySelector('dialog [name=qty]');assert.equal(input.value,'1');assert.equal(h.w.document.activeElement,input);assert.ok(selected.includes(input));
  h.w.document.querySelector('dialog').close();await h.click('discount');input=h.w.document.querySelector('dialog [name=amount]');assert.equal(h.w.document.activeElement,input);assert.ok(selected.includes(input));
@@ -255,4 +255,30 @@ test('paid takeaway remains selectable without offering payment or price editing
  assert.equal(h.app.state.sale._id,h.sale._id);assert.equal(h.w.document.querySelector('[data-action=pay]'),null);assert.equal(h.w.document.querySelector('[data-action=add]'),null);
  assert.match(h.w.document.querySelector('[data-action=serveAll]').textContent,/Given to customer/);
  const filters=JSON.parse(h.calls.find(c=>c.url==='sales').body.filters);assert.equal(filters.floor_closed_at.$exists,false);assert.ok(filters.$or.some(f=>f.floor_lifecycle===true));h.close();
+});
+
+test('choosing table and guests does not navigate until Next; pax can be omitted',async()=>{
+ const h=setup();h.app.showDataTablePage();await flush();await h.click('new');
+ const d=h.w.document.querySelector('.kv2-seating-dialog');
+ d.querySelector('[value=t7]').click();d.querySelector('[data-guests="3"]').click();await flush();
+ assert.equal(h.app.state.draft,null);assert.equal(d.open,true);
+ d.querySelector('[name=guests]').value='';
+ assert.equal(d.querySelector('[name=guests]').required,false);
+ d.querySelector('[type=submit]').click();await flush();
+ assert.equal(h.app.state.draft.table,'7');assert.equal(h.app.state.draft.guests,0);
+ h.close();
+});
+
+test('rooms accept a typed number but wait for Next and preserve charge agreement',async()=>{
+ setup.roomVenues=[{code:'hotel',name:'Our hotel',room_charge:{enabled:true,percent:5,name:'Room service'}}];
+ const h=setup();try {
+ h.app.showDataTablePage();await flush();await h.click('rooms');
+ const d=h.w.document.querySelector('dialog');d.querySelector('[name=unit]').value='35B';
+ assert.equal(h.app.state.draft,null);
+ d.querySelector('[name=acceptCharge]').checked=true;
+ d.querySelector('[type=submit]').click();await flush();
+ assert.equal(h.app.state.draft.unit,'35B');assert.equal(h.app.state.draft.roomChargeAccepted,true);
+ h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});await h.click('send');
+ const request=h.calls.find(c=>c.url==='sales/qrOrder');assert.equal(request.body.venue,'hotel');assert.equal(request.body.unit,'35B');assert.equal(request.body.room_charge_accepted,true);
+ } finally {setup.roomVenues=null;h.close();}
 });

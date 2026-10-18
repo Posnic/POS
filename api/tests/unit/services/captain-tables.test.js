@@ -623,3 +623,11 @@ test('staff temporary labels are normalized, retry safe and do not alter configu
   });
   expect(otherRow.id).not.toBe(rows[0].id);
 });
+
+test('table is required unless this branch explicitly allows unassigned orders', async () => {
+  expect((await service.list(req())).tableRequired).toBe(true);
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { captain_allow_unassigned: true } });
+  expect((await service.list(req())).tableRequired).toBe(false);
+});
