@@ -17,6 +17,7 @@
     "exportReport",
     "hktvWaybill",
     "hktvManifest",
+    "hktvOrderOptions",
     "hktvOrders",
     "hktvOrder",
     "hktvOrderHistory",

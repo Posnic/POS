@@ -26,6 +26,12 @@ async function listOrders(args){
  const result=await store.list({...input,mappedSkus:(state.state.mappings||[]).map(m=>m.sku)});
  return {orders:result.records.map(r=>({order:r.data,revision:r.revision})),next:result.next,total:result.total,settingsRevision:state.revision};
 }
+async function orderOptions(args){
+ const input=args.input||{};
+ if(Object.keys(input).some(k=>!['skuAfter','skuSearch','limit'].includes(k)))fail('hktv_orders_query_invalid',422);
+ const {store,state}=await context(args);
+ return {...await store.options(input),settingsRevision:state.revision};
+}
 async function readOrder(args){
  const input=args.input||{};
  if(Object.keys(input).some(k=>k!=='orderKey')||!/^[a-f0-9]{64}$/.test(input.orderKey||''))fail('hktv_order_key_invalid',422);
@@ -59,4 +65,4 @@ async function commandOrder(args){
  const result=await store.write({order:plan.state.orders[0],expectedRevision:input.expectedRevision,actorId:String(actor.userId),reason});
  return {...result,result:plan.result};
 }
-module.exports={listOrders,readOrder,orderHistory,commandOrder,cloudStore};
+module.exports={orderOptions,listOrders,readOrder,orderHistory,commandOrder,cloudStore};
