@@ -386,7 +386,10 @@ router.post(
       payload = require('../helpers/bill-payload').buildBillPayload(sale, c.branch);
       payload.payments = [
         {
-          label: intent.sale.payment.method === 'upi' ? 'UPI (staff confirmed)' : sale.payment_mode || intent.sale.payment.method,
+          label:
+            intent.sale.payment.method === 'upi'
+              ? 'UPI (staff confirmed)'
+              : sale.payment_mode || intent.sale.payment.method,
           amount:
             intent.sale.payment.method === 'cash'
               ? intent.sale.payment.received / 100
@@ -395,12 +398,17 @@ router.post(
       ];
       if (intent.sale.payment.method === 'cash') payload.change = intent.sale.payment.change / 100;
       payload.title = 'RECEIPT';
-      if (payload.receiptDocument) Object.assign(payload.receiptDocument, {
-        receipt_settled: true,
-        payment_mode: sale.payment_mode || intent.sale.payment.method,
-        received_amount: intent.sale.payment.method === 'cash' ? intent.sale.payment.received / 100 : intent.sale.total / 100,
-        change_amount: intent.sale.payment.method === 'cash' ? intent.sale.payment.change / 100 : 0,
-      });
+      if (payload.receiptDocument)
+        Object.assign(payload.receiptDocument, {
+          receipt_settled: true,
+          payment_mode: sale.payment_mode || intent.sale.payment.method,
+          received_amount:
+            intent.sale.payment.method === 'cash'
+              ? intent.sale.payment.received / 100
+              : intent.sale.total / 100,
+          change_amount:
+            intent.sale.payment.method === 'cash' ? intent.sale.payment.change / 100 : 0,
+        });
     } else
       payload = {
         storeName: c.branch.branch_name || 'Posnic',
