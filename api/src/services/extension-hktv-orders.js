@@ -7,7 +7,10 @@ async function cloudStore({db,scope,storeCode}){
  if(!root||!path.isAbsolute(root))fail('hktv_cloud_connection_required',503);
  const config=JSON.parse(await fs.readFile(path.join(root,'private/config.json'),'utf8'));
  if(config.tenantDb!==db.databaseName||config.license!==String(scope.license)||config.branchId!==String(scope.branchId)||config.storeCode!==storeCode)fail('hktv_connection_scope_mismatch',403);
- return require(path.join(root,'src/order-store.cjs')).createOrderStore(db,{license:String(scope.license),branchId:String(scope.branchId),storeCode});
+ const storeScope={license:String(scope.license),branchId:String(scope.branchId),storeCode};
+ const store=require(path.join(root,'src/order-store.cjs')).createOrderStore(db,storeScope);
+ const catalogue=require(path.join(root,'src/product-catalogue-view.cjs'));
+ return catalogue.withCatalogue(store,await catalogue.readSnapshot(root,{...storeScope,tenantDb:db.databaseName}));
 }
 async function context(args){
  const {descriptor,actor,db,scope,readState=namespace.readNamespace,getStore=cloudStore}=args;
