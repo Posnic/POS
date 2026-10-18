@@ -38,6 +38,7 @@
                                     <lang class="lang_modules">Features</lang>
                                 </a>
                                 
+
                                 <div class="settings-nav-group" data-desktop-only><lang class="lang_desktop_this_computer">This computer</lang></div>
                                 <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-hardware-tab" data-toggle="pill" href="#v-pills-hardware" role="tab" aria-controls="v-pills-hardware" aria-selected="false"><i class="feather icon-printer mr-2"></i><lang class="lang_desktop_devices">Devices & Printing</lang></a>
                                 <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-app-tab" data-toggle="pill" href="#v-pills-app" role="tab" aria-controls="v-pills-app" aria-selected="false"><i class="feather icon-monitor mr-2"></i><lang class="lang_desktop_app">App Settings</lang></a>
@@ -212,8 +213,7 @@
 
                 <!-- Start col -->
                 <div class="col-lg-7 col-xl-9">
-                    <div class="tab-content loader-view-mystore" id="v-pills-tabContent">
-                        <div class="tab-pane fade" id="v-pills-hardware" role="tabpanel" aria-labelledby="v-pills-hardware-tab"><div class="card"><div class="card-body" data-desktop-page="hardware"></div></div></div>
+                    <div class="tab-content loader-view-mystore" id="v-pills-tabContent"><div class="tab-pane fade" id="v-pills-hardware" role="tabpanel" aria-labelledby="v-pills-hardware-tab"><div class="card"><div class="card-body" data-desktop-page="hardware"></div></div></div>
                         <div class="tab-pane fade" id="v-pills-app" role="tabpanel" aria-labelledby="v-pills-app-tab"><div class="card"><div class="card-body" data-desktop-page="app"></div></div></div>
                         <div class="tab-pane fade" id="v-pills-updates" role="tabpanel" aria-labelledby="v-pills-updates-tab"><div class="card"><div class="card-body" data-desktop-page="updates"></div></div></div>
                         <div class="tab-pane fade" id="v-pills-backups" role="tabpanel" aria-labelledby="v-pills-backups-tab"><div class="card"><div class="card-body" data-desktop-page="backups"></div></div></div>
@@ -5135,6 +5135,7 @@
                                                             
                                                         <a class="nav-link" data-toggle="pill" href="#inv-sub-stock" role="tab"><i class="feather icon-box mr-2"></i><lang class="lang_stock_preference">Stock preference</lang></a>
 <a class="nav-link" data-toggle="pill" href="#inv-sub-mobile" role="tab"><i class="feather icon-smartphone mr-2"></i><lang class="lang_mobile_inventory">Mobile inventory</lang></a>
+<a class="nav-link" id="inv-sub-packaging-tab" data-toggle="pill" href="#inv-sub-packaging" role="tab"><i class="feather icon-box mr-2"></i>Packaging</a>
 <a class="nav-link" data-toggle="pill" href="#inv-sub-expiry" role="tab"><i class="feather icon-bell mr-2"></i><lang class="lang_expiry_reminders">Expiry reminders</lang></a>
 </div>
                                                     </div>
@@ -5196,6 +5197,7 @@
  <p><lang class="lang_applies_to_new_items_in_this_branch_existi">Applies to new items in this branch. Existing items keep their stock settings. You can still mark an item sold out manually.</lang></p>
  <button class="btn btn-primary" type="button" id="item_settings_save_stock"><lang class="lang_save_title">Save</lang></button></div></div>
 </div>
+<div class="tab-pane fade" id="inv-sub-packaging" role="tabpanel" aria-labelledby="inv-sub-packaging-tab"><div class="card"><div class="card-body"><h5>Saved cartons (optional)</h5><p class="text-muted">Save your actual box dimensions and empty-box weight. Examples: Small, Medium, Large. No presets are applied automatically.</p><div id="parcel_carton_status" role="status"></div><div class="table-responsive"><table class="table"><thead><tr><th>Name</th><th>Length (cm)</th><th>Width (cm)</th><th>Height (cm)</th><th>Empty weight (kg)</th><th></th></tr></thead><tbody id="parcel_carton_rows"></tbody></table></div><button type="button" class="btn btn-light" id="parcel_carton_add">Add carton</button> <button type="button" class="btn btn-primary" id="parcel_carton_save">Save cartons</button></div></div></div>
 <div class="tab-pane fade" id="inv-sub-mobile" role="tabpanel"><div id="mobile_inventory_settings"></div></div>
 <div class="tab-pane fade" id="inv-sub-expiry" role="tabpanel">
 <div class="card"><div class="card-header"><h5><lang class="lang_expiry_reminders">Expiry reminders</lang></h5></div><div class="card-body">

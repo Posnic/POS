@@ -10401,3 +10401,14 @@ $(document).on('click','#save_captain_tables',function(){
 });
 
 $(document).on("change", "#sharing_fieldset input", function () { PosnicPro.settings._sharingDirty = true; });
+
+/* Optional branch packaging presets, through the scoped shared settings API. */
+(function(){
+ var busy=false,loaded=false;
+ function status(text){$('#parcel_carton_status').text(text);}
+ function lock(value){busy=value;$('#parcel_carton_add,#parcel_carton_save,#parcel_carton_rows input,#parcel_carton_rows button').prop('disabled',value);}
+ function row(value){var tr=$('<tr>').attr('data-carton-id',value.id||crypto.randomUUID());['name','lengthCm','widthCm','heightCm','emptyWeightKg'].forEach(function(key){var input=$('<input>').addClass('form-control').attr({'data-field':key,'aria-label':key,type:key==='name'?'text':'number'}).val(value[key]==null?'':value[key]);if(key==='name')input.attr('maxlength','80');else input.attr({min:key==='emptyWeightKg'?0:0.001,step:'any'});tr.append($('<td>').append(input));});var remove=$('<button type="button" class="btn btn-light">Remove</button>').on('click',function(){tr.remove();status('Unsaved changes');});tr.append($('<td>').append(remove));$('#parcel_carton_rows').append(tr);}
+ $(document).on('click','#inv-sub-packaging-tab',function(){if(busy)return;loaded=false;lock(true);status('Loading saved cartons…');PosnicPro.get({url:'settings/group/channels',data:{}},function(response){lock(false);if(!response||response.type!=='success'){status('Could not load carton settings. Reopen Packaging to retry.');return;}$('#parcel_carton_rows').empty();((response.data&&response.data.values&&response.data.values.parcel_cartons)||[]).forEach(row);loaded=true;status('Loaded. Cartons are optional.');},function(){lock(false);status('Could not load carton settings. Reopen Packaging to retry.');});});
+ $(document).on('click','#parcel_carton_add',function(){if(busy||!loaded)return;row({});status('Unsaved changes');});
+ $(document).on('click','#parcel_carton_save',function(){if(busy||!loaded)return;var values=[];$('#parcel_carton_rows tr').each(function(){var tr=$(this),value={id:tr.attr('data-carton-id')};tr.find('input').each(function(){value[$(this).attr('data-field')]=$(this).val();});values.push(value);});lock(true);status('Saving cartons…');PosnicPro.put({url:'settings/group/channels',data:JSON.stringify({parcel_cartons:values})},function(response){lock(false);status(response&&response.type==='success'?'Cartons saved.':response&&response.message||'Could not save cartons.');},function(){lock(false);status('Could not save cartons. Your entries are preserved; try Save again.');});});
+})();

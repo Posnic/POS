@@ -1,0 +1,11 @@
+# Optional parcel details and packaging presets
+
+Product `parcel_details` stores weightKg and packed-unit lengthCm/widthCm/heightCm. Missing or cleared measurements are null. Omitted parcel_details on an older client does not clear existing measurements. No stock, price, courier or marketplace writes follow a measurement save.
+
+Core Settings > Inventory > Packaging saves parcel_cartons through the scoped channels settings endpoint. Empty defaults, up to 50 presets with stable IDs, unique names, positive dimensions and nonnegative emptyWeightKg. Removal is an explicit list save. Branch/account inheritance is unchanged. Presets must describe actual boxes; Small/Medium/Large are examples, not invented measurements.
+
+Sync: product metadata uses existing items branch lane. Presets use branch_channels with branch_id/license and updated_date, mirrored into branches for legacy readers. Added branch_channels branch lane to core manifest, Gateway scope map and agent config. Account rows with null branch_id follow existing shared-document semantics. No new file attachments, background jobs or replayable effects. Till-origin writes require configured sync to propagate to cloud and other authorized tills; disconnected devices show their last local records and use existing reconnect conflict handling. Removing a preset updates the list; clearing a measurement writes null.
+
+Validation: measurement/carton unit tests; editor saved-value roundtrip; 51 settings repository tests including scoped preset writes, validation-before-write, timestamp and mirror; existing item/settings UI checks. Sync manifest agreement is a configuration check, NOT evidence of live cross-device delivery.
+
+Rollout remaining: deploy matching API/frontend and Gateway, bundle/install updated agent, verify cloud-to-till, till-to-cloud, another authorized till, reconnect, concurrent edits, removal and branch isolation. Do not describe this as deployed to client tills until those checks finish. Carton autofill and weight estimation in the HKTVmall extension are separate consumers and are not implemented by these storage controls.

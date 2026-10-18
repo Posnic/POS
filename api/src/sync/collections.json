@@ -17,6 +17,7 @@
     "stocklogs": "branch",
     "cashregister": "branch",
     "items": "branch",
+    "branch_channels": "branch",
     "variants": "branch",
     "categories": "branch",
     "customers": "branch",

@@ -320,6 +320,7 @@ class ItemModel {
        projecting through this map silently dropped them. */
     items_mfg_date: { type: 'String', select: true },
     items_expiry_date: { type: 'String', select: true },
+    parcel_details: { type: Object, default: undefined },
     item_weight_machine_based: { type: 'Boolean', select: true },
     modifier_group_ids: { type: 'Array', select: true },
     // IC1: deliberate ask-at-the-till pricing, set from the item form.
