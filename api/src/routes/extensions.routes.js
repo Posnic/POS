@@ -317,6 +317,12 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       } catch(error) { respondError(res,error); }
     });
   }
+  for (const [route,method] of [['read','readStatus'],['submit','submitStatus']]) {
+    router.post('/:extensionId/hktv-status/'+route, async (req,res) => {
+      try { res.json(await require('../services/extension-hktv-status')[method]({db:req.db,...req.extension,input:req.body})); }
+      catch(error) { respondError(res,error); }
+    });
+  }
   router.post('/:extensionId/hktv-manifest', async (req, res) => {
     try {
       const e = req.extension;
