@@ -121,6 +121,8 @@
     "extension_command_receipts": "Command idempotency, state revisions and effect recovery belong to the executing installation. No independent cross-installation merge contract exists.",
     "extension_stock_commands": "Command idempotency, state revisions and effect recovery belong to the executing installation. No independent cross-installation merge contract exists.",
     "extension_namespaces": "Command idempotency, state revisions and effect recovery belong to the executing installation. No independent cross-installation merge contract exists.",
+    "hktv_product_mappings": "Cloud-authoritative marketplace SKU matches; read through scoped API, never merge from tills.",
+    "hktv_mapping_revisions": "Private immutable mapping history; not replicated to tills.",
     "hktv_order_records": "Cloud-authoritative marketplace order records. Tills must read and command through the authenticated branch-scoped cloud API; offline edits and independent merges are not supported.",
     "hktv_order_revisions": "Immutable cloud order revision journal. Do not replay or merge onto tills; authorized staff view history through the cloud API.",
     "extension_hardware_claims": "Exclusive delivery claims belong to the installation owning the printer or terminal.",
