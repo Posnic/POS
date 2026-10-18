@@ -16,6 +16,7 @@
     "salesReport",
     "exportReport",
     "hktvWaybill",
+    "hktvManifest",
   ]);
   function mount(options) {
     var container = options.container,
@@ -156,12 +157,12 @@
   }
   function showDocument(value) {
     var safe=sanitizeDocument(value.html),nonce=crypto.randomUUID().replace(/-/g,''),overlay=document.createElement('div'),bar=document.createElement('div'),frame=document.createElement('iframe');
-    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-label','HKTVmall original waybill');overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-label',value.title||'Document preview');overlay.setAttribute('aria-modal','true');
     overlay.style.cssText='position:fixed;inset:16px;z-index:100000;background:white;box-shadow:0 0 0 40px #0008;display:flex;flex-direction:column;padding:16px;gap:12px';
-    var title=document.createElement('strong');title.textContent='Original HKTVmall waybill · '+String(value.orderId||'');bar.appendChild(title);
+    var title=document.createElement('strong');title.textContent=String(value.title||'Document preview')+' · '+String(value.orderId||'');bar.appendChild(title);
     var print=document.createElement('button');print.textContent='Print';print.style.margin='0 12px';print.onclick=function(){frame.contentWindow.postMessage({type:'posnic-print-document'},'*');};bar.appendChild(print);
     var close=document.createElement('button');close.textContent='Close preview';close.onclick=function(){overlay.remove();};bar.appendChild(close);
-    frame.title='Original HKTVmall waybill';frame.setAttribute('sandbox','allow-scripts allow-modals');frame.setAttribute('referrerpolicy','no-referrer');frame.style.cssText='width:100%;flex:1;border:1px solid #ddd';
+    frame.title=value.title||'Document preview';frame.setAttribute('sandbox','allow-scripts allow-modals');frame.setAttribute('referrerpolicy','no-referrer');frame.style.cssText='width:100%;flex:1;border:1px solid #ddd';
     var policy="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'nonce-"+nonce+"'; connect-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
     frame.srcdoc='<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+policy+'"></head><body>'+safe+'<script nonce="'+nonce+'">window.addEventListener("message",function(e){if(e.source===parent&&e.data&&e.data.type==="posnic-print-document")window.print();});</script></body></html>';
     overlay.appendChild(bar);overlay.appendChild(frame);document.body.appendChild(overlay);close.focus();

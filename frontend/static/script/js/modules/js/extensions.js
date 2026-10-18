@@ -532,6 +532,14 @@
               if(run!==generation||branch!==String(PosnicPro.local.get("branch_id_set")||""))throw Error('Workspace changed. Open the waybill again.');
               return PosnicExtensionFrame.showDocument(value);
             });
+            if (method === "hktvManifest") return request(base + "/hktv-manifest", input).then(function(value){
+              if(run!==generation||branch!==String(PosnicPro.local.get("branch_id_set")||""))throw Error('Workspace changed. Prepare the manifest again.');
+              if(input.format==='html')return PosnicExtensionFrame.showDocument(value);
+              if(value.format!=='xlsx'||!/^GOGOX-handover-\d{4}-\d{2}-\d{2}\.xlsx$/.test(value.filename)||typeof value.base64!=='string'||value.base64.length>4*1024*1024)throw Error('Invalid manifest response.');
+              var binary=atob(value.base64),bytes=new Uint8Array(binary.length);for(var i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+              var url=URL.createObjectURL(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),link=document.createElement('a');link.href=url;link.download=value.filename;document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},1000);
+              return {downloaded:true,orders:value.orders,cartons:value.cartons};
+            });
             if (method === "sales")
               return request(
                 base + "/sales?after=" + encodeURIComponent(input.after || ""),
