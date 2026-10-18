@@ -58,7 +58,7 @@ async function orderHistory(args){
 async function commandOrder(args){
  const {descriptor,actor,input}=args;
  if(!input||Object.keys(input).some(k=>!['expectedRevision','settingsRevision','command'].includes(k))||!Number.isSafeInteger(input.expectedRevision)||input.expectedRevision<1||!Number.isSafeInteger(input.settingsRevision))fail('hktv_order_command_invalid',422);
- const command=input.command,reason={'order.pack':'packing','order.handover':'handover'}[command?.type];
+ const command=input.command,reason={'order.pack':'packing','order.handover':'handover','order.review':'order-review'}[command?.type];
  if(!reason||!/^[a-f0-9]{64}$/.test(command.orderKey||''))fail('hktv_order_command_invalid',422);
  const required=descriptor.commands?.[command.type];
  if(!Array.isArray(required)||!required.length||!actor.permissions?.includes('write')||required.some(p=>!actor.permissions.includes(p)))fail('hktv_order_command_forbidden',403);
