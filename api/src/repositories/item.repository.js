@@ -2908,19 +2908,8 @@ class ItemRepository extends BaseModel {
         }
       }
 
-      // Stock availability logic
-      // Items are available if:
-      // 1. track_inventory=false (always available), OR
-      // 2. available_quantity > 0, OR
-      // 3. negative_stock=true (can go below 0)
-      const stockCondition = {
-        $or: [
-          { track_inventory: false },
-          { item_kind: 'service' },
-          { available_quantity: { $gt: 0 } },
-          { negative_stock: true },
-        ],
-      };
+      // Catalogue visibility is separate from permission to sell. Keep sold-out
+      // products searchable; add-to-cart and sale validation enforce quantity.
 
       /* Same two clauses as the sale grid, same reason: search is a doorway
          to selling, and a hidden or deleted sample reachable by typing its
@@ -2934,7 +2923,6 @@ class ItemRepository extends BaseModel {
           { 'branch_access.branch_id': branchObjectId },
           { item_status: { $ne: 'instant' } },
           { available_for_sale: { $ne: false } },
-          type === 'barcode' ? null : stockCondition,
           ...(categoryId ? [{ category_id: new ObjectId(categoryId) }] : []),
           ...(licenseObjectId ? [{ license: licenseObjectId }] : []),
         ].filter(Boolean),
@@ -3140,13 +3128,7 @@ class ItemRepository extends BaseModel {
           }
           match.$and.push({ category_id: new ObjectId(params.categoryId) });
         }
-        match.$and.push({
-          $or: [
-            { track_inventory: { $ne: true } },
-            { negative_stock: true },
-            { available_quantity: { $gt: 0 } },
-          ],
-        });
+        // Zero stock must not make an imported catalogue look empty.
         // Expiry can be an epoch string or an ISO date. Missing/invalid dates
         // remain available, matching the billing search's expiry semantics.
         const expiry = {
@@ -3206,57 +3188,44 @@ class ItemRepository extends BaseModel {
         nextOffset = items.length === limit ? offset + limit : null;
       }
 
-      const list = items
-        .filter((item) => {
-          const negativeStock =
-            typeof item.negative_stock === 'boolean' ? item.negative_stock : false;
-
-          // PHP logic:
-          // if track_inventory === false OR negative_stock === true
-          // OR available_quantity > 0 then include in list
-          const trackInventory = item.track_inventory !== true ? false : true;
-          const availableQty = Number(item.available_quantity) || 0;
-
-          return trackInventory === false || negativeStock === true || availableQty > 0;
-        })
-        .map((item) => ({
-          id: item._id?.toString?.() || '',
-          name: item.name || '',
-          item_name: item.name || '',
-          item_id: item._id?.toString?.() || '',
-          plu_code: item.plu_code || '',
-          barcode_id: item.barcode_id || '',
-          barcodes: item.barcodes || [],
-          short_code: item.short_code || '',
-          item_code: item.item_code || '',
-          track_inventory: item.track_inventory === true,
-          negative_stock: item.negative_stock === true,
-          item_kind: item.item_kind || 'product',
-          unit: item.unit || '',
-          ...itemText.snapshot(item),
-          selling_price: item.selling_price || 0,
-          itemid: item.itemid || '',
-          available_quantity: String(item.available_quantity || 0),
-          company_price: item.company_price || 0,
-          discount_amount: item.discount_amount || 0,
-          discount_percentage: item.discount_percentage || 0,
-          tax: item.tax || 0,
-          tax_type: item.tax_type || '',
-          category_id: item.category_id?.toString?.() || '',
-          category_name: item.category_name || '',
-          image: item.image || DEFAULTS.IMAGE,
-          supplier: item.supplier_name || '',
-          // Match PHP: expose items_expiry_date for frontend expiry checks
-          items_expiry_date: item.items_expiry_date != null ? String(item.items_expiry_date) : '',
-          // Variant family link (V1): lets the sale grid collapse a family
-          // into one tile with a picker. Empty strings for plain items.
-          variant_group_id: item.variant_group_id ? String(item.variant_group_id) : '',
-          variant_value: item.variant_value || '',
-          variant_parent_name: item.variant_parent_name || '',
-          // Tile colour (Loyverse study L2): the no-image tile's look.
-          tile_color: item.tile_color || '',
-          tile_shape: item.tile_shape || '',
-        }));
+      const list = items.map((item) => ({
+        id: item._id?.toString?.() || '',
+        name: item.name || '',
+        item_name: item.name || '',
+        item_id: item._id?.toString?.() || '',
+        plu_code: item.plu_code || '',
+        barcode_id: item.barcode_id || '',
+        barcodes: item.barcodes || [],
+        short_code: item.short_code || '',
+        item_code: item.item_code || '',
+        track_inventory: item.track_inventory === true,
+        negative_stock: item.negative_stock === true,
+        item_kind: item.item_kind || 'product',
+        unit: item.unit || '',
+        ...itemText.snapshot(item),
+        selling_price: item.selling_price || 0,
+        itemid: item.itemid || '',
+        available_quantity: String(item.available_quantity || 0),
+        company_price: item.company_price || 0,
+        discount_amount: item.discount_amount || 0,
+        discount_percentage: item.discount_percentage || 0,
+        tax: item.tax || 0,
+        tax_type: item.tax_type || '',
+        category_id: item.category_id?.toString?.() || '',
+        category_name: item.category_name || '',
+        image: item.image || DEFAULTS.IMAGE,
+        supplier: item.supplier_name || '',
+        // Match PHP: expose items_expiry_date for frontend expiry checks
+        items_expiry_date: item.items_expiry_date != null ? String(item.items_expiry_date) : '',
+        // Variant family link (V1): lets the sale grid collapse a family
+        // into one tile with a picker. Empty strings for plain items.
+        variant_group_id: item.variant_group_id ? String(item.variant_group_id) : '',
+        variant_value: item.variant_value || '',
+        variant_parent_name: item.variant_parent_name || '',
+        // Tile colour (Loyverse study L2): the no-image tile's look.
+        tile_color: item.tile_color || '',
+        tile_shape: item.tile_shape || '',
+      }));
 
       return {
         status: true,
