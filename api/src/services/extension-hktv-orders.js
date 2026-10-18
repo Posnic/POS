@@ -106,4 +106,31 @@ async function saveMapping(args){
  const key=require('node:crypto').createHash('sha256').update(input.sku).digest('hex');
  return store.mappings.write({mapping:{key,sku:input.sku,productId:product.id,description:product.description},expectedRevision:input.expectedRevision,actorId:String(actor.userId),reason:'mapping'});
 }
-module.exports={readMapping,saveMapping,orderOptions,listOrders,readOrder,orderHistory,commandOrder,cloudStore};
+async function previewMappings(args){
+ const {input,descriptor,actor,db,scope}=args;
+ if(!input||Object.keys(input).some(k=>!['links','settingsRevision'].includes(k))||!Number.isSafeInteger(input.settingsRevision)||!Array.isArray(input.links)||input.links.length<1||input.links.length>100)fail('hktv_mapping_preview_invalid',422);
+ const seen=new Set();
+ for(const link of input.links){
+  if(!link||Object.keys(link).some(k=>!['sku','productId'].includes(k))||typeof link.sku!=='string'||!link.sku.trim()||link.sku.length>300||!/^[a-f0-9]{24}$/.test(link.productId||'')||seen.has(link.sku))fail('hktv_mapping_preview_invalid',422);
+  seen.add(link.sku);
+ }
+ const required=descriptor.commands?.['mapping.save'];
+ if(!actor.permissions?.includes('manage')||!Array.isArray(required)||!required.length||required.some(p=>!actor.permissions.includes(p)))fail('hktv_mapping_forbidden',403);
+ const {state,store}=await context(args);
+ if(state.state.mappingStorage!=='records-v1')fail('hktv_mapping_storage_not_active',503);
+ if(state.revision!==input.settingsRevision)fail('hktv_settings_changed');
+ for(const link of input.links)if(!await store.hasSku(link.sku))fail('hktv_mapping_sku_unknown',422);
+ const prepare=args.prepareCatalogue||require('./extension-catalog').prepareContext;
+ const catalogue=await prepare({db,scope,state:state.state,command:{type:'mapping.save'},resources:['catalog.products'],selection:{productIds:[...new Set(input.links.map(r=>r.productId))]}});
+ const products=new Map((catalogue.products||[]).map(p=>[p.id,p]));
+ const current=new Map((await store.mappings.findMany(input.links.map(r=>r.sku))).map(r=>[r.data.sku,r]));
+ const links=input.links.map(link=>{
+  const target=products.get(link.productId);if(!target)fail('hktv_mapping_product_unavailable',409);
+  const previous=current.get(link.sku);
+  return {...link,description:target.description,expectedRevision:previous?.revision||0,previousProductId:previous?.data.productId||null,previousDescription:previous?.data.description||null,action:!previous?'link':previous.data.productId===link.productId?'unchanged':'replace'};
+ });
+ const latest=await (args.readState||namespace.readNamespace)(db,scope,descriptor,actor);
+ if(latest.busy||latest.revision!==state.revision||latest.state.mappingStorage!=='records-v1')fail('hktv_settings_changed');
+ return {links,settingsRevision:state.revision,applied:false,stockEffects:false,paymentEffects:false};
+}
+module.exports={readMapping,saveMapping,previewMappings,orderOptions,listOrders,readOrder,orderHistory,commandOrder,cloudStore};
