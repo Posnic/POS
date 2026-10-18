@@ -302,6 +302,14 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       respondError(res, error);
     }
   });
+  router.post('/:extensionId/hktv-waybill', async (req, res) => {
+    try {
+      const e = req.extension;
+      res.json(await require('../services/extension-hktv-waybill').readWaybill({
+        db: req.db, scope: e.scope, descriptor: e.descriptor, actor: e.actor, input: req.body,
+      }));
+    } catch (error) { respondError(res, error); }
+  });
   router.get('/:extensionId/sales', async (req, res) => {
     try {
       if (Object.keys(req.query).some((key) => key !== 'after'))

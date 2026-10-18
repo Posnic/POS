@@ -528,6 +528,10 @@
                 return { capabilities: values[0], namespace: values[1], salesWorkspace: embedded ? embedded.workspace : null, salesWorkspaceBridge: Boolean(PosnicPro.saleExtensions) };
               });
             if (method === "state") return request(base + "/state");
+            if (method === "hktvWaybill") return request(base + "/hktv-waybill", input).then(function(value){
+              if(run!==generation||branch!==String(PosnicPro.local.get("branch_id_set")||""))throw Error('Workspace changed. Open the waybill again.');
+              return PosnicExtensionFrame.showDocument(value);
+            });
             if (method === "sales")
               return request(
                 base + "/sales?after=" + encodeURIComponent(input.after || ""),
