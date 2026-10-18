@@ -21,10 +21,10 @@ async function context(args){
 }
 async function listOrders(args){
  const input=args.input||{};
- if(Object.keys(input).some(k=>!['after','limit','search','status'].includes(k)))fail('hktv_orders_query_invalid',422);
+ if(Object.keys(input).some(k=>!['after','limit','search','status','preparation','warehouseId','dateFrom','dateTo','collection'].includes(k)))fail('hktv_orders_query_invalid',422);
  const {store,state}=await context(args);
- const result=await store.list(input);
- return {orders:result.records.map(r=>({order:r.data,revision:r.revision})),next:result.next,settingsRevision:state.revision};
+ const result=await store.list({...input,mappedSkus:(state.state.mappings||[]).map(m=>m.sku)});
+ return {orders:result.records.map(r=>({order:r.data,revision:r.revision})),next:result.next,total:result.total,settingsRevision:state.revision};
 }
 async function readOrder(args){
  const input=args.input||{};
