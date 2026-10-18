@@ -282,3 +282,27 @@ test('rooms accept a typed number but wait for Next and preserve charge agreemen
  const request=h.calls.find(c=>c.url==='sales/qrOrder');assert.equal(request.body.venue,'hotel');assert.equal(request.body.unit,'35B');assert.equal(request.body.room_charge_accepted,true);
  } finally {setup.roomVenues=null;h.close();}
 });
+
+
+test('blocked draft exposes review latest order directly without resending accepted dishes', async () => {
+ const h=setup();
+ try {
+  h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');
+  h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+  setup.failure=true;await h.click('send');setup.failure=false;
+  const line=h.app.state.draft.items[0];
+  h.sale.items.push({item_id:line.product_id,line_id:line.line_id,item_quantity:line.quantity,item_price:line.price});
+  const posts=h.calls.filter(c=>c.method==='post').length;
+  await h.click('discard');
+  const modal=h.w.document.querySelector('dialog');
+  assert.ok(modal.querySelector('[data-action=reviewPendingOrder]'));
+  assert.ok(h.app.state.draft.intent);
+  modal.querySelector('[data-action=reviewPendingOrder]').click();await flush();
+  assert.equal(h.w.document.querySelector('dialog'),null);
+  assert.equal(h.app.state.draft.intent,undefined);
+  assert.equal(h.app.state.draft.items.length,0);
+  assert.equal(h.calls.filter(c=>c.method==='post').length,posts);
+  await h.click('discard');assert.equal(h.app.state.draft,null);
+  assert.equal(h.sale.items.length,2);
+ } finally {setup.failure=false;h.close();}
+});
