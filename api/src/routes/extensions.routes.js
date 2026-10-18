@@ -251,7 +251,7 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       );
       if (!permissions.includes('read')) access.fail('Extension read permission required.', 403);
       const actor = { userId: String(req.user._id || req.user.id), permissions };
-      req.extension = { descriptor, scope, actor };
+      req.extension = { descriptor, scope, actor, orderStorage: state?.data?.orderStorage };
       res.set('Cache-Control', 'no-store');
       next();
     } catch (error) {
@@ -310,6 +310,13 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       }));
     } catch (error) { respondError(res, error); }
   });
+  for (const [route,method] of [['list','listOrders'],['detail','readOrder'],['history','orderHistory'],['command','commandOrder']]) {
+    router.post('/:extensionId/hktv-orders/'+route, async (req,res) => {
+      try {
+        res.json(await require('../services/extension-hktv-orders')[method]({db:req.db,...req.extension,input:req.body}));
+      } catch(error) { respondError(res,error); }
+    });
+  }
   router.post('/:extensionId/hktv-manifest', async (req, res) => {
     try {
       const e = req.extension;
@@ -352,6 +359,10 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
   router.post('/:extensionId/commands', async (req, res) => {
     try {
       const e = req.extension;
+      if (e.descriptor.id === 'posnic.hktvmall-gogox' && e.orderStorage === 'records-v1' &&
+          ['orders.stage','order.pack','order.handover'].includes(req.body?.command?.type)) {
+        access.fail('Order storage changed. Refresh Online Orders before continuing.',409);
+      }
       res.json(
         await namespace.executeNamespace(
           req.db,

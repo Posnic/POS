@@ -17,6 +17,10 @@
     "exportReport",
     "hktvWaybill",
     "hktvManifest",
+    "hktvOrders",
+    "hktvOrder",
+    "hktvOrderHistory",
+    "hktvOrderCommand",
   ]);
   function mount(options) {
     var container = options.container,

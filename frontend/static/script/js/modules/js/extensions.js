@@ -534,6 +534,11 @@
                 return { capabilities: values[0], namespace: values[1], salesWorkspace: embedded ? embedded.workspace : null, salesWorkspaceBridge: Boolean(PosnicPro.saleExtensions) };
               });
             if (method === "state") return request(base + "/state");
+            var orderMethods = {hktvOrders:"list",hktvOrder:"detail",hktvOrderHistory:"history",hktvOrderCommand:"command"};
+            if (Object.prototype.hasOwnProperty.call(orderMethods,method)) return request(base+"/hktv-orders/"+orderMethods[method],input).then(function(value){
+              if(run!==generation||branch!==String(PosnicPro.local.get("branch_id_set")||""))throw Error('Workspace changed. Reopen Online Orders.');
+              return value;
+            });
             if (method === "hktvWaybill") return request(base + "/hktv-waybill", input).then(function(value){
               if(run!==generation||branch!==String(PosnicPro.local.get("branch_id_set")||""))throw Error('Workspace changed. Open the waybill again.');
               return PosnicExtensionFrame.showDocument(value);
