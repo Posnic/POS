@@ -500,7 +500,7 @@
         status("");
         if (!embedded && id === "posnic.hktvmall-gogox") {
           document.querySelector("#extensions .crumbbar_padding").style.display = "none";
-          document.querySelector("#extensions .contentbar").style.padding = "60px 0 0";
+          document.querySelector("#extensions .contentbar").style.setProperty("padding", "60px 0 0", "important");
         }
         mounted = PosnicExtensionFrame.mount({
           container: embedded ? embedded.container : document.getElementById("extensions_content"),
