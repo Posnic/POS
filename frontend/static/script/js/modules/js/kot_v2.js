@@ -829,7 +829,7 @@
                 notify(error.message);
                 return;
             }
-            if (d.saleId && error.message === 'order_changed') {
+            if (d.saleId && ['order_changed', 'The seating group changed. Refresh this order.'].includes(error.message)) {
                 // This is an explicit refusal, not an unknown network outcome.
                 // Reconcile accepted line IDs before unlocking the remaining draft.
                 const latest = await api('get', 'sales/' + d.saleId);
