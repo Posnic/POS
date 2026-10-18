@@ -8314,6 +8314,7 @@ class SalesRepository {
             projection: {
               sales_id: 1,
               token_id: 1,
+              takeaway_number: 1,
               table_number: 1,
               'outlet_snapshot.name': 1,
               room_reference: 1,
