@@ -312,8 +312,8 @@ class CategoryRepository extends BaseModel {
    * ItemModel::getCategoriesWithStockedItems and is aligned with
    * ItemRepository.getOnlineSalesItems:
    *  - Same branch & license scoping
-   *  - Only items that are sellable (respecting track_inventory,
-   *    negative_stock, available_quantity, item_status)
+   *  - Catalogue items remain visible when stock reaches zero.
+   *    Sale quantity validation remains separate from browsing.
    *
    * As a result, Sales "Categories" tab will only show categories that
    * actually have valid items for the current branch/license.
@@ -337,7 +337,7 @@ class CategoryRepository extends BaseModel {
     }
 
     // Aggregation pipeline to get only categories with at least one
-    // sellable item for the current branch/license
+    // catalogue item for the current branch/license
     return await this.model.aggregate([
       { $match: matchStage },
       {
@@ -355,23 +355,7 @@ class CategoryRepository extends BaseModel {
                 ...(licenseObjectId ? { license: licenseObjectId } : {}),
                 item_status: { $ne: 'instant' },
                 is_deleted: { $ne: true },
-                $or: [
-                  // Case 1: Inventory not tracked - always allowed
-                  { track_inventory: false },
-
-                  // Keep the category visible even after an allowed sale takes stock below zero.
-                  { negative_stock: true },
-
-                  // Case 3: Normal stock - quantity > 0
-                  {
-                    $and: [
-                      {
-                        $or: [{ negative_stock: false }, { negative_stock: { $exists: false } }],
-                      },
-                      { available_quantity: { $gt: 0 } },
-                    ],
-                  },
-                ],
+                del_status: { $nin: [1, '1', true] },
               },
             },
             { $limit: 1 },
