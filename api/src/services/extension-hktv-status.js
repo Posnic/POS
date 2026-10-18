@@ -7,7 +7,7 @@ async function reauthorize({db,scope,descriptor,actor},write){
  if(descriptor.id!=='posnic.hktvmall-gogox'||!actor.permissions?.includes('read')||(write&&!actor.permissions?.includes('write')))fail('hktv_status_forbidden',403);
  if(!/^[a-f0-9]{24}$/.test(actor.userId||''))fail('hktv_status_forbidden',403);
  const user=await db.collection('users').findOne({_id:new ObjectId(actor.userId),license:scope.license});
- if(!user||user.status!=='active'||user.active===false||[1,'1',true].includes(user.del_status)||!access.allowed(user,descriptor.permissionModule||'extensions',write?'write':'read'))fail('hktv_status_forbidden',403);
+ if(!user||user.activate!==true||user.active===false||[1,'1',true].includes(user.del_status)||!access.allowed(user,descriptor.permissionModule||'extensions',write?'write':'read'))fail('hktv_status_forbidden',403);
  if(String(user.branch_id)!==String(scope.branchId)&&!user.branch_access?.some(b=>String(b.branch_id)===String(scope.branchId)))fail('hktv_status_forbidden',403);
  const installed=await db.collection('extension_installations').findOne({license:scope.license,branch_id:scope.branchId,extensionId:descriptor.id,packageDigest:descriptor.packageDigest,enabled:true});
  const state=await db.collection('extension_namespaces').findOne({license:scope.license,branch_id:scope.branchId,extensionId:descriptor.id});
@@ -52,4 +52,12 @@ async function readStatus(args){
  const command=await r.journal.read(args.input.id);
  if(!command)fail('hktv_status_not_found',404);return view(command);
 }
-module.exports={submitStatus,readStatus,reauthorize};
+async function reconcileStatus(args){
+ if(!args.input||Object.keys(args.input).length!==1||!key(args.input.id))fail('hktv_status_input_invalid',422);
+ const state=await stateFor(args,false),r=await (args.getRuntime||runtime)({...args,storeCode:state.state.storeCode},true);
+ const command=await r.journal.read(args.input.id);if(!command)fail('hktv_status_not_found',404);
+ // Readback remains available when outbound updates are switched off.
+ const authorize=async()=>{const current=await stateFor(args,false);if(current.state.storeCode!==state.state.storeCode)fail('hktv_settings_changed');};
+ return view(await r.run({id:command._id,journal:r.journal,reader:r.reader,readOrder:r.store.read,withOrderLease:r.store.withStatusLease,authorize,dispatchAllowed:false}));
+}
+module.exports={submitStatus,readStatus,reconcileStatus,reauthorize};

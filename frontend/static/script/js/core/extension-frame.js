@@ -26,6 +26,9 @@
     "hktvOrder",
     "hktvOrderHistory",
     "hktvOrderCommand",
+    "hktvStatusRead",
+    "hktvStatusSubmit",
+    "hktvStatusReconcile",
   ]);
   function mount(options) {
     var container = options.container,
