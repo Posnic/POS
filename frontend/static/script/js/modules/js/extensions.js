@@ -221,7 +221,7 @@
         if (menuRun !== menuGeneration || branch !== String(PosnicPro.local.get('branch_id_set') || '')) return;
         document.querySelectorAll('[data-extension-menu]').forEach(function (node) { node.remove(); });
         if (PosnicPro.saleExtensions) PosnicPro.saleExtensions.configure(data.extensions);
-        var anchor = document.getElementById('view_touchsales_page');
+        var anchor = document.getElementById('view_sales_page') || document.getElementById('view_touchsales_page');
         if (!anchor) return;
         data.extensions.filter(function (item) { return item.enabled !== false && item.menu === 'sales'; }).forEach(function (item) {
           var row = document.createElement('li'), link = document.createElement('a'), icon = document.createElement('img');
