@@ -133,4 +133,13 @@ async function previewMappings(args){
  if(latest.busy||latest.revision!==state.revision||latest.state.mappingStorage!=='records-v1')fail('hktv_settings_changed');
  return {links,settingsRevision:state.revision,applied:false,stockEffects:false,paymentEffects:false};
 }
-module.exports={readMapping,saveMapping,previewMappings,orderOptions,listOrders,readOrder,orderHistory,commandOrder,cloudStore};
+async function readMappingWorkbook(args){
+ const {input,actor,descriptor}=args;
+ if(!input||Object.keys(input).some(k=>k!=='base64'))fail('hktv_mapping_workbook_invalid',422);
+ const required=descriptor.commands?.['mapping.save'];
+ if(!actor.permissions?.includes('manage')||!Array.isArray(required)||!required.length||required.some(p=>!actor.permissions.includes(p)))fail('hktv_mapping_forbidden',403);
+ const {state}=await context(args);
+ if(state.state.mappingStorage!=='records-v1')fail('hktv_mapping_storage_not_active',503);
+ return {...await require('./extension-product-link-workbook').readWorkbook(input.base64),settingsRevision:state.revision};
+}
+module.exports={readMappingWorkbook,readMapping,saveMapping,previewMappings,orderOptions,listOrders,readOrder,orderHistory,commandOrder,cloudStore};

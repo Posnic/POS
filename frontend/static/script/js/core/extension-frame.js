@@ -19,6 +19,8 @@
     "hktvManifest",
     "hktvMapping",
     "hktvMappingSave",
+    "hktvMappingPreview",
+    "hktvMappingWorkbook",
     "hktvOrderOptions",
     "hktvOrders",
     "hktvOrder",
@@ -72,7 +74,7 @@
         if (
           !methods.has(message.method) ||
           pending.size >= 8 ||
-          new TextEncoder().encode(JSON.stringify(message)).length > 65536
+          new TextEncoder().encode(JSON.stringify(message)).length > (message.method === "hktvMappingWorkbook" && options.extensionId === "posnic.hktvmall-gogox" ? 740000 : 65536)
         )
           throw new Error("Unsupported extension request");
         pending.add(message.id);
