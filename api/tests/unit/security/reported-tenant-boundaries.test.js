@@ -294,3 +294,156 @@ test('API key validation allows blank edits but rejects blank creates and short 
     ).toBe(invalid);
   }
 });
+
+test('explicit staff password reset persists the hash and revokes old sessions without changing other tenants', async () => {
+  const User = require('../../../src/models/user.model');
+  const bcrypt = require('bcryptjs');
+  const id = new ObjectId();
+  const original = await bcrypt.hash(Buffer.from('Old@12345').toString('base64'), 4);
+  await db.collection('users').insertOne({
+    _id: id,
+    license: licenseA,
+    username: 'staff',
+    email: 'staff@example.com',
+    password: original,
+    usertype: 'staff',
+  });
+  await db.collection('branches').insertOne({ _id: branchA, license: licenseA, branch_name: 'A' });
+  const plan = jest.spyOn(BaseModel.prototype, 'checkPlan').mockResolvedValue(0);
+  const log = jest.spyOn(BaseModel.prototype, 'changeLog').mockResolvedValue();
+  try {
+    const data = {
+      usertype: 'staff',
+      name: 'staff',
+      email: 'staff@example.com',
+      firstname: 'Staff',
+      branch_data: [{ branch_id: String(branchA), branch_name: 'A' }],
+      user_status: 'active',
+      check_password: 'no',
+    };
+    const context = {
+      license: licenseA,
+      user: { ...request(id).user, username: 'owner', usertype: 'super_admin' },
+    };
+    expect((await User.userInsertUpdate(data, String(id), context)).status).toBe(true);
+    expect((await db.collection('users').findOne({ _id: id })).password).toBe(original);
+    for (const password of ['', 'a']) {
+      expect(
+        (
+          await User.userInsertUpdate(
+            { ...data, check_password: 'yes', password },
+            String(id),
+            context
+          )
+        ).status
+      ).toBe(false);
+    }
+    expect(
+      (
+        await User.userInsertUpdate(
+          { ...data, check_password: 'yes', password: 'New@12345', retype_password: 'Different' },
+          String(id),
+          context
+        )
+      ).status
+    ).toBe(false);
+    expect(
+      (
+        await User.userInsertUpdate(
+          { ...data, check_password: 'yes', password: 'New@12345', retype_password: 'New@12345' },
+          String(id),
+          context
+        )
+      ).status
+    ).toBe(true);
+    const stored = await db.collection('users').findOne({ _id: id });
+    expect(await bcrypt.compare(Buffer.from('New@12345').toString('base64'), stored.password)).toBe(
+      true
+    );
+    expect(await bcrypt.compare(Buffer.from('Old@12345').toString('base64'), stored.password)).toBe(
+      false
+    );
+    expect(User.hydrate(stored).changedPasswordAfter(Math.floor(Date.now() / 1000) - 60)).toBe(
+      true
+    );
+    await User.userInsertUpdate(
+      { ...data, check_password: 'yes', password: 'Wrong@12345' },
+      String(id),
+      { ...context, license: licenseB }
+    );
+    expect((await db.collection('users').findOne({ _id: id })).password).toBe(stored.password);
+  } finally {
+    plan.mockRestore();
+    log.mockRestore();
+  }
+});
+
+test('payment reports recover Captain origin names and preserve saved POS names in tenant scope', async () => {
+  const sales = require('../../../src/repositories/sale.repository');
+  const Model =
+    mongoose.models.ReportAttribution ||
+    mongoose.model(
+      'ReportAttribution',
+      new mongoose.Schema({}, { strict: false, collection: 'sales' })
+    );
+  const template = {
+    license: licenseA,
+    branch_id: branchA,
+    date: new Date('2026-10-17T12:00:00Z'),
+    payment_status: 'Paid',
+    sale_process: 'Add',
+    sales_total: 100,
+  };
+  await db.collection('sales').deleteMany({});
+  await db.collection('sales').insertMany([
+    {
+      ...template,
+      sales_id: 'captain',
+      origin: { actor_name: 'Captain original' },
+      updated_by: 'Later cashier',
+    },
+    { ...template, sales_id: 'pos', user_name: 'POS original', origin: { actor_name: 'Other' } },
+    { ...template, sales_id: 'legacy', user_name: 'undefined', created_by: 'Legacy original' },
+    { ...template, sales_id: 'unknown' },
+    { ...template, license: licenseB, sales_id: 'foreign', origin: { actor_name: 'Foreign user' } },
+  ]);
+  const result = await runWithRequestContext({ license: licenseA, currentBranch: branchA }, () =>
+    sales.paymentSalesTransactionReportPage(
+      {
+        branchid: [String(branchA)],
+        starting_date: '2026-10-17T00:00:00Z',
+        ending_date: '2026-10-17T23:59:59Z',
+      },
+      { limit: 20 },
+      { SaleModel: Model }
+    )
+  );
+  expect(result.status).toBe(true);
+  expect(Object.fromEntries(result.data.list.map((row) => [row.sales_id, row.user_name]))).toEqual({
+    captain: 'Captain original',
+    pos: 'POS original',
+    legacy: 'Legacy original',
+    unknown: '',
+  });
+  await db.collection('sales').updateMany({}, { $set: { sale_process: 'PartialReturn' } });
+  const returned = await runWithRequestContext({ license: licenseA, currentBranch: branchA }, () =>
+    sales.paymentReturnSalesTranscationReportTable(
+      {
+        branchid: [String(branchA)],
+        starting_date: '2026-10-17T00:00:00Z',
+        ending_date: '2026-10-17T23:59:59Z',
+      },
+      { limit: 20 },
+      { SaleModel: Model }
+    )
+  );
+  expect(returned.status).toBe(true);
+  expect(
+    Object.fromEntries(returned.data.list.map((row) => [row.sales_id, row.user_name]))
+  ).toEqual({
+    captain: 'Captain original',
+    pos: 'POS original',
+    legacy: 'Legacy original',
+    unknown: '',
+  });
+});

@@ -83,6 +83,8 @@ for (const exporting of [false, true]) {
             } })
         };
         const script = fs.readFileSync(path.join(__dirname, '../frontend/static/script/js/modules/js/report_payment.js'), 'utf8');
+        const helper = script.indexOf('    recordedUser: function');
+        win.eval('PosnicPro.paymentreport = {' + script.slice(helper, script.indexOf('    showDataTablePage:', helper)) + '};');
         const first = script.indexOf('    paymentransactionTable: function');
         const last = script.indexOf('    paymentransactionexport:', first);
         win.eval('PosnicPro.paymentransaction = {' + script.slice(first, last).trim().replace(/,$/, '') + '};');

@@ -1,3 +1,4 @@
+const { recordedUserName } = require('../utils/recorded-user-name');
 const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
 const pricingAuthority = require('../services/pricing-authority');
 const Money = require('../utils/currency');
@@ -4102,6 +4103,7 @@ class SalesRepository {
         branch_name: 1,
         user_id: 1,
         user_name: 1,
+        'origin.actor_name': 1,
         sales_id: 1,
         date: 1,
         items: 1,
@@ -4175,6 +4177,10 @@ class SalesRepository {
         .lean();
 
       const list = (Array.isArray(rawList) ? rawList : []).map((row) => {
+        row = {
+          ...row,
+          user_name: recordedUserName(row.user_name, row.created_by, row.origin?.actor_name),
+        };
         if (!row.captain_payments?.length || row.payment_status !== 'Paid') return row;
         const digits = row.captain_transfer_allocation?.currencyDigits;
         return {
@@ -4459,6 +4465,7 @@ class SalesRepository {
         branch_name: 1,
         user_id: 1,
         user_name: 1,
+        'origin.actor_name': 1,
         sales_id: 1,
         date: 1,
         items: 1,
@@ -4528,7 +4535,10 @@ class SalesRepository {
         .limit(limit)
         .lean();
 
-      const list = Array.isArray(rawList) ? rawList : [];
+      const list = (Array.isArray(rawList) ? rawList : []).map((row) => ({
+        ...row,
+        user_name: recordedUserName(row.user_name, row.created_by, row.origin?.actor_name),
+      }));
 
       const total = await Model.countDocuments(filters);
 

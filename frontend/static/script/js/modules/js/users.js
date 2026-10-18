@@ -1,4 +1,9 @@
 PosnicPro.users = {
+    setPasswordEditing: function (enabled) {
+        $("#user_change_password").prop("checked", enabled);
+        $("#users_password,#users_retype_password").prop("disabled", !enabled).css("cursor", enabled ? "auto" : "not-allowed").val("");
+        $("#check_password").val(enabled ? "yes" : "no");
+    },
     roleLabel: function (user) {
         var roleId = user.role_id && (user.role_id.$oid || user.role_id);
         var role = (PosnicPro.users.rolesCache || []).find(function (entry) { return String(entry._id || entry.id) === String(roleId); });
@@ -599,8 +604,8 @@ PosnicPro.users = {
                 $('#user_target_daily').val(st.daily === null || st.daily === undefined ? '' : st.daily);
                 $('#user_target_weekly').val(st.weekly === null || st.weekly === undefined ? '' : st.weekly);
                 $('#user_target_monthly').val(st.monthly === null || st.monthly === undefined ? '' : st.monthly);
-                $("#users_password,#users_retype_password").css({cursor: "not-allowed"}).attr('disabled', 'disabled');
-                $("#users_password,#users_retype_password").val('Demo@000');
+                $("#user_password_change_row").prop("hidden", data.usertype === "api");
+                PosnicPro.users.setPasswordEditing(false);
                 $('#usertype').val(data.usertype);
                 $('#hide_show_user_type').hide();
                 $('#accordionExample').show();
@@ -975,7 +980,8 @@ PosnicPro.users = {
         $('#user_title').text(PosnicPro.i18n.t('lang_new_title', 'Add'));
         $('.user-image-label-title').html('<i class="feather icon-plus-circle mr-2"></i>Add Image');
         $('#user_button_title,#submit_user_img').text(PosnicPro.i18n.t('lang_save_title', 'Save'));
-        $("#users_password,#users_retype_password").css({cursor: "auto"}).removeAttr('disabled');
+        $("#user_password_change_row").prop("hidden", true);
+        PosnicPro.users.setPasswordEditing(true);
         $('.update-button').attr('disabled', 'disabled').removeClass('btn-outline-success');
         $("#check_password").val('yes');
         $('.icon-help-circle').hide();
@@ -2039,6 +2045,8 @@ PosnicPro.users = {
         }
     },
     userClearForm: function () {
+        $('#user_password_change_row').prop('hidden', true);
+        PosnicPro.users.setPasswordEditing(true);
         $('#user_save_errors').remove();
         $('#checkbox_error').text('').removeClass('error').hide();
         $("#branchtype").select2({
