@@ -33,7 +33,8 @@ async function orderOptions(args){
  const input=args.input||{};
  if(Object.keys(input).some(k=>!['skuAfter','skuSearch','limit'].includes(k)))fail('hktv_orders_query_invalid',422);
  const {store,state}=await context(args);
- return {...await store.options(input),settingsRevision:state.revision};
+ const importStatus=await (args.getImportStatus||require('./extension-hktv-import-status').readImportStatus)({db:args.db,scope:args.scope,storeCode:state.state.storeCode}).catch(()=>({state:'unavailable'}));
+ return {...await store.options(input),settingsRevision:state.revision,importStatus};
 }
 async function readOrder(args){
  const input=args.input||{};
