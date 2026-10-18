@@ -41,7 +41,9 @@ async function readOrder(args){
  if(Object.keys(input).some(k=>k!=='orderKey')||!/^[a-f0-9]{64}$/.test(input.orderKey||''))fail('hktv_order_key_invalid',422);
  const {store,state}=await context(args),row=await store.read(input.orderKey);
  if(!row)fail('hktv_order_not_found',404);
- return {order:row.data,revision:row.revision,settingsRevision:state.revision};
+ const mappings=state.state.mappingStorage==='records-v1'?(await store.mappings.findMany(row.data.lines.map(l=>l.sku))).map(r=>r.data):(state.state.mappings||[]).filter(m=>row.data.lines.some(l=>l.sku===m.sku));
+ const parcelHints=await (args.readParcelHints||require('./extension-parcel-hints').readParcelHints)({db:args.db,scope:args.scope,mappings});
+ return {order:row.data,revision:row.revision,settingsRevision:state.revision,parcelHints};
 }
 async function orderHistory(args){
  const input=args.input||{};
