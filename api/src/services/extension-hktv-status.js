@@ -48,7 +48,7 @@ async function submitStatus(args){
 async function readStatus(args){
  if(!args.input||Object.keys(args.input).length!==1||!((key(args.input.id)&&!args.input.orderKey)||(key(args.input.orderKey)&&!args.input.id)))fail('hktv_status_input_invalid',422);
  const state=await stateFor(args,false),r=await (args.getRuntime||runtime)({...args,storeCode:state.state.storeCode},false);
- if(args.input.orderKey)return {enabled:state.state.statusUpdates?.enabled===true,commands:(await r.journal.forOrder(args.input.orderKey)).map(view)};
+ if(args.input.orderKey)return {enabled:state.state.statusUpdates?.enabled===true,canDiscard:args.actor.permissions?.includes('write')&&Array.isArray(args.descriptor.commands?.['status.discard']),commands:(await r.journal.forOrder(args.input.orderKey)).map(view)};
  const command=await r.journal.read(args.input.id);
  if(!command)fail('hktv_status_not_found',404);return view(command);
 }
@@ -60,4 +60,19 @@ async function reconcileStatus(args){
  const authorize=async()=>{const current=await stateFor(args,false);if(current.state.storeCode!==state.state.storeCode)fail('hktv_settings_changed');};
  return view(await r.run({id:command._id,journal:r.journal,reader:r.reader,readOrder:r.store.read,withOrderLease:r.store.withStatusLease,authorize,dispatchAllowed:false}));
 }
-module.exports={submitStatus,readStatus,reconcileStatus,reauthorize};
+async function discardStatus(args){
+ const {input,descriptor,actor}=args;
+ if(!input||Object.keys(input).some(k=>!['id','expectedRevision','confirmed'].includes(k))||!key(input.id)||!Number.isSafeInteger(input.expectedRevision)||input.expectedRevision<1||input.confirmed!==true)fail('hktv_status_input_invalid',422);
+ const required=descriptor.commands?.['status.discard'];if(!Array.isArray(required)||!required.length||required.some(p=>!actor.permissions?.includes(p)))fail('hktv_status_forbidden',403);
+ const state=await stateFor(args,true),r=await (args.getRuntime||runtime)({...args,storeCode:state.state.storeCode},false);
+ const command=await r.journal.read(input.id);if(!command)fail('hktv_status_not_found',404);
+ return r.store.withStatusLease(command.intent.orderKey,command._id,async()=>{
+  const fresh=await stateFor(args,true);if(fresh.state.storeCode!==state.state.storeCode)fail('hktv_settings_changed');
+  const current=await r.journal.read(input.id);if(!current)fail('hktv_status_not_found',404);
+  if(current.state==='obsolete'&&current.reason==='UNSENT_REQUEST_DISCARDED')return view(current);
+  if(current.state!=='prepared')fail('hktv_status_already_dispatched');
+  if(current.revision!==input.expectedRevision)fail('hktv_status_command_changed');
+  return view(await r.journal.transition(input.id,current.revision,'obsolete',{reason:'UNSENT_REQUEST_DISCARDED',actorId:actor.userId}));
+ });
+}
+module.exports={submitStatus,readStatus,reconcileStatus,discardStatus,reauthorize};

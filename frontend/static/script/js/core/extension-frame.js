@@ -29,6 +29,7 @@
     "hktvStatusRead",
     "hktvStatusSubmit",
     "hktvStatusReconcile",
+    "hktvStatusDiscard",
   ]);
   function mount(options) {
     var container = options.container,
