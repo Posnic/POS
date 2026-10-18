@@ -17,6 +17,10 @@ function manifest(state,input){
   const expected=new Map(),packed=new Map();for(const line of order.lines)expected.set(line.sku,(expected.get(line.sku)||0)+line.quantity);
   for(const c of p.cartons){
    if(![c.weightKg,c.lengthM,c.widthM,c.heightM].every(n=>Number.isFinite(n)&&n>0)||!Number.isSafeInteger(c.declaredValueCents)||c.declaredValueCents<0||c.waybill!==order.trackingId||c.orderId!==order.orderId||!Array.isArray(c.items))fail('manifest_carton_invalid');
+   // Revalidate saved cartons at export: older packing records may predate these checks.
+   if(c.weightKg>20)fail('manifest_carton_over_20_kg');
+   if([c.lengthM,c.widthM,c.heightM].some(v=>v>1.3))fail('manifest_carton_side_over_130_cm');
+   if(c.lengthM+c.widthM+c.heightM>1.8+1e-12)fail('manifest_carton_total_over_180_cm');
    for(const item of c.items){if(!expected.has(item.sku)||!Number.isSafeInteger(item.quantity)||item.quantity<1)fail('manifest_quantity_mismatch');packed.set(item.sku,(packed.get(item.sku)||0)+item.quantity);}
    rows.push([String(rows.length+1),order.orderId,order.trackingId,c.weightKg,`${c.lengthM} × ${c.widthM} × ${c.heightM}`,c.declaredValueCents/100]);
   }

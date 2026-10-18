@@ -19,3 +19,11 @@ test('storage cutover during a legacy manifest invalidates the document',async()
  const x=fixture();x.input.format='html';let reads=0;
  await expect(readManifest({db:{},scope:{},descriptor:{id:'posnic.hktvmall-gogox'},actor:{permissions:['read']},input:x.input,readState:async()=>({revision:3,state:++reads===1?x.state:{...x.state,orderStorage:'records-v1'}}),getStore:async()=>({read:async()=>({data:x.state.orders[0],revision:1})})})).rejects.toThrow('changed_refresh');
 });
+test.each(['html','xlsx'])('old packing with oversized parcels is rejected by %s export',async format=>{
+ for(const [measurements,error] of [[{weightKg:20.001},'over_20_kg'],[{lengthM:1.301},'side_over_130_cm'],[{lengthM:.601,widthM:.6,heightM:.6},'total_over_180_cm']]){
+  const x=fixture();Object.assign(x.state.orders[0].packing.cartons[0],measurements);x.input.format=format;
+  await expect(readManifest({db:{},scope:{},descriptor:{id:'posnic.hktvmall-gogox'},actor:{permissions:['read']},input:x.input,readState:async()=>({revision:3,state:x.state})})).rejects.toThrow(error);
+ }
+ const x=fixture();Object.assign(x.state.orders[0].packing.cartons[0],{weightKg:20,lengthM:1.3,widthM:.3,heightM:.2});x.input.format=format;
+ const result=await readManifest({db:{},scope:{},descriptor:{id:'posnic.hktvmall-gogox'},actor:{permissions:['read']},input:x.input,readState:async()=>({revision:3,state:x.state})});expect(result.html||result.base64).toBeTruthy();
+});
