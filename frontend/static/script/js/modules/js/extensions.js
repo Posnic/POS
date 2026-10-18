@@ -64,6 +64,8 @@
     $(".page_loader,#osk-container").hide();
     $("#extensions,.page-title-box").show();
     $(".dashboard_img_menu").hide();
+    document.querySelector("#extensions .crumbbar_padding").style.display = "";
+    document.querySelector("#extensions .contentbar").style.padding = "0 10px 10px";
     document.getElementById("extensions_title").textContent = title;
     document.getElementById("extensions_status").textContent = "Loading…";
     document.getElementById("extensions_content").replaceChildren();
@@ -496,6 +498,10 @@
         document.getElementById("extensions_title").textContent =
           data.displayName;
         status("");
+        if (!embedded && id === "posnic.hktvmall-gogox") {
+          document.querySelector("#extensions .crumbbar_padding").style.display = "none";
+          document.querySelector("#extensions .contentbar").style.padding = "0";
+        }
         mounted = PosnicExtensionFrame.mount({
           container: embedded ? embedded.container : document.getElementById("extensions_content"),
           extensionId: id,
