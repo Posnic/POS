@@ -1604,3 +1604,26 @@ test('quote settings hide irrelevant controls and preserve explicit QR dimension
     assert.throws(() => contract.normalize(sale.receipt_designs), /QR size/);
     dom.window.close();
 });
+
+test('unit follows quantity and quantity totals retain their column while amount stays last', () => {
+    const {dom,engine,sale,$}=setup();
+    for(const format of Object.keys(contract.formats)) for(const showUnit of [true,false]) for(const serial of [true,false]) {
+        const layout=sale.receipt_designs.layouts[format];
+        const items=layout.blocks.find(b=>b.type==='items');
+        Object.assign(items,{itemLayout:'columns',showUnit,showRowNumbers:serial,hsn:true});
+        if(!layout.blocks.some(b=>b.field==='total_quantity')) layout.blocks.push({id:'quantity-total',type:'field',field:'total_quantity'});
+        const output=$('<div>').html(engine.render(sale,format,false));
+        const headers=output.find('thead th');
+        assert.equal(headers.last().text(),'Amount');
+        const quantityIndex=headers.index(headers.filter('.rd-quantity'));
+        if(showUnit) assert.equal(headers.index(headers.filter('.rd-unit')),quantityIndex+1);
+        const row=output.find('tbody tr').first();
+        assert.equal(row.find('td').last().hasClass('rd-amount'),true);
+        const total=output.find('.rd-total-quantity');
+        assert.equal(total.length,1);
+        assert.equal(Number(total.find('td').first().attr('colspan')),quantityIndex);
+        assert.equal(total.find('.rd-quantity').text(),'2');
+        assert.equal(output.find('.rd-field-total_quantity').length,0);
+    }
+    dom.window.close();
+});
