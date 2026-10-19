@@ -78,7 +78,9 @@ test('receipt editor explicitly opts into the Thirukkural QR and saves the optio
     assert.equal(target, undefined);
     $('#rd-quote-qr').prop('checked', true).trigger('change');
     assert.equal(target, 'https://www.posnic.com/tools/thirukural/1');
+    $('#rd-quote-qr-size').val('18').trigger('change');
     $('[data-action="save"]').trigger('click');
+    assert.equal(sent.receipt_designs.quoteFooter.qrSizeMm, 18);
     assert.equal(sent.receipt_designs.quoteFooter.showQr, true);
     w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: sent.receipt_designs });
     assert.equal($('#rd-quote-qr').prop('checked'), true);
@@ -1581,4 +1583,24 @@ test('GBP and EUR receipts stay on Fast receipt without raster fallback', () => 
       assert.match(bytes, /Total GBP 1.50/); assert.match(bytes, /Cash GBP 2.00/);
       assert.match(bytes, /Change GBP 0.50/); assert.match(bytes, /Total EUR 3.00/);
     } finally { dom.window.close(); }
+});
+
+test('quote settings hide irrelevant controls and preserve explicit QR dimensions', () => {
+    const { dom, w, $, branch, sale, engine } = setup();
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('.rd-quote-qr-options').prop('hidden'), true);
+    assert.equal($('#rd-quote-list').prop('hidden'), true);
+    $('#rd-quote-source').val('custom').trigger('change');
+    assert.equal($('#rd-quote-list').prop('hidden'), false);
+    sale.receipt_quote = require('../api/src/helpers/receipt-quote').select({ source: 'thirukkural', order: 'sequential', showQr: true }, 'S1');
+    for (const size of [18, 22, 26]) {
+        sale.receipt_designs.quoteFooter = { source: 'thirukkural', order: 'sequential', quotes: [], qrSizeMm: size };
+        assert.equal(contract.normalize(sale.receipt_designs).quoteFooter.qrSizeMm, size);
+        const output = $('<div>').html(engine.render(sale, '80', false));
+        assert.equal(output.find('.rd-quote-qr')[0].style.width, size + 'mm');
+        assert.equal(output.find('.rd-quote').text(), sale.receipt_quote.text);
+    }
+    sale.receipt_designs.quoteFooter.qrSizeMm = 4;
+    assert.throws(() => contract.normalize(sale.receipt_designs), /QR size/);
+    dom.window.close();
 });
