@@ -659,10 +659,13 @@ class SettingController extends BaseController {
        * own. Empty means "none" and partial payloads may omit it entirely.
        */
 
+      let quoteLibrary;
       if (data.receipt_designs !== undefined) {
         try {
           const { resolveReceiptDesign } = require('../helpers/resolve-receipt-design');
           data.receipt_designs = await resolveReceiptDesign(data.receipt_designs);
+          if (data.receipt_designs.quoteFooter?.source === 'thirukkural')
+            quoteLibrary = await require('../helpers/thirukkural-library').install();
         } catch (error) {
           return res.status(400).json({ type: 'error', message: error.message, data: null });
         }
@@ -672,7 +675,7 @@ class SettingController extends BaseController {
       if (result.status) {
         return res
           .status(200)
-          .json({ type: 'success', message: 'Common settings updated', data: result.data });
+          .json({ type: 'success', message: quoteLibrary?.warning || 'Common settings updated', data: result.data, quoteLibrary });
       }
       return res.status(404).json({
         type: 'error',

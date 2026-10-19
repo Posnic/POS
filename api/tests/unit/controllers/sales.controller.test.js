@@ -905,6 +905,35 @@ describe('SalesController', () => {
 
   // ── delete ───────────────────────────────────────────────────────────────────
   describe('delete', () => {
+    test('paid restaurant deletion explains the conflict instead of a generic 404', async () => {
+      const message = 'This restaurant bill is already paid. Use Return items to reverse the sale.';
+      salesService.deleteSales.mockResolvedValue({
+        status: false,
+        statusCode: 409,
+        message,
+        data: null,
+      });
+      const res = mockRes();
+      await ctrl.delete(mockReq({ body: { data: [VALID_ID] } }), res, mockNext());
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message }));
+    });
+
+    test('unexpected deletion errors do not disclose database internals', async () => {
+      salesService.deleteSales.mockResolvedValue({
+        status: false,
+        statusCode: 500,
+        message: 'private database detail',
+        data: null,
+      });
+      const res = mockRes();
+      await ctrl.delete(mockReq({ body: { data: [VALID_ID] } }), res, mockNext());
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: ERROR_MESSAGES.SALES_NOT_DELETED })
+      );
+    });
+
     test.each(['admin', 'owner', 'manager', 'cashier'])(
       'rejects %s even with sale-delete permission and the switch enabled',
       async (role) => {
@@ -1010,6 +1039,18 @@ describe('SalesController', () => {
   });
 
   // ── getLatestSales ───────────────────────────────────────────────────────────
+  describe('clearParkedSales', () => {
+    test('requires sales write permission', async () => {
+      const res = mockRes();
+      await ctrl.clearParkedSales(mockReq({ user: restrictedUser(), body: { confirmed: true } }), res, jest.fn());
+      expect(res.status).toHaveBeenCalledWith(403);
+    });
+    test('requires explicit confirmation', async () => {
+      const res = mockRes();
+      await ctrl.clearParkedSales(mockReq({ body: {} }), res, jest.fn());
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+  });
   describe('getLatestSales', () => {
     test('200 returns stringified JSON when sales exist', async () => {
       const res = mockRes();

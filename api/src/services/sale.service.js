@@ -352,6 +352,16 @@ const processSale = async (
 
     // 3. Process Items & Calculations
     let items = data.items || [];
+    // Stock edit tracking is keyed by product, so one product cannot carry
+    // competing unit conversions in the same document.
+    const submittedUnits = new Map();
+    for (const line of items) {
+      const productId = String(line.item_id || '');
+      const unit = String(line.item_unit || '').trim();
+      if (submittedUnits.has(productId) && submittedUnits.get(productId) !== unit)
+        return { status: false, message: 'Use one selling unit per product in a sale.' };
+      submittedUnits.set(productId, unit);
+    }
 
     // Robust numeric parser for legacy string values that may contain
     // commas or currency/percent symbols.
@@ -405,6 +415,7 @@ const processSale = async (
             if (oldItem.item_id) {
               oldItemsData[String(oldItem.item_id)] = {
                 quantity: parseFloat(oldItem.item_quantity),
+                unit_conversion: oldItem.unit_conversion,
                 name: oldItem.item_name || '',
                 item_code: oldItem.item_sku || '', // PHP uses item_code/item_id inconsistent naming sometimes
                 price: parseFloat(oldItem.item_price || 0),
@@ -496,7 +507,7 @@ const processSale = async (
       // Determine Values (Logic from PHP)
       // Prefer numeric overrides from payload, then per-item discount fields,
       // then legacy item master. All values may arrive as formatted strings.
-      const discountAmount =
+      let discountAmount =
         parseLegacyNumber(item.sale_inline_discount_value) ??
         parseLegacyNumber(item.item_discount) ??
         parseLegacyNumber(document.discount_amount) ??
@@ -511,6 +522,17 @@ const processSale = async (
       const previousLine = existingSale?.items?.find(
         (line) => String(line.line_id || line.item_id) === String(item.line_id || itemId)
       );
+      let unitConversion;
+      try {
+        unitConversion = require('../helpers/selling-units').resolve(document, item.item_unit, previousLine);
+      } catch (error) { return { status: false, message: error.message }; }
+      if (unitConversion.factor !== 1 && (outlet || priceList || extensionStock))
+        return { status: false, message: 'Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.' };
+      if (unitConversion.factor !== 1 && items.filter(line => String(line.item_id) === itemId).length > 1)
+        return { status: false, message: 'Combine this product into one line when selling in an alternate unit.' };
+      const stockQuantity = require('../helpers/selling-units').stockQuantity({ unit_conversion: unitConversion }, itemQuantity);
+      if (parseLegacyNumber(item.sale_inline_discount_value) === null && parseLegacyNumber(item.item_discount) === null)
+        discountAmount *= unitConversion.factor;
       if (
         previousLine?.pricing &&
         item.modifiers !== undefined &&
@@ -533,9 +555,11 @@ const processSale = async (
       let pricing;
       try {
         pricing = pricingAuthority.resolve({
-          product: document,
+          product: { ...document, selling_price: unitConversion.price ?? Number(document.selling_price ?? document.item_price ?? 0) * unitConversion.factor },
           branch: pricingBranch,
           allowCounterPriceOverride: context.allowCounterPriceOverride === true,
+          allowParkedPriceOverride: existingSale?.sale_process === 'Hold' &&
+            existingSale?.payment_status !== 'Paid' && !existingSale?.captain_payment_plan,
           roundGrossUnit: context.roundGrossUnit === true,
           previous: previousLine,
           submitted: pricingAuthority.desktopSubmittedPrice(item),
@@ -563,8 +587,8 @@ const processSale = async (
       // Prefer payload-provided company_price_total when available, otherwise
       // fall back to legacy item company_price * quantity.
       const companyPrice =
-        parseLegacyNumber(item.company_price_total) ??
-        itemQuantity * (parseLegacyNumber(document.company_price) ?? 0);
+        (unitConversion.factor === 1 ? parseLegacyNumber(item.company_price_total) : null) ??
+        stockQuantity * (parseLegacyNumber(document.company_price) ?? 0);
 
       total_company_data.push({ company_amount: companyPrice });
 
@@ -629,7 +653,7 @@ const processSale = async (
 
       // Inventory check
       const availablequatity = parseFloat(document.available_quantity || 0);
-      const total_available_qty = availablequatity - itemQuantity;
+      const total_available_qty = availablequatity - stockQuantity;
 
       // Calculate Changes (Old Item logic)
       let changeQty = 0;
@@ -671,6 +695,7 @@ const processSale = async (
           item_name: document.name,
           ...require('../utils/item-localization').snapshot(document),
           item_quantity: changeQty,
+          stock_quantity: require('../helpers/selling-units').stockQuantity({ unit_conversion: unitConversion }, changeQty),
           process: changeProcess,
           item_code: document.itemid,
           unit: item.item_unit || 'qty',
@@ -797,9 +822,10 @@ const processSale = async (
         item_discount: discountAmount,
         item_discount_percentage: discountPercentage,
         item_quantity: itemQuantity,
+        unit_conversion: unitConversion,
         item_available_quantity: itemAvailableQty,
         item_id: itemId || '',
-        item_unit: item.item_unit || 'qty',
+        item_unit: unitConversion.unit,
         total_amount: itemDiscountAmountTotalCalculation,
         barcode_id: document.barcode_id || '',
         company_price_total: companyPrice,
@@ -883,6 +909,7 @@ const processSale = async (
           item_id: remItemId,
           item_name: remItem.name,
           item_quantity: remItem.quantity,
+          stock_quantity: require('../helpers/selling-units').stockQuantity({ unit_conversion: remItem.unit_conversion }, remItem.quantity),
           process: 'cancel',
           item_code: remItem.item_code,
           unit: remItem.unit,
@@ -1444,6 +1471,12 @@ const processSale = async (
       denomination_values: data.denomination_values ?? (existingSale?.denomination_values || []),
     };
 
+    updateData.receipt_quote = require('../helpers/receipt-quote').select(
+      context.branchSettings?.receipt_designs?.quoteFooter,
+      existingSale?.sales_id || prefixId,
+      existingSale ? (existingSale.receipt_quote ?? null) : undefined
+    );
+
     if (preparePaidEdit) return { status: true, data: updateData };
     let finalSaleData = id === '' ? { ...insertData, ...updateData } : updateData;
     if (extensionStock) {
@@ -1500,7 +1533,8 @@ const processSale = async (
       for (const item of items) {
         const doc = await itemRepository.findItemById(item.item_id);
         if (doc && doc.track_inventory && !doc.negative_stock) {
-          if (doc.available_quantity < parseFloat(item.item_quantity)) {
+          const requiredStock = require('../helpers/selling-units').stockQuantity(itemsale.find(line => String(line.item_id) === String(item.item_id)), item.item_quantity);
+          if (doc.available_quantity < requiredStock) {
             insufficientItems.push({
               item_id: String(doc._id),
               item_quantity: doc.available_quantity,
@@ -1524,7 +1558,7 @@ const processSale = async (
       const stockRequests = new Map();
       for (const item of items) {
         const doc = await itemRepository.findItemById(item.item_id);
-        const qty = parseFloat(item.item_quantity);
+        const qty = require('../helpers/selling-units').stockQuantity(itemsale.find(line => line.item_id === item.item_id), item.item_quantity);
         const isTracked = doc && (doc.track_inventory === true || doc.track_inventory === 'true');
         if (!isTracked || doc.negative_stock === true) continue;
         const key = String(doc._id);
@@ -1759,7 +1793,7 @@ const processSale = async (
         const doc = await itemRepository.findItemById(item.item_id);
         if (!doc) continue;
 
-        const qty = parseFloat(item.item_quantity);
+        const qty = require('../helpers/selling-units').stockQuantity(itemsale.find(line => line.item_id === item.item_id), item.item_quantity);
         // This quantity already left stock in a durable host operation. The
         // sale retains that reference; there is no second movement or stock log.
         if (extensionStock?.itemIds.has(String(doc._id))) continue;
@@ -1824,7 +1858,7 @@ const processSale = async (
         const isTracked = doc && (doc.track_inventory === true || doc.track_inventory === 'true');
         if (!isTracked) continue;
 
-        const qtyChange = change.item_quantity;
+        const qtyChange = change.stock_quantity ?? change.item_quantity;
         const opening = doc.available_quantity;
         let newAvailable = opening;
         let action = '';
@@ -2605,7 +2639,8 @@ const getLatestSales = async ({ branchId, licenseId, holdOnly }, { SaleModel } =
     baseFilter.license = licenseId;
   }
 
-  const pipeline = [{ $match: baseFilter }, { $sort: { _id: -1 } }, { $limit: holdOnly ? 20 : 6 }];
+  const pipeline = [{ $match: baseFilter }, { $sort: { _id: -1 } },
+    ...require('./parked-sales').visibilityStages(), { $limit: holdOnly ? 20 : 6 }];
 
   const sales = await salesRepository.aggregate(pipeline, { SaleModel: Model });
 

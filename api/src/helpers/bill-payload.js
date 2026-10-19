@@ -740,6 +740,7 @@ function receiptDocument(sale, branch, bill) {
   doc.tax = num(sale.tax ?? sale.tax_amount);
   doc.receipt_tax_rows = bill.taxes;
   doc.receipt_line_rows = bill.items;
+  doc.receipt_quote = sale.receipt_quote || null;
   doc.discount = bill.discount;
   doc.sale_extra_discount = num(sale.sale_extra_discount);
   doc.round_off = bill.roundOff;

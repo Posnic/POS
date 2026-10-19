@@ -1097,9 +1097,6 @@
                 window.electronAPI.desktop.capabilities().then((caps) => {
                     if (PosnicPro.userACL && PosnicPro.userACL.branch && PosnicPro.userACL.branch.write) addItem(PosnicPro.i18n.t('lang_desktop_app', 'App Settings'), 'app', 'settings', true);
                     addItem(PosnicPro.i18n.t('lang_hardware_manager', 'Hardware Manager'), 'hardware', 'printer');
-                    if (['enable', 'true', true].includes(PosnicPro.local.get('table_options'))) addItem(PosnicPro.i18n.t('lang_desktop_kitchen', 'Kitchen Printing'), 'hardware:kot', 'clipboard');
-                    addItem(PosnicPro.i18n.t('lang_desktop_kitchen_screen', 'Kitchen screen'), 'hardware:screen', 'monitor');
-                    addItem(PosnicPro.i18n.t('lang_desktop_kitchen_sound', 'Kitchen sound'), 'hardware:sound', 'volume-2');
                     if (caps.backup) addItem(PosnicPro.i18n.t('lang_desktop_backups', 'Backup & Recovery'), 'backup', 'database');
                     addItem(PosnicPro.i18n.t('lang_desktop_update_recovery', 'Updates & recovery'), 'update', 'download-cloud');
                     addItem(PosnicPro.i18n.t('lang_desktop_cloudsync', 'Cloud Sync'), 'cloud', 'cloud');

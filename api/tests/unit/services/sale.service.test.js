@@ -187,6 +187,63 @@ describe('SalesService', () => {
     mockRegisterRepositoryInstance.validateSessionOwner.mockResolvedValue({ status: true });
   });
 
+  test('new counter sale saves the configured quote, ignoring client supplied text', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc());
+    const result = await salesService.processSale(makeSaleData({
+      receipt_quote: { text: 'Client cannot install this' },
+      multi_payment: { Cash: 200 },
+    }), '', 'Add', makeContext({ branchSettings: { receipt_designs: {
+      quoteFooter: { source: 'custom', order: 'sequential', quotes: ['First', 'Second'] },
+    } } }));
+    expect(result.status).toBe(true);
+    expect(salesRepository.create.mock.calls[0][0].receipt_quote).toMatchObject({
+      source: 'custom', text: 'First',
+    });
+  });
+
+  test('fresh inclusive quick item completes at the entered total without an override permission', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc({
+      item_status: 'instant', selling_price: 70, tax: 5, tax_type: 'inclusive',
+      track_inventory: false, negative_stock: true,
+    }));
+    const result = await salesService.processSale(makeSaleData({
+      sales_total: '70', multi_payment: { Cash: 70 },
+      items: [makeItemPayload({ item_quantity: '1', item_price_total: '70',
+        sale_inline_item_price: '70', tax: 5, tax_type: 'inclusive' })],
+    }), '', 'Add', makeContext({ allowCounterPriceOverride: false }));
+    expect(result.status).toBe(true);
+    expect(salesRepository.create.mock.calls[0][0].items[0].pricing).toMatchObject({
+      source: 'quick_item', selling_price: 70, tax_type: 'inclusive',
+    });
+  });
+
+  test('ten feet prices in feet but atomically reserves 3.048 metres', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc({
+      unit: 'm', selling_price: 100, available_quantity: 4,
+      selling_units: [{ unit: 'ft', factor: 0.3048, price: 32 }],
+    }));
+    const result = await salesService.processSale(makeSaleData({
+      sales_total: '320', multi_payment: { Cash: 320 },
+      items: [makeItemPayload({ item_quantity: '10', item_price_total: '32', item_unit: 'ft' })],
+    }), '', 'Add', makeContext());
+    expect(result.status).toBe(true);
+    expect(mockItemRepositoryInstance.deductStockIfAvailable.mock.calls[0][1]).toBe(3.048);
+    expect(salesRepository.create.mock.calls[0][0].items[0]).toMatchObject({
+      item_quantity: 10, item_unit: 'ft', item_price: 32,
+      unit_conversion: { factor: 0.3048, base_unit: 'm', unit: 'ft' },
+    });
+    expect(mockStockLogsRepositoryInstance.createStockLog.mock.calls[0][0].item_quantity).toBe(3.048);
+  });
+
+  test('mixed selling units for one product are rejected before stock is reserved', async () => {
+    const result = await salesService.processSale(makeSaleData({ items: [
+      makeItemPayload({ item_unit: 'm' }), makeItemPayload({ item_unit: 'ft' }),
+    ] }), '', 'Add', makeContext());
+    expect(result.status).toBe(false);
+    expect(result.message).toMatch(/one selling unit/);
+    expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
+  });
+
   test.each([
     ['', undefined, '', false],
     ['64f8f2f4c2b9c0a1e4b22222', '', '', false],
@@ -2293,6 +2350,15 @@ describe('SalesService', () => {
   // ── getLatestSales ────────────────────────────────────────────────────────
 
   describe('getLatestSales', () => {
+    test.each([true, false])('cleared holds are filtered before the page limit (%s)', async holdOnly => {
+      salesRepository.aggregate.mockResolvedValue([]);
+      await salesService.getLatestSales({ branchId: BRANCH_ID, licenseId: LICENSE_ID, holdOnly });
+      const pipeline = salesRepository.aggregate.mock.calls[0][0];
+      const lookupAt = pipeline.findIndex(stage => stage.$lookup);
+      expect(pipeline[lookupAt].$lookup.from).toBe('settings');
+      expect(lookupAt).toBeLessThan(pipeline.findIndex(stage => stage.$limit));
+      expect(pipeline[0].$match.license).toBe(LICENSE_ID);
+    });
     test('returns empty array when repository returns empty array', async () => {
       salesRepository.aggregate.mockResolvedValue([]);
       const result = await salesService.getLatestSales({ branchId: BRANCH_ID });
