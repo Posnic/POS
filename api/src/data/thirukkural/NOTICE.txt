@@ -1,0 +1,6 @@
+Thirukkural original Tamil verses by Thiruvalluvar.
+Digital source: https://github.com/tk120404/thirukkural (Apache-2.0; LICENSE included).
+Retrieved 2026-10-19. Source SHA256: e793099d6f300787329cf22bc0a144292d4af11b9dc3ca9595f1928692f4caee
+Modified: retained Number, Line1 and Line2 only; renamed keys. No modern translations or commentaries included.
+Reference edition: https://www.projectmadurai.org/pm_etexts/utf8/pmuni0001.html
+Structural validation: 1,330 sequential numbers, two nonempty Tamil lines each. Full scholarly collation remains pending.

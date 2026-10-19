@@ -30,11 +30,22 @@
         var country = String(branch.branch_country || branch.country || branch.sortname || PosnicPro.local.get('country_setting') || '').trim().toLowerCase();
         return country ? ['india', 'in', 'ind'].includes(country) : ['gst_on', 'enable', true, 'true'].includes(branch.indian_gst) || ['enable', true, 'true'].includes(branch.gst);
     }
+    var sampleQuoteQr;
+    function loadQuoteQr() {
+        if (sampleQuoteQr || !design.quoteFooter || !design.quoteFooter.showQr) return;
+        PosnicPro.post({ url: 'setting/receiptDesignQr', data: JSON.stringify({ text: 'https://www.posnic.com/tools/thirukural/1' }) }, function (res) {
+            if (res.type === 'success' && res.data && schema.image(res.data.src)) { sampleQuoteQr = res.data.src; schedulePreview(); }
+        });
+    }
     function sample() {
         var item = function (name, price, qty) { return { item_name: name, item_price: price, item_quantity: qty, item_unit: 'ea', total_amount: price * qty, hsn_code: '1234' }; };
         var tax = sampleTaxEnabled() ? 2.25 : 0;
         var taxRows = !tax ? [] : sampleIndianGst() ? (sampleInterstate ? [{ label: t('IGST') + ' 5%', amount: tax }] : [{ label: t('CGST') + ' 2.5%', amount: 1.13 }, { label: t('SGST') + ' 2.5%', amount: 1.12 }]) : [{ label: t(schema.taxLabel(branch, PosnicPro.local.get('country_setting'))) + ' 5%', amount: tax }];
-        return Object.assign({}, branch, printOptions(), { receipt_designs: design, sales_id: 'S-000128', created_date: new Date().toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
+        var sampleQuote = design.quoteFooter && design.quoteFooter.source === 'thirukkural'
+            ? { source: 'thirukkural', number: 1, text: 'அகர முதல எழுத்தெல்லாம் ஆதி\nபகவன் முதற்றே உலகு.', qr: design.quoteFooter.showQr ? sampleQuoteQr : undefined }
+            : design.quoteFooter && design.quoteFooter.source === 'custom'
+                ? { source: 'custom', text: (design.quoteFooter.quotes || [])[0] || '' } : null;
+        return Object.assign({}, branch, printOptions(), { receipt_designs: design, receipt_quote: sampleQuote, sales_id: 'S-000128', created_date: new Date().toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
             customer_name: 'Alex Morgan', customer_phone: '+1 202 555 0148', customer_email: 'alex@example.com', customer_address: '24 Market Street',
             customer_gstin: '', customer_tax_number: layout().blocks.some(function (b) { return b.field === 'customer_tax_number'; }) ? 'TAX-123456' : '',
             items: [item('Everyday notebook', 12, 2), item('Reusable travel cup', 18, 1), item('Gift wrap', 3, 1)],
@@ -159,6 +170,7 @@
             '<label for="rd-field-width">' + esc(t('Field width')) + '</label><select id="rd-field-width" data-prop="width"><option value="100"' + (b.width !== 50 ? ' selected' : '') + '>' + esc(t('Full width')) + '</option><option value="50"' + (b.width === 50 ? ' selected' : '') + '>' + esc(t('Half width')) + '</option></select><small>' + esc(t('Place two half-width fields next to each other to share a row.')) + '</small>';
         if (b.type === 'barcode') html += '<p class="rd-help">' + esc(t('Code 128 barcode of the saved receipt number. Appears after the sale is saved.')) + '</p>';
         if (b.type === 'items') html += '<label class="rd-inline"><input type="checkbox" data-prop="showRowNumbers" ' + (b.showRowNumbers ? 'checked' : '') + '> ' + esc(t('Show item row numbers')) + '</label>';
+        if (b.type === 'items') html += '<label>' + esc(t('Row number label')) + '<input type="text" maxlength="12" data-prop="rowNumberLabel" value="' + esc(b.rowNumberLabel == null ? 'S.No' : b.rowNumberLabel) + '"></label><label class="rd-inline"><input type="checkbox" data-prop="showUnit" ' + (b.showUnit ? 'checked' : '') + '> ' + esc(t('Show separate Unit column')) + '</label>';
         if (b.type === 'items') html += '<label class="rd-inline"><input type="checkbox" data-prop="hsn" ' + (b.hsn ? 'checked' : '') + '> ' + esc(t('Show HSN / SAC codes')) + '</label><p class="rd-help">' + esc(t(b.itemLayout === 'columns' ? PosnicPro.i18n.t('lang_long_names_are_shortened_to_keep_quantity', 'Long names are shortened to keep quantity in its own column.') : PosnicPro.i18n.t('lang_rd_item_names_wrap_onto_the_next_line_prices_and_quantities_stay_readable_', 'Item names wrap onto the next line. Prices and quantities stay readable.'))) + '</p>';
         if (b.type === 'items' && !schema.formats[format].height) html += '<label for="rd-item-layout">' + esc(t('Item layout')) + '</label><select id="rd-item-layout" data-prop="itemLayout"><option value="detailed"' + (!b.itemLayout || b.itemLayout === 'detailed' ? ' selected' : '') + '>' + esc(t('Detailed - quantity and unit price below')) + '</option><option value="compact"' + (b.itemLayout === 'compact' ? ' selected' : '') + '>' + esc(t('Compact - item × quantity and amount')) + '</option><option value="columns"' + (b.itemLayout === 'columns' ? ' selected' : '') + '>' + esc(t('Fixed columns - item, rate, quantity, amount')) + '</option></select>';
         if (b.type === 'items') html += '<label>' + esc(t('Item column heading')) + '<input class="form-control" type="text" maxlength="40" data-prop="heading" placeholder="' + esc(t('Item')) + '" value="' + esc(b.heading || '') + '"></label>';
@@ -324,6 +336,13 @@
             note.text(xhr && xhr.responseJSON && xhr.responseJSON.message || PosnicPro.i18n.t('lang_print_save_failed', 'Could not save print settings.'));
         });
     }
+    function updateQuoteControls() {
+        var source = box.find('#rd-quote-source').val();
+        box.find('.rd-quote-qr-options').prop('hidden', source !== 'thirukkural');
+        box.find('#rd-quote-qr-size').prop('disabled', !box.find('#rd-quote-qr').prop('checked'));
+        box.find('#rd-quote-list, label[for="rd-quote-list"]').prop('hidden', source !== 'custom');
+        box.find('#rd-quote-order, label[for="rd-quote-order"], .rd-quote-settings > small').prop('hidden', source === 'none');
+    }
     function load(data) {
         closeWorkspace(); editorRevision++; printing = false;
         clearTimeout(qrTimer); clearTimeout(previewTimer);
@@ -340,7 +359,16 @@
             '<div class="rd-workspace"><aside class="rd-library"><h4>' + esc(t('Add a block')) + '</h4><p>' + esc(t('Click to add. Drag blocks to reorder.')) + '</p><div class="rd-library-buttons">' + ['text', 'qr', 'image', 'logo', 'barcode', 'divider', 'signature'].map(function (type) { return '<button type="button" data-add="' + type + '"><span>+</span>' + esc(t(names[type])) + '</button>'; }).join('') + '</div><h4>' + esc(t('Sale fields')) + '</h4><div class="rd-library-buttons">' + Object.keys(schema.fields).filter(function (f) { return schema.fieldAvailable(f, branch); }).map(function (field) { return '<button type="button" data-add="field" data-field="' + field + '"><span>+</span>' + esc(t(schema.fields[field])) + '</button>'; }).join('') + '</div></aside>' +
             '<section class="rd-layout"><div class="rd-section-heading"><h4>' + esc(t('Your layout')) + ' <small class="rd-block-count"></small></h4><div>' + button('reset-template', 'Reset template', 'refresh-cw') + button('undo', 'Undo', 'rotate-ccw', 'disabled') + '</div></div><div class="rd-reset-confirm" hidden><p>' + esc(t('Reset this format to the standard template? Other formats and branch details are kept. Save designs to apply.')) + '</p><button type="button" class="btn btn-outline-primary btn-sm" data-action="confirm-reset">' + esc(t('Reset template')) + '</button> <button type="button" class="btn btn-light btn-sm" data-action="cancel-reset">' + esc(t('Cancel')) + '</button></div><div class="rd-font-control"><label for="rd-text-size">' + esc(t('Default text size')) + '</label><select id="rd-text-size" aria-describedby="rd-font-scope">' + [8,9,10,11,12,13,14,16,18].map(function (n) { return '<option value="' + n + '">' + n + ' px</option>'; }).join('') + '</select><small id="rd-font-scope">' + esc(t('Applies to this paper format. Select a block to override its text size or make it bold.')) + '</small></div><ol class="rd-block-list"></ol><p class="rd-help">' + esc(t('Store details, receipt details, items and totals are always included.')) + '</p></section>' +
             '<aside class="rd-preview"><div class="rd-section-heading"><h4>' + esc(t('Live preview')) + '</h4><select class="rd-preview-fit" aria-label="' + esc(t('Preview zoom')) + '"><option value="page">' + esc(t('Fit whole receipt')) + '</option><option value="width">' + esc(t('Fit width')) + '</option></select></div><div class="rd-preview-stage"><div class="rd-preview-page"></div></div><div class="rd-preview-footer"><strong class="rd-preview-name"></strong><span class="rd-dimensions"></span><span class="rd-sample-label">' + esc(t('Sample sale')) + '</span></div></aside></div>' +
-            '<section class="rd-print-options"><label><input type="checkbox" id="rd-branding" ' + (design.showBranding !== false ? 'checked' : '') + '> ' + esc(t('Show footer text')) + '</label><label for="rd-branding-text">' + esc(t('Footer text')) + '</label><textarea id="rd-branding-text" class="form-control" rows="2" maxlength="200" placeholder="Made with Posnic &middot; posnic.com" data-t-placeholder="lang_made_with_posnic_posnic_com">' + esc(design.brandingText || '') + '</textarea><small>' + esc(t('Leave blank to use the default. Applies to all paper sizes.')) + '</small><div class="rd-existing-options"></div></section>');
+            '<section class="rd-print-options"><div class="rd-document-settings"><label for="rd-custom-heading">' + esc(t('Optional document heading')) + '</label><input id="rd-custom-heading" class="form-control" maxlength="60" value="' + esc(design.customHeading || '') + '"><small>' + esc(t('Blank adds no heading. Display text does not change the document type.')) + '</small><label><input type="checkbox" id="rd-branding" ' + (design.showBranding !== false ? 'checked' : '') + '> ' + esc(t('Show footer text')) + '</label><label for="rd-branding-text">' + esc(t('Footer text')) + '</label><textarea id="rd-branding-text" class="form-control" rows="2" maxlength="200" placeholder="Made with Posnic &middot; posnic.com" data-t-placeholder="lang_made_with_posnic_posnic_com">' + esc(design.brandingText || '') + '</textarea><small>' + esc(t('Leave blank to use the default. Applies to all paper sizes.')) + '</small></div><div class="rd-existing-options"></div></section>');
+        var quotePolicy = design.quoteFooter || { source: 'none', order: 'sequential', quotes: [] };
+        box.find('.rd-print-options').prepend('<fieldset class="rd-quote-settings"><legend><lang class="lang_receipt_quotes">Receipt quotes</lang></legend><label for="rd-quote-source"><lang class="lang_library">Library</lang></label><select id="rd-quote-source" class="form-control"><option value="none" data-t="lang_off">Off</option><option value="thirukkural" data-t="lang_thirukkural_1_330_tamil_couplets">Thirukkural - 1,330 Tamil couplets</option><option value="custom" data-t="lang_my_quotes">My quotes</option></select><label for="rd-quote-order"><lang class="lang_order">Order</lang></label><select id="rd-quote-order" class="form-control"><option value="sequential" data-t="lang_in_bill_number_order">In bill-number order</option><option value="random" data-t="lang_random">Random</option></select><div class="rd-quote-qr-options"><label class="rd-checkbox"><input type="checkbox" id="rd-quote-qr"> <lang class="lang_quote_qr_meaning">QR for Tamil and English meaning</lang></label><label for="rd-quote-qr-size"><lang class="lang_quote_qr_size">QR size</lang></label><select id="rd-quote-qr-size" class="form-control"><option value="18">18 mm</option><option value="22">22 mm</option><option value="26">26 mm</option></select></div><small>Saved with each new sale. Reprints keep the same quote. Bill-number order can skip numbers and runs separately on offline tills. Remove your greeting text block if you want only a quote.</small><label for="rd-quote-list"><lang class="lang_my_quotes_separate_entries_with_a_blank_li">My quotes - separate entries with a blank line</lang></label><textarea id="rd-quote-list" class="form-control" rows="4"></textarea></fieldset>');
+        box.find('#rd-quote-source').val(quotePolicy.source);
+        box.find('#rd-quote-order').val(quotePolicy.order);
+        box.find('#rd-quote-qr').prop('checked', quotePolicy.showQr === true);
+        box.find('#rd-quote-qr-size').val(String(quotePolicy.qrSizeMm || 22));
+        updateQuoteControls();
+        loadQuoteQr();
+        box.find('#rd-quote-list').val(quotePolicy.quotes.join('\n\n'));
         if (sampleTaxEnabled()) {
             box.find('.rd-preview-footer').append('<label>' + esc(PosnicPro.i18n.t('lang_rd_sample_tax_help', 'Example tax: 5%. Actual receipts use saved sale taxes.')) + (sampleIndianGst() ? '<select id="rd-sample-tax"><option value="intra">CGST + SGST</option><option value="inter" data-t="lang_igst_tax_receiving">IGST</option></select>' : '') + '</label>');
             box.find('#rd-sample-tax').val(sampleInterstate ? 'inter' : 'intra').on('change', function () { sampleInterstate = this.value === 'inter'; schedulePreview(); });
@@ -368,6 +396,14 @@
             checkpoint(); design.showBranding = this.checked; changed();
         }).on('input.receiptDesigner', '#rd-branding-text', function () {
             checkpoint(); design.brandingText = this.value; changed();
+        }).on('change.receiptDesigner', '#rd-quote-source,#rd-quote-order,#rd-quote-list,#rd-quote-qr,#rd-quote-qr-size', function () {
+            checkpoint();
+            design.quoteFooter = { qrSizeMm: Number(box.find('#rd-quote-qr-size').val()) || 22, showQr: box.find('#rd-quote-qr').prop('checked'), source: box.find('#rd-quote-source').val(), order: box.find('#rd-quote-order').val(), quotes: box.find('#rd-quote-list').val().split(/\n\s*\n/).map(function (q) { return q.trim(); }).filter(Boolean) };
+            updateQuoteControls();
+            loadQuoteQr();
+            changed();
+        }).on('input.receiptDesigner', '#rd-custom-heading', function () {
+            checkpoint(); design.customHeading = this.value; changed();
         }).on('click.receiptDesigner', '[data-default-format]', function () {
             var next = this.getAttribute('data-default-format');
             if (next === design.defaultFormat) return;

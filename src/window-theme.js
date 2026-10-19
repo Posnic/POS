@@ -129,9 +129,13 @@
       });
       if (kind === 'hardware' && typeof window.switchTab === 'function') {
         var section = location.hash.slice(1);
-        if (section) window.switchTab(section);
+        var navigateHardware = async function (target) {
+          if (window.refreshRestaurantHardwareVisibility) await window.refreshRestaurantHardwareVisibility();
+          window.switchTab(target);
+        };
+        if (section) void navigateHardware(section);
         if (window.electronAPI && window.electronAPI.desktop && window.electronAPI.desktop.onNavigate) {
-          var removeNavigation = window.electronAPI.desktop.onNavigate(function (target) { window.switchTab(target); });
+          var removeNavigation = window.electronAPI.desktop.onNavigate(function (target) { void navigateHardware(target); });
           window.addEventListener('unload', removeNavigation, { once: true });
         }
       }

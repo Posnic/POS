@@ -287,6 +287,11 @@ async function renderReceipt(sale, options = {}, render = rasterize) {
 
 async function renderDesignedReceipt(document, paper, render = rasterize) {
   if (!['58', '80', '112'].includes(paper)) throw new Error('Designed raw receipts require thermal paper');
+  // Quote footers can use scripts absent from the till's installed fonts.
+  // Keep the rest of the designer's typography, but make quote printing use
+  // the same bundled Unicode coverage as legacy graphic receipts.
+  const quoteFonts = fontsFor(document);
+  document += `<style>${cssFor(quoteFonts)}\n.rd-document .rd-quote{font-family:${quoteFonts.map(family).join(',')},sans-serif!important;}</style>`;
   const strips = await render({ document, body: '', pictures: [], paper, width: DOTS[paper] });
   const receipt = new Receipt(paper, { glyphs: false });
   if (!strips.length) throw new Error('The rendered receipt is blank');

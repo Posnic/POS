@@ -4272,7 +4272,6 @@ function createTray() {
         { type: 'separator' },
         ...branchItems,
         { label: 'App Settings', click: () => openAppSettings('app') },
-        { label: 'Kitchen Printing', click: () => openHardwareManager('kot') },
         { label: 'Hardware Manager', click: () => openHardwareManager() },
         ...(fs.existsSync(CLOUD_CONFIG_FILE) ? [] : [
           { label: 'Backup Manager', click: () => openBackupManager() }

@@ -38,6 +38,8 @@ async function returned({
   original = amount * quantity,
   storedExtra = {},
   registerMode,
+  unitConversion,
+  submittedReturnUnit,
 } = {}) {
   const license = new ObjectId(),
     branchId = new ObjectId(),
@@ -56,6 +58,7 @@ async function returned({
     item_name: 'Test item',
     available_quantity: 10,
     company_price: 20,
+    track_inventory: !!unitConversion,
   });
   const line = {
     item_id: String(itemId),
@@ -65,6 +68,7 @@ async function returned({
     total_amount: amount * quantity,
     tax: 0,
     tax_type: 'inclusive',
+    ...(unitConversion ? { item_unit: unitConversion.unit, unit_conversion: unitConversion } : {}),
   };
   const invoiceDate = new Date(Date.now() - 7 * 86400000);
   await db.collection('sales').insertOne({
@@ -108,7 +112,7 @@ async function returned({
             ]
           : [],
       items_return: [
-        { ...line, item_quantity: returnedQuantity, total_amount: amount * returnedQuantity },
+        { ...line, ...(submittedReturnUnit ? { item_unit: submittedReturnUnit } : {}), item_quantity: returnedQuantity, total_amount: amount * returnedQuantity },
       ],
       extra_discount: extra,
       extra_discount_type: 'percent',
@@ -122,6 +126,7 @@ async function returned({
   return {
     result,
     stored,
+    item: await db.collection('items').findOne({ _id: itemId }),
     registerId: String(registerId),
     branch: {
       id: String(branchId),
@@ -132,6 +137,16 @@ async function returned({
     },
   };
 }
+
+test('partial return restores base stock and preserves the selling-unit snapshot', async () => {
+  const conversion = { unit: 'ft', base_unit: 'm', factor: 0.3048, price: 32 };
+  const f = await returned({ amount: 32, quantity: 10, returnedQuantity: 2, unitConversion: conversion, submittedReturnUnit: 'm' });
+  assert.equal(f.item.available_quantity, 10.6096);
+  assert.equal(f.stored.items_return_total, 64);
+  assert.equal(f.stored.items[0].item_quantity, 8);
+  assert.deepEqual(f.stored.items[0].unit_conversion, conversion);
+  assert.equal(f.stored.items_return[0].returnArray.returnValue[0].item_unit, 'ft');
+});
 test('actual partial/full return writes reconcile with Business and preserve the original invoice day', async () => {
   for (const returnedQuantity of [1, 2]) {
     const f = await returned({ returnedQuantity });

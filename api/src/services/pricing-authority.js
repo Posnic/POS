@@ -47,6 +47,7 @@ function resolve({
   priceList,
   channel = 'counter',
   allowCounterPriceOverride = false,
+  allowParkedPriceOverride = false,
   roundGrossUnit = false,
 }) {
   const monetary = Money.policy(branch);
@@ -65,6 +66,23 @@ function resolve({
     if (String(old.item_id) !== String(product._id))
       fail('price_context_mismatch', 'Item pricing context changed.');
     const expected = number(old.selling_price, 'Stored price');
+    if (
+      allowParkedPriceOverride === true &&
+      allowCounterPriceOverride === true &&
+      channel === 'counter' &&
+      old.channel === 'counter' &&
+      !outlet &&
+      !priceList &&
+      !venue &&
+      ['catalogue', 'counter_override', 'quick_item', 'variable'].includes(old.source) &&
+      submitted !== undefined &&
+      round(number(submitted, 'Entered price')) !== round(expected)
+    ) {
+      const entered = number(submitted, 'Entered price');
+      if (entered <= 0 || entered > 1000000)
+        fail('item_price_too_high', `${name}: price is outside the allowed range.`);
+      return { ...old, selling_price: round(entered), source: 'counter_override' };
+    }
     assertPrice(submitted, expected, round, name);
     return { ...old };
   }
