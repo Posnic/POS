@@ -4863,5 +4863,8 @@
   "lang_sl_preset_a4": "A4 · 24 labels · 63 × 33 mm",
   "lang_sl_preset_80": "80 mm receipt roll · 72 × 33 mm printable · ESC/POS",
   "lang_sl_preset_58": "58 mm receipt roll · 48 × 33 mm printable · driver",
-  "lang_sl_preset_help": "Presets fill in dimensions; check they match your paper. Sticker labels use the printer driver. Printable width and feed margins vary by printer."
+  "lang_sl_preset_help": "Presets fill in dimensions; check they match your paper. Sticker labels use the printer driver. Printable width and feed margins vary by printer.",
+  "lang_sl_preset_40": "40 × 30 mm",
+  "lang_sl_preset_50": "50 × 30 mm",
+  "lang_sl_preset_60": "60 × 40 mm"
 }

@@ -5046,5 +5046,8 @@
   "lang_sl_preset_a4": "A4 · 24 etiketten · 63 × 33 mm",
   "lang_sl_preset_80": "80 mm bonrol · 72 × 33 mm afdrukbaar · ESC/POS",
   "lang_sl_preset_58": "58 mm bonrol · 48 × 33 mm afdrukbaar · printerstuurprogramma",
-  "lang_sl_preset_help": "Voorinstellingen vullen de afmetingen in; controleer of ze bij uw papier passen. Stickervellen gebruiken het printerstuurprogramma. Afdrukbare breedte en doorvoermarges verschillen per printer."
+  "lang_sl_preset_help": "Voorinstellingen vullen de afmetingen in; controleer of ze bij uw papier passen. Stickervellen gebruiken het printerstuurprogramma. Afdrukbare breedte en doorvoermarges verschillen per printer.",
+  "lang_sl_preset_40": "40 × 30 mm",
+  "lang_sl_preset_50": "50 × 30 mm",
+  "lang_sl_preset_60": "60 × 40 mm"
 }
