@@ -10408,12 +10408,12 @@ PosnicPro.settings.loadRestaurantRequirements = function () {
         $('#restaurant_table_required').prop('checked', data.tableRequired !== false);
         $('#restaurant_guests_required').prop('checked', data.guestsRequired === true);
         $('#save_restaurant_requirements').prop('disabled', false);
-    }, function() { $('#restaurant_requirements_message').text('Could not load settings. Please retry.'); });
+    }, function() { $('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_could_not_load_settings_please_retry', 'Could not load settings. Please retry.')); });
 };
 $(document).on('shown.bs.tab', '#restauranttables-tab-line, #v-pills-tableorder-tab', function () { PosnicPro.settings.loadRestaurantRequirements(); });
 $(document).on('click', '#save_restaurant_requirements', function() {
     var button=$(this).prop('disabled',true);
     PosnicPro.post({url:'captain/v1/table-settings',processData:false,data:JSON.stringify({tableRequired:$('#restaurant_table_required').is(':checked'),guestsRequired:$('#restaurant_guests_required').is(':checked')})},function(){
-        button.prop('disabled',false);$('#restaurant_requirements_message').text('Saved.');
-    },function(){button.prop('disabled',false);$('#restaurant_requirements_message').text('Could not save settings. Please retry.');});
+        button.prop('disabled',false);$('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_saved', 'Saved.'));
+    },function(){button.prop('disabled',false);$('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_could_not_save_settings_please_retry', 'Could not save settings. Please retry.'));});
 });
