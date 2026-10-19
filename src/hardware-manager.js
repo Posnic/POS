@@ -567,7 +567,7 @@ class HardwareManager {
         receiptPrinter = deviceName;
         const bytes = options.fastReceiptLines
           ? require('./receipt-fast').renderFastReceipt(options.fastReceiptLines, options.pageSize.replace('mm', ''))
-          : await require('./escpos-unicode').renderDesignedReceipt(htmlContent, options.pageSize.replace('mm', ''));
+          : await require('./escpos-unicode').renderDesignedReceipt(htmlContent, options.pageSize.replace('mm', ''), undefined, { cut: options.cut !== false });
         diagnostics?.record('print.rendered', { trace, bytes: bytes.length, durationMs: Date.now() - started });
         if (diagnostics?.holdPrint()) {
           capturedOnly = true;

@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const { JSDOM } = require('jsdom');
 test('HSN selection requires exact origin, iframe, nonce and valid code; never changes tax', () => {
-  const dom = new JSDOM('<input id="hsn"><input id="hsn-description"><span id="hsn-hint"></span><input id="tax" value="18">', { url: 'https://shop.posnic.io' });
+  const dom = new JSDOM('<div id="items_v2"></div><input id="hsn"><input id="hsn-description"><span id="hsn-hint"></span><input id="tax" value="18">', { url: 'https://shop.posnic.io' });
   const { window } = dom;
   window.HTMLDialogElement.prototype.showModal = function () {};
   const source = fs.readFileSync('frontend/static/script/js/modules/js/items-v2-details.js', 'utf8');
