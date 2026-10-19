@@ -53,7 +53,7 @@
             'display:flex;flex-direction:column;justify-content:' + ((s.previewPaper || s.paper) === 'roll' ? 'flex-start' : 'center') + ';gap:1px;border:' + (s.guides ? '.15mm dashed #aaa' : 'none') + ';font-family:' + s.font + ';font-size:' + s.fontSize + 'px;text-align:' + s.align +
             ';font-weight:' + (s.fontOptions?.includes('bold') ? '700' : '400') + ';font-style:normal' +
             ';color:' + s.ink + ';background:' + s.background + ';print-color-adjust:exact;-webkit-print-color-adjust:exact}' +
-            '.sl-label p{margin:0;line-height:1.15;overflow-wrap:anywhere}.sl-name{font-weight:' + (s.nameBold === false ? 400 : 700) + ';font-size:' + (s.nameSize ?? s.fontSize * 1.35) + 'px}.sl-price{font-weight:' + (s.priceBold === false ? 400 : 700) + ';font-size:' + (s.priceSize ?? s.fontSize * 2.6) + 'px}.sl-barcode{display:block;flex-shrink:1;min-height:0;max-width:100%;max-height:45%;' +
+            '.sl-label.sl-with-image{flex-direction:row;align-items:center;gap:2mm}.sl-label-content{display:flex;flex-direction:column;min-width:0;flex:1;max-height:100%;gap:1px}.sl-product-image{object-fit:contain;max-height:100%;flex-shrink:0}.sl-label p{margin:0;line-height:1.15;overflow-wrap:anywhere}.sl-name{font-weight:' + (s.nameBold === false ? 400 : 700) + ';font-size:' + (s.nameSize ?? s.fontSize * 1.35) + 'px}.sl-price{font-weight:' + (s.priceBold === false ? 400 : 700) + ';font-size:' + (s.priceSize ?? s.fontSize * 2.6) + 'px}.sl-barcode{display:block;flex-shrink:1;min-height:0;max-width:100%;max-height:45%;' +
             'margin-left:' + (s.align === 'left' ? '0' : 'auto') + ';margin-right:' + (s.align === 'right' ? '0' : 'auto') + '}.sl-foot{font-size:' + (s.footSize ?? s.fontSize * .75) + 'px;font-weight:' + (s.footBold ? 700 : 400) + ';font-style:normal}.sl-shop{font-size:' + (s.shopSize ?? s.fontSize * .75) + 'px;font-weight:' + (s.shopBold ? 700 : 400) + ';font-style:normal}';
     }
     function validateDesign(s) {
@@ -63,16 +63,28 @@
     }
     function label(doc, item, s, barcode) {
         if (!Number.isFinite(item.label_price)) throw Error(item.name + ': ' + (item.label_price_error || 'A fixed price is required.'));
-        if (s.barcode !== false && !item.barcode_id) throw Error(item.name + ': ' + t('lang_sl_barcode_missing', 'No barcode. Switch off Show barcode to print a price label.'));
         var div = doc.createElement('div'); div.className = 'sl-label';
         function text(value, cls) { var p = doc.createElement('p'); p.className = cls || ''; p.textContent = value; div.appendChild(p); }
         text(item.name, 'sl-name');
-        if (s.barcode !== false) {
+        if ((s.codeKind || (s.barcode === false ? 'none' : 'barcode')) === 'barcode' && item.barcode_id) {
             var svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.classList.add('sl-barcode'); div.appendChild(svg);
             barcode(svg, String(item.barcode_id), { format: s.format, width: s.barWidth, height: s.barHeight, margin: s.barMargin,
             marginTop: s.top, marginBottom: s.bottom, marginLeft: s.left, marginRight: s.right,
             displayValue: s.barText, textMargin: s.textMargin, font: s.font, fontSize: s.fontSize,
             textAlign: s.align, fontOptions: s.fontOptions || '', lineColor: s.ink, background: s.background });
+        }
+        if (s.codeKind === 'qr') {
+            var payload = s.qrSource === 'custom' ? s.qrCustom : String(item.barcode_id || item.sku || item.item_code || '').trim();
+            if (payload) {
+                var matrix = root.PosnicLabelQR.create(payload, { errorCorrectionLevel: 'M' }).modules;
+                var qr = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                qr.setAttribute('viewBox', '0 0 ' + (matrix.size + 8) + ' ' + (matrix.size + 8));
+                qr.setAttribute('class', 'sl-qr'); qr.setAttribute('role', 'img'); qr.setAttribute('aria-label', 'QR code');
+                qr.style.cssText = 'width:' + (s.qrSize || 12) + 'mm;height:' + (s.qrSize || 12) + 'mm;max-width:100%;flex-shrink:0;align-self:center;background:white';
+                var path = doc.createElementNS('http://www.w3.org/2000/svg', 'path'), pixels = '';
+                for (var y = 0; y < matrix.size; y++) for (var x = 0; x < matrix.size; x++) if (matrix.get(y, x)) pixels += 'M' + (x + 4) + ' ' + (y + 4) + 'h1v1h-1z';
+                path.setAttribute('d', pixels); path.setAttribute('fill', '#000'); qr.appendChild(path); div.appendChild(qr);
+            }
         }
         text(s.currency + ' ' + item.label_price.toFixed(item.label_currency_digits ?? 2), 'sl-price');
         if (s.mrp && Number(item.mrp_price) > 0) text('MRP ' + s.currency + ' ' + Number(item.mrp_price).toFixed(item.label_currency_digits ?? 2), 'sl-foot');
@@ -81,6 +93,20 @@
         if (s.shop) text(s.shop, 'sl-shop');
         if (s.address) text(s.address, 'sl-foot');
         if (s.date) text(s.printedDate, 'sl-foot');
+        if (s.photo && item.image) {
+            try {
+                var url = new URL(item.image, doc.baseURI);
+                if (!['http:', 'https:'].includes(url.protocol) && !/^data:image\/(png|jpeg|webp|gif);base64,/i.test(url.href)) return div;
+                var content = doc.createElement('div'); content.className = 'sl-label-content';
+                while (div.firstChild) content.appendChild(div.firstChild);
+                var img = doc.createElement('img'); img.className = 'sl-product-image'; img.alt = '';
+                img.style.width = (s.photoWidth || 30) + '%'; img.src = url.href;
+                div.classList.add('sl-with-image');
+                img.onerror = function () { img.remove(); div.classList.remove('sl-with-image'); };
+                if (s.photoSide === 'right') { div.appendChild(content); div.appendChild(img); }
+                else { div.appendChild(img); div.appendChild(content); }
+            } catch (_) { /* Invalid image URLs leave the product text visible. */ }
+        }
         return div;
     }
     function sheet(doc, cells, s, barcode) {
@@ -112,11 +138,15 @@
             background: $('#background-color').val(), ink: $('#line-color').val(), format: $('#barcodeLabelType').val(),
             barWidth: Number($('#bar-width').val()), barHeight: Number($('#bar-height').val()), barMargin: Number($('#bar-margin').val()), textMargin: Number($('#bar-text-margin').val()),
             top: Number($('#margin_top').val()), bottom: Number($('#margin_bottom').val()), left: Number($('#margin_left').val()), right: Number($('#margin_right').val()),
+            codeKind: $('#sl-code-kind').val(), qrSource: $('#sl-qr-source').val(), qrCustom: String($('#sl-qr-custom').val() || '').trim(), qrSize: Number($('#sl-qr-size').val()),
+            photo: $('#sl-photo').is(':checked'), photoSide: $('#sl-photo-side').val(), photoWidth: Number($('#sl-photo-width').val()),
             barcode: $('#sl-show-barcode').is(':checked'), barText: $('#sl-bar-text').is(':checked'), mrp: $('#sl-mrp').is(':checked'), mfg: $('#mfg_checkbox').is(':checked'), exp: $('#exp_checkbox').is(':checked'),
             shop: $('#sl-shop').is(':checked') ? root.PosnicPro.local.get('branchname') || '' : '', address: $('#address-value').val(),
             date: $('#sl-date').is(':checked'), printedDate: new Date().toLocaleDateString(), currency: root.PosnicPro.local.get('currencySign') || ''
         };
         ['name', 'price', 'shop', 'foot'].forEach(function (key) { s[key + 'Size'] = Number($('#sl-' + key + '-size').val()); s[key + 'Bold'] = $('#sl-' + key + '-bold').is(':checked'); });
+        if (s.codeKind === 'qr' && (!Number.isFinite(s.qrSize) || s.qrSize < 10 || s.qrSize > 60)) throw Error('QR size must be between 10 and 60 mm.');
+        if (s.photo && (!Number.isFinite(s.photoWidth) || s.photoWidth < 15 || s.photoWidth > 50)) throw Error('Image width must be between 15% and 50%.');
         validateDesign(s); geometry(s); return s;
     }
     function chosen() { return state.entries.filter(function (e) { return e.selected; }); }
@@ -224,6 +254,9 @@
         selectedCount();
         if (!$('#view_print_lable').hasClass('show')) return;
         $('#sl-a4-settings').prop('hidden', $('#sl-paper').val() !== 'a4');
+        $('#sl-qr-options').prop('hidden', $('#sl-code-kind').val() !== 'qr');
+        $('#sl-qr-custom-field').prop('hidden', $('#sl-qr-source').val() !== 'custom');
+        $('#sl-photo-options').prop('hidden', !$('#sl-photo').is(':checked'));
         $('#sl-bar-text,#barcodeLabelType').prop('disabled', !$('#sl-show-barcode').is(':checked'));
         $('#sl-status').empty();
         if (state.loadError) return error(state.loadError);
@@ -245,7 +278,7 @@
             var s = settings(), g = geometry(s), amount = Number($('#sl-batch').val()), from = Number($('#sl-from').val());
             $('#sl-capacity').text(s.paper === 'a4' ? capacityText(g) : t('lang_label_roll_one_label_per_page', 'Label roll · one label per page'));
             $('#sl-start').attr('max', g.capacity); $('#sl-dimensions').text(s.width + ' × ' + s.height + ' mm');
-            try { root.localStorage.setItem('posnic.shelf-label-layout', JSON.stringify({ paper: s.paper, width: s.width, height: s.height, margin: s.margin, gap: s.gap, start: s.start, guides: s.guides, barcode: s.barcode, barText: s.barText, shop: !!s.shop, date: s.date, mrp: s.mrp, mfg: s.mfg, exp: s.exp,
+            try { root.localStorage.setItem('posnic.shelf-label-layout', JSON.stringify({ paper: s.paper, width: s.width, height: s.height, margin: s.margin, gap: s.gap, start: s.start, guides: s.guides, codeKind: s.codeKind, qrSource: s.qrSource, qrCustom: s.qrCustom, qrSize: s.qrSize, photo: s.photo, photoSide: s.photoSide, photoWidth: s.photoWidth, barcode: s.barcode, barText: s.barText, shop: !!s.shop, date: s.date, mrp: s.mrp, mfg: s.mfg, exp: s.exp,
                 design: { nameSize: s.nameSize, priceSize: s.priceSize, shopSize: s.shopSize, footSize: s.footSize, nameBold: s.nameBold, priceBold: s.priceBold, shopBold: s.shopBold, footBold: s.footBold, font: s.font, fontSize: s.fontSize, align: s.align, ink: s.ink, background: s.background, format: s.format, barWidth: s.barWidth, barHeight: s.barHeight, barMargin: s.barMargin, textMargin: s.textMargin, top: s.top, bottom: s.bottom, left: s.left, right: s.right, fontOptions: s.fontOptions } })); } catch (_) { /* Optional storage. */ }
             if (state.step === 1) {
                 var sampleGeometry = geometry(Object.assign({}, s, { paper: 'roll' }));
@@ -286,8 +319,8 @@
                 // Validate every selected item, including later pages; never hide a print failure behind a good first sheet.
                 entries.forEach(function (e) {
                     if (!Number.isFinite(e.item.label_price)) throw Error(e.item.name + ': ' + (e.item.label_price_error || t('lang_sl_fixed_price', 'A fixed price is required.')));
-                    if (s.barcode) {
-                        if (!e.item.barcode_id) throw Error(e.item.name + ': ' + t('lang_sl_barcode_missing', 'No barcode. Switch off Show barcode to print a price label.'));
+                    if (s.codeKind === 'qr') label(root.document, e.item, s, root.JsBarcode);
+                    if (s.codeKind === 'barcode' && e.item.barcode_id) {
                         try { root.JsBarcode({}, String(e.item.barcode_id), { format: s.format }); }
                         catch (_) { throw Error(e.item.name + ': ' + t('lang_sl_barcode_format', 'The barcode does not match this format. Choose another format or switch off Show barcode.')); }
                     }
@@ -392,6 +425,9 @@
                 ['width', 'height', 'margin', 'gap', 'start'].forEach(function (key) { if (Number.isFinite(saved[key])) $('#sl-' + key).val(saved[key]); });
                 ['guides', 'date', 'mrp', 'shop'].forEach(function (key) { if (typeof saved[key] === 'boolean') $('#sl-' + key).prop('checked', saved[key]); });
                 ['mfg', 'exp'].forEach(function (key) { if (typeof saved[key] === 'boolean') $('#' + key + '_checkbox').prop('checked', saved[key]); });
+                $('#sl-code-kind').val(saved.codeKind || (saved.barcode === false ? 'none' : 'barcode'));
+                $('#sl-photo').prop('checked', !!saved.photo);
+                Object.entries({qrSource:'sl-qr-source',qrCustom:'sl-qr-custom',qrSize:'sl-qr-size',photoSide:'sl-photo-side',photoWidth:'sl-photo-width'}).forEach(function (pair) { if (saved[pair[0]] !== undefined) $('#' + pair[1]).val(saved[pair[0]]); });
                 if (typeof saved.barcode === 'boolean') $('#sl-show-barcode').prop('checked', saved.barcode);
                 if (typeof saved.barText === 'boolean') $('#sl-bar-text').prop('checked', saved.barText);
                 if (saved.design) {
@@ -430,6 +466,29 @@
             if (state.loading) throw Error(t('lang_sl_wait_loading', 'Wait for products to finish loading.'));
             if (state.loadError) throw state.loadError;
             var s = settings(), g = geometry(s), entries = chosen(), from = Number($('#sl-from').val()), amount = test ? 1 : Number($('#sl-batch').val());
+            if (s.photo) {
+                state.printing = true; $('#sl-print,#sl-test').prop('disabled', true);
+                var photos = new Map();
+                entries = await Promise.all(entries.map(async function (entry) {
+                    var item = Object.assign({}, entry.item);
+                    if (item.image) {
+                        if (!photos.has(item.image)) photos.set(item.image, (async function (source) {
+                            try {
+                                var url = new URL(source, root.document.baseURI);
+                                if (/^data:image\/(png|jpeg|webp|gif);base64,/i.test(url.href)) return url.href;
+                                if (!['http:', 'https:'].includes(url.protocol)) return '';
+                                var response = await root.fetch(url.href, { signal: AbortSignal.timeout(10000) });
+                                if (!response.ok) return '';
+                                var blob = await response.blob();
+                                if (!/^image\/(png|jpeg|webp|gif)$/.test(blob.type) || blob.size > 10000000) return '';
+                                return await new Promise(function (resolve) { var reader = new root.FileReader(); reader.onload = function () { resolve(reader.result); }; reader.onerror = function () { resolve(''); }; reader.readAsDataURL(blob); });
+                            } catch (_) { return ''; }
+                        })(item.image));
+                        item.image = await photos.get(item.image);
+                    }
+                    return Object.assign({}, entry, {item:item});
+                }));
+            }
             var first = slots(entries, g, 0, from, amount), html = '';
             for (var i = 0; i < first.pages; i++) html += sheet(root.document, slots(entries, g, i, from, amount).cells, s, root.JsBarcode).outerHTML;
             var printer = root.electronAPI && root.electronAPI.printer;
@@ -535,6 +594,8 @@
             refresh();
         });
         $(root.document).on('click', '#sl-refresh-printers', loadPrinters);
+        $(root.document).on('change', '#sl-code-kind', function () { $('#sl-show-barcode').prop('checked', this.value === 'barcode'); refresh(); });
+        $(root.document).on('change', '#sl-show-barcode', function () { $('#sl-code-kind').val(this.checked ? 'barcode' : 'none'); refresh(); });
         $(root.document).on('change', '#sl-print-method', function () { $('#sl-thermal-help').prop('hidden', this.value !== 'thermal'); try { root.localStorage.setItem('posnic.shelf-label-method.' + $('#sl-paper').val(), this.value); } catch (_) {} refresh(); });
         $(root).on('resize', function () { if (state.step > 0) refresh(); });
     }

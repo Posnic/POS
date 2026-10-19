@@ -13,7 +13,9 @@ function setup(failBulk = false, noBarcode = false, delayedBulk = false, pages =
     // jsdom lacks canvas text measurement; barcode encoding and SVG rendering remain real.
     w.HTMLCanvasElement.prototype.getContext = () => ({ measureText: text => ({ width: String(text).length * 6 }) });
     w.eval(script('jquery.min.js'));
+    w.TextEncoder = require('node:util').TextEncoder;
     w.eval(script('JsBarcode.all.min.js'));
+    w.eval(script('vendor/label-qr.js'));
     const $ = w.jQuery;
     $.fn.modal = function () { this.addClass('show'); return this; };
     const items = Array.from({ length: pages ? 60 : 30 }, (_, i) => ({ _id: String(i), name: 'Product ' + i, barcode_id: noBarcode ? '' : '7622202828256', label_price: 1.75, label_currency_digits: 2 }));
@@ -134,9 +136,8 @@ test('price-only labels work for products without barcodes, without blocking sel
     w.PosnicShelfLabels.open(); await tick();
     $('#sl-products input[type=checkbox]').first().prop('checked', true).trigger('change');
     assert.equal($('#sl-clear').prop('disabled'), false);
-    next(); next(); assert.equal($('[data-sl-panel="1"]').prop('hidden'), false);
-    assert.match($('#sl-status').text(), /Switch off Show barcode/);
-    $('#sl-show-barcode').prop('checked', false).trigger('change'); next(); next();
+    next(); next(); next();
+    assert.equal($('#sl-status').text(), '');
     w.PosnicShelfLabels.print(false); assert.ok(getPrint());
     assert.ok(!getPrint().printable.includes('<svg')); assert.match(getPrint().printable, /Product 0/);
     dom.window.close();
@@ -419,4 +420,41 @@ test('text controls size each label element independently and persist the design
 test('old saved font size migrates to independent sizes without losing the layout',async()=>{
  const {dom,w,$}=setup();w.localStorage.setItem('posnic.shelf-label-layout',JSON.stringify({design:{fontSize:20}}));w.PosnicShelfLabels.open('0');await tick();
  assert.equal($('#sl-name-size').val(),'27');assert.equal($('#sl-price-size').val(),'52');assert.equal($('#sl-shop-size').val(),'15');assert.equal($('#bar-fontSize').val(),'20');dom.window.close();
+});
+
+
+test('QR labels use custom data and omit missing product codes without blocking text', async () => {
+    const {dom,w,$,next,getPrint}=setup(false,true);
+    w.PosnicShelfLabels.open(); await tick();
+    $('#sl-products input[type=checkbox]').first().prop('checked',true).trigger('change');
+    next(); $('#sl-code-kind').val('qr').trigger('change');
+    assert.equal($('#sl-sample .sl-qr').length,0);
+    assert.match($('#sl-sample').text(),/Product 0/);
+    $('#sl-qr-source').val('custom').trigger('change');
+    $('#sl-qr-custom').val('https://posnic.io/product/123').trigger('input');
+    assert.equal($('#sl-sample .sl-qr').length,1);
+    const matrix=require('../api/node_modules/qrcode').create('https://posnic.io/product/123',{errorCorrectionLevel:'M'}).modules;
+    assert.equal($('#sl-sample .sl-qr').attr('viewBox'),'0 0 '+(matrix.size+8)+' '+(matrix.size+8));
+    next();next(); await w.PosnicShelfLabels.print(false);
+    assert.match(getPrint().printable,/sl-qr/); assert.match(getPrint().printable,/Product 0/);
+    $('#sl-code-kind').val('none').trigger('change'); await w.PosnicShelfLabels.print(false);
+    assert.doesNotMatch(getPrint().printable,/<svg/);
+    dom.window.close();
+});
+
+test('product image layout supports both sides and absent or unsafe photos retain text', () => {
+    const {dom,w}=setup();
+    const s={barcode:false,photo:true,photoWidth:30,currency:'$',photoSide:'left'};
+    const item={name:'Photo product',label_price:4,image:'https://example.com/photo.png'};
+    let label=w.PosnicShelfLabels.label(w.document,item,s,()=>{});
+    assert.equal(label.firstChild.tagName,'IMG'); assert.match(label.textContent,/Photo product/);
+    label=w.PosnicShelfLabels.label(w.document,item,{...s,photoSide:'right'},()=>{});
+    assert.equal(label.lastChild.tagName,'IMG');
+    label.querySelector('img').dispatchEvent(new w.Event('error'));
+    assert.equal(label.querySelector('img'),null); assert.equal(label.classList.contains('sl-with-image'),false);
+    for(const image of ['', 'javascript:alert(1)']) {
+        label=w.PosnicShelfLabels.label(w.document,{...item,image},s,()=>{});
+        assert.equal(label.querySelector('img'),null); assert.match(label.textContent,/Photo product/);
+    }
+    dom.window.close();
 });
