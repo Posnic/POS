@@ -4205,7 +4205,7 @@
   "lang_sl_narrow_filter": "Too many products. Narrow the Items filter before printing.",
   "lang_sl_no_barcode": "No barcode",
   "lang_sl_no_matches": "No matching products.",
-  "lang_sl_none_automatic": "Products are selected only when you tick them.",
+  "lang_sl_none_automatic": "Click a product row or checkbox to select or deselect it.",
   "lang_sl_pages_count": "pages",
   "lang_sl_preview_labels": "Preview labels →",
   "lang_sl_print_settings": "Print settings →",

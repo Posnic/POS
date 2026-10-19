@@ -239,10 +239,15 @@
     }
     function renderRows() {
         var body = $('#sl-products').empty(), current = state.entries.filter(function (e) { return state.viewIds.includes(String(e.item._id)); });
-        current.forEach(function (e) {
+        current.forEach(function (e, index) {
             var row = $('<div class="sl-product-row">'), checked = $('<input type="checkbox">').prop('checked', e.selected).attr('aria-label', t('lang_select', 'Select') + ' ' + e.item.name);
+            checked.attr('id', 'sl-product-select-' + index);
             checked.on('change', function () { cancelBulk(); e.selected = this.checked; state.page = 0; state.furthestStep = 0; refresh(); });
-            var name = $('<div>').text(e.item.name).append($('<small>').text(e.item.barcode_id || t('lang_sl_no_barcode', 'No barcode')));
+            var name = $('<label>').attr('for', checked.attr('id')).css({ margin: 0, cursor: 'pointer' }).text(e.item.name).append($('<small>').text(e.item.barcode_id || t('lang_sl_no_barcode', 'No barcode')));
+            row.css('cursor', 'pointer').on('click', function (event) {
+                if ($(event.target).closest('input,label,button,a,select,textarea').length) return;
+                checked.prop('checked', !checked.prop('checked')).trigger('change');
+            });
             var money = Number.isFinite(e.item.label_price) ? (root.PosnicPro.local.get('currencySign') || '') + ' ' + e.item.label_price.toFixed(e.item.label_currency_digits ?? 2) : '—';
             var copies = $('<input type="number" min="1" max="999" class="sl-input">').val(e.copies).attr('aria-label', t('lang_print_copies', 'Copies') + ' ' + e.item.name);
             copies.on('change', function () { e.copies = Number(this.value); state.page = 0; state.furthestStep = 0; refresh(); });
@@ -251,7 +256,7 @@
         if (!current.length) body.append($('<div class="sl-empty">').text(state.loading ? t('lang_sl_loading_products', 'Loading products…') : t('lang_sl_no_matches', 'No matching products.')));
         $('#sl-listed').text(state.productPage + ' / ' + state.totalPages + ' · ' + state.total + ' ' + t('lang_sl_products_count', 'products'));
         $('#sl-product-prev').prop('disabled', state.loading || state.productPage <= 1); $('#sl-product-next').prop('disabled', state.loading || state.productPage >= state.totalPages);
-        $('#sl-product-note').text(t('lang_sl_none_automatic', 'Products are selected only when you tick them.'));
+        $('#sl-product-note').text(t('lang_sl_none_automatic', 'Click a product row or checkbox to select or deselect it.'));
         refresh();
     }
     function request(params) {

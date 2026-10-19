@@ -45,6 +45,23 @@ function setup(failBulk = false, noBarcode = false, delayedBulk = false, pages =
     return { dom, w, $, requests, release: () => releaseBulk(), next: () => $('#sl-next-step').trigger('click'), selectAll: async () => { $('#sl-all').prop('checked', true).trigger('change'); await tick(); }, getPrint: () => printed };
 }
 
+test('product row and name toggle selection once without interfering with copies', async () => {
+    const { dom, w, $ } = setup();
+    w.PosnicShelfLabels.open(); await tick();
+    const row = $('#sl-products .sl-product-row').first();
+    const checkbox = row.find('input[type=checkbox]')[0];
+    row[0].click(); assert.equal(checkbox.checked, true);
+    row.find('label')[0].click(); assert.equal(checkbox.checked, false);
+    row.find('label small')[0].click(); assert.equal(checkbox.checked, true);
+    checkbox.click(); assert.equal(checkbox.checked, false);
+    row.find('input[type=number]')[0].click();
+    row.find('input[type=number]').val(4).trigger('change');
+    assert.equal(checkbox.checked, false);
+    row.find('.sl-product-price')[0].click(); assert.equal(checkbox.checked, true);
+    assert.equal(row.find('input[type=number]').val(), '4');
+    dom.window.close();
+});
+
 test('the real designer previews A4, prints the same sheets and restores its layout', async () => {
     const { dom, w, $, getPrint, next, selectAll } = setup();
     w.PosnicShelfLabels.open(); await tick();
