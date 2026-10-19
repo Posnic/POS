@@ -75,3 +75,12 @@ test.each([{ branchId: '' }, { licenseId: '' }, { userId: '' }])(
     expect(collection).not.toHaveBeenCalled();
   }
 );
+
+test.each([{ $ne: null }, ['tenant-a'], 123, ''])(
+  'rejects non-scalar or empty tenant scope %p before any database access',
+  async (licenseId) => {
+    const db = { collection: jest.fn() };
+    await expect(clearAll(db, { ...scope, licenseId })).rejects.toThrow('signed-in branch');
+    expect(db.collection).not.toHaveBeenCalled();
+  }
+);

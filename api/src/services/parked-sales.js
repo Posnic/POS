@@ -3,14 +3,19 @@ const { ObjectId } = require('mongodb');
 // Clearing is a shared list action, not a financial void or hard deletion.
 // Separate immutable markers avoid rewriting financial sales during offline sync.
 async function clearAll(db, { branchId, licenseId, userId }) {
-  if (!ObjectId.isValid(String(branchId || '')) || !licenseId || !userId)
+  if (
+    !ObjectId.isValid(String(branchId || '')) ||
+    typeof licenseId !== 'string' ||
+    !licenseId.trim() ||
+    !userId
+  )
     throw new Error('A signed-in branch is required to clear parked sales.');
   const branch = new ObjectId(String(branchId));
   const now = new Date();
   const sales = await db
     .collection('sales')
     .find({
-      license: licenseId,
+      license: String(licenseId),
       $or: [{ branch_id: branch }, { branch: branch }],
       sale_process: 'Hold',
     })
@@ -26,7 +31,7 @@ async function clearAll(db, { branchId, licenseId, userId }) {
             $setOnInsert: {
               kind: 'parked_sale_clearance',
               branch_id: branch,
-              license: licenseId,
+              license: String(licenseId),
               parked_sale_id: sale._id,
               cleared_by: String(userId),
               created_date: now,
