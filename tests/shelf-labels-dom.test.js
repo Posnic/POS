@@ -392,3 +392,18 @@ test('24 selected products fill the same A4 sheet in preview and web printing', 
  $('#sl-plan-products input').first().val(2).trigger('change');assert.equal($('#sl-batch').val(),'25');assert.equal($('#sl-job-pages').text(),'2');
  dom.window.close();
 });
+
+test('thermal label cutter modes preserve order and cut only at selected boundaries', async () => {
+ for (const [mode, expected] of [['each',[true,true]],['batch',[false,true]],['none',[false,false]]]) {
+  const {dom,w,$,next}=setup(),sent=[];
+  w.electronAPI={printer:{list:async()=>[{name:'POS-80C'}],print:async(html,options)=>{sent.push(options);return {success:true};}}};
+  w.PosnicShelfLabels.open('0');await tick();next();
+  $('#sl-paper').val('roll').trigger('change');await tick();
+  $('#sl-products input[type=number]').first().val(2).trigger('change');next();next();
+  $('#sl-printer').val('POS-80C');$('#sl-print-method').val('thermal').trigger('change');$('#sl-cut-mode').val(mode);
+  await w.PosnicShelfLabels.print(false);
+  assert.deepEqual(sent.map(o=>o.cut),expected);
+  $('#sl-print-method').val('driver').trigger('change');assert.equal($('#sl-cut-field').prop('hidden'),true);
+  dom.window.close();
+ }
+});

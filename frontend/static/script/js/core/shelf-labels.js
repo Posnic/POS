@@ -209,6 +209,9 @@
         if (s.paper === 'a4') $('#sl-plan-batch').append($('<small style="display:block">').text(capacityText(g)));
     }
     function refresh() {
+        var rawRoll = $('#sl-paper').val() === 'roll' && $('#sl-print-method').val() === 'thermal';
+        $('#sl-cut-field').prop('hidden', !rawRoll);
+        $('#sl-driver-cut-help').prop('hidden', rawRoll || $('#sl-paper').val() !== 'roll');
         var matched = Object.keys(presets).find(function (key) {
             return ['paper', 'width', 'height', 'margin', 'gap'].every(function (field) {
                 return presets[key][field] === undefined || String(presets[key][field]) === String($('#sl-' + field).val());
@@ -427,6 +430,7 @@
                 var name = $('#sl-printer').val();
                 if (!name) throw Error('Choose a shelf-label printer.');
                 var thermal = $('#sl-print-method').val() === 'thermal';
+                var cutMode = $('#sl-cut-mode').val() || 'each';
                 if (thermal && (s.paper !== 'roll' || s.width > 72)) throw Error('For the 80 mm receipt printer, choose Label roll and a label width of 72 mm or less.');
                 state.printing = true;
                 $('#sl-print,#sl-test').prop('disabled', true);
@@ -438,7 +442,7 @@
                 for (var job = 0; job < documents.length; job++) {
                     var result = await printer.print('<!doctype html><html><head><meta charset="utf-8"><style>' + css(s, g) + '</style></head><body>' + documents[job] + '</body></html>', {
                         printerName: name, pageSize: thermal ? '80mm' : { width: Math.round(g.width * 1000), height: Math.round(g.height * 1000) },
-                        thermalRaster: thermal, exactPageSize: true, silent: true, copies: 1, landscape: false,
+                        thermalRaster: thermal, cut: cutMode === 'each' || (cutMode === 'batch' && job === documents.length - 1), exactPageSize: true, silent: true, copies: 1, landscape: false,
                         printBackground: true, margins: { marginType: 'none' }
                     });
                     if (!result || !result.success) throw Error((result && result.error || 'Labels could not be sent to the printer.') +
