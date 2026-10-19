@@ -80,7 +80,7 @@
         dialog.append(button('Close search', close), frame);
         dialog.addEventListener('cancel', function(event) { event.preventDefault(); close(); });
         window.addEventListener('message', receive);
-        document.body.append(dialog); dialog.showModal();
+        document.getElementById('items_v2').append(dialog); dialog.showModal();
     }
     function button(text, action) {
         var b = document.createElement('button'); b.type = 'button'; b.className = 'iv2-secondary'; b.textContent = text; b.onclick = action; return b;
@@ -185,7 +185,7 @@
         value = value || {};
         var row = document.createElement('div'); row.className = 'iv2-selling-unit-row';
         row.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:8px;align-items:end;margin:8px 0';
-        row.innerHTML = '<label>Unit<input data-unit maxlength="20" placeholder="ft"></label><label>Base units per unit<input data-factor type="number" step="any" min="0.000000001" placeholder="0.3048"></label><label>Selling price<input data-price type="number" step="0.01" min="0.01" placeholder="Automatic" data-t-placeholder="lang_automatic"></label><button type="button" aria-label="Remove selling unit" data-t-aria-label="lang_remove_selling_unit">×</button>';
+        row.innerHTML = '<label>Unit<input data-unit maxlength="20" placeholder="ft"></label><label>Base units per unit<input data-factor type="number" step="any" min="0.000000001" placeholder="0.3048"></label><label>Selling price<input data-price type="number" step="0.01" min="0.01" placeholder="Automatic" data-t-placeholder="lang_automatic"></label><button type="button" class="iv2-secondary" aria-label="Remove selling unit" data-t-aria-label="lang_remove_selling_unit">×</button>';
         row.querySelector('[data-unit]').value = value.unit || '';
         row.querySelector('[data-factor]').value = value.factor || '';
         row.querySelector('[data-price]').value = value.price == null ? '' : value.price;
@@ -292,7 +292,7 @@
         if (!el('selling-unit-rows')) {
             var unitsPanel = document.createElement('section');
             unitsPanel.style.gridColumn = '1 / -1';
-            unitsPanel.innerHTML = '<h4><lang class="lang_alternate_selling_units">Alternate selling units</lang></h4><p>Stock stays in the item unit above. Example: when stock is in metres, 1 ft = 0.3048 metres. Leave price blank to calculate it from the base price.</p><div id="iv2-selling-unit-rows"></div><button type="button" id="iv2-add-selling-unit"><lang class="lang_add_selling_unit">Add selling unit</lang></button>';
+            unitsPanel.innerHTML = '<h4><lang class="lang_alternate_selling_units">Alternate selling units</lang></h4><p>Stock stays in the item unit above. Example: when stock is in metres, 1 ft = 0.3048 metres. Leave price blank to calculate it from the base price.</p><div id="iv2-selling-unit-rows"></div><button type="button" id="iv2-add-selling-unit" class="iv2-secondary"><lang class="lang_add_selling_unit">Add selling unit</lang></button>';
             el('unit').parentElement.insertAdjacentElement('afterend', unitsPanel);
             el('add-selling-unit').onclick = function () { addSellingUnit(); };
         }
