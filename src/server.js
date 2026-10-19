@@ -280,7 +280,7 @@ module.exports = async function startServer(options = {}) {
     process.env.NODE_ENV = 'development';
     
     console.log('Environment configured:');
-    console.log('  - MONGODB_URI:', process.env.MONGODB_URI);
+    console.log('  - Database connection:', process.env.MONGODB_URI ? 'configured' : 'not configured');
     console.log('  - PORT:', process.env.PORT);
     
     // Load mongoose and app from api's node_modules

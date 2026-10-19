@@ -23,7 +23,7 @@ const RESTART_DELAY_MS = 15_000;
 const AGENT_HEALTHY_AFTER_MS = 60_000;
 
 class SyncAgentManager {
-  constructor({ app, fetch: fetchImpl } = {}) {
+  constructor({ app, fetch: fetchImpl, credentialReader } = {}) {
     this.app = app;
     this.child = null;
     this.stopped = false;
@@ -32,6 +32,24 @@ class SyncAgentManager {
        of the same open call does not start a second alarm. */
     this._ringingCalls = new Set();
     this._fetch = fetchImpl || globalThis.fetch;
+    this._credentialReader = credentialReader;
+  }
+
+  _localUri(cfg) {
+    const base = this.app.getPath('userData');
+    const file = path.join(base, '.mongodb-credentials.json');
+    if (!fs.existsSync(file)) return cfg.localUri || `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
+    const read = this._credentialReader || (() => {
+      const store = require(this.app.isPackaged
+        ? path.join(process.resourcesPath, 'credentials-store')
+        : path.join(__dirname, 'credentials-store'));
+      return store.read([file], base, require('electron').safeStorage);
+    });
+    const credentials = read(file, base);
+    // A broken encrypted credential must be reported, never silently replaced
+    // with an unauthenticated URI or an older cloud configuration credential.
+    if (!credentials?.uri) throw new Error('Local sync database credentials unavailable');
+    return credentials.uri;
   }
 
   /*
@@ -184,14 +202,7 @@ class SyncAgentManager {
 
     // Always prefer the CURRENT MongoDB credentials at spawn time - local
     // setup can enable DB auth after the cloud config was first written.
-    let localUri = cfg.localUri || `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
-    try {
-      const credFile = path.join(this.app.getPath('userData'), '.mongodb-credentials.json');
-      if (fs.existsSync(credFile)) {
-        const creds = JSON.parse(fs.readFileSync(credFile, 'utf8'));
-        if (creds.uri) localUri = creds.uri;
-      }
-    } catch (e) { /* stored value is the fallback */ }
+    const localUri = this._localUri(cfg);
 
     const env = {
       ...process.env,
