@@ -139,11 +139,32 @@ describe('settings read path', () => {
   };
 
   test('optional cartons save scoped values, timestamp and legacy mirror without other keys', async () => {
-    seedWrite();mockCollections.branch_channels={findOne:jest.fn().mockResolvedValue(null),updateOne:jest.fn().mockResolvedValue({matchedCount:1})};
-    const cartons=[{id:'small',name:'Small',lengthCm:20,widthCm:10,heightCm:10,emptyWeightKg:0.1}];
-    const result=await repo.saveGroup('channels',{parcel_cartons:cartons},ctx);expect(result.status).toBe(true);
-    const [filter,update]=mockCollections.branch_channels.updateOne.mock.calls[0];expect(String(filter.branch_id)).toBe(BRANCH);expect(String(filter.license)).toBe(LICENSE);expect(update.$set.parcel_cartons).toEqual(cartons);expect(update.$set.updated_date).toBeInstanceOf(Date);expect(update.$set.sales_channel_partners).toBeUndefined();expect(mockCollections.branches.updateOne.mock.calls[0][1].$set.parcel_cartons).toEqual(cartons);
-    const bad=await repo.saveGroup('channels',{parcel_cartons:[{...cartons[0],heightCm:-1}]},ctx);expect(bad.status).toBe(false);expect(mockCollections.branch_channels.updateOne).toHaveBeenCalledTimes(1);
+    seedWrite();
+    mockCollections.branch_channels = {
+      findOne: jest.fn().mockResolvedValue(null),
+      updateOne: jest.fn().mockResolvedValue({ matchedCount: 1 }),
+    };
+    const cartons = [
+      { id: 'small', name: 'Small', lengthCm: 20, widthCm: 10, heightCm: 10, emptyWeightKg: 0.1 },
+    ];
+    const result = await repo.saveGroup('channels', { parcel_cartons: cartons }, ctx);
+    expect(result.status).toBe(true);
+    const [filter, update] = mockCollections.branch_channels.updateOne.mock.calls[0];
+    expect(String(filter.branch_id)).toBe(BRANCH);
+    expect(String(filter.license)).toBe(LICENSE);
+    expect(update.$set.parcel_cartons).toEqual(cartons);
+    expect(update.$set.updated_date).toBeInstanceOf(Date);
+    expect(update.$set.sales_channel_partners).toBeUndefined();
+    expect(mockCollections.branches.updateOne.mock.calls[0][1].$set.parcel_cartons).toEqual(
+      cartons
+    );
+    const bad = await repo.saveGroup(
+      'channels',
+      { parcel_cartons: [{ ...cartons[0], heightCm: -1 }] },
+      ctx
+    );
+    expect(bad.status).toBe(false);
+    expect(mockCollections.branch_channels.updateOne).toHaveBeenCalledTimes(1);
   });
 
   test('a printable menu design saves only its branch document key', async () => {

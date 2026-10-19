@@ -733,8 +733,12 @@ describe('CategoryRepository (class, extends BaseModel)', () => {
       await repository.findByBranchWithItems(FAKE_BRANCH_ID);
       const pipeline = CategoryModel.aggregate.mock.calls[0][0];
       const match = pipeline.find((stage) => stage.$lookup).$lookup.pipeline[0].$match;
-      expect(match.$or).toContainEqual({ negative_stock: true });
-      expect(match.$or).toContainEqual({ track_inventory: false });
+      // Catalogue categories include items at any stock level; stock validation
+      // happens when selling. A sellable-only predicate hides zero-stock categories.
+      expect(match.$or).toBeUndefined();
+      expect(match.available_quantity).toBeUndefined();
+      expect(match.item_status).toEqual({ $ne: 'instant' });
+      expect(match.is_deleted).toEqual({ $ne: true });
       expect(match['branch_access.branch_id']).toBeDefined();
     });
     test('calls model.aggregate with complex pipeline', async () => {

@@ -1,5 +1,48 @@
- 'use strict';
-function measurement(value,key,zero=false){if(value===null||value===undefined||value==='')return null;const n=typeof value==='number'?value:typeof value==='string'&&/^\d+(?:\.\d+)?$/.test(value.trim())?Number(value):NaN;if(!Number.isFinite(n)||n<0||(!zero&&n===0)||n>100000)throw Error('Enter a valid '+key+' measurement.');return n;}
-function product(value){if(value===null)return null;if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Invalid parcel details.');const out={};for(const key of ['weightKg','lengthCm','widthCm','heightCm'])out[key]=measurement(value[key],key);return Object.values(out).every(v=>v===null)?null:out;}
-function cartons(value){if(!Array.isArray(value)||value.length>50)throw Error('Save up to 50 carton presets.');const ids=new Set(),names=new Set();return value.map(row=>{if(!row||typeof row.id!=='string'||!/^[a-zA-Z0-9-]{1,64}$/.test(row.id)||ids.has(row.id))throw Error('Invalid or duplicate carton identifier.');const name=String(row.name||'').trim();if(!name||name.length>80||names.has(name.toLowerCase()))throw Error('Give every carton a unique name.');ids.add(row.id);names.add(name.toLowerCase());const out={id:row.id,name};for(const key of ['lengthCm','widthCm','heightCm','emptyWeightKg']){out[key]=measurement(row[key],key,key==='emptyWeightKg');if(out[key]===null)throw Error('Enter dimensions and empty weight for '+name+'.');}return out;});}
-module.exports={product,cartons};
+'use strict';
+function measurement(value, key, zero = false) {
+  if (value === null || value === undefined || value === '') return null;
+  const n =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && /^\d+(?:\.\d+)?$/.test(value.trim())
+        ? Number(value)
+        : NaN;
+  if (!Number.isFinite(n) || n < 0 || (!zero && n === 0) || n > 100000)
+    throw Error('Enter a valid ' + key + ' measurement.');
+  return n;
+}
+function product(value) {
+  if (value === null) return null;
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw Error('Invalid parcel details.');
+  const out = {};
+  for (const key of ['weightKg', 'lengthCm', 'widthCm', 'heightCm'])
+    out[key] = measurement(value[key], key);
+  return Object.values(out).every((v) => v === null) ? null : out;
+}
+function cartons(value) {
+  if (!Array.isArray(value) || value.length > 50) throw Error('Save up to 50 carton presets.');
+  const ids = new Set(),
+    names = new Set();
+  return value.map((row) => {
+    if (
+      !row ||
+      typeof row.id !== 'string' ||
+      !/^[a-zA-Z0-9-]{1,64}$/.test(row.id) ||
+      ids.has(row.id)
+    )
+      throw Error('Invalid or duplicate carton identifier.');
+    const name = String(row.name || '').trim();
+    if (!name || name.length > 80 || names.has(name.toLowerCase()))
+      throw Error('Give every carton a unique name.');
+    ids.add(row.id);
+    names.add(name.toLowerCase());
+    const out = { id: row.id, name };
+    for (const key of ['lengthCm', 'widthCm', 'heightCm', 'emptyWeightKg']) {
+      out[key] = measurement(row[key], key, key === 'emptyWeightKg');
+      if (out[key] === null) throw Error('Enter dimensions and empty weight for ' + name + '.');
+    }
+    return out;
+  });
+}
+module.exports = { product, cartons };

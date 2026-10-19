@@ -305,31 +305,80 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
   router.post('/:extensionId/hktv-waybill', async (req, res) => {
     try {
       const e = req.extension;
-      res.json(await require('../services/extension-hktv-waybill').readWaybill({
-        db: req.db, scope: e.scope, descriptor: e.descriptor, actor: e.actor, input: req.body,
-      }));
-    } catch (error) { respondError(res, error); }
+      res.json(
+        await require('../services/extension-hktv-waybill').readWaybill({
+          db: req.db,
+          scope: e.scope,
+          descriptor: e.descriptor,
+          actor: e.actor,
+          input: req.body,
+        })
+      );
+    } catch (error) {
+      respondError(res, error);
+    }
   });
-  for (const [route,method] of [['mapping','readMapping'],['mapping-save','saveMapping'],['mapping-preview','previewMappings'],['mapping-workbook','readMappingWorkbook'],['options','orderOptions'],['keys','orderKeys'],['list','listOrders'],['detail','readOrder'],['history','orderHistory'],['command','commandOrder']]) {
-    router.post('/:extensionId/hktv-orders/'+route, async (req,res) => {
+  for (const [route, method] of [
+    ['mapping', 'readMapping'],
+    ['mapping-save', 'saveMapping'],
+    ['mapping-preview', 'previewMappings'],
+    ['mapping-workbook', 'readMappingWorkbook'],
+    ['options', 'orderOptions'],
+    ['keys', 'orderKeys'],
+    ['list', 'listOrders'],
+    ['detail', 'readOrder'],
+    ['history', 'orderHistory'],
+    ['command', 'commandOrder'],
+  ]) {
+    router.post('/:extensionId/hktv-orders/' + route, async (req, res) => {
       try {
-        res.json(await require('../services/extension-hktv-orders')[method]({db:req.db,...req.extension,input:req.body}));
-      } catch(error) { respondError(res,error); }
+        res.json(
+          await require('../services/extension-hktv-orders')[method]({
+            db: req.db,
+            ...req.extension,
+            input: req.body,
+          })
+        );
+      } catch (error) {
+        respondError(res, error);
+      }
     });
   }
-    for (const [route,method] of [['read','readStatus'],['submit','submitStatus'],['reconcile','reconcileStatus'],['discard','discardStatus']]) {
-    router.post('/:extensionId/hktv-status/'+route, async (req,res) => {
-      try { res.json(await require('../services/extension-hktv-status')[method]({db:req.db,...req.extension,input:req.body})); }
-      catch(error) { respondError(res,error); }
+  for (const [route, method] of [
+    ['read', 'readStatus'],
+    ['submit', 'submitStatus'],
+    ['reconcile', 'reconcileStatus'],
+    ['discard', 'discardStatus'],
+  ]) {
+    router.post('/:extensionId/hktv-status/' + route, async (req, res) => {
+      try {
+        res.json(
+          await require('../services/extension-hktv-status')[method]({
+            db: req.db,
+            ...req.extension,
+            input: req.body,
+          })
+        );
+      } catch (error) {
+        respondError(res, error);
+      }
     });
   }
   router.post('/:extensionId/hktv-manifest', async (req, res) => {
     try {
       const e = req.extension;
-      res.json(await require('../services/extension-hktv-manifest').readManifest({
-        db: req.db, scope: e.scope, descriptor: e.descriptor, actor: e.actor, input: req.body,
-      }));
-    } catch (error) { respondError(res, error); }
+      res.json(
+        await require('../services/extension-hktv-manifest').readManifest({
+          db: req.db,
+          scope: e.scope,
+          descriptor: e.descriptor,
+          actor: e.actor,
+          input: req.body,
+        })
+      );
+    } catch (error) {
+      respondError(res, error);
+    }
   });
   router.get('/:extensionId/sales', async (req, res) => {
     try {
@@ -365,9 +414,14 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
   router.post('/:extensionId/commands', async (req, res) => {
     try {
       const e = req.extension;
-      if (e.descriptor.id === 'posnic.hktvmall-gogox' && e.orderStorage === 'records-v1' &&
-          ['orders.stage','order.pack','order.handover','mapping.save'].includes(req.body?.command?.type)) {
-        access.fail('Order storage changed. Refresh Online Orders before continuing.',409);
+      if (
+        e.descriptor.id === 'posnic.hktvmall-gogox' &&
+        e.orderStorage === 'records-v1' &&
+        ['orders.stage', 'order.pack', 'order.handover', 'mapping.save'].includes(
+          req.body?.command?.type
+        )
+      ) {
+        access.fail('Order storage changed. Refresh Online Orders before continuing.', 409);
       }
       res.json(
         await namespace.executeNamespace(
