@@ -673,14 +673,12 @@ class SettingController extends BaseController {
       const result = await settingsService.updateCommonSettings(data);
 
       if (result.status) {
-        return res
-          .status(200)
-          .json({
-            type: 'success',
-            message: quoteLibrary?.warning || 'Common settings updated',
-            data: result.data,
-            quoteLibrary,
-          });
+        return res.status(200).json({
+          type: 'success',
+          message: quoteLibrary?.warning || 'Common settings updated',
+          data: result.data,
+          quoteLibrary,
+        });
       }
       return res.status(404).json({
         type: 'error',

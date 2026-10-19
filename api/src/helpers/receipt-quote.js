@@ -8,15 +8,13 @@ function select(policy, saleNumber, existing) {
   if (!policy || policy.source === 'none') return null;
   const entries =
     policy.source === 'thirukkural'
-      ? library
-          .entries()
-          .map((v) => ({
-            text: v.lines.join('\n'),
-            number: v.number,
-            ...(policy.showQr === true
-              ? { qr: v.qr, url: 'https://www.posnic.com/tools/thirukural/' + v.number }
-              : {}),
-          }))
+      ? library.entries().map((v) => ({
+          text: v.lines.join('\n'),
+          number: v.number,
+          ...(policy.showQr === true
+            ? { qr: v.qr, url: 'https://www.posnic.com/tools/thirukural/' + v.number }
+            : {}),
+        }))
       : policy.source === 'custom' && Array.isArray(policy.quotes)
         ? policy.quotes
             .filter((q) => typeof q === 'string' && q.trim())
