@@ -60,6 +60,7 @@ router.post(
 // Routes below require authentication
 router.use(protect);
 router.post('/receiptDesignQr', bindController(settingController.previewReceiptQr));
+router.post('/receiptQuotePreview', bindController(settingController.previewReceiptQuote));
 
 router.get('/getDefaultCustomer', bindController(settingController.getDefaultCustomer));
 

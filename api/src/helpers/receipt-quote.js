@@ -21,6 +21,11 @@ function select(policy, saleNumber, existing) {
             .map((q) => ({ text: q.trim() }))
         : [];
   if (!entries.length) return null;
+  if (policy.order === 'fixed') {
+    if (!Number.isInteger(policy.selectedNumber) || !entries[policy.selectedNumber - 1])
+      return null;
+    return { source: policy.source, version: '2026-10-19', ...entries[policy.selectedNumber - 1] };
+  }
   const sequence = String(saleNumber || '').match(/(\d+)$/);
   if (!saleNumber || (policy.order === 'sequential' && !sequence)) return null;
   const index =
