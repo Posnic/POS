@@ -16,11 +16,13 @@ const event = () => ({ eventId: '1'.repeat(64), sourceReference: 'ORDER-1', prov
 
 test('posting credential requires a dedicated grant, exact endpoint and active sales permission', () => {
   const req = { isApiKey: true, method: 'POST', path: '/external-sales', user: { _id: userId, activate: true,
+    apiEndpointScope: { kind: 'extension-sales-writer', extensionId: descriptor.id },
     access: { extensions: { read: true }, sales: { write: true } } } };
   assert.equal(writerAllowed(req, approval), true);
   for (const change of [{ method: 'GET' }, { path: '/commands' }, { isApiKey: false }, { user: { ...req.user, active: false } }])
     assert.equal(writerAllowed({ ...req, ...change }, approval), false);
   assert.equal(writerAllowed(req, { ...approval, connectorReaderId: userId }), false);
+  assert.equal(writerAllowed({ ...req, user: { ...req.user, apiEndpointScope: undefined } }, approval), false);
   assert.equal(writerAllowed(req, { ...approval, externalSales: { ...approval.externalSales, enabled: false } }), false);
 });
 test('external event input rejects arbitrary fields, tax assumptions, invalid totals and dates', () => {
@@ -71,8 +73,9 @@ test('real database posting is atomic and scoped; retries preserve cost and neve
     const app = express(); app.use(express.json());
     app.use('/extensions/v1', routes.createRouter({ registry: { get: () => descriptor }, authenticate: (req, res, next) => {
       req.db = db; req.isApiKey = true;
-      req.user = { _id: userId, activate: true, access: { extensions: { read: true }, sales: { write: true } } };
-      req.tenantContext = { licenseId: String(license), branchId: String(branchId) }; next();
+      req.user = { _id: userId, activate: true, apiEndpointScope: {kind:'extension-sales-writer',extensionId:descriptor.id}, access: { extensions: { read: true, write: true }, sales: { write: true } } };
+      req.tenantContext = { licenseId: String(license), branchId: String(branchId) };
+      require('../api/src/middleware/api-key').enforceApiKeyAcl(req,res,next);
     } }));
     http = await new Promise(resolve => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
     const base = `http://127.0.0.1:${http.address().port}/extensions/v1/${descriptor.id}`;

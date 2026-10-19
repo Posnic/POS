@@ -19,6 +19,25 @@ const {
 
 const KEY = '35c4a96c97701b4a290a088d0b4d811e7bb54612';
 
+describe('dedicated extension sales key', () => {
+  const { aclRefusal } = require('../../../src/middleware/api-key');
+  const user = {
+    apiEndpointScope: { kind: 'extension-sales-writer', extensionId: 'example.marketplace' },
+    access: { sales: { read: true, write: true, delete: true }, extensions: { read: true, write: true } },
+  };
+  it('cannot use broad access flags to reach ordinary sales or another extension', () => {
+    for (const path of ['/sales', '/sales/123', '/extensions/v1/other.marketplace/external-sales', '/extensions/v1/example.marketplace/commands'])
+      expect(aclRefusal({ user, path, method: 'POST' })).not.toBeNull();
+    expect(aclRefusal({ user, method: 'GET', path: '/extensions/v1/example.marketplace/external-sales' })).not.toBeNull();
+    expect(aclRefusal({ user, method: 'POST', baseUrl: '/extensions/v1', path: '/example.marketplace/external-sales' })).toBeNull();
+  });
+  it('fails closed for malformed restrictions and still enforces the normal permission grid', () => {
+    const req = { user, method: 'POST', path: '/extensions/v1/example.marketplace/external-sales' };
+    expect(aclRefusal({ ...req, user: { ...user, access: {} } })).not.toBeNull();
+    expect(aclRefusal({ ...req, user: { ...user, apiEndpointScope: {} } })).not.toBeNull();
+  });
+});
+
 function apiUser(access = {}) {
   return { _id: 'u1', username: 'shopapi', usertype: 'api', apikey: KEY, access };
 }

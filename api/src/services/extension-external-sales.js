@@ -24,6 +24,8 @@ function writerAllowed(req, approval) {
     /^[a-f0-9]{24}$/.test(String(approval.externalSales.writerId || '')) &&
     String(approval.externalSales.writerId) !== String(approval.connectorReaderId || '') &&
     String(approval.externalSales.writerId) === String(req.user?._id || req.user?.id || '') &&
+    req.user?.apiEndpointScope?.kind === 'extension-sales-writer' &&
+    req.user.apiEndpointScope.extensionId === approval.extensionId &&
     req.user?.activate === true &&
     req.user?.active !== false &&
     ![1, '1', true].includes(req.user?.del_status) &&

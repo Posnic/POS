@@ -213,6 +213,19 @@ function apiKeyAuth({ findUserByApiKey, continueWithTenant }) {
  * or the endpoint does not exist.
  */
 function aclRefusal(req) {
+  const restriction = req.user?.apiEndpointScope;
+  if (restriction !== undefined && restriction !== null) {
+    const extensionId = restriction.extensionId;
+    const expected = `/extensions/v1/${extensionId}/external-sales`;
+    const actual = requestPath(req).split('?')[0];
+    if (
+      restriction.kind !== 'extension-sales-writer' ||
+      !/^[a-z][a-z0-9.-]{2,99}$/.test(extensionId || '') ||
+      req.method !== 'POST' ||
+      actual !== expected
+    )
+      return { type: 'error', status: 'error', message: 'This API key is restricted to its approved endpoint.', data: null };
+  }
   const action = actionFor(req.method);
   const moduleName = moduleFor(requestPath(req));
 
