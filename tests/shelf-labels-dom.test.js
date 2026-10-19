@@ -356,7 +356,8 @@ test('web roll printing opens the browser print helper and recovers from an inva
     assert.equal($('#sl-print').prop('disabled'), false);
     assert.equal($('#sl-status').text(), '');
     $('#sl-print')[0].click(); await tick();
-    assert.match(getPrint().style, /72mm 33mm/);
+    assert.match(getPrint().style, /@page\{size:portrait/);
+    assert.match(getPrint().style, /width:72mm;height:33mm/);
     $('#sl-from').val(2).trigger('input');
     assert.equal($('#sl-test').prop('disabled'), true);
     assert.ok($('.sl-footer #sl-status').text());
