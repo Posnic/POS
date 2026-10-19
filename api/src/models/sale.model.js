@@ -266,6 +266,8 @@ const saleSchema = new mongoose.Schema(
   {
     // ---- PHP-compatible legacy fields (mirroring Api/src/model/sales_model.php::$fields) ----
 
+    receipt_quote: { type: mongoose.Schema.Types.Mixed },
+
     // Branch & document identity
     branch_id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -988,6 +990,7 @@ saleSchema.pre('save', async function () {
       const src = item && typeof item.toObject === 'function' ? item.toObject() : item || {};
 
       return {
+        ...(src.unit_conversion ? { unit_conversion: src.unit_conversion } : {}),
         ...(src.pricing
           ? {
               pricing: src.pricing,

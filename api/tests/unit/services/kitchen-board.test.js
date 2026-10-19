@@ -4,6 +4,15 @@ const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb');
 const service = require('../../../src/services/kitchen-board');
 const { rounds } = require('../../../src/helpers/kitchen-rounds');
+test.each([{ floor_closed_at: new Date() }, { kitchen_closed: true }])(
+  'web kitchen excludes explicitly closed orders (%j)',
+  async (closure) => {
+    expect((await service.list(request())).tickets).toHaveLength(1);
+    await db.collection('sales').updateOne({ _id: saleId }, { $set: closure });
+    expect((await service.list(request())).tickets).toEqual([]);
+    expect(await db.collection('sales').findOne({ _id: saleId })).not.toBeNull();
+  }
+);
 function lineAction(operation, quantity, revision, actor, actionId = 'line-action-123456') {
   const req = action({ operation, quantity, revision, itemId: 'c0i0', actionId });
   if (actor) req.user._id = actor;
@@ -531,4 +540,24 @@ test('given setting keeps ready takeaway visible and survives saves from older c
       body: { orangeMinutes: 6, redMinutes: 12, pulse: false, takeawayRemoveWhen: 'paid' },
     })
   ).rejects.toMatchObject({ status: 400 });
+});
+
+test('web kitchen excludes unassigned edited receipts with stale kitchen flags', async () => {
+  await db.collection('sales').updateOne(
+    { _id: saleId },
+    {
+      $set: {
+        sale_process: 'Edit',
+        kitchen_required: true,
+        kitchen_closed: false,
+        table_number: '',
+        dine_type: '',
+        fulfilment: null,
+      },
+      $unset: { floor_lifecycle: '' },
+    }
+  );
+  expect((await service.list(request())).tickets).toEqual([]);
+  await db.collection('sales').updateOne({ _id: saleId }, { $set: { floor_lifecycle: true } });
+  expect((await service.list(request())).tickets).toHaveLength(1);
 });

@@ -149,3 +149,23 @@ body.rd-workspace-open { overflow: hidden; }
     .desktop-kitchen-printer > .desktop-setting-switch { grid-column: 1 / -1; }
     .desktop-settings-card { padding: 16px; }
 }
+
+/* Shared receipt options stay readable beside the live designer. */
+#receipt-designer .rd-print-options { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:24px 32px; max-width:1120px; padding:24px; background:#fff; }
+#receipt-designer .rd-quote-settings { border:0; padding:0; margin:0; min-width:0; }
+#receipt-designer .rd-quote-settings legend { font-size:16px; font-weight:600; margin-bottom:16px; }
+#receipt-designer .rd-print-options label { display:block; font-size:13px; margin:14px 0 6px; }
+#receipt-designer .rd-print-options .form-control { width:100%; min-height:36px; }
+#receipt-designer .rd-print-options small { display:block; font-size:12px; line-height:1.5; color:#66758b; margin-top:8px; }
+#receipt-designer .rd-document-settings { border-left:1px solid var(--rd-border); padding-left:32px; }
+#receipt-designer .rd-document-settings > label:first-child { margin-top:0; }
+#receipt-designer .rd-print-options input[type=checkbox] { vertical-align:middle; margin-right:6px; }
+#receipt-designer .rd-quote-qr-options { display:grid; grid-template-columns:1fr 100px; align-items:center; column-gap:12px; }
+#receipt-designer .rd-quote-qr-options .rd-checkbox { grid-column:1/-1; }
+#receipt-designer .rd-quote-qr-options select { margin-top:8px; }
+#receipt-designer .rd-existing-options { grid-column:1/-1; margin:0; }
+#receipt-designer .rd-print-options [hidden] { display:none!important; }
+@media(max-width:760px) {
+ #receipt-designer .rd-print-options { grid-template-columns:1fr; padding:16px; }
+ #receipt-designer .rd-document-settings { border-left:0; border-top:1px solid var(--rd-border); padding:20px 0 0; }
+}

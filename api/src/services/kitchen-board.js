@@ -3,10 +3,10 @@ const { ObjectId } = require('mongodb');
 const { context, allowed, fail } = require('../utils/branch-access');
 const { rounds, activeRounds, progress } = require('../helpers/kitchen-rounds');
 const states = ['new', 'preparing', 'ready'];
-const filter = (c) => ({
+const filter = (c, excludeClosed = false) => ({
   license: c.license,
   branch_id: c.branchId,
-  ...require('../helpers/kitchen-eligibility').kitchenEligibility(),
+  ...require('../helpers/kitchen-eligibility').kitchenEligibility({ excludeClosed }),
 });
 async function scope(req) {
   if (!req.user || !allowed(req.user, 'sales'))
@@ -88,32 +88,29 @@ async function list(req, includePickup = false) {
   const c = await scope(req);
   const cursor = req.db
     .collection('sales')
-    .find(
-      { ...filter(c), kitchen_closed: { $ne: true } },
-      {
-        projection: {
-          table_number: 1,
-          sales_id: 1,
-          token_id: 1,
-          takeaway_number: 1,
-          'outlet_snapshot.name': 1,
-          room_reference: 1,
-          preparation_note: 1,
-          created_date: 1,
-          items: 1,
-          changes: 1,
-          kitchen_service: 1,
-          kitchen_work: 1,
-          kitchen_actor: 1,
-          payment_status: 1,
-          fulfilment: 1,
-          dine_type: 1,
-          bill_requested_at: 1,
-          bill_printed_at: 1,
-          captain_payments: 1,
-        },
-      }
-    )
+    .find(filter(c, true), {
+      projection: {
+        table_number: 1,
+        sales_id: 1,
+        token_id: 1,
+        takeaway_number: 1,
+        'outlet_snapshot.name': 1,
+        room_reference: 1,
+        preparation_note: 1,
+        created_date: 1,
+        items: 1,
+        changes: 1,
+        kitchen_service: 1,
+        kitchen_work: 1,
+        kitchen_actor: 1,
+        payment_status: 1,
+        fulfilment: 1,
+        dine_type: 1,
+        bill_requested_at: 1,
+        bill_printed_at: 1,
+        captain_payments: 1,
+      },
+    })
     .sort({ created_date: 1 });
   const tickets = [];
   try {

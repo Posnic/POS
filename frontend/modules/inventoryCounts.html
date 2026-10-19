@@ -1,10 +1,49 @@
 <div class="vertical-layout page_loader" id="inventorycounts" style="display:none">
     <div id="containerbar"><div class="breadcrumbbar crumbbar_padding"><div class="row align-items-center row_filter"><div class="col"><h4 class="page-title break_title mb-0"><lang class="lang_stock_counts">Stock Counts</lang></h4></div><div class="col-auto">
-<button class="btn btn-primary" data-module="item" data-access="write" onclick="PosnicPro.items.openStockAdjustment();"><lang class="lang_start_recount">Start recount</lang></button>
+<button class="btn btn-primary" data-module="item" data-access="write" onclick="PosnicPro.items.openStockAdjustment();"><i class="feather icon-plus" aria-hidden="true"></i> <lang class="lang_start_recount">Start recount</lang></button>
 <button class="btn btn-primary-rgba" data-module="item" data-access="write" onclick="PosnicPro.items.openBulkStock();"><lang class="lang_bulk_stock_update">Bulk stock update</lang></button>
 <a class="btn btn-primary-rgba" href="#/stocklogs"><lang class="lang_inventory_logs">Inventory logs</lang></a>
 <a class="btn btn-primary-rgba" href="#/lowstockitems"><lang class="lang_low_stock_list">Low stock list</lang></a>
-<button class="btn btn-primary-rgba" onclick="PosnicPro.inventorycounts.load();"><lang class="lang_wf_refresh">Refresh</lang></button>
+<button class="btn btn-primary-rgba" onclick="PosnicPro.inventorycounts.load();"><i class="feather icon-refresh-cw" aria-hidden="true"></i> <lang class="lang_wf_refresh">Refresh</lang></button>
 </div><div class="col-auto" data-ask-entry style="display:none"><a class="btn btn-primary-rgba" href="#/askposnic"><lang class="lang_prepare_with_ask_posnic">Prepare with Ask Posnic</lang></a></div></div></div></div>
-    <div class="contentbar"><div class="row"><div class="col-lg-12"><div class="card m-b-30"><div class="card-body"><h5><lang class="lang_saved_count_worksheets">Saved count worksheets</lang></h5><p class="text-muted"><lang class="lang_start_recount_to_review_and_apply_actual_s">Start recount to review and apply actual stock quantities. Completed adjustments appear in Inventory logs; saved draft worksheets appear below.</lang></p><div id="inventory_counts_list" class="text-muted"><lang class="lang_loading_stock_counts">Loading stock counts…</lang></div><div id="inventory_count_detail" class="mt-4" style="display:none"></div></div></div></div></div></div>
+    <div class="contentbar stock-count-content"><div class="row"><div class="col-lg-12"><div class="card m-b-30 count-workspace"><div class="card-body"><h5><i class="feather icon-clipboard" aria-hidden="true"></i> <lang class="lang_saved_count_worksheets">Saved count worksheets</lang></h5><p class="text-muted"><lang class="lang_start_recount_to_review_and_apply_actual_s">Start recount to review and apply actual stock quantities. Completed adjustments appear in Inventory logs; saved draft worksheets appear below.</lang></p><div id="inventory_counts_list" class="text-muted"><lang class="lang_loading_stock_counts">Loading stock counts…</lang></div><div id="inventory_count_detail" class="mt-4" style="display:none"></div></div></div></div></div></div>
 </div>
+
+<style>
+#inventorycounts .row_filter { gap: 8px; }
+#inventorycounts .row_filter > .col-auto { display:flex; flex-wrap:wrap; gap:6px; }
+#inventorycounts .btn { border-radius:8px; }
+#inventorycounts .btn i { margin-inline-end:6px; }
+#inventorycounts .count-workspace { border:0; background:transparent; box-shadow:none; }
+#inventorycounts .count-workspace > .card-body { padding:0; }
+#inventorycounts .count-workspace > .card-body > h5 { font-size:16px; margin-bottom:8px; }
+#inventorycounts .count-workspace > .card-body > p { max-width:980px; font-size:13px; line-height:1.6; }
+#inventorycounts #inventory_counts_list { background:var(--bs-body-bg,#fff); border:1px solid #e4e9f0; border-radius:12px; margin-bottom:24px; }
+#inventorycounts #inventory_counts_list .text-center { padding:20px!important; text-align:start!important; font-size:13px; }
+#inventorycounts #inventory_counts_list .text-center p { margin-top:6px!important; }
+#inventorycounts .inventory-panel { background:var(--bs-body-bg,#fff); border:1px solid #e4e9f0; border-radius:12px; overflow:hidden; }
+#inventorycounts .inventory-panel-header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 20px; border-bottom:1px solid #edf0f5; }
+#inventorycounts .inventory-panel-header h5 { margin:0; font-size:16px; display:flex; align-items:center; gap:10px; }
+#inventorycounts .inventory-panel-header h5 i { color:#1769d2; }
+#inventorycounts .inventory-table { margin:0; }
+#inventorycounts .inventory-table th { background:#f7f9fc; color:#69758a; font-size:12px; font-weight:600; border-top:0; padding:12px 18px; white-space:nowrap; }
+#inventorycounts .inventory-table td { padding:14px 18px; vertical-align:middle; border-top:1px solid #edf0f5; font-size:13px; }
+#inventorycounts .inventory-table tbody tr:hover { background:#f8faff; }
+#inventorycounts .inventory-operation { display:flex; align-items:center; gap:12px; min-width:190px; }
+#inventorycounts .inventory-operation strong { display:block; font-weight:600; }
+#inventorycounts .inventory-operation small { display:block; color:#6c788b; max-width:340px; overflow-wrap:anywhere; margin-top:3px; }
+#inventorycounts .inventory-operation-icon { display:grid; place-items:center; width:36px; height:36px; flex-shrink:0; border-radius:10px; background:#edf4ff; color:#1769d2; font-size:18px; }
+#inventorycounts .inventory-status { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap; background:#edf3ff; color:#2459a6; }
+#inventorycounts .inventory-status.complete { background:#e9f6ef; color:#24734b; }
+#inventorycounts .inventory-status.conflict { background:#fff1e4; color:#9b5310; }
+#inventorycounts .inventory-status.prepared,#inventorycounts .inventory-status.applying { background:#fff7dd; color:#826515; }
+#inventorycounts .inventory-date { color:#667389; white-space:nowrap; }
+#inventorycounts .mobile-inventory-open { white-space:nowrap; }
+#inventorycounts .inventory-empty { padding:28px 20px; color:#69758a; }
+#inventorycounts #mobile_inventory_detail:not(:empty) { border:1px solid #b9cfee; border-radius:12px; margin-top:20px; padding:20px; background:var(--bs-body-bg,#fff); }
+#inventorycounts #mobile_inventory_detail .inventory-panel-header { padding:0 0 16px; margin-bottom:16px; }
+#inventorycounts #mobile_inventory_detail .table-responsive { margin:16px 0; }
+#inventorycounts .mobile-inventory-more { margin:16px 20px; }
+#inventorycounts button:focus-visible { outline:3px solid #93b9ed; outline-offset:2px; }
+@media(max-width:767px) { #inventorycounts .inventory-panel-header { padding:14px; } #inventorycounts .inventory-table td,#inventorycounts .inventory-table th { padding:12px; } #inventorycounts .contentbar { padding:16px; } }
+</style>

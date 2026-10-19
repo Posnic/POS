@@ -2107,6 +2107,12 @@ class ItemRepository extends BaseModel {
       if (data.purchase_unit !== undefined) {
         updateData.purchase_unit = String(data.purchase_unit || '').trim();
       }
+      if (data.selling_units !== undefined) {
+        updateData.selling_units = require('../helpers/selling-units').normalize(
+          data.selling_units,
+          updateData.unit
+        );
+      }
       if (data.conversion_factor !== undefined) {
         const cf = Number(data.conversion_factor);
         updateData.conversion_factor = Number.isFinite(cf) && cf > 0 ? cf : 0;
@@ -2994,6 +3000,7 @@ class ItemRepository extends BaseModel {
               mrp_price: 1,
               itemid: 1,
               unit: 1,
+              selling_units: 1,
               short_code: 1,
               item_code: 1,
               barcodes: 1,
@@ -3032,6 +3039,7 @@ class ItemRepository extends BaseModel {
         mrp_price: item.mrp_price || 0,
         itemid: item.itemid || '',
         unit: item.unit || '',
+        selling_units: item.selling_units || [],
         short_code: item.short_code || '',
         item_code: item.item_code || '',
         barcodes: item.barcodes || [],
@@ -3206,6 +3214,7 @@ class ItemRepository extends BaseModel {
         negative_stock: item.negative_stock === true,
         item_kind: item.item_kind || 'product',
         unit: item.unit || '',
+        selling_units: item.selling_units || [],
         ...itemText.snapshot(item),
         selling_price: item.selling_price || 0,
         itemid: item.itemid || '',
@@ -6657,6 +6666,7 @@ class ItemRepository extends BaseModel {
             name: 1,
             itemid: 1,
             unit: 1,
+            selling_units: 1,
             selling_price: 1,
             company_price: 1,
             mrp_price: 1,
@@ -7922,6 +7932,7 @@ class ItemRepository extends BaseModel {
             selling_price: 1,
             available_quantity: 1,
             unit: 1,
+            selling_units: 1,
             sort_order: 1,
           },
         })

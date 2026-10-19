@@ -1,9 +1,9 @@
 'use strict';
 const { ObjectId } = require('mongodb');
 const message =
-  'This bill has a Captain payment record. Ordinary sale edits cannot overwrite it. Open payment details to review the recorded payments.';
+  'This bill has a recorded restaurant payment. Ordinary sale edits cannot overwrite it. Open payment details to review the recorded payments.';
 const paidMessage =
-  'This bill is already paid through Captain. Use Return items to remove items, or Correct payment to change the payment method.';
+  'This restaurant bill is already paid. Use Return items to reverse the sale, or Correct payment to change the payment method.';
 async function mutable(db, sale) {
   if (sale?.payment_correction_pending)
     throw Object.assign(new Error('Finish the pending payment correction first.'), { status: 409 });

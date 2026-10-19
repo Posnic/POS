@@ -148,6 +148,39 @@
         throw new Error('Receipt footer text must be at most 200 characters.');
       out.brandingText = value.brandingText.trim();
     }
+    if (value.customHeading != null) {
+      if (typeof value.customHeading !== 'string' || value.customHeading.length > 60)
+        throw new Error('Custom receipt heading must be at most 60 characters.');
+      out.customHeading = value.customHeading.trim();
+    }
+    if (value.quoteFooter != null) {
+      const q = value.quoteFooter;
+      if (
+        !q ||
+        !['none', 'custom', 'thirukkural'].includes(q.source) ||
+        !['sequential', 'random'].includes(q.order)
+      )
+        throw new Error('Choose a valid quote library and order.');
+      if (
+        !Array.isArray(q.quotes) ||
+        q.quotes.length > 200 ||
+        q.quotes.some((text) => typeof text !== 'string' || text.length > 600)
+      )
+        throw new Error('Use up to 200 quotes, each at most 600 characters.');
+      const quotes = q.quotes.map((text) => text.trim()).filter(Boolean);
+      if (q.source === 'custom' && !quotes.length) throw new Error('Add at least one quote.');
+      out.quoteFooter = { source: q.source, order: q.order, quotes };
+      if (q.qrSizeMm !== undefined) {
+        if (![18, 22, 26].includes(q.qrSizeMm))
+          throw new Error('Choose a QR size of 18, 22 or 26 mm.');
+        out.quoteFooter.qrSizeMm = q.qrSizeMm;
+      }
+      if (q.showQr !== undefined) {
+        if (typeof q.showQr !== 'boolean')
+          throw new Error('Choose whether to show the Thirukkural QR code.');
+        out.quoteFooter.showQr = q.showQr;
+      }
+    }
     Object.keys(formats).forEach(function (format) {
       const layout = layoutFor(value, format);
       if (!layout || !Array.isArray(layout.blocks) || layout.blocks.length > 40)
@@ -182,6 +215,12 @@
           }
           b.hsn = block.hsn === true;
           b.showRowNumbers = block.showRowNumbers === true;
+          b.showUnit = block.showUnit === true;
+          if (block.rowNumberLabel != null) {
+            if (typeof block.rowNumberLabel !== 'string' || block.rowNumberLabel.length > 12)
+              throw new Error('Row number label must be at most 12 characters.');
+            b.rowNumberLabel = block.rowNumberLabel.trim();
+          }
           if (block.lineStyle != null) {
             if (!['solid', 'dashed', 'dotted'].includes(block.lineStyle))
               throw new Error('Choose a valid separator style.');

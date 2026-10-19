@@ -30,6 +30,77 @@ function setup() {
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
 }
 
+test('optional units, short row labels and heading render escaped across paper sizes', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.receipt_line_rows = [{ name: 'Pipe', qty: 2.5, unit: 'ft', rate: 32, amount: 80 }];
+    sale.receipt_designs.customHeading = '<Invoice>';
+    for (const format of Object.keys(contract.formats)) {
+        const items = sale.receipt_designs.layouts[format].blocks.find(b => b.type === 'items');
+        Object.assign(items, { showUnit: true, showRowNumbers: true, rowNumberLabel: 'No.' });
+        const output = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(output.find('th.rd-unit').text(), 'Unit');
+        assert.equal(output.find('td.rd-unit').text(), 'ft');
+        assert.equal(output.find('th.rd-row-number').text(), 'No.');
+        assert.equal(output.find('.rd-custom-heading').text(), '<Invoice>');
+        assert.equal(output.find('Invoice').length, 0);
+        assert.equal(output.find('thead th').length, output.find('tbody tr').first().find('td').length);
+    }
+    const normalized = contract.normalize(sale.receipt_designs);
+    assert.equal(normalized.customHeading, '<Invoice>');
+    assert.equal(normalized.layouts['80'].blocks.find(b => b.type === 'items').rowNumberLabel, 'No.');
+    sale.receipt_designs.customHeading = '';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-custom-heading').length, 0);
+    dom.window.close();
+});
+
+test('Thirukkural QR sits beside its saved verse and stacks on narrow paper', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.receipt_quote = require('../api/src/helpers/receipt-quote').select({ source: 'thirukkural', order: 'sequential', showQr: true }, 'S222');
+    for (const format of Object.keys(contract.formats)) {
+        const output = $('<div>').html(engine.render(sale, format, false));
+        assert.equal(output.find('.rd-quote-qr').attr('src'), sale.receipt_quote.qr);
+        assert.equal(output.find('.rd-quote-qr')[0].style.width, '22mm');
+        assert.equal(output.find('.rd-quote')[0].style.flexDirection, format === '58' ? 'column' : '');
+    }
+    sale.receipt_quote.qr = 'https://untrusted.test/tracker.png';
+    assert.equal($('<div>').html(engine.render(sale, '80', false)).find('.rd-quote-qr').length, 0);
+    dom.window.close();
+});
+
+test('receipt editor explicitly opts into the Thirukkural QR and saves the option', () => {
+    const { dom, w, $, branch } = setup();
+    let sent, target;
+    w.PosnicPro.post = (request, done) => { target = JSON.parse(request.data).text; done({ type: 'success', data: { src: require('../api/src/data/thirukkural/qr.json')[0] } }); };
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: sent }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('#rd-quote-qr').prop('checked'), false);
+    $('#rd-quote-source').val('thirukkural').trigger('change');
+    assert.equal(target, undefined);
+    $('#rd-quote-qr').prop('checked', true).trigger('change');
+    assert.equal(target, 'https://www.posnic.com/tools/thirukural/1');
+    $('#rd-quote-qr-size').val('18').trigger('change');
+    $('[data-action="save"]').trigger('click');
+    assert.equal(sent.receipt_designs.quoteFooter.qrSizeMm, 18);
+    assert.equal(sent.receipt_designs.quoteFooter.showQr, true);
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: sent.receipt_designs });
+    assert.equal($('#rd-quote-qr').prop('checked'), true);
+    dom.window.close();
+});
+
+test('saved quotes render safely on every paper size even after the library is disabled', () => {
+    const { dom, engine, sale, $ } = setup();
+    sale.receipt_quote = { source: 'custom', text: 'First line\n<script>second</script>' };
+    sale.receipt_designs.quoteFooter = { source: 'none', order: 'sequential', quotes: [] };
+    for (const format of Object.keys(contract.formats)) {
+        const html = engine.render(sale, format, false);
+        const output = $('<div>').html(html);
+        assert.equal(output.find('.rd-quote').text(), sale.receipt_quote.text);
+        assert.equal(output.find('.rd-quote script').length, 0);
+        assert.equal(engine.render(sale, format, false), html);
+    }
+    dom.window.close();
+});
+
 test('paid receipts use settlement time on every paper format and keep it on reprint', () => {
     const { dom, engine, sale, $ } = setup();
     Object.assign(sale, { payment_status: 'Paid', created_date: '14/10/2026 8:50 AM',
@@ -1512,4 +1583,47 @@ test('GBP and EUR receipts stay on Fast receipt without raster fallback', () => 
       assert.match(bytes, /Total GBP 1.50/); assert.match(bytes, /Cash GBP 2.00/);
       assert.match(bytes, /Change GBP 0.50/); assert.match(bytes, /Total EUR 3.00/);
     } finally { dom.window.close(); }
+});
+
+test('quote settings hide irrelevant controls and preserve explicit QR dimensions', () => {
+    const { dom, w, $, branch, sale, engine } = setup();
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('.rd-quote-qr-options').prop('hidden'), true);
+    assert.equal($('#rd-quote-list').prop('hidden'), true);
+    $('#rd-quote-source').val('custom').trigger('change');
+    assert.equal($('#rd-quote-list').prop('hidden'), false);
+    sale.receipt_quote = require('../api/src/helpers/receipt-quote').select({ source: 'thirukkural', order: 'sequential', showQr: true }, 'S1');
+    for (const size of [18, 22, 26]) {
+        sale.receipt_designs.quoteFooter = { source: 'thirukkural', order: 'sequential', quotes: [], qrSizeMm: size };
+        assert.equal(contract.normalize(sale.receipt_designs).quoteFooter.qrSizeMm, size);
+        const output = $('<div>').html(engine.render(sale, '80', false));
+        assert.equal(output.find('.rd-quote-qr')[0].style.width, size + 'mm');
+        assert.equal(output.find('.rd-quote').text(), sale.receipt_quote.text);
+    }
+    sale.receipt_designs.quoteFooter.qrSizeMm = 4;
+    assert.throws(() => contract.normalize(sale.receipt_designs), /QR size/);
+    dom.window.close();
+});
+
+test('unit follows quantity and quantity totals retain their column while amount stays last', () => {
+    const {dom,engine,sale,$}=setup();
+    for(const format of Object.keys(contract.formats)) for(const showUnit of [true,false]) for(const serial of [true,false]) {
+        const layout=sale.receipt_designs.layouts[format];
+        const items=layout.blocks.find(b=>b.type==='items');
+        Object.assign(items,{itemLayout:'columns',showUnit,showRowNumbers:serial,hsn:true});
+        if(!layout.blocks.some(b=>b.field==='total_quantity')) layout.blocks.push({id:'quantity-total',type:'field',field:'total_quantity'});
+        const output=$('<div>').html(engine.render(sale,format,false));
+        const headers=output.find('thead th');
+        assert.equal(headers.last().text(),'Amount');
+        const quantityIndex=headers.index(headers.filter('.rd-quantity'));
+        if(showUnit) assert.equal(headers.index(headers.filter('.rd-unit')),quantityIndex+1);
+        const row=output.find('tbody tr').first();
+        assert.equal(row.find('td').last().hasClass('rd-amount'),true);
+        const total=output.find('.rd-total-quantity');
+        assert.equal(total.length,1);
+        assert.equal(Number(total.find('td').first().attr('colspan')),quantityIndex);
+        assert.equal(total.find('.rd-quantity').text(),'2');
+        assert.equal(output.find('.rd-field-total_quantity').length,0);
+    }
+    dom.window.close();
 });

@@ -3857,13 +3857,23 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
    cell in every row, so that selector styles a hidden one. The action cell
    is addressed by its own id prefix. */
 #sales_new #return_table thead th:last-child,
-#sales_new #return_table td[id^="addSalesRemoveLineItem_"] {
+#sales_new #return_table td[id^="addSalesRemoveLineItem_"],
+#sales_new #sales_new_items_table td[id^="addSalesRemoveLineItem_"] {
     white-space: nowrap;
-    min-width: 86px;
+    min-width: 120px;
     text-align: center;
 }
 #sales_new #return_table td[id^="addSalesLineItemName_"] { word-break: break-word; }
 .sale-line-act { flex: 0 0 auto; }
+
+#sales_new .sale-tax-summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    line-height: 1.4;
+}
+#sales_new .sale-tax-values { text-align: right; white-space: nowrap; }
 
 /* chips follow the theme instead of assuming a light one */
 [data-theme] .sale-chip {

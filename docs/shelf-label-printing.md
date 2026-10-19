@@ -29,3 +29,53 @@ The full 24-label A4 sheet was physically confirmed by the operator. Product nam
 The three existing receipt modes remain available under Settings > Printers & paper: Exact design (raster), Fast receipt (text with Exact fallback for unsupported content), and Windows driver. Explicit physical tests were submitted using the actual receipt designer and HardwareManager. Exact and Fast returned success; Windows driver reported no matching spooler job and was not retried. The operator subsequently confirmed all three physical samples. The driver spooler check was a false negative; no duplicate was submitted.
 
 126 targeted tests passed, including receipt modes, printer settings, receipt designer, shelf labels and PDF printing.
+
+## Size presets
+
+The layout step offers A4 63 x 33 mm (24 positions), 80 mm receipt roll
+(72 x 33 mm printable, ESC/POS), 58 mm receipt roll (48 x 33 mm printable,
+driver), and 40 x 30, 50 x 30 and 60 x 40 mm sticker-label layouts (driver).
+These are editable starting points, not detection or certification of printer
+stock. Custom dimensions and existing designs are preserved. The 58 mm driver
+preset has not been physically tested; direct ESC/POS remains 80 mm only.
+
+Selecting a preset is explicit opt-in and saves only the existing local layout
+and print-method preferences. It does not change business data or sync lanes.
+Regression tests cover dimensions, method switching, copies, custom edits and
+reopening. 24 focused label and international-language tests passed.
+
+## Paper cards and print plan
+
+Paper and size choices are visible buttons with selected states. New layouts
+start with the 80 mm roll preset (72 x 33 mm printable); existing saved layouts
+remain unchanged. A4 sizes offer 24, 40 and 14 positions plus custom dimensions,
+with live column/row/capacity calculations. Roll sizes are hidden for A4 and vice
+versa. This default change was explicitly requested by the user.
+
+The print step lists selected products with editable label copies, a one-each
+shortcut, and the actual batch count/range and sheets or individual roll labels.
+Copies do not multiply the entire sheet. These controls still use existing
+local layout preferences and transient product selection, with no sync changes.
+
+## Batch selection and faithful preview (2026-10-19)
+
+A new or changed product/copy selection now fills the batch automatically, up to
+2,000 labels. An explicitly reduced batch remains in effect until selection/copies
+change. Preview and Print summaries show the actual batch amount, not just the
+selected total. The separate one-test-label action remains available.
+
+Preview uses the exact same sheet renderer and cells as both print paths. Fit-page
+uses the available viewport; Actual size uses 96 CSS pixels per inch with scrolling
+(actual physical monitor size depends on OS/browser zoom). A4 keeps its label
+margins and gaps, rather than stretching labels to fill paper. Desktop driver jobs
+retain micron dimensions and actual-size A4 PDF printing; ESC/POS retains its
+72 mm printable region on 80 mm stock.
+
+Local verification: 30 unit/DOM/desktop tests, real Chrome wizard and mobile checks,
+and real print-to-PDF output: 24 labels on one A4 page; 24 roll pages at the selected
+72 x 33 mm preset (PDF rounding within 0.3 mm). No physical printer was used.
+
+Sync decision: batch, selection, preview zoom and printer layout remain transient
+or per-device preferences. No shared business fields, collections, print queues or
+sync protocols change. The frontend is shared by web and desktop; an existing
+installed EXE is not modified by this source change.

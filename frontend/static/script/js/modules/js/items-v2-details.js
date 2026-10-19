@@ -58,6 +58,30 @@
         // This catalogue can contain historic tax slabs. Suggest codes only;
         // never silently replace the rate the shopkeeper selected.
     }
+    function openHsnSearch() {
+        var origin = 'https://www.posnic.com', requestId = crypto.randomUUID();
+        var dialog = document.createElement('dialog'), frame = document.createElement('iframe');
+        dialog.id = 'iv2-hsn-search-dialog';
+        dialog.style.cssText = 'width:min(960px,94vw);max-height:92vh;border:1px solid #cad6e4;border-radius:12px;padding:12px';
+        frame.title = 'Search HSN and SAC codes';
+        frame.style.cssText = 'width:100%;height:70vh;border:0';
+        frame.referrerPolicy = 'no-referrer';
+        frame.src = origin + '/hsn-code-search?' + new URLSearchParams({ embed: '1', parentOrigin: location.origin, requestId: requestId });
+        function close() { window.removeEventListener('message', receive); dialog.remove(); }
+        function receive(event) {
+            var message = event.data, row = message && message.selection;
+            if (event.origin !== origin || event.source !== frame.contentWindow || !message || message.type !== 'posnic.hsn.selected' || message.version !== 1 || message.requestId !== requestId) return;
+            if (!row || !['HSN', 'SAC'].includes(row.kind) || !/^\d{4,8}$/.test(row.code) || typeof row.description !== 'string' || row.description.length > 1000) return;
+            el('hsn').value = row.code;
+            el('hsn-description').value = [row.context, row.description].filter(Boolean).join(' — ').slice(0, 1000);
+            el('hsn-hint').textContent = 'Code selected. Confirm the applicable tax rate below.';
+            notify(); close(); el('hsn').focus();
+        }
+        dialog.append(button('Close search', close), frame);
+        dialog.addEventListener('cancel', function(event) { event.preventDefault(); close(); });
+        window.addEventListener('message', receive);
+        document.body.append(dialog); dialog.showModal();
+    }
     function button(text, action) {
         var b = document.createElement('button'); b.type = 'button'; b.className = 'iv2-secondary'; b.textContent = text; b.onclick = action; return b;
     }
@@ -151,7 +175,30 @@
         document.querySelectorAll('#iv2-variant-rows [data-field="photo"]').forEach(function(pick,i){pick.value=variants[i].photo||'';}); notify();
     }
     function isFamily() { return checked('has-variants') && document.querySelector('#items_v2 [name="iv2-kind"]:checked').value !== 'service'; }
+    function sellingUnits() {
+        return Array.from(el('selling-unit-rows').children).map(function(row) {
+            return { unit: row.querySelector('[data-unit]').value.trim(), factor: Number(row.querySelector('[data-factor]').value), price: row.querySelector('[data-price]').value === '' ? null : Number(row.querySelector('[data-price]').value) };
+        });
+    }
+    function addSellingUnit(value) {
+        if (el('selling-unit-rows').children.length >= 8) return;
+        value = value || {};
+        var row = document.createElement('div'); row.className = 'iv2-selling-unit-row';
+        row.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:8px;align-items:end;margin:8px 0';
+        row.innerHTML = '<label>Unit<input data-unit maxlength="20" placeholder="ft"></label><label>Base units per unit<input data-factor type="number" step="any" min="0.000000001" placeholder="0.3048"></label><label>Selling price<input data-price type="number" step="0.01" min="0.01" placeholder="Automatic" data-t-placeholder="lang_automatic"></label><button type="button" aria-label="Remove selling unit" data-t-aria-label="lang_remove_selling_unit">×</button>';
+        row.querySelector('[data-unit]').value = value.unit || '';
+        row.querySelector('[data-factor]').value = value.factor || '';
+        row.querySelector('[data-price]').value = value.price == null ? '' : value.price;
+        row.querySelector('button').onclick = function () { row.remove(); };
+        el('selling-unit-rows').appendChild(row);
+    }
     function validate() {
+        var units = sellingUnits(), seenUnits = new Set([option('unit') && option('unit').dataset.unit || 'qty']);
+        for (var sellingUnit of units) {
+            if (!sellingUnit.unit || seenUnits.has(sellingUnit.unit) || !(sellingUnit.factor > 0) || (sellingUnit.price !== null && !(sellingUnit.price > 0))) return error('Enter a unique selling unit, positive conversion and valid price.', 'selling-unit-rows');
+            seenUnits.add(sellingUnit.unit);
+        }
+
         if (caps.tax && val('hsn') && !/^\d{4,8}$/.test(val('hsn'))) return error(P.i18n.t('lang_iv2_hsn_code_invalid', 'Choose an HSN / SAC code from the suggestions, or enter a 4 to 8 digit code.'), 'hsn');
         if (caps.tax && val('hsn') && val('hsn-rate') === '') return error(P.i18n.t('lang_iv2_hsn_rate_required', 'Enter the applicable tax rate for this code. Enter 0 for a zero-rated item.'), 'hsn-rate');
         var invalid = document.querySelector('#iv2-fields input:invalid, #iv2-fields select:invalid, #iv2-fields textarea:invalid');
@@ -188,7 +235,7 @@
     }
     function data() {
         var u = option('unit'), supplier = option('supplier'), auto = checked('auto-tile') && P.autoTile ? P.autoTile(val('name')) : null;
-        var out = { mrp_price: Number(val('mrp')), reorder_point: number('reorder'), unit_id: val('unit') === 'qty' ? '' : val('unit'), unit: u && u.dataset.unit || 'qty', supplier_id: val('supplier'), supplier_name: supplier && supplier.dataset.name || '',
+        var out = { selling_units: sellingUnits(), mrp_price: Number(val('mrp')), reorder_point: number('reorder'), unit_id: val('unit') === 'qty' ? '' : val('unit'), unit: u && u.dataset.unit || 'qty', supplier_id: val('supplier'), supplier_name: supplier && supplier.dataset.name || '',
             open_price: checked('open-price'), service_unit: val('service-unit'), item_weight_machine_based: caps.weight && checked('weight'),
             discount_amount: val('discount-type') === 'amount' ? Number(val('discount')) : 0, discount_percentage: val('discount-type') === 'percentage' ? Number(val('discount')) : 0,
             plu_code: val('plu'), gtin: val('gtin'), barcodes: list(val('alt-barcodes')), purchase_unit: val('purchase-unit'), conversion_factor: number('pack-size'), brand: val('brand'), tags: list(val('tags')), position: Number(val('position')),
@@ -239,8 +286,21 @@
         preview.textContent=val('icon')||'▦';
         preview.style.background=checked('auto-tile')&&P.autoTile?P.autoTile(val('name')).color:val('tile-color');preview.style.color='white';
     }
-    function reset() {['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){if(el('parcel-'+k))el('parcel-'+k).value='';});generation++;reading=0;photos=[];variants=[];signature='';el('variant-rows').replaceChildren();el('auto-tile').checked=true;photoPicker();P.itemTranslationsV2.reset();}
+    function reset() {if(el('selling-unit-rows'))el('selling-unit-rows').replaceChildren();['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){if(el('parcel-'+k))el('parcel-'+k).value='';});generation++;reading=0;photos=[];variants=[];signature='';el('variant-rows').replaceChildren();el('auto-tile').checked=true;photoPicker();P.itemTranslationsV2.reset();}
     function init() {
+        if (!document.getElementById('iv2-hsn-search-button')) {
+            var searchButton = button('Find HSN / SAC code', openHsnSearch);
+            searchButton.id = 'iv2-hsn-search-button';
+            el('hsn-hint').insertAdjacentElement('afterend', searchButton);
+        }
+        if (!el('selling-unit-rows')) {
+            var unitsPanel = document.createElement('section');
+            unitsPanel.style.gridColumn = '1 / -1';
+            unitsPanel.innerHTML = '<h4><lang class="lang_alternate_selling_units">Alternate selling units</lang></h4><p>Stock stays in the item unit above. Example: when stock is in metres, 1 ft = 0.3048 metres. Leave price blank to calculate it from the base price.</p><div id="iv2-selling-unit-rows"></div><button type="button" id="iv2-add-selling-unit"><lang class="lang_add_selling_unit">Add selling unit</lang></button>';
+            el('unit').parentElement.insertAdjacentElement('afterend', unitsPanel);
+            el('add-selling-unit').onclick = function () { addSellingUnit(); };
+        }
+
         if(initialized)return;initialized=true;
         el('hsn').addEventListener('focus', hsnSuggestions);
         el('hsn').addEventListener('input', hsnSuggestions);
@@ -273,6 +333,7 @@
     function load(item) {
         reset();
         ['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){if(el('parcel-'+k))el('parcel-'+k).value=item.parcel_details && item.parcel_details[k]!=null?item.parcel_details[k]:'';});
+        (item.selling_units || []).forEach(addSellingUnit);
         var mapping = {mrp:'mrp_price',reorder:'reorder_point',plu:'plu_code',gtin:'gtin','purchase-unit':'purchase_unit','pack-size':'conversion_factor',brand:'brand',position:'sort_order',icon:'icon','tile-color':'tile_color','tile-shape':'tile_shape','service-unit':'service_unit','hsn':'hsncode','hsn-description':'hsndescription','hsn-rate':'tax','prep-note':'prep_note','prep-minutes':'prep_minutes'};
         Object.keys(mapping).forEach(function(id){if(item[mapping[id]] != null) el(id).value=item[mapping[id]];});
         ['mfg','expiry'].forEach(function(id){var v=item[id==='mfg'?'items_mfg_date':'items_expiry_date'];el(id).value=v?String(v).slice(0,10):'';});

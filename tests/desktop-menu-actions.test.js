@@ -24,7 +24,8 @@ test('moving focus between Desktop items must not hide the item before its click
   const { w, fab, trigger, opened } = await menu(t);
   const items = [...fab.querySelectorAll('[role=menuitem]')];
   assert.equal(items.find(x => x.textContent === 'Hardware Manager').textContent, 'Hardware Manager');
-  const targets = ['settings/app', 'hardware', 'hardware:kot', 'hardware:screen', 'hardware:sound', 'backup', 'update', 'cloud', 'log', 'about'];
+  const targets = ['settings/app', 'hardware', 'backup', 'update', 'cloud', 'log', 'about'];
+  assert.equal(items.some(x => /Kitchen/i.test(x.textContent)), false);
   for (let i = 0; i < items.length; i++) {
     trigger.click();
     // Chromium delivers focusout while activeElement is temporarily body.
