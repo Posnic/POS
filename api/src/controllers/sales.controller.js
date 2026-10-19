@@ -1401,7 +1401,9 @@ class SalesController extends BaseController {
         userId: req.user?._id,
       });
       return this.success(res, result, 'Parked sales cleared');
-    } catch (error) { next(error); }
+    } catch (error) {
+      next(error);
+    }
   }
 
   async getLatestSales(req, res) {

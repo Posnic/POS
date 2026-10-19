@@ -191,3 +191,24 @@ installed or physically scan-tested. No EXE generated.
 7. Review/merge/deploy only after remaining work and verification; no new EXE requested.
 
 Tax audit remains paused while these user-requested POS issues are addressed.
+
+### Release verification update, 19 October
+
+The earlier "not merged/published" notes above describe their checkpoints, not the
+current state. POS main received the feature batch at 65f6db1c. Tenant frontend/CDN
+workflows completed, but the tenant API workflow failed its post-reload smoke test;
+therefore this is not a fully verified production rollout. The smoke restock helper
+was selecting a deleted product while billing selected a live product with no stock.
+PR #1430 aligns both fixtures and preserves the sold unit on returns. It also fixes
+release inventories, translations and rejects object-valued tenant identifiers in
+parked clearing before any database access. Required review is still outstanding.
+
+The central HSN API deployed successfully at web-api 30e1bdac. A public water-tank
+query returned the starter catalogue result. Website publication is still pending:
+PR #98 adds the palm-leaf reader and optional reduced-motion-aware stylus reveal,
+and corrects publication/sitemap inventories. All 1,330 source hashes and generated
+pages pass their focused checks; full website validation remains in progress.
+
+No customer historical records were repaired. Physical print/QR scans, installed
+desktop reconnection and the exact customer Quick Item checkout remain unverified.
+No new installer was manually requested for this release.

@@ -1017,7 +1017,18 @@ describe('invoice_key survives the strict schema', () => {
 describe('item translation snapshots', () => {
   test('selling conversion survives persistence, legacy normalization and reopen', async () => {
     const conversion = { unit: 'ft', base_unit: 'm', factor: 0.3048, price: 32 };
-    const sale = new Sale({ sale_method: 'Live-Order', items: [{ item_name: 'Pipe', item_quantity: 10, item_unit: 'ft', unit_conversion: conversion, total_amount: 320 }] });
+    const sale = new Sale({
+      sale_method: 'Live-Order',
+      items: [
+        {
+          item_name: 'Pipe',
+          item_quantity: 10,
+          item_unit: 'ft',
+          unit_conversion: conversion,
+          total_amount: 320,
+        },
+      ],
+    });
     await getPreSaveFn().call(sale);
     expect(Sale.hydrate(sale.toObject()).toObject().items[0].unit_conversion).toEqual(conversion);
   });

@@ -5064,5 +5064,18 @@
   "lang_sl_a4small": "48 × 25 mm",
   "lang_sl_a4large": "99 × 38 mm",
   "lang_sl_sending": "Labels worden naar de printer verzonden. Even geduld.",
-  "lang_sl_browser_unavailable": "Het afdrukonderdeel van de browser is niet beschikbaar. Vernieuw deze pagina en probeer het opnieuw."
+  "lang_sl_browser_unavailable": "Het afdrukonderdeel van de browser is niet beschikbaar. Vernieuw deze pagina en probeer het opnieuw.",
+  "lang_add_selling_unit": "Verkoopeenheid toevoegen",
+  "lang_alternate_selling_units": "Alternatieve verkoopeenheden",
+  "lang_in_bill_number_order": "Op volgorde van bonnummer",
+  "lang_library": "Bibliotheek",
+  "lang_my_quotes": "Mijn citaten",
+  "lang_my_quotes_separate_entries_with_a_blank_li": "Mijn citaten - scheid de teksten met een lege regel",
+  "lang_order": "Volgorde",
+  "lang_random": "Willekeurig",
+  "lang_read_the_meaning": "Lees de betekenis",
+  "lang_receipt_quotes": "Citaten op de bon",
+  "lang_remove_selling_unit": "Verkoopeenheid verwijderen",
+  "lang_sell_by_which_unit": "In welke eenheid verkopen?",
+  "lang_thirukkural_1_330_tamil_couplets": "Thirukkural - 1.330 Tamil coupletten"
 }

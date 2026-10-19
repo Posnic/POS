@@ -1042,7 +1042,11 @@ describe('SalesController', () => {
   describe('clearParkedSales', () => {
     test('requires sales write permission', async () => {
       const res = mockRes();
-      await ctrl.clearParkedSales(mockReq({ user: restrictedUser(), body: { confirmed: true } }), res, jest.fn());
+      await ctrl.clearParkedSales(
+        mockReq({ user: restrictedUser(), body: { confirmed: true } }),
+        res,
+        jest.fn()
+      );
       expect(res.status).toHaveBeenCalledWith(403);
     });
     test('requires explicit confirmation', async () => {

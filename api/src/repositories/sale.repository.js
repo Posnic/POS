@@ -5307,8 +5307,19 @@ class SalesRepository {
           cgst_tax: cgst,
           sgst_tax: sgst,
           tax_fields: itemDoc.tax_fields,
-          item_unit: (originalSaleItems.find(line => String(line.item_id || line.item) === String(rawItemId)) || {}).item_unit || item.item_unit || 'qty',
-          unit_conversion: (originalSaleItems.find(line => String(line.item_id || line.item) === String(rawItemId)) || {}).unit_conversion,
+          item_unit:
+            (
+              originalSaleItems.find(
+                (line) => String(line.item_id || line.item) === String(rawItemId)
+              ) || {}
+            ).item_unit ||
+            item.item_unit ||
+            'qty',
+          unit_conversion: (
+            originalSaleItems.find(
+              (line) => String(line.item_id || line.item) === String(rawItemId)
+            ) || {}
+          ).unit_conversion,
         });
       }
 
@@ -5391,7 +5402,6 @@ class SalesRepository {
 
         itemsReturn.push({
           unit_conversion: originalLine && originalLine.unit_conversion,
-          item_unit: originalLine && originalLine.item_unit,
           item_status: process,
           return: returnFlag,
           item_name: item.item_name,
@@ -5422,7 +5432,7 @@ class SalesRepository {
           cgst_tax: cgst,
           sgst_tax: sgst,
           tax_fields: itemDoc.tax_fields,
-          item_unit: item.item_unit || 'qty',
+          item_unit: (originalLine && originalLine.item_unit) || item.item_unit || 'qty',
         });
 
         itemsTotalAmount += totalAmount;
@@ -5538,8 +5548,14 @@ class SalesRepository {
           }
 
           const openingBalance = Number(itemDoc.available_quantity || 0);
-          const sourceLine = originalSaleItems.find(line => String(line.item_id || line.item) === String(rawItemId)) || {};
-          const itemQty = require('../helpers/selling-units').stockQuantity(sourceLine, item.item_quantity || 0);
+          const sourceLine =
+            originalSaleItems.find(
+              (line) => String(line.item_id || line.item) === String(rawItemId)
+            ) || {};
+          const itemQty = require('../helpers/selling-units').stockQuantity(
+            sourceLine,
+            item.item_quantity || 0
+          );
           if (!itemQty || itemQty <= 0) {
             continue;
           }
@@ -9446,7 +9462,8 @@ class SalesRepository {
         ready_minutes: readyMinutes,
       };
       saleDocument.receipt_quote = require('../helpers/receipt-quote').select(
-        branchDoc?.receipt_designs?.quoteFooter, saleDocument.sales_id
+        branchDoc?.receipt_designs?.quoteFooter,
+        saleDocument.sales_id
       );
 
       /* A number taken a moment ago is taken again, not handed to the
