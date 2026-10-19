@@ -5,6 +5,11 @@ const message =
 const paidMessage =
   'This restaurant bill is already paid. Use Return items to reverse the sale, or Correct payment to change the payment method.';
 async function mutable(db, sale) {
+  if (sale?.external_sale)
+    throw Object.assign(
+      new Error('This marketplace sale is managed by its extension. Use its adjustment workflow.'),
+      { status: 409, statusCode: 409 }
+    );
   if (sale?.payment_correction_pending)
     throw Object.assign(new Error('Finish the pending payment correction first.'), { status: 409 });
   if (!sale?.captain_payment_plan) return;

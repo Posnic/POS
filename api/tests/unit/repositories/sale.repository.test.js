@@ -1885,6 +1885,23 @@ describe('SalesRepository', () => {
 
     const range = { starting_date: '2026-01-01', ending_date: '2026-01-31', branchid: [] };
 
+    test('unreconciled marketplace fees are unknown, never zero profit deductions', async () => {
+      aggregates(
+        [],
+        [{ _id: 'Example marketplace', orders: 2, sales: 100, commission: 0, feesPending: 2 }]
+      );
+      const r = await salesRepository.commissionReport(range);
+      expect(r.status).toBe(true);
+      expect(r.data.rows[0].sales).toBe(100);
+      expect(r.data.rows[0].commission).toBeNull();
+      expect(r.data.rows[0].net).toBeNull();
+      expect(r.data.totals.net).toBeNull();
+      expect(r.data.totals.feesPending).toBe(2);
+      const date = collections.sales.aggregate.mock.calls[0][0][0].$match.date;
+      expect(date.$gte.toISOString()).toBe('2025-12-31T18:30:00.000Z');
+      expect(date.$lt.toISOString()).toBe('2026-01-31T18:30:00.000Z');
+    });
+
     test('a hotel is one row, with what it brought in and what it is owed', async () => {
       aggregates(
         [{ _id: 'rc', name: 'Royal Club Hotel', orders: 40, sales: 12320, commission: 1120 }],

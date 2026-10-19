@@ -1726,6 +1726,11 @@ class SalesRepository {
         })
         .toArray();
       for (const sale of paymentCandidates) {
+        if (sale.external_sale)
+          throw Object.assign(
+            new Error('Marketplace sales must be adjusted through their extension, not deleted.'),
+            { statusCode: 409 }
+          );
         if (sale.captain_payment_plan && sale.payment_status === 'Paid' && objectIds.length !== 1)
           throw Object.assign(
             new Error(
@@ -1756,6 +1761,7 @@ class SalesRepository {
       const salesFilter = {
         _id: { $in: objectIds },
         ...licenseFilter,
+        external_sale: { $exists: false },
         $or: [
           { captain_payment_plan: { $exists: false } },
           ...captainEdits.filter((entry) => entry.filter).map((entry) => entry.filter),
@@ -2081,6 +2087,10 @@ class SalesRepository {
 
   async save(sale) {
     if (!sale) return null;
+    if (!sale.isNew && sale.external_sale)
+      throw Object.assign(new Error('Marketplace sales require an extension adjustment.'), {
+        status: 409,
+      });
     if (!sale.isNew && typeof sale.$where !== 'function') {
       if (sale.captain_payment_plan) {
         await require('../services/captain-payment-guard').mutable(await BaseModel.getDb(), sale);
@@ -2094,6 +2104,7 @@ class SalesRepository {
         : (sale.seating_capacity_revision ?? { $exists: false });
       sale.$where = {
         ...(sale.$where || {}),
+        external_sale: { $exists: false },
         captain_payment_plan: { $exists: false },
         seating_capacity_revision: expectedCapacity,
       };
@@ -2110,6 +2121,7 @@ class SalesRepository {
         {
           _id: new mongoose.Types.ObjectId(saleId),
           license: BaseModel.license,
+          external_sale: { $exists: false },
         },
         {
           $set: {
@@ -5044,6 +5056,14 @@ class SalesRepository {
           message: 'Sale not found',
         };
       }
+
+      if (saleDocument.external_sale)
+        return {
+          status: false,
+          data: null,
+          message:
+            'Use the marketplace extension to record the refund and physical return separately.',
+        };
 
       const branchId =
         saleDocument.branch_id || saleDocument.branch || BaseModel.currentBranch || null;
@@ -9683,10 +9703,10 @@ class SalesRepository {
   async commissionReport(value = {}) {
     try {
       const baseModel = new BaseModel('sales');
-      const { FromDate, ToDate } = formatDate(
-        value.starting_date,
-        value.ending_date,
-        BaseModel.currentTimeZone || 'Asia/Kolkata'
+      const zone = BaseModel.currentTimeZone || 'Asia/Kolkata';
+      const period = require('../helpers/daily-report-period').dailyReportPeriod(
+        { starting_date: value.starting_date, ending_date: value.ending_date },
+        zone
       );
 
       const branchIds = [];
@@ -9700,7 +9720,7 @@ class SalesRepository {
 
       const range = {
         ...reportableSales(),
-        date: { $gte: new Date(FromDate), $lte: new Date(ToDate) },
+        date: { $gte: period.start, $lt: period.end },
         license: BaseModel.license,
       };
       if (branchIds.length) range.branch_id = { $in: branchIds };
@@ -9733,6 +9753,9 @@ class SalesRepository {
             $group: {
               _id: '$channel_partner',
               orders: { $sum: 1 },
+              feesPending: {
+                $sum: { $cond: [{ $eq: ['$external_sale.feeStatus', 'unknown'] }, 1, 0] },
+              },
               sales: { $sum: { $toDouble: { $ifNull: ['$total', 0] } } },
               commission: { $sum: { $toDouble: { $ifNull: ['$channel_commission', 0] } } },
             },
@@ -9749,12 +9772,15 @@ class SalesRepository {
           name: row.name || String(row._id || ''),
           orders: Number(row.orders) || 0,
           sales: money(row.sales),
-          commission: money(row.commission),
+          feesPending: Number(row.feesPending) || 0,
+          commission: row.feesPending ? null : money(row.commission),
           /* What the shop actually keeps. The number the report exists for:
              a month that looks like 90,000 of sales through partners is
              67,500 once their cut is out, and a shop planning on the first
              figure is planning on money it never had. */
-          net: money((Number(row.sales) || 0) - (Number(row.commission) || 0)),
+          net: row.feesPending
+            ? null
+            : money((Number(row.sales) || 0) - (Number(row.commission) || 0)),
         }));
 
       const rows = [...shape(venues, 'venue'), ...shape(partners, 'partner')];
@@ -9767,8 +9793,13 @@ class SalesRepository {
           totals: {
             orders: rows.reduce((sum, r) => sum + r.orders, 0),
             sales: money(rows.reduce((sum, r) => sum + r.sales, 0)),
-            commission: money(rows.reduce((sum, r) => sum + r.commission, 0)),
-            net: money(rows.reduce((sum, r) => sum + r.net, 0)),
+            feesPending: rows.reduce((sum, r) => sum + r.feesPending, 0),
+            commission: rows.some((r) => r.feesPending)
+              ? null
+              : money(rows.reduce((sum, r) => sum + r.commission, 0)),
+            net: rows.some((r) => r.feesPending)
+              ? null
+              : money(rows.reduce((sum, r) => sum + r.net, 0)),
           },
         },
       };

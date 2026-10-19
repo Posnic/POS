@@ -238,7 +238,8 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       if (!approved) access.fail('Extension is not enabled for this shop.', 403);
       if (
         req.isApiKey &&
-        !require('../services/extension-connector-context').readerAllowed(req, approved)
+        !require('../services/extension-connector-context').readerAllowed(req, approved) &&
+        !require('../services/extension-external-sales').writerAllowed(req, approved)
       )
         access.fail('Scoped connector reader approval required.', 403);
       const state = await req.db.collection('extension_namespaces').findOne({
@@ -255,6 +256,9 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       if (!permissions.includes('read')) access.fail('Extension read permission required.', 403);
       const actor = { userId: String(req.user._id || req.user.id), permissions };
       req.extension = { descriptor, scope, actor, orderStorage: state?.data?.orderStorage };
+      req.extensionApproval = approved;
+      req.extensionPostingAuthorized =
+        require('../services/extension-external-sales').writerAllowed(req, approved);
       res.set('Cache-Control', 'no-store');
       next();
     } catch (error) {
@@ -279,6 +283,28 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
           db: req.db,
           ...req.extension,
           query: req.query,
+        })
+      );
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
+  router.post('/:extensionId/external-sales', async (req, res) => {
+    try {
+      const service = require('../services/extension-external-sales');
+      if (req.extensionPostingAuthorized !== true)
+        access.fail('Dedicated sales posting approval required.', 403);
+      res.json(
+        await service.postExternalSale({
+          db: req.db,
+          ...req.extension,
+          approval: req.extensionApproval,
+          input: req.body,
+          notify: async (document) => {
+            const { enqueue, REASONS } = require('../sync/outbox');
+            await enqueue({ collection: 'sales', documentId: document._id, reason: REASONS.SALE });
+            require('../sync/nudge').nudgeSyncAgent();
+          },
         })
       );
     } catch (error) {

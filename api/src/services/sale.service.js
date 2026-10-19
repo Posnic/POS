@@ -392,6 +392,12 @@ const processSale = async (
     if (id !== '') {
       existingSale = await salesRepository.getById(id);
       if (existingSale) {
+        if (existingSale.external_sale)
+          return {
+            status: false,
+            message:
+              'This marketplace sale is managed by its extension. Use its adjustment workflow.',
+          };
         if (existingSale.payment_correction_pending)
           return { status: false, message: 'Finish the pending payment correction first.' };
         if (existingSale.extension_stock_operation)

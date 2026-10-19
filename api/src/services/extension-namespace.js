@@ -154,7 +154,7 @@ async function executeNamespace(db, scope, descriptor, actor, input, dependencie
         command,
         actor: json(actor),
         operationId,
-        context: json(prepared),
+        context: json({ ...prepared, serverTime: new Date().toISOString() }),
       })
     );
     if (

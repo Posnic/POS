@@ -424,7 +424,7 @@ PosnicPro.commissionreport = {
         var rows = (data && data.rows) || [];
         var totals = (data && data.totals) || {};
         var sign = PosnicPro.local.get('currencySign') || '';
-        var money = function (amount) { return sign + (Number(amount) || 0).toFixed(2); };
+        var money = function (amount) { return amount === null ? 'Awaiting marketplace fees' : sign + (Number(amount) || 0).toFixed(2); };
         var safe = function (value) { return $('<div>').text(value == null ? '' : value).html(); };
         var t = function (key, fallback) { return PosnicPro.i18n.t(key, fallback); };
 
