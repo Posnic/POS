@@ -51,6 +51,41 @@ test('wall screen excludes ordinary counter sales before and after payment', asy
   result = await repository.kitchenScreenTickets(String(branch));
   expect(result.data.map((t) => t.id)).toEqual([`${id}:c0`]);
 });
+
+test.each([{ floor_closed_at: new Date() }, { kitchen_closed: true }])(
+  'wall screen excludes explicitly closed orders without removing an active table (%j)',
+  async (closure) => {
+    const active = await collection.findOne({ _id: id });
+    await collection.updateOne({ _id: id }, { $set: { table_number: 'T10' } });
+    const oldId = new mongoose.Types.ObjectId();
+    await collection.insertOne({
+      ...active,
+      _id: oldId,
+      created_date: new Date('2026-10-01'),
+      ...closure,
+    });
+    const result = await repository.kitchenScreenTickets(String(branch));
+    expect(result.status).toBe(true);
+    expect(result.data.map((ticket) => ticket.id)).toEqual([`${id}:c0`]);
+    expect(await collection.findOne({ _id: oldId })).not.toBeNull();
+  }
+);
+
+test('paid takeaway still cooking remains visible regardless of age', async () => {
+  await collection.updateOne(
+    { _id: id },
+    {
+      $set: {
+        dine_type: 'Take away',
+        kitchen_required: true,
+        floor_lifecycle: true,
+        payment_status: 'Paid',
+        created_date: new Date('2026-10-01'),
+      },
+    }
+  );
+  expect((await repository.kitchenScreenTickets(String(branch))).data).toHaveLength(1);
+});
 test('service persists, retries are idempotent, and the kitchen shows only the remainder', async () => {
   const changed = jest.fn();
   process.on('posnic:kitchen-served', changed);
@@ -311,4 +346,32 @@ test('desktop Serve all closes a paid takeaway and advances its sync timestamp',
   expect(saved.updated_date.getTime()).toBeGreaterThan(before.getTime());
   expect(saved.sales_total).toBe(1134);
   expect(saved.payment_status).toBe('Paid');
+});
+
+test('legacy edited receipt with stale kitchen flag is not an active kitchen order', async () => {
+  const base = await collection.findOne({ _id: id });
+  const oldId = new mongoose.Types.ObjectId();
+  await collection.updateOne({ _id: id }, { $set: { table_number: 'T5' } });
+  await collection.insertOne({
+    ...base,
+    _id: oldId,
+    sale_process: 'Edit',
+    kitchen_required: true,
+    kitchen_closed: false,
+    table_number: '',
+    dine_type: '',
+    fulfilment: null,
+    created_date: new Date('2026-10-01T07:21:00Z'),
+  });
+  expect((await repository.kitchenScreenTickets(String(branch))).data.map((t) => t.id)).toEqual([
+    `${id}:c0`,
+  ]);
+  expect(await collection.findOne({ _id: oldId })).not.toBeNull();
+  await collection.updateOne({ _id: oldId }, { $set: { floor_lifecycle: true } });
+  expect((await repository.kitchenScreenTickets(String(branch))).data).toHaveLength(2);
+  await collection.updateOne(
+    { _id: oldId },
+    { $unset: { floor_lifecycle: '' }, $set: { dine_type: 'Take away', payment_status: 'Paid' } }
+  );
+  expect((await repository.kitchenScreenTickets(String(branch))).data).toHaveLength(2);
 });

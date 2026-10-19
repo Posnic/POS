@@ -108,6 +108,7 @@ const cspDirectives = {
   // Allow previews and embedded documents that use data: or same-origin
   // URLs inside <iframe> elements (purchase/sales attachment previews).
   'frame-src': [
+    'https://www.posnic.com',
     'blob:', // PDFs fetched through the permission-checked attachment API.
     "'self'",
     'data:',
@@ -123,6 +124,7 @@ const cspDirectives = {
   // Older user agents may still consult child-src for nested browsing
   // contexts; mirror frame-src for safety.
   'child-src': [
+    'https://www.posnic.com',
     'blob:',
     "'self'",
     'data:',

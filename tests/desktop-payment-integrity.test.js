@@ -188,6 +188,8 @@ function savedOrderSetup() {
   }
   load('PosnicPro.sales', 'savedSellingPrice');
   load('PosnicPro.sales', 'addSalesLineItems');
+  sales.parkedMenu = {};
+  load('PosnicPro.sales.parkedMenu', 'paidOnResume');
   load('PosnicPro.sales.recentMenu', 'editItems');
   load('PosnicPro.sales.calculation', 'salesTableRowCart');
   load('PosnicPro.sales.calculation', 'extraDiscoundCalculation');

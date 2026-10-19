@@ -29,7 +29,26 @@
   function outer(id, host) { let el = at(id); while (el && el.parentElement !== host) el = el.parentElement; return el; }
   const pages = [['receipt','Receipt printer','Checkout'],['cash','Cash drawer'],['weight','Weight machine'],['scanner','Barcode scanner'],['kot','Kitchen printing','Kitchen'],['screen','Kitchen Display'],['sound','Kitchen sound'],['mobile','Mobile devices','Connections']];
   const nav = document.querySelector('.tabs');
-  pages.forEach(([key, title, group]) => { const b = nav.querySelector(`[onclick="switchTab('${key}')"]`); if(!b)return; if(group)nav.append(make('div','hw-nav-group',group)); b.textContent=t(title);nav.append(b); });
+  pages.forEach(([key, title, group]) => { const b = nav.querySelector(`[onclick="switchTab('${key}')"]`); if(!b)return; if(group){const heading=make('div','hw-nav-group',group);if(key==='kot'){heading.id='hardwareKitchenGroup';heading.style.display='none';}nav.append(heading);} b.textContent=t(title);nav.append(b); });
+  window.restaurantHardwareEnabled = false;
+  let restaurantVisibilityRevision = 0;
+  window.refreshRestaurantHardwareVisibility = async function () {
+    const revision = ++restaurantVisibilityRevision;
+    let enabled = false;
+    try { enabled = (await window.electronAPI?.preferences?.get('kot.enabled')) === true; } catch (_) {}
+    if (revision !== restaurantVisibilityRevision) return;
+    window.restaurantHardwareEnabled = enabled;
+    at('hardwareKitchenGroup').style.display = enabled ? '' : 'none';
+    for (const key of ['kot', 'screen', 'sound']) {
+      nav.querySelector(`[onclick="switchTab('${key}')"]`).style.display = enabled ? '' : 'none';
+      if (!enabled && at(key + 'Tab').classList.contains('active')) window.switchTab('receipt');
+    }
+  };
+  // The dashboard mirrors the selected branch's Restaurant setting. Refresh
+  // open hardware windows too, without modifying any saved device settings.
+  window.addEventListener('focus', window.refreshRestaurantHardwareVisibility);
+  const restaurantTimer = setInterval(window.refreshRestaurantHardwareVisibility, 2000);
+  window.addEventListener('beforeunload', () => clearInterval(restaurantTimer));
   document.body.classList.add('hardware-workspace');
   document.querySelector('.header h1').textContent='Hardware Manager';
   document.querySelector('.header p').textContent='Devices and connections on this computer';
@@ -179,7 +198,7 @@
   while(walker.nextNode()){const node=walker.currentNode;if(node.parentElement.closest('button,label,h1,h2,h3,summary'))node.textContent=node.textContent.replace(/^[\s]*(?:[\p{Extended_Pictographic}\uFE0F]+\s*)+/u,'');}
   let checkingDisplays = false;
   const displayTimer = setInterval(async()=>{
-    if(checkingDisplays || document.hidden || !window.posnicKitchenScreen?.list || document.querySelector('.hw-screen-card[data-unsaved=true]')) return;
+    if(!window.restaurantHardwareEnabled || checkingDisplays || document.hidden || !window.posnicKitchenScreen?.list || document.querySelector('.hw-screen-card[data-unsaved=true]')) return;
     checkingDisplays=true;
     try {
       const result=await window.posnicKitchenScreen.list();

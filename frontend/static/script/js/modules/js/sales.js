@@ -424,11 +424,7 @@ PosnicPro.sales = {
     },
     showHold: function (id) {
         PosnicPro.kotorder.kotHideShow();
-        // Resuming a parked sale means collecting now - Paid is the
-        // default, not the hold's stored Unpaid (owner ask).
-        setTimeout(function () {
-            $('#unpaid_payment_toggle').prop('checked', true).trigger('change');
-        }, 600);
+        // Payment state is set after the saved sale loads, not on a timer.
         PosnicPro.sales.defaultCustomer = false;
         $('[data-toggle="tooltip"]').tooltip("hide");
         $('#time-format').removeClass('commonDate');
@@ -1324,6 +1320,10 @@ PosnicPro.sales = {
         }
         if (billingWindowId && (!PosnicPro.billingoutlets || !PosnicPro.billingoutlets.current)) {
             window.alert('Outlet settings are not ready. Open Billing outlets and retry.'); return;
+        }
+        if (params.selling_units && params.selling_units.length && !params._sellingUnitChosen) {
+            PosnicPro.sales.chooseSellingUnit(params, function (chosen) { PosnicPro.sales.addSalesLineItems(chosen); });
+            return;
         }
         // Price list first, so modifier deltas ride the customer's price.
         if (PosnicPro.sales.SaleAction !== 'return'
@@ -4480,7 +4480,7 @@ PosnicPro.sales.addSale = {
                     var askPrint = PosnicPro.askposnic && PosnicPro.askposnic.checkout && PosnicPro.askposnic.checkout.print === true;
                     if (PosnicPro.askposnic) PosnicPro.askposnic.checkout = null;
                     $('#ask_checkout_payment').remove();
-                    if (PosnicPro.sales.saleProcess !== 'KOT' && (response.data.print === true || askPrint)) {
+                    if (PosnicPro.sales.saleProcess !== 'KOT' && (PosnicPro.sales.parkedMenu.printEnabled(response.data.print) || askPrint)) {
                         PosnicPro.sales.view.printSale(response.data.sales_id, 'sale');
                     }
                     if (isKotNewSale && PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(response.data.sales_id);
@@ -4918,7 +4918,8 @@ PosnicPro.sales.editSale = {
             SalesDocumentId = (PosnicPro.sales.salesExchange === true) ? PosnicPro.sales.refundSaleId : SalesDocumentId;
 
             // Default behaviour: convert Hold -> Add, otherwise keep as Edit
-            var sale_process = (PosnicPro.sales.EditRecentSaleParams.sale_process === 'Hold') ? PosnicPro.i18n.t('lang_nav_add', 'Add') : PosnicPro.i18n.t('lang_edit_title', 'Edit');
+            // Protocol values must not depend on the cashier's display language.
+            var sale_process = (PosnicPro.sales.EditRecentSaleParams.sale_process === 'Hold') ? 'Add' : 'Edit';
 
             // KOT History payment-only flow: when paying a KOT order from KOT History,
             // promote it to a normal completed sale by setting sale_process to 'Add'.
@@ -5064,6 +5065,7 @@ PosnicPro.sales.editSale = {
             };
 
             PosnicPro.sales._editDiscountRetried = false;
+            var completingParkedSale = PosnicPro.sales.EditRecentSaleParams.sale_process === 'Hold' && !isKotEditFlow;
             var submitEditSale = function () {
             PosnicPro.request(paramsEdit, function (response) {
                 if (response.type === 'success') {
@@ -5164,10 +5166,10 @@ PosnicPro.sales.editSale = {
 
                     // Auto-print on KOT settlement when printall setting is enabled
                     if (isKotOrderEditFlow && PosnicPro.kotPrint) PosnicPro.kotPrint.afterSave(saleId);
-                    if (isKotPaymentOnlyFlow &&
+                    if ((isKotPaymentOnlyFlow || completingParkedSale) &&
                         response &&
                         typeof response.data === 'object' &&
-                        response.data.print === true &&
+                        PosnicPro.sales.parkedMenu.printEnabled(response.data.print) &&
                         saleId) {
                         PosnicPro.sales.view.printSale(saleId, 'sale');
                     }
@@ -8800,7 +8802,7 @@ PosnicPro.sales.recentMenu = {
         var normalizedStatus = String(status).toLowerCase();
         // Treat anything that is NOT clearly unpaid/cancelled as Paid (includes Partially Paid)
         var isUnpaidLike = (normalizedStatus.indexOf('unpaid') !== -1 || normalizedStatus.indexOf('cancel') !== -1);
-        var isPaidForToggle = !isUnpaidLike;
+        var isPaidForToggle = PosnicPro.sales.parkedMenu.paidOnResume(result, !isUnpaidLike);
         $('#unpaid_payment_toggle')
             .prop('disabled', false)
             .prop('checked', isPaidForToggle)
@@ -8887,7 +8889,7 @@ PosnicPro.sales.recentMenu = {
                 "selling_price": PosnicPro.sales.savedSellingPrice(val),
                 "itemid": val.barcode_id,
                 "item_quantity": val.item_quantity,
-                "available_quantity": val.item_available_quantity,
+                "available_quantity": Number(val.item_available_quantity) / Number(val.unit_conversion && val.unit_conversion.factor || 1),
                 "company_price": val.company_price_total,
                 "sale_inline_discount_value": val.sale_inline_discount_value,
                 "sale_inline_discount_pervalue": val.sale_inline_discount_pervalue,
@@ -9048,6 +9050,31 @@ PosnicPro.sales.recentMenu = {
  * resume = the existing hold route.
  */
 PosnicPro.sales.parkedMenu = {
+    printEnabled: function (value) { return value === true || value === 'true'; },
+    clearing: false,
+    clearAll: function () {
+        var menu = PosnicPro.sales.parkedMenu;
+        if (menu.clearing || !window.confirm('Clear all parked sales in this branch? This includes parked sales beyond the rows shown. They will be removed from the parked and recent lists. Sale records, payments and stock will not be deleted.')) return;
+        menu.clearing = true;
+        $('#clear_all_parked_sales').prop('disabled', true);
+        var failed = function (message) {
+            menu.clearing = false;
+            $('#clear_all_parked_sales').prop('disabled', false);
+            PosnicPro.alert('error', message || 'Could not clear parked sales. Please try again.');
+        };
+        PosnicPro.post({ url: 'sales/parked/clear', data: JSON.stringify({ confirmed: true }) }, function (response) {
+            if (response.type !== 'success') { failed(response.message); return; }
+            menu.clearing = false;
+            PosnicPro.alert('success', Number(response.data && response.data.cleared || 0) + ' parked sales cleared.');
+            menu.list();
+        }, function () { failed(); });
+    },
+    paidOnResume: function (sale, previousToggle) {
+        // Ordinary drafts resume ready to collect. KOT and completed bills
+        // retain their existing payment state.
+        return sale.sale_process === 'Hold' && !sale.captain_payment_plan
+            ? true : previousToggle;
+    },
     list: function () {
         PosnicPro.sales._catalogueGeneration = (PosnicPro.sales._catalogueGeneration || 0) + 1;
         var loader = $(".loader-product");
@@ -9057,9 +9084,10 @@ PosnicPro.sales.parkedMenu = {
         $('#item-lists').remove();
         $('#sales_new_productList').append(' <div id="item-lists" style="margin-left: 7px;"/>');
         $('#item-lists').append(
-            "<div class='m-b-30'><div class='wishlist-box'><div class='table-responsive'><table id='parked_sales_table' class='table table-borderless' cellpadding='1'>" +
+            "<div class='m-b-30'><div class='d-flex justify-content-end mb-2'><button type='button' id='clear_all_parked_sales' class='btn btn-outline-danger btn-sm' data-module='sales' data-access='write' disabled>Clear all parked sales</button></div><div class='wishlist-box'><div class='table-responsive'><table id='parked_sales_table' class='table table-borderless' cellpadding='1'>" +
             "<thead><tr><th scope='col'>Customer</th><th scope='col' class='text-center'>Items</th><th scope='col' class='text-center'>Total</th><th scope='col' class='text-center'>Parked</th><th scope='col' class='text-center'>Resume</th></tr></thead>" +
             "<tbody></tbody></table></div></div></div>");
+        $('#clear_all_parked_sales').on('click', PosnicPro.sales.parkedMenu.clearAll);
         PosnicPro.get('sales/getLatestSales?type=hold', function (response) {
             loader.find(".loadingSpinner:first").remove();
             var rows = [];
@@ -9071,6 +9099,7 @@ PosnicPro.sales.parkedMenu = {
                     "<tr><td colspan='5' class='text-center text-muted p-t-20'>Nothing parked - press Hold on a sale and it waits here.</td></tr>");
                 return;
             }
+            $('#clear_all_parked_sales').prop('disabled', PosnicPro.sales.parkedMenu.clearing);
             /* Newest first. The server already sorts that way, but a parked
                sale that has been waiting since yesterday matters more than
                where it happens to sit in a list, so the order is made
@@ -9086,7 +9115,8 @@ PosnicPro.sales.parkedMenu = {
                     '<td class="text-center">' + esc(r.number_of_items) + '</td>' +
                     '<td class="text-center">' + currency + '&nbsp;' + Number(r.total_amount || 0).toFixed(2) + '</td>' +
                     '<td class="text-center"><span class="parked-ago' + (waited.stale ? ' stale' : '') + '" title="' + esc(waited.exact) + '">' + esc(waited.text) + '</span></td>' +
-                    '<td class="text-center"><a href="#/sales/' + esc(r.sales_document_id) + '/hold" class="btn btn-success-rgba btn-sm" title="Resume this sale" data-t-title="lang_resume_this_sale"><i class="feather icon-play"></i></a></td>' +
+                    '<td class="text-center"><div class="d-inline-flex align-items-center" style="gap:6px"><a href="#/sales/' + esc(r.sales_document_id) + '/hold" class="btn btn-success-rgba btn-sm" title="Resume this sale" data-t-title="lang_resume_this_sale"><i class="feather icon-play"></i> Resume</a>' +
+                    '</div></td>' +
                     '</tr>';
             });
             $('#parked_sales_table tbody').html(html);
@@ -11515,7 +11545,7 @@ PosnicPro.sales.quickSale = {
                 '<small class="text-muted d-block" id="quick_sale_added"></small>' +
                 '</div>' +
                 '<div class="modal-footer py-2">' +
-                '<button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal"><lang class="lang_done">Done</lang></button>' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>' +
                 '<button type="button" class="btn btn-warning-rgba" id="quick_sale_add" onclick="PosnicPro.sales.quickSale.add();"><lang class="lang_add_to_sale">Add to sale</lang></button>' +
                 '</div></div></div></div>');
             $('#quick_sale_amount').on('keydown', function (e) {
@@ -11772,12 +11802,35 @@ PosnicPro.sugActionRow = function (icon, cls, title, meta) {
         + '<div class="sug-main"><div class="sug-name">' + title + '</div>'
         + '<div class="sug-meta">' + meta + '</div></div></div>';
 };
+PosnicPro.sales.chooseSellingUnit = function (item, done) {
+    var id = item.id || item.item_id;
+    var rows = [{ unit: item.unit || 'qty', factor: 1, price: Number(item.selling_price) }].concat(item.selling_units || []);
+    var options = {};
+    rows.forEach(function (row, index) {
+        var price = row.price == null ? Number(item.selling_price) * Number(row.factor) : Number(row.price);
+        options[index] = row.unit + ' — ' + price.toFixed(2);
+    });
+    swal({ title: PosnicPro.i18n.t('lang_sell_by_which_unit', 'Sell by which unit?'), text: item.item_name || item.name || '', input: 'select', inputOptions: options, inputValue: '0', showCancelButton: true, confirmButtonText: 'Use unit' }).then(function (result) {
+        if (!result || result.dismiss) return;
+        var choice = rows[Number(typeof result === 'string' ? result : result.value)];
+        if (!choice) return;
+        var existingUnit = $('#addSalesLineItemUnit_' + id).text();
+        if (existingUnit && existingUnit !== choice.unit) {
+            PosnicPro.alert('error', 'This item is already in the cart in ' + existingUnit + '. Remove that line before choosing another unit.'); return;
+        }
+        var price = choice.price == null ? Number(item.selling_price) * Number(choice.factor) : Number(choice.price);
+        done(Object.assign({}, item, { unit: choice.unit, selling_price: Number(price.toFixed(2)), sale_inline_item_price: Number(price.toFixed(2)), discount_amount: Number((Number(item.discount_amount || 0) * Number(choice.factor)).toFixed(2)), available_quantity: Number(item.available_quantity || 0) / Number(choice.factor), _sellingUnitChosen: true }));
+    });
+};
 PosnicPro.sales.askSearchQuantity = function (item, id) {
     if (id && !item._searchDetailsLoaded) {
         PosnicPro.sales.itemCache.get(id, function (details) {
             PosnicPro.sales.askSearchQuantity(Object.assign({}, details, { _searchDetailsLoaded: true }), id);
         });
         return;
+    }
+    if (item.selling_units && item.selling_units.length && !item._sellingUnitChosen) {
+        PosnicPro.sales.chooseSellingUnit(item, function (chosen) { PosnicPro.sales.askSearchQuantity(chosen, id); }); return;
     }
     var weighed = PosnicPro.sales.isWeighedItem && PosnicPro.sales.isWeighedItem(item);
     var settings = {};
