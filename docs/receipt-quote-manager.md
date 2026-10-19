@@ -52,3 +52,10 @@ frontend asset build were checked. Existing Gateway/agent manifests were reviewe
 no transport changes are needed. Actual cloud-to-till, till-to-cloud and second-till
 reconnect/conflict delivery and installed agent versions have not been verified
 on live devices. These local tests do not establish deployed multi-device delivery.
+
+CI follow-up: the legacy Captain retry path can read a claim snapshot before
+another copy of the same request commits its order. The occupancy refusal now
+re-reads that request's claim, requiring the same actor and payload before
+returning it. No stored fields, scopes or transport lanes change. A deterministic
+interleaving regression fails on the old implementation and passes on this fix;
+the existing competing-request test still requires a single winner.

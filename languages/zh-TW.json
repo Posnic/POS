@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}：折扣後的 {1}% 食物，稅前。",
   "lang_room_charge_final": "包括在最終賬單中。",
   "lang_room_orders_enable_help": "在「設定」「餐廳」「酒店和其他場地」中啟用員工房間訂單。",
-  "lang_room_venue": "場地"
+  "lang_room_venue": "場地",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "每行加上一個引號。換行符號保留在該引號內。",
+  "lang_apply_quotes": "應用報價",
+  "lang_apply_updates_your_draft_save_designs_to_s": "應用程式更新您的草稿。儲存設計以儲存該分支的變更。",
+  "lang_close_quote_manager": "關閉報價管理器",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "在每行中輸入引號，或刪除空白行。每個引言最多可包含 600 個字元。",
+  "lang_enter_your_quote": "輸入您的報價",
+  "lang_manage_my_quotes": "管理我的報價",
+  "lang_my_receipt_quotes": "我的收據報價",
+  "lang_quote_kural_number": "報價/庫拉爾編號",
+  "lang_use_a_specific_number": "使用特定號碼",
+  "lang_use_this_quote_on_every_new_bill_until_you": "在每張新帳單上都使用此報價，直到您更改為止。"
 }

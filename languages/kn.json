@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: {1}% ರಷ್ಟು ಆಹಾರವನ್ನು ರಿಯಾಯಿತಿಯ ನಂತರ, ತೆರಿಗೆಗೆ ಮುಂಚಿತವಾಗಿ.",
   "lang_room_charge_final": "ಅಂತಿಮ ಮಸೂದೆಯಲ್ಲಿ ಸೇರಿಸಲಾಗಿದೆ.",
   "lang_room_orders_enable_help": "ಸೆಟ್ಟಿಂಗ್ಸ್ → ರೆಸ್ಟೋರೆಂಟ್ → ಹೋಟೆಲ್ಗಳು ಮತ್ತು ಇತರ ಸ್ಥಳಗಳಲ್ಲಿ ಸಿಬ್ಬಂದಿ ಕೊಠಡಿ ಆದೇಶಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.",
-  "lang_room_venue": "ಸ್ಥಳ"
+  "lang_room_venue": "ಸ್ಥಳ",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು ಉಲ್ಲೇಖವನ್ನು ಸೇರಿಸಿ. ಲೈನ್ ಬ್ರೇಕ್‌ಗಳು ಆ ಉಲ್ಲೇಖದ ಒಳಗೆ ಉಳಿಯುತ್ತವೆ.",
+  "lang_apply_quotes": "ಉಲ್ಲೇಖಗಳನ್ನು ಅನ್ವಯಿಸಿ",
+  "lang_apply_updates_your_draft_save_designs_to_s": "ನಿಮ್ಮ ಡ್ರಾಫ್ಟ್ ನವೀಕರಣಗಳನ್ನು ಅನ್ವಯಿಸಿ. ಈ ಶಾಖೆಗೆ ಬದಲಾವಣೆಗಳನ್ನು ಸಂಗ್ರಹಿಸಲು ವಿನ್ಯಾಸಗಳನ್ನು ಉಳಿಸಿ.",
+  "lang_close_quote_manager": "ಉಲ್ಲೇಖ ನಿರ್ವಾಹಕರನ್ನು ಮುಚ್ಚಿ",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "ಪ್ರತಿ ಸಾಲಿನಲ್ಲಿ ಉಲ್ಲೇಖವನ್ನು ನಮೂದಿಸಿ ಅಥವಾ ಖಾಲಿ ಸಾಲುಗಳನ್ನು ತೆಗೆದುಹಾಕಿ. ಪ್ರತಿ ಉಲ್ಲೇಖವು 600 ಅಕ್ಷರಗಳನ್ನು ಹೊಂದಿರಬಹುದು.",
+  "lang_enter_your_quote": "ನಿಮ್ಮ ಉಲ್ಲೇಖವನ್ನು ನಮೂದಿಸಿ",
+  "lang_manage_my_quotes": "ನನ್ನ ಉಲ್ಲೇಖಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
+  "lang_my_receipt_quotes": "ನನ್ನ ರಸೀದಿ ಉಲ್ಲೇಖಗಳು",
+  "lang_quote_kural_number": "ಉಲ್ಲೇಖ / ಕುರಲ್ ಸಂಖ್ಯೆ",
+  "lang_use_a_specific_number": "ನಿರ್ದಿಷ್ಟ ಸಂಖ್ಯೆಯನ್ನು ಬಳಸಿ",
+  "lang_use_this_quote_on_every_new_bill_until_you": "ನೀವು ಅದನ್ನು ಬದಲಾಯಿಸುವವರೆಗೆ ಪ್ರತಿ ಹೊಸ ಬಿಲ್‌ನಲ್ಲಿ ಈ ಉಲ್ಲೇಖವನ್ನು ಬಳಸಿ."
 }

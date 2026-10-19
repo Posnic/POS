@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% din produsele alimentare după reduceri, înainte de impozitare.",
   "lang_room_charge_final": "Inclus în factura finală.",
   "lang_room_orders_enable_help": "Activați comenzile camerelor personalului în Setări „Restaurant”” Hoteluri și alte locații.",
-  "lang_room_venue": "Locul de desfășurare"
+  "lang_room_venue": "Locul de desfășurare",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Adăugați un citat pe rând. Spărturile de rând rămân în interiorul citatului.",
+  "lang_apply_quotes": "Aplicați ghilimele",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Aplicați actualizările nefinalizate. Salvați modelele pentru a stoca modificările pentru această ramură.",
+  "lang_close_quote_manager": "Închideți managerul de cotații",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Introduceți un citat în fiecare rând sau eliminați rândurile goale. Fiecare citat poate avea până la 600 de caractere.",
+  "lang_enter_your_quote": "Introduceți oferta dvs",
+  "lang_manage_my_quotes": "Gestionați-mi ghilimele",
+  "lang_my_receipt_quotes": "Cotațiile mele de chitanță",
+  "lang_quote_kural_number": "Citat / număr Kural",
+  "lang_use_a_specific_number": "Utilizați un anumit număr",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Folosiți această cotație pentru fiecare nouă factură până când o modificați."
 }

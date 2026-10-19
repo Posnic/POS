@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% от храната след отстъпки, преди данъчно облагане.",
   "lang_room_charge_final": "Включено в окончателната сметка.",
   "lang_room_orders_enable_help": "Активирайте поръчките за стаи на персонала в Настройки „Ресторант“ „Хотели и други места“.",
-  "lang_room_venue": "Място"
+  "lang_room_venue": "Място",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Добавете по един цитат на ред. Прекъсването на редовете остава в този цитат.",
+  "lang_apply_quotes": "Прилагане на котировки",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Прилагането актуализира вашата чернова. Запазете дизайни, за да запазите промените за този клон.",
+  "lang_close_quote_manager": "Затворете мениджъра на оферти",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Въведете цитат във всеки ред или премахнете празните редове. Всеки цитат може да има до 600 знака.",
+  "lang_enter_your_quote": "Въведете вашата оферта",
+  "lang_manage_my_quotes": "Управление на моите оферти",
+  "lang_my_receipt_quotes": "Моите оферти за получаване",
+  "lang_quote_kural_number": "Цитат / Kural номер",
+  "lang_use_a_specific_number": "Използвайте конкретен номер",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Използвайте тази оферта на всяка нова сметка, докато не я промените."
 }

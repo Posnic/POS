@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% tal-ikel wara l-iskontijiet, qabel it-taxxa.",
   "lang_room_charge_final": "Inkluż fuq il-polza finali.",
   "lang_room_orders_enable_help": "Ippermetti ordnijiet tal-kamra tal-persunal f'Settings → Restaurant → Lukandi u postijiet oħra.",
-  "lang_room_venue": "Post"
+  "lang_room_venue": "Post",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Żid kwotazzjoni waħda għal kull ringiela. Line breaks jibqgħu ġewwa dik il-kwotazzjoni.",
+  "lang_apply_quotes": "Applika kwotazzjonijiet",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Applika l-aġġornamenti tal-abbozz tiegħek. Issejvja disinji biex taħżen bidliet għal din il-fergħa.",
+  "lang_close_quote_manager": "Agħlaq il-maniġer tal-kwotazzjonijiet",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Daħħal kwotazzjoni f'kull ringiela, jew neħħi ringieli vojta. Kull kwotazzjoni jista' jkollha sa 600 karattru.",
+  "lang_enter_your_quote": "Daħħal il-kwotazzjoni tiegħek",
+  "lang_manage_my_quotes": "Immaniġġja l-kwotazzjonijiet tiegħi",
+  "lang_my_receipt_quotes": "L-irċevuta tiegħi tikkwota",
+  "lang_quote_kural_number": "Kwotazzjoni / numru Kural",
+  "lang_use_a_specific_number": "Uża numru speċifiku",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Uża din il-kwotazzjoni fuq kull kont ġdid sakemm tibdelha."
 }

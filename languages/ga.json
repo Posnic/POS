@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% de bhia tar éis lascainí, roimh cháin.",
   "lang_room_charge_final": "San áireamh ar an mbille deiridh.",
   "lang_room_orders_enable_help": "Cumasaigh orduithe seomra foirne i Socruithe → Bialann → Óstáin agus ionaid eile.",
-  "lang_room_venue": "Ionad"
+  "lang_room_venue": "Ionad",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Cuir luachan amháin leis an tsraith. Fanann sosanna líne taobh istigh den luachan sin.",
+  "lang_apply_quotes": "Cuir Sleachta i bhfeidhm",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Cuir nuashonruithe i bhfeidhm ar do dhréacht. Sábháil dearaí chun athruithe a stóráil don bhrainse seo.",
+  "lang_close_quote_manager": "Dún an bainisteoir athfhriotail",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Cuir isteach luachan i ngach ró, nó bain sraitheanna folmha. Féadfaidh suas le 600 carachtar a bheith ag gach luachan.",
+  "lang_enter_your_quote": "Cuir isteach do luachan",
+  "lang_manage_my_quotes": "Bainistigh mo chuid Sleachta",
+  "lang_my_receipt_quotes": "Sleachta mo admháil",
+  "lang_quote_kural_number": "Uimhir Athfhriotail / Kural",
+  "lang_use_a_specific_number": "Bain úsáid as uimhir ar leith",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Úsáid an luachan seo ar gach bille nua go dtí go n-athraíonn tú é."
 }

@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: {1}% makanan setelah diskon, sebelum pajak.",
   "lang_room_charge_final": "Termasuk pada tagihan akhir.",
   "lang_room_orders_enable_help": "Aktifkan pemesanan kamar staf di Pengaturan “Restoran” Hotel dan tempat lainnya.",
-  "lang_room_venue": "Tempat"
+  "lang_room_venue": "Tempat",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Tambahkan satu kutipan per baris. Jeda baris tetap berada di dalam kutipan itu.",
+  "lang_apply_quotes": "Terapkan kutipan",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Terapkan pembaruan draf Anda. Simpan desain untuk menyimpan perubahan pada cabang ini.",
+  "lang_close_quote_manager": "Tutup manajer kutipan",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Masukkan kutipan di setiap baris, atau hapus baris kosong. Setiap kutipan dapat memiliki hingga 600 karakter.",
+  "lang_enter_your_quote": "Masukkan penawaran Anda",
+  "lang_manage_my_quotes": "Kelola kutipan saya",
+  "lang_my_receipt_quotes": "Kutipan tanda terima saya",
+  "lang_quote_kural_number": "Kutipan / Nomor Kural",
+  "lang_use_a_specific_number": "Gunakan nomor tertentu",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Gunakan kutipan ini pada setiap tagihan baru sampai Anda mengubahnya."
 }

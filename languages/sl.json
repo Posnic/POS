@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% hrane po popustu, pred davkom.",
   "lang_room_charge_final": "Vključeno v končni račun.",
   "lang_room_orders_enable_help": "Omogočite naročanje sob za osebje v nastavitvah → Restavracija → Hoteli in druga prizorišča.",
-  "lang_room_venue": "Prizorišče"
+  "lang_room_venue": "Prizorišče",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Dodajte en citat na vrstico. Prelomi vrstic ostanejo znotraj tega citata.",
+  "lang_apply_quotes": "Uporabi ponudbe",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Uporabi posodobi vaš osnutek. Shranite načrte za shranjevanje sprememb za to vejo.",
+  "lang_close_quote_manager": "Zapri upravitelja ponudb",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "V vsako vrstico vnesite citat ali odstranite prazne vrstice. Vsak citat ima lahko do 600 znakov.",
+  "lang_enter_your_quote": "Vnesite svojo ponudbo",
+  "lang_manage_my_quotes": "Upravljaj moje ponudbe",
+  "lang_my_receipt_quotes": "Moji predračuni",
+  "lang_quote_kural_number": "Citat / Kural številka",
+  "lang_use_a_specific_number": "Uporabite določeno številko",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Uporabite to ponudbo na vsakem novem računu, dokler ga ne spremenite."
 }

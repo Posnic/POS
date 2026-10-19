@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: {1}% der Speisen nach Abzug der Rabatte, vor Steuern.",
   "lang_room_charge_final": "In der Endabrechnung enthalten.",
   "lang_room_orders_enable_help": "Aktiviere Zimmerbestellungen für Mitarbeiter in den Einstellungen „Restaurant“, Hotels und andere Veranstaltungsorte.",
-  "lang_room_venue": "Veranstaltungsort"
+  "lang_room_venue": "Veranstaltungsort",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Fügen Sie ein Zitat pro Zeile hinzu. Zeilenumbrüche bleiben innerhalb des Zitats.",
+  "lang_apply_quotes": "Anführungszeichen anwenden",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Übernehmen Sie Aktualisierungen Ihres Entwurfs. Speichern Sie Designs, um Änderungen für diesen Zweig zu speichern.",
+  "lang_close_quote_manager": "Angebotsmanager schließen",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Geben Sie in jede Zeile ein Zitat ein oder entfernen Sie leere Zeilen. Jedes Zitat kann bis zu 600 Zeichen lang sein.",
+  "lang_enter_your_quote": "Geben Sie Ihr Angebot ein",
+  "lang_manage_my_quotes": "Meine Angebote verwalten",
+  "lang_my_receipt_quotes": "Meine Quittungsangebote",
+  "lang_quote_kural_number": "Zitat / Kural-Nummer",
+  "lang_use_a_specific_number": "Verwenden Sie eine bestimmte Nummer",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Verwenden Sie dieses Angebot auf jeder neuen Rechnung, bis Sie es ändern."
 }

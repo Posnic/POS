@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}: ٹیکس سے پہلے، چھوٹ کے بعد کھانے کا {1} فیصد",
   "lang_room_charge_final": "حتمی بل میں شامل ہے۔",
   "lang_room_orders_enable_help": "سیٹنگز → ریستوراں → ہوٹلوں اور دیگر مقامات میں عملے کے کمرے کے آرڈرز کو فعال کریں۔",
-  "lang_room_venue": "مقام"
+  "lang_room_venue": "مقام",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "ہر قطار میں ایک اقتباس شامل کریں۔ لائن بریک اس اقتباس کے اندر رہتے ہیں۔",
+  "lang_apply_quotes": "اقتباسات کا اطلاق کریں۔",
+  "lang_apply_updates_your_draft_save_designs_to_s": "اپ ڈیٹس اپنے مسودے کو اپلائی کریں۔ اس برانچ کے لیے تبدیلیاں ذخیرہ کرنے کے لیے ڈیزائن محفوظ کریں۔",
+  "lang_close_quote_manager": "اقتباس مینیجر کو بند کریں۔",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "ہر قطار میں ایک اقتباس درج کریں، یا خالی قطاروں کو ہٹا دیں۔ ہر اقتباس میں 600 حروف تک ہو سکتے ہیں۔",
+  "lang_enter_your_quote": "اپنا اقتباس درج کریں۔",
+  "lang_manage_my_quotes": "میرے اقتباسات کا نظم کریں۔",
+  "lang_my_receipt_quotes": "میری رسید کے حوالے",
+  "lang_quote_kural_number": "اقتباس/کورل نمبر",
+  "lang_use_a_specific_number": "ایک مخصوص نمبر استعمال کریں۔",
+  "lang_use_this_quote_on_every_new_bill_until_you": "اس اقتباس کو ہر نئے بل پر استعمال کریں جب تک کہ آپ اسے تبدیل نہ کریں۔"
 }

@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: {1}% ya chakula baada ya punguzo, kabla ya ushuru.",
   "lang_room_charge_final": "Imejumuishwa kwenye muswada wa mwisho.",
   "lang_room_orders_enable_help": "Wezesha maagizo ya chumba cha wafanyikazi katika Mipangilio → Mkahawa → Hoteli na maeneo mengine.",
-  "lang_room_venue": "Ukumbi"
+  "lang_room_venue": "Ukumbi",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Ongeza nukuu moja kwa kila safu. Mapumziko ya mstari hukaa ndani ya nukuu hiyo.",
+  "lang_apply_quotes": "Tumia nukuu",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Tumia masasisho ya rasimu yako. Hifadhi miundo ili kuhifadhi mabadiliko ya tawi hili.",
+  "lang_close_quote_manager": "Funga kidhibiti cha nukuu",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Weka nukuu katika kila safu mlalo, au uondoe safu mlalo tupu. Kila nukuu inaweza kuwa na hadi herufi 600.",
+  "lang_enter_your_quote": "Weka nukuu yako",
+  "lang_manage_my_quotes": "Dhibiti nukuu zangu",
+  "lang_my_receipt_quotes": "Nukuu zangu za risiti",
+  "lang_quote_kural_number": "Nukuu / Nambari ya Kural",
+  "lang_use_a_specific_number": "Tumia nambari maalum",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Tumia nukuu hii kwenye kila bili mpya hadi uibadilishe."
 }

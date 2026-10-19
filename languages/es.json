@@ -5014,5 +5014,16 @@
   "lang_room_charge_rate": "{0}: {1}% de comida después de los descuentos, antes de impuestos.",
   "lang_room_charge_final": "Incluido en la factura final.",
   "lang_room_orders_enable_help": "Activa los pedidos de habitaciones para el personal en Ajustes →, Restaurante, Hoteles y otros establecimientos.",
-  "lang_room_venue": "Lugar"
+  "lang_room_venue": "Lugar",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Agregue una cita por fila. Los saltos de línea permanecen dentro de esa cita.",
+  "lang_apply_quotes": "Aplicar cotizaciones",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Aplicar actualiza su borrador. Guarde diseños para almacenar cambios para esta rama.",
+  "lang_close_quote_manager": "Cerrar gestor de cotizaciones",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Ingrese una cotización en cada fila o elimine las filas vacías. Cada cita puede tener hasta 600 caracteres.",
+  "lang_enter_your_quote": "Ingresa tu cotización",
+  "lang_manage_my_quotes": "Administrar mis cotizaciones",
+  "lang_my_receipt_quotes": "Mis cotizaciones de recibos",
+  "lang_quote_kural_number": "Cotización / número de Kural",
+  "lang_use_a_specific_number": "Utilice un número específico",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Utilice esta cotización en cada factura nueva hasta que la cambie."
 }

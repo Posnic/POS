@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: ఆహారంలో {1}% డిస్కౌంట్ల తర్వాత, పన్ను ముందు.",
   "lang_room_charge_final": "తుది బిల్లులో చేర్చబడింది.",
   "lang_room_orders_enable_help": "సెట్టింగ్స్ → రెస్టారెంట్ → హోటల్స్ మరియు ఇతర వేదికలలో సిబ్బంది గది ఆర్డర్లను ప్రారంభించండి.",
-  "lang_room_venue": "వేదిక"
+  "lang_room_venue": "వేదిక",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "ప్రతి అడ్డు వరుసకు ఒక కోట్ జోడించండి. లైన్ బ్రేక్‌లు ఆ కోట్‌లో ఉంటాయి.",
+  "lang_apply_quotes": "కోట్‌లను వర్తింపజేయండి",
+  "lang_apply_updates_your_draft_save_designs_to_s": "మీ డ్రాఫ్ట్ అప్‌డేట్‌లను వర్తింపజేయండి. ఈ శాఖ కోసం మార్పులను నిల్వ చేయడానికి డిజైన్‌లను సేవ్ చేయండి.",
+  "lang_close_quote_manager": "కోట్ మేనేజర్‌ని మూసివేయండి",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "ప్రతి అడ్డు వరుసలో కోట్‌ని నమోదు చేయండి లేదా ఖాళీ అడ్డు వరుసలను తీసివేయండి. ప్రతి కోట్‌లో గరిష్టంగా 600 అక్షరాలు ఉండవచ్చు.",
+  "lang_enter_your_quote": "మీ కోట్‌ని నమోదు చేయండి",
+  "lang_manage_my_quotes": "నా కోట్‌లను నిర్వహించండి",
+  "lang_my_receipt_quotes": "నా రసీదు కోట్‌లు",
+  "lang_quote_kural_number": "కోట్ / కురల్ సంఖ్య",
+  "lang_use_a_specific_number": "నిర్దిష్ట సంఖ్యను ఉపయోగించండి",
+  "lang_use_this_quote_on_every_new_bill_until_you": "మీరు మార్చే వరకు ప్రతి కొత్త బిల్లుపై ఈ కోట్‌ని ఉపయోగించండి."
 }

@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}: कर आधी सवलतीनंतर अन्नाचे {1}%.",
   "lang_room_charge_final": "अंतिम बिलमध्ये समाविष्ट आहे.",
   "lang_room_orders_enable_help": "सेटिंग्ज → रेस्टॉरंट → हॉटेल आणि इतर ठिकाणांमध्ये स्टाफ रूम ऑर्ड",
-  "lang_room_venue": "ठिकाण"
+  "lang_room_venue": "ठिकाण",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "प्रति पंक्ती एक कोट जोडा. लाइन ब्रेक त्या कोटच्या आत राहतात.",
+  "lang_apply_quotes": "अवतरण लागू करा",
+  "lang_apply_updates_your_draft_save_designs_to_s": "तुमचा मसुदा अद्यतने लागू करा. या शाखेसाठी बदल संचयित करण्यासाठी डिझाइन जतन करा.",
+  "lang_close_quote_manager": "कोट व्यवस्थापक बंद करा",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "प्रत्येक पंक्तीमध्ये कोट एंटर करा किंवा रिकाम्या पंक्ती काढा. प्रत्येक कोटमध्ये 600 वर्ण असू शकतात.",
+  "lang_enter_your_quote": "तुमचा कोट एंटर करा",
+  "lang_manage_my_quotes": "माझे कोट्स व्यवस्थापित करा",
+  "lang_my_receipt_quotes": "माझी पावती कोट",
+  "lang_quote_kural_number": "कोट/कुरल क्रमांक",
+  "lang_use_a_specific_number": "विशिष्ट क्रमांक वापरा",
+  "lang_use_this_quote_on_every_new_bill_until_you": "जोपर्यंत तुम्ही बदलत नाही तोपर्यंत प्रत्येक नवीन बिलावर हा कोट वापरा."
 }

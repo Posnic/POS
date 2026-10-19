@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}: ছাড়ের পরে খাবারের {1}%, ট্যাক্সের আগে।",
   "lang_room_charge_final": "চূড়ান্ত বিলে অন্তর্ভুক্ত।",
   "lang_room_orders_enable_help": "সেটিংস → রেস্তোঁরা → হোটেল এবং অন্যান্য ভেন্যুতে স্টাফ রুম অর্ডার সক্ষম করুন।",
-  "lang_room_venue": "ভেন্যু"
+  "lang_room_venue": "ভেন্যু",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "প্রতি সারিতে একটি উদ্ধৃতি যোগ করুন। লাইন বিরতি যে উদ্ধৃতি ভিতরে থাকে.",
+  "lang_apply_quotes": "উদ্ধৃতি প্রয়োগ করুন",
+  "lang_apply_updates_your_draft_save_designs_to_s": "আপনার খসড়া আপডেট প্রয়োগ করুন. এই শাখার জন্য পরিবর্তন সঞ্চয় করতে ডিজাইন সংরক্ষণ করুন।",
+  "lang_close_quote_manager": "উদ্ধৃতি ম্যানেজার বন্ধ করুন",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "প্রতিটি সারিতে একটি উদ্ধৃতি লিখুন, বা খালি সারিগুলি সরান৷ প্রতিটি উদ্ধৃতিতে 600টি অক্ষর থাকতে পারে।",
+  "lang_enter_your_quote": "আপনার উদ্ধৃতি লিখুন",
+  "lang_manage_my_quotes": "আমার উদ্ধৃতি পরিচালনা করুন",
+  "lang_my_receipt_quotes": "আমার রসিদ উদ্ধৃতি",
+  "lang_quote_kural_number": "উদ্ধৃতি/কুরাল নম্বর",
+  "lang_use_a_specific_number": "একটি নির্দিষ্ট নম্বর ব্যবহার করুন",
+  "lang_use_this_quote_on_every_new_bill_until_you": "আপনি এটি পরিবর্তন না করা পর্যন্ত প্রতিটি নতুন বিলে এই উদ্ধৃতিটি ব্যবহার করুন।"
 }

@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}: ટેક્સ પહેલાં, ડિસ્કાઉન્ટ પછી ખોરાકનો {1}%.",
   "lang_room_charge_final": "અંતિમ બિલ પર શામેલ છે.",
   "lang_room_orders_enable_help": "સેટિંગ્સ → રેસ્ટોરન્ટ → હોટેલ્સ અને અન્ય સ્થળોમાં સ્ટાફ રૂમ ઓર્ડર સક્ષમ કરો.",
-  "lang_room_venue": "સ્થળ"
+  "lang_room_venue": "સ્થળ",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "પંક્તિ દીઠ એક અવતરણ ઉમેરો. લાઇન બ્રેક્સ તે અવતરણની અંદર રહે છે.",
+  "lang_apply_quotes": "અવતરણ લાગુ કરો",
+  "lang_apply_updates_your_draft_save_designs_to_s": "તમારા ડ્રાફ્ટ અપડેટ્સ લાગુ કરો. આ શાખા માટે ફેરફારો સંગ્રહવા માટે ડિઝાઇન સાચવો.",
+  "lang_close_quote_manager": "ક્વોટ મેનેજર બંધ કરો",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "દરેક પંક્તિમાં ક્વોટ દાખલ કરો અથવા ખાલી પંક્તિઓ દૂર કરો. દરેક અવતરણમાં 600 અક્ષરો હોઈ શકે છે.",
+  "lang_enter_your_quote": "તમારું ક્વોટ દાખલ કરો",
+  "lang_manage_my_quotes": "મારા અવતરણ મેનેજ કરો",
+  "lang_my_receipt_quotes": "મારી રસીદ અવતરણ",
+  "lang_quote_kural_number": "અવતરણ / કુરલ નંબર",
+  "lang_use_a_specific_number": "ચોક્કસ નંબરનો ઉપયોગ કરો",
+  "lang_use_this_quote_on_every_new_bill_until_you": "જ્યાં સુધી તમે તેને બદલો નહીં ત્યાં સુધી દરેક નવા બિલ પર આ ક્વોટનો ઉપયોગ કરો."
 }

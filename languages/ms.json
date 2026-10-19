@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}: {1}% makanan selepas diskaun, sebelum cukai.",
   "lang_room_charge_final": "Termasuk pada rang undang-undang akhir.",
   "lang_room_orders_enable_help": "Dayakan pesanan bilik kakitangan di Tetapan → Restoran → Hotel dan tempat lain.",
-  "lang_room_venue": "Tempat"
+  "lang_room_venue": "Tempat",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Tambahkan satu petikan setiap baris. Line break kekal dalam petikan itu.",
+  "lang_apply_quotes": "Guna sebut harga",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Gunakan kemas kini draf anda. Simpan reka bentuk untuk menyimpan perubahan bagi cawangan ini.",
+  "lang_close_quote_manager": "Tutup pengurus sebut harga",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Masukkan petikan dalam setiap baris atau alih keluar baris kosong. Setiap petikan boleh mempunyai sehingga 600 aksara.",
+  "lang_enter_your_quote": "Masukkan petikan anda",
+  "lang_manage_my_quotes": "Uruskan petikan saya",
+  "lang_my_receipt_quotes": "Sebut harga resit saya",
+  "lang_quote_kural_number": "Sebut harga / nombor Kural",
+  "lang_use_a_specific_number": "Gunakan nombor tertentu",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Gunakan petikan ini pada setiap bil baharu sehingga anda mengubahnya."
 }

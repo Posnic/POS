@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% elintarvikkeista alennusten jälkeen, ennen veroja.",
   "lang_room_charge_final": "Sisältyy lopulliseen laskuun.",
   "lang_room_orders_enable_help": "Ota henkilökunnan huonetilojen tilaukset käyttöön Asetuksissa ”Ravintola” Hotelleissa ja muissa tiloissa.",
-  "lang_room_venue": "Tapahtumapaikka"
+  "lang_room_venue": "Tapahtumapaikka",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Lisää yksi lainaus riviä kohden. Rivinvaihdot pysyvät lainauksen sisällä.",
+  "lang_apply_quotes": "Käytä lainauksia",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Ota luonnoksesi päivitykset käyttöön. Tallenna mallit tämän haaran muutosten tallentamiseksi.",
+  "lang_close_quote_manager": "Sulje tarjoushallinta",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Kirjoita lainaus jokaiselle riville tai poista tyhjät rivit. Jokaisessa lainauksessa voi olla enintään 600 merkkiä.",
+  "lang_enter_your_quote": "Kirjoita tarjouksesi",
+  "lang_manage_my_quotes": "Hallinnoi lainauksiani",
+  "lang_my_receipt_quotes": "Kuittilainaukseni",
+  "lang_quote_kural_number": "Lainaus / Kural-numero",
+  "lang_use_a_specific_number": "Käytä tiettyä numeroa",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Käytä tätä lainausta jokaisessa uudessa laskussa, kunnes muutat sitä."
 }

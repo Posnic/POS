@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% no pārtikas pēc atlaidēm, pirms nodokļiem.",
   "lang_room_charge_final": "Iekļauts galīgajā rēķinā.",
   "lang_room_orders_enable_help": "Iespējojiet personāla numuru pasūtījumus sadaļā Iestatījumi → Restorāns → Viesnīcas un citās vietās.",
-  "lang_room_venue": "Norises vieta"
+  "lang_room_venue": "Norises vieta",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Katrā rindā pievienojiet vienu citātu. Rindas pārtraukumi paliek šajā citātā.",
+  "lang_apply_quotes": "Lietojiet pēdiņas",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Lietojiet melnraksta atjauninājumus. Saglabājiet dizainus, lai saglabātu šīs filiāles izmaiņas.",
+  "lang_close_quote_manager": "Aizvērt citātu pārvaldnieku",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Ievadiet citātu katrā rindā vai noņemiet tukšās rindas. Katrā citātā var būt līdz 600 rakstzīmēm.",
+  "lang_enter_your_quote": "Ievadiet savu citātu",
+  "lang_manage_my_quotes": "Pārvaldiet manus citātus",
+  "lang_my_receipt_quotes": "Mani kvīšu citāti",
+  "lang_quote_kural_number": "Citāts / Kural numurs",
+  "lang_use_a_specific_number": "Izmantojiet noteiktu numuru",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Izmantojiet šo citātu katrā jaunajā rēķinā, līdz to mainīsit."
 }

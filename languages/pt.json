@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: {1}% de alimentos após descontos, antes de impostos.",
   "lang_room_charge_final": "Incluído na fatura final.",
   "lang_room_orders_enable_help": "Habilite pedidos de quartos para funcionários em Configurações → Restaurante → Hotéis e outros locais.",
-  "lang_room_venue": "Local"
+  "lang_room_venue": "Local",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Adicione uma cotação por linha. As quebras de linha ficam dentro dessa citação.",
+  "lang_apply_quotes": "Aplicar cotações",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Aplicar atualiza seu rascunho. Salve designs para armazenar alterações nesta ramificação.",
+  "lang_close_quote_manager": "Fechar gerenciador de cotações",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Insira uma cotação em cada linha ou remova as linhas vazias. Cada citação pode ter até 600 caracteres.",
+  "lang_enter_your_quote": "Insira sua cotação",
+  "lang_manage_my_quotes": "Gerenciar minhas cotações",
+  "lang_my_receipt_quotes": "Minhas cotações de recibo",
+  "lang_quote_kural_number": "Citação / Número Kural",
+  "lang_use_a_specific_number": "Use um número específico",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Use esta cotação em cada nova fatura até alterá-la."
 }

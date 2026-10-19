@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: {1}% del cibo al netto degli sconti, tasse escluse.",
   "lang_room_charge_final": "Incluso nella fattura finale.",
   "lang_room_orders_enable_help": "Abilita l'ordine delle camere per il personale nelle Impostazioni → Ristorante → Hotel e altre sedi.",
-  "lang_room_venue": "Sede"
+  "lang_room_venue": "Sede",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Aggiungi una citazione per riga. Le interruzioni di riga rimangono all'interno di quella citazione.",
+  "lang_apply_quotes": "Applicare virgolette",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Applica aggiorna la tua bozza. Salva i disegni per memorizzare le modifiche per questo ramo.",
+  "lang_close_quote_manager": "Chiudi il gestore dei preventivi",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Inserisci una citazione in ogni riga o rimuovi le righe vuote. Ogni citazione può contenere fino a 600 caratteri.",
+  "lang_enter_your_quote": "Inserisci il tuo preventivo",
+  "lang_manage_my_quotes": "Gestisci i miei preventivi",
+  "lang_my_receipt_quotes": "Le mie citazioni di ricevuta",
+  "lang_quote_kural_number": "Citazione / Numero Kural",
+  "lang_use_a_specific_number": "Utilizza un numero specifico",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Utilizza questa citazione su ogni nuova fattura finché non la cambi."
 }

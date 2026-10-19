@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}: 할인 후 식재료의 {1}% (세금 미포함)",
   "lang_room_charge_final": "최종 청구서에 포함되어 있습니다.",
   "lang_room_orders_enable_help": "설정 → 레스토랑 → 호텔 및 기타 장소에서 직원 객실 주문을 활성화하세요.",
-  "lang_room_venue": "장소"
+  "lang_room_venue": "장소",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "행당 하나의 인용문을 추가합니다. 줄 바꿈은 해당 따옴표 안에 유지됩니다.",
+  "lang_apply_quotes": "따옴표 적용",
+  "lang_apply_updates_your_draft_save_designs_to_s": "적용은 초안을 업데이트합니다. 이 지점의 변경 사항을 저장하려면 디자인을 저장하세요.",
+  "lang_close_quote_manager": "견적 관리자 닫기",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "각 행에 인용문을 입력하거나 빈 행을 삭제하세요. 각 인용문은 최대 600자까지 가능합니다.",
+  "lang_enter_your_quote": "견적을 입력하세요",
+  "lang_manage_my_quotes": "내 견적 관리",
+  "lang_my_receipt_quotes": "내 영수증 견적",
+  "lang_quote_kural_number": "견적 / 쿠랄 번호",
+  "lang_use_a_specific_number": "특정 번호 사용",
+  "lang_use_this_quote_on_every_new_bill_until_you": "변경할 때까지 모든 새 청구서에 이 견적을 사용하십시오."
 }

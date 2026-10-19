@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}: {1}% от стоимости еды после вычета скидок до уплаты налогов.",
   "lang_room_charge_final": "Включено в окончательный счет.",
   "lang_room_orders_enable_help": "Разрешите заказ номеров для персонала в меню «Настройки», «Ресторан», «Отели» и другие заведения.",
-  "lang_room_venue": "Место проведения"
+  "lang_room_venue": "Место проведения",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Добавьте по одной цитате в каждую строку. Разрывы строк остаются внутри этой кавычки.",
+  "lang_apply_quotes": "Применить кавычки",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Примените обновления вашего проекта. Сохраните проекты, чтобы сохранить изменения для этой ветки.",
+  "lang_close_quote_manager": "Закрыть менеджер котировок",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Введите цитату в каждую строку или удалите пустые строки. Каждая цитата может содержать до 600 символов.",
+  "lang_enter_your_quote": "Введите вашу цитату",
+  "lang_manage_my_quotes": "Управляйте моими котировками",
+  "lang_my_receipt_quotes": "Мои расценки на получение",
+  "lang_quote_kural_number": "Цитата / Куральский номер",
+  "lang_use_a_specific_number": "Используйте определенный номер",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Используйте эту цитату в каждом новом счете, пока не измените ее."
 }

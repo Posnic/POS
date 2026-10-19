@@ -337,10 +337,22 @@ async function reserveClaim(
         tables[0].tableorder_value !== mergeTarget.table_number
       )
         fail('The seating group changed. Refresh this order.', 409);
-    } else if (!adopting && limit && count >= limit)
-      fail('This table has reached its open order limit.', 409);
-    if (!adopting && maximum && input.guests + occupiedGuests(overlaps, open) > maximum)
+    }
+    if (
+      !adopting &&
+      ((!mergeTarget && limit && count >= limit) ||
+        (maximum && input.guests + occupiedGuests(overlaps, open) > maximum))
+    ) {
+      // A retry can read the claim snapshot before the winning request reserves,
+      // then read its committed sale afterwards. Re-read our own claim before
+      // counting that same request as another party. Other actors/payloads must
+      // still pass the normal occupancy checks.
+      const winner = await find(db, scope, id);
+      if (winner && !terminal(winner) && sameRequest(winner, claim)) return winner;
+      if (!mergeTarget && limit && count >= limit)
+        fail('This table has reached its open order limit.', 409);
       fail('Choose a table with enough seats.', 409);
+    }
   }
   if (await history(db).findOne({ _id: `${key}:${id}` }))
     fail('This seating request has already been used.', 409);

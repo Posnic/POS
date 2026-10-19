@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% של מזון לאחר הנחות, לפני מס.",
   "lang_room_charge_final": "כלול על הצעת החוק הסופית.",
   "lang_room_orders_enable_help": "אפשר הזמנות חדרי צוות בהגדרות \"מסעדה\" \"מלונות ומקומות אחרים.",
-  "lang_room_venue": "מקום"
+  "lang_room_venue": "מקום",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "הוסף ציטוט אחד בכל שורה. מעברי שורות נשארים בתוך הציטוט הזה.",
+  "lang_apply_quotes": "החל ציטוטים",
+  "lang_apply_updates_your_draft_save_designs_to_s": "החל מעדכן את הטיוטה שלך. שמור עיצובים לאחסון שינויים עבור סניף זה.",
+  "lang_close_quote_manager": "סגור מנהל הצעות מחיר",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "הזן ציטוט בכל שורה, או הסר שורות ריקות. כל ציטוט יכול להכיל עד 600 תווים.",
+  "lang_enter_your_quote": "הזן את הצעת המחיר שלך",
+  "lang_manage_my_quotes": "נהל את הציטוטים שלי",
+  "lang_my_receipt_quotes": "ציטוטי הקבלות שלי",
+  "lang_quote_kural_number": "ציטוט / מספר קורל",
+  "lang_use_a_specific_number": "השתמש במספר מסוים",
+  "lang_use_this_quote_on_every_new_bill_until_you": "השתמש בהצעת מחיר זו על כל שטר חדש עד שתשנה אותו."
 }

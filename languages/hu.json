@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: Az élelmiszer {1}% -a kedvezmény után, adózás előtt.",
   "lang_room_charge_final": "A végső számlán szerepel.",
   "lang_room_orders_enable_help": "Engedélyezze a személyzeti szobarendezést a Beállítások → Étterem → Hotelek és egyéb helyszínek menüpontban.",
-  "lang_room_venue": "Helyszín"
+  "lang_room_venue": "Helyszín",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Soronként egy idézetet adjon hozzá. A sortörések az idézetben maradnak.",
+  "lang_apply_quotes": "Idézetek alkalmazása",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Alkalmazza a piszkozat frissítéseit. Mentse el a terveket az ág módosításainak tárolásához.",
+  "lang_close_quote_manager": "Árajánlatkezelő bezárása",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Írjon be egy idézetet minden sorba, vagy távolítsa el az üres sorokat. Minden idézet legfeljebb 600 karakterből állhat.",
+  "lang_enter_your_quote": "Adja meg árajánlatát",
+  "lang_manage_my_quotes": "Kezelje idézeteimet",
+  "lang_my_receipt_quotes": "A nyugta idézeteim",
+  "lang_quote_kural_number": "Idézet / Kural szám",
+  "lang_use_a_specific_number": "Használjon egy adott számot",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Használja ezt az idézetet minden új számlánál, amíg meg nem változtatja."
 }
