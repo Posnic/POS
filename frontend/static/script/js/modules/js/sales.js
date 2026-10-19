@@ -597,11 +597,31 @@ PosnicPro.sales = {
             if (settings[entry[0]] === true) sources.push([entry[1],entry[2]]);
         });
         var select = $('#sales_history_source'), prior = select.val() || '';
+        var historyBranch = PosnicPro.local.get('branch_id_set') || '';
+        var sourceLabels = { pos: 'POS / Counter', tableside: 'Captain / Tableside', phone: 'Phone', kiosk: 'Kiosk', online: 'Online ordering', whatsapp: 'WhatsApp', marketplace: 'Marketplace', ecommerce: 'Webshop' };
+        if (select.data('recordedBranch') === historyBranch) {
+            (select.data('recordedSources') || []).forEach(function (value) {
+                if (Object.prototype.hasOwnProperty.call(sourceLabels, value) && !sources.some(function (s) { return s[0] === value; })) sources.push([value, sourceLabels[value]]);
+            });
+        }
         select.empty().append($('<option>').val('').text(PosnicPro.i18n.t('lang_all_sources', 'All sources')));
         sources.forEach(function (s) { select.append($('<option>').val(s[0]).text(s[1])); });
         select.val(sources.some(function (s) { return s[0] === prior; }) ? prior : '');
         $('#sales_history_source_wrap').toggle(sources.length > 1);
         if (sources.length === 1) select.val('');
+        // History remains searchable after a module is disabled. This read
+        // adds only sources recorded in the authorized branch; it enables no module.
+        var sourceRequest = (PosnicPro.sales.historySourceRequest || 0) + 1;
+        PosnicPro.sales.historySourceRequest = sourceRequest;
+        PosnicPro.get({ url: 'sales/historyFilterOptions', data: { branch: historyBranch, field: 'source' } }, function (r) {
+            if (sourceRequest !== PosnicPro.sales.historySourceRequest || historyBranch !== (PosnicPro.local.get('branch_id_set') || '') || !r || r.type !== 'success' || !Array.isArray(r.data)) return;
+            select.data('recordedBranch', historyBranch).data('recordedSources', r.data.map(function (row) { return row.value; }));
+            r.data.forEach(function (row) {
+                if (!Object.prototype.hasOwnProperty.call(sourceLabels, row.value)) return;
+                if (!select.find('option').toArray().some(function (option) { return option.value === row.value; })) select.append($('<option>').val(row.value).text(sourceLabels[row.value]));
+            });
+            $('#sales_history_source_wrap').toggle(select.find('option').length > 2);
+        });
         if ($.fn.autocomplete) {
             var sourceSearch = $('#sales_history_source_search');
             if (!sourceSearch.length) {

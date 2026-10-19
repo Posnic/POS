@@ -16,6 +16,9 @@ describe('recorded history filter choices', () => {
       { license: licenseId, branch_id: branchId, kitchen_actor: { name: '' }, client: { staff_name: 'Asha', device_id: 'tablet-1', device_model: 'Kitchen tablet' } },
       { license: new ObjectId(), branch_id: branchId, created_by: 'Other tenant' },
       { license: licenseId, branch_id: new ObjectId(), created_by: 'Other branch' },
+      { license: licenseId, branch_id: branchId, channel: 'marketplace' },
+      { license: licenseId, branch_id: branchId, sale_method: 'Kiosk' },
+      { license: new ObjectId(), branch_id: branchId, channel: 'ecommerce' },
       ...Array.from({length:12}, (_,i)=>({license:licenseId,branch_id:branchId,created_by:'Staff '+i})),
     ]);
   });
@@ -36,5 +39,11 @@ describe('recorded history filter choices', () => {
   test('invalid field, query objects and branch IDs are rejected', () => {
     for (const extra of [{field:'password'}, {query:{$ne:''}}, {branchId:'invalid'}])
       assert.throws(()=>pipeline({branchId,licenseId,field:'staff',...extra}));
+  });
+  test('recorded sources include marketplace and legacy sales without module flags or tenant leakage', async () => {
+    assert.deepEqual(await options('source'), [
+      {value:'kiosk',label:'kiosk'}, {value:'marketplace',label:'marketplace'}, {value:'pos',label:'pos'},
+    ]);
+    assert.deepEqual(await options('source', 'market'), [{value:'marketplace',label:'marketplace'}]);
   });
 });
