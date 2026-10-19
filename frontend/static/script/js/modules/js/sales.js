@@ -7844,7 +7844,9 @@ PosnicPro.sales.itemsMenu = {
                             if (_trackInv === true || _trackInv === 'true') {
                                 var _aq = getItemdata[i]['available_quantity'];
                                 _aq = (_aq === undefined || _aq === null || _aq === '') ? 0 : _aq;
-                                _stockHtml = '<div class="text-center wsk-cp-stock">' + _aq + ' in stock</div>';
+                                _stockHtml = '<div class="text-center wsk-cp-stock">' + (Number(_aq) <= 0
+                                    ? PosnicPro.i18n.t('lang_out_of_stock_2', 'Out of stock')
+                                    : Number(_aq) + ' in stock') + '</div>';
                             }
                             /* Tile colour (Loyverse study L2): an item without a real
                                image but with a chosen colour renders a coloured tile
@@ -8464,6 +8466,14 @@ PosnicPro.sales.itemsMenu = {
     },
     addToLineItemsList: function (item_id) {
         PosnicPro.sales.itemCache.get(item_id, function (item) {
+            // Browsing includes sold-out products; it must not authorize a sale.
+            var tracked = item.track_inventory === true || item.track_inventory === 'true';
+            var negative = item.negative_stock === true || item.negative_stock === 'true';
+            if (PosnicPro.sales.SaleAction !== 'return' && item.item_kind !== 'service'
+                && tracked && !negative && Number(item.available_quantity || 0) <= 0) {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_some_items_are_out_of_stock', 'Some items are out of stock.'));
+                return;
+            }
             $("#save_submit").removeClass("disabled");
             let hash = window.location.hash.slice(1);
             if (hash === '/sales/new') {

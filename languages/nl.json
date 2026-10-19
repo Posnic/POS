@@ -5079,5 +5079,11 @@
   "lang_sell_by_which_unit": "In welke eenheid verkopen?",
   "lang_thirukkural_1_330_tamil_couplets": "Thirukkural - 1.330 Tamil coupletten",
   "lang_quote_qr_meaning": "QR voor de Tamil- en Engelse betekenis",
-  "lang_quote_qr_size": "QR-formaat"
+  "lang_quote_qr_size": "QR-formaat",
+  "lang_could_not_save_settings_please_retry": "Instellingen konden niet worden opgeslagen. Probeer het opnieuw.",
+  "lang_require_a_table": "Een tafel verplicht stellen",
+  "lang_require_guest_count_pax": "Aantal gasten verplicht stellen",
+  "lang_required_dine_in_details": "Verplichte gegevens voor eten ter plaatse",
+  "lang_staff_must_choose_a_table_or_enter_its_num": "Medewerkers moeten een tafel kiezen of het tafelnummer invoeren voordat ze een bestelling voor eten ter plaatse starten.",
+  "lang_staff_must_enter_how_many_people_are_dinin": "Medewerkers moeten invoeren hoeveel personen komen eten. Standaard uitgeschakeld. Voor afhaal- en bezorgbestellingen is geen aantal gasten nodig."
 }
