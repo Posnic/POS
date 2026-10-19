@@ -160,14 +160,14 @@
         return page;
     }
     var presets = {
-        a4: { paper: 'a4', width: 63, height: 33, margin: 5, gap: 2, method: 'driver' },
-        a4small: { paper: 'a4', width: 48, height: 25, margin: 5, gap: 2, method: 'driver' },
-        a4large: { paper: 'a4', width: 99, height: 38, margin: 5, gap: 2, method: 'driver' },
-        thermal80: { paper: 'roll', width: 72, height: 33, method: 'thermal' },
-        thermal58: { paper: 'roll', width: 48, height: 33, method: 'driver' },
-        label40: { paper: 'roll', width: 40, height: 30, method: 'driver' },
-        label50: { paper: 'roll', width: 50, height: 30, method: 'driver' },
-        label60: { paper: 'roll', width: 60, height: 40, method: 'driver' }
+        a4: { paper: 'a4', width: 63, height: 33, margin: 5, gap: 2 },
+        a4small: { paper: 'a4', width: 48, height: 25, margin: 5, gap: 2 },
+        a4large: { paper: 'a4', width: 99, height: 38, margin: 5, gap: 2 },
+        thermal80: { paper: 'roll', width: 72, height: 33 },
+        thermal58: { paper: 'roll', width: 48, height: 33 },
+        label40: { paper: 'roll', width: 40, height: 30 },
+        label50: { paper: 'roll', width: 50, height: 30 },
+        label60: { paper: 'roll', width: 60, height: 40 }
     };
     function capacityText(g) {
         return g.columns + ' ' + t('lang_sl_columns', 'columns') + ' × ' + g.rows + ' ' + t('lang_sl_rows', 'rows') + ' · ' + g.capacity + ' ' + t('lang_sl_per_sheet', 'labels per A4 sheet');
@@ -357,11 +357,9 @@
         state.filters = {};
         $('#sl-search').val(''); $('#sl-category').val(''); $('#sl-from').val(1); $('#sl-batch').val(5); $('#sl-copies').val(1);
         $('#sl-paper').val('roll'); $('#sl-width').val(72); $('#sl-height').val(33); $('#sl-start').val(1);
-        var savedLayout = false;
         try {
             var saved = JSON.parse(root.localStorage.getItem('posnic.shelf-label-layout') || 'null');
             if (saved) {
-                savedLayout = true;
                 if (['a4', 'roll'].includes(saved.paper)) $('#sl-paper').val(saved.paper);
                 ['width', 'height', 'margin', 'gap', 'start'].forEach(function (key) { if (Number.isFinite(saved[key])) $('#sl-' + key).val(saved[key]); });
                 ['guides', 'date', 'mrp', 'shop'].forEach(function (key) { if (typeof saved[key] === 'boolean') $('#sl-' + key).prop('checked', saved[key]); });
@@ -376,9 +374,8 @@
                 }
             }
         } catch (_) { /* Use current controls if storage is unavailable. */ }
-        if (!savedLayout) { try { root.localStorage.setItem('posnic.shelf-label-method.roll', 'thermal'); } catch (_) {} }
         $('#document_width').val(Number($('#sl-width').val()) / 25.4); $('#document_height').val(Number($('#sl-height').val()) / 25.4);
-        $('#view_print_lable').modal('show'); setStep(0); renderRows(); loadPrinters(savedLayout ? undefined : 'thermal');
+        $('#view_print_lable').modal('show'); setStep(0); renderRows(); loadPrinters();
         var scopeToken = state.token;
         root.PosnicPro.get({ url: 'categories/getCategoryAjaxList', data: 'query=' }, function (response) {
             if (!$('#view_print_lable').hasClass('show') || !response) return;
@@ -484,7 +481,7 @@
         $(root.document).on('click', '#sl-prev,#sl-next', function () { state.page += this.id === 'sl-next' ? 1 : -1; refresh(); });
         $(root.document).on('click', '#sl-test', function () { print(true); });
         $(root.document).on('click', '#sl-print', function () { print(false); });
-        $(root.document).on('change', '#sl-paper', function () { $('#sl-preset').val(this.value === 'a4' ? 'a4' : 'thermal80').trigger('change'); });
+        $(root.document).on('change', '#sl-paper', function () { $('#sl-preset').val(this.value === 'a4' ? 'a4' : 'thermal80').trigger('change'); loadPrinters(); });
         $(root.document).on('click', '#sl-one-each', function () { chosen().forEach(function (e) { e.copies = 1; }); $('#sl-from').val(1); state.page = 0; renderRows(); });
         $(root.document).on('click', '#sl-edit-products', function () { setStep(0); renderRows(); });
         $(root.document).on('change', '#sl-preset', function () {
@@ -493,12 +490,11 @@
             ['paper', 'width', 'height', 'margin', 'gap'].forEach(function (field) { if (preset[field] !== undefined) $('#sl-' + field).val(preset[field]); });
             $('#sl-start').val(1);
             $('#document_width').val(preset.width / 25.4); $('#document_height').val(preset.height / 25.4);
-            try { root.localStorage.setItem('posnic.shelf-label-method.' + preset.paper, preset.method); } catch (_) {}
             state.page = 0; state.furthestStep = 1;
-            loadPrinters(preset.method); refresh();
+            refresh();
         });
         $(root.document).on('click', '#sl-refresh-printers', loadPrinters);
-        $(root.document).on('change', '#sl-print-method', function () { $('#sl-thermal-help').prop('hidden', this.value !== 'thermal'); refresh(); });
+        $(root.document).on('change', '#sl-print-method', function () { $('#sl-thermal-help').prop('hidden', this.value !== 'thermal'); try { root.localStorage.setItem('posnic.shelf-label-method.' + $('#sl-paper').val(), this.value); } catch (_) {} refresh(); });
         $(root).on('resize', function () { if (state.step > 0) refresh(); });
     }
     init();

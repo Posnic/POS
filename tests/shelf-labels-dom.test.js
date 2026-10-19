@@ -265,21 +265,24 @@ test('thermal labels explicitly opt into raw raster printing and stop at the fir
     dom.window.close();
 });
 
-test('size presets set dimensions and method, keep copies, and restore after reopening', async () => {
+test('size presets only set dimensions, preserve printer method and copies, and restore after reopening', async () => {
     const { dom, w, $, next } = setup();
     w.electronAPI = { printer: { list: async () => [{ name: 'POS-80C' }], print: async () => ({success:true}) } };
     w.PosnicShelfLabels.open('0'); await tick(); next();
     $('#sl-products input[type=number]').first().val(3).trigger('change');
     $('#sl-preset').val('thermal80').trigger('change'); await tick();
     assert.equal($('#sl-paper').val(), 'roll'); assert.equal($('#sl-width').val(), '72');
-    assert.equal($('#sl-print-method').val(), 'thermal');
+    assert.equal($('#sl-print-method').val(), 'driver');
+    $('#sl-print-method').val('thermal').trigger('change');
+    $('#sl-printer').val('POS-80C');
     assert.equal($('#sl-products input[type=number]').first().val(), '3');
     $('#sl-preset').val('thermal58').trigger('change'); await tick();
-    assert.equal($('#sl-width').val(), '48'); assert.equal($('#sl-print-method').val(), 'driver');
+    assert.equal($('#sl-width').val(), '48'); assert.equal($('#sl-print-method').val(), 'thermal');
+    assert.equal($('#sl-printer').val(), 'POS-80C');
     w.PosnicShelfLabels.open('0'); await tick();
-    assert.equal($('#sl-preset').val(), 'thermal58'); assert.equal($('#sl-print-method').val(), 'driver');
+    assert.equal($('#sl-preset').val(), 'thermal58'); assert.equal($('#sl-print-method').val(), 'thermal');
     $('#sl-width').val(47).trigger('change'); assert.equal($('#sl-preset').val(), 'custom');
-    $('#sl-preset').val('a4').trigger('change'); await tick();
+    $('#sl-paper').val('a4').trigger('change'); await tick();
     assert.equal($('#sl-paper').val(), 'a4'); assert.equal($('#sl-width').val(), '63');
     assert.equal($('#sl-margin').val(), '5'); assert.equal($('#sl-gap').val(), '2');
     assert.equal($('#sl-print-method').val(), 'driver');
