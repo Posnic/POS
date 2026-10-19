@@ -4866,5 +4866,18 @@
   "lang_sl_preset_help": "Presets fill in dimensions; check they match your paper. Sticker labels use the printer driver. Printable width and feed margins vary by printer.",
   "lang_sl_preset_40": "40 × 30 mm",
   "lang_sl_preset_50": "50 × 30 mm",
-  "lang_sl_preset_60": "60 × 40 mm"
+  "lang_sl_preset_60": "60 × 40 mm",
+  "lang_sl_print_plan": "Products and copies",
+  "lang_sl_one_each": "One label per selected product",
+  "lang_sl_edit_products": "Change products",
+  "lang_sl_copies_help": "For repeated labels, set copies beside each product. These are label copies, not extra copies of the whole sheet.",
+  "lang_sl_columns": "columns",
+  "lang_sl_rows": "rows",
+  "lang_sl_per_sheet": "labels per A4 sheet",
+  "lang_sl_repeated": "Repeated labels",
+  "lang_sl_this_batch": "This print batch",
+  "lang_sl_sheets": "A4 sheets",
+  "lang_sl_roll_labels": "individual roll labels",
+  "lang_sl_a4small": "48 × 25 mm",
+  "lang_sl_a4large": "99 × 38 mm"
 }

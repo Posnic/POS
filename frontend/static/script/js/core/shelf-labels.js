@@ -161,12 +161,47 @@
     }
     var presets = {
         a4: { paper: 'a4', width: 63, height: 33, margin: 5, gap: 2, method: 'driver' },
+        a4small: { paper: 'a4', width: 48, height: 25, margin: 5, gap: 2, method: 'driver' },
+        a4large: { paper: 'a4', width: 99, height: 38, margin: 5, gap: 2, method: 'driver' },
         thermal80: { paper: 'roll', width: 72, height: 33, method: 'thermal' },
         thermal58: { paper: 'roll', width: 48, height: 33, method: 'driver' },
         label40: { paper: 'roll', width: 40, height: 30, method: 'driver' },
         label50: { paper: 'roll', width: 50, height: 30, method: 'driver' },
         label60: { paper: 'roll', width: 60, height: 40, method: 'driver' }
     };
+    function capacityText(g) {
+        return g.columns + ' ' + t('lang_sl_columns', 'columns') + ' × ' + g.rows + ' ' + t('lang_sl_rows', 'rows') + ' · ' + g.capacity + ' ' + t('lang_sl_per_sheet', 'labels per A4 sheet');
+    }
+    function choiceCards() {
+        [['sl-paper', 'sl-paper-cards'], ['sl-preset', 'sl-size-cards']].forEach(function (pair) {
+            var host = $('#' + pair[1]);
+            if (!host.children().length) $('#' + pair[0] + ' option').each(function () {
+                var value = this.value, card = $('<button type="button" class="sl-choice">').attr('data-value', value);
+                if (pair[0] === 'sl-paper') card.append($('<i aria-hidden="true" class="feather">').addClass(value === 'roll' ? 'icon-printer' : 'icon-file-text'), ' ');
+                card.append($('<span>').html($(this).html()));
+                if (pair[0] === 'sl-preset' && presets[value]?.paper === 'a4') card.append($('<small>').text(capacityText(geometry(Object.assign({ start: 1 }, presets[value])))));
+                card.on('click', function () { $('#' + pair[0]).val(value).trigger('change'); });
+                host.append(card);
+            });
+            host.children().each(function () {
+                var value = $(this).attr('data-value');
+                $(this).attr('aria-pressed', String($('#' + pair[0]).val() === value));
+                if (pair[0] === 'sl-preset') $(this).prop('hidden', value !== 'custom' && presets[value]?.paper !== $('#sl-paper').val());
+            });
+        });
+    }
+    function printPlan(entries, result, from, s, g) {
+        var repeated = entries.some(function (e) { return e.copies > 1; });
+        $('#sl-plan-mode').text(entries.length + ' ' + t('lang_sl_products_count', 'products') + ' · ' + (repeated ? t('lang_sl_repeated', 'Repeated labels') : t('lang_sl_one_each', 'One label per selected product')));
+        var host = $('#sl-plan-products').empty();
+        entries.forEach(function (e) {
+            var input = $('<input type="number" class="sl-input" min="1" max="999">').val(e.copies).attr('aria-label', t('lang_print_copies', 'Copies') + ' ' + e.item.name);
+            input.on('change', function () { e.copies = Number(this.value); $('#sl-from').val(1); state.page = 0; refresh(); });
+            host.append($('<label class="sl-plan-row">').append($('<span>').text(e.item.name), input));
+        });
+        $('#sl-plan-batch').text(t('lang_sl_this_batch', 'This print batch') + ': ' + result.amount + ' / ' + result.total + ' ' + t('lang_sl_labels_count', 'labels') + ' · ' + from + '–' + (from + result.amount - 1) + ' · ' + result.pages + ' ' + (s.paper === 'a4' ? t('lang_sl_sheets', 'A4 sheets') : t('lang_sl_roll_labels', 'individual roll labels')));
+        if (s.paper === 'a4') $('#sl-plan-batch').append($('<small style="display:block">').text(capacityText(g)));
+    }
     function refresh() {
         var matched = Object.keys(presets).find(function (key) {
             return ['paper', 'width', 'height', 'margin', 'gap'].every(function (field) {
@@ -174,6 +209,7 @@
             });
         });
         $('#sl-preset').val(matched || 'custom');
+        choiceCards();
         selectedCount();
         if (!$('#view_print_lable').hasClass('show')) return;
         $('#sl-a4-settings').prop('hidden', $('#sl-paper').val() !== 'a4');
@@ -188,6 +224,7 @@
         }
         try {
             var s = settings(), g = geometry(s), amount = Number($('#sl-batch').val()), from = Number($('#sl-from').val());
+            $('#sl-capacity').text(s.paper === 'a4' ? capacityText(g) : t('lang_label_roll_one_label_per_page', 'Label roll · one label per page'));
             $('#sl-start').attr('max', g.capacity); $('#sl-dimensions').text(s.width + ' × ' + s.height + ' mm');
             try { root.localStorage.setItem('posnic.shelf-label-layout', JSON.stringify({ paper: s.paper, width: s.width, height: s.height, margin: s.margin, gap: s.gap, start: s.start, guides: s.guides, barcode: s.barcode, barText: s.barText, shop: !!s.shop, date: s.date, mrp: s.mrp, mfg: s.mfg, exp: s.exp,
                 design: { font: s.font, fontSize: s.fontSize, align: s.align, ink: s.ink, background: s.background, format: s.format, barWidth: s.barWidth, barHeight: s.barHeight, barMargin: s.barMargin, textMargin: s.textMargin, top: s.top, bottom: s.bottom, left: s.left, right: s.right, fontOptions: s.fontOptions } })); } catch (_) { /* Optional storage. */ }
@@ -208,6 +245,7 @@
             $('#sl-prev').prop('disabled', state.page === 0); $('#sl-next').prop('disabled', state.page === result.pages - 1);
             $('#sl-job-paper').text(s.paper === 'a4' ? 'A4 · 210 × 297 mm' : s.width + ' × ' + s.height + ' mm');
             $('#sl-job-total').text(result.total); $('#sl-job-pages').text(result.pages);
+            printPlan(entries, result, from, s, g);
             $('#sl-print,#sl-test').prop('disabled', state.loading || state.printing);
         } catch (e) { error(e); }
     }
@@ -318,10 +356,12 @@
         // The wizard owns its visible search/category filters. Tenant scope remains enforced by the Items API.
         state.filters = {};
         $('#sl-search').val(''); $('#sl-category').val(''); $('#sl-from').val(1); $('#sl-batch').val(5); $('#sl-copies').val(1);
-        $('#sl-width').val(Math.round(Number($('#document_width').val()) * 25.4 * 10) / 10); $('#sl-height').val(Math.round(Number($('#document_height').val()) * 25.4 * 10) / 10);
+        $('#sl-paper').val('roll'); $('#sl-width').val(72); $('#sl-height').val(33); $('#sl-start').val(1);
+        var savedLayout = false;
         try {
             var saved = JSON.parse(root.localStorage.getItem('posnic.shelf-label-layout') || 'null');
             if (saved) {
+                savedLayout = true;
                 if (['a4', 'roll'].includes(saved.paper)) $('#sl-paper').val(saved.paper);
                 ['width', 'height', 'margin', 'gap', 'start'].forEach(function (key) { if (Number.isFinite(saved[key])) $('#sl-' + key).val(saved[key]); });
                 ['guides', 'date', 'mrp', 'shop'].forEach(function (key) { if (typeof saved[key] === 'boolean') $('#sl-' + key).prop('checked', saved[key]); });
@@ -336,7 +376,9 @@
                 }
             }
         } catch (_) { /* Use current controls if storage is unavailable. */ }
-        $('#view_print_lable').modal('show'); setStep(0); renderRows(); loadPrinters();
+        if (!savedLayout) { try { root.localStorage.setItem('posnic.shelf-label-method.roll', 'thermal'); } catch (_) {} }
+        $('#document_width').val(Number($('#sl-width').val()) / 25.4); $('#document_height').val(Number($('#sl-height').val()) / 25.4);
+        $('#view_print_lable').modal('show'); setStep(0); renderRows(); loadPrinters(savedLayout ? undefined : 'thermal');
         var scopeToken = state.token;
         root.PosnicPro.get({ url: 'categories/getCategoryAjaxList', data: 'query=' }, function (response) {
             if (!$('#view_print_lable').hasClass('show') || !response) return;
@@ -442,10 +484,12 @@
         $(root.document).on('click', '#sl-prev,#sl-next', function () { state.page += this.id === 'sl-next' ? 1 : -1; refresh(); });
         $(root.document).on('click', '#sl-test', function () { print(true); });
         $(root.document).on('click', '#sl-print', function () { print(false); });
-        $(root.document).on('change', '#sl-paper', function () { $('#sl-start').val(1); refresh(); loadPrinters(); });
+        $(root.document).on('change', '#sl-paper', function () { $('#sl-preset').val(this.value === 'a4' ? 'a4' : 'thermal80').trigger('change'); });
+        $(root.document).on('click', '#sl-one-each', function () { chosen().forEach(function (e) { e.copies = 1; }); $('#sl-from').val(1); state.page = 0; renderRows(); });
+        $(root.document).on('click', '#sl-edit-products', function () { setStep(0); renderRows(); });
         $(root.document).on('change', '#sl-preset', function () {
             var preset = presets[this.value];
-            if (!preset) return;
+            if (!preset) { choiceCards(); $('#sl-width').trigger('focus'); return; }
             ['paper', 'width', 'height', 'margin', 'gap'].forEach(function (field) { if (preset[field] !== undefined) $('#sl-' + field).val(preset[field]); });
             $('#sl-start').val(1);
             $('#document_width').val(preset.width / 25.4); $('#document_height').val(preset.height / 25.4);

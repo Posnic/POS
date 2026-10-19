@@ -208,7 +208,8 @@ test('desktop labels use a chosen printer and exact roll dimensions without a br
     w.PosnicShelfLabels.open('0'); await tick();
     assert.equal($('#sl-batch').val(), '5');
     assert.equal($('#sl-desktop-printer').prop('hidden'), false);
-    next(); $('#sl-paper').val('roll').trigger('change'); await tick(); next(); next();
+    next(); $('#sl-paper').val('roll').trigger('change'); await tick();
+    $('#sl-width').val(63).trigger('change'); $('#sl-print-method').val('driver').trigger('change'); next(); next();
     await w.PosnicShelfLabels.print(true);
     assert.equal(sent.length, 0, 'must not borrow the receipt/default printer');
     $('#sl-printer').val('POS-80C');
@@ -297,4 +298,38 @@ test('thermal preview shows roll edges and keeps print content within the print 
     assert.match(sent[0].html,/justify-content:flex-start/);
     assert.match(sent[0].html,/width:72mm/);
     dom.window.close();
+});
+
+test('paper cards default to roll, filter sizes, and retain saved A4 layouts', async () => {
+ const {dom,w,$,next}=setup();
+ w.PosnicShelfLabels.open('0');await tick();next();
+ assert.equal($('#sl-paper').val(),'roll');assert.equal($('#sl-width').val(),'72');
+ assert.equal($('#sl-paper').prop('hidden'),true);
+ assert.equal($('#sl-size-cards [data-value=a4]').prop('hidden'),true);
+ $('#sl-paper-cards [data-value=a4]')[0].click();await tick();
+ assert.equal($('#sl-size-cards [data-value=thermal80]').prop('hidden'),true);
+ assert.match($('#sl-capacity').text(),/3 columns × 8 rows · 24/);
+ $('#sl-size-cards [data-value=a4small]')[0].click();await tick();
+ assert.match($('#sl-capacity').text(),/4 columns × 10 rows · 40/);
+ $('#sl-size-cards [data-value=custom]')[0].click();$('#sl-width').val(55).trigger('change');
+ assert.equal($('#sl-preset').val(),'custom');
+ w.PosnicShelfLabels.open('0');await tick();assert.equal($('#sl-paper').val(),'a4');assert.equal($('#sl-width').val(),'55');
+ dom.window.close();
+});
+
+test('print plan explains mixed quantities and batch limits without multiplying sheet copies', async () => {
+ const {dom,w,$,next}=setup();w.PosnicShelfLabels.open();await tick();
+ const rows=$('#sl-products .sl-product-row');rows[0].click();rows[1].click();
+ rows.eq(0).find('input[type=number]').val(3).trigger('change');
+ rows.eq(1).find('input[type=number]').val(4).trigger('change');
+ next();$('#sl-paper-cards [data-value=a4]')[0].click();await tick();next();next();
+ assert.match($('#sl-plan-mode').text(),/2 products.*Repeated labels/);
+ assert.equal($('#sl-plan-products input').length,2);
+ assert.match($('#sl-plan-batch').text(),/5 \/ 7 labels/);
+ $('#sl-plan-products input').first().val(2).trigger('change');
+ assert.equal($('#sl-job-total').text(),'6');
+ $('#sl-one-each')[0].click();
+ assert.equal($('#sl-job-total').text(),'2');assert.match($('#sl-plan-mode').text(),/One label per selected product/);
+ assert.equal($('#sl-job-pages').text(),'1');
+ dom.window.close();
 });

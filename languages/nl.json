@@ -5049,5 +5049,18 @@
   "lang_sl_preset_help": "Voorinstellingen vullen de afmetingen in; controleer of ze bij uw papier passen. Stickervellen gebruiken het printerstuurprogramma. Afdrukbare breedte en doorvoermarges verschillen per printer.",
   "lang_sl_preset_40": "40 × 30 mm",
   "lang_sl_preset_50": "50 × 30 mm",
-  "lang_sl_preset_60": "60 × 40 mm"
+  "lang_sl_preset_60": "60 × 40 mm",
+  "lang_sl_print_plan": "Producten en exemplaren",
+  "lang_sl_one_each": "Eén etiket per geselecteerd product",
+  "lang_sl_edit_products": "Producten wijzigen",
+  "lang_sl_copies_help": "Stel voor herhaalde etiketten het aantal naast elk product in. Dit zijn etiketexemplaren, geen extra exemplaren van het hele vel.",
+  "lang_sl_columns": "kolommen",
+  "lang_sl_rows": "rijen",
+  "lang_sl_per_sheet": "etiketten per A4-vel",
+  "lang_sl_repeated": "Herhaalde etiketten",
+  "lang_sl_this_batch": "Deze afdrukbatch",
+  "lang_sl_sheets": "A4-vellen",
+  "lang_sl_roll_labels": "afzonderlijke roletiketten",
+  "lang_sl_a4small": "48 × 25 mm",
+  "lang_sl_a4large": "99 × 38 mm"
 }

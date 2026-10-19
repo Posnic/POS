@@ -4619,5 +4619,18 @@
   "lang_sl_preset_60": "60 × 40 mm",
   "lang_print_shelf_labels": "शेल्फ / उत्पादन लेबल प्रिन्ट गर्नुहोस्",
   "lang_shelf_label_products": "शेल्फ / उत्पादन लेबल",
-  "lang_sl_none_automatic": "उत्पादन छान्न वा हटाउन उत्पादनको पङ्क्ति वा चेकबक्समा क्लिक गर्नुहोस्।"
+  "lang_sl_none_automatic": "उत्पादन छान्न वा हटाउन उत्पादनको पङ्क्ति वा चेकबक्समा क्लिक गर्नुहोस्।",
+  "lang_sl_print_plan": "उत्पादन र प्रतिहरू",
+  "lang_sl_one_each": "प्रत्येक छानिएको उत्पादनको एउटा लेबल",
+  "lang_sl_edit_products": "उत्पादन बदल्नुहोस्",
+  "lang_sl_copies_help": "दोहोरिएका लेबलका लागि प्रत्येक उत्पादनको छेउमा प्रतिहरू राख्नुहोस्। यी लेबलका प्रतिहरू हुन्, पूरै पानाका थप प्रतिहरू होइनन्।",
+  "lang_sl_columns": "स्तम्भ",
+  "lang_sl_rows": "पङ्क्ति",
+  "lang_sl_per_sheet": "प्रति A4 पाना लेबल",
+  "lang_sl_repeated": "दोहोरिएका लेबल",
+  "lang_sl_this_batch": "यो प्रिन्ट समूह",
+  "lang_sl_sheets": "A4 पाना",
+  "lang_sl_roll_labels": "छुट्टाछुट्टै रोल लेबल",
+  "lang_sl_a4small": "48 × 25 mm",
+  "lang_sl_a4large": "99 × 38 mm"
 }
