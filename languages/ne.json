@@ -23,7 +23,7 @@
   "lang_sample_label": "पूर्वावलोकन",
   "lang_select_all_matching_products": "सबै छान्नुहोस्",
   "lang_select_products": "उत्पादनहरू",
-  "lang_shelf_label_printing": "लेबल प्रिन्ट गर्नुहोस्",
+  "lang_shelf_label_printing": "शेल्फ / उत्पादन लेबल प्रिन्ट",
   "lang_show_barcode": "बारकोड",
   "lang_sl_loading_products": "लोड हुँदै&hellip;",
   "lang_sl_no_matches": "कुनै उत्पादन फेला परेन",
@@ -4616,5 +4616,7 @@
   "lang_sl_preset_help": "पूर्वनिर्धारित विकल्पले मापन भर्छ; आफ्नो कागजसँग मिल्छ कि जाँच्नुहोस्। स्टिकर लेबलमा प्रिन्टर ड्राइभर प्रयोग हुन्छ। छाप्न मिल्ने चौडाइ र कागज तान्ने किनारा प्रिन्टरअनुसार फरक हुन्छ।",
   "lang_sl_preset_40": "40 × 30 mm",
   "lang_sl_preset_50": "50 × 30 mm",
-  "lang_sl_preset_60": "60 × 40 mm"
+  "lang_sl_preset_60": "60 × 40 mm",
+  "lang_print_shelf_labels": "शेल्फ / उत्पादन लेबल प्रिन्ट गर्नुहोस्",
+  "lang_shelf_label_products": "शेल्फ / उत्पादन लेबल"
 }

@@ -380,7 +380,7 @@
                 try { root.localStorage.setItem('posnic.shelf-label-printer.' + s.paper, name); root.localStorage.setItem('posnic.shelf-label-method.' + s.paper, thermal ? 'thermal' : 'driver'); } catch (_) {}
                 $('#sl-status').text('Sent ' + first.amount + ' label(s) to ' + name + '. Check the printed output.');
             } else {
-                root.printJS({ printable: html, type: 'raw-html', style: css(s, g), scanStyles: false, documentTitle: t('lang_shelf_label_products', 'Shelf label products') });
+                root.printJS({ printable: html, type: 'raw-html', style: css(s, g), scanStyles: false, documentTitle: t('lang_shelf_label_products', 'Shelf / product labels') });
             }
         } catch (e) { error(e); }
         finally { state.printing = false; $('#sl-print,#sl-test').prop('disabled', state.loading || state.printing); }
