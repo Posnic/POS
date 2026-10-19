@@ -35,9 +35,19 @@ function connectorOperations(value) {
 async function configuration() {
   const filename = process.env.POSNIC_EXTENSION_CONNECTORS_FILE;
   if (!filename || !path.isAbsolute(filename)) fail('extension_connector_unavailable', 503);
-  const stat = await fs.stat(filename);
-  if (stat.size > 128 * 1024) fail('extension_connector_configuration_invalid', 503);
-  const entries = JSON.parse(await fs.readFile(filename, 'utf8'));
+  const handle = await fs.open(filename, 'r');
+  let entries;
+  try {
+    const stat = await handle.stat();
+    if (!stat.isFile() || stat.size > 128 * 1024)
+      fail('extension_connector_configuration_invalid', 503);
+    const bytes = Buffer.alloc(128 * 1024 + 1);
+    const { bytesRead } = await handle.read(bytes, 0, bytes.length, 0);
+    if (bytesRead > 128 * 1024) fail('extension_connector_configuration_invalid', 503);
+    entries = JSON.parse(bytes.subarray(0, bytesRead).toString('utf8'));
+  } finally {
+    await handle.close();
+  }
   if (!Array.isArray(entries) || entries.length > 256)
     fail('extension_connector_configuration_invalid', 503);
   return entries;
