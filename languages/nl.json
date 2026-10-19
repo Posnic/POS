@@ -5035,7 +5035,6 @@
   "lang_for_an_80_mm_receipt_printer_use_label_wid": "Gebruik voor een 80 mm-bonprinter een labelbreedte van maximaal 72 mm (het afdrukbare gebied). Het voorbeeld toont een rol van 80 mm met aan beide zijden 4 mm die niet kan worden bedrukt en een afdrukbaar gebied van 72 mm. De papierinvoer en snijmarges verschillen per printer. Elk label wordt afzonderlijk afgesneden.",
   "lang_print_directly_to_the_selected_printer_at": "Druk rechtstreeks af op de geselecteerde printer met het hierboven getoonde labelformaat.",
   "lang_printer_driver_a4_or_label_printer": "Printerstuurprogramma (A4- of labelprinter)",
-  "lang_start_with_one_test_label_the_batch_starts": "Begin met één testlabel. De batch begint met 5 labels; verhoog het aantal wanneer u klaar bent (maximaal 2.000).",
   "lang_print_method": "Afdrukmethode",
   "lang_print_exact_route": "Thermisch papier: de HTML-opmaak wordt als afbeelding weergegeven en rechtstreeks via ESC/POS verstuurd. Behoudt logo’s, QR-codes, barcodes en uitlijning. Geen PDF-conversie.",
   "lang_print_fast_route": "Thermisch papier: standaardtekst wordt rechtstreeks via ESC/POS verstuurd, zonder afbeelding of PDF. Afbeeldingen of niet-ondersteunde tekens gebruiken automatisch Exact design.",
@@ -5077,5 +5076,6 @@
   "lang_receipt_quotes": "Citaten op de bon",
   "lang_remove_selling_unit": "Verkoopeenheid verwijderen",
   "lang_sell_by_which_unit": "In welke eenheid verkopen?",
-  "lang_thirukkural_1_330_tamil_couplets": "Thirukkural - 1.330 Tamil coupletten"
+  "lang_thirukkural_1_330_tamil_couplets": "Thirukkural - 1.330 Tamil coupletten",
+  "lang_sl_batch_selection_help": "De batch volgt de geselecteerde producten en aantallen (maximaal 2.000). U kunt deze hier verkleinen of eerst één testlabel afdrukken."
 }

@@ -206,7 +206,7 @@ test('desktop labels use a chosen printer and exact roll dimensions without a br
         print: async (html, options) => { sent.push({ html, options }); return { success: true }; }
     } };
     w.PosnicShelfLabels.open('0'); await tick();
-    assert.equal($('#sl-batch').val(), '5');
+    assert.equal($('#sl-batch').val(), '1');
     assert.equal($('#sl-desktop-printer').prop('hidden'), false);
     next(); $('#sl-paper').val('roll').trigger('change'); await tick();
     $('#sl-width').val(63).trigger('change'); $('#sl-print-method').val('driver').trigger('change'); next(); next();
@@ -239,7 +239,7 @@ test('desktop A4 keeps sheet dimensions and does not retry a failed submission t
     await w.PosnicShelfLabels.print(false);
     assert.equal(sent.length, 1);
     assert.deepEqual(JSON.parse(JSON.stringify(sent[0].options.pageSize)), { width: 210000, height: 297000 });
-    assert.equal(new JSDOM(sent[0].html).window.document.querySelectorAll('.sl-label').length, 5);
+    assert.equal(new JSDOM(sent[0].html).window.document.querySelectorAll('.sl-label').length, 30);
     assert.match($('#sl-status').text(), /Printer offline/);
     assert.equal(getPrint(), undefined);
     dom.window.close();
@@ -328,7 +328,7 @@ test('print plan explains mixed quantities and batch limits without multiplying 
  next();$('#sl-paper-cards [data-value=a4]')[0].click();await tick();next();next();
  assert.match($('#sl-plan-mode').text(),/2 products.*Repeated labels/);
  assert.equal($('#sl-plan-products input').length,2);
- assert.match($('#sl-plan-batch').text(),/5 \/ 7 labels/);
+ assert.match($('#sl-plan-batch').text(),/7 \/ 7 labels/);
  $('#sl-plan-products input').first().val(2).trigger('change');
  assert.equal($('#sl-job-total').text(),'6');
  $('#sl-one-each')[0].click();
@@ -370,4 +370,24 @@ test('missing web print component explains how to recover', async () => {
     $('#sl-test')[0].click(); await tick();
     assert.match($('.sl-footer #sl-status').text(), /Reload this page/);
     dom.window.close();
+});
+
+test('24 selected products fill the same A4 sheet in preview and web printing', async () => {
+ const {dom,w,$,next,getPrint}=setup();w.PosnicShelfLabels.open();await tick();
+ $('#sl-products .sl-product-row').slice(0,24).each(function(){this.click();});
+ assert.equal($('#sl-batch').val(),'24');
+ next();
+ // Select the actual supported A4 preset through its dimensions.
+ $('#sl-paper').val('a4').trigger('change');$('#sl-width').val(63).trigger('change');$('#sl-height').val(33).trigger('change');
+ next();assert.equal($('#sl-preview .sl-label').length,24);
+ assert.match($('#sl-summary').text(),/24 \/ 24 labels/);
+ $('#sl-preview-zoom').val('actual').trigger('change');
+ assert.equal($('#sl-preview .sl-sheet')[0].style.transform,'scale(1)');
+ next();assert.equal($('#sl-print-sample .sl-label').length,24);
+ await w.PosnicShelfLabels.print(false);
+ const doc=new JSDOM(getPrint().printable).window.document;
+ assert.equal(doc.querySelectorAll('.sl-label').length,24);assert.equal(doc.querySelectorAll('.sl-sheet').length,1);
+ $('#sl-batch').val(5).trigger('input');assert.equal($('#sl-print-sample .sl-label').length,5);assert.equal($('#sl-job-total').text(),'5');
+ $('#sl-plan-products input').first().val(2).trigger('change');assert.equal($('#sl-batch').val(),'25');assert.equal($('#sl-job-pages').text(),'2');
+ dom.window.close();
 });

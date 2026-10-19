@@ -56,3 +56,26 @@ The print step lists selected products with editable label copies, a one-each
 shortcut, and the actual batch count/range and sheets or individual roll labels.
 Copies do not multiply the entire sheet. These controls still use existing
 local layout preferences and transient product selection, with no sync changes.
+
+## Batch selection and faithful preview (2026-10-19)
+
+A new or changed product/copy selection now fills the batch automatically, up to
+2,000 labels. An explicitly reduced batch remains in effect until selection/copies
+change. Preview and Print summaries show the actual batch amount, not just the
+selected total. The separate one-test-label action remains available.
+
+Preview uses the exact same sheet renderer and cells as both print paths. Fit-page
+uses the available viewport; Actual size uses 96 CSS pixels per inch with scrolling
+(actual physical monitor size depends on OS/browser zoom). A4 keeps its label
+margins and gaps, rather than stretching labels to fill paper. Desktop driver jobs
+retain micron dimensions and actual-size A4 PDF printing; ESC/POS retains its
+72 mm printable region on 80 mm stock.
+
+Local verification: 30 unit/DOM/desktop tests, real Chrome wizard and mobile checks,
+and real print-to-PDF output: 24 labels on one A4 page; 24 roll pages at the selected
+72 x 33 mm preset (PDF rounding within 0.3 mm). No physical printer was used.
+
+Sync decision: batch, selection, preview zoom and printer layout remain transient
+or per-device preferences. No shared business fields, collections, print queues or
+sync protocols change. The frontend is shared by web and desktop; an existing
+installed EXE is not modified by this source change.
