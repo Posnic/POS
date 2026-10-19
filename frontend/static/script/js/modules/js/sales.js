@@ -11810,7 +11810,7 @@ PosnicPro.sales.chooseSellingUnit = function (item, done) {
         var price = row.price == null ? Number(item.selling_price) * Number(row.factor) : Number(row.price);
         options[index] = row.unit + ' — ' + price.toFixed(2);
     });
-    swal({ title: 'Sell by which unit?', text: item.item_name || item.name || '', input: 'select', inputOptions: options, inputValue: '0', showCancelButton: true, confirmButtonText: 'Use unit' }).then(function (result) {
+    swal({ title: PosnicPro.i18n.t('lang_sell_by_which_unit', 'Sell by which unit?'), text: item.item_name || item.name || '', input: 'select', inputOptions: options, inputValue: '0', showCancelButton: true, confirmButtonText: 'Use unit' }).then(function (result) {
         if (!result || result.dismiss) return;
         var choice = rows[Number(typeof result === 'string' ? result : result.value)];
         if (!choice) return;
