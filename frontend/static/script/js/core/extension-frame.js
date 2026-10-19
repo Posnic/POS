@@ -15,22 +15,9 @@
     "sales",
     "salesReport",
     "exportReport",
-    "hktvWaybill",
-    "hktvManifest",
-    "hktvMapping",
-    "hktvMappingSave",
-    "hktvMappingPreview",
-    "hktvMappingWorkbook",
-    "hktvOrderOptions",
-    "hktvOrders",
-    "hktvOrderKeys",
-    "hktvOrder",
-    "hktvOrderHistory",
-    "hktvOrderCommand",
-    "hktvStatusRead",
-    "hktvStatusSubmit",
-    "hktvStatusReconcile",
-    "hktvStatusDiscard",
+    "connector",
+    "document",
+    "download",
   ]);
   function mount(options) {
     var container = options.container,
@@ -79,7 +66,7 @@
         if (
           !methods.has(message.method) ||
           pending.size >= 8 ||
-          new TextEncoder().encode(JSON.stringify(message)).length > (message.method === "hktvMappingWorkbook" && options.extensionId === "posnic.hktvmall-gogox" ? 740000 : 65536)
+          new TextEncoder().encode(JSON.stringify(message)).length > (["connector", "document", "download"].includes(message.method) ? 4 * 1024 * 1024 : 65536)
         )
           throw new Error("Unsupported extension request");
         pending.add(message.id);
@@ -182,5 +169,14 @@
     overlay.appendChild(bar);overlay.appendChild(frame);document.body.appendChild(overlay);close.focus();
     return {opened:true};
   }
-  host.PosnicExtensionFrame = { mount: mount, sanitizeDocument: sanitizeDocument, showDocument: showDocument };
+  function downloadDocument(value) {
+    if (value.format !== 'xlsx' || typeof value.filename !== 'string' || !/^[a-zA-Z0-9_-]{1,100}\.xlsx$/.test(value.filename) || typeof value.base64 !== 'string' || value.base64.length > 4 * 1024 * 1024 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value.base64)) throw Error('Invalid document download.');
+    var binary = atob(value.base64), bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    var url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })), link = document.createElement('a');
+    link.href = url; link.download = value.filename; document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    return { downloaded: true };
+  }
+  host.PosnicExtensionFrame = { mount: mount, sanitizeDocument: sanitizeDocument, showDocument: showDocument, downloadDocument: downloadDocument };
 })(window);

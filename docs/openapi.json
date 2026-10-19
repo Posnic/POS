@@ -9219,6 +9219,39 @@
         }
       }
     },
+    "/extensions/v1/{extensionId}/connector-context": {
+      "get": {
+        "summary": "error",
+        "operationId": "get_extensions_v1_extensionId_connector_context",
+        "tags": [
+          "Extensions"
+        ],
+        "parameters": [
+          {
+            "name": "extensionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/extensions/v1/{extensionId}/view": {
       "get": {
         "summary": "view",
@@ -9318,112 +9351,10 @@
         }
       }
     },
-    "/extensions/v1/{extensionId}/hktv-waybill": {
+    "/extensions/v1/{extensionId}/connector": {
       "post": {
         "summary": "error",
-        "operationId": "post_extensions_v1_extensionId_hktv_waybill",
-        "tags": [
-          "Extensions"
-        ],
-        "parameters": [
-          {
-            "name": "extensionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "400": {
-            "description": "Validation failed"
-          },
-          "401": {
-            "description": "Authentication required"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        },
-        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
-      }
-    },
-    "/extensions/v1/{extensionId}/hktv-orders": {
-      "post": {
-        "summary": "error",
-        "operationId": "post_extensions_v1_extensionId_hktv_orders",
-        "tags": [
-          "Extensions"
-        ],
-        "parameters": [
-          {
-            "name": "extensionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "400": {
-            "description": "Validation failed"
-          },
-          "401": {
-            "description": "Authentication required"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        },
-        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
-      }
-    },
-    "/extensions/v1/{extensionId}/hktv-status": {
-      "post": {
-        "summary": "error",
-        "operationId": "post_extensions_v1_extensionId_hktv_status",
-        "tags": [
-          "Extensions"
-        ],
-        "parameters": [
-          {
-            "name": "extensionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "400": {
-            "description": "Validation failed"
-          },
-          "401": {
-            "description": "Authentication required"
-          },
-          "500": {
-            "description": "Server error"
-          }
-        },
-        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
-      }
-    },
-    "/extensions/v1/{extensionId}/hktv-manifest": {
-      "post": {
-        "summary": "error",
-        "operationId": "post_extensions_v1_extensionId_hktv_manifest",
+        "operationId": "post_extensions_v1_extensionId_connector",
         "tags": [
           "Extensions"
         ],
