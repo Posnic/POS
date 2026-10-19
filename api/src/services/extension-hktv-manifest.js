@@ -176,7 +176,7 @@ async function readManifest({
     ['HKTVmall hub', m.destination],
     ['Total cartons', String(m.rows.length)],
   ];
-  if (input.format === 'html') await verifyCurrent();
+  await verifyCurrent();
   if (input.format === 'html')
     return {
       title: 'GOGOX daily collection',

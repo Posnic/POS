@@ -16,5 +16,6 @@ test('import status is scoped, bounded and never equates saved orders with a cur
  await fs.appendFile(path.join(journal,'runs.jsonl'),JSON.stringify({startedAt:'2026-10-19T01:01:00Z',result:'failed',code:'HKTV_CONNECTION_FAILED'})+'\n'+ '{"partial":');
  assert.equal((await readImportStatus({...args,now:completed+120000})).state,'error');
  await fs.writeFile(checkpoint,JSON.stringify({storeCode:'OTHER',total:15}));await assert.rejects(readImportStatus(args),/checkpoint_invalid/);
+ await fs.writeFile(checkpoint,' '.repeat(65537));await assert.rejects(readImportStatus(args),/checkpoint_invalid/);
  }finally{await fs.rm(root,{recursive:true,force:true});}
 });

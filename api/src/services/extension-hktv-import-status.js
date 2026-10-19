@@ -31,11 +31,15 @@ async function readImportStatus({
     lastError: null,
     total: null,
   };
+  let checkpointFile;
   try {
-    const checkpointPath = path.join(config.journalDirectory, 'checkpoint.json'),
-      stat = await fs.stat(checkpointPath);
+    checkpointFile = await fs.open(path.join(config.journalDirectory, 'checkpoint.json'), 'r');
+    const stat = await checkpointFile.stat();
     if (stat.size > 65536) fail('hktv_checkpoint_invalid');
-    const checkpoint = JSON.parse(await fs.readFile(checkpointPath, 'utf8'));
+    const buffer = Buffer.alloc(65537);
+    const { bytesRead } = await checkpointFile.read(buffer, 0, buffer.length, 0);
+    if (bytesRead > 65536) fail('hktv_checkpoint_invalid');
+    const checkpoint = JSON.parse(buffer.subarray(0, bytesRead).toString('utf8'));
     if (
       checkpoint.storeCode !== storeCode ||
       !Number.isSafeInteger(checkpoint.total) ||
@@ -46,6 +50,8 @@ async function readImportStatus({
     result.total = checkpoint.total;
   } catch (e) {
     if (e.code !== 'ENOENT') throw e;
+  } finally {
+    await checkpointFile?.close();
   }
   let file;
   try {
