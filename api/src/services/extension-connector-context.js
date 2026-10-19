@@ -11,6 +11,10 @@ function readerAllowed(req, approval) {
     req.path === '/connector-context' &&
     String(approval?.connectorReaderId || '') === String(req.user?._id || req.user?.id || '') &&
     /^[a-f0-9]{24}$/.test(String(approval?.connectorReaderId || '')) &&
+    req.user?.activate === true &&
+    req.user?.active !== false &&
+    ![1, '1', true].includes(req.user?.del_status) &&
+    String(req.user?.status).toLowerCase() !== 'inactive' &&
     req.user?.access?.extensions?.read === true
   );
 }

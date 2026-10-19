@@ -1,8 +1,9 @@
 # Isolated connector transport
 
-Development capability: `connector.requests.v1`. This is not a deployed connector
-or a completed migration. Provider routes remain until the replacement passes
-cutover acceptance.
+Capabilities: `connector.requests.v1` and `connector.context.v1`. These generic
+host contracts allow a separately supervised connector to serve a signed UI.
+Provider SDKs, polling, documents and business workflow handlers belong in the
+connector repository, not in POSNIC routes or its shared API process.
 
 A signed package declares `connectorOperations`, mapping operation names to
 `read`, `write`, or `manage` permissions. Every operation also requires `read`.
@@ -41,10 +42,31 @@ execution configuration, not till business data, and must not be replicated.
 Each request rechecks the configured binding. Removing a grant blocks subsequent
 requests; it cannot cancel an already dispatched external action.
 
-The transport does not grant the connector access back into POSNIC. Read APIs,
-service identity provisioning, connector-owned storage, migration, writer
-fencing, offline presentation, and cloud/till acceptance must be completed before
-the provider-specific routes are removed or the independent package is activated.
+The transport itself does not grant access back into POSNIC. An operator may
+provision a dedicated API user with only `extensions.read`, and bind its ID as
+`connectorReaderId` on one installation approval. That identity can only call
+`GET /extensions/v1/:extensionId/connector-context`. The endpoint supports bounded
+`state`, `products`, `parcels` and staff `authorization` reads. Other extension
+routes reject API keys. Every read checks installation digest, branch, lifecycle,
+reader activation and permission. The authorization resource rereads the actual
+staff identity so a connector cannot rely on stale browser permissions.
+
+Connectors must use their own database credentials, restricted to their own
+storage, and an OS service account without access to POSNIC source or secrets.
+Installing a ZIP does not provision arbitrary server code or database access.
+Connector deployment remains an operator action; an uploaded signed UI can only
+request operations that its manifest declares and its operator grant permits.
+
+Cloud data has one authoritative connector. Tills require an authenticated cloud
+connection for connector operations. A local host with no connector grant fails
+closed; it must not start its own importer or replay partner writes. This contract
+does not itself implement offline caching or prove cross-till rollout.
+
+Upgrade requirements: preserve the versioned capabilities, separately installed
+package root, operator grants and connector service. Incompatible packages are
+rejected rather than silently run against a different API. Test ordinary core
+upgrades with the same installed extension and data; source separation alone is
+not sufficient acceptance evidence.
 
 Local checks: `node --test tests/extension-connector.test.cjs` covers operation
 permissions, scope/package bindings, disabled/duplicate grants, destination

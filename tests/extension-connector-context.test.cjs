@@ -4,10 +4,12 @@ const assert = require('node:assert/strict');
 const { readerAllowed, readContext } = require('../api/src/services/extension-connector-context');
 const id = 'a'.repeat(24), branchId = 'b'.repeat(24), license = 'c'.repeat(24);
 test('a connector reader is restricted to its explicit installation grant and read endpoint', () => {
-  const req = { isApiKey: true, method: 'GET', path: '/connector-context', user: { _id: id, access: { extensions: { read: true } } } };
+  const req = { isApiKey: true, method: 'GET', path: '/connector-context', user: { _id: id, activate: true, access: { extensions: { read: true } } } };
   assert.equal(readerAllowed(req, { connectorReaderId: id }), true);
   for (const changes of [{ method: 'POST' }, { path: '/commands' }, { path: '/state' }, { isApiKey: false }])
     assert.equal(readerAllowed({ ...req, ...changes }, { connectorReaderId: id }), false);
+  for (const change of [{ activate: false }, { active: false }, { del_status: 1 }, { status: 'inactive' }])
+    assert.equal(readerAllowed({ ...req, user: { ...req.user, ...change } }, { connectorReaderId: id }), false);
   assert.equal(readerAllowed(req, {}), false);
   assert.equal(readerAllowed(req, { connectorReaderId: 'd'.repeat(24) }), false);
   assert.equal(readerAllowed({ ...req, user: { ...req.user, access: {} } }, { connectorReaderId: id }), false);
@@ -46,7 +48,7 @@ test('real router permits only the approved reader context endpoint, including a
   } }) };
   const app = express(); app.use(express.json());
   app.use('/extensions/v1', routes.createRouter({ registry: { get: () => descriptor }, authenticate: (req, res, next) => {
-    req.db = db; req.isApiKey = true; req.user = { _id: id, access: { extensions: { read: true, write: true, manage: true } } };
+    req.db = db; req.isApiKey = true; req.user = { _id: id, activate: true, access: { extensions: { read: true, write: true, manage: true } } };
     req.tenantContext = { licenseId: license, branchId }; next();
   } }));
   const server = await new Promise(resolve => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });

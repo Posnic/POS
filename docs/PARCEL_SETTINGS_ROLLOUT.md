@@ -1,17 +1,32 @@
 # Optional parcel details and packaging presets
 
-Product `parcel_details` stores weightKg and packed-unit lengthCm/widthCm/heightCm. Missing or cleared measurements are null. Omitted parcel_details on an older client does not clear existing measurements. No stock, price, courier or marketplace writes follow a measurement save.
+Product `parcel_details` stores weightKg and packed-unit lengthCm/widthCm/heightCm.
+Missing or cleared measurements are null. Older clients that omit the field do
+not clear existing values. Saving measurements has no stock, price or courier effects.
 
-Core Settings > Inventory > Packaging saves parcel_cartons through the scoped channels settings endpoint. Empty defaults, up to 50 presets with stable IDs, unique names, positive dimensions and nonnegative emptyWeightKg. Removal is an explicit list save. Branch/account inheritance is unchanged. Presets must describe actual boxes; Small/Medium/Large are examples, not invented measurements.
+Core Settings > Inventory > Packaging stores optional `parcel_cartons` through
+the scoped channels endpoint. Defaults are empty. Up to 50 presets have stable
+IDs, unique names, positive dimensions and nonnegative empty-box weight. Removing
+a preset explicitly saves the updated list; no sample dimensions are invented.
 
-Sync: product metadata uses existing items branch lane. Presets use branch_channels with branch_id/license and updated_date, mirrored into branches for legacy readers. Added branch_channels branch lane to core manifest, Gateway scope map and agent config. Account rows with null branch_id follow existing shared-document semantics. No new file attachments, background jobs or replayable effects. Till-origin writes require configured sync to propagate to cloud and other authorized tills; disconnected devices show their last local records and use existing reconnect conflict handling. Removing a preset updates the list; clearing a measurement writes null.
+## Synchronization
 
-Validation: measurement/carton unit tests; editor saved-value roundtrip; 51 settings repository tests including scoped preset writes, validation-before-write, timestamp and mirror; existing item/settings UI checks. Sync manifest agreement is a configuration check, NOT evidence of live cross-device delivery.
+Product metadata uses the existing items lane. Cartons use `branch_channels`,
+scoped by branch_id/license and updated_date, with the existing legacy branch
+mirror. Roll out matching Gateway and sync-agent collection configurations before
+claiming device delivery. Account defaults retain existing inheritance behavior;
+an explicit empty branch list overrides defaults. No jobs, secrets or effects are
+replicated. Offline devices see their local records and use the existing conflict
+handling on reconnection. Clearing a product measurement writes null.
 
-Rollout remaining: deploy matching API/frontend and Gateway, bundle/install updated agent, verify cloud-to-till, till-to-cloud, another authorized till, reconnect, concurrent edits, removal and branch isolation. Do not describe this as deployed to client tills until those checks finish. The HKTVmall order-detail response now projects scoped carton presets and linked-product measurements. Its packing UI offers explicit Use carton dimensions and Estimate weight from products actions; neither saves packing nor contacts partners. Estimates include selected product quantities and empty-box weight only, with a visible instruction to weigh fillers and the finished parcel. Missing weights block estimation. These consumer changes also require deployment and live verification.
+## Extension contract and acceptance
 
-Cloud rollout 19 October 2026: deployed API and frontend parcel fields/settings plus the scoped order-detail hints to OBC cloud, preserving the live item repository catalogue filtering through a targeted patch. Signed extension 0.3.11 activated. Authenticated live GET settings and order-detail reads passed; no presets exist yet and no client measurement values were invented. Original order namespace revision remained 21. These checks do not prove live save/readback, browser rendering or cross-till sync. Gateway/installed agent rollout and actual till checks remain pending.
+The generic connector context read API exposes authorized linked-product
+measurements and carton presets. Consumers choose whether to use them; a hint
+never saves packing or submits a delivery. Missing measurements remain unknown.
 
-Sync audit 19 October 2026: the active gateway release at `/home/ubuntu/apps/gateway/src/collections.js` already includes `branch_channels` with branch scope. The published stable agent 1.7.5 ZIP does not include that collection. Prepared the local installer agent from the explicit `gateway-source/apps/sync-agent` checkout; its 28 collections match the core sync manifest, including branch_channels. This prepared bundle has not been published or installed. The OBC tenant has zero registered devices in the control database, so live till and reconnect verification cannot yet run. Do not infer device delivery from the gateway map or prepared bundle.
-
-Editor repair, 19 October 2026: the earlier cloud source rollout did not update the inlined item form in the served dashboard. The newer detail script dereferenced missing optional parcel inputs before initializing tabs or feature visibility. Rebuilt matching assets and deployed the item form plus content-hashed dashboard bundle and service-worker update with baseline checks and a rollback backup. Existing-item edit and new-item routes were verified in the live browser: item values load, only the selected tab is shown, retail hides Dish/Restaurant, and optional parcel fields appear under Codes & variants. No product save or stock change was performed. Cached older forms now omit parcel_details instead of clearing values, and reset/load tolerate absent inputs. Two DOM regression cases cover current and cached templates; actual till synchronization remains unverified.
+Validation includes measurement/carton bounds, settings persistence and timestamp
+checks, cached-form compatibility, and sync-manifest agreement. Actual
+cloud-to-till, till-to-cloud, second-till, reconnect, concurrent edits, removals
+and branch isolation must be verified on the intended installer and devices.
+Configuration checks alone do not establish those results.
