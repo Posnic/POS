@@ -41,7 +41,7 @@ test('all matching sales are counted regardless of page, with branch/date/search
   expect(value.currencies[0].total).toBe(303);
   expect(value.currencies[0].payments).toEqual([{ method: 'Cash', amount: 303 }]);
 });
-test('split payments are counted once, credit is not cash, partial collections use actual amounts and currencies remain separate', async () => {
+test('only paid bills contribute totals and tenders, while currencies remain separate', async () => {
   await Model.insertMany([
     {
       sales_total: 100,
@@ -63,11 +63,10 @@ test('split payments are counted once, credit is not cash, partial collections u
     },
   ]);
   const value = await summary(Model, {});
-  expect(value.count).toBe(4);
+  expect(value.count).toBe(2);
   expect(value.currencies).toHaveLength(2);
-  expect(value.currencies[0].total).toBe(230);
+  expect(value.currencies[0].total).toBe(100);
   expect(value.currencies[0].payments).toEqual([
-    { method: 'Card', amount: 20 },
     { method: 'Cash', amount: 30 },
     { method: 'UPI', amount: 70 },
   ]);
@@ -75,4 +74,19 @@ test('split payments are counted once, credit is not cash, partial collections u
 });
 test('empty filter result has no stale totals', async () => {
   expect(await summary(Model, {})).toEqual({ count: 0, cancelled: 0, currencies: [] });
+});
+
+test('cancelled status overrides Paid and unknown or partial statuses never inflate paid sales', async () => {
+  await Model.insertMany([
+    { sales_total: 100, payment_status: 'Paid', sale_process: 'Cancelled', payment_mode: 'Cash' },
+    { sales_total: 200, payment_status: 'Paid', status: 'cancelled', payment_mode: 'Upi' },
+    { sales_total: 300, payment_status: 'Partially Paid', paid_amount: 100, payment_mode: 'Card' },
+    { sales_total: 400, payment_mode: 'Cash' },
+    { sales_total: 50, payment_status: 'Paid', payment_mode: 'Cash' },
+  ]);
+  const value = await summary(Model, {});
+  expect(value.count).toBe(1);
+  expect(value.cancelled).toBe(2);
+  expect(value.currencies[0].total).toBe(50);
+  expect(value.currencies[0].payments).toEqual([{ method: 'Cash', amount: 50 }]);
 });

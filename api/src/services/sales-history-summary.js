@@ -25,6 +25,13 @@ async function historySummary(Model, filter) {
         cancelled++;
         continue;
       }
+      // This headline reports completed paid sales, not outstanding orders.
+      if (
+        String(sale.payment_status || '')
+          .trim()
+          .toLowerCase() !== 'paid'
+      )
+        continue;
       count++;
       const policy = Money.snapshot(sale);
       const key = JSON.stringify([

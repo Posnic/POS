@@ -5085,5 +5085,22 @@
   "lang_require_guest_count_pax": "Aantal gasten verplicht stellen",
   "lang_required_dine_in_details": "Verplichte gegevens voor eten ter plaatse",
   "lang_staff_must_choose_a_table_or_enter_its_num": "Medewerkers moeten een tafel kiezen of het tafelnummer invoeren voordat ze een bestelling voor eten ter plaatse starten.",
-  "lang_staff_must_enter_how_many_people_are_dinin": "Medewerkers moeten invoeren hoeveel personen komen eten. Standaard uitgeschakeld. Voor afhaal- en bezorgbestellingen is geen aantal gasten nodig."
+  "lang_staff_must_enter_how_many_people_are_dinin": "Medewerkers moeten invoeren hoeveel personen komen eten. Standaard uitgeschakeld. Voor afhaal- en bezorgbestellingen is geen aantal gasten nodig.",
+  "lang_sl_appearance": "Algemene vormgeving",
+  "lang_sl_appearance_help": "Lettertype, uitlijning en kleuren gelden voor het hele etiket. Gebruik zwart op wit voor thermische printers.",
+  "lang_sl_barcode_design": "Barcode en nummer",
+  "lang_sl_barcode_design_help": "De balkbreedte bepaalt de dikte van elke balk. Houd de volledige barcode en de witte rand zichtbaar en test daarna met uw scanner.",
+  "lang_sl_barcode_space": "Witruimte rond de barcode",
+  "lang_sl_barcode_space_help": "Deze marges omringen de barcode, niet het papier. Waarden zijn in pixels. Papierdoorvoer en snijmarges worden door de printer geregeld.",
+  "lang_sl_cut_batch": "Snijden na de reeks",
+  "lang_sl_cut_each": "Snijden na elk etiket",
+  "lang_sl_cut_mode": "Automatisch snijden",
+  "lang_sl_cut_none": "Niet snijden",
+  "lang_sl_cut_requires": "Vereist een automatische snijder die compatibel is met ESC/POS.",
+  "lang_sl_driver_cut": "Stel voor afdrukken op een rol via een stuurprogramma het juiste papierformaat en snijden tussen pagina’s in de printervoorkeuren in. De app kan de snijder van het stuurprogramma niet bedienen.",
+  "lang_sl_extras": "Aanvullende informatie",
+  "lang_sl_extras_help": "Datums verschijnen alleen als ze bij het product beschikbaar zijn. Aanvullende details gebruiken de bovenstaande tekstgrootte.",
+  "lang_sl_text_sizes": "Tekstgroottes",
+  "lang_sl_text_sizes_help": "Pas elke regel afzonderlijk aan. Groottes zijn in pixels; het voorbeeld gebruikt hetzelfde ontwerp als de afdruk.",
+  "lang_sl_type_foot": "Aanvullende details"
 }
