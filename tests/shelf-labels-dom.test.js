@@ -247,6 +247,27 @@ test('thermal labels explicitly opt into raw raster printing and stop at the fir
     dom.window.close();
 });
 
+test('size presets set dimensions and method, keep copies, and restore after reopening', async () => {
+    const { dom, w, $, next } = setup();
+    w.electronAPI = { printer: { list: async () => [{ name: 'POS-80C' }], print: async () => ({success:true}) } };
+    w.PosnicShelfLabels.open('0'); await tick(); next();
+    $('#sl-products input[type=number]').first().val(3).trigger('change');
+    $('#sl-preset').val('thermal80').trigger('change'); await tick();
+    assert.equal($('#sl-paper').val(), 'roll'); assert.equal($('#sl-width').val(), '72');
+    assert.equal($('#sl-print-method').val(), 'thermal');
+    assert.equal($('#sl-products input[type=number]').first().val(), '3');
+    $('#sl-preset').val('thermal58').trigger('change'); await tick();
+    assert.equal($('#sl-width').val(), '48'); assert.equal($('#sl-print-method').val(), 'driver');
+    w.PosnicShelfLabels.open('0'); await tick();
+    assert.equal($('#sl-preset').val(), 'thermal58'); assert.equal($('#sl-print-method').val(), 'driver');
+    $('#sl-width').val(47).trigger('change'); assert.equal($('#sl-preset').val(), 'custom');
+    $('#sl-preset').val('a4').trigger('change'); await tick();
+    assert.equal($('#sl-paper').val(), 'a4'); assert.equal($('#sl-width').val(), '63');
+    assert.equal($('#sl-margin').val(), '5'); assert.equal($('#sl-gap').val(), '2');
+    assert.equal($('#sl-print-method').val(), 'driver');
+    dom.window.close();
+});
+
 test('thermal preview shows roll edges and keeps print content within the print head', async () => {
     const { dom, w, $, next } = setup(); const sent=[];
     w.electronAPI={printer:{list:async()=>[{name:'POS-80C'}],print:async(html,options)=>{sent.push({html,options});return {success:true};}}};
