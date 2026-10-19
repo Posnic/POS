@@ -806,6 +806,9 @@
   "Enter the amount received": [
     "src/services/invoice-sync.js"
   ],
+  "Enter the number of guests.": [
+    "src/repositories/sale.repository.js"
+  ],
   "Enter up to 1,000 characters for the QR code.": [
     "src/controllers/settings.controller.js"
   ],

@@ -8829,6 +8829,21 @@ class SalesRepository {
         };
       }
 
+      if (
+        staffOrder &&
+        requestedService === 'dinein' &&
+        branchDoc?.restaurant_require_guests === true &&
+        (!Number.isInteger(Number(person_count)) ||
+          Number(person_count) < 1 ||
+          Number(person_count) > 1000)
+      ) {
+        return {
+          status: false,
+          message: 'Enter the number of guests.',
+          data: { code: 'GUESTS_REQUIRED' },
+        };
+      }
+
       if (staffOrder && requestedService === 'room') {
         const scoped = await new (require('./settings.repository'))().resolveGroup('channels', {
           branchId: branchObjectId,

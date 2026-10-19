@@ -19,7 +19,7 @@ test('two tills exchange unit snapshots, quotes and clear markers without replay
   let server;
   try {
     const cloud = client.db('cloud'), a = client.db('till_a'), b = client.db('till_b'), foreign = client.db('foreign_till');
-    const branch = new ObjectId(), otherBranch = new ObjectId(), license = new ObjectId(), itemId = new ObjectId(), saleId = new ObjectId();
+    const branch = new ObjectId(), otherBranch = new ObjectId(), license = String(new ObjectId()), itemId = new ObjectId(), saleId = new ObjectId();
     await cloud.collection('branches').insertMany([{ _id: branch }, { _id: otherBranch }]);
     const app = express(); app.use(express.json());
     app.use((req, res, next) => {
@@ -33,6 +33,19 @@ test('two tills exchange unit snapshots, quotes and clear markers without replay
     const cfg = id => ({ deviceToken: id, gatewayUrl: 'http://127.0.0.1:' + server.address().port });
     const sa = new SyncState(a), sb = new SyncState(b), sf = new SyncState(foreign);
     const now = new Date();
+    // Branch presentation settings use the existing tenant-global branch lane.
+    await cloud.collection('branches').updateOne({ _id: branch }, { $set: { receipt_designs: { quoteFooter: { source: 'thirukkural', order: 'sequential', quotes: [], showQr: true, qrSizeMm: 18 } }, updated_date: now } });
+    await pullCollection(a, sa, cfg('a'), 'branches');
+    assert.equal((await a.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter.qrSizeMm, 18);
+    await a.collection('branches').updateOne({ _id: branch }, { $set: { 'receipt_designs.quoteFooter.qrSizeMm': 26, updated_date: new Date(Date.now() + 1000) } });
+    await pushCollection(a, sa, cfg('a'), 'branches');
+    await pullCollection(b, sb, cfg('b'), 'branches');
+    assert.equal((await cloud.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter.qrSizeMm, 26);
+    assert.equal((await b.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter.qrSizeMm, 26);
+    await sb.setPullSince('branches', null);
+    await pullCollection(b, sb, cfg('b'), 'branches');
+    assert.equal(await b.collection('branches').countDocuments({ _id: branch }), 1);
+
     const conversion = { unit: 'ft', base_unit: 'm', factor: .3048, price: 32 };
     await a.collection('items').insertOne({ _id: itemId, license, branch_id: branch, unit: 'm', selling_units: [{ unit: 'ft', factor: .3048, price: 32 }], available_quantity: 6.952, updated_date: now });
     await a.collection('sales').insertOne({ _id: saleId, license, branch_id: branch, sale_process: 'Hold', sales_total: 320, items: [{ item_id: String(itemId), item_unit: 'ft', item_quantity: 10, unit_conversion: conversion }], receipt_quote: require('../src/helpers/receipt-quote').select({source:'thirukkural',order:'sequential',showQr:true}, 'S222'), updated_date: now });
@@ -47,7 +60,7 @@ test('two tills exchange unit snapshots, quotes and clear markers without replay
     assert.deepEqual(received.receipt_quote, require('../src/helpers/receipt-quote').select({source:'thirukkural',order:'sequential',showQr:true}, 'S222'));
     assert.equal((await b.collection('items').findOne({ _id: itemId })).available_quantity, 6.952);
     const parked = require('../src/services/parked-sales');
-    await parked.clearAll(apiClient.db('till_b'), { branchId: String(branch), licenseId: new ApiId(String(license)), userId: new ApiId() });
+    await parked.clearAll(apiClient.db('till_b'), { branchId: String(branch), licenseId: license, userId: new ApiId() });
     assert.equal(await pushCollection(b, sb, cfg('b'), 'settings'), 1);
     assert.equal(await pullCollection(a, sa, cfg('a'), 'settings'), 1);
     for (const database of [a,b,cloud]) {

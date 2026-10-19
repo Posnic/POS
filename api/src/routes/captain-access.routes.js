@@ -356,6 +356,7 @@ router.get(
   wrap(async (req) => {
     const c = await require('../utils/branch-access').context(req);
     return {
+      guestsRequired: c.branch?.restaurant_require_guests === true,
       tableRequired: c.branch?.captain_allow_unassigned !== true,
       cleaningEnabled: require('../services/table-cleaning').enabled(c.branch),
     };
@@ -366,16 +367,22 @@ router.post(
   wrap(async (req) => {
     const { allowed, context, fail } = require('../utils/branch-access');
     if (!allowed(req.user, 'settings')) fail('Settings permission is required.', 403);
-    if (typeof req.body?.cleaningEnabled !== 'boolean') fail('Choose a table status.');
+    if (req.body?.cleaningEnabled !== undefined && typeof req.body.cleaningEnabled !== 'boolean')
+      fail('Choose a table status.');
     if (req.body.tableRequired !== undefined && typeof req.body.tableRequired !== 'boolean')
       fail('Choose a table requirement.');
+    if (req.body.guestsRequired !== undefined && typeof req.body.guestsRequired !== 'boolean')
+      fail('Choose a guest count requirement.');
     const c = await context(req),
       cleaningEnabled = req.body.cleaningEnabled;
     await req.db.collection('branches').updateOne(
       { _id: c.branchId, license: c.license },
       {
         $set: {
-          captain_table_cleaning: cleaningEnabled,
+          ...(cleaningEnabled === undefined ? {} : { captain_table_cleaning: cleaningEnabled }),
+          ...(req.body.guestsRequired === undefined
+            ? {}
+            : { restaurant_require_guests: req.body.guestsRequired }),
           ...(req.body.tableRequired === undefined
             ? {}
             : { captain_allow_unassigned: !req.body.tableRequired }),
@@ -383,7 +390,7 @@ router.post(
         },
       }
     );
-    if (!cleaningEnabled)
+    if (cleaningEnabled === false)
       await req.db.collection('tableorder').updateMany(
         { branch_id: c.branchId, license: c.license, service_state: 'cleaning' },
         {

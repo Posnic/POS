@@ -733,8 +733,12 @@ describe('CategoryRepository (class, extends BaseModel)', () => {
       await repository.findByBranchWithItems(FAKE_BRANCH_ID);
       const pipeline = CategoryModel.aggregate.mock.calls[0][0];
       const match = pipeline.find((stage) => stage.$lookup).$lookup.pipeline[0].$match;
-      expect(match.$or).toContainEqual({ negative_stock: true });
-      expect(match.$or).toContainEqual({ track_inventory: false });
+      // Catalogue browsing no longer filters stock; checkout validates quantities.
+      expect(match.$or).toBeUndefined();
+      expect(match.available_quantity).toBeUndefined();
+      expect(match.negative_stock).toBeUndefined();
+      expect(match.is_deleted).toEqual({ $ne: true });
+      expect(match.del_status).toEqual({ $nin: [1, '1', true] });
       expect(match['branch_access.branch_id']).toBeDefined();
     });
     test('calls model.aggregate with complex pipeline', async () => {

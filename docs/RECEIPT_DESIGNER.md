@@ -80,3 +80,16 @@ they do not yet reproduce the custom designer's blocks and styling.
 Changes go through a pull request targeting `develop`, then verification on
 [the development sandbox](https://develop.posnic.io). Promotion to `main` is a
 separate step after that verification.
+
+### Quantity and unit columns
+
+Unit follows Quantity in column-style roll receipts and A4/A5 tables. Amount is
+always the final column, aligned to the totals at the right. When total quantity
+is enabled, the table footer places it in the Quantity column; sheet formats no
+longer duplicate it as a separate text block. Compact/detailed roll layouts keep
+quantity within the item description and place the optional Unit before Amount.
+
+This is shared web/desktop presentation only. Existing design flags, saved units,
+quantities and financial values are unchanged; no data migration or sync lane is
+needed. Regression checks cover all paper sizes with optional units, HSN and row
+numbers. Physical print verification remains separate from renderer tests.
