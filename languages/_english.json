@@ -4879,5 +4879,7 @@
   "lang_sl_sheets": "A4 sheets",
   "lang_sl_roll_labels": "individual roll labels",
   "lang_sl_a4small": "48 × 25 mm",
-  "lang_sl_a4large": "99 × 38 mm"
+  "lang_sl_a4large": "99 × 38 mm",
+  "lang_sl_sending": "Sending labels to the printer. Please wait.",
+  "lang_sl_browser_unavailable": "The browser print component is unavailable. Reload this page and try again."
 }

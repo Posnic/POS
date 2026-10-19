@@ -26,7 +26,7 @@
         }, 0);
     }
     function slots(entries, layout, page, from, amount) {
-        var total = count(entries), first = from || 1, limit = amount || total;
+        var total = count(entries), first = from == null ? 1 : from, limit = amount == null ? total : amount;
         if (!Number.isInteger(first) || first < 1 || first > total) throw Error('Choose a valid first label.');
         if (!Number.isInteger(limit) || limit < 1 || limit > 2000) throw Error('Print up to 2,000 labels per batch.');
         limit = Math.min(limit, total - first + 1);
@@ -87,7 +87,7 @@
         cells.forEach(function (item) { page.appendChild(item ? label(doc, item, s, barcode) : doc.createElement('div')); });
         return page;
     }
-    var state = { entries: [], byId: new Map(), viewIds: [], filters: {}, step: 0, furthestStep: 0, page: 0, productPage: 1, totalPages: 1, total: 0, loading: false, bulkLoading: false, token: 0, loadError: null, completeKey: null };
+    var state = { entries: [], byId: new Map(), viewIds: [], filters: {}, step: 0, furthestStep: 0, page: 0, productPage: 1, totalPages: 1, total: 0, loading: false, printing: false, bulkLoading: false, token: 0, loadError: null, completeKey: null };
     var searchTimer;
     function $() { return root.jQuery.apply(null, arguments); }
     function t(key, fallback) { return root.PosnicPro?.i18n?.t(key, fallback) || fallback; }
@@ -220,7 +220,7 @@
         if (!entries.length) {
             $('#sl-sample,#sl-preview,#sl-print-sample').empty();
             $('#sl-summary').text(t('lang_select_products_to_print', 'Select products to print.'));
-            $('#sl-print,#sl-test').prop('disabled', true); return;
+            error(Error(t('lang_select_products_to_print', 'Select products to print.'))); return;
         }
         try {
             var s = settings(), g = geometry(s), amount = Number($('#sl-batch').val()), from = Number($('#sl-from').val());
@@ -234,6 +234,10 @@
                 catch (e) { $('#sl-sample').empty().append($('<p class="sl-muted">').text(e.message || String(e))); }
             }
             if (state.step < 2) return;
+            var batchError = null;
+            try { slots(entries, g, 0, from, amount); } catch (e) { batchError = e; }
+            // A test label remains available while the batch quantity is being edited.
+            if (batchError) { slots(entries, g, 0, from, 1); amount = 1; }
             var pages = Math.ceil((g.start - 1 + Math.min(amount, count(entries) - from + 1)) / g.capacity);
             state.page = Math.max(0, Math.min(state.page, pages - 1));
             var result = slots(entries, g, state.page, from, amount);
@@ -246,7 +250,12 @@
             $('#sl-job-paper').text(s.paper === 'a4' ? 'A4 · 210 × 297 mm' : s.width + ' × ' + s.height + ' mm');
             $('#sl-job-total').text(result.total); $('#sl-job-pages').text(result.pages);
             printPlan(entries, result, from, s, g);
-            $('#sl-print,#sl-test').prop('disabled', state.loading || state.printing);
+            var busy = !!(state.loading || state.printing);
+            $('#sl-test').prop('disabled', busy);
+            $('#sl-print').prop('disabled', busy || !!batchError);
+            if (state.loading) $('#sl-status').text(t('lang_sl_wait_loading', 'Wait for products to finish loading.'));
+            else if (state.printing) $('#sl-status').text(t('lang_sl_sending', 'Sending labels to the printer. Please wait.'));
+            else if (batchError) $('#sl-status').text(batchError.message);
         } catch (e) { error(e); }
     }
     function setStep(step) {
@@ -424,10 +433,16 @@
                 try { root.localStorage.setItem('posnic.shelf-label-printer.' + s.paper, name); root.localStorage.setItem('posnic.shelf-label-method.' + s.paper, thermal ? 'thermal' : 'driver'); } catch (_) {}
                 $('#sl-status').text('Sent ' + first.amount + ' label(s) to ' + name + '. Check the printed output.');
             } else {
+                if (typeof root.printJS !== 'function') throw Error(t('lang_sl_browser_unavailable', 'The browser print component is unavailable. Reload this page and try again.'));
                 root.printJS({ printable: html, type: 'raw-html', style: css(s, g), scanStyles: false, documentTitle: t('lang_shelf_label_products', 'Shelf / product labels') });
             }
         } catch (e) { error(e); }
-        finally { state.printing = false; $('#sl-print,#sl-test').prop('disabled', state.loading || state.printing); }
+        finally {
+            state.printing = false;
+            var message = $('#sl-status').text();
+            refresh();
+            if (message) $('#sl-status').text(message);
+        }
         return false;
     }
     async function loadPrinters(requestedMethod) {

@@ -336,3 +336,38 @@ test('print plan explains mixed quantities and batch limits without multiplying 
  assert.equal($('#sl-job-pages').text(),'1');
  dom.window.close();
 });
+
+
+test('web roll printing opens the browser print helper and recovers from an invalid batch', async () => {
+    const { dom, w, $, next, getPrint } = setup();
+    w.PosnicShelfLabels.open('0'); await tick(); next(); next(); next();
+    assert.equal($('#sl-desktop-printer').prop('hidden'), true);
+    assert.equal($('#sl-test').prop('disabled'), false, $('#sl-status').text() + ' STEP ' + $('[aria-current=step]').text());
+    assert.equal($('#sl-print').prop('disabled'), false);
+    $('#sl-batch').val('').trigger('input');
+    assert.equal($('#sl-print').prop('disabled'), true);
+    assert.equal($('#sl-test').prop('disabled'), false, $('#sl-status').text() + ' STEP ' + $('[aria-current=step]').text());
+    assert.match($('#sl-footer').text() || $('.sl-footer #sl-status').text(), /2,000/);
+    $('#sl-test')[0].click(); await tick();
+    assert.equal(getPrint().type, 'raw-html');
+    assert.equal((getPrint().printable.match(/class="sl-label"/g) || []).length, 1);
+    assert.equal($('#sl-print').prop('disabled'), true);
+    $('#sl-batch').val(1).trigger('input');
+    assert.equal($('#sl-print').prop('disabled'), false);
+    assert.equal($('#sl-status').text(), '');
+    $('#sl-print')[0].click(); await tick();
+    assert.match(getPrint().style, /72mm 33mm/);
+    $('#sl-from').val(2).trigger('input');
+    assert.equal($('#sl-test').prop('disabled'), true);
+    assert.ok($('.sl-footer #sl-status').text());
+    dom.window.close();
+});
+
+test('missing web print component explains how to recover', async () => {
+    const { dom, w, $, next } = setup();
+    w.PosnicShelfLabels.open('0'); await tick(); next(); next(); next();
+    delete w.printJS;
+    $('#sl-test')[0].click(); await tick();
+    assert.match($('.sl-footer #sl-status').text(), /Reload this page/);
+    dom.window.close();
+});

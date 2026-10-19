@@ -4632,5 +4632,7 @@
   "lang_sl_sheets": "A4 पाना",
   "lang_sl_roll_labels": "छुट्टाछुट्टै रोल लेबल",
   "lang_sl_a4small": "48 × 25 mm",
-  "lang_sl_a4large": "99 × 38 mm"
+  "lang_sl_a4large": "99 × 38 mm",
+  "lang_sl_sending": "प्रिन्टरमा लेबल पठाइँदै छ। कृपया पर्खनुहोस्।",
+  "lang_sl_browser_unavailable": "ब्राउजरको प्रिन्ट सुविधा उपलब्ध छैन। यो पृष्ठ पुनः लोड गरेर फेरि प्रयास गर्नुहोस्।"
 }
