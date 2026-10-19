@@ -148,9 +148,15 @@
         var available = $host.parent().width() || 400;
         var scale = Math.min(1.4, available / (previewWidth * 96 / 25.4));
         if (s.paper === 'a4' && host !== '#sl-sample') {
-            if (host === '#sl-preview' && $('#sl-preview-zoom').val() === 'actual') scale = Math.min(1, scale);
+            if (host === '#sl-preview' && $('#sl-preview-zoom').val() === 'actual') scale = 1;
             else {
-                var availableHeight = host === '#sl-preview' ? Math.max(260, $('#view_print_lable .sl-body').height() - 165) : 320;
+                var availableHeight = Math.min(720, (root.innerHeight || 900) - 280);
+                if (host === '#sl-preview') {
+                    var body = $('#view_print_lable .sl-body')[0], area = $host.parent()[0];
+                    var bodyTop = body.getBoundingClientRect().top, areaTop = area.getBoundingClientRect().top;
+                    var bodyLimit = parseFloat($(body).css('max-height')) || (root.innerHeight || 900) - 255;
+                    availableHeight = Math.max(160, Math.min(bodyTop + bodyLimit, (root.innerHeight || 900) - 100) - areaTop - 44);
+                }
                 scale = Math.min(scale, availableHeight / (g.height * 96 / 25.4));
             }
         }
@@ -217,6 +223,14 @@
         $('#sl-status').empty();
         if (state.loadError) return error(state.loadError);
         var entries = chosen();
+        var selectionKey = JSON.stringify(entries.map(function (e) { return [String(e.item._id), e.copies]; }));
+        if (state.batchSelection !== selectionKey) {
+            state.batchSelection = selectionKey; state.manualBatch = false;
+            $('#sl-from').val(1);
+        }
+        if (!state.manualBatch) {
+            try { $('#sl-batch').val(Math.min(2000, Math.max(1, count(entries) - Number($('#sl-from').val()) + 1))); } catch (_) { /* Validation below reports invalid copies. */ }
+        }
         if (!entries.length) {
             $('#sl-sample,#sl-preview,#sl-print-sample').empty();
             $('#sl-summary').text(t('lang_select_products_to_print', 'Select products to print.'));
@@ -243,12 +257,12 @@
             var result = slots(entries, g, state.page, from, amount);
             if (state.step === 2) mountPreview('#sl-preview', result.cells, s, g);
             if (state.step === 3) mountPreview('#sl-print-sample', result.cells, s, g);
-            $('#sl-summary').text(entries.length + ' ' + t('lang_sl_products_count', 'products') + ' · ' + result.total + ' ' + t('lang_sl_labels_count', 'labels') + ' · ' + result.pages + ' ' + t('lang_sl_pages_count', 'pages'));
+            $('#sl-summary').text(entries.length + ' ' + t('lang_sl_products_count', 'products') + ' · ' + result.amount + ' / ' + result.total + ' ' + t('lang_sl_labels_count', 'labels') + ' · ' + result.pages + ' ' + t('lang_sl_pages_count', 'pages'));
             $('#sl-layout-summary').text(s.paper === 'a4' ? g.columns + ' × ' + g.rows + ' · A4' : s.width + ' × ' + s.height + ' mm');
             $('#sl-page').text((state.page + 1) + ' / ' + result.pages);
             $('#sl-prev').prop('disabled', state.page === 0); $('#sl-next').prop('disabled', state.page === result.pages - 1);
             $('#sl-job-paper').text(s.paper === 'a4' ? 'A4 · 210 × 297 mm' : s.width + ' × ' + s.height + ' mm');
-            $('#sl-job-total').text(result.total); $('#sl-job-pages').text(result.pages);
+            $('#sl-job-total').text(result.amount); $('#sl-job-pages').text(result.pages);
             printPlan(entries, result, from, s, g);
             var busy = !!(state.loading || state.printing);
             $('#sl-test').prop('disabled', busy);
@@ -364,7 +378,7 @@
         state.total = 0; state.totalPages = 1; state.productPage = 1;
         // The wizard owns its visible search/category filters. Tenant scope remains enforced by the Items API.
         state.filters = {};
-        $('#sl-search').val(''); $('#sl-category').val(''); $('#sl-from').val(1); $('#sl-batch').val(5); $('#sl-copies').val(1);
+        $('#sl-search').val(''); $('#sl-category').val(''); $('#sl-from').val(1); $('#sl-batch').val(1); state.manualBatch = false; state.batchSelection = null; $('#sl-copies').val(1);
         $('#sl-paper').val('roll'); $('#sl-width').val(72); $('#sl-height').val(33); $('#sl-start').val(1);
         try {
             var saved = JSON.parse(root.localStorage.getItem('posnic.shelf-label-layout') || 'null');
@@ -471,6 +485,7 @@
         $(root.document).on('click', '#sl-next-step', function () { setStep(state.step + 1); });
         $(root.document).on('click', '#sl-back', function () { setStep(state.step - 1); });
         $(root.document).on('input change', '#view_print_lable input:not(#sl-search):not(#sl-all):not(#sl-page-all):not(#sl-category),#view_print_lable select:not(#sl-category):not(#sl-preset),#view_print_lable textarea', function () {
+            if (this.id === 'sl-batch') state.manualBatch = true;
             if (this.id === 'sl-width' || this.id === 'sl-height') { $('#document_width').val(Number($('#sl-width').val()) / 25.4); $('#document_height').val(Number($('#sl-height').val()) / 25.4); }
             if (state.step === 1) state.furthestStep = 1;
             state.page = 0; refresh();
