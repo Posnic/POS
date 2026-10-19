@@ -524,14 +524,36 @@ const processSale = async (
       );
       let unitConversion;
       try {
-        unitConversion = require('../helpers/selling-units').resolve(document, item.item_unit, previousLine);
-      } catch (error) { return { status: false, message: error.message }; }
+        unitConversion = require('../helpers/selling-units').resolve(
+          document,
+          item.item_unit,
+          previousLine
+        );
+      } catch (error) {
+        return { status: false, message: error.message };
+      }
       if (unitConversion.factor !== 1 && (outlet || priceList || extensionStock))
-        return { status: false, message: 'Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.' };
-      if (unitConversion.factor !== 1 && items.filter(line => String(line.item_id) === itemId).length > 1)
-        return { status: false, message: 'Combine this product into one line when selling in an alternate unit.' };
-      const stockQuantity = require('../helpers/selling-units').stockQuantity({ unit_conversion: unitConversion }, itemQuantity);
-      if (parseLegacyNumber(item.sale_inline_discount_value) === null && parseLegacyNumber(item.item_discount) === null)
+        return {
+          status: false,
+          message:
+            'Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.',
+        };
+      if (
+        unitConversion.factor !== 1 &&
+        items.filter((line) => String(line.item_id) === itemId).length > 1
+      )
+        return {
+          status: false,
+          message: 'Combine this product into one line when selling in an alternate unit.',
+        };
+      const stockQuantity = require('../helpers/selling-units').stockQuantity(
+        { unit_conversion: unitConversion },
+        itemQuantity
+      );
+      if (
+        parseLegacyNumber(item.sale_inline_discount_value) === null &&
+        parseLegacyNumber(item.item_discount) === null
+      )
         discountAmount *= unitConversion.factor;
       if (
         previousLine?.pricing &&
@@ -555,11 +577,18 @@ const processSale = async (
       let pricing;
       try {
         pricing = pricingAuthority.resolve({
-          product: { ...document, selling_price: unitConversion.price ?? Number(document.selling_price ?? document.item_price ?? 0) * unitConversion.factor },
+          product: {
+            ...document,
+            selling_price:
+              unitConversion.price ??
+              Number(document.selling_price ?? document.item_price ?? 0) * unitConversion.factor,
+          },
           branch: pricingBranch,
           allowCounterPriceOverride: context.allowCounterPriceOverride === true,
-          allowParkedPriceOverride: existingSale?.sale_process === 'Hold' &&
-            existingSale?.payment_status !== 'Paid' && !existingSale?.captain_payment_plan,
+          allowParkedPriceOverride:
+            existingSale?.sale_process === 'Hold' &&
+            existingSale?.payment_status !== 'Paid' &&
+            !existingSale?.captain_payment_plan,
           roundGrossUnit: context.roundGrossUnit === true,
           previous: previousLine,
           submitted: pricingAuthority.desktopSubmittedPrice(item),
@@ -695,7 +724,10 @@ const processSale = async (
           item_name: document.name,
           ...require('../utils/item-localization').snapshot(document),
           item_quantity: changeQty,
-          stock_quantity: require('../helpers/selling-units').stockQuantity({ unit_conversion: unitConversion }, changeQty),
+          stock_quantity: require('../helpers/selling-units').stockQuantity(
+            { unit_conversion: unitConversion },
+            changeQty
+          ),
           process: changeProcess,
           item_code: document.itemid,
           unit: item.item_unit || 'qty',
@@ -909,7 +941,10 @@ const processSale = async (
           item_id: remItemId,
           item_name: remItem.name,
           item_quantity: remItem.quantity,
-          stock_quantity: require('../helpers/selling-units').stockQuantity({ unit_conversion: remItem.unit_conversion }, remItem.quantity),
+          stock_quantity: require('../helpers/selling-units').stockQuantity(
+            { unit_conversion: remItem.unit_conversion },
+            remItem.quantity
+          ),
           process: 'cancel',
           item_code: remItem.item_code,
           unit: remItem.unit,
@@ -1533,7 +1568,10 @@ const processSale = async (
       for (const item of items) {
         const doc = await itemRepository.findItemById(item.item_id);
         if (doc && doc.track_inventory && !doc.negative_stock) {
-          const requiredStock = require('../helpers/selling-units').stockQuantity(itemsale.find(line => String(line.item_id) === String(item.item_id)), item.item_quantity);
+          const requiredStock = require('../helpers/selling-units').stockQuantity(
+            itemsale.find((line) => String(line.item_id) === String(item.item_id)),
+            item.item_quantity
+          );
           if (doc.available_quantity < requiredStock) {
             insufficientItems.push({
               item_id: String(doc._id),
@@ -1558,7 +1596,10 @@ const processSale = async (
       const stockRequests = new Map();
       for (const item of items) {
         const doc = await itemRepository.findItemById(item.item_id);
-        const qty = require('../helpers/selling-units').stockQuantity(itemsale.find(line => line.item_id === item.item_id), item.item_quantity);
+        const qty = require('../helpers/selling-units').stockQuantity(
+          itemsale.find((line) => line.item_id === item.item_id),
+          item.item_quantity
+        );
         const isTracked = doc && (doc.track_inventory === true || doc.track_inventory === 'true');
         if (!isTracked || doc.negative_stock === true) continue;
         const key = String(doc._id);
@@ -1793,7 +1834,10 @@ const processSale = async (
         const doc = await itemRepository.findItemById(item.item_id);
         if (!doc) continue;
 
-        const qty = require('../helpers/selling-units').stockQuantity(itemsale.find(line => line.item_id === item.item_id), item.item_quantity);
+        const qty = require('../helpers/selling-units').stockQuantity(
+          itemsale.find((line) => line.item_id === item.item_id),
+          item.item_quantity
+        );
         // This quantity already left stock in a durable host operation. The
         // sale retains that reference; there is no second movement or stock log.
         if (extensionStock?.itemIds.has(String(doc._id))) continue;
@@ -2639,8 +2683,12 @@ const getLatestSales = async ({ branchId, licenseId, holdOnly }, { SaleModel } =
     baseFilter.license = licenseId;
   }
 
-  const pipeline = [{ $match: baseFilter }, { $sort: { _id: -1 } },
-    ...require('./parked-sales').visibilityStages(), { $limit: holdOnly ? 20 : 6 }];
+  const pipeline = [
+    { $match: baseFilter },
+    { $sort: { _id: -1 } },
+    ...require('./parked-sales').visibilityStages(),
+    { $limit: holdOnly ? 20 : 6 },
+  ];
 
   const sales = await salesRepository.aggregate(pipeline, { SaleModel: Model });
 

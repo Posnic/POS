@@ -67,10 +67,16 @@ function resolve({
       fail('price_context_mismatch', 'Item pricing context changed.');
     const expected = number(old.selling_price, 'Stored price');
     if (
-      allowParkedPriceOverride === true && allowCounterPriceOverride === true &&
-      channel === 'counter' && old.channel === 'counter' && !outlet && !priceList && !venue &&
+      allowParkedPriceOverride === true &&
+      allowCounterPriceOverride === true &&
+      channel === 'counter' &&
+      old.channel === 'counter' &&
+      !outlet &&
+      !priceList &&
+      !venue &&
       ['catalogue', 'counter_override', 'quick_item', 'variable'].includes(old.source) &&
-      submitted !== undefined && round(number(submitted, 'Entered price')) !== round(expected)
+      submitted !== undefined &&
+      round(number(submitted, 'Entered price')) !== round(expected)
     ) {
       const entered = number(submitted, 'Entered price');
       if (entered <= 0 || entered > 1000000)

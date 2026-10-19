@@ -56,16 +56,25 @@ test('stored snapshots preserve agreed price and tax after catalogue edits', () 
 
 test('authorised parked counter price edits retain tax but not a stale price', () => {
   const previous = { pricing: quote() };
-  const options = { previous, submitted: 70, allowCounterPriceOverride: true,
-    allowParkedPriceOverride: true };
+  const options = {
+    previous,
+    submitted: 70,
+    allowCounterPriceOverride: true,
+    allowParkedPriceOverride: true,
+  };
   expect(quote({ ...options, product: { ...product, tax: 18 } })).toMatchObject({
-    selling_price: 70, tax: 5, source: 'counter_override',
+    selling_price: 70,
+    tax: 5,
+    source: 'counter_override',
   });
   expect(() => quote({ ...options, allowParkedPriceOverride: false })).toThrow();
   expect(() => quote({ ...options, allowCounterPriceOverride: false })).toThrow();
-  expect(() => quote({ ...options, previous: { pricing: { ...previous.pricing, source: 'outlet' } } })).toThrow();
+  expect(() =>
+    quote({ ...options, previous: { pricing: { ...previous.pricing, source: 'outlet' } } })
+  ).toThrow();
   expect(() => quote({ ...options, channel: 'online' })).toThrow();
-  for (const submitted of [0, -1, 1000001, 'bad']) expect(() => quote({ ...options, submitted })).toThrow();
+  for (const submitted of [0, -1, 1000001, 'bad'])
+    expect(() => quote({ ...options, submitted })).toThrow();
 });
 test.each(['variable', 'quick'])('%s is explicit and bounded', (kind) => {
   const p = {

@@ -675,7 +675,12 @@ class SettingController extends BaseController {
       if (result.status) {
         return res
           .status(200)
-          .json({ type: 'success', message: quoteLibrary?.warning || 'Common settings updated', data: result.data, quoteLibrary });
+          .json({
+            type: 'success',
+            message: quoteLibrary?.warning || 'Common settings updated',
+            data: result.data,
+            quoteLibrary,
+          });
       }
       return res.status(404).json({
         type: 'error',
