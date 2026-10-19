@@ -58,7 +58,7 @@ async function main() {
       const dbName = 'posnic_t_' + writeTenant.replace(/-/g, '');
       const items = client.db(dbName).collection('items');
       const first = await items
-        .find({})
+        .find({ del_status: { $nin: [1, '1', true] } })
         .project({ name: 1, available_quantity: 1 })
         .limit(1)
         .toArray()
