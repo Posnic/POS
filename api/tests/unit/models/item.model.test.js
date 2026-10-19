@@ -791,13 +791,15 @@ describe('Item.LegacyItemModel › class identity', () => {
     // deliberately NOT fields, so a dish can never store one).
     // + nutrition_source (who said so: a person, or a machine that guessed;
     //   dish-facts publishes nothing derived from an estimate).
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(82);
+    // + configured selling units, retained by legacy catalogue reads.
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(83);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         /* Named as well as counted: a count alone passes if one field is
            added while another is dropped, which is the change that silently
            stops a read projecting a column. */
         available_for_sale: expect.any(Object),
+        selling_units: expect.objectContaining({ select: true }),
         availability_revision: expect.any(Object),
         default_language: expect.any(Object),
         translations: expect.any(Object),

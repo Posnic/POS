@@ -254,6 +254,14 @@ function recordView(plan, c, input) {
   };
 }
 async function reconcile(db, c, plan) {
+  const latest = await db
+    .collection('captain_payment_plans')
+    .findOne({ ...baseFilter(c), _id: plan._id });
+  if (['deleting', 'deleted'].includes(latest?.state))
+    fail(
+      'This sale is being deleted or has been deleted. Its recorded payment cannot be replayed.',
+      409
+    );
   const monetary = Money.snapshot(plan.snapshot),
     factor = monetary.factor;
   const payments = plan.payments || [];
@@ -308,6 +316,7 @@ async function reconcile(db, c, plan) {
         ...baseFilter(c),
         _id: sale._id,
         captain_payment_plan: plan._id,
+        captain_edit_token: { $exists: false },
         payment_correction_pending: { $exists: false },
         'payment_corrections.0': { $exists: false },
         'paid_bill_corrections.0': { $exists: false },
@@ -330,7 +339,7 @@ async function reconcile(db, c, plan) {
           partial_check: due > 0 && paid > 0,
           payment_mode: Object.keys(multi).join(','),
           multi_payment: multi,
-          payment_description: 'Collected in Captain',
+          payment_description: 'Payment recorded',
           updated_date: new Date(),
           updated_by: payments[payments.length - 1].staffName,
           updated_by_id: oid(payments[payments.length - 1].staffId),
@@ -368,6 +377,7 @@ async function reconcile(db, c, plan) {
       )
         return;
       if (
+        current?.captain_edit_token ||
         current?.captain_payment_plan !== plan._id ||
         current.captain_payment_version < plan.version
       )
@@ -438,7 +448,7 @@ async function reconcile(db, c, plan) {
   if (receiptPending) throw new Error('Payment saved; receipt is pending.');
   const paid = payments.reduce((sum, p) => sum + p.amountMinor, 0);
   await db.collection('captain_payment_plans').updateOne(
-    { _id: plan._id, version: plan.version },
+    { _id: plan._id, version: plan.version, state: { $nin: ['deleting', 'deleted'] } },
     {
       $set: {
         projectedVersion: plan.version,

@@ -125,6 +125,9 @@
     "src/controllers/users.controller.js",
     "src/repositories/user.repository.js"
   ],
+  "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": [
+    "src/services/sale.service.js"
+  ],
   "Amount and type are required": [
     "src/services/expense.service.js"
   ],
@@ -463,6 +466,9 @@
   ],
   "Clocked out": [
     "src/repositories/shift.repository.js"
+  ],
+  "Combine this product into one line when selling in an alternate unit.": [
+    "src/services/sale.service.js"
   ],
   "Common settings updated": [
     "src/controllers/settings.controller.js"
@@ -2684,6 +2690,9 @@
   ],
   "Update info": [
     "src/models/setting.model.js"
+  ],
+  "Use one selling unit per product in a sale.": [
+    "src/services/sale.service.js"
   ],
   "Use the normal return process for an allocated sale.": [
     "src/services/sale.service.js"

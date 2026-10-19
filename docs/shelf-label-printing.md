@@ -43,3 +43,16 @@ Selecting a preset is explicit opt-in and saves only the existing local layout
 and print-method preferences. It does not change business data or sync lanes.
 Regression tests cover dimensions, method switching, copies, custom edits and
 reopening. 24 focused label and international-language tests passed.
+
+## Paper cards and print plan
+
+Paper and size choices are visible buttons with selected states. New layouts
+start with the 80 mm roll preset (72 x 33 mm printable); existing saved layouts
+remain unchanged. A4 sizes offer 24, 40 and 14 positions plus custom dimensions,
+with live column/row/capacity calculations. Roll sizes are hidden for A4 and vice
+versa. This default change was explicitly requested by the user.
+
+The print step lists selected products with editable label copies, a one-each
+shortcut, and the actual batch count/range and sheets or individual roll labels.
+Copies do not multiply the entire sheet. These controls still use existing
+local layout preferences and transient product selection, with no sync changes.

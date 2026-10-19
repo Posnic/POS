@@ -8,6 +8,25 @@ const { renderReceipt, needsRaster, layout } = require('../src/escpos-unicode');
 const { renderSale } = require('../src/escpos-receipt');
 const { parse } = require('../src/escpos-preview');
 
+test('designed Tamil quote receipts load bundled fonts without changing other typography', async () => {
+  const { renderDesignedReceipt } = require('../src/escpos-unicode');
+  const { fontsFor, family } = require('../src/receipt-fonts');
+  const quote = 'அகர முதல எழுத்தெல்லாம்';
+  const tamil = fontsFor(quote).find(font => /Tamil/i.test(font.family));
+  assert.ok(tamil, 'Tamil font is shipped with the application');
+  for (const paper of ['58', '80', '112']) {
+    await renderDesignedReceipt(`<article class="rd-document"><section class="rd-quote">${quote}</section></article>`, paper, async plan => {
+      const doc = new JSDOM(plan.document).window.document;
+      assert.equal(doc.querySelector('.rd-quote').textContent, quote);
+      const css = doc.querySelector('style').textContent;
+      assert.ok(css.includes('font-family:' + family(tamil)));
+      assert.match(css, /src:url\("file:/);
+      assert.match(css, /\.rd-document \.rd-quote\{font-family:/);
+      return [{ width: plan.width, height: 1, data: Buffer.alloc(plan.width / 8, 255).toString('base64') }];
+    });
+  }
+});
+
 function frameImage(frame, fill = 255) {
   const width = 384, height = 260;
   const pixels = Buffer.alloc(width * height * 4, fill);
