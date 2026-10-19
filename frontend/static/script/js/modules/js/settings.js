@@ -976,6 +976,7 @@ PosnicPro.settings = {
                  * allows one, every time this screen loaded.
                  */
                 PosnicPro.settings.showTableOrderLimit(data.table_order_limit ?? 1);
+                PosnicPro.settings.loadRestaurantRequirements();
                 $('#staff_shifts_enable').prop('checked', data.staff_shifts_enable !== false);
                 $('#staff_tips_enable').prop('checked', data.staff_tips_enable === true);
                 $('#staff_roster_enable').prop('checked', data.staff_roster_enable !== false);
@@ -10388,16 +10389,31 @@ $(document).on('shown.bs.tab', '#captaintables-tab-line', function () {
     $('#save_captain_tables').prop('disabled',true);
     PosnicPro.get({url:'captain/v1/table-settings'},function(data){
         $('#captain_table_cleaning').prop('checked',data.cleaningEnabled === true);
-        $('#captain_allow_unassigned').prop('checked',data.tableRequired === false);
         $('#save_captain_tables').prop('disabled',false);
         $('#captain_tables_message').empty();
     },function(){ $('#captain_tables_message').text(PosnicPro.i18n.t('lang_could_not_load_table_settings_please_retry', 'Could not load table settings. Please retry.')); });
 });
 $(document).on('click','#save_captain_tables',function(){
     var button=$(this).prop('disabled',true);
-    PosnicPro.post({url:'captain/v1/table-settings',processData:false,data:JSON.stringify({cleaningEnabled:$('#captain_table_cleaning').is(':checked'),tableRequired:!$('#captain_allow_unassigned').is(':checked')})},function(){
+    PosnicPro.post({url:'captain/v1/table-settings',processData:false,data:JSON.stringify({cleaningEnabled:$('#captain_table_cleaning').is(':checked')})},function(){
         button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_successfully_completed','Successfully Completed'));
     },function(){button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_could_not_save_table_settings_please_retry', 'Could not save table settings. Please retry.'));});
 });
 
 $(document).on("change", "#sharing_fieldset input", function () { PosnicPro.settings._sharingDirty = true; });
+
+PosnicPro.settings.loadRestaurantRequirements = function () {
+    $('#save_restaurant_requirements').prop('disabled', true);
+    PosnicPro.get({url:'captain/v1/table-settings'}, function(data) {
+        $('#restaurant_table_required').prop('checked', data.tableRequired !== false);
+        $('#restaurant_guests_required').prop('checked', data.guestsRequired === true);
+        $('#save_restaurant_requirements').prop('disabled', false);
+    }, function() { $('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_could_not_load_settings_please_retry', 'Could not load settings. Please retry.')); });
+};
+$(document).on('shown.bs.tab', '#restauranttables-tab-line, #v-pills-tableorder-tab', function () { PosnicPro.settings.loadRestaurantRequirements(); });
+$(document).on('click', '#save_restaurant_requirements', function() {
+    var button=$(this).prop('disabled',true);
+    PosnicPro.post({url:'captain/v1/table-settings',processData:false,data:JSON.stringify({tableRequired:$('#restaurant_table_required').is(':checked'),guestsRequired:$('#restaurant_guests_required').is(':checked')})},function(){
+        button.prop('disabled',false);$('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_saved', 'Saved.'));
+    },function(){button.prop('disabled',false);$('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_could_not_save_settings_please_retry', 'Could not save settings. Please retry.'));});
+});

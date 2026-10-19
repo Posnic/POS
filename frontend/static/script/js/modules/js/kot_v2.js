@@ -919,22 +919,24 @@ default: return text; } };
     async function newOrder(takeaway = false, tableId = '', movingDraft = null) {
         if (movingDraft && (state.draft !== movingDraft || movingDraft.intent || movingDraft.saleId)) return;
         if (!movingDraft && resolveDraftBeforeSwitch(() => newOrder(takeaway, tableId))) return;
-        let tableRequired = true;
+        let tableRequired = true, guestsRequired = false;
         if (!takeaway) {
             const floor = await api('get', 'captain/v1/tables', { branchId: branch() });
             state.floor = floor.tables || [];
             tableRequired = floor.tableRequired !== false;
+            guestsRequired = floor.guestsRequired === true;
         }
         const free = state.floor.filter((t) => t.status === 'available');
         const modal = dialog(
             takeaway ? PosnicPro.i18n.t('lang_new_takeaway', 'New takeaway') : PosnicPro.i18n.t('lang_start_a_table_order', 'Start a table order'),
-            `<div class="kv2-seating-layout">${takeaway ? '' : `<div class="kv2-table-section"><h4>${icon('table')} <lang class="lang_choose_a_table">Choose a table</lang></h4><div class="kv2-choices kv2-seat-grid">${[...state.floor].sort((a, b) => Number(b.status === 'available') - Number(a.status === 'available')).map((t) => `<label class="kv2-seat ${t.status !== 'available' ? 'occupied' : ''}"><input type="radio" name="table" value="${esc(t.id)}" ${tableId === t.id && t.status === 'available' ? 'checked' : ''} ${t.status !== 'available' ? 'disabled' : ''}>${icon('table')}<strong>${esc(t.tableorder_value)}</strong><small>${esc(t.status)}</small></label>`).join('')}</div><label>Other table number<input name="custom" maxlength="30" placeholder="For example, Garden 2" data-t-placeholder="lang_for_example_garden_2"></label></div>`}<div class="kv2-guest-section"><h4>${icon('guests')} <lang class="lang_kot_workspace_covers">Number of guests</lang></h4>${takeaway ? '' : `<div class="kv2-choices kv2-guest-grid">${[1, 2, 3, 4, 5, 6, 8, 10].map((n) => `<button type="button" data-guests="${n}" aria-pressed="false">${icon('guests')}<strong>${n}</strong></button>`).join('')}</div>`}<label>${PosnicPro.i18n.t('lang_guests_optional', 'Guests (optional)')}<input name="guests" inputmode="numeric" type="number" value="" min="0" max="1000"></label></div></div>`,
+            `<div class="kv2-seating-layout">${takeaway ? '' : `<div class="kv2-table-section"><h4>${icon('table')} <lang class="lang_choose_a_table">Choose a table</lang></h4><div class="kv2-choices kv2-seat-grid">${[...state.floor].sort((a, b) => Number(b.status === 'available') - Number(a.status === 'available')).map((t) => `<label class="kv2-seat ${t.status !== 'available' ? 'occupied' : ''}"><input type="radio" name="table" value="${esc(t.id)}" ${tableId === t.id && t.status === 'available' ? 'checked' : ''} ${t.status !== 'available' ? 'disabled' : ''}>${icon('table')}<strong>${esc(t.tableorder_value)}</strong><small>${esc(t.status)}</small></label>`).join('')}</div><label>Other table number<input name="custom" maxlength="30" placeholder="For example, Garden 2" data-t-placeholder="lang_for_example_garden_2"></label></div>`}<div class="kv2-guest-section"><h4>${icon('guests')} <lang class="lang_kot_workspace_covers">Number of guests</lang></h4>${takeaway ? '' : `<div class="kv2-choices kv2-guest-grid">${[1, 2, 3, 4, 5, 6, 8, 10].map((n) => `<button type="button" data-guests="${n}" aria-pressed="false">${icon('guests')}<strong>${n}</strong></button>`).join('')}</div>`}<label>${guestsRequired ? PosnicPro.i18n.t('lang_kot_workspace_covers', 'Number of guests') : PosnicPro.i18n.t('lang_guests_optional', 'Guests (optional)')}<input name="guests" inputmode="numeric" type="number" value="" min="${guestsRequired ? 1 : 0}" max="1000" ${guestsRequired ? 'required' : ''}></label></div></div>`,
 
             async (form) => {
                 let t = free.find((t) => t.id === form.get('table'));
                 const
                     custom = String(form.get('custom') || '').trim();
                 if (!takeaway && tableRequired && !t && !custom) throw new Error('Choose a table or enter its number.');
+                if (guestsRequired && (!Number.isInteger(Number(form.get('guests'))) || Number(form.get('guests')) < 1)) throw new Error('Enter the number of guests.');
                 if (custom.toUpperCase() === 'TA') throw new Error('Use Takeaway for an order to go.');
                 if (!takeaway && (t || custom)) {
                     const floor = await api('get', 'captain/v1/tables', { branchId: branch() });
