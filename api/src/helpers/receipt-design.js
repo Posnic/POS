@@ -170,6 +170,11 @@
       const quotes = q.quotes.map((text) => text.trim()).filter(Boolean);
       if (q.source === 'custom' && !quotes.length) throw new Error('Add at least one quote.');
       out.quoteFooter = { source: q.source, order: q.order, quotes };
+      if (q.qrSizeMm !== undefined) {
+        if (![18, 22, 26].includes(q.qrSizeMm))
+          throw new Error('Choose a QR size of 18, 22 or 26 mm.');
+        out.quoteFooter.qrSizeMm = q.qrSizeMm;
+      }
       if (q.showQr !== undefined) {
         if (typeof q.showQr !== 'boolean')
           throw new Error('Choose whether to show the Thirukkural QR code.');
