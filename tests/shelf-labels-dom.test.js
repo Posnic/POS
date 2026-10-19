@@ -407,3 +407,16 @@ test('thermal label cutter modes preserve order and cut only at selected boundar
   dom.window.close();
  }
 });
+
+test('text controls size each label element independently and persist the design', async () => {
+ const {dom,w,$,next}=setup(); w.PosnicShelfLabels.open('0');await tick();next();
+ $('#sl-name-size').val(20).trigger('change');$('#sl-price-size').val(38).trigger('change');$('#sl-shop-size').val(10).trigger('change');$('#bar-fontSize').val(8).trigger('change');
+ const css=$('#sl-sample style').text();assert.match(css,/sl-name\{[^}]*font-size:20px/);assert.match(css,/sl-price\{[^}]*font-size:38px/);assert.match(css,/sl-shop\{[^}]*font-size:10px/);
+ assert.match($('#sl-sample svg text').attr('style'), /8px/);
+ const saved=JSON.parse(w.localStorage.getItem('posnic.shelf-label-layout'));assert.equal(saved.design.nameSize,20);assert.equal(saved.design.priceSize,38);
+ w.PosnicShelfLabels.open('0');await tick();assert.equal($('#sl-name-size').val(),'20');assert.equal($('#sl-price-size').val(),'38');dom.window.close();
+});
+test('old saved font size migrates to independent sizes without losing the layout',async()=>{
+ const {dom,w,$}=setup();w.localStorage.setItem('posnic.shelf-label-layout',JSON.stringify({design:{fontSize:20}}));w.PosnicShelfLabels.open('0');await tick();
+ assert.equal($('#sl-name-size').val(),'27');assert.equal($('#sl-price-size').val(),'52');assert.equal($('#sl-shop-size').val(),'15');assert.equal($('#bar-fontSize').val(),'20');dom.window.close();
+});

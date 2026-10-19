@@ -51,13 +51,14 @@
             'grid-template-rows:repeat(' + g.rows + ',' + s.height + 'mm);gap:' + (s.paper === 'a4' ? s.gap : 0) + 'mm;break-after:page;overflow:hidden}' +
             '.sl-sheet:last-child{break-after:auto}.sl-label{width:' + s.width + 'mm;height:' + s.height + 'mm;padding:1mm;overflow:hidden;' +
             'display:flex;flex-direction:column;justify-content:' + ((s.previewPaper || s.paper) === 'roll' ? 'flex-start' : 'center') + ';gap:1px;border:' + (s.guides ? '.15mm dashed #aaa' : 'none') + ';font-family:' + s.font + ';font-size:' + s.fontSize + 'px;text-align:' + s.align +
-            ';font-weight:' + (s.fontOptions?.includes('bold') ? '700' : '400') + ';font-style:' + (s.fontOptions?.includes('italic') ? 'italic' : 'normal') +
+            ';font-weight:' + (s.fontOptions?.includes('bold') ? '700' : '400') + ';font-style:normal' +
             ';color:' + s.ink + ';background:' + s.background + ';print-color-adjust:exact;-webkit-print-color-adjust:exact}' +
-            '.sl-label p{margin:0;line-height:1.15;overflow-wrap:anywhere}.sl-name{font-weight:700;font-size:135%}.sl-price{font-weight:700;font-size:260%}.sl-barcode{display:block;flex-shrink:1;min-height:0;max-width:100%;max-height:45%;' +
-            'margin-left:' + (s.align === 'left' ? '0' : 'auto') + ';margin-right:' + (s.align === 'right' ? '0' : 'auto') + '}.sl-foot{font-size:75%}';
+            '.sl-label p{margin:0;line-height:1.15;overflow-wrap:anywhere}.sl-name{font-weight:' + (s.nameBold === false ? 400 : 700) + ';font-size:' + (s.nameSize ?? s.fontSize * 1.35) + 'px}.sl-price{font-weight:' + (s.priceBold === false ? 400 : 700) + ';font-size:' + (s.priceSize ?? s.fontSize * 2.6) + 'px}.sl-barcode{display:block;flex-shrink:1;min-height:0;max-width:100%;max-height:45%;' +
+            'margin-left:' + (s.align === 'left' ? '0' : 'auto') + ';margin-right:' + (s.align === 'right' ? '0' : 'auto') + '}.sl-foot{font-size:' + (s.footSize ?? s.fontSize * .75) + 'px;font-weight:' + (s.footBold ? 700 : 400) + ';font-style:normal}.sl-shop{font-size:' + (s.shopSize ?? s.fontSize * .75) + 'px;font-weight:' + (s.shopBold ? 700 : 400) + ';font-style:normal}';
     }
     function validateDesign(s) {
         if (!/^[a-zA-Z ,\-]+$/.test(s.font) || !['left', 'center', 'right'].includes(s.align) || !/^#[a-f\d]{6}$/i.test(s.background) || !/^#[a-f\d]{6}$/i.test(s.ink)) throw Error('Invalid label design.');
+        ['name', 'price', 'shop', 'foot'].forEach(function (key) { if (s[key + 'Size'] !== undefined && (!Number.isFinite(s[key + 'Size']) || s[key + 'Size'] < 3 || s[key + 'Size'] > 96)) throw Error('Text sizes must be between 3 and 96 pixels.'); });
         if (!Number.isFinite(s.fontSize) || s.fontSize < 3 || s.fontSize > 36) throw Error('Choose a font size between 3 and 36.');
     }
     function label(doc, item, s, barcode) {
@@ -77,7 +78,7 @@
         if (s.mrp && Number(item.mrp_price) > 0) text('MRP ' + s.currency + ' ' + Number(item.mrp_price).toFixed(item.label_currency_digits ?? 2), 'sl-foot');
         if (s.mfg && item.items_mfg_date) text('MFG ' + String(item.items_mfg_date).split(' ')[0], 'sl-foot');
         if (s.exp && item.items_expiry_date) text('EXP ' + String(item.items_expiry_date).split(' ')[0], 'sl-foot');
-        if (s.shop) text(s.shop, 'sl-foot');
+        if (s.shop) text(s.shop, 'sl-shop');
         if (s.address) text(s.address, 'sl-foot');
         if (s.date) text(s.printedDate, 'sl-foot');
         return div;
@@ -115,6 +116,7 @@
             shop: $('#sl-shop').is(':checked') ? root.PosnicPro.local.get('branchname') || '' : '', address: $('#address-value').val(),
             date: $('#sl-date').is(':checked'), printedDate: new Date().toLocaleDateString(), currency: root.PosnicPro.local.get('currencySign') || ''
         };
+        ['name', 'price', 'shop', 'foot'].forEach(function (key) { s[key + 'Size'] = Number($('#sl-' + key + '-size').val()); s[key + 'Bold'] = $('#sl-' + key + '-bold').is(':checked'); });
         validateDesign(s); geometry(s); return s;
     }
     function chosen() { return state.entries.filter(function (e) { return e.selected; }); }
@@ -244,7 +246,7 @@
             $('#sl-capacity').text(s.paper === 'a4' ? capacityText(g) : t('lang_label_roll_one_label_per_page', 'Label roll · one label per page'));
             $('#sl-start').attr('max', g.capacity); $('#sl-dimensions').text(s.width + ' × ' + s.height + ' mm');
             try { root.localStorage.setItem('posnic.shelf-label-layout', JSON.stringify({ paper: s.paper, width: s.width, height: s.height, margin: s.margin, gap: s.gap, start: s.start, guides: s.guides, barcode: s.barcode, barText: s.barText, shop: !!s.shop, date: s.date, mrp: s.mrp, mfg: s.mfg, exp: s.exp,
-                design: { font: s.font, fontSize: s.fontSize, align: s.align, ink: s.ink, background: s.background, format: s.format, barWidth: s.barWidth, barHeight: s.barHeight, barMargin: s.barMargin, textMargin: s.textMargin, top: s.top, bottom: s.bottom, left: s.left, right: s.right, fontOptions: s.fontOptions } })); } catch (_) { /* Optional storage. */ }
+                design: { nameSize: s.nameSize, priceSize: s.priceSize, shopSize: s.shopSize, footSize: s.footSize, nameBold: s.nameBold, priceBold: s.priceBold, shopBold: s.shopBold, footBold: s.footBold, font: s.font, fontSize: s.fontSize, align: s.align, ink: s.ink, background: s.background, format: s.format, barWidth: s.barWidth, barHeight: s.barHeight, barMargin: s.barMargin, textMargin: s.textMargin, top: s.top, bottom: s.bottom, left: s.left, right: s.right, fontOptions: s.fontOptions } })); } catch (_) { /* Optional storage. */ }
             if (state.step === 1) {
                 var sampleGeometry = geometry(Object.assign({}, s, { paper: 'roll' }));
                 try { mountPreview('#sl-sample', [entries[0].item], Object.assign({}, s, { paper: 'roll', previewPaper: s.paper }), sampleGeometry); }
@@ -394,6 +396,11 @@
                 if (typeof saved.barText === 'boolean') $('#sl-bar-text').prop('checked', saved.barText);
                 if (saved.design) {
                     var d = saved.design;
+                    ['name', 'price', 'shop', 'foot'].forEach(function (key) {
+                        var scale = {name: 1.35, price: 2.6, shop: .75, foot: .75}[key];
+                        $('#sl-' + key + '-size').val(d[key + 'Size'] ?? Math.round((d.fontSize || 12) * scale * 10) / 10);
+                        $('#sl-' + key + '-bold').prop('checked', d[key + 'Bold'] ?? (key === 'name' || key === 'price' || (d.fontOptions || '').includes('bold')));
+                    });
                     Object.entries({ font: 'font', fontSize: 'bar-fontSize', ink: 'line-color', background: 'background-color', format: 'barcodeLabelType', barWidth: 'bar-width', barHeight: 'bar-height', barMargin: 'bar-margin', textMargin: 'bar-text-margin', top: 'margin_top', bottom: 'margin_bottom', left: 'margin_left', right: 'margin_right' }).forEach(function (pair) { if (d[pair[0]] !== undefined) $('#' + pair[1]).val(d[pair[0]]); });
                     if (['left', 'center', 'right'].includes(d.align)) $('.text-align').removeClass('btn-primary').filter('[value="' + d.align + '"]').addClass('btn-primary');
                     $('.font-option').each(function () { $(this).toggleClass('btn-primary', typeof d.fontOptions === 'string' && d.fontOptions.split(' ').includes(this.value)); });

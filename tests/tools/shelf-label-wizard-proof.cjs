@@ -67,6 +67,12 @@ const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label
     await page.select('#font', 'Arial');
     await page.$eval('#bar-fontSize', el => { el.value = 12; el.dispatchEvent(new Event('change', { bubbles: true })); });
     await page.screenshot({ path: path.join(OUT, '03-layout.png') });
+    const originalPrice = await page.$eval('#sl-sample .sl-price', el => getComputedStyle(el).fontSize);
+    await page.$eval('#sl-name-size', el => { el.value = 22; el.dispatchEvent(new Event('change', { bubbles: true })); el.scrollIntoView({block:'center'}); });
+    assert.equal(await page.$eval('#sl-sample .sl-name', el => getComputedStyle(el).fontSize), '22px');
+    assert.equal(await page.$eval('#sl-sample .sl-price', el => getComputedStyle(el).fontSize), originalPrice);
+    await page.screenshot({ path: path.join(OUT, '03-text-customization.png') });
+    await page.$eval('#sl-name-size', el => { el.value = 16.2; el.dispatchEvent(new Event('change', { bubbles: true })); });
     await page.click('#sl-next-step');
     await page.waitForFunction(() => !document.querySelector('[data-sl-panel="2"]').hidden);
     assert.equal(await page.$eval('#sl-preview', el => el.querySelectorAll('.sl-label').length), 24);
