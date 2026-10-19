@@ -44,8 +44,8 @@
         }
         return { cells: cells, pages: pages, amount: limit, total: total };
     }
-    function css(s, g) {
-        return '@page{size:' + (s.paper === 'a4' ? 'A4' : s.width + 'mm ' + s.height + 'mm') + ';margin:0}' +
+    function css(s, g, browserPrint) {
+        return '@page{size:' + (s.paper === 'a4' ? 'A4' : browserPrint ? 'portrait' : s.width + 'mm ' + s.height + 'mm') + ';margin:0}' +
             'html,body{margin:0;padding:0}*{box-sizing:border-box}.sl-sheet{width:' + g.width + 'mm;height:' + g.height + 'mm;' +
             'padding:' + (s.paper === 'a4' ? s.margin : 0) + 'mm;display:grid;grid-template-columns:repeat(' + g.columns + ',' + s.width + 'mm);' +
             'grid-template-rows:repeat(' + g.rows + ',' + s.height + 'mm);gap:' + (s.paper === 'a4' ? s.gap : 0) + 'mm;break-after:page;overflow:hidden}' +
@@ -434,7 +434,7 @@
                 $('#sl-status').text('Sent ' + first.amount + ' label(s) to ' + name + '. Check the printed output.');
             } else {
                 if (typeof root.printJS !== 'function') throw Error(t('lang_sl_browser_unavailable', 'The browser print component is unavailable. Reload this page and try again.'));
-                root.printJS({ printable: html, type: 'raw-html', style: css(s, g), scanStyles: false, documentTitle: t('lang_shelf_label_products', 'Shelf / product labels') });
+                root.printJS({ printable: html, type: 'raw-html', style: css(s, g, true), scanStyles: false, documentTitle: t('lang_shelf_label_products', 'Shelf / product labels') });
             }
         } catch (e) { error(e); }
         finally {
