@@ -1998,6 +1998,10 @@ class ItemRepository extends BaseModel {
        * gated - clients that predate the checkbox omit the key and never
        * clear a stored flag.
        */
+      if (Object.prototype.hasOwnProperty.call(data, 'parcel_details')) {
+        updateData.parcel_details = require('../utils/parcel-details').product(data.parcel_details);
+      }
+
       if (data.open_price !== undefined) {
         updateData.open_price = data.open_price === true || data.open_price === 'true';
       }

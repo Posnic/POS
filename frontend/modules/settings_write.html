@@ -38,6 +38,7 @@
                                     <lang class="lang_modules">Features</lang>
                                 </a>
                                 
+
                                 <div class="settings-nav-group" data-desktop-only><lang class="lang_desktop_this_computer">This computer</lang></div>
                                 <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-hardware-tab" data-toggle="pill" href="#v-pills-hardware" role="tab" aria-controls="v-pills-hardware" aria-selected="false"><i class="feather icon-printer mr-2"></i><lang class="lang_desktop_devices">Devices & Printing</lang></a>
                                 <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-app-tab" data-toggle="pill" href="#v-pills-app" role="tab" aria-controls="v-pills-app" aria-selected="false"><i class="feather icon-monitor mr-2"></i><lang class="lang_desktop_app">App Settings</lang></a>
@@ -212,8 +213,7 @@
 
                 <!-- Start col -->
                 <div class="col-lg-7 col-xl-9">
-                    <div class="tab-content loader-view-mystore" id="v-pills-tabContent">
-                        <div class="tab-pane fade" id="v-pills-hardware" role="tabpanel" aria-labelledby="v-pills-hardware-tab"><div class="card"><div class="card-body" data-desktop-page="hardware"></div></div></div>
+                    <div class="tab-content loader-view-mystore" id="v-pills-tabContent"><div class="tab-pane fade" id="v-pills-hardware" role="tabpanel" aria-labelledby="v-pills-hardware-tab"><div class="card"><div class="card-body" data-desktop-page="hardware"></div></div></div>
                         <div class="tab-pane fade" id="v-pills-app" role="tabpanel" aria-labelledby="v-pills-app-tab"><div class="card"><div class="card-body" data-desktop-page="app"></div></div></div>
                         <div class="tab-pane fade" id="v-pills-updates" role="tabpanel" aria-labelledby="v-pills-updates-tab"><div class="card"><div class="card-body" data-desktop-page="updates"></div></div></div>
                         <div class="tab-pane fade" id="v-pills-backups" role="tabpanel" aria-labelledby="v-pills-backups-tab"><div class="card"><div class="card-body" data-desktop-page="backups"></div></div></div>
@@ -5144,6 +5144,7 @@
                                                             
                                                         <a class="nav-link" data-toggle="pill" href="#inv-sub-stock" role="tab"><i class="feather icon-box mr-2"></i><lang class="lang_stock_preference">Stock preference</lang></a>
 <a class="nav-link" data-toggle="pill" href="#inv-sub-mobile" role="tab"><i class="feather icon-smartphone mr-2"></i><lang class="lang_mobile_inventory">Mobile inventory</lang></a>
+<a class="nav-link" id="inv-sub-packaging-tab" data-toggle="pill" href="#inv-sub-packaging" role="tab"><i class="feather icon-box mr-2"></i><lang class="lang_packaging">Packaging</lang></a>
 <a class="nav-link" data-toggle="pill" href="#inv-sub-expiry" role="tab"><i class="feather icon-bell mr-2"></i><lang class="lang_expiry_reminders">Expiry reminders</lang></a>
 </div>
                                                     </div>
@@ -5199,12 +5200,13 @@
                                                             
 <div class="tab-pane fade" id="inv-sub-stock" role="tabpanel">
 <div class="card mb-3"><div class="card-header"><h5><lang class="lang_stock_preference">Stock preference</lang></h5></div><div class="card-body">
- <select id="item_stock_preference" class="form-control mb-3" aria-label="Stock for new items" data-t-aria-label="lang_stock_for_new_items"><option value="" data-t="lang_choose_a_preference">Choose a preference</option><option value="always_available" data-t="lang_always_available">Always available</option><option value="track_quantities" data-t="lang_track_quantities">Track quantities</option></select>
+ <select id="item_stock_preference" class="form-control mb-3" aria-label="Stock for new items" data-t-aria-label="lang_stock_for_new_items"><option value="" data-t="lang_choose_a_preference"><lang class="lang_choose_a_preference">Choose a preference</lang></option><option value="always_available" data-t="lang_always_available"><lang class="lang_always_available">Always available</lang></option><option value="track_quantities" data-t="lang_track_quantities"><lang class="lang_track_quantities">Track quantities</lang></option></select>
  <p><strong><lang class="lang_always_available_2">Always available:</lang></strong> <lang class="lang_sell_without_entering_stock_quantities_no">Sell without entering stock quantities. No low-stock alerts. Suitable for made-to-order dishes.</lang></p>
  <p><strong><lang class="lang_track_quantities_2">Track quantities:</lang></strong> <lang class="lang_enter_stock_received_and_count_each_sale_l">Enter stock received and count each sale. Low-stock alerts apply. Suitable for packaged goods.</lang></p>
  <p><lang class="lang_applies_to_new_items_in_this_branch_existi">Applies to new items in this branch. Existing items keep their stock settings. You can still mark an item sold out manually.</lang></p>
  <button class="btn btn-primary" type="button" id="item_settings_save_stock"><lang class="lang_save_title">Save</lang></button></div></div>
 </div>
+<div class="tab-pane fade" id="inv-sub-packaging" role="tabpanel" aria-labelledby="inv-sub-packaging-tab"><div class="card"><div class="card-body"><h5><lang class="lang_saved_cartons_optional">Saved cartons (optional)</lang></h5><p class="text-muted"><lang class="lang_save_your_actual_box_dimensions_and_empty">Save your actual box dimensions and empty-box weight. Examples: Small, Medium, Large. No presets are applied automatically.</lang></p><div id="parcel_carton_status" role="status"></div><div class="table-responsive"><table class="table"><thead><tr><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_length_cm">Length (cm)</lang></th><th><lang class="lang_width_cm">Width (cm)</lang></th><th><lang class="lang_height_cm">Height (cm)</lang></th><th><lang class="lang_empty_weight_kg">Empty weight (kg)</lang></th><th></th></tr></thead><tbody id="parcel_carton_rows"></tbody></table></div><button type="button" class="btn btn-light" id="parcel_carton_add"><lang class="lang_add_carton">Add carton</lang></button> <button type="button" class="btn btn-primary" id="parcel_carton_save"><lang class="lang_save_cartons">Save cartons</lang></button></div></div></div>
 <div class="tab-pane fade" id="inv-sub-mobile" role="tabpanel"><div id="mobile_inventory_settings"></div></div>
 <div class="tab-pane fade" id="inv-sub-expiry" role="tabpanel">
 <div class="card"><div class="card-header"><h5><lang class="lang_expiry_reminders">Expiry reminders</lang></h5></div><div class="card-body">

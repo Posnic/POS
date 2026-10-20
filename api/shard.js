@@ -281,6 +281,8 @@ async function main() {
   }
 
   await loadRegistry();
+  const releaseExtensions = await require('./src/services/extension-shard-runtime').start({ tenants: byHost.values() });
+  app.locals.releaseExtensionRuntime = releaseExtensions;
   require('./src/services/ask-posnic-runner.service').start({ tenants: () => byHost.values() });
   setInterval(() => {
     loadRegistry().catch((e) => console.error('[shard] refresh failed:', e.message));
@@ -332,6 +334,7 @@ async function main() {
   });
 
   server.listen(PORT, HOST, () => {
+    if (releaseExtensions) server.once('close', releaseExtensions);
     server.once('close', require('./src/services/price-schedule-worker').start({ tenants: () => byHost.values() }));
     const stopNotifications =
       require('./src/services/business-notification-worker').startNotifications({

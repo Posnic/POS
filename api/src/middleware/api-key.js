@@ -32,6 +32,7 @@ const { createHash, timingSafeEqual } = require('crypto');
  * circulation.
  */
 const MODULE_BY_PREFIX = {
+  extensions: 'extensions',
   'ask-posnic': 'dashboard',
   branches: 'branch',
   categories: 'category',
