@@ -13852,4 +13852,3 @@ $(document).on('focusin click', '#sales_new input[name="addSalesLineItemQty"], #
     setInterval(checkAvailability, 15000);
     window.addEventListener('focus', checkAvailability);
 })();
-
