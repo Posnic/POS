@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "Rechercher dans le libellé ou l'extension existants",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "Met à jour les étiquettes correspondantes et les options Ajout/Recherche/Ventes par phrases prises en charge. Les noms des produits, les notes et les autres langues restent inchangés.",
-  "lang_your_wording": "Votre libellé"
+  "lang_your_wording": "Votre libellé",
+  "lang_wording_changed_only": "Modifié uniquement",
+  "lang_wording_labels_per_page": "Étiquettes par page"
 }

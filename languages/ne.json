@@ -4745,5 +4745,7 @@
   "lang_shop_name": "पसलको नाम",
   "lang_show_cutting_guides": "काट्ने निर्देशिका देखाउनुहोस्",
   "lang_sl_no_barcode": "बारकोड छैन",
-  "lang_total_labels": "कुल लेबलहरू"
+  "lang_total_labels": "कुल लेबलहरू",
+  "lang_wording_changed_only": "परिवर्तन गरिएका मात्र",
+  "lang_wording_labels_per_page": "प्रति पृष्ठ लेबलहरू"
 }

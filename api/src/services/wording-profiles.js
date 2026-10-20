@@ -114,6 +114,17 @@ function resolveBundle(state, branch, locale, labels) {
       if (label && typeof value === 'string' && placeholders(value) === placeholders(label.english))
         values[label.key] = value;
     }
+  // Compatibility bridge for apps whose bundled translations use English
+  // source strings. Never guess when equal source text has different meanings.
+  const candidates = new Map();
+  for (const label of labels.values()) {
+    const candidate = values[label.key] ?? null;
+    if (!candidates.has(label.english)) candidates.set(label.english, candidate);
+    else if (candidates.get(label.english) !== candidate) candidates.set(label.english, null);
+  }
+  const sourceValues = Object.create(null);
+  for (const [source, value] of candidates)
+    if (typeof value === 'string') sourceValues[source] = value;
   return {
     schemaVersion: 1,
     revision: state.revision,
@@ -121,7 +132,9 @@ function resolveBundle(state, branch, locale, labels) {
     branchId: branch,
     profileId: profile?.id || null,
     profileRevision: revision?.id || null,
+    profileName: revision?.name || null,
     values,
+    sourceValues,
   };
 }
 

@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "Pesquise palavras ou extensões existentes",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "Atualiza rótulos correspondentes e suporta Adicionar/Pesquisar/Vendas por frases. Os nomes dos produtos, notas e outros idiomas permanecem inalterados",
-  "lang_your_wording": "Sua redação"
+  "lang_your_wording": "Sua redação",
+  "lang_wording_changed_only": "Apenas alterado",
+  "lang_wording_labels_per_page": "Etiquetas por página"
 }

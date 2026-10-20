@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "בניסוח קיים או בתוסף",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "עדכוני תוויות תואמות ותוויות נתמכות הוספה/חפש/מכירות לפי ביטויים. שמות מוצרים, הערות ושפות אחרות אינם משתנים.",
-  "lang_your_wording": "הניסוח שלך"
+  "lang_your_wording": "הניסוח שלך",
+  "lang_wording_changed_only": "השתנה בלבד",
+  "lang_wording_labels_per_page": "תוויות בעמוד"
 }

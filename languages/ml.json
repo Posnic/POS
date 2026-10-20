@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "നിലവിലുള്ള പദങ്ങൾ അല്ലെങ്കിൽ വിപുലീകരണം",
   "lang_wording_takeaway": "ടേക്ക്ഔട്ട്",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "അപ്ഡേറ്റുകൾ പൊരുത്തപ്പെടുന്ന ലേബലുകളും പിന്തുണയ്ക്കുന്നു ശൈലികൾ പ്രകാരം ചേർക്കുക/തിരയുക ഉൽപ്പന്ന പേരുകൾ, കുറിപ്പുകൾ, മറ്റ് ഭാഷകൾ എന്നിവയിൽ മാറ്റമില്ല.",
-  "lang_your_wording": "നിങ്ങളുടെ വാക്കുകൾ"
+  "lang_your_wording": "നിങ്ങളുടെ വാക്കുകൾ",
+  "lang_wording_changed_only": "മാറ്റിയത് മാത്രം",
+  "lang_wording_labels_per_page": "ഓരോ പേജിലും ലേബലുകൾ"
 }

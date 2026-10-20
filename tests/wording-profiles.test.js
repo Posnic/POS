@@ -18,6 +18,7 @@ test('draft remains inactive; publish atomically assigns branches and locale; un
   assert.deepEqual({ ...resolveBundle(state, branch, 'en', labels()).values }, {});
   state = await svc.publish({ id: state.profiles[0].id, expectedRevision: 1, branches: [branch] }, 'owner', [branch]);
   assert.equal(resolveBundle(state, branch, 'en', labels()).values.lang_takeaway, 'Parcel');
+  assert.equal(resolveBundle(state, branch, 'en', labels()).profileName, 'Shop English');
   assert.deepEqual({ ...resolveBundle(state, branch, 'ta', labels()).values }, {});
   assert.deepEqual({ ...resolveBundle(state, 'cccccccccccccccccccccccc', 'en', labels()).values }, {});
   const firstRevision = state.profiles[0].revisions[0];
@@ -26,6 +27,18 @@ test('draft remains inactive; publish atomically assigns branches and locale; un
   state = await svc.publish({ id: state.profiles[0].id, expectedRevision: 3, branches: [branch] }, 'owner', [branch]);
   assert.deepEqual({ ...resolveBundle(state, branch, 'en', labels()).values }, {});
   assert.equal(state.profiles[0].revisions[0].id, firstRevision.id);
+});
+test('mobile source bridge includes unique labels but skips ambiguous wording', () => {
+  const registry = createRegistry({ lang_one: 'Product', lang_two: 'Product', lang_room: 'Room number' }, []);
+  const state = { schemaVersion: 1, revision: 1, assignments: { [branch]: { en: { profileId: 'p', revisionId: 'r' } } },
+    profiles: [{ id: 'p', revisions: [{ id: 'r', name: 'Published', locale: 'en', overrides: {
+      'posnic.lang_one': 'Item', 'posnic.lang_room': 'Suite number'
+    } }] }] };
+  const bundle = resolveBundle(state, branch, 'en', registry);
+  assert.equal(bundle.sourceValues['Room number'], 'Suite number');
+  assert.equal(bundle.sourceValues.Product, undefined);
+  state.profiles[0].revisions[0].overrides['posnic.lang_two'] = 'Item';
+  assert.equal(resolveBundle(state, branch, 'en', registry).sourceValues.Product, 'Item');
 });
 test('concurrent edit is rejected without losing published or draft changes', async () => {
   const svc = new WordingProfiles(memory(), tenant, labels());

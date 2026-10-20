@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "Suchen Sie nach vorhandenen Formulierungen oder Erweiterungen",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "aktualisiert die passenden Labels und die unterstützten Begriffe Hinzufügen/Suchen/Umsatz nach. Produktnamen, Hinweise und andere Sprachen sind unverändert.",
-  "lang_your_wording": "Ihr Wortlaut"
+  "lang_your_wording": "Ihr Wortlaut",
+  "lang_wording_changed_only": "Nur geändert",
+  "lang_wording_labels_per_page": "Etiketten pro Seite"
 }

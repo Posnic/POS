@@ -4977,5 +4977,7 @@
   "lang_wording_search_existing_wording_or_extension": "kiếm từ ngữ hiện có hoặc tiện ích mở rộng",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "Cập nhật các nhãn phù hợp và được hỗ trợ Thêm/Tìm kiếm/Bán hàng theo cụm từ. Tên sản phẩm, ghi chú và các ngôn ngữ khác không thay đổi.",
-  "lang_your_wording": "Từ ngữ của bạn"
+  "lang_your_wording": "Từ ngữ của bạn",
+  "lang_wording_changed_only": "Chỉ thay đổi",
+  "lang_wording_labels_per_page": "Nhãn trên mỗi trang"
 }
