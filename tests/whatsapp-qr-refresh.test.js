@@ -24,3 +24,21 @@ test('QR polling starts before initialization returns, rotates codes and recover
  wa.showConnectButton(); assert.equal(w.$('#whatsapp_connect_btn').prop('disabled'),false);
  dom.window.close();
 });
+
+test('late initialization and QR callbacks cannot restore the spinner after authentication', () => {
+ const dom=new JSDOM('<input id="whatsapp_device_id" value="posnic"><button id="whatsapp_connect_btn"></button><div id="whatsapp_qr_container"><div id="whatsapp_qr_code"></div></div><span id="whatsapp_status_badge"></span>',{runScripts:'outside-only'});
+ const w=dom.window; w.eval(fs.readFileSync('frontend/static/script/js/jquery.min.js','utf8'));
+ const gets=[]; let initialized;
+ w.setInterval=()=>1; w.clearInterval=()=>{};
+ w.PosnicPro={local:{get:()=> 'branch'},i18n:{t:(k,v)=>v},alert(){},post:(p,cb)=>{initialized=cb;},get:(p,cb)=>gets.push(cb)};
+ w.eval(fs.readFileSync('frontend/static/script/js/modules/js/whatsapp.js','utf8'));
+ const wa=w.PosnicPro.whatsapp;
+ wa.connect(); wa.fetchAndDisplayQR(); const lateQR=gets.shift();
+ wa.checkStatus(true); gets.shift()({type:'success',data:{status:'authenticated',connected:false}});
+ lateQR({type:'success',data:{qr_code:'stale'}});
+ assert.equal(w.$('#whatsapp_qr_container').css('display'),'none');
+ assert.equal(w.$('#whatsapp_qr_code img').length,0);
+ wa.onConnected(); initialized({type:'success'});
+ assert.equal(w.$('#whatsapp_qr_container').css('display'),'none');
+ dom.window.close();
+});
