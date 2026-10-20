@@ -3,7 +3,7 @@
  *
  * Reach a segment of customers with a message over SMS or WhatsApp. Sending is
  * deliberately deliberate: you preview the reach, can send a dry run that
- * dispatches nothing, and a real send asks for confirmation. Opt-outs and
+ * dispatches nothing, and the review screen is the final confirmation. Opt-outs and
  * customers with no phone are skipped on the server; a customer is never
  * messaged twice for the same campaign.
  */
@@ -277,7 +277,7 @@ PosnicPro.campaigns = {
     };
   },
 
-  save: function (after) {
+  save: function (after, failed) {
     var data = PosnicPro.campaigns.collect();
     if ((data.segment.type === 'category' && !data.segment.category_ids.length) ||
         (data.segment.type === 'customers' && !data.segment.customer_ids.length)) {
@@ -296,15 +296,17 @@ PosnicPro.campaigns = {
     var done = function (res) {
       if (res && res.type === 'success') {
         if (res.data && res.data._id) $('#campaign_form_id').val(res.data._id);
-        PosnicPro.campaigns.load();
+        if (typeof after !== 'function') PosnicPro.campaigns.load();
         if (typeof after === 'function') after(res.data);
         else PosnicPro.alert('success', res.message || 'Saved');
       } else {
+        if (typeof failed === 'function') failed();
         PosnicPro.alert((res && res.type) || 'error', (res && res.message) || 'Could not save');
       }
     };
-    if (id) PosnicPro.put({ url: 'campaigns/' + id, data: JSON.stringify(data) }, done);
-    else PosnicPro.post({ url: 'campaigns', data: JSON.stringify(data) }, done);
+    if (id) PosnicPro.put({ url: 'campaigns/' + id, data: JSON.stringify(data) }, done, failed);
+    else PosnicPro.post({ url: 'campaigns', data: JSON.stringify(data) }, done, failed);
+    return true;
   },
 
   remove: function (id) {
@@ -352,27 +354,33 @@ PosnicPro.campaigns = {
     });
   },
 
-  // dryRun true = test (dispatch nothing); false = real send (asks first).
+  // The reviewed Send now action is the confirmation; no browser dialog.
   sendNow: function (dryRun) {
-    PosnicPro.campaigns.save(function (data) {
+    var self = PosnicPro.campaigns;
+    if (self._sending || $('#campaign_review').prop('hidden') || $('#campaign_send_btn').prop('disabled')) return;
+    self._sending = true;
+    var controls = $('#campaign_send_btn, #campaign_test_btn, #campaign_schedule_btn, #campaign_edit_again');
+    controls.prop('disabled', true);
+    var release = function () { self._sending = false; controls.prop('disabled', false); };
+    var failed = function () { release(); self.invalidateReview(); };
+    var started = self.save(function (data) {
       var id = data && data._id;
-      if (!id) return;
-      if (!dryRun) {
-        if (!window.confirm('Send this campaign for real now? Reachable customers will be messaged.')) return;
-      }
+      if (!id) { failed(); return; }
       PosnicPro.post({ url: 'campaigns/' + id + '/send', data: JSON.stringify({ dryRun: !!dryRun }) }, function (res) {
+        release();
+        self.invalidateReview();
         if (!res || res.type !== 'success') {
           PosnicPro.alert((res && res.type) || 'error', (res && res.message) || 'Send failed');
           return;
         }
         var d = res.data || {};
-        PosnicPro.alert(
-          'success',
-          (dryRun ? PosnicPro.i18n.t('lang_dry_run', 'Dry run: ') : PosnicPro.i18n.t('lang_sent', 'Sent: ')) + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped'
-        );
-        PosnicPro.campaigns.load();
-      });
-    });
+        PosnicPro.alert('success',
+          (dryRun ? PosnicPro.i18n.t('lang_dry_run', 'Dry run: ') : PosnicPro.i18n.t('lang_sent', 'Sent: ')) + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped');
+        self.load();
+        if (!dryRun) self.hideForm();
+      }, failed);
+    }, failed);
+    if (!started) release();
   },
 
   schedule: function () {

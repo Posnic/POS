@@ -236,3 +236,19 @@ test('WhatsApp providers show only their fields, setup guide and isolated creden
  assert.notEqual($('#messaging_wa_meta_fields').css('display'),'none');
  dom.window.close();
 });
+
+test('review is the send confirmation, double clicks send once and network failure requires review again',()=>{
+ const {dom,w,$,writes}=setup(); const c=w.PosnicPro.campaigns;
+ w.confirm=()=>{throw Error('Native dialog must not open');};
+ c.fill({name:'Test',message:'Hello',segment:{type:'all'}});
+ c.sendNow(false); assert.equal(writes.length,0);
+ c.preview(); writes[0].cb({type:'success',data:{reachable:1,total:1,sample:[]}});
+ c.sendNow(false); c.sendNow(false); assert.equal(writes.length,2);
+ writes[1].cb({type:'success',data:{_id:'campaign-id'}});
+ assert.equal(writes.length,3); assert.equal(writes[2].payload.url,'campaigns/campaign-id/send');
+ assert.equal(JSON.parse(writes[2].payload.data).dryRun,false);
+ writes[2].failure({status:503}); assert.equal(c._sending,false);
+ assert.equal($('#campaign_review').prop('hidden'),true);
+ c.sendNow(false); assert.equal(writes.length,3);
+ dom.window.close();
+});
