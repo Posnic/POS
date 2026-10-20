@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "ग्राहक क्रेडिटसाठी जतन केलेले ग्राहक",
   "Exact numeric search must be on or off": "अचूक संख्याशी शोध चालू किंवा बंद असणे",
   "Item not found or selling price is held. Review it in Edit prices.": "आयटम सापडला नाही किंवा विक्री किंमत ठेवली आहे संपादित किंमती मध्ये त्याचे पुनरावलोक",
+  "Branch access required": "शाखा प्रवेश आव",
+  "Branch and supported language required": "श्यक आहे शाखा आणि सम",
   "Password must contain between 5 and 20 characters": "संकेतशब्दामध्ये 5 ते 20 वर्ण असणे आवश्यक आहे"
 }

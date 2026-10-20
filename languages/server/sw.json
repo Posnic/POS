@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "Chagua mteja aliyehifadhiwa kwa mkopo wa wateja.",
   "Exact numeric search must be on or off": "Utafutaji halisi wa nambari lazima uwe wawa au kuzima",
   "Item not found or selling price is held. Review it in Edit prices.": "Bidhaa haijapatikana au bei ya kuuza kinashikiliwa. Ipitia katika Hariri bei.",
+  "Branch access required": "Ufikiaji wa tawi in",
+  "Branch and supported language required": "ahitajika Tawi na lugha inayo",
   "Password must contain between 5 and 20 characters": "Nenosiri lazima iwe na kati ya herufi 5 na 20"
 }

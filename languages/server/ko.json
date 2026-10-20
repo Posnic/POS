@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "고객 크레딧으로 사용할 저장된 고객을 선택합니다.",
   "Exact numeric search must be on or off": "정확한 숫자 검색을 켜거나 꺼야 합니다.",
   "Item not found or selling price is held. Review it in Edit prices.": "아이템을 찾을 수 없거나 판매 가격이 보류되었습니다.가격 편집에서 검토하세요.",
+  "Branch access required": "브랜치 액세스 필요",
+  "Branch and supported language required": "브랜치 및 지원 언어 필요",
   "Password must contain between 5 and 20 characters": "비밀번호는 5~20자 사이여야 합니다."
 }

@@ -617,7 +617,7 @@ test('the English map the console edits against is not stale', () => {
 test('the runtime watches for markup drawn after load', () => {
   const watchFn = member('watch');
   assert.match(watchFn, /MutationObserver/, 'watch() does not observe the document');
-  assert.match(watchFn, /if \(!PosnicPro\.i18n\._dict\) return/, 'English still pays for the observer');
+  assert.match(watchFn, /if \(!PosnicPro\.i18n\._dict && !\(PosnicPro\.wording && PosnicPro\.wording\.values\(\)\)\) return/, 'Uncustomized English must still skip observer work');
   const core = fs.readFileSync(CORE, 'utf8');
   assert.match(core, /^PosnicPro\.i18n\.watch\(\);/m, 'nothing starts the observer');
 });

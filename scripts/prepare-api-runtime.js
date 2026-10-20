@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 
 const rootDir = path.resolve(__dirname, '..');
+require('./build-wording-catalog');
 const sourceDir = path.join(rootDir, 'api', 'node_modules');
 const outputDir = path.join(rootDir, 'builds', 'api-runtime');
 const archivePath = path.join(outputDir, 'node_modules.zip');

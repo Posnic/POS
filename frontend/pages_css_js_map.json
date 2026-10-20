@@ -73,6 +73,7 @@
             "static/script/js/core/receipt-data.js",
             "static/script/js/core/themeManager.js",
             "static/script/js/core/ajax.js",
+            "static/script/js/core/wording-profiles.js",
             "static/script/js/core/extension-frame.js",
             "static/script/js/modules/js/extensions.js",
             "static/script/js/modules/js/sale-extensions.js",
@@ -155,6 +156,7 @@
             "static/script/js/modules/js/kot_v2.js",
             "static/script/js/modules/js/kothistory.js",
             "static/script/js/modules/js/settings.js",
+            "static/script/js/modules/js/wording-editor.js",
             "static/script/js/modules/js/desktop-settings.js",
             "static/script/js/modules/js/print-tills.js",
             "static/script/js/modules/js/loyalty.js",
@@ -205,6 +207,7 @@
             "static/script/js/core/lock-screen.js",
             "static/script/js/core/receipt-data.js",
             "static/script/js/core/ajax.js",
+            "static/script/js/core/wording-profiles.js",
             "static/script/js/core/version-badge.js",
             "static/script/js/modules/js/users.js",
             "static/script/js/core/offline-recovery.js",
@@ -240,6 +243,7 @@
             "static/script/js/core/receipt-data.js",
             "static/script/js/core/themeManager.js",
             "static/script/js/core/ajax.js",
+            "static/script/js/core/wording-profiles.js",
             "static/script/js/modules/js/customer_view.js"
         ],
         "css": [
@@ -274,6 +278,7 @@
             "static/script/js/core/receipt-data.js",
             "static/script/js/core/themeManager.js",
             "static/script/js/core/ajax.js",
+            "static/script/js/core/wording-profiles.js",
             "static/script/js/modules/js/customer_search.js",
             "static/script/js/jQuery-Autocomplete.min.js",
             "static/script/js/vertical.js",
@@ -310,6 +315,7 @@
             "static/script/js/core/receipt-data.js",
             "static/script/js/jquery.toast.min.js",
             "static/script/js/core/ajax.js",
+            "static/script/js/core/wording-profiles.js",
             "static/script/js/modules/js/customer_mail.js"
         ],
         "css": [
@@ -331,6 +337,7 @@
             "static/script/js/core/lock-screen.js",
             "static/script/js/core/receipt-data.js",
             "static/script/js/core/ajax.js",
+            "static/script/js/core/wording-profiles.js",
             "static/script/js/jquery.toast.min.js",
             "static/script/js/modules/js/users.js"
         ],
@@ -355,6 +362,7 @@
             "static/script/js/core/lock-screen.js",
             "static/script/js/core/receipt-data.js",
             "static/script/js/core/ajax.js",
+            "static/script/js/core/wording-profiles.js",
             "static/script/js/jquery.toast.min.js",
             "static/script/js/modules/js/users.js"
         ],

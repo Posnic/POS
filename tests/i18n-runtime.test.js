@@ -64,6 +64,27 @@ const TA = {
   lang_blank: '   ',
 };
 
+test('custom English wording applies to existing and inserted labels and restores cleanly', async () => {
+  const dom = page('<lang class="lang_takeaway">Takeaway</lang><span translate="no">Product name</span>');
+  const { PosnicPro } = loadI18n(dom, null);
+  let values = { lang_takeaway: 'Parcel' };
+  PosnicPro.wording = { values: () => values };
+  PosnicPro.i18n.apply();
+  assert.equal(dom.window.document.querySelector('lang').textContent, 'Parcel');
+  assert.equal(PosnicPro.i18n.t('lang_takeaway', 'Takeaway'), 'Parcel');
+  const observer = PosnicPro.i18n.watch(dom.window.document.body);
+  const inserted = dom.window.document.createElement('lang');
+  inserted.className = 'lang_takeaway'; inserted.textContent = 'Takeaway';
+  dom.window.document.body.appendChild(inserted);
+  await new Promise(resolve => setTimeout(resolve, 0));
+  assert.equal(inserted.textContent, 'Parcel');
+  values = null;
+  PosnicPro.i18n.restore(); PosnicPro.i18n.apply();
+  assert.equal(inserted.textContent, 'Takeaway');
+  assert.equal(dom.window.document.querySelector('span').textContent, 'Product name');
+  observer.disconnect(); dom.window.close();
+});
+
 /* --------------------------------------------------------------- applying --- */
 
 test('a <lang> tag is translated in place', () => {
