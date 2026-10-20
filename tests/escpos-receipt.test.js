@@ -13,6 +13,20 @@ const { renderSale, COLUMNS } = require('../src/escpos-receipt');
  */
 const ESC = 0x1b, GS = 0x1d;
 
+test('room service charge is itemized on thermal bills', () => {
+  const { buildBillPayload } = require('../api/src/helpers/bill-payload');
+  const payload = buildBillPayload({
+    sales_id: 'ROOM-207', sales_total: 1050, tax: 0, items: [],
+    charges: [{ source: 'room', name: 'Room service charge', percent: 5, amount: 50 }],
+  }, {});
+  for (const paperWidth of ['58', '80']) {
+    const text = decode(renderSale(payload, { paperWidth })).lines.join(' ');
+    assert.ok(text.includes('Room service charge'));
+    assert.ok(text.includes('(5%)'));
+    assert.ok(text.includes('50.00'));
+  }
+});
+
 function decode(buf) {
   const lines = [];
   const notes = [];
