@@ -434,8 +434,7 @@ router.get(
 // (PHP served getCustomerPrint publicly too). Registered before router.use(protect).
 router.get(
   '/getCustomerPrint',
-  optionalProtect,
-  protectOrKioskKey,
+  require('../middleware/customer-receipt-link'),
   bindController(salesController.getCustomerPrint)
 );
 

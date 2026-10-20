@@ -5447,6 +5447,16 @@ class SalesController extends BaseController {
         }),
       };
 
+      const receiptDocument = await require('../services/receipt-document.service').prepare(
+        saleId,
+        req.tenantContext?.branchId || req.user?.branch_id || sale.branch_id || sale.branch
+      );
+      emailContent.attachments = [{
+        filename: receiptDocument.filename,
+        content: receiptDocument.buffer,
+        contentType: 'application/pdf',
+      }];
+
       try {
         await transporter.sendMail(emailContent);
         /* The dev fallback transport prints to console instead of

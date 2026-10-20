@@ -190,6 +190,7 @@ async function loadRegistry() {
   const next = new Map();
 
   for (const t of tenants) {
+    if (require('./src/utils/shard-exclusions').isExcluded(t)) continue;
     const secrets = {};
     try {
       for (const [name, blob] of Object.entries(t.secrets || {})) {

@@ -283,7 +283,22 @@ PosnicPro.sales = {
         PosnicPro.sales.showEdit(id);
     },
     showWhatsapp: function (id) {
-        PosnicPro.sales.view.whatsappSale(id, 'sale');
+        PosnicPro.get('sales/' + id, function (response) {
+            if (!response || response.type !== 'success' || !response.data) {
+                PosnicPro.alert('error', 'Could not load this receipt. No message was sent.');
+                return;
+            }
+            var sale = response.data;
+            PosnicPro.sales.showWhatsAppReceipt(id, sale.customer_phone || '', sale.customer_name || '');
+            var lines = (sale.items || []).map(function (item) {
+                return item.item_quantity + ' x ' + item.item_name + ': ' + item.total_amount;
+            });
+            $('#customer_sms_message').val('Receipt ' + (sale.sales_id || '') +
+                '\n' + lines.join('\n') +
+                '\nTotal: ' + (sale.items_total || '0') +
+                '\nPayment status: ' + (sale.payment_status || '') +
+                '\nThank you for visiting.');
+        });
     },
     /*
      * Permanent invoice link (built like quotes): the server renders the
@@ -325,6 +340,12 @@ PosnicPro.sales = {
         });
     },
     showSMS: function (id, phone, name) {
+        $('#smsModal .modal-dialog').addClass('modal-sm');
+        $('#sms_form').data('message-channel', 'sms');
+        $('#whatsapp_template_group').remove();
+        $('#whatsapp_receipt_message_group').remove();
+        $('#smsModal .modal-title .lang_autosmsaftersales_title').text('SMS Receipt');
+        $('#customer_sms_message').val('');
         $('#smsModal').modal('show');
         $('#customer_sms_id').val(id);
         $('#customer_sms_phone').val(phone);
@@ -333,13 +354,14 @@ PosnicPro.sales = {
     },
     
     showWhatsAppReceipt: function (id, phone, name) {
-        console.log('showWhatsAppReceipt called');
-        console.log('PosnicPro.sales:', PosnicPro.sales);
-        console.log('sendWhatsAppReceipt function:', PosnicPro.sales.addSale.sendWhatsAppReceipt);
+        $('#smsModal .modal-dialog').removeClass('modal-sm');
         
         // Store sale ID for template variable replacement
         PosnicPro.sales.currentSaleId = id;
-        console.log('showWhatsAppReceipt - Stored sale ID:', PosnicPro.sales.currentSaleId);
+        if (!$('#customer_sms_message').length) {
+            $('#sms_form .modal-footer').before('<div class="form-group px-3" id="whatsapp_receipt_message_group"><label for="customer_sms_message">Receipt message</label><textarea class="form-control" id="customer_sms_message" rows="7"></textarea><p class="small text-muted mt-2">Your linked phone sends the bill as a PDF attachment. API senders include a link to view and download the bill.</p></div>');
+        }
+        $('#customer_sms_message').val('');
         
         $('#smsModal').modal('show');
         $('#smsModal .modal-title .lang_autosmsaftersales_title').text(PosnicPro.i18n.t('lang_autowhatsappaftersales_title', 'WhatsApp Receipt'));
@@ -348,19 +370,15 @@ PosnicPro.sales = {
         $('#customer_sms_name').val(name);
         $('#customer_sms_fullphone').val(phone);
         
+        $('#sms_form').data('message-channel', 'whatsapp');
         // Add template selection to WhatsApp receipt modal
         this.addTemplateSelectionToModal(id);
         $('#customer_sms_phone').val(phone);
         $('#customer_sms_name').val(name);
         $('#customer_sms_fullphone').val(phone);
         
-        // Change form ID and submit handler for WhatsApp
-        $('#sms_form').attr('id', 'whatsapp_receipt_form');
-        $('#whatsapp_receipt_form').off('submit').on('submit', function(e) {
-            e.preventDefault();
-            console.log('Form submitted, calling sendWhatsAppReceipt');
-            PosnicPro.sales.addSale.sendWhatsAppReceipt();
-        });
+        // Keep one form and one submit handler when switching delivery channels.
+        $('#sms_form').data('message-channel', 'whatsapp');
     },
 
     /**
@@ -373,6 +391,7 @@ PosnicPro.sales = {
         };
 
         PosnicPro.get(params, (response) => {
+            if ($('#sms_form').data('message-channel') !== 'whatsapp' || PosnicPro.sales.currentSaleId !== saleId) return;
             if (response.type === 'success' && response.data) {
                 // Add template dropdown to modal
                 const templateDropdown = `
@@ -396,7 +415,7 @@ PosnicPro.sales = {
                     // Show all templates, but indicate sales_receipt type in display
                     const displayName = template.template_type === 'sales_receipt' ? 
                         `${template.name} (Sales)` : template.name;
-                    select.append(`<option value="${template._id}">${displayName}</option>`);
+                    select.append($('<option>').val(template._id).text(displayName));
                 });
                 
                 // Add change event handler
@@ -1055,7 +1074,7 @@ PosnicPro.sales = {
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showPrint(\'' + esc(id) + '\'); return false;"><i class="feather icon-printer mr-2"></i>Print</a>'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showPdf(\'' + esc(id) + '\'); return false;"><i class="feather icon-file mr-2"></i>Download PDF</a>'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.emailSale(\'' + esc(id) + '\', \'' + esc(d.customer_email || '') + '\');"><i class="feather icon-mail mr-2"></i>Email</a>'
-            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.whatsappSaleLink(\'' + esc(id) + '\', \'' + esc(d.sales_id || '') + '\', \'' + esc(String(d.items_total || '')) + '\');"><i class="feather icon-message-circle mr-2"></i>WhatsApp</a>'
+            + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showWhatsapp(\'' + esc(id) + '\');"><i class="feather icon-message-circle mr-2"></i>WhatsApp</a>'
             + '<a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.sales.showSMS(\'' + esc(id) + '\', \'' + esc(d.customer_phone || '') + '\', \'' + esc(d.customer_name || '') + '\');"><i class="feather icon-smartphone mr-2"></i>SMS</a>'
             + '<div class="dropdown-divider"></div>'
             + '<a class="dropdown-item sale-invoice-link" href="javascript:void(0)" data-sale-id="' + esc(id) + '"><i class="feather icon-link mr-2"></i>Copy invoice link</a>'
@@ -4589,6 +4608,7 @@ PosnicPro.sales.addSale = {
     },
     
     sendWhatsAppReceipt: function () {
+        if (PosnicPro.sales.receiptSending) return;
         
         // Get form data using jQuery val() directly
         const phoneNumber = $('#customer_sms_fullphone').val();
@@ -4606,6 +4626,7 @@ PosnicPro.sales.addSale = {
         const params = {
             url: 'whatsapp/sendMessage',
             data: {
+                sale_id: PosnicPro.sales.currentSaleId || '',
                 phone_number: phoneNumber.replace(/\D/g, '') // Remove non-digits
             }
         };
@@ -4615,11 +4636,7 @@ PosnicPro.sales.addSale = {
             params.data.template_id = selectedTemplate;
             // Add sale_id for template variable replacement
             params.data.sale_id = PosnicPro.sales.currentSaleId || '';
-            console.log('Sending WhatsApp with template:', {
-                template_id: params.data.template_id,
-                sale_id: params.data.sale_id,
-                currentSaleId: PosnicPro.sales.currentSaleId
-            });
+
         } else if (message && message.trim() !== '') {
             params.data.message = message;
         } else {
@@ -4627,22 +4644,26 @@ PosnicPro.sales.addSale = {
             return;
         }
         
+        PosnicPro.sales.receiptSending = true;
+        $('#sms_form :submit').prop('disabled', true);
+        function finished() {
+            PosnicPro.sales.receiptSending = false;
+            $('#sms_form :submit').prop('disabled', false);
+        }
         PosnicPro.post(params, function (response) {
+            finished();
             if (response.type === 'success') {
                 $('#smsModal').modal('hide');
-                hasher.changed.active = false;
-                hasher.replaceHash('sales/new');
-                hasher.changed.active = true;
                 PosnicPro.alert(response.type, response.message);
-                
-                // Reset form ID back to original
-                $('#whatsapp_receipt_form').attr('id', 'sms_form');
+                $('#sms_form').removeData('message-channel');
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
         }, function (xhr) {
-            var errorMessage = 'An unknown error occurred.';
-            var response = jQuery.parseJSON(xhr.responseText);
+            finished();
+            var errorMessage = 'Could not confirm sending. Check message history before trying again.';
+            var response = {};
+            try { response = JSON.parse(xhr.responseText); } catch (e) { /* non-JSON network error */ }
             if (response.message) {
                 errorMessage = response.message;
             }
@@ -12947,6 +12968,10 @@ $(document).ready(function () {
 
 $("#sms_form").submit(function (event) {
     event.preventDefault();
+    if ($('#sms_form').data('message-channel') === 'whatsapp') {
+        PosnicPro.sales.addSale.sendWhatsAppReceipt();
+        return;
+    }
     if ($('#sms_form').valid()) {            // checks form for validity
         PosnicPro.sales.addSale.sendSms();
     }
@@ -13827,3 +13852,4 @@ $(document).on('focusin click', '#sales_new input[name="addSalesLineItemQty"], #
     setInterval(checkAvailability, 15000);
     window.addEventListener('focus', checkAvailability);
 })();
+

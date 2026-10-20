@@ -2,6 +2,7 @@
 
 const { ObjectId } = require('mongodb');
 const BaseModel = require('../models/base.model');
+const { withBranchScope } = require('./branch-scope');
 const {
   CHANNEL,
   STATUS,
@@ -56,7 +57,9 @@ class CampaignService {
       case SEGMENT_TYPE.MIN_POINTS:
         return { 'loyalty.points': { $gte: Math.max(0, Number(s.min_points) || 0) } };
       case SEGMENT_TYPE.CATEGORY:
-        return s.category_id ? { category_id: oid(s.category_id) } : {};
+        return { category_id: { $in: CampaignService.ids(s.category_ids || [s.category_id]) } };
+      case SEGMENT_TYPE.CUSTOMERS:
+        return { _id: { $in: CampaignService.ids(s.customer_ids) } };
       case SEGMENT_TYPE.LAPSED: {
         const days = Math.max(0, Number(s.lapsed_days) || 0);
         const cutoff = new Date(nowMs - days * 24 * 60 * 60 * 1000);
@@ -76,6 +79,11 @@ class CampaignService {
   }
 
   /** Whether a customer may be messaged on this channel (per-channel opt-out). */
+  static ids(values) {
+    return [...new Set((Array.isArray(values) ? values : []).map(String))]
+      .filter((v) => /^[a-f0-9]{24}$/i.test(v)).slice(0, 2000).map(oid);
+  }
+
   static optedIn(customer, channel) {
     const p = (customer && customer.preferences) || {};
     if (channel === CHANNEL.WHATSAPP) return p.whatsappNotifications !== false;
@@ -106,8 +114,11 @@ class CampaignService {
     const out = { type };
     if (type === SEGMENT_TYPE.TIER) out.tier = String(seg.tier || '');
     if (type === SEGMENT_TYPE.MIN_POINTS) out.min_points = Math.max(0, Number(seg.min_points) || 0);
-    if (type === SEGMENT_TYPE.CATEGORY)
-      out.category_id = seg.category_id ? oid(seg.category_id) : null;
+    if (type === SEGMENT_TYPE.CATEGORY) {
+      out.category_ids = CampaignService.ids(seg.category_ids || [seg.category_id]);
+      out.category_id = out.category_ids[0] || null;
+    }
+    if (type === SEGMENT_TYPE.CUSTOMERS) out.customer_ids = CampaignService.ids(seg.customer_ids);
     if (type === SEGMENT_TYPE.LAPSED) out.lapsed_days = Math.max(0, Number(seg.lapsed_days) || 0);
     return out;
   }
@@ -127,12 +138,17 @@ class CampaignService {
     if (!channel) return { status: false, message: MESSAGES.BAD_CHANNEL };
     const message = String(data.message || '').trim();
     if (!message) return { status: false, message: MESSAGES.MESSAGE_REQUIRED };
+    const segment = this._cleanSegment(data.segment);
+    if ((segment.type === SEGMENT_TYPE.CUSTOMERS && !segment.customer_ids.length) ||
+        (segment.type === SEGMENT_TYPE.CATEGORY && !segment.category_ids.length)) {
+      return { status: false, message: 'Select at least one customer or category' };
+    }
 
     const set = {
       name,
       channel,
       message,
-      segment: this._cleanSegment(data.segment),
+      segment,
       branch_id: ctx.branchId ? oid(ctx.branchId) : null,
       branch_name: ctx.branchName || '',
       updated_date: now,
@@ -175,15 +191,33 @@ class CampaignService {
 
   // ============================ audience ============================
 
-  async _recipients(segment) {
+  async _recipients(segment, branchId = BaseModel.currentBranch) {
     const db = await BaseModel.getDb();
-    const q = { ...CampaignService.buildAudienceQuery(segment), license: BaseModel.license };
+    const q = withBranchScope({ ...CampaignService.buildAudienceQuery(segment), license: BaseModel.license,
+      is_deleted: { $ne: true } }, branchId);
     return db.collection('customers').find(q).toArray();
   }
 
   /** Reach for a segment: total in the segment and how many are actually reachable. */
-  async preview(segment, channel) {
-    const rows = await this._recipients(segment);
+  async audienceOptions(kind, search, ids, branchId) {
+    if (!branchId) return { status: false, message: 'Select a branch first' };
+    const db = await BaseModel.getDb();
+    const category = kind === 'category';
+    const query = withBranchScope({ license: BaseModel.license, is_deleted: { $ne: true } }, branchId);
+    const selected = CampaignService.ids(String(ids || '').split(','));
+    if (selected.length) query._id = { $in: selected };
+    else if (search) {
+      const term = String(search).slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.$or = [{ name: { $regex: term, $options: 'i' } }];
+      if (!category) query.$or.push({ phone: { $regex: term, $options: 'i' } });
+    }
+    const rows = await db.collection(category ? 'customer_category' : 'customers')
+      .find(query).project({ name: 1, phone: 1 }).sort({ name: 1, _id: 1 }).limit(selected.length || 50).toArray();
+    return { status: true, data: rows, message: 'Audience choices' };
+  }
+
+  async preview(segment, channel, branchId = BaseModel.currentBranch) {
+    const rows = await this._recipients(segment, branchId);
     let reachable = 0;
     const sample = [];
     for (const c of rows) {
@@ -211,7 +245,7 @@ class CampaignService {
     return {
       [CHANNEL.WHATSAPP]: async (phone, message) => {
         try {
-          return await messagingService.sendWhatsapp(branchId, phone, message);
+          return await messagingService.sendWhatsapp(branchId, phone, message, { purpose: 'Campaign' });
         } catch (e) {
           return { ok: false, error: e.message };
         }
@@ -261,7 +295,7 @@ class CampaignService {
 
     const channel = campaign.channel;
     const dispatch = adapters || (await this._defaultAdapters(campaign.branch_id));
-    const recipients = await this._recipients(campaign.segment);
+    const recipients = await this._recipients(campaign.segment, campaign.branch_id);
 
     if (!dryRun) await col.updateOne({ _id: campaign._id }, { $set: { status: STATUS.SENDING } });
 
@@ -274,7 +308,7 @@ class CampaignService {
         campaign_id: campaign._id,
         customer_id: cust._id,
         license: BaseModel.license,
-        status: { $nin: [SEND_STATUS.FAILED] },
+        status: { $nin: [SEND_STATUS.FAILED, SEND_STATUS.DRY_RUN] },
       });
       if (already) continue;
 

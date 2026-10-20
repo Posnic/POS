@@ -200,17 +200,6 @@ class WhatsAppController extends BaseController {
     try {
       const { device_id } = req.query;
 
-      // Debug session data
-      console.log('WhatsApp status check - Session data:', {
-        session: req.session,
-        user: req.user,
-        selectedBranchId: req.session?.selectedBranchId,
-        branch_id: req.session?.branch_id,
-        user_branch_id: req.user?.branch_id,
-        user_branch: req.user?.branch?._id,
-        default_branch_id: req.user?.default_branch_id,
-        branch_access: req.user?.branch_access,
-      });
 
       const resolvedBranchId = activeBranchId(req);
 
@@ -338,7 +327,7 @@ class WhatsAppController extends BaseController {
       console.log('[WHATSAPP SEND] ========== START ==========');
       console.log('[WHATSAPP SEND] Request body:', redact(req.body));
 
-      const { device_id, phone_number, message, template_id, sale_id } = req.body;
+      const { phone_number, message, template_id, sale_id } = req.body;
 
       // Get branch_id with multiple fallbacks
       const branchId = activeBranchId(req);
@@ -358,18 +347,6 @@ class WhatsAppController extends BaseController {
           type: 'error',
           message: 'Message or template is required',
         });
-      }
-
-      // If device_id not provided, get it from branch settings
-      let deviceId = device_id;
-      if (!deviceId) {
-        try {
-          const Branch = require('../models/branch.model');
-          const branch = await Branch.findOne(branchIdentity(req, branchId));
-          deviceId = branch?.whatsapp_device_id || 'default_device';
-        } catch (error) {
-          deviceId = 'default_device';
-        }
       }
 
       if (!branchId) {
@@ -583,19 +560,18 @@ class WhatsAppController extends BaseController {
         }
       }
 
-      const result = await whatsappService.sendMessage(
-        deviceId,
-        branchId,
-        phone_number,
-        finalMessage
-      );
-
-      // Add small delay before sending response to prevent frontend detached frame error
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      const document = sale_id
+        ? await require('../services/receipt-document.service').prepare(sale_id, branchId)
+        : null;
+      if (document?.url) finalMessage += '\n\nView or download your bill:\n' + document.url;
+      const MessagingService = require('../services/messaging.service');
+      const result = await new MessagingService().sendWhatsapp(branchId, phone_number, finalMessage,
+        { purpose: sale_id ? 'Sales receipt' : 'Message', ...(document ? { document } : {}) });
 
       return res.json({
-        type: result.status ? 'success' : 'error',
-        message: result.message,
+        type: result.ok ? 'success' : 'error',
+        message: result.ok ? (result.queued ? 'Message waiting to send' : 'Message accepted by sender') : result.error,
+        data: { queued: !!result.queued, messageId: result.messageId || null },
       });
     } catch (error) {
       console.error('[WHATSAPP SEND] ERROR:', error);
@@ -679,13 +655,6 @@ class WhatsAppController extends BaseController {
       const { name, message, template_type } = req.body;
 
       console.log('saveTemplate - Request body:', { name, message, template_type });
-      console.log('saveTemplate - Session data:', {
-        session: req.session,
-        user: req.user,
-        selectedBranchId: req.session?.selectedBranchId,
-        branch_id: req.session?.branch_id,
-        user_branch_id: req.user?.branch_id,
-      });
 
       // Get branch_id from parameter first, then fallback to session
       const branchId = activeBranchId(req);

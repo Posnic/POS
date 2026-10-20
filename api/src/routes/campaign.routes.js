@@ -13,6 +13,7 @@ router.use(protect);
 
 // Audience reach for a segment, and the scheduled-run tick. Before /:id routes.
 router.post('/preview', bindController(campaignController.preview));
+router.get('/audience-options', bindController(campaignController.audienceOptions));
 router.post('/run-due', bindController(campaignController.runDue));
 
 // CRUD.

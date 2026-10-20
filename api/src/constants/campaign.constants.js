@@ -34,6 +34,7 @@ const SEGMENT_TYPE = {
   TIER: 'tier', // a loyalty tier
   MIN_POINTS: 'min_points', // at least N points in the wallet
   CATEGORY: 'category', // a customer category
+  CUSTOMERS: 'customers', // explicit customer selection
   LAPSED: 'lapsed', // no purchase in the last N days (or never)
 };
 

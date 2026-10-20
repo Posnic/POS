@@ -27,6 +27,18 @@ class CampaignController extends BaseController {
   }
 
   /** GET /campaigns - list. */
+  async audienceOptions(req, res) {
+    try {
+      if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
+      const q = req.query || {};
+      const r = await this.service.audienceOptions(q.kind, q.search, q.ids, this._ctx(req).branchId);
+      if (!r.status) return this.error(res, r.message, 400);
+      return this.success(res, r.data, r.message);
+    } catch (e) {
+      return this.error(res, e.message, 500);
+    }
+  }
+
   async list(req, res) {
     try {
       const ctx = this._ctx(req);
@@ -93,7 +105,7 @@ class CampaignController extends BaseController {
   async preview(req, res) {
     try {
       const { segment, channel } = req.body || {};
-      const r = await this.service.preview(segment || {}, channel);
+      const r = await this.service.preview(segment || {}, channel, this._ctx(req).branchId);
       return this.success(res, r.data, r.message);
     } catch (e) {
       console.error('Error in campaign.preview:', e);

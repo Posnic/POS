@@ -19,6 +19,13 @@ jest.mock('../../../src/services/whatsapp.service', () => ({
   sendMessage: jest.fn(),
 }));
 
+jest.mock('../../../src/services/messaging.service', () => {
+  const sendWhatsapp = jest.fn();
+  const Service = jest.fn(() => ({ sendWhatsapp }));
+  Service.sendWhatsapp = sendWhatsapp;
+  return Service;
+});
+
 // Branch model — inline-required inside methods
 jest.mock('../../../src/models/branch.model', () => ({
   updateOne: jest.fn().mockResolvedValue({}),
@@ -67,7 +74,11 @@ jest.spyOn(global, 'setTimeout').mockImplementation((fn) => {
 
 // ─── Load controller & mocks ──────────────────────────────────────────────────
 const ctrl = require('../../../src/controllers/whatsapp.controller');
+jest.mock('../../../src/services/receipt-document.service', () => ({
+  prepare: jest.fn().mockResolvedValue({ buffer: Buffer.from('%PDF-test'), filename: 'test.pdf', url: null }),
+}));
 const mockService = require('../../../src/services/whatsapp.service');
+const mockMessaging = require('../../../src/services/messaging.service');
 const mockBranch = require('../../../src/models/branch.model');
 const MockTemplate = require('../../../src/models/whatsapp-template.model');
 const mockSale = require('../../../src/models/sale.model');
@@ -479,24 +490,24 @@ describe('sendMessage', () => {
   const validBody = { device_id: 'dev1', phone_number: '+919876543210', message: 'Hello!' };
 
   test('success: sends plain text message', async () => {
-    mockService.sendMessage.mockResolvedValue({ status: true, message: 'Message sent' });
+    mockMessaging.sendWhatsapp.mockResolvedValue({ ok: true });
     const req = mockReq({ body: validBody });
     const res = mockRes();
     await ctrl.sendMessage(req, res);
-    expect(mockService.sendMessage).toHaveBeenCalledWith(
-      'dev1',
+    expect(mockMessaging.sendWhatsapp).toHaveBeenCalledWith(
       'branch001',
       '+919876543210',
-      'Hello!'
+      'Hello!',
+      { purpose: 'Message' }
     );
-    expect(res.json).toHaveBeenCalledWith({ type: 'success', message: 'Message sent' });
+    expect(res.json).toHaveBeenCalledWith({ type: 'success', message: 'Message accepted by sender', data: { queued: false, messageId: null } });
   });
 
   test('error: missing phone_number', async () => {
     const req = mockReq({ body: { device_id: 'dev1', message: 'Hi' } });
     const res = mockRes();
     await ctrl.sendMessage(req, res);
-    expect(mockService.sendMessage).not.toHaveBeenCalled();
+    expect(mockMessaging.sendWhatsapp).not.toHaveBeenCalled();
     expect(res.json).toHaveBeenCalledWith({ type: 'error', message: 'Phone number is required' });
   });
 
@@ -504,38 +515,38 @@ describe('sendMessage', () => {
     const req = mockReq({ body: { device_id: 'dev1', phone_number: '+91999' } });
     const res = mockRes();
     await ctrl.sendMessage(req, res);
-    expect(mockService.sendMessage).not.toHaveBeenCalled();
+    expect(mockMessaging.sendWhatsapp).not.toHaveBeenCalled();
     expect(res.json).toHaveBeenCalledWith({
       type: 'error',
       message: 'Message or template is required',
     });
   });
 
-  test('gets device_id from branch when not provided', async () => {
+  test('uses provider selection without a supplied device_id', async () => {
     mockBranch.findOne.mockResolvedValue({ whatsapp_device_id: 'branch-device' });
-    mockService.sendMessage.mockResolvedValue({ status: true, message: 'sent' });
+    mockMessaging.sendWhatsapp.mockResolvedValue({ ok: true });
     const req = mockReq({ body: { phone_number: '+91999', message: 'Hi' } }); // no device_id
     const res = mockRes();
     await ctrl.sendMessage(req, res);
-    expect(mockService.sendMessage).toHaveBeenCalledWith(
-      'branch-device',
+    expect(mockMessaging.sendWhatsapp).toHaveBeenCalledWith(
       'branch001',
       '+91999',
-      'Hi'
+      'Hi',
+      { purpose: 'Message' }
     );
   });
 
-  test('uses default_device when branch has no whatsapp_device_id', async () => {
+  test('allows API sending without a branch QR device', async () => {
     mockBranch.findOne.mockResolvedValue({ whatsapp_device_id: null });
-    mockService.sendMessage.mockResolvedValue({ status: true, message: 'sent' });
+    mockMessaging.sendWhatsapp.mockResolvedValue({ ok: true });
     const req = mockReq({ body: { phone_number: '+91999', message: 'Hi' } });
     const res = mockRes();
     await ctrl.sendMessage(req, res);
-    expect(mockService.sendMessage).toHaveBeenCalledWith(
-      'default_device',
+    expect(mockMessaging.sendWhatsapp).toHaveBeenCalledWith(
       'branch001',
       '+91999',
-      'Hi'
+      'Hi',
+      { purpose: 'Message' }
     );
   });
 
@@ -551,15 +562,15 @@ describe('sendMessage', () => {
   });
 
   test('service failure returns error type', async () => {
-    mockService.sendMessage.mockResolvedValue({ status: false, message: 'Send failed' });
+    mockMessaging.sendWhatsapp.mockResolvedValue({ ok: false, error: 'Send failed' });
     const req = mockReq({ body: validBody });
     const res = mockRes();
     await ctrl.sendMessage(req, res);
-    expect(res.json).toHaveBeenCalledWith({ type: 'error', message: 'Send failed' });
+    expect(res.json).toHaveBeenCalledWith({ type: 'error', message: 'Send failed', data: { queued: false, messageId: null } });
   });
 
   test('500: exception returns error json', async () => {
-    mockService.sendMessage.mockRejectedValue(new Error('Network error'));
+    mockMessaging.sendWhatsapp.mockRejectedValue(new Error('Network error'));
     const req = mockReq({ body: validBody });
     const res = mockRes();
     await ctrl.sendMessage(req, res);
@@ -574,17 +585,17 @@ describe('sendMessage', () => {
     test('success: sends message using template content', async () => {
       const tpl = { message: 'Dear Customer, your bill is ready.', branch_id: null };
       MockTemplate.findOne.mockResolvedValue(tpl);
-      mockService.sendMessage.mockResolvedValue({ status: true, message: 'sent' });
+      mockMessaging.sendWhatsapp.mockResolvedValue({ ok: true });
       const req = mockReq({ body: templateBody });
       const res = mockRes();
       await ctrl.sendMessage(req, res);
-      expect(mockService.sendMessage).toHaveBeenCalledWith(
-        'dev1',
+      expect(mockMessaging.sendWhatsapp).toHaveBeenCalledWith(
         'branch001',
         '+91999',
-        tpl.message
+        tpl.message,
+      { purpose: 'Message' }
       );
-      expect(res.json).toHaveBeenCalledWith({ type: 'success', message: 'sent' });
+      expect(res.json).toHaveBeenCalledWith({ type: 'success', message: 'Message accepted by sender', data: { queued: false, messageId: null } });
     });
 
     test('error: invalid template_id format (ObjectId throws)', async () => {
@@ -636,12 +647,12 @@ describe('sendMessage', () => {
         branch_id: null,
       };
       mockSale.findOne.mockResolvedValue(sale);
-      mockService.sendMessage.mockResolvedValue({ status: true, message: 'sent' });
+      mockMessaging.sendWhatsapp.mockResolvedValue({ ok: true });
       const req = mockReq({ body: { ...templateBody, sale_id: 'sale001' } });
       const res = mockRes();
       await ctrl.sendMessage(req, res);
       // Assert variable replacement occurred
-      const sentMsg = mockService.sendMessage.mock.calls[0][3];
+      const sentMsg = mockMessaging.sendWhatsapp.mock.calls[0][2];
       expect(sentMsg).toContain('John');
       expect(sentMsg).toContain('1500.00');
       expect(sentMsg).not.toContain('{customer_name}');
@@ -652,12 +663,12 @@ describe('sendMessage', () => {
       const tpl = { message: 'Hi {customer_name}', branch_id: null };
       MockTemplate.findOne.mockResolvedValue(tpl);
       mockSale.findOne.mockResolvedValue(null);
-      mockService.sendMessage.mockResolvedValue({ status: true, message: 'sent' });
+      mockMessaging.sendWhatsapp.mockResolvedValue({ ok: true });
       const req = mockReq({ body: { ...templateBody, sale_id: 'badid' } });
       const res = mockRes();
       await ctrl.sendMessage(req, res);
       // Template still used, variables not replaced
-      const sentMsg = mockService.sendMessage.mock.calls[0][3];
+      const sentMsg = mockMessaging.sendWhatsapp.mock.calls[0][2];
       expect(sentMsg).toContain('{customer_name}');
     });
 
@@ -987,7 +998,7 @@ describe('security: no sensitive data in responses', () => {
   });
 
   test('response type is always "success" or "error"', async () => {
-    mockService.sendMessage.mockResolvedValue({ status: true, message: 'sent' });
+    mockMessaging.sendWhatsapp.mockResolvedValue({ ok: true });
     const req = mockReq({ body: { device_id: 'dev1', phone_number: '+91999', message: 'Hi' } });
     const res = mockRes();
     await ctrl.sendMessage(req, res);
