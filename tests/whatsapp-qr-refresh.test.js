@@ -1,0 +1,26 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const {JSDOM} = require('jsdom');
+test('QR polling starts before initialization returns, rotates codes and recovers after disconnect', () => {
+ const dom = new JSDOM('<input id="whatsapp_device_id" value="posnic"><button id="whatsapp_connect_btn"></button><div id="whatsapp_qr_code"></div><span id="whatsapp_status_badge"></span>', {runScripts:'outside-only'});
+ const w=dom.window; w.eval(fs.readFileSync('frontend/static/script/js/jquery.min.js','utf8'));
+ const ticks=new Map(); let id=0; const gets=[];
+ w.setInterval=(cb)=>{ticks.set(++id,cb);return id;}; w.clearInterval=(id)=>ticks.delete(id);
+ w.PosnicPro={local:{get:()=> 'branch'},i18n:{t:(k,v)=>v},alert(){},post(){},get:(p,cb)=>gets.push({p,cb})};
+ w.eval(fs.readFileSync('frontend/static/script/js/modules/js/whatsapp.js','utf8'));
+ const wa=w.PosnicPro.whatsapp;
+ wa.connect(); assert.equal(ticks.size,1); wa.startStatusPolling(); assert.equal(ticks.size,1);
+ ticks.values().next().value(); gets.shift().cb({type:'success',data:{status:'qr_ready'}});
+ gets.shift().cb({type:'success',data:{qr_code:'data:image/png;base64,first'}});
+ assert.match(w.$('#whatsapp_qr_code').html(),/first/);
+ ticks.values().next().value(); gets.shift().cb({type:'success',data:{status:'qr_ready'}});
+ gets.shift().cb({type:'success',data:{qr_code:'data:image/png;base64,second'}});
+ assert.match(w.$('#whatsapp_qr_code').html(),/second/);
+ wa.onConnected(); assert.equal(ticks.size,1);
+ ticks.values().next().value(); gets.shift().cb({type:'success',data:{status:'disconnected',connected:false}});
+ assert.equal(wa.connected,false);
+ wa.startStatusPolling(); assert.equal(ticks.size,1);
+ wa.showConnectButton(); assert.equal(w.$('#whatsapp_connect_btn').prop('disabled'),false);
+ dom.window.close();
+});

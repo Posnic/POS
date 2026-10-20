@@ -46,7 +46,9 @@ PosnicPro.customermail = {
                         $('.customer_PaymentStatus_view').addClass('badge badge-success-inverse') :
                         $('.customer_PaymentStatus_view').addClass('badge badge-warning-inverse');
                 (data.partial_check === "true") ? $('.partial-check-hide').show() : $('.partial-check-hide').hide();
-                let length = data.total_items;
+                data.items = Array.isArray(data.items) ? data.items : [];
+                let length = data.items.length;
+                $('#customer_item_list tbody, #tax_details_customerprint').empty();
                 var taxText = [];
                 var taxCgstText = [];
                 var qtyTotal = 0;
@@ -55,6 +57,10 @@ PosnicPro.customermail = {
                 var itemTotalTax = 0;
                 var itemPrintTaxDetails = [];
                 for (var i = 0; i < length; i++) {
+                    data.items[i].tax_fields = Array.isArray(data.items[i].tax_fields) ? data.items[i].tax_fields : [];
+                    ['tax', 'igst_tax', 'cgst_tax', 'item_price', 'item_quantity', 'item_discount', 'item_discount_percentage'].forEach(function (key) {
+                        data.items[i][key] = Number(data.items[i][key]) || 0;
+                    });
                     if (data.items[i].tax !== 0) {
                         tax = data.items[i].tax;
                         taxText.push(tax + '% &nbsp;');
@@ -92,7 +98,7 @@ PosnicPro.customermail = {
                             var taxAmount = (priceAmount / 100) * taxItem.tax_value;
                             itemTotalTax += taxAmount;
                             itemPrintTaxDetails.push({
-                                "tax_id": taxItem.tax_id.$oid,
+                                "tax_id": taxItem.tax_id && (taxItem.tax_id.$oid || taxItem.tax_id),
                                 "tax_name": taxItem.tax_name,
                                 "tax_value": taxAmount
                             });

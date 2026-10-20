@@ -2094,6 +2094,22 @@
                                         </div>
 
                                         <div id="messaging_wa_cloud" style="display:none;">
+                                            <div class="form-group"><label for="messaging_wa_provider">WhatsApp provider</label>
+                                                <select class="form-control" id="messaging_wa_provider"><option value="meta">Meta (direct)</option></select>
+                                            </div>
+                                            <div id="messaging_wa_provider_fields"></div>
+                                            <div id="messaging_wa_meta_fields">
+                                            <details class="border rounded p-3 mb-3 messaging-setup-help" open>
+                                                <summary class="font-weight-bold">How to set up WhatsApp API</summary>
+                                                <ol class="mt-2 mb-2 pl-3">
+                                                    <li>Open Meta for Developers, create or choose your business app, and add WhatsApp.</li>
+                                                    <li>In WhatsApp API setup, follow Meta's steps to connect your business and phone number. Copy the Phone number ID and access token into the fields below.</li>
+                                                    <li>For ongoing sending, follow Meta's access-token guide; temporary test tokens expire. Add the approved message template name and its language.</li>
+                                                    <li>Save and send a test to your own WhatsApp number. Meta test numbers can send only to recipients added and verified in Meta.</li>
+                                                </ol>
+                                                <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Open Meta apps</a>
+                                                · <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer">Official WhatsApp API setup guide (opens a new tab)</a>
+                                            </details>
                                             <p class="text-muted small mb-2"><lang class="lang_register_a_meta_app_add_a_whatsapp_phone_n">Register a Meta app, add a WhatsApp phone
                                                 number, and paste its credentials. Marketing messages need an approved
                                                 Meta template, set its name below.</lang></p>
@@ -2113,7 +2129,7 @@
                                                         placeholder="v20.0">
                                                 </div>
                                                 <div class="col-md-4 mb-2">
-                                                    <label><lang class="lang_template_name_marketing">Template name (marketing)</lang></label>
+                                                    <label><lang class="lang_template_name_marketing">Approved template name</lang></label>
                                                     <input type="text" class="form-control" id="messaging_wa_tplname" aria-label="Messaging wa tplname" data-t-aria-label="lang_messaging_wa_tplname">
                                                 </div>
                                                 <div class="col-md-4 mb-2">
@@ -2122,6 +2138,8 @@
                                                         placeholder="en_US" data-t-placeholder="lang_en_us">
                                                 </div>
                                             </div>
+                                        </div>
+
                                         </div>
 
                                         <div class="d-flex flex-wrap align-items-center mt-2">
@@ -2345,6 +2363,20 @@
                                                 <small class="text-muted"><lang class="lang_email_sending_hint">Your own mail account sends the shop's emails. Leave empty to use Posnic's cloud email.</lang></small>
                                             </div>
                                             <div class="card-body">
+                                                <details id="messaging_email_help" class="border rounded p-3 mb-3 messaging-setup-help" open>
+                                                    <summary class="font-weight-bold">How to connect your email account</summary>
+                                                    <ol class="mt-2 mb-2 pl-3">
+                                                        <li>Open your email provider's SMTP settings. Copy its SMTP host, port, username and SMTP password or app password into the fields below.</li>
+                                                        <li>Use a From address that your provider allows. Complete sender or domain verification if your provider asks for it.</li>
+                                                        <li>Match the provider's encryption settings: select SSL for port 465; leave it unchecked for STARTTLS on port 587.</li>
+                                                        <li>Save the settings, then send a test receipt or report to your own email address. Check the inbox, spam folder and provider delivery logs.</li>
+                                                    </ol>
+                                                    <p class="small mb-2"><strong>Using Brevo?</strong> Open SMTP &amp; API → SMTP. Use the SMTP login and an active SMTP key, not your Brevo account password or API key. The host is smtp-relay.brevo.com.</p>
+                                                    <a href="https://app.brevo.com/settings/keys/smtp" target="_blank" rel="noopener noreferrer">Open Brevo SMTP settings</a>
+                                                    · <a href="https://help.brevo.com/hc/en-us/articles/7924908994450-Send-transactional-emails-using-Brevo-SMTP" target="_blank" rel="noopener noreferrer">Brevo SMTP guide</a>
+                                                    · <a href="https://support.google.com/a/answer/176600" target="_blank" rel="noopener noreferrer">Google email setup guide</a>
+                                                    <p class="text-muted small mt-2 mb-0">Help links open in a new tab. For another email service, ask your provider for its official SMTP settings. Leave these fields empty to use Posnic's cloud email.</p>
+                                                </details>
                                                 <div class="form-row">
                                                     <div class="form-group col-md-4">
                                                         <label class="form-control-placeholder" for="email_smtp_host"><lang class="lang_smtp_host">SMTP host</lang></label>

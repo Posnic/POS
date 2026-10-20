@@ -2700,9 +2700,45 @@ class SettingModel extends BaseModel {
         orderId: this.user?._id || data.orderId,
         license: this.licenseId,
         timezone: this.constructor.currentTimeZone || 'Asia/Kolkata',
+        receiptPublicBase: this.receiptPublicBase,
       };
 
-      // Send SMS via SMS service (matching PHP salesSmsReceiptModel)
+      // A shop's configured sender owns its receipt delivery too. Never silently
+      // fall back to the platform account after that sender rejects a request.
+      const MessagingService = require('../services/messaging.service');
+      const messaging = new MessagingService();
+      const settings = await messaging._raw(this.branchId);
+      if (settings.sms_provider) {
+        let { url } = await require('../services/receipt-document.service').prepare(
+          data.customer_sms_id,
+          this.branchId
+        );
+        if (!url && this.receiptPublicBase) {
+          const encryptedId = require('../utils/encryption').generateEncryptedId(
+            data.customer_sms_id
+          );
+          url = `${this.receiptPublicBase}/customersMailPrint.html?id=${encodeURIComponent(encryptedId)}`;
+        }
+        if (!url) {
+          return {
+            status: false,
+            data: null,
+            message:
+              'Receipt sharing is unavailable. Configure receipt file storage before sending an SMS bill.',
+          };
+        }
+        const sent = await messaging.sendSms(
+          this.branchId,
+          data.customer_sms_fullphone,
+          `Hi ${data.customer_sms_name}, view your receipt: ${url}`,
+          { purpose: 'receipt', name: data.customer_sms_name, url }
+        );
+        return {
+          status: sent.ok,
+          data: sent.ok ? 'accepted' : null,
+          message: sent.ok ? 'Receipt accepted by SMS provider' : sent.error,
+        };
+      }
       const result = await smsService.sendSalesReceipt(smsData);
 
       return result;

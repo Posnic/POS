@@ -59,12 +59,21 @@ const makeData = (o = {}) => ({
   customer_sms_fullphone: '+919876543210',
   license: 'LIC_ABC',
   timezone: 'Asia/Kolkata',
+  receiptPublicBase: 'https://shop.posnic.io',
   ...o,
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('SmsService', () => {
+  test('uses the shop receipt address and escapes encrypted identifiers', () => {
+    expect(smsService.receiptUrl(makeData(), 'a+b=')).toBe(
+      'https://shop.posnic.io/customersMailPrint.html?id=a%2Bb%3D'
+    );
+  });
+  test('does not invent a platform website link when the shop address is absent', () => {
+    expect(() => smsService.receiptUrl({}, 'id')).toThrow('shop website address');
+  });
   beforeEach(() => {
     jest.clearAllMocks();
     mockS3Send.mockResolvedValue({});

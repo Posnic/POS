@@ -62,6 +62,30 @@ describe('representative provider builders', () => {
     expect(spec.success({ messages: [{ status: '2' }] })).toBe(false);
   });
 
+  test('Vonage Messages API uses Basic auth and requires an accepted message ID', () => {
+    const spec = getProvider('vonage_messages').build(
+      { api_key: 'key', api_secret: 'secret', sender: 'Posnic' },
+      '+91 94941 11161',
+      'POSNIC TEST'
+    );
+    expect(spec.url).toBe('https://api.nexmo.com/v1/messages');
+    expect(spec.headers.Authorization).toBe(
+      'Basic ' + Buffer.from('key:secret').toString('base64')
+    );
+    expect(spec.bodyType).toBe('json');
+    expect(spec.body).toEqual({
+      to: '919494111161',
+      from: 'Posnic',
+      channel: 'sms',
+      message_type: 'text',
+      text: 'POSNIC TEST',
+    });
+    expect(secretKeys('vonage_messages')).toEqual(['api_secret']);
+    expect(spec.success({ message_uuid: 'test-id' }, 202)).toBe(true);
+    expect(spec.success({}, 202)).toBe(false);
+    expect(spec.success({ message_uuid: 'test-id' }, 400)).toBe(false);
+  });
+
   test('MSG91: v5 flow with template + authkey header', () => {
     const spec = getProvider('msg91').build(
       { authkey: 'ak', sender: 'MSGIND', template_id: 'T1' },
@@ -89,4 +113,25 @@ describe('representative provider builders', () => {
     expect(spec.url).toBe('https://gw.example/send');
     expect(spec.body).toEqual({ dest: '15551234567', from: 'Shop', txt: 'hello' });
   });
+});
+
+test('MSG91 receipt variables stay separate from general message templates', () => {
+  const p = getProvider('msg91');
+  const config = { authkey: 'test', sender: 'POSNIC', receipt_template_id: 'receipt' };
+  const spec = p.build(config, '+919008427482', 'unused', {
+    purpose: 'receipt',
+    name: 'Posnic TEST',
+    url: 'https://www.posnic.com/',
+  });
+  expect(spec.body.template_id).toBe('receipt');
+  expect(spec.body.recipients).toEqual([
+    { mobiles: '919008427482', name: 'Posnic TEST', url: 'https://www.posnic.com/' },
+  ]);
+  expect(() => p.build(config, '+919008427482', 'campaign')).toThrow('approved message template');
+  expect(() => p.build(config, '+919008427482', 'receipt', { purpose: 'receipt' })).toThrow(
+    'name and link'
+  );
+  expect(spec.success(null, 200)).toBe(false);
+  expect(spec.success({ type: 'error' }, 200)).toBe(false);
+  expect(spec.success({ type: 'success' }, 200)).toBe(true);
 });

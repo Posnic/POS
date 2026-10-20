@@ -207,7 +207,7 @@ class CashbackService {
         const ms = new MessagingService();
         const res =
           cfg.deliver_channel === 'whatsapp'
-            ? await ms.sendWhatsapp(ctx.branchId, phone, message)
+            ? await ms.sendWhatsapp(ctx.branchId, phone, message, { purpose: 'Cashback coupon' })
             : await ms.sendSms(ctx.branchId, phone, message);
         delivered = !!(res && res.ok);
         if (delivered)
