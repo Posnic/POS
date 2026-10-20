@@ -63,6 +63,8 @@ PosnicPro.campaigns = {
   invalidateReview: function () {
     ++PosnicPro.campaigns._reviewVersion;
     $('#campaign_review').prop('hidden', true);
+    $('#campaigns_form_wrap').removeClass('is-reviewing');
+    $('.campaign-compose-grid, .campaign-footer').prop('hidden', false);
     $('#campaign_preview_btn').prop('disabled', false).text('Review message →');
   },
 
@@ -342,7 +344,11 @@ PosnicPro.campaigns = {
       );
       $('#campaign_review_message').text(data.message);
       $('#campaign_send_btn, #campaign_schedule_btn').prop('disabled', !d.reachable);
-      $('#campaign_review').prop('hidden', false).trigger('focus');
+      $('#campaigns_form_wrap').addClass('is-reviewing');
+      $('.campaign-compose-grid, .campaign-footer').prop('hidden', true);
+      var review = $('#campaign_review').prop('hidden', false);
+      review.trigger('focus');
+      if (review[0] && review[0].scrollIntoView) review[0].scrollIntoView({block:'start', behavior:'instant'});
     });
   },
 
@@ -471,3 +477,5 @@ $(document).on('click', '[data-message-preset]', function () {
 
 $(document).on('input change', '#campaign_name, #campaign_channel, #campaign_seg_type, .campaign-seg-field input, .campaign-seg-field select, #campaign_message, [data-recipient]', function () { PosnicPro.campaigns.invalidateReview(); });
 $(document).on('click', '[data-remove-recipient], [data-message-preset], .campaign-merge, #campaign_edit_again', function () { PosnicPro.campaigns.invalidateReview(); });
+
+$(document).on('click', '#campaign_edit_again', function () { $('#campaign_message').trigger('focus'); });

@@ -124,6 +124,12 @@ test('review checks audience without sending and invalidates when content change
   writes[0].cb({type:'success',data:{reachable:2,total:3,sample:[]}});
   assert.equal($('#campaign_review').prop('hidden'),false);
   assert.equal($('#campaign_send_btn').prop('disabled'),false);
+  assert.equal($('.campaign-compose-grid').prop('hidden'),true);
+  assert.equal($('.campaign-footer').prop('hidden'),true);
+  $('#campaign_edit_again').trigger('click');
+  assert.equal($('.campaign-compose-grid').prop('hidden'),false);
+  assert.equal($('#campaign_message').val(),'Hello {name}');
+  assert.equal(w.document.activeElement.id,'campaign_message');
   $('#campaign_message').val('Updated').trigger('input');
   assert.equal($('#campaign_review').prop('hidden'),true);
   c.preview();
