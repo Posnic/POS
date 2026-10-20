@@ -252,3 +252,17 @@ test('review is the send confirmation, double clicks send once and network failu
  c.sendNow(false); assert.equal(writes.length,3);
  dom.window.close();
 });
+
+test('send failures stay visible with the provider reason instead of success',()=>{
+ const {dom,w,$,writes}=setup(); const c=w.PosnicPro.campaigns;
+ c.fill({name:'Test',message:'Hello',segment:{type:'all'}});
+ c.preview(); writes[0].cb({type:'success',data:{reachable:1,total:1,sample:[]}});
+ c.sendNow(false); assert.match($('#campaign_send_result').text(),/Sending/);
+ writes[1].cb({type:'success',data:{_id:'campaign-id'}});
+ writes[2].cb({type:'success',data:{sent:0,failed:1,skipped:0,errors:['Phone is reconnecting. No message was sent.']}});
+ assert.equal($('#campaign_send_result').prop('hidden'),false);
+ assert.equal($('#campaign_send_result').attr('role'),'alert');
+ assert.match($('#campaign_send_result').text(),/0 sent, 1 failed/);
+ assert.match($('#campaign_send_result').text(),/Phone is reconnecting/);
+ dom.window.close();
+});

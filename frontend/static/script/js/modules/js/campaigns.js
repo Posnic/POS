@@ -33,6 +33,7 @@ PosnicPro.campaigns = {
   layoutComposer: function () {
     var form = $('#campaigns_form_wrap'), body = form.children('.card-body');
     form.addClass('campaign-composer');
+    if (!$('#campaign_send_result').length) form.before('<div id="campaign_send_result" hidden tabindex="-1"></div>');
     form.parent().children('p').first().text(PosnicPro.i18n.t('lang_send_offers_greetings_and_updates_to_your', 'Send offers, greetings and updates to your customers.'));
     var meta = $('#campaign_name').closest('.form-row').addClass('campaign-meta');
     var audience = $('#campaign_seg_type').closest('.form-row');
@@ -354,15 +355,27 @@ PosnicPro.campaigns = {
     });
   },
 
+  showSendResult: function (text, error) {
+    var result = $('#campaign_send_result');
+    result.prop('hidden', false).attr('role', error ? 'alert' : 'status')
+      .attr('class', 'alert ' + (error ? 'alert-danger' : 'alert-info')).text(text);
+    result.trigger('focus');
+    if (result[0] && result[0].scrollIntoView) result[0].scrollIntoView({block:'nearest'});
+  },
+
   // The reviewed Send now action is the confirmation; no browser dialog.
   sendNow: function (dryRun) {
     var self = PosnicPro.campaigns;
     if (self._sending || $('#campaign_review').prop('hidden') || $('#campaign_send_btn').prop('disabled')) return;
     self._sending = true;
+    self.showSendResult('Sending…', false);
     var controls = $('#campaign_send_btn, #campaign_test_btn, #campaign_schedule_btn, #campaign_edit_again');
     controls.prop('disabled', true);
     var release = function () { self._sending = false; controls.prop('disabled', false); };
-    var failed = function () { release(); self.invalidateReview(); };
+    var failed = function (xhr) {
+      release(); self.invalidateReview();
+      self.showSendResult((xhr && xhr.responseJSON && xhr.responseJSON.message) || 'Could not confirm sending. Check Message history before trying again.', true);
+    };
     var started = self.save(function (data) {
       var id = data && data._id;
       if (!id) { failed(); return; }
@@ -370,12 +383,15 @@ PosnicPro.campaigns = {
         release();
         self.invalidateReview();
         if (!res || res.type !== 'success') {
-          PosnicPro.alert((res && res.type) || 'error', (res && res.message) || 'Send failed');
+          self.showSendResult((res && res.message) || 'Send failed', true);
           return;
         }
         var d = res.data || {};
-        PosnicPro.alert('success',
+        PosnicPro.alert(d.failed ? 'error' : 'success',
           (dryRun ? PosnicPro.i18n.t('lang_dry_run', 'Dry run: ') : PosnicPro.i18n.t('lang_sent', 'Sent: ')) + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped');
+        var summary = (dryRun ? 'Check complete: ' : '') + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped';
+        if (d.errors && d.errors.length) summary += '. ' + d.errors.join('; ');
+        self.showSendResult(summary, !!d.failed);
         self.load();
         if (!dryRun) self.hideForm();
       }, failed);
