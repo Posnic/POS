@@ -10731,6 +10731,8 @@ class SalesRepository {
           subtotal: doc.sales_sub_total || doc.subtotal || 0,
           charges: (doc.charges || []).map((c) => ({
             name: c.name,
+            source: c.source,
+            percent: c.percent,
             amount: c.amount,
             tax_amount: c.tax_amount,
           })),
