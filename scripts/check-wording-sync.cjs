@@ -17,12 +17,16 @@ const { WordingProfiles, createRegistry, resolveBundle } = require(path.join(pos
   try {
     const labels = createRegistry({ lang_takeaway: 'Takeaway' });
     const branch = 'bbbbbbbbbbbbbbbbbbbbbbbb';
+    await client.db('shop').collection('branches').insertOne({
+      _id: new (require(path.join(pos, 'api/node_modules/mongodb')).ObjectId)(branch),
+      license: new (require(path.join(pos, 'api/node_modules/mongodb')).ObjectId)('aaaaaaaaaaaaaaaaaaaaaaaa'),
+    });
     const svc = new WordingProfiles(client.db('shop').collection('settings'), 'aaaaaaaaaaaaaaaaaaaaaaaa', labels);
     let state = await svc.save({ name: 'English shop', locale: 'en', overrides: { 'posnic.lang_takeaway': 'Parcel' }, expectedRevision: 0 }, 'owner');
     state = await svc.publish({ id: state.profiles[0].id, expectedRevision: 1, branches: [branch] }, 'owner', [branch]);
     const app = express();
     app.use(express.json());
-    app.use((req, res, next) => { req.device = { tenantDb: req.headers['x-test-tenant'] || 'shop', deviceId: req.headers['x-test-device'] || 'till1', branches: [] }; next(); });
+    app.use((req, res, next) => { req.device = { tenantDb: req.headers['x-test-tenant'] || 'shop', deviceId: req.headers['x-test-device'] || 'till1', branches: [req.headers['x-test-branch'] || branch] }; next(); });
     app.use(createSyncRouter(gatewayClient));
     server = await new Promise(resolve => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
     const request = async (route, body, headers = {}) => {
@@ -66,6 +70,32 @@ const { WordingProfiles, createRegistry, resolveBundle } = require(path.join(pos
       assert.deepEqual({ ...resolveBundle(await local.read(), branch, 'en', labels).values }, {});
       assert.equal((await local.read()).profiles[0].revisions.length, 3);
     }
-    console.log('PASS: actual gateway create/update/unassignment, offline retention, two-till reconnect, checkpoint resume, tenant isolation, stale duplicate retry protection');
+    const snapshot = await require(path.join(pos, 'api/src/services/document-wording-snapshot')).capture(
+      client.db('till1').collection('settings'), 'aaaaaaaaaaaaaaaaaaaaaaaa', branch
+    );
+    const ObjectId = require(path.join(pos, 'api/node_modules/mongodb')).ObjectId;
+    const sale = { _id: new ObjectId(), branch_id: new ObjectId(branch),
+      license: new ObjectId('aaaaaaaaaaaaaaaaaaaaaaaa'), sales_id: 'WORDING-TEST-1',
+      wording_snapshot: snapshot, updated_date: new Date(), total: 10 };
+    await request('push', { collection: 'sales', docs: [sale] });
+    const delivered = await request('pull', { collection: 'sales' }, { 'x-test-device': 'till2' });
+    assert.equal(delivered.docs.length, 1);
+    assert.deepEqual(delivered.docs[0].wording_snapshot, snapshot);
+    assert.equal((await request('pull', { collection: 'sales' }, { 'x-test-tenant': 'another_shop' })).docs.length, 0);
+    assert.equal((await request('pull', { collection: 'sales' }, { 'x-test-branch': 'cccccccccccccccccccccccc' })).docs.length, 0);
+    const staleSale = { ...sale, updated_date: new Date(0), wording_snapshot: null };
+    await request('push', { collection: 'sales', docs: [staleSale] });
+    assert.deepEqual((await client.db('shop').collection('sales').findOne({ _id: sale._id })).wording_snapshot, snapshot);
+    const receiving = { ...sale, _id: new ObjectId(), receiving_id: 'WORDING-PURCHASE-1' };
+    delete receiving.sales_id;
+    await request('push', { collection: 'receivings', docs: [receiving] });
+    const purchases = await request('pull', { collection: 'receivings' }, { 'x-test-device': 'till2' });
+    assert.equal(purchases.docs.length, 1);
+    assert.deepEqual(purchases.docs[0].wording_snapshot, snapshot);
+    assert.equal((await request('pull', { collection: 'receivings' }, { 'x-test-tenant': 'another_shop' })).docs.length, 0);
+    assert.equal((await request('pull', { collection: 'receivings' }, { 'x-test-branch': 'cccccccccccccccccccccccc' })).docs.length, 0);
+    await request('push', { collection: 'receivings', docs: [{ ...receiving, updated_date: new Date(0), wording_snapshot: null }] });
+    assert.deepEqual((await client.db('shop').collection('receivings').findOne({ _id: receiving._id })).wording_snapshot, snapshot);
+    console.log('PASS: actual gateway profile delivery and immutable sale/purchase wording, offline retention, two-till reconnect, tenant/branch isolation, stale duplicate retry protection');
   } finally { if (server) await new Promise(resolve => server.close(resolve)); await gatewayClient.close(); await client.close(); await memory.stop(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -14840,6 +14840,12 @@ class SalesRepository {
    */
   async insertSaleWithFreshNumber(salesCollection, document, branchId, { attempts = 5 } = {}) {
     document.origin = require('../utils/sale-origin').stamp(document);
+    if (document.license && branchId) {
+      const settings = await new BaseModel('settings').getCollection('settings');
+      document.wording_snapshot = await require('../services/document-wording-snapshot').capture(
+        settings, document.license, branchId
+      );
+    }
     for (let attempt = 1; ; attempt++) {
       try {
         return await salesCollection.insertOne(document);

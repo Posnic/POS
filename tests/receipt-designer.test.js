@@ -57,6 +57,22 @@ test('template defaults inherit wording but explicit custom headings remain lite
     dom.window.close();
 });
 
+test('reprints use frozen wording while design previews use current wording', () => {
+    const { dom, w, engine, sale, $ } = setup();
+    w.eval(read('frontend/static/script/js/core/receipt-design-labels.js'));
+    w.PosnicPro.i18n.t = (key, fallback) => key === 'lang_item' ? 'Current article' : fallback;
+    sale.wording_snapshot = { schemaVersion: 1, locales: { en: { values: {
+        lang_item: 'Original article', lang_item_name: 'Original article name'
+    } } } };
+    for (const format of Object.keys(contract.formats)) {
+        delete sale.receipt_designs.layouts[format].blocks.find(b => b.type === 'items').heading;
+        const output = $('<div>').html(engine.render(sale, format, false));
+        assert.match(output.find('thead').text(), /Original article/);
+        assert.ok(!engine.render(sale, format, true).includes('Original article'));
+    }
+    dom.window.close();
+});
+
 test('room charge rate and saved amount print on thermal and A4 designs', () => {
     const { dom, engine, sale } = setup();
     sale.charges = [{ name: 'Room service charge', source: 'room', percent: 5, amount: 50, tax_amount: 2.5 }];

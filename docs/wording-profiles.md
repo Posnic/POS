@@ -152,7 +152,10 @@ It records registered references by consumer type and flags document consumers
 without static keys for inspection. It is a static audit, not an exhaustive
 hardcoded-text counter or a claim that every output has been migrated.
 
-Remaining from the broader research phases:
+The following was the initial checkpoint; the implementation update below
+supersedes its local-code gaps. Rollout remains unverified.
+
+Remaining from the broader research phases at that checkpoint:
 
 - Complete legacy report/export/template migration and validate actual rendered
   outputs. Preserve machine-oriented field names and business data.
@@ -201,3 +204,86 @@ sales timestamps merely to record a label snapshot: that could race payment sync
 Account for raw collection sales writes as well as Mongoose saves, immutable
 published revision references, missing historical defaults, copied templates,
 offline issuance and cloud/till conflict resolution before enabling it.
+
+### Business consumer adapter, 2026-10-20
+
+Business now has a local translator adapter on `feature/wording-profile-consumer`
+in `C:/Users/Kayal/posnic-business`. It applies published exact-source wording,
+preserves interpolation and plural fallback, clears on scope/locale changes and
+rejects delayed responses using request generations. React text subscribers now
+observe a version snapshot so profile updates can refresh without remounting.
+TypeScript and 13 focused tests passed.
+
+This is not yet connected Business support: its restricted `pb1_` session needs
+a Business-authorized read endpoint, branch-access checks, lifecycle integration
+and scoped offline caching. Do not reuse that token against ordinary POS routes.
+See Business `docs/wording-profiles.md` for the handoff contract. No customer
+settings, credentials or databases were changed. Mobile POS authorization work
+was not modified. All rollout and historical snapshot gaps above remain open.
+
+### Business authenticated read, 2026-10-20
+
+Added `/api/business/v1/wording` behind the existing dedicated Business session
+middleware. Each read refreshes the user's authorized context and requires one
+explicit branch plus a supported locale. Tenant scope comes from that context,
+never the query. Only the published resolved bundle is returned, with no-store
+headers. Capability advertisement is opt-in via `discovery?wording=1` to preserve
+older clients' strict discovery parsers. No new permission, collection or write
+path was added; labels use the existing settings sync lane.
+
+The Business client now negotiates and validates this endpoint through its
+existing bounded transport. All 24 Business HTTP tests passed against disposable
+MongoDB, including publication/draft isolation, tenant/branch isolation and
+revocation. Business TypeScript and 15 focused consumer/transport checks passed.
+Account lifecycle wiring, scoped offline caching and deployed verification are
+still pending; this is not yet end-to-end app support. No customer database or
+Mobile POS authorization files were changed.
+
+### Implementation and verification update, 2026-10-20
+
+Implemented locally:
+
+- Business authenticated branch/locale lifecycle, foreground refresh and isolated
+  offline cache. Access loss and unassignment clear overrides. Secure-store
+  chunks contain labels only; credentials remain in their existing vault.
+- Mobile POS authenticated wording endpoint and exact-source consumer. Requests
+  pin credentials to the server. Branch, shop, staff and locale are checked
+  before applying or caching a bundle. Training/sign-out clears the cache.
+- Mobile POS receipts freeze their displayed registered labels at checkout.
+  These local print labels are excluded from financial upload commands.
+- Sales and purchases capture document wording in their creation write, including
+  raw repository paths. PDF/receipt reads do not mutate sales or sync timestamps.
+  Reprints use the saved wording; receipt-design previews use current wording.
+  Literal custom headings remain literal; inherited headings resolve by key.
+- Generic invoice/receipt/report PDFs use the scoped resolver for built-in labels.
+  Machine export keys, user-supplied headings and business data remain unchanged.
+- Separate kitchen display reads published wording with its existing authorization.
+  Refresh runs independently of order polling and rejects stale branch results.
+
+Local evidence:
+
+- Mobile POS: 106 checks and web export passed.
+- Business: 121 checks, TypeScript, attribution and web export passed.
+- Documents/profiles: 94 checks; write models/repositories: 403 checks;
+  receiving controller: 135 checks; generic PDF controller: 70 checks.
+- Kitchen browser/unit display checks: 22 passed. API authorization checks are
+  being rerun after adding coverage.
+- Actual Gateway router with disposable MongoDB: profile delivery/unassignment,
+  offline cache, reconnect, two tills, tenant/branch isolation and stale retries;
+  sale and receiving snapshots traverse existing sync lanes unchanged.
+- POS frontend build passed. Captain's complete browser gate is still running.
+
+Historical boundaries are explicit: old documents without snapshots retain the
+existing current-wording behavior because their original labels cannot be
+reconstructed. New server documents freeze English and explicitly assigned
+locales. Unassigned locales use the shipped base pack; arbitrary future-language
+reprints are not promised to preserve a translation that was never captured.
+Snapshots preserve labels, not the entire template layout. A locally printed
+offline Mobile POS receipt and a server invoice issued after later synchronization
+can legitimately have different wording revisions; neither silently rewrites
+the other's snapshot.
+
+Release preparation uses a separate main-based checkout to exclude inherited
+PR #1447. Remaining verification includes exact release-head checks, bundled-agent
+compatibility, upgrade/rollback with persisted profiles and snapshots, and live
+installed-device/physical-printer checks. No new release or deployment is claimed.

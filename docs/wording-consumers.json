@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "registeredLabels": 4979,
+  "registeredLabels": 4954,
   "consumers": [
     {
       "app": "POS",
@@ -1038,27 +1038,6 @@
         "lang_takeaway"
       ],
       "review": "registered references; render verification required"
-    },
-    {
-      "app": "POS",
-      "file": "frontend/static/script/js/jspdf.debug.js",
-      "kind": "pdf",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
-      "app": "POS",
-      "file": "frontend/static/script/js/jspdf.plugin.autotable.min.js",
-      "kind": "pdf",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
-      "app": "POS",
-      "file": "frontend/static/script/js/jspdf.umd.min.js",
-      "kind": "pdf",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
     },
     {
       "app": "POS",
@@ -2641,27 +2620,18 @@
       "file": "frontend/static/script/js/modules/js/receipt-designer-editor.js",
       "kind": "receipt",
       "registeredKeys": [
-        "lang_add_one_quote_per_row_line_breaks_stay_ins",
-        "lang_apply_quotes",
-        "lang_apply_updates_your_draft_save_designs_to_s",
         "lang_bill_no",
-        "lang_cancel_title",
-        "lang_close_quote_manager",
-        "lang_enter_a_quote_in_each_row_or_remove_empty",
-        "lang_enter_your_quote",
         "lang_igst_tax_receiving",
         "lang_in_bill_number_order",
         "lang_library",
         "lang_long_names_are_shortened_to_keep_quantity",
         "lang_made_with_posnic_posnic_com",
-        "lang_manage_my_quotes",
         "lang_my_quotes",
-        "lang_my_receipt_quotes",
+        "lang_my_quotes_separate_entries_with_a_blank_li",
         "lang_off",
         "lang_order",
         "lang_print_save_failed",
         "lang_print_settings_saved",
-        "lang_quote_kural_number",
         "lang_quote_qr_meaning",
         "lang_quote_qr_size",
         "lang_random",
@@ -2681,10 +2651,7 @@
         "lang_rd_website_payment_link_or_other_text",
         "lang_receipt_design_preview",
         "lang_receipt_quotes",
-        "lang_remove",
-        "lang_thirukkural_1_330_tamil_couplets",
-        "lang_use_a_specific_number",
-        "lang_use_this_quote_on_every_new_bill_until_you"
+        "lang_thirukkural_1_330_tamil_couplets"
       ],
       "review": "registered references; render verification required"
     },
@@ -4030,18 +3997,31 @@
       "review": "registered references; render verification required"
     },
     {
-      "app": "POS",
-      "file": "frontend/static/style/plugins/datatables/pdfmake.min.js",
-      "kind": "pdf",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
       "app": "POS API",
       "file": "api/src/controllers/common-pdf.controller.js",
       "kind": "pdf",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
+      "registeredKeys": [
+        "lang_amount",
+        "lang_bill_to",
+        "lang_date_title",
+        "lang_description",
+        "lang_email_title",
+        "lang_invoice",
+        "lang_item",
+        "lang_module_tax",
+        "lang_payment_method",
+        "lang_phone_title",
+        "lang_price_title",
+        "lang_quantity",
+        "lang_receipt_title",
+        "lang_reference_title",
+        "lang_report",
+        "lang_subtotal",
+        "lang_summary",
+        "lang_total",
+        "lang_type"
+      ],
+      "review": "registered references; render verification required"
     },
     {
       "app": "POS API",
@@ -4206,6 +4186,7 @@
         "lang_balance_due_2",
         "lang_bill_print_total_qty",
         "lang_bill_to",
+        "lang_date_title",
         "lang_description",
         "lang_extra_discount",
         "lang_item",
@@ -4217,6 +4198,7 @@
         "lang_quantity",
         "lang_sales_receipt",
         "lang_subtotal",
+        "lang_supplydetails_title",
         "lang_tax_invoice",
         "lang_total"
       ],
@@ -4270,114 +4252,15 @@
       "kind": "receipt",
       "registeredKeys": [],
       "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
-      "app": "Captain",
-      "file": "assets/common/captain-payments.js",
-      "kind": "screen",
-      "registeredKeys": [
-        "lang_cancel",
-        "lang_captain_all_remaining_guests",
-        "lang_captain_amount_received",
-        "lang_captain_change_to_return",
-        "lang_captain_collect_payment",
-        "lang_captain_confirm_received",
-        "lang_captain_payment_changed",
-        "lang_captain_payment_details",
-        "lang_captain_payment_disabled",
-        "lang_captain_payment_recorded",
-        "lang_captain_payment_reference",
-        "lang_captain_payment_server",
-        "lang_captain_payment_short",
-        "lang_captain_payment_verified",
-        "lang_captain_record_payment",
-        "lang_captain_remaining_balance",
-        "lang_card",
-        "lang_cash",
-        "lang_close",
-        "lang_guest",
-        "lang_loading",
-        "lang_paid",
-        "lang_retry",
-        "lang_upi"
-      ],
-      "review": "registered references; render verification required"
-    },
-    {
-      "app": "Captain",
-      "file": "assets/common/i18n.js",
-      "kind": "screen",
-      "registeredKeys": [
-        "lang_add_product",
-        "lang_product",
-        "lang_products",
-        "lang_take_away",
-        "lang_take_away_2",
-        "lang_takeaway"
-      ],
-      "review": "registered references; render verification required"
-    },
-    {
-      "app": "Captain",
-      "file": "playwright-report/index.html",
-      "kind": "report",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
-      "app": "Mobile POS",
-      "file": "src/services/receipt.ts",
-      "kind": "receipt",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
-      "app": "Mobile POS",
-      "file": "src/services/receiptText.ts",
-      "kind": "receipt",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
-      "app": "Business",
-      "file": "build-output/business-report-explorer-preview.html",
-      "kind": "report",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
-      "app": "Business",
-      "file": "build-output/deployed-business-reports.js",
-      "kind": "report",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
-      "app": "Business",
-      "file": "build-output/test-report-explorer.cjs",
-      "kind": "report",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
-      "app": "Business",
-      "file": "src/components/ReportingDesktop.tsx",
-      "kind": "report",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
-    },
-    {
-      "app": "Business",
-      "file": "src/domain/reportPeriod.ts",
-      "kind": "report",
-      "registeredKeys": [],
-      "review": "no static registered key; inspect indirect resolution and hardcoded labels"
     }
   ],
   "exclusions": [
     "Vendor libraries and generated bundles",
     "Business data: names, products, notes and addresses",
     "Machine CSV/API field names and canonical order types",
-    "Static references are not proof of live device or physical print coverage"
+    "Static references are not proof of live device or physical print coverage",
+    "Captain: checkout not supplied to inventory",
+    "Mobile POS: checkout not supplied to inventory",
+    "Business: checkout not supplied to inventory"
   ]
 }

@@ -161,6 +161,7 @@ async function list(req, includePickup = false) {
   await require('./kitchen-voice').listForTickets(req, c, tickets);
   return {
     branch: String(c.branch.branch_name || ''),
+    branchId: String(c.branchId),
     settings: {
       orangeMinutes: 5,
       redMinutes: 10,
@@ -380,6 +381,14 @@ async function saveSettings(req) {
   return { settings };
 }
 module.exports = {
+  async wording(req) {
+    const c = await scope(req);
+    const { WordingProfiles, resolveBundle, supportedLocales } = require('./wording-profiles');
+    if (typeof req.query?.locale !== 'string' || !supportedLocales().includes(req.query.locale))
+      fail('Choose a supported language.', 400);
+    const service = new WordingProfiles(req.db.collection('settings'), c.license);
+    return resolveBundle(await service.read(), String(c.branchId), req.query.locale, service.labels);
+  },
   list,
   project,
   transition: (req) => mutate(req),
