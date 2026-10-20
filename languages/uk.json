@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% продуктів харчування після знижок, до оподаткування.",
   "lang_room_charge_final": "Включено до остаточного рахунку.",
   "lang_room_orders_enable_help": "Увімкніть замовлення номерів персоналу в налаштуваннях «Ресторан» «Готелі та інші заклади».",
-  "lang_room_venue": "Місце проведення"
+  "lang_room_venue": "Місце проведення",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Додайте одну цитату в рядок. Розриви рядків залишаються всередині цієї цитати.",
+  "lang_apply_quotes": "Застосувати лапки",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Застосувати оновлює чернетку. Збережіть проекти, щоб зберегти зміни для цієї гілки.",
+  "lang_close_quote_manager": "Закрити менеджер пропозицій",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Введіть цитату в кожен рядок або видаліть порожні рядки. Кожна цитата може містити до 600 символів.",
+  "lang_enter_your_quote": "Введіть свою цитату",
+  "lang_manage_my_quotes": "Керувати моїми цитатами",
+  "lang_my_receipt_quotes": "Мої квитанції",
+  "lang_quote_kural_number": "Цитата / Кураль номер",
+  "lang_use_a_specific_number": "Використовуйте конкретне число",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Використовуйте цю цитату на кожному новому рахунку, доки ви його не зміните."
 }

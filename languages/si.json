@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: {1}% ආහාර වට්ටම් වලින් පසුව, බද්දට පෙර.",
   "lang_room_charge_final": "අවසාන පනතට ඇතුළත් කර ඇත.",
   "lang_room_orders_enable_help": "සැකසුම් → අවන්හල් → හෝටල් සහ වෙනත් ස්ථානවල කාර්ය මණ්ඩල කාමර ඇණවුම් සක්රීය කරන්න.",
-  "lang_room_venue": "ස්ථානය"
+  "lang_room_venue": "ස්ථානය",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "පේළියකට එක් උද්ධෘතයක් එක් කරන්න. රේඛා බිඳීම් එම උද්ධෘතය තුළ පවතී.",
+  "lang_apply_quotes": "උපුටා දැක්වීම් යොදන්න",
+  "lang_apply_updates_your_draft_save_designs_to_s": "ඔබගේ කෙටුම්පත යාවත්කාලීන කරන්න. මෙම ශාඛාව සඳහා වෙනස්කම් ගබඩා කිරීමට සැලසුම් සුරකින්න.",
+  "lang_close_quote_manager": "උද්ධෘත කළමනාකරු වසන්න",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "එක් එක් පේළියේ උද්ධෘතයක් ඇතුළු කරන්න, නැතහොත් හිස් පේළි ඉවත් කරන්න. සෑම උපුටා දැක්වීමකටම අක්ෂර 600ක් දක්වා තිබිය හැක.",
+  "lang_enter_your_quote": "ඔබේ උපුටා දැක්වීම ඇතුළත් කරන්න",
+  "lang_manage_my_quotes": "මගේ උපුටා දැක්වීම් කළමනාකරණය කරන්න",
+  "lang_my_receipt_quotes": "මගේ රිසිට්පත් උපුටා දැක්වීම්",
+  "lang_quote_kural_number": "උපුටා ගැනීම / කුරල් අංකය",
+  "lang_use_a_specific_number": "නිශ්චිත අංකයක් භාවිතා කරන්න",
+  "lang_use_this_quote_on_every_new_bill_until_you": "ඔබ එය වෙනස් කරන තෙක් සෑම නව බිල්පතකම මෙම උපුටා දැක්වීම භාවිතා කරන්න."
 }

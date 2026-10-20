@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% żywności po rabatach, przed opodatkowaniem.",
   "lang_room_charge_final": "Zawarte w ostatecznym rachunku.",
   "lang_room_orders_enable_help": "Włącz zamawianie pokoi dla personelu w Ustawieniach → Restauracja → Hotele i inne obiekty.",
-  "lang_room_venue": "Miejsce"
+  "lang_room_venue": "Miejsce",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Dodaj jeden cytat w każdym wierszu. Podziały wierszy pozostają wewnątrz tego cytatu.",
+  "lang_apply_quotes": "Zastosuj cytaty",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Zastosuj aktualizuje wersję roboczą. Zapisz projekty, aby zapisać zmiany dla tej gałęzi.",
+  "lang_close_quote_manager": "Zamknij menedżera ofert",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Wprowadź cudzysłów w każdym wierszu lub usuń puste wiersze. Każdy cytat może mieć maksymalnie 600 znaków.",
+  "lang_enter_your_quote": "Wpisz swój cytat",
+  "lang_manage_my_quotes": "Zarządzaj moimi cytatami",
+  "lang_my_receipt_quotes": "Cytaty z mojego rachunku",
+  "lang_quote_kural_number": "Cytat / numer Kural",
+  "lang_use_a_specific_number": "Użyj konkretnego numeru",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Użyj tego cytatu na każdym nowym rachunku, dopóki go nie zmienisz."
 }

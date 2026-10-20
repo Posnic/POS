@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}: 割引後、税抜きのお食事の {1}%",
   "lang_room_charge_final": "最終請求書に含まれています。",
   "lang_room_orders_enable_help": "設定 → レストラン → のホテルやその他の施設でスタッフルームの注文を有効にします。",
-  "lang_room_venue": "会場"
+  "lang_room_venue": "会場",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "1 行に 1 つの引用符を追加します。改行は引用符内に留まります。",
+  "lang_apply_quotes": "見積もりを適用する",
+  "lang_apply_updates_your_draft_save_designs_to_s": "「適用」により下書きが更新されます。デザインを保存して、このブランチの変更を保存します。",
+  "lang_close_quote_manager": "見積マネージャーを閉じる",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "各行に引用符を入力するか、空の行を削除します。各引用には最大 600 文字を含めることができます。",
+  "lang_enter_your_quote": "見積もりを入力してください",
+  "lang_manage_my_quotes": "見積もりを管理する",
+  "lang_my_receipt_quotes": "私の領収書の引用",
+  "lang_quote_kural_number": "見積書/クラル番号",
+  "lang_use_a_specific_number": "特定の番号を使用する",
+  "lang_use_this_quote_on_every_new_bill_until_you": "変更するまで、すべての新しい請求書にこの見積書を使用します。"
 }

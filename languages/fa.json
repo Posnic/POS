@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1} درصد مواد غذایی پس از تخفیف، قبل از مالیات.",
   "lang_room_charge_final": "در صورتحساب نهایی گنجانده شده است.",
   "lang_room_orders_enable_help": "سفارشات اتاق کارکنان را در تنظیمات «رستوران» هتل ها و سایر مکان ها فعال کنید.",
-  "lang_room_venue": "محل برگزاری"
+  "lang_room_venue": "محل برگزاری",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "در هر ردیف یک نقل قول اضافه کنید. شکست خط در داخل آن نقل قول باقی می ماند.",
+  "lang_apply_quotes": "اعمال نقل قول",
+  "lang_apply_updates_your_draft_save_designs_to_s": "به روز رسانی های پیش نویس خود را اعمال کنید. طرح ها را برای ذخیره تغییرات این شاخه ذخیره کنید.",
+  "lang_close_quote_manager": "مدیر نقل قول را ببندید",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "در هر ردیف یک نقل قول وارد کنید یا ردیف های خالی را حذف کنید. هر نقل قول می تواند حداکثر 600 کاراکتر داشته باشد.",
+  "lang_enter_your_quote": "نقل قول خود را وارد کنید",
+  "lang_manage_my_quotes": "نقل قول های من را مدیریت کنید",
+  "lang_my_receipt_quotes": "نقل قول های رسید من",
+  "lang_quote_kural_number": "نقل قول / عدد کورال",
+  "lang_use_a_specific_number": "از یک عدد خاص استفاده کنید",
+  "lang_use_this_quote_on_every_new_bill_until_you": "از این مظنه در هر صورتحساب جدید استفاده کنید تا زمانی که آن را تغییر دهید."
 }

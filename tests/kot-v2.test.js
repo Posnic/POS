@@ -337,6 +337,39 @@ test('required guests cannot be omitted in the dine-in picker and takeaway stays
  }finally{setup.guestsRequired=false;h.close();}
 });
 
+
+test('single venue room order allows blank guests and no additional charge agreement', async()=>{
+ setup.roomVenues=[{code:'south',name:'South Avenue',unit_label:'Room',room_charge:{enabled:true,percent:5,name:'Room service',taxed:true,tax_available:false}}];
+ const h=setup();try{
+ h.app.showDataTablePage();await flush();await h.click('rooms');
+ const d=h.w.document.querySelector('dialog');
+ assert.equal(d.querySelector('select[name=venue]'),null);
+ assert.equal(d.querySelector('[name=venue]').value,'south');
+ assert.equal(d.querySelector('[name=guests]').required,false);
+ assert.equal(d.querySelector('[name=acceptCharge]').required,false);
+ assert.equal(d.querySelector('[name=acceptCharge]').checked,false);
+ d.querySelector('[name=unit]').value='343';d.querySelector('[type=submit]').click();await flush();
+ assert.equal(h.app.state.draft.guests,0);assert.equal(h.app.state.draft.roomChargeAccepted,false);
+ assert.equal(h.app.state.draft.table,'South Avenue · Room 343');
+ h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});await h.click('send');
+ const request=h.calls.find(c=>c.url==='sales/qrOrder');assert.equal(request.body.person_count,0);assert.equal(request.body.room_charge_accepted,false);
+ }finally{setup.roomVenues=null;h.close();}
+});
+
+test('multiple room venues preserve optional guest count and reset agreement when venue changes',async()=>{
+ setup.roomVenues=[{code:'a',name:'Hotel A',room_charge:{enabled:true,percent:5,name:'Room service'}},{code:'b',name:'Hotel B',unit_label:'Suite',room_charge:{enabled:false}}];
+ const h=setup();try{
+ h.app.showDataTablePage();await flush();await h.click('rooms');
+ const d=h.w.document.querySelector('dialog'),v=d.querySelector('select[name=venue]');assert.equal(v.options.length,2);
+ d.querySelector('[name=acceptCharge]').checked=true;v.value='b';v.dispatchEvent(new h.w.Event('change'));
+ assert.equal(d.querySelector('[name=acceptCharge]').checked,false);assert.equal(d.querySelector('[data-room-agreement]').hidden,true);
+ d.querySelector('[name=unit]').value='10';d.querySelector('[name=guests]').value='3';d.querySelector('[type=submit]').click();await flush();
+ assert.equal(h.app.state.draft.guests,3);assert.equal(h.app.state.draft.table,'Hotel B · Suite 10');
+ h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});await h.click('send');
+ assert.equal(h.calls.find(c=>c.url==='sales/qrOrder').body.person_count,3);
+ }finally{setup.roomVenues=null;h.close();}
+});
+
 test('cancel item requires a reason and cancelling the last dish uses audited order cancellation',async()=>{
  const h=setup();try{h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('cancelLine');
  const d=h.w.document.querySelector('dialog'),form=d.querySelector('form');assert.equal(d.querySelector('[name=qty]').value,'0');assert.equal(d.querySelector('[name=reason]').required,true);

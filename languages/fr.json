@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0} : {1} % de la nourriture après les remises, avant taxes.",
   "lang_room_charge_final": "Inclus dans la facture finale.",
   "lang_room_orders_enable_help": "Activez les commandes de chambres pour le personnel dans les paramètres « Restaurant », « Hôtels » et autres lieux.",
-  "lang_room_venue": "Lieu"
+  "lang_room_venue": "Lieu",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Ajoutez une citation par ligne. Les sauts de ligne restent à l’intérieur de cette citation.",
+  "lang_apply_quotes": "Appliquer des devis",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Appliquer les mises à jour de votre brouillon. Enregistrez les conceptions pour stocker les modifications apportées à cette branche.",
+  "lang_close_quote_manager": "Fermer le gestionnaire de devis",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Saisissez une citation dans chaque ligne ou supprimez les lignes vides. Chaque citation peut contenir jusqu'à 600 caractères.",
+  "lang_enter_your_quote": "Entrez votre devis",
+  "lang_manage_my_quotes": "Gérer mes devis",
+  "lang_my_receipt_quotes": "Mes devis de réception",
+  "lang_quote_kural_number": "Devis / Numéro Kural",
+  "lang_use_a_specific_number": "Utiliser un numéro spécifique",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Utilisez ce devis sur chaque nouvelle facture jusqu'à ce que vous le modifiiez."
 }

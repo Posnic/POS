@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: ਛੋਟ ਤੋਂ ਬਾਅਦ ਭੋਜਨ ਦਾ {1}%, ਟੈਕਸ ਤੋਂ ਪਹਿਲਾਂ।",
   "lang_room_charge_final": "ਅੰਤਮ ਬਿੱਲ ਤੇ ਸ਼ਾਮਲ.",
   "lang_room_orders_enable_help": "ਸੈਟਿੰਗਜ਼ → ਰੈਸਟੋਰੈਂਟ → ਹੋਟਲ ਅਤੇ ਹੋਰ ਸਥਾਨਾਂ ਵਿੱਚ ਸਟਾਫ ਰੂਮ ਆਰਡਰ ਨੂੰ ਸਮਰੱਥ ਬਣਾਓ।",
-  "lang_room_venue": "ਸਥਾਨ"
+  "lang_room_venue": "ਸਥਾਨ",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "ਪ੍ਰਤੀ ਕਤਾਰ ਇੱਕ ਹਵਾਲਾ ਸ਼ਾਮਲ ਕਰੋ। ਲਾਈਨ ਬਰੇਕ ਉਸ ਹਵਾਲੇ ਦੇ ਅੰਦਰ ਹੀ ਰਹਿੰਦੇ ਹਨ।",
+  "lang_apply_quotes": "ਹਵਾਲੇ ਲਾਗੂ ਕਰੋ",
+  "lang_apply_updates_your_draft_save_designs_to_s": "ਆਪਣੇ ਡਰਾਫਟ ਨੂੰ ਅੱਪਡੇਟ ਕਰੋ। ਇਸ ਸ਼ਾਖਾ ਲਈ ਤਬਦੀਲੀਆਂ ਨੂੰ ਸਟੋਰ ਕਰਨ ਲਈ ਡਿਜ਼ਾਈਨ ਸੁਰੱਖਿਅਤ ਕਰੋ।",
+  "lang_close_quote_manager": "ਹਵਾਲਾ ਪ੍ਰਬੰਧਕ ਬੰਦ ਕਰੋ",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "ਹਰੇਕ ਕਤਾਰ ਵਿੱਚ ਇੱਕ ਹਵਾਲਾ ਦਰਜ ਕਰੋ, ਜਾਂ ਖਾਲੀ ਕਤਾਰਾਂ ਨੂੰ ਹਟਾਓ। ਹਰੇਕ ਹਵਾਲੇ ਵਿੱਚ 600 ਅੱਖਰ ਤੱਕ ਹੋ ਸਕਦੇ ਹਨ।",
+  "lang_enter_your_quote": "ਆਪਣਾ ਹਵਾਲਾ ਦਰਜ ਕਰੋ",
+  "lang_manage_my_quotes": "ਮੇਰੇ ਹਵਾਲੇ ਦਾ ਪ੍ਰਬੰਧਨ ਕਰੋ",
+  "lang_my_receipt_quotes": "ਮੇਰੀ ਰਸੀਦ ਦੇ ਹਵਾਲੇ",
+  "lang_quote_kural_number": "ਹਵਾਲਾ/ਕੁਰਲ ਨੰਬਰ",
+  "lang_use_a_specific_number": "ਇੱਕ ਖਾਸ ਨੰਬਰ ਦੀ ਵਰਤੋਂ ਕਰੋ",
+  "lang_use_this_quote_on_every_new_bill_until_you": "ਹਰ ਨਵੇਂ ਬਿੱਲ 'ਤੇ ਇਸ ਹਵਾਲੇ ਦੀ ਵਰਤੋਂ ਕਰੋ ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਇਸ ਨੂੰ ਨਹੀਂ ਬਦਲਦੇ।"
 }

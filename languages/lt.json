@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% maisto po nuolaidų, neatskaičius mokesčių.",
   "lang_room_charge_final": "Įtraukta į galutinę sąskaitą.",
   "lang_room_orders_enable_help": "Įgalinti personalo kambarių užsakymus Nustatymai → Restoranas → Viešbučiai ir kitos vietos.",
-  "lang_room_venue": "Vieta"
+  "lang_room_venue": "Vieta",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Įtraukite po vieną citatą eilutėje. Eilučių lūžiai lieka toje citatoje.",
+  "lang_apply_quotes": "Taikyti kabutes",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Taikykite juodraščio atnaujinimus. Išsaugokite dizainą, kad išsaugotumėte šios šakos pakeitimus.",
+  "lang_close_quote_manager": "Uždaryti citatų tvarkyklę",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Kiekvienoje eilutėje įveskite citatą arba pašalinkite tuščias eilutes. Kiekvieną citatą gali sudaryti iki 600 simbolių.",
+  "lang_enter_your_quote": "Įveskite savo citatą",
+  "lang_manage_my_quotes": "Tvarkykite mano citatas",
+  "lang_my_receipt_quotes": "Mano kvito citatos",
+  "lang_quote_kural_number": "Citata / Kural numeris",
+  "lang_use_a_specific_number": "Naudokite konkretų skaičių",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Naudokite šią citatą kiekvienoje naujoje sąskaitoje, kol ją pakeisite."
 }

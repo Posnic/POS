@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% af mat eftir afslætti, fyrir skatta.",
   "lang_room_charge_final": "Innifalið í endanlegu frumvarpinu.",
   "lang_room_orders_enable_help": "Virkja herbergjapantanir starfsfólks í Stillingar → Veitingastaður → Hótel og aðrir staðir.",
-  "lang_room_venue": "Vettvangur"
+  "lang_room_venue": "Vettvangur",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Bættu við einni tilvitnun í hverja röð. Línuskil eru inni í þeirri tilvitnun.",
+  "lang_apply_quotes": "Notaðu tilvitnanir",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Nota uppfærir drögin þín. Vistaðu hönnun til að geyma breytingar fyrir þetta útibú.",
+  "lang_close_quote_manager": "Lokaðu tilboðsstjóra",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Sláðu inn tilboð í hverja línu eða fjarlægðu tómar línur. Hver tilvitnun getur verið allt að 600 stafir.",
+  "lang_enter_your_quote": "Sláðu inn tilboðið þitt",
+  "lang_manage_my_quotes": "Stjórna tilvitnunum mínum",
+  "lang_my_receipt_quotes": "Tilvitnanir í kvittanir mínar",
+  "lang_quote_kural_number": "Tilvitnun / Kural númer",
+  "lang_use_a_specific_number": "Notaðu ákveðið númer",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Notaðu þessa tilvitnun á hvern nýjan reikning þar til þú breytir því."
 }

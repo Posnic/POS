@@ -4708,5 +4708,16 @@
   "lang_shop_name": "पसलको नाम",
   "lang_show_cutting_guides": "काट्ने निर्देशिका देखाउनुहोस्",
   "lang_sl_no_barcode": "बारकोड छैन",
-  "lang_total_labels": "कुल लेबलहरू"
+  "lang_total_labels": "कुल लेबलहरू",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "प्रति पङ्क्ति एक उद्धरण थप्नुहोस्। लाइन ब्रेकहरू त्यो उद्धरण भित्र रहन्छ।",
+  "lang_apply_quotes": "उद्धरणहरू लागू गर्नुहोस्",
+  "lang_apply_updates_your_draft_save_designs_to_s": "आफ्नो मस्यौदा अद्यावधिकहरू लागू गर्नुहोस्। यस शाखाको लागि परिवर्तनहरू भण्डारण गर्न डिजाइनहरू बचत गर्नुहोस्।",
+  "lang_close_quote_manager": "उद्धरण प्रबन्धक बन्द गर्नुहोस्",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "प्रत्येक पङ्क्तिमा उद्धरण प्रविष्ट गर्नुहोस्, वा खाली पङ्क्तिहरू हटाउनुहोस्। प्रत्येक उद्धरणमा 600 वर्णहरू हुन सक्छन्।",
+  "lang_enter_your_quote": "आफ्नो उद्धरण प्रविष्ट गर्नुहोस्",
+  "lang_manage_my_quotes": "मेरो उद्धरणहरू व्यवस्थापन गर्नुहोस्",
+  "lang_my_receipt_quotes": "मेरो रसिद उद्धरण",
+  "lang_quote_kural_number": "उद्धरण / कुरल नम्बर",
+  "lang_use_a_specific_number": "एक विशिष्ट संख्या प्रयोग गर्नुहोस्",
+  "lang_use_this_quote_on_every_new_bill_until_you": "तपाईंले यसलाई परिवर्तन नगरेसम्म प्रत्येक नयाँ बिलमा यो उद्धरण प्रयोग गर्नुहोस्।"
 }

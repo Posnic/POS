@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% mat efter rabatter, före skatt.",
   "lang_room_charge_final": "Ingår i slutfakturan.",
   "lang_room_orders_enable_help": "Aktivera personalrumsbeställningar i Inställningar ”Restaurang” Hotell och andra lokaler.",
-  "lang_room_venue": "Mötesplats"
+  "lang_room_venue": "Mötesplats",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Lägg till ett citat per rad. Radbrytningar stannar inom det citatet.",
+  "lang_apply_quotes": "Använd offerter",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Apply uppdaterar ditt utkast. Spara mönster för att lagra ändringar för denna gren.",
+  "lang_close_quote_manager": "Stäng offerthanterare",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Ange ett citat i varje rad, eller ta bort tomma rader. Varje citat kan ha upp till 600 tecken.",
+  "lang_enter_your_quote": "Ange din offert",
+  "lang_manage_my_quotes": "Hantera mina citat",
+  "lang_my_receipt_quotes": "Mina kvittocitat",
+  "lang_quote_kural_number": "Citat / Kuralnummer",
+  "lang_use_a_specific_number": "Använd ett specifikt nummer",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Använd denna offert på varje ny faktura tills du ändrar den."
 }

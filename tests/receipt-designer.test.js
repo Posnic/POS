@@ -1589,9 +1589,9 @@ test('quote settings hide irrelevant controls and preserve explicit QR dimension
     const { dom, w, $, branch, sale, engine } = setup();
     w.PosnicPro.receiptDesignerEditor.load(branch);
     assert.equal($('.rd-quote-qr-options').prop('hidden'), true);
-    assert.equal($('#rd-quote-list').prop('hidden'), true);
+    assert.equal($('.rd-custom-quotes').prop('hidden'), true);
     $('#rd-quote-source').val('custom').trigger('change');
-    assert.equal($('#rd-quote-list').prop('hidden'), false);
+    assert.equal($('.rd-custom-quotes').prop('hidden'), false);
     sale.receipt_quote = require('../api/src/helpers/receipt-quote').select({ source: 'thirukkural', order: 'sequential', showQr: true }, 'S1');
     for (const size of [18, 22, 26]) {
         sale.receipt_designs.quoteFooter = { source: 'thirukkural', order: 'sequential', quotes: [], qrSizeMm: size };
@@ -1625,5 +1625,103 @@ test('unit follows quantity and quantity totals retain their column while amount
         assert.equal(total.find('.rd-quantity').text(),'2');
         assert.equal(output.find('.rd-field-total_quantity').length,0);
     }
+    dom.window.close();
+});
+
+test('quote manager applies numbered multiline rows, cancels edits and persists fixed selection', () => {
+    const { dom, w, $, branch } = setup();
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: sent }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    $('#rd-quote-source').val('custom').trigger('change');
+    $('#rd-manage-quotes').trigger('click');
+    const popup = () => $('.rd-quotes-dialog');
+    popup().find('textarea').val('First\nsecond line').trigger('input');
+    popup().find('[data-q="add"]').trigger('click');
+    popup().find('textarea').last().val('Other quote').trigger('input');
+    popup().find('[data-q="up"]').last().trigger('click');
+    assert.equal(popup().find('textarea').first().val(), 'Other quote');
+    popup().find('[data-q="apply"]').trigger('click');
+    assert.equal(popup().length, 0);
+    assert.equal($('#rd-quote-count').text(), '2 / 200 quotes');
+    $('#rd-manage-quotes').trigger('click');
+    popup().find('[data-q="remove"]').first().trigger('click');
+    popup().find('[data-q="cancel"]').first().trigger('click');
+    assert.equal($('#rd-quote-count').text(), '2 / 200 quotes');
+    $('#rd-quote-order').val('fixed').trigger('change');
+    $('#rd-quote-number').val('2').trigger('change');
+    $('[data-action="save"]').trigger('click');
+    assert.deepEqual(sent.receipt_designs.quoteFooter.quotes, ['Other quote', 'First\nsecond line']);
+    assert.equal(sent.receipt_designs.quoteFooter.selectedNumber, 2);
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: sent.receipt_designs });
+    assert.equal($('#rd-quote-number').val(), '2');
+    assert.equal($('.rd-fixed-quote').prop('hidden'), false);
+    $('#rd-manage-quotes').trigger('click');
+    popup().find('[data-q="add"]').trigger('click');
+    popup().find('[data-q="apply"]').trigger('click');
+    assert.match(popup().find('[role="alert"]').text(), /Enter a quote/);
+    popup().find('[data-q="remove"]').last().trigger('click');
+    popup().find('[data-q="remove"]').first().trigger('click');
+    popup().find('[data-q="apply"]').trigger('click');
+    assert.equal($('#rd-quote-number').val(), '1');
+    $('[data-action="undo"]').trigger('click');
+    assert.equal($('#rd-quote-count').text(), '2 / 200 quotes');
+    assert.equal($('#rd-quote-number').val(), '2');
+    dom.window.close();
+});
+
+test('fixed quote contract rejects invalid numbers and keeps old policies unchanged', () => {
+    const { dom, design } = setup();
+    const old = { source: 'custom', order: 'sequential', quotes: ['One', 'Two'] };
+    design.quoteFooter = old;
+    assert.deepEqual(contract.normalize(design).quoteFooter, old);
+    for (const selectedNumber of [0, 3, 1.2, '1', undefined]) {
+        design.quoteFooter = { ...old, order: 'fixed', selectedNumber };
+        assert.throws(() => contract.normalize(design), /quote number/);
+    }
+    design.quoteFooter = { ...old, order: 'fixed', selectedNumber: 2 };
+    assert.equal(contract.normalize(design).quoteFooter.selectedNumber, 2);
+    dom.window.close();
+});
+
+test('fixed Kural preview ignores stale responses and uses the selected verse and QR', async () => {
+    const { dom, w, $, branch, design } = setup();
+    const requests = [];
+    w.PosnicPro.post = (req, done) => requests.push({ req, done });
+    design.quoteFooter = { source: 'thirukkural', order: 'fixed', selectedNumber: 51, quotes: [], showQr: true };
+    w.PosnicPro.receiptDesignerEditor.load({ ...branch, receipt_designs: design });
+    assert.equal(requests[0].req.url, 'setting/receiptQuotePreview');
+    assert.equal(JSON.parse(requests[0].req.data).number, 51);
+    $('#rd-quote-number').val('52').trigger('change');
+    const select = require('../api/src/helpers/receipt-quote').select;
+    requests[1].done({ type: 'success', data: select({ ...design.quoteFooter, selectedNumber: 52 }, 'S1') });
+    requests[0].done({ type: 'success', data: select(design.quoteFooter, 'S1') });
+    await new Promise(resolve => setTimeout(resolve, 250));
+    const verse = require('../api/src/data/thirukkural/verses.json')[51];
+    const preview = $('<div>').html($('.rd-preview-page iframe').attr('srcdoc'));
+    assert.equal(preview.find('.rd-quote').text(), verse.lines.join('\n'));
+    assert.equal(preview.find('.rd-quote-qr').attr('src'), require('../api/src/data/thirukkural/qr.json')[51]);
+    dom.window.close();
+});
+
+
+test('thermal columns reserve content space and give wider rolls more room for names', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    const nameWidths = [];
+    sale.items[0].item_name = 'Everyday notebook with hard cover';
+    for (const format of ['80', '112']) {
+        Object.assign(design.layouts[format].blocks.find(b => b.type === 'items'), {
+            itemLayout: 'columns', showUnit: true, showRowNumbers: true, rowNumberLabel: 'No', nameMaxChars: 80, fontSize: 11
+        });
+        const output = $('<div>').html(engine.render(sale, format, false));
+        const widths = output.find('col').map((_, el) => parseFloat(el.style.width)).get();
+        assert.ok(Math.abs(widths.reduce((a,b)=>a+b,0)-100)<0.000001);
+        assert.ok(widths[0] < (format === '112' ? 6 : 9));
+        assert.equal(output.find('td.rd-item-fixed').text(), sale.items[0].item_name);
+        assert.equal(output.find('thead th').last().text(), 'Amount');
+        nameWidths.push(widths[1]);
+    }
+    assert.ok(nameWidths[1] > nameWidths[0]);
+    assert.ok(nameWidths[1] > 45);
     dom.window.close();
 });

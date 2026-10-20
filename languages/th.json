@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: {1}% ของอาหารหลังส่วนลด ก่อนหักภาษี",
   "lang_room_charge_final": "รวมอยู่ในใบเรียกเก็บเงินขั้นสุดท้าย",
   "lang_room_orders_enable_help": "เปิดใช้งานการสั่งซื้อห้องพักสำหรับพนักงานใน การตั้งค่า → ร้านอาหาร → โรงแรมและสถานที่อื่นๆ",
-  "lang_room_venue": "สถานที่จัดงาน"
+  "lang_room_venue": "สถานที่จัดงาน",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "เพิ่มหนึ่งคำพูดต่อแถว ตัวแบ่งบรรทัดจะอยู่ภายในเครื่องหมายคำพูดนั้น",
+  "lang_apply_quotes": "ใช้คำพูด",
+  "lang_apply_updates_your_draft_save_designs_to_s": "ใช้การอัปเดตร่างของคุณ บันทึกการออกแบบเพื่อจัดเก็บการเปลี่ยนแปลงสำหรับสาขานี้",
+  "lang_close_quote_manager": "ปิดผู้จัดการใบเสนอราคา",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "ป้อนใบเสนอราคาในแต่ละแถว หรือลบแถวว่างออก คำพูดแต่ละรายการสามารถมีอักขระได้สูงสุด 600 ตัว",
+  "lang_enter_your_quote": "ใส่ใบเสนอราคาของคุณ",
+  "lang_manage_my_quotes": "จัดการคำพูดของฉัน",
+  "lang_my_receipt_quotes": "ใบเสนอราคาใบเสร็จรับเงินของฉัน",
+  "lang_quote_kural_number": "ใบเสนอราคา / หมายเลข Kural",
+  "lang_use_a_specific_number": "ใช้หมายเลขเฉพาะ",
+  "lang_use_this_quote_on_every_new_bill_until_you": "ใช้ใบเสนอราคานี้กับบิลใหม่ทุกครั้งจนกว่าคุณจะเปลี่ยนแปลง"
 }

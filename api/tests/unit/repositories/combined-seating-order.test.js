@@ -653,3 +653,56 @@ test('guest requirement rejects omitted or zero dine-in pax before creating a sa
   expect(await db.collection('sales').countDocuments()).toBe(0);
   expect((await submit()).status).toBe(true);
 });
+
+test('a retry with an older claim snapshot reuses the order committed during its occupancy read', async () => {
+  await seating.cancel(db, { branchId: branch, license }, claim.id, actor);
+  const collection = db.collection.bind(db);
+  let release, reached;
+  const blocked = new Promise((resolve) => {
+    release = resolve;
+  });
+  const reading = new Promise((resolve) => {
+    reached = resolve;
+  });
+  let paused = false;
+  jest.spyOn(db, 'collection').mockImplementation((name, ...args) => {
+    const col = collection(name, ...args);
+    if (name === 'sales') {
+      const find = col.find.bind(col);
+      col.find = (filter, options) => {
+        const cursor = find(filter, options);
+        if (!paused && filter.table_number?.$in && options?.projection?.person_count === 1) {
+          paused = true;
+          const toArray = cursor.toArray.bind(cursor);
+          cursor.toArray = async () => {
+            reached();
+            await blocked;
+            return toArray();
+          };
+        }
+        return cursor;
+      };
+    }
+    return col;
+  });
+  const send = () =>
+    submit(
+      { seating_request_id: undefined, person_count: 2, idempotencyKey: 'interleaved-old-tap' },
+      actor,
+      true,
+      true
+    );
+  const delayed = send();
+  await reading;
+  let winner;
+  try {
+    winner = await send();
+  } finally {
+    release();
+  }
+  const retry = await delayed;
+  expect(winner.status).toBe(true);
+  expect(retry).toMatchObject({ status: true, data: { sale_id: winner.data.sale_id } });
+  expect(await collection('sales').countDocuments({})).toBe(1);
+  expect(await seating.read(db, { branchId: branch, license })).toHaveLength(1);
+});

@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% potravín po zľavách, pred zdanením.",
   "lang_room_charge_final": "Zahrnuté v konečnom účte.",
   "lang_room_orders_enable_help": "Povoliť objednávky izieb pre zamestnancov v nastaveniach → Reštaurácia → Hotely a iné miesta.",
-  "lang_room_venue": "Miesto konania"
+  "lang_room_venue": "Miesto konania",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Pridajte jednu cenovú ponuku na riadok. Zalomenia riadkov zostávajú v tomto citáte.",
+  "lang_apply_quotes": "Použiť úvodzovky",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Použite aktualizácie svojho konceptu. Uložte návrhy na uloženie zmien pre túto vetvu.",
+  "lang_close_quote_manager": "Zavrieť správcu cenových ponúk",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Zadajte cenovú ponuku do každého riadku alebo odstráňte prázdne riadky. Každý citát môže mať až 600 znakov.",
+  "lang_enter_your_quote": "Zadajte cenovú ponuku",
+  "lang_manage_my_quotes": "Spravovať moje cenové ponuky",
+  "lang_my_receipt_quotes": "Moje cenové ponuky",
+  "lang_quote_kural_number": "Citát / kuralské číslo",
+  "lang_use_a_specific_number": "Použite konkrétne číslo",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Túto cenovú ponuku používajte na každom novom účte, kým ho nezmeníte."
 }

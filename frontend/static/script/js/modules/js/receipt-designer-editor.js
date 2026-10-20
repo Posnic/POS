@@ -30,8 +30,21 @@
         var country = String(branch.branch_country || branch.country || branch.sortname || PosnicPro.local.get('country_setting') || '').trim().toLowerCase();
         return country ? ['india', 'in', 'ind'].includes(country) : ['gst_on', 'enable', true, 'true'].includes(branch.indian_gst) || ['enable', true, 'true'].includes(branch.gst);
     }
-    var sampleQuoteQr;
+    var sampleQuoteQr, selectedKural, selectedKuralRequest;
     function loadQuoteQr() {
+        var policy = design.quoteFooter;
+        if (policy && policy.source === 'thirukkural' && policy.order === 'fixed') {
+            var number = policy.selectedNumber;
+            if (!Number.isInteger(number) || number < 1 || number > 1330 || !PosnicPro.post) return;
+            if (selectedKural && selectedKural.number === number || selectedKuralRequest === number) return;
+            selectedKuralRequest = number;
+            PosnicPro.post({ url: 'setting/receiptQuotePreview', data: JSON.stringify({ number: number }) }, function (res) {
+                if (selectedKuralRequest !== number) return;
+                selectedKuralRequest = null;
+                if (res.type === 'success' && res.data && res.data.number === number) { selectedKural = res.data; schedulePreview(); }
+            });
+            return;
+        }
         if (sampleQuoteQr || !design.quoteFooter || !design.quoteFooter.showQr) return;
         PosnicPro.post({ url: 'setting/receiptDesignQr', data: JSON.stringify({ text: 'https://www.posnic.com/tools/thirukural/1' }) }, function (res) {
             if (res.type === 'success' && res.data && schema.image(res.data.src)) { sampleQuoteQr = res.data.src; schedulePreview(); }
@@ -44,7 +57,10 @@
         var sampleQuote = design.quoteFooter && design.quoteFooter.source === 'thirukkural'
             ? { source: 'thirukkural', number: 1, text: 'அகர முதல எழுத்தெல்லாம் ஆதி\nபகவன் முதற்றே உலகு.', qr: design.quoteFooter.showQr ? sampleQuoteQr : undefined }
             : design.quoteFooter && design.quoteFooter.source === 'custom'
-                ? { source: 'custom', text: (design.quoteFooter.quotes || [])[0] || '' } : null;
+                ? { source: 'custom', text: (design.quoteFooter.quotes || [])[design.quoteFooter.order === 'fixed' ? design.quoteFooter.selectedNumber - 1 : 0] || '' } : null;
+        if (design.quoteFooter && design.quoteFooter.source === 'thirukkural' && design.quoteFooter.order === 'fixed') {
+            sampleQuote = selectedKural && selectedKural.number === design.quoteFooter.selectedNumber ? Object.assign({}, selectedKural, { qr: design.quoteFooter.showQr ? selectedKural.qr : undefined }) : null;
+        }
         return Object.assign({}, branch, printOptions(), { receipt_designs: design, receipt_quote: sampleQuote, sales_id: 'S-000128', created_date: new Date().toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
             customer_name: 'Alex Morgan', customer_phone: '+1 202 555 0148', customer_email: 'alex@example.com', customer_address: '24 Market Street',
             customer_gstin: '', customer_tax_number: layout().blocks.some(function (b) { return b.field === 'customer_tax_number'; }) ? 'TAX-123456' : '',
@@ -174,7 +190,7 @@
         if (b.type === 'items') html += '<label class="rd-inline"><input type="checkbox" data-prop="hsn" ' + (b.hsn ? 'checked' : '') + '> ' + esc(t('Show HSN / SAC codes')) + '</label><p class="rd-help">' + esc(t(b.itemLayout === 'columns' ? PosnicPro.i18n.t('lang_long_names_are_shortened_to_keep_quantity', 'Long names are shortened to keep quantity in its own column.') : PosnicPro.i18n.t('lang_rd_item_names_wrap_onto_the_next_line_prices_and_quantities_stay_readable_', 'Item names wrap onto the next line. Prices and quantities stay readable.'))) + '</p>';
         if (b.type === 'items' && !schema.formats[format].height) html += '<label for="rd-item-layout">' + esc(t('Item layout')) + '</label><select id="rd-item-layout" data-prop="itemLayout"><option value="detailed"' + (!b.itemLayout || b.itemLayout === 'detailed' ? ' selected' : '') + '>' + esc(t('Detailed - quantity and unit price below')) + '</option><option value="compact"' + (b.itemLayout === 'compact' ? ' selected' : '') + '>' + esc(t('Compact - item × quantity and amount')) + '</option><option value="columns"' + (b.itemLayout === 'columns' ? ' selected' : '') + '>' + esc(t('Fixed columns - item, rate, quantity, amount')) + '</option></select>';
         if (b.type === 'items') html += '<label>' + esc(t('Item column heading')) + '<input class="form-control" type="text" maxlength="40" data-prop="heading" placeholder="' + esc(t('Item')) + '" value="' + esc(b.heading || '') + '"></label>';
-        if (b.type === 'items' && b.itemLayout === 'columns') html += '<label>' + esc(t('Maximum item name characters')) + '<input type="number" min="8" max="80" data-prop="nameMaxChars" value="' + (b.nameMaxChars || 24) + '"></label>';
+        if (b.type === 'items' && b.itemLayout === 'columns') html += '<label>' + esc(t('Maximum item name characters')) + '<input type="number" min="8" max="80" data-prop="nameMaxChars" value="' + (b.nameMaxChars || 80) + '"></label>';
         if (b.type === 'transaction' && !schema.formats[format].height) html += '<label><input type="checkbox" data-prop="showTitle" ' + (b.showTitle !== false ? 'checked' : '') + '> ' + esc(t('Show invoice / receipt title')) + '</label>';
         if (b.type === 'transaction') {
             html += '<label>' + esc(t('Custom left label')) + '<input class="form-control" type="text" maxlength="40" data-prop="labelText" placeholder="' + esc(PosnicPro.i18n.t('lang_bill_no', 'Bill no')) + '" value="' + esc(b.labelText || '') + '"></label><small>' + esc(t('Custom text replaces the receipt title. Clear to use the default.')) + '</small>';
@@ -336,15 +352,69 @@
             note.text(xhr && xhr.responseJSON && xhr.responseJSON.message || PosnicPro.i18n.t('lang_print_save_failed', 'Could not save print settings.'));
         });
     }
+    function openQuoteManager() {
+        var draft = (design.quoteFooter && design.quoteFooter.quotes || []).slice();
+        if (!draft.length) draft.push('');
+        var trigger = document.activeElement;
+        var dialog = document.createElement('dialog');
+        dialog.className = 'rd-quotes-dialog';
+        dialog.setAttribute('aria-labelledby', 'rd-quotes-title');
+        dialog.innerHTML = '<header><div><h3 id="rd-quotes-title"><lang class="lang_my_receipt_quotes">My receipt quotes</lang></h3><p><lang class="lang_add_one_quote_per_row_line_breaks_stay_ins">Add one quote per row. Line breaks stay inside that quote.</lang></p></div><button type="button" data-q="cancel" aria-label="Close quote manager" data-t-aria-label="lang_close_quote_manager">×</button></header><div class="rd-quote-rows"></div><p class="rd-quotes-error" role="alert"></p><footer><button type="button" data-q="add">+ Add quote</button><span class="rd-quotes-count"></span><button type="button" data-q="cancel"><lang class="lang_cancel_title">Cancel</lang></button><button type="button" data-q="apply" class="btn btn-primary"><lang class="lang_apply_quotes">Apply quotes</lang></button></footer><small><lang class="lang_apply_updates_your_draft_save_designs_to_s">Apply updates your draft. Save designs to store changes for this branch.</lang></small>';
+        (box.closest('dialog')[0] || document.body).appendChild(dialog);
+        function close() { dialog.remove(); if (trigger && trigger.isConnected) trigger.focus(); }
+        function render(focusIndex) {
+            $(dialog).find('.rd-quote-rows').html(draft.map(function (text, i) {
+                return '<div class="rd-quote-row" data-index="' + i + '"><label for="rd-quote-entry-' + i + '">Quote ' + (i + 1) + '</label><textarea id="rd-quote-entry-' + i + '" rows="3" maxlength="600" placeholder="Enter your quote" data-t-placeholder="lang_enter_your_quote">' + esc(text) + '</textarea><div class="rd-quote-row-actions"><button type="button" data-q="up" aria-label="Move quote ' + (i + 1) + ' up" ' + (!i ? 'disabled' : '') + '>↑</button><button type="button" data-q="down" aria-label="Move quote ' + (i + 1) + ' down" ' + (i === draft.length - 1 ? 'disabled' : '') + '>↓</button><button type="button" data-q="remove"><lang class="lang_remove">Remove</lang></button></div></div>';
+            }).join(''));
+            $(dialog).find('.rd-quotes-count').text(draft.length + ' / 200');
+            $(dialog).find('[data-q="add"]').prop('disabled', draft.length >= 200);
+            if (focusIndex != null) $(dialog).find('textarea').eq(focusIndex).trigger('focus');
+        }
+        $(dialog).on('input', 'textarea', function () { draft[Number($(this).closest('[data-index]').attr('data-index'))] = this.value; });
+        $(dialog).on('click', '[data-q]', function () {
+            var action = this.getAttribute('data-q');
+            var index = Number($(this).closest('[data-index]').attr('data-index'));
+            if (action === 'cancel') return close();
+            if (action === 'add' && draft.length < 200) { draft.push(''); return render(draft.length - 1); }
+            if (action === 'remove') { draft.splice(index, 1); return render(Math.max(0, index - 1)); }
+            if (action === 'up' || action === 'down') {
+                var next = index + (action === 'up' ? -1 : 1);
+                if (next < 0 || next >= draft.length) return;
+                var value = draft[index]; draft[index] = draft[next]; draft[next] = value;
+                return render(next);
+            }
+            if (action === 'apply') {
+                var quotes = draft.map(function (text) { return text.trim(); });
+                if (!quotes.length || quotes.some(function (text) { return !text || text.length > 600; })) {
+                    $(dialog).find('.rd-quotes-error').text(PosnicPro.i18n.t('lang_enter_a_quote_in_each_row_or_remove_empty', 'Enter a quote in each row, or remove empty rows. Each quote can have up to 600 characters.')); return;
+                }
+                checkpoint();
+                design.quoteFooter = Object.assign({}, design.quoteFooter, { quotes: quotes });
+                if (design.quoteFooter.order === 'fixed') {
+                    design.quoteFooter.selectedNumber = Math.min(design.quoteFooter.selectedNumber || 1, quotes.length);
+                    box.find('#rd-quote-number').val(design.quoteFooter.selectedNumber);
+                }
+                updateQuoteControls(); changed(); close();
+            }
+        });
+        dialog.addEventListener('cancel', function (event) { event.preventDefault(); close(); });
+        render();
+        if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
+        $(dialog).find('textarea').first().trigger('focus');
+    }
     function updateQuoteControls() {
         var source = box.find('#rd-quote-source').val();
         box.find('.rd-quote-qr-options').prop('hidden', source !== 'thirukkural');
         box.find('#rd-quote-qr-size').prop('disabled', !box.find('#rd-quote-qr').prop('checked'));
-        box.find('#rd-quote-list, label[for="rd-quote-list"]').prop('hidden', source !== 'custom');
+        box.find('.rd-custom-quotes').prop('hidden', source !== 'custom');
+        var quotes = design.quoteFooter && design.quoteFooter.quotes || [];
+        box.find('#rd-quote-count').text(quotes.length + ' / 200 quotes');
+        box.find('.rd-fixed-quote').prop('hidden', source === 'none' || box.find('#rd-quote-order').val() !== 'fixed');
+        box.find('#rd-quote-number').attr('max', source === 'thirukkural' ? 1330 : Math.max(1, quotes.length));
         box.find('#rd-quote-order, label[for="rd-quote-order"], .rd-quote-settings > small').prop('hidden', source === 'none');
     }
     function load(data) {
-        closeWorkspace(); editorRevision++; printing = false;
+        $('.rd-quotes-dialog').remove(); closeWorkspace(); editorRevision++; printing = false;
         clearTimeout(qrTimer); clearTimeout(previewTimer);
         engine = PosnicPro.receiptDesigner; schema = engine.contract; branch = data;
         box = $('#receipt-designer'); if (!box.length) return;
@@ -361,14 +431,14 @@
             '<aside class="rd-preview"><div class="rd-section-heading"><h4>' + esc(t('Live preview')) + '</h4><select class="rd-preview-fit" aria-label="' + esc(t('Preview zoom')) + '"><option value="page">' + esc(t('Fit whole receipt')) + '</option><option value="width">' + esc(t('Fit width')) + '</option></select></div><div class="rd-preview-stage"><div class="rd-preview-page"></div></div><div class="rd-preview-footer"><strong class="rd-preview-name"></strong><span class="rd-dimensions"></span><span class="rd-sample-label">' + esc(t('Sample sale')) + '</span></div></aside></div>' +
             '<section class="rd-print-options"><div class="rd-document-settings"><label for="rd-custom-heading">' + esc(t('Optional document heading')) + '</label><input id="rd-custom-heading" class="form-control" maxlength="60" value="' + esc(design.customHeading || '') + '"><small>' + esc(t('Blank adds no heading. Display text does not change the document type.')) + '</small><label><input type="checkbox" id="rd-branding" ' + (design.showBranding !== false ? 'checked' : '') + '> ' + esc(t('Show footer text')) + '</label><label for="rd-branding-text">' + esc(t('Footer text')) + '</label><textarea id="rd-branding-text" class="form-control" rows="2" maxlength="200" placeholder="Made with Posnic &middot; posnic.com" data-t-placeholder="lang_made_with_posnic_posnic_com">' + esc(design.brandingText || '') + '</textarea><small>' + esc(t('Leave blank to use the default. Applies to all paper sizes.')) + '</small></div><div class="rd-existing-options"></div></section>');
         var quotePolicy = design.quoteFooter || { source: 'none', order: 'sequential', quotes: [] };
-        box.find('.rd-print-options').prepend('<fieldset class="rd-quote-settings"><legend><lang class="lang_receipt_quotes">Receipt quotes</lang></legend><label for="rd-quote-source"><lang class="lang_library">Library</lang></label><select id="rd-quote-source" class="form-control"><option value="none" data-t="lang_off">Off</option><option value="thirukkural" data-t="lang_thirukkural_1_330_tamil_couplets">Thirukkural - 1,330 Tamil couplets</option><option value="custom" data-t="lang_my_quotes">My quotes</option></select><label for="rd-quote-order"><lang class="lang_order">Order</lang></label><select id="rd-quote-order" class="form-control"><option value="sequential" data-t="lang_in_bill_number_order">In bill-number order</option><option value="random" data-t="lang_random">Random</option></select><div class="rd-quote-qr-options"><label class="rd-checkbox"><input type="checkbox" id="rd-quote-qr"> <lang class="lang_quote_qr_meaning">QR for Tamil and English meaning</lang></label><label for="rd-quote-qr-size"><lang class="lang_quote_qr_size">QR size</lang></label><select id="rd-quote-qr-size" class="form-control"><option value="18">18 mm</option><option value="22">22 mm</option><option value="26">26 mm</option></select></div><small>Saved with each new sale. Reprints keep the same quote. Bill-number order can skip numbers and runs separately on offline tills. Remove your greeting text block if you want only a quote.</small><label for="rd-quote-list"><lang class="lang_my_quotes_separate_entries_with_a_blank_li">My quotes - separate entries with a blank line</lang></label><textarea id="rd-quote-list" class="form-control" rows="4"></textarea></fieldset>');
+        box.find('.rd-print-options').prepend('<fieldset class="rd-quote-settings"><legend><lang class="lang_receipt_quotes">Receipt quotes</lang></legend><label for="rd-quote-source"><lang class="lang_library">Library</lang></label><select id="rd-quote-source" class="form-control"><option value="none" data-t="lang_off">Off</option><option value="thirukkural" data-t="lang_thirukkural_1_330_tamil_couplets">Thirukkural - 1,330 Tamil couplets</option><option value="custom" data-t="lang_my_quotes">My quotes</option></select><label for="rd-quote-order"><lang class="lang_order">Order</lang></label><select id="rd-quote-order" class="form-control"><option value="sequential" data-t="lang_in_bill_number_order">In bill-number order</option><option value="random" data-t="lang_random">Random</option><option value="fixed" data-t="lang_use_a_specific_number">Use a specific number</option></select><div class="rd-fixed-quote"><label for="rd-quote-number"><lang class="lang_quote_kural_number">Quote / Kural number</lang></label><input id="rd-quote-number" class="form-control" type="number" min="1" step="1" value="1"><small><lang class="lang_use_this_quote_on_every_new_bill_until_you">Use this quote on every new bill until you change it.</lang></small></div><div class="rd-quote-qr-options"><label class="rd-checkbox"><input type="checkbox" id="rd-quote-qr"> <lang class="lang_quote_qr_meaning">QR for Tamil and English meaning</lang></label><label for="rd-quote-qr-size"><lang class="lang_quote_qr_size">QR size</lang></label><select id="rd-quote-qr-size" class="form-control"><option value="18">18 mm</option><option value="22">22 mm</option><option value="26">26 mm</option></select></div><small>Saved with each new sale. Reprints keep the same quote. Random may repeat a quote. Bill-number order can skip numbers and runs separately on offline tills. Remove your greeting text block if you want only a quote.</small><div class="rd-custom-quotes"><button type="button" class="btn btn-outline-primary" id="rd-manage-quotes"><lang class="lang_manage_my_quotes">Manage my quotes</lang></button> <span id="rd-quote-count"></span><small>One numbered entry per quote. Saved with this branch’s receipt settings.</small></div></fieldset>');
         box.find('#rd-quote-source').val(quotePolicy.source);
         box.find('#rd-quote-order').val(quotePolicy.order);
         box.find('#rd-quote-qr').prop('checked', quotePolicy.showQr === true);
         box.find('#rd-quote-qr-size').val(String(quotePolicy.qrSizeMm || 22));
         updateQuoteControls();
         loadQuoteQr();
-        box.find('#rd-quote-list').val(quotePolicy.quotes.join('\n\n'));
+        box.find('#rd-quote-number').val(quotePolicy.selectedNumber || 1);
         if (sampleTaxEnabled()) {
             box.find('.rd-preview-footer').append('<label>' + esc(PosnicPro.i18n.t('lang_rd_sample_tax_help', 'Example tax: 5%. Actual receipts use saved sale taxes.')) + (sampleIndianGst() ? '<select id="rd-sample-tax"><option value="intra">CGST + SGST</option><option value="inter" data-t="lang_igst_tax_receiving">IGST</option></select>' : '') + '</label>');
             box.find('#rd-sample-tax').val(sampleInterstate ? 'inter' : 'intra').on('change', function () { sampleInterstate = this.value === 'inter'; schedulePreview(); });
@@ -396,13 +466,13 @@
             checkpoint(); design.showBranding = this.checked; changed();
         }).on('input.receiptDesigner', '#rd-branding-text', function () {
             checkpoint(); design.brandingText = this.value; changed();
-        }).on('change.receiptDesigner', '#rd-quote-source,#rd-quote-order,#rd-quote-list,#rd-quote-qr,#rd-quote-qr-size', function () {
+        }).on('change.receiptDesigner', '#rd-quote-source,#rd-quote-order,#rd-quote-number,#rd-quote-qr,#rd-quote-qr-size', function () {
             checkpoint();
-            design.quoteFooter = { qrSizeMm: Number(box.find('#rd-quote-qr-size').val()) || 22, showQr: box.find('#rd-quote-qr').prop('checked'), source: box.find('#rd-quote-source').val(), order: box.find('#rd-quote-order').val(), quotes: box.find('#rd-quote-list').val().split(/\n\s*\n/).map(function (q) { return q.trim(); }).filter(Boolean) };
+            design.quoteFooter = { qrSizeMm: Number(box.find('#rd-quote-qr-size').val()) || 22, showQr: box.find('#rd-quote-qr').prop('checked'), source: box.find('#rd-quote-source').val(), order: box.find('#rd-quote-order').val(), selectedNumber: Number(box.find('#rd-quote-number').val()), quotes: design.quoteFooter && design.quoteFooter.quotes || [] };
             updateQuoteControls();
             loadQuoteQr();
             changed();
-        }).on('input.receiptDesigner', '#rd-custom-heading', function () {
+        }).on('click.receiptDesigner', '#rd-manage-quotes', openQuoteManager).on('input.receiptDesigner', '#rd-custom-heading', function () {
             checkpoint(); design.customHeading = this.value; changed();
         }).on('click.receiptDesigner', '[data-default-format]', function () {
             var next = this.getAttribute('data-default-format');
@@ -428,7 +498,7 @@
             else if (action === 'cancel-reset') { box.find('.rd-reset-confirm').prop('hidden', true); box.find('[data-action="reset-template"]').trigger('focus'); }
             else if (action === 'confirm-reset') { checkpoint(); design.layouts[format] = engine.standardLayout(format); selected = null; renderEditor(); changed(); box.find('[data-action="reset-template"]').trigger('focus'); }
             else if (action === 'hardware') $('#open_hardware_manager').trigger('click');
-            else if (action === 'undo' && undo.length) { design = undo.pop(); renderEditor(); status(t(dirty() ? PosnicPro.i18n.t('lang_rd_unsaved_changes', 'Unsaved changes') : PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved'))); }
+            else if (action === 'undo' && undo.length) { design = undo.pop(); var q = design.quoteFooter || { source: 'none', order: 'sequential' }; box.find('#rd-quote-source').val(q.source); box.find('#rd-quote-order').val(q.order); box.find('#rd-quote-number').val(q.selectedNumber || 1); box.find('#rd-quote-qr').prop('checked', q.showQr === true); box.find('#rd-quote-qr-size').val(String(q.qrSizeMm || 22)); updateQuoteControls(); loadQuoteQr(); renderEditor(); status(t(dirty() ? PosnicPro.i18n.t('lang_rd_unsaved_changes', 'Unsaved changes') : PosnicPro.i18n.t('lang_rd_all_designs_saved', 'All designs saved'))); }
             else if (action === 'select') { selected = selected === id ? null : id; renderList(); }
             else if (action === 'remove' && at >= 0 && schema.required.indexOf(layout().blocks[at].type) === -1) { checkpoint(); layout().blocks.splice(at, 1); renderList(); changed(); }
             else if (action === 'up' || action === 'down') move(id, at + (action === 'up' ? -1 : 1));

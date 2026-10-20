@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% од храната по попусти, пред оданочување.",
   "lang_room_charge_final": "Вклучено во конечниот предлог.",
   "lang_room_orders_enable_help": "Овозможете нарачки за соби на персоналот во Поставки → Ресторан → Хотели и други места.",
-  "lang_room_venue": "Место"
+  "lang_room_venue": "Место",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Додадете по еден цитат по ред. Прекините на линиите остануваат во тој цитат.",
+  "lang_apply_quotes": "Примени цитати",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Применете ги ажурирањата на вашиот нацрт. Зачувајте дизајни за да ги зачувате промените за оваа гранка.",
+  "lang_close_quote_manager": "Затворете го менаџерот за цитати",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Внесете понуда во секој ред или отстранете ги празните редови. Секој цитат може да има до 600 знаци.",
+  "lang_enter_your_quote": "Внесете ја вашата понуда",
+  "lang_manage_my_quotes": "Управувајте со моите цитати",
+  "lang_my_receipt_quotes": "Мои цитати за сметки",
+  "lang_quote_kural_number": "Цитат / Курален број",
+  "lang_use_a_specific_number": "Користете одреден број",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Користете ја оваа понуда за секоја нова сметка додека не ја промените."
 }

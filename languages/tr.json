@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}: Vergi öncesi indirimlerden sonra yiyeceklerin {1} %'si.",
   "lang_room_charge_final": "Son faturaya dahildir.",
   "lang_room_orders_enable_help": "Ayarlar → Restoran → Oteller ve diğer mekanlarda personel odası siparişlerini etkinleştirin.",
-  "lang_room_venue": "Mekan"
+  "lang_room_venue": "Mekan",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Her satıra bir alıntı ekleyin. Satır sonları bu alıntının içinde kalır.",
+  "lang_apply_quotes": "Teklifleri uygula",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Taslağınızın güncellemelerini uygulayın. Bu dal için değişiklikleri depolamak üzere tasarımları kaydedin.",
+  "lang_close_quote_manager": "Teklif yöneticisini kapat",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Her satıra bir teklif girin veya boş satırları kaldırın. Her alıntı en fazla 600 karakterden oluşabilir.",
+  "lang_enter_your_quote": "Teklifinizi girin",
+  "lang_manage_my_quotes": "Tekliflerimi yönet",
+  "lang_my_receipt_quotes": "Makbuz tekliflerim",
+  "lang_quote_kural_number": "Alıntı / Kural numarası",
+  "lang_use_a_specific_number": "Belirli bir numara kullan",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Bu teklifi değiştirene kadar her yeni faturada kullanın."
 }

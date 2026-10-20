@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: {1}% من الطعام بعد الخصومات، قبل الضرائب.",
   "lang_room_charge_final": "مدرج في الفاتورة النهائية.",
   "lang_room_orders_enable_help": "قم بتمكين طلبات غرف الموظفين في الإعدادات → Restaurant → الفنادق والأماكن الأخرى.",
-  "lang_room_venue": "المكان"
+  "lang_room_venue": "المكان",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "أضف اقتباسًا واحدًا لكل صف. تبقى فواصل الأسطر داخل هذا الاقتباس.",
+  "lang_apply_quotes": "تطبيق الاقتباسات",
+  "lang_apply_updates_your_draft_save_designs_to_s": "تطبيق التحديثات المسودة الخاصة بك. حفظ التصاميم لتخزين التغييرات لهذا الفرع.",
+  "lang_close_quote_manager": "إغلاق مدير الاقتباس",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "أدخل عرض أسعار في كل صف، أو قم بإزالة الصفوف الفارغة. يمكن أن يحتوي كل اقتباس على ما يصل إلى 600 حرف.",
+  "lang_enter_your_quote": "أدخل الاقتباس الخاص بك",
+  "lang_manage_my_quotes": "إدارة عروض الأسعار الخاصة بي",
+  "lang_my_receipt_quotes": "يقتبس إيصالي",
+  "lang_quote_kural_number": "اقتباس / رقم كورال",
+  "lang_use_a_specific_number": "استخدم رقمًا محددًا",
+  "lang_use_this_quote_on_every_new_bill_until_you": "استخدم هذا الاقتباس في كل فاتورة جديدة حتى تقوم بتغييره."
 }

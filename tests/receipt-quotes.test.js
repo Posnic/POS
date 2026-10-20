@@ -27,3 +27,17 @@ test('saved selection survives settings changes, disablement and retries', () =>
   assert.equal(select(p, 'S123', null), null); // old bills stay unchanged
   assert.equal(select({ ...p, order: 'sequential' }, 'S2').text, 'Second');
 });
+const testQuotePolicy = { source: 'custom', order: 'fixed', selectedNumber: 2, quotes: ['First', 'Second'] };
+test('fixed quote numbers select custom entries or Kurals and preserve saved receipts', () => {
+  assert.equal(select(testQuotePolicy, 'S1').text, 'Second');
+  assert.equal(select(testQuotePolicy, 'S99').text, 'Second');
+  const saved = select(testQuotePolicy, 'S1');
+  assert.deepEqual(select({ ...testQuotePolicy, selectedNumber: 1 }, 'S1', saved), saved);
+  for (const selectedNumber of [0, -1, 3, 1.5, '2']) assert.equal(select({ ...testQuotePolicy, selectedNumber }, 'S1'), null);
+  for (const selectedNumber of [1, 51, 1330]) {
+    const q = select({ source: 'thirukkural', order: 'fixed', selectedNumber, showQr: true }, 'S99');
+    assert.equal(q.number, selectedNumber);
+    assert.equal(q.text, verses[selectedNumber - 1].lines.join('\n'));
+    assert.equal(q.url, 'https://www.posnic.com/tools/thirukural/' + selectedNumber);
+  }
+});

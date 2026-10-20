@@ -4937,5 +4937,16 @@
   "lang_room_charge_rate": "{0}: {1}% mat etter rabatter, før skatt.",
   "lang_room_charge_final": "Inkludert på den endelige regningen.",
   "lang_room_orders_enable_help": "Aktiver bestillinger av personalrom i Innstillinger «Restaurant» Hoteller og andre arenaer.",
-  "lang_room_venue": "Sted"
+  "lang_room_venue": "Sted",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Legg til ett tilbud per rad. Linjeskift holder seg innenfor det sitatet.",
+  "lang_apply_quotes": "Bruk sitater",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Bruk oppdaterer utkastet ditt. Lagre design for å lagre endringer for denne grenen.",
+  "lang_close_quote_manager": "Lukk tilbudsansvarlig",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Skriv inn et tilbud i hver rad, eller fjern tomme rader. Hvert sitat kan ha opptil 600 tegn.",
+  "lang_enter_your_quote": "Skriv inn tilbudet ditt",
+  "lang_manage_my_quotes": "Administrer sitatene mine",
+  "lang_my_receipt_quotes": "Mine kvitteringssitater",
+  "lang_quote_kural_number": "Sitat / Kural nummer",
+  "lang_use_a_specific_number": "Bruk et bestemt nummer",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Bruk dette tilbudet på hver ny regning til du endrer den."
 }

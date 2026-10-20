@@ -2414,3 +2414,23 @@ describe('deleteAllSelectedCollection', () => {
     expect(res.status).toHaveBeenCalledWith(500);
   });
 });
+
+describe('receipt quote preview', () => {
+  test.each([0, 1331, 1.5, 'bad', null])('rejects invalid Kural number %s', async (number) => {
+    const res = mockRes();
+    await ctrl.previewReceiptQuote(mockReq({ body: { number } }), res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+  test('returns the chosen verse and matching QR from the offline library', async () => {
+    const res = mockRes();
+    await ctrl.previewReceiptQuote(mockReq({ body: { number: 51 } }), res);
+    expect(res.json.mock.calls[0][0]).toMatchObject({
+      type: 'success',
+      data: {
+        number: 51,
+        url: 'https://www.posnic.com/tools/thirukural/51',
+      },
+    });
+    expect(res.json.mock.calls[0][0].data.qr).toMatch(/^data:image\/png;base64,/);
+  });
+});

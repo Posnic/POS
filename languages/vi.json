@@ -4940,5 +4940,16 @@
   "lang_room_charge_rate": "{0}: {1}% thực phẩm sau khi giảm giá, trước thuế.",
   "lang_room_charge_final": "Bao gồm trong hóa đơn cuối cùng.",
   "lang_room_orders_enable_help": "Bật đơn đặt hàng phòng nhân viên trong Cài đặt “Nhà hàng”” Khách sạn và các địa điểm khác.",
-  "lang_room_venue": "Địa điểm"
+  "lang_room_venue": "Địa điểm",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "Thêm một trích dẫn mỗi hàng. Ngắt dòng vẫn ở bên trong trích dẫn đó.",
+  "lang_apply_quotes": "Áp dụng dấu ngoặc kép",
+  "lang_apply_updates_your_draft_save_designs_to_s": "Áp dụng bản cập nhật dự thảo của bạn. Lưu thiết kế để lưu trữ các thay đổi cho nhánh này.",
+  "lang_close_quote_manager": "Đóng trình quản lý báo giá",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "Nhập một trích dẫn vào mỗi hàng hoặc xóa các hàng trống. Mỗi trích dẫn có thể có tối đa 600 ký tự.",
+  "lang_enter_your_quote": "Nhập báo giá của bạn",
+  "lang_manage_my_quotes": "Quản lý báo giá của tôi",
+  "lang_my_receipt_quotes": "Báo giá biên nhận của tôi",
+  "lang_quote_kural_number": "Trích dẫn / số Kural",
+  "lang_use_a_specific_number": "Sử dụng một số cụ thể",
+  "lang_use_this_quote_on_every_new_bill_until_you": "Sử dụng trích dẫn này trên mỗi hóa đơn mới cho đến khi bạn thay đổi nó."
 }

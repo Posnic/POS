@@ -5018,5 +5018,16 @@
   "lang_room_charge_rate": "{0}: छूट के बाद भोजन का {1}%, टैक्स से पहले.",
   "lang_room_charge_final": "अंतिम बिल में शामिल है.",
   "lang_room_orders_enable_help": "होटल और अन्य स्थानों की सेटिंग में स्टाफ़ रूम ऑर्डर सक्षम करें.",
-  "lang_room_venue": "वेन्यू"
+  "lang_room_venue": "वेन्यू",
+  "lang_add_one_quote_per_row_line_breaks_stay_ins": "प्रति पंक्ति एक उद्धरण जोड़ें. लाइन ब्रेक उस उद्धरण के अंदर रहते हैं।",
+  "lang_apply_quotes": "उद्धरण लागू करें",
+  "lang_apply_updates_your_draft_save_designs_to_s": "अपने ड्राफ्ट को अद्यतन लागू करें. इस शाखा के लिए परिवर्तन संग्रहीत करने के लिए डिज़ाइन सहेजें।",
+  "lang_close_quote_manager": "उद्धरण प्रबंधक बंद करें",
+  "lang_enter_a_quote_in_each_row_or_remove_empty": "प्रत्येक पंक्ति में एक उद्धरण दर्ज करें, या खाली पंक्तियाँ हटा दें। प्रत्येक उद्धरण में 600 अक्षर तक हो सकते हैं।",
+  "lang_enter_your_quote": "अपना उद्धरण दर्ज करें",
+  "lang_manage_my_quotes": "मेरे उद्धरण प्रबंधित करें",
+  "lang_my_receipt_quotes": "मेरी रसीद उद्धरण",
+  "lang_quote_kural_number": "उद्धरण / कुरल संख्या",
+  "lang_use_a_specific_number": "एक विशिष्ट संख्या का प्रयोग करें",
+  "lang_use_this_quote_on_every_new_bill_until_you": "प्रत्येक नए बिल पर इस उद्धरण का प्रयोग तब तक करें जब तक कि आप इसे बदल न लें।"
 }
