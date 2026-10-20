@@ -234,6 +234,15 @@ function taxRows(sale, branch, allocation = null) {
     }
   }
   if (recorded.size) {
+    // Line components exclude document charges. Include their saved tax once;
+    // the legacy fallback below already uses the sale's combined tax total.
+    for (const charge of sale.charges || []) {
+      const amount = num(charge.tax_amount);
+      if (amount > 0) {
+        const label = `${charge.tax_name || 'Tax'} · ${charge.name || 'Charge'}`;
+        recorded.set(label, (recorded.get(label) || 0) + amount);
+      }
+    }
     const money = require('../utils/currency');
     const policy = money.policy(branch || {});
     let cumulative = 0;
@@ -641,7 +650,12 @@ function buildBillPayload(sale = {}, branch = {}, options = {}) {
             name: key.slice(7),
             amount: Money.fromMinor(minor, Money.policy(branch)),
           }))
-      : (sale.charges || []).map((c) => ({ name: c.name, amount: num(c.amount) })),
+      : (sale.charges || []).map((c) => ({
+          name:
+            c.name +
+            (c.source === 'room' && Number(c.percent) > 0 ? ` (${Number(c.percent)}%)` : ''),
+          amount: num(c.amount),
+        })),
     discount: num(sale.discount),
     roundOff: num(sale.round_off || sale.sales_round_off),
     total: num(sale.sales_total != null ? sale.sales_total : sale.total),
@@ -745,7 +759,15 @@ function receiptDocument(sale, branch, bill) {
   doc.sale_extra_discount = num(sale.sale_extra_discount);
   doc.round_off = bill.roundOff;
   doc.charges = Array.isArray(sale.charges)
-    ? sale.charges.map((c) => ({ name: c.name, amount: c.amount, tax_amount: c.tax_amount }))
+    ? sale.charges.map((c) => ({
+        name: c.name,
+        source: c.source,
+        percent: c.percent,
+        amount: c.amount,
+        tax_amount: c.tax_amount,
+        tax_name: c.tax_name,
+        taxed: c.taxed,
+      }))
     : [];
   doc.items = (sale.items || []).filter(billable).map((item) => ({
     item_name: item.item_name || item.name,
