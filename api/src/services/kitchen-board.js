@@ -69,7 +69,12 @@ function project(sale) {
             .replace(/[\s_-]/g, '') === 'takeaway',
         orderNumber: String(sale.takeaway_number || sale.token_id || sale.sales_id || ''),
         outlet: String(sale.outlet_snapshot?.name || ''),
-        roomReference: String(sale.room_reference || ''),
+        roomReference: String(
+          sale.room_reference ||
+            (sale.dine_type === 'Room' ? sale.venue?.unit || sale.table_number : '') ||
+            ''
+        ),
+        venueName: sale.dine_type === 'Room' ? String(sale.venue?.venue_name || '') : '',
         placedAt: round.fired_at || round.ordered_at,
         preparationNote: String(sale.preparation_note || ''),
         state,
@@ -96,6 +101,7 @@ async function list(req, includePickup = false) {
         takeaway_number: 1,
         'outlet_snapshot.name': 1,
         room_reference: 1,
+        venue: 1,
         preparation_note: 1,
         created_date: 1,
         items: 1,
