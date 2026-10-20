@@ -38,12 +38,11 @@ const handler = (fn) => async (req, res) => {
   try {
     await fn(req, res);
   } catch (e) {
-    res
-      .status(e.status || 500)
-      .json({
-        type: 'error',
-        message: e.status ? e.message : 'Could not load or save wording profiles',
-      });
+    const response = res.status(e.status || 500);
+    response.json({
+      type: 'error',
+      message: e.status ? e.message : 'Could not load or save wording profiles',
+    });
   }
 };
 function requireAdmin(req, write = false) {
