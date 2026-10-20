@@ -39,6 +39,39 @@ const lastGood = new Map();
 let generation = 0;
 let servedListener = null;
 let requestRefresh = null;
+const wordingReads = new Map();
+function refreshWording(branch, displayId, fetchImpl, isCurrent) {
+  if (!displayId || !screens().setWording) return;
+  const key = String(displayId);
+  let state = wordingReads.get(key);
+  if (!state || state.branch !== branch) {
+    state = { branch, at: 0, busy: false };
+    wordingReads.set(key, state);
+    screens().setWording(null, displayId);
+  }
+  if (state.busy || Date.now() - state.at < 60000) return;
+  const doFetch = fetchImpl || (typeof fetch === 'function' ? fetch : null);
+  if (!doFetch || (!fetchImpl && !process.env.KIOSK_API_KEY)) return;
+  state.busy = true; state.at = Date.now();
+  void (async () => {
+    try {
+      const response = await doFetch(`${apiUrl()}/sales/kitchenScreenWording`, {
+        method: 'POST', signal: AbortSignal.timeout(10000),
+        headers: { 'Content-Type': 'application/json', kioskkey: process.env.KIOSK_API_KEY || '' },
+        body: JSON.stringify({ branchId: branch }),
+      });
+      const current = () => isCurrent() && wordingReads.get(key) === state;
+      if (!response.ok) {
+        if (current() && [401, 403, 404].includes(response.status)) screens().setWording(null, displayId);
+        return;
+      }
+      const answer = await response.json();
+      if (current() && answer.data?.branchId === branch && answer.data.bundles)
+        screens().setWording(answer.data, displayId);
+    } catch { /* Labels never block or clear kitchen orders. */ }
+    finally { state.busy = false; }
+  })();
+}
 
 function screens() {
   return require('./kitchen-screen');
@@ -139,6 +172,7 @@ async function pollScreens({ resolveBranch, fetchImpl, isCurrent = () => true } 
       screens().setTickets([], d.id);
       screens().setFeedStatus('Connecting to kitchen orders...', d.id);
     }
+    refreshWording(branchId, d.id, fetchImpl, current);
     const result = await tick({ branchId, displayId: d.id, fetchImpl, isCurrent: current });
     if (current()) screens().setFeedStatus(result.ok ? '' : result.why === 'authentication' ?
       'Kitchen authentication failed. Contact support; displayed orders may be out of date.' :
@@ -204,6 +238,7 @@ function start({ branchId, resolveBranch, everyMs = EVERY_MS, fetchImpl } = {}) 
 }
 
 function stop() {
+  wordingReads.clear();
   if (requestRefresh) requestRefresh.stop();
   requestRefresh = null;
   generation += 1;

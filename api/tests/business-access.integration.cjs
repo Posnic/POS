@@ -164,6 +164,44 @@ async function grant(f) {
   return f.access.exchange(f.request, f.verifier);
 }
 
+test('Business wording exposes published labels only within current tenant and branch access', async () => {
+  const f = await fixture(), other = await fixture();
+  const session = await grant(f);
+  const { WordingProfiles } = require('../src/services/wording-profiles');
+  const service = new WordingProfiles(db.collection('settings'), f.license);
+  let state = await service.save({
+    name: 'Published shop wording', locale: 'en',
+    overrides: { 'posnic.lang_product': 'Shop item' }, expectedRevision: 0,
+  }, String(f.user._id));
+  state = await service.publish({
+    id: state.profiles[0].id, expectedRevision: 1, branches: [String(f.branch._id)],
+  }, String(f.user._id), [String(f.branch._id)]);
+  await service.save({
+    id: state.profiles[0].id, name: 'Private draft', locale: 'en',
+    overrides: { 'posnic.lang_product': 'Unpublished secret' }, expectedRevision: 2,
+  }, String(f.user._id));
+  const call = (query, token = session.token) => fetch(
+    base + '/api/business/v1/wording?' + query,
+    { headers: { 'x-forwarded-proto': 'https', authorization: 'Bearer ' + token } }
+  );
+  const query = 'branchId=' + f.branch._id + '&locale=en';
+  const response = await call(query);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  const bundle = await response.json();
+  assert.equal(bundle.values.lang_product, 'Shop item');
+  assert.equal(bundle.profileName, 'Published shop wording');
+  assert.ok(!JSON.stringify(bundle).includes('Unpublished secret'));
+  assert.equal((await call('branchId=' + other.branch._id + '&locale=en')).status, 403);
+  assert.equal((await call(query + '&license=' + other.license)).status, 400);
+  assert.equal((await call('branchId=' + f.branch._id + '&locale=missing')).status, 400);
+  assert.equal((await call(query, 'pb1_' + opaque())).status, 401);
+  await db.collection('users').updateOne(
+    { _id: f.user._id }, { $set: { branch_access: [] } }
+  );
+  assert.equal((await call(query)).status, 403);
+});
+
 test('PKCE exchange is one-use under concurrency, stores only token hashes, and cannot authorize POS', async () => {
   const f = await fixture();
   await assert.rejects(f.access.exchange(f.request, f.verifier), is('authorization_pending'));

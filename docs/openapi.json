@@ -3148,6 +3148,31 @@
         "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
       }
     },
+    "/business/v1/wording": {
+      "get": {
+        "summary": "query",
+        "operationId": "get_business_v1_wording",
+        "tags": [
+          "Business access"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [],
+        "description": " Uses the separate Business authorization protocol; see BUSINESS_AUTHORIZATION.md for browser consent, PKCE and session requirements."
+      }
+    },
     "/business/v1/context": {
       "get": {
         "summary": "user",
@@ -12767,6 +12792,29 @@
         }
       }
     },
+    "/kitchen/wording": {
+      "get": {
+        "summary": "wording",
+        "operationId": "get_kitchen_wording",
+        "tags": [
+          "Kitchen board"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/kitchen/voice/{saleId}/{voiceId}": {
       "get": {
         "summary": "voice",
@@ -13162,6 +13210,29 @@
           }
         },
         "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/mobile/v1/wording": {
+      "get": {
+        "summary": "userId",
+        "operationId": "get_mobile_v1_wording",
+        "tags": [
+          "Mobile pos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
       }
     },
     "/mobile/v1/products/options": {
@@ -17245,6 +17316,30 @@
       "post": {
         "summary": "kitchenScreenTickets",
         "operationId": "post_sales_kitchenScreenTickets",
+        "tags": [
+          "Sales"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/sales/kitchenScreenWording": {
+      "post": {
+        "summary": "kitchenScreenWording",
+        "operationId": "post_sales_kitchenScreenWording",
         "tags": [
           "Sales"
         ],

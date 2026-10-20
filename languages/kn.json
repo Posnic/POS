@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "ತಿತ್ವದಲ್ಲಿರುವ ಮಾತುಗಳು ಅಥವಾ ವಿಸ್ತ",
   "lang_wording_takeaway": "ಟೇ",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "ಅಪ್ಡೇಟ್ಗಳು ಹೊಂದಾಣಿಕೆಯ ಲೇಬಲ್ಗಳು ಮತ್ತು ಬೆಂಬಲಿತ ಪದಗುಚ್ಛಗಳ ಮೂಲಕ ಸೇರಿಸಿ/ ಉತ್ಪನ್ನದ ಹೆಸರುಗಳು, ಟಿಪ್ಪಣಿಗಳು ಮತ್ತು ಇತರ ಭಾಷೆಗಳು ಬದಲಾಗುವುದಿಲ್ಲ.",
-  "lang_your_wording": "ನಿಮ್ಮ ಮಾತುಗಳು"
+  "lang_your_wording": "ನಿಮ್ಮ ಮಾತುಗಳು",
+  "lang_wording_changed_only": "ಮಾತ್ರ ಬದಲಾಯಿಸಲಾಗಿದೆ",
+  "lang_wording_labels_per_page": "ಪ್ರತಿ ಪುಟಕ್ಕೆ ಲೇಬಲ್ಗಳು"
 }

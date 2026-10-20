@@ -4977,5 +4977,7 @@
   "lang_wording_search_existing_wording_or_extension": "Ищите существующие формулировки или расширения",
   "lang_wording_takeaway": "Takeaway Updates",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": ", соответствующие меткам и поддерживаемым вариантам добавления/поиска/продажи по фразам. Названия продуктов, примечания и другие языки остались без изменений",
-  "lang_your_wording": "Ваша формулировка"
+  "lang_your_wording": "Ваша формулировка",
+  "lang_wording_changed_only": "Только изменено",
+  "lang_wording_labels_per_page": "Этикетки на странице"
 }

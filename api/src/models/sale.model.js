@@ -739,6 +739,7 @@ const saleSchema = new mongoose.Schema(
     },
 
     // ---- Node-only / extended fields (no strict PHP order) ----
+    wording_snapshot: { type: mongoose.Schema.Types.Mixed, immutable: true },
 
     // Keep branch as an optional reference only; PHP documents only store branch_id.
     branch: {
@@ -866,6 +867,14 @@ saleSchema.pre('save', async function () {
   // STEP 2: Sync branch_id with branch
   if (this.branch && (!this.branch_id || this.isNew || this.isModified('branch'))) {
     this.branch_id = this.branch;
+  }
+  if (this.isNew && this.license && this.branch_id && this.constructor.db?.db) {
+    // Never trust a caller-supplied snapshot for a new sale.
+    this.wording_snapshot = await require('../services/document-wording-snapshot').capture(
+      this.constructor.db.db.collection('settings'),
+      this.license,
+      this.branch_id
+    );
   }
 
   const items = Array.isArray(this.items) ? this.items : [];

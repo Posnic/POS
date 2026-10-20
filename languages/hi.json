@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "मौजूदा शब्दों या एक्सटेंशन",
   "lang_wording_takeaway": "टेकअवे",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "लेबल से मेल खाने वाले",
-  "lang_your_wording": "आपका शब्दांकन"
+  "lang_your_wording": "आपका शब्दांकन",
+  "lang_wording_changed_only": "केवल बदला हुआ",
+  "lang_wording_labels_per_page": "लेबल प्रति पेज"
 }

@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "sige olemasolevat sõnastust või lai",
   "lang_wording_takeaway": "away",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "Värskendused, mis vastavad siltidele ja toetatud Lisa/Otsi/Müük fraaside järgi Tootenimed, märkmed ja muud keeled ei muutu.",
-  "lang_your_wording": "Teie sõnastus"
+  "lang_your_wording": "Teie sõnastus",
+  "lang_wording_changed_only": "Ainult muudetud",
+  "lang_wording_labels_per_page": "Sildid lehekülje kohta"
 }

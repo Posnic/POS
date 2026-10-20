@@ -153,6 +153,47 @@ function action(extra = {}) {
     ...extra,
   });
 }
+test('kitchen wording uses authenticated branch scope and only published labels', async () => {
+  const { WordingProfiles } = require('../../../src/services/wording-profiles');
+  const profiles = new WordingProfiles(db.collection('settings'), license);
+  const state = await profiles.save(
+    {
+      name: 'Kitchen words',
+      locale: 'en',
+      overrides: { 'posnic.lang_item': 'Article' },
+      expectedRevision: 0,
+    },
+    'owner'
+  );
+  const req = { ...request(), query: { locale: 'en' } };
+  expect((await service.wording(req)).values).toEqual({});
+  await profiles.publish(
+    {
+      id: state.profiles[0].id,
+      expectedRevision: state.revision,
+      branches: [String(branch)],
+    },
+    'owner',
+    [String(branch)]
+  );
+  expect(await service.wording(req)).toMatchObject({
+    branchId: String(branch),
+    locale: 'en',
+    values: { lang_item: 'Article' },
+  });
+  await expect(service.wording({ ...req, user: { role: 'staff' } })).rejects.toMatchObject({
+    status: 403,
+  });
+  await expect(
+    service.wording({
+      ...req,
+      tenantContext: { ...req.tenantContext, branchId: String(new ObjectId()) },
+    })
+  ).rejects.toMatchObject({ status: 403 });
+  await expect(service.wording({ ...req, query: { locale: '../../en' } })).rejects.toMatchObject({
+    status: 400,
+  });
+});
 test('counter sales never appear, even before payment; explicit walk-in KOTs still appear', async () => {
   const sales = db.collection('sales');
   const base = await sales.findOne({ _id: saleId });

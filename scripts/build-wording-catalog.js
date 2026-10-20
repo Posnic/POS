@@ -10,3 +10,4 @@ const compiled = JSON.stringify({ schemaVersion: 1, locales: [...new Set(locales
 if (process.argv.includes('--check')) {
   if (!fs.existsSync(output) || fs.readFileSync(output, 'utf8') !== compiled) throw new Error('Run node scripts/build-wording-catalog.js before releasing changed language catalogs.');
 } else { fs.mkdirSync(path.dirname(output), { recursive: true }); fs.writeFileSync(output, compiled); }
+require('./build-document-wording-catalog');

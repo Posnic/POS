@@ -192,6 +192,18 @@
             '@media print{.rd-document{max-width:none!important;}body{width:auto!important;min-width:0!important;}}';
     }
     function render(data, format, preview) {
+        var snapshot = !preview && data.wording_snapshot;
+        var locale = PosnicPro.i18n.code ? PosnicPro.i18n.code() : 'en';
+        var saved = snapshot && snapshot.schemaVersion === 1 && snapshot.locales && snapshot.locales[locale];
+        var text = function (key, fallback) {
+            return saved && saved.values && typeof saved.values[key] === 'string'
+                ? saved.values[key] : snapshot
+                    ? ((PosnicPro.i18n._dict || {})[key] || fallback)
+                    : PosnicPro.i18n.t(key, fallback);
+        };
+        var label = function (value) {
+            return PosnicPro.receiptDesignLabel ? PosnicPro.receiptDesignLabel(value, text) : value;
+        };
         var designs = data.receipt_designs;
         format = formatFor(data, format);
         var layout = contract.layoutFor(designs, format);
@@ -209,7 +221,7 @@
         var gstNumber = [data.customer_gstin, data.customer_gstin_number, data.customer_gst_number].find(present);
         var taxNumber = present(gstNumber) ? gstNumber : data.customer_tax_number;
         var registrationLabel = contract.taxRegistrationLabel(data, PosnicPro.local.get('country_setting'));
-        var fieldLabel = function (field) { return label({ customer_name: 'Name', customer_phone: 'Phone', customer_email: 'Email', customer_address: 'Address', customer_tax_number: present(gstNumber) ? registrationLabel : PosnicPro.i18n.t('lang_tax_id', 'Tax ID'), fssai: 'FSSAI' }[field] || contract.fields[field]); };
+        var fieldLabel = function (field) { return label({ customer_name: 'Name', customer_phone: 'Phone', customer_email: 'Email', customer_address: 'Address', customer_tax_number: present(gstNumber) ? registrationLabel : text('lang_tax_id', 'Tax ID'), fssai: 'FSSAI' }[field] || contract.fields[field]); };
         var pendingGoods = data.pending_goods_receipt === true;
         var beforePayment = pendingGoods || preview || !data.sales_id;
         var documentTitle = pendingGoods ? label('Bill') : beforePayment ? (present(data.branch_gstin_number) || on(data.gst) ? label('Tax invoice') : label('Bill')) : label('Receipt');
@@ -256,12 +268,12 @@
                 var customLabel = typeof b.labelText === 'string';
                 if (sheet) {
                     content = '<div class="rd-invoice-meta"><div class="rd-invoice-title">' + esc(documentTitle) + '</div><dl>';
-                    if (data.sales_id) content += '<dt>' + esc(customLabel ? b.labelText : beforePayment ? PosnicPro.i18n.t('lang_bill_no', 'Bill no') : PosnicPro.i18n.t('lang_rd_receipt_number', 'Receipt number')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
-                    content += '<dt>' + esc(PosnicPro.i18n.t('lang_date_title', 'Date')) + '</dt><dd>' + esc(receiptDate) + '</dd></dl></div>';
+                    if (data.sales_id) content += '<dt>' + esc(customLabel ? b.labelText : beforePayment ? text('lang_bill_no', 'Bill no') : text('lang_rd_receipt_number', 'Receipt number')) + '</dt><dd>' + esc(data.sales_id) + '</dd>';
+                    content += '<dt>' + esc(text('lang_date_title', 'Date')) + '</dt><dd>' + esc(receiptDate) + '</dd></dl></div>';
                 } else {
                     var billPrefix = '';
                     if (b.showTitle === false && data.sales_id) {
-                        var prefix = PosnicPro.i18n.t('lang_bill_no', 'Bill no') + ': ';
+                        var prefix = text('lang_bill_no', 'Bill no') + ': ';
                         var headerText = prefix + data.sales_id + formattedDate;
                         // Thermal headers use monospace. Reserve a small gap and allow
                         // for bold glyphs; omit only the label when the row is too wide.
@@ -270,7 +282,7 @@
                     }
                     content = '<div class="rd-transaction"' + (b.showTitle === false ? ' style="column-gap:4px"' : '') + '><strong>' + (customLabel ? esc(b.labelText) + (b.labelText ? ' ' : '') : b.showTitle === false ? esc(billPrefix) : esc(documentTitle)) + (data.sales_id ? (customLabel || b.showTitle === false ? '' : ' ') + headerValue(data.sales_id) : '') + '</strong><span class="rd-transaction-date">' + thermalDate(formattedDate) + '</span></div>';
                 }
-                if (!data.sales_id && !pendingGoods) content += '<p class="rd-pending-number">' + esc(PosnicPro.i18n.t('lang_receipt_number_after_save', 'Receipt number is assigned after saving the sale.')) + '</p>';
+                if (!data.sales_id && !pendingGoods) content += '<p class="rd-pending-number">' + esc(text('lang_receipt_number_after_save', 'Receipt number is assigned after saving the sale.')) + '</p>';
                 if (present(taxNumber) && !hasField('customer_tax_number')) content += '<p class="rd-customer-tax">' + esc(fieldLabel('customer_tax_number')) + ': ' + esc(String(taxNumber).trim()) + '</p>';
             } else if (b.type === 'items') {
                 var compact = !sheet && b.itemLayout === 'compact';
@@ -282,7 +294,7 @@
                 var widths = sheet ? [12, 20, 22] : columns ? (hsnColumn ? [16, 18, 8, 22] : format === '58' ? [23, 12, 25] : [20, 10, 24]) : [compact ? 32 : 40];
                 if (b.showUnit) widths.splice(sheet ? 1 : widths.length - 1, 0, unitWidth);
                 var unitHeading = b.showUnit ? '<th class="rd-unit">' + esc(label('Unit')) + '</th>' : '';
-                content = '<table' + (columns ? ' class="rd-fixed-columns"' : '') + '><colgroup>' + (b.showRowNumbers ? '<col style="width:' + serialWidth + '%">' : '') + '<col style="width:' + itemWidth + '%">' + widths.map(function (width) { return '<col style="width:' + width + '%">'; }).join('') + '</colgroup><thead><tr>' + (b.showRowNumbers ? '<th class="rd-row-number">' + esc(b.rowNumberLabel == null ? label('S.No') : b.rowNumberLabel) + '</th>' : '') + '<th>' + esc((b.heading || (columns ? label('Item name') : label('Item'))) + (compact ? ' × ' + label('Qty') : '')) + '</th>' + (hsnColumn ? '<th class="rd-number">' + esc(PosnicPro.i18n.t('lang_hsn_2', 'HSN')) + '</th>' : '') + (sheet ? '<th class="rd-number rd-quantity">' + esc(label('Qty')) + '</th>' + unitHeading + '<th class="rd-number">' + esc(label('Unit price')) + '</th>' : (columns ? '<th class="rd-number">' + esc(label('Rate')) + '</th><th class="rd-number rd-quantity">' + esc(label('Qty')) + '</th>' : '') + unitHeading) + '<th class="rd-number rd-amount">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
+                content = '<table' + (columns ? ' class="rd-fixed-columns"' : '') + '><colgroup>' + (b.showRowNumbers ? '<col style="width:' + serialWidth + '%">' : '') + '<col style="width:' + itemWidth + '%">' + widths.map(function (width) { return '<col style="width:' + width + '%">'; }).join('') + '</colgroup><thead><tr>' + (b.showRowNumbers ? '<th class="rd-row-number">' + esc(b.rowNumberLabel == null ? label('S.No') : b.rowNumberLabel) + '</th>' : '') + '<th>' + esc((b.heading || (columns ? label('Item name') : label('Item'))) + (compact ? ' × ' + label('Qty') : '')) + '</th>' + (hsnColumn ? '<th class="rd-number">' + esc(text('lang_hsn_2', 'HSN')) + '</th>' : '') + (sheet ? '<th class="rd-number rd-quantity">' + esc(label('Qty')) + '</th>' + unitHeading + '<th class="rd-number">' + esc(label('Unit price')) + '</th>' : (columns ? '<th class="rd-number">' + esc(label('Rate')) + '</th><th class="rd-number rd-quantity">' + esc(label('Qty')) + '</th>' : '') + unitHeading) + '<th class="rd-number rd-amount">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
                 receiptItems.forEach(function (item, index) {
                     var qty = Number(item.item_quantity || 0);
                     var hsn = item.hsncode || item.hsn_code || item.hsn || (/^\d{4,8}$/.test(item.tax_name || '') ? item.tax_name : '');
@@ -335,7 +347,7 @@
             }
             else if (b.type === 'signature') {
                 var signature = contract.image(data.quote_default_signature) ? data.quote_default_signature : '';
-                var signatureLabel = PosnicPro.i18n.t('lang_authorised_signatory', 'Authorised signatory');
+                var signatureLabel = text('lang_authorised_signatory', 'Authorised signatory');
                 content = '<div class="rd-signature" style="width:' + (b.width || 60) + '%">' +
                     (signature ? '<img src="' + esc(signature) + '" alt="' + esc(signatureLabel) + '">' : '<div class="rd-signature-blank"></div>') +
                     '<div class="rd-signature-line">' + esc(signatureLabel) + '</div></div>';
@@ -351,7 +363,7 @@
                 var src = b.type === 'logo' ? safeImage(!logo || logo === 'store.png' ? 'static/images/default/store.png' : logo) : b.type === 'barcode' ? barcode(data.sales_id) : safeImage(b.src);
                 if (!src) return '';
                 var imageWidth = b.type === 'logo' ? (sheet ? 22 : 45) : b.type === 'barcode' ? 90 : b.width;
-                content = '<img src="' + esc(src) + '" alt="' + esc(label(b.type === 'qr' ? 'QR code' : b.type === 'logo' ? 'Store logo' : b.type === 'barcode' ? PosnicPro.i18n.t('lang_rd_receipt_barcode', 'Receipt barcode') : PosnicPro.i18n.t('lang_image', 'Image'))) + '" style="width:' + (sheet ? contract.formats[format].content * imageWidth / 100 + 'mm' : imageWidth + '%') + ';max-height:' + (b.type === 'logo' ? '100px' : 'none') + ';">';
+                content = '<img src="' + esc(src) + '" alt="' + esc(label(b.type === 'qr' ? 'QR code' : b.type === 'logo' ? 'Store logo' : b.type === 'barcode' ? text('lang_rd_receipt_barcode', 'Receipt barcode') : text('lang_image', 'Image'))) + '" style="width:' + (sheet ? contract.formats[format].content * imageWidth / 100 + 'mm' : imageWidth + '%') + ';max-height:' + (b.type === 'logo' ? '100px' : 'none') + ';">';
             }
             var style = 'text-align:' + b.align;
             if (contract.textTypes.indexOf(b.type) !== -1) {
@@ -375,9 +387,9 @@
         if (sheet) {
             var notes = '';
             if ((data.branch_gstin_number || on(data.gst)) && PosnicPro.sales && PosnicPro.sales.view && PosnicPro.sales.view._amountInWords) {
-                notes += '<div class="rd-terms"><strong>' + esc(PosnicPro.i18n.t('lang_amount_in_words', 'Amount in words:')) + '</strong> ' + esc(PosnicPro.sales.view._amountInWords(data.items_total)) + '</div>';
+                notes += '<div class="rd-terms"><strong>' + esc(text('lang_amount_in_words', 'Amount in words:')) + '</strong> ' + esc(PosnicPro.sales.view._amountInWords(data.items_total)) + '</div>';
             }
-            if (data.invoice_terms) notes += '<div class="rd-terms"><strong>' + esc(PosnicPro.i18n.t('lang_terms_conditions', 'Terms & conditions')) + '</strong><br>' + esc(data.invoice_terms) + '</div>';
+            if (data.invoice_terms) notes += '<div class="rd-terms"><strong>' + esc(text('lang_terms_conditions', 'Terms & conditions')) + '</strong><br>' + esc(data.invoice_terms) + '</div>';
             if (notes) html += '<div class="rd-invoice-end"><div class="rd-invoice-end-notes">' + notes + '</div></div>';
         }
         return '<style>' + css(format, layout.fontSize) + (fixedItems ? '.rd-fixed-columns .rd-number{white-space:nowrap;}.rd-fixed-columns td{border-bottom:0;padding-top:2px;padding-bottom:2px;}.rd-fixed-columns th,.rd-total-quantity td,.rd-grand-total{border-color:#333;border-top-style:' + (fixedItems.lineStyle || 'dotted') + ';border-bottom-style:' + (fixedItems.lineStyle || 'dotted') + ';}.rd-transaction{border-bottom-style:' + (fixedItems.lineStyle || 'dotted') + ';}.rd-total-quantity td{border-top:1px ' + (fixedItems.lineStyle || 'dotted') + ' #333;padding-top:6px;}.rd-grand-total{border-top-width:1px;border-bottom:1px ' + (fixedItems.lineStyle || 'dotted') + ' #333;padding-bottom:6px;}' : '') + '</style><article class="rd-document' + (sheet ? ' rd-sheet' : '') + '" data-receipt-design="' + format + '">' + html + '</article>';

@@ -5597,6 +5597,7 @@ class SalesController extends BaseController {
         branch: branch,
         res: res,
         wording: await require('../services/document-wording').loadDocumentWording({
+          document: sale,
           branchId,
           licenseId: sale.license,
           locale: 'en',
@@ -5663,6 +5664,7 @@ class SalesController extends BaseController {
         branch: branch,
         res: sink,
         wording: await require('../services/document-wording').loadDocumentWording({
+          document: sale,
           branchId,
           licenseId: sale.license,
           locale: 'en',
@@ -7437,6 +7439,22 @@ class SalesController extends BaseController {
     } catch (error) {
       console.error('Error marking items served:', error);
       return this.error(res, ERROR_MESSAGES.SOMETHING_WENT_WRONG, 500);
+    }
+  }
+
+  async kitchenScreenWording(req, res) {
+    try {
+      const data = await require('../repositories/sale.repository').kitchenScreenWording(
+        req.body.branchId
+      );
+      res.set('Cache-Control', 'no-store');
+      return this.success(res, data, 'success');
+    } catch (error) {
+      return this.error(
+        res,
+        error.status ? error.message : 'Kitchen wording unavailable.',
+        error.status || 500
+      );
     }
   }
 

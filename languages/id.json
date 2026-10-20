@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "Cari kata-kata yang ada atau ekstensi",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "Update label yang cocok dan didukung Tambah/Telusuri/Penjualan berdasarkan frasa. Nama produk, catatan, dan bahasa lainnya tidak berubah.",
-  "lang_your_wording": "Kata-kata Anda"
+  "lang_your_wording": "Kata-kata Anda",
+  "lang_wording_changed_only": "Hanya diubah",
+  "lang_wording_labels_per_page": "Label per halaman"
 }

@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "Prohledat stávající znění nebo rozšíření",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "Aktualizuje odpovídající štítky a podporované Přidat/Vyhledávání/Prodej podle frází. Názvy produktů, poznámky a další jazyky se nezmění.",
-  "lang_your_wording": "Vaše znění"
+  "lang_your_wording": "Vaše znění",
+  "lang_wording_changed_only": "Pouze změněno",
+  "lang_wording_labels_per_page": "Štítky na stránku"
 }

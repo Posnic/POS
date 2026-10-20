@@ -4977,5 +4977,7 @@
   "lang_wording_search_existing_wording_or_extension": "기존 문구 또는 확장명",
   "lang_wording_takeaway": "테이크 아웃",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "레이블과 일치하는",
-  "lang_your_wording": "당신의 문구"
+  "lang_your_wording": "당신의 문구",
+  "lang_wording_changed_only": "변경만",
+  "lang_wording_labels_per_page": "페이지당 라벨 수"
 }

@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "Пошук існуючих формулювань або розши",
   "lang_wording_takeaway": "рень Винос",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "Оновлює відповідні мітки та підтримуються Додати/Пошук/Продажі за фразами. Назви продуктів, примітки та інші мови залишаються незмінними.",
-  "lang_your_wording": "Ваша формулювання"
+  "lang_your_wording": "Ваша формулювання",
+  "lang_wording_changed_only": "Змінено тільки",
+  "lang_wording_labels_per_page": "Мітки на сторінку"
 }

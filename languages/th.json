@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "ค้นหาคำหรือส่วนขยายที่มี",
   "lang_wording_takeaway": "away",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "อัปเดตป้ายกำกับที่ตรงกับและรองรับ เพิ่ม/ค้นหา/ขายตามวลีที่รองรับชื่อผลิตภัณฑ์หมายเหตุและภาษาอื่น ๆ จะไม่มีการเปลี่ยนแปลง",
-  "lang_your_wording": "ถ้อยคำของคุณ"
+  "lang_your_wording": "ถ้อยคำของคุณ",
+  "lang_wording_changed_only": "เปลี่ยนไปเท่านั้น",
+  "lang_wording_labels_per_page": "ป้ายกำกับต่อหน้า"
 }

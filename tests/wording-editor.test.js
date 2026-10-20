@@ -28,3 +28,29 @@ test('searchable editor saves a draft then publishes selected branches without a
   assert.match(doc.getElementById('wording-notice').textContent, /Published/);
   dom.window.close();
 });
+test('pagination reaches every label and preserves draft edits across search, sizing and filters', () => {
+  const dom = new JSDOM('<div id="wording-editor"></div>', { runScripts: 'outside-only' });
+  const data = { state: { revision: 0, profiles: [], assignments: {} }, writable: true, locales: ['en'], branches: [],
+    labels: Array.from({ length: 131 }, (_, i) => ({ id: 'posnic.label' + i, english: 'Label ' + i, module: 'Core' })) };
+  dom.window.PosnicPro = { local: { get: () => 'super_admin' }, i18n: { t: (_, v) => v }, get: (_, cb) => cb({ type: 'success', data }) };
+  dom.window.eval(fs.readFileSync('frontend/static/script/js/modules/js/wording-editor.js', 'utf8'));
+  dom.window.PosnicPro.wordingEditor.open();
+  const q = s => dom.window.document.querySelector(s);
+  const event = (el, type) => el.dispatchEvent(new dom.window.Event(type, { bubbles: true }));
+  assert.equal(dom.window.document.querySelectorAll('[data-word]').length, 25);
+  q('[data-word]').value = 'My label'; event(q('[data-word]'), 'input');
+  for (let i = 0; i < 5; i++) q('#wording-next').click();
+  assert.equal(q('#wording-results').textContent, '126–131 / 131');
+  assert.equal(q('#wording-next').disabled, true);
+  q('#wording-search').value = 'My label'; event(q('#wording-search'), 'input');
+  assert.equal(q('[data-word]').value, 'My label');
+  q('#wording-search').value = ''; event(q('#wording-search'), 'input');
+  q('#wording-page-size').value = '100'; event(q('#wording-page-size'), 'change');
+  assert.equal(dom.window.document.querySelectorAll('[data-word]').length, 100);
+  q('#wording-changed').checked = true; event(q('#wording-changed'), 'change');
+  assert.equal(q('#wording-results').textContent, '1–1 / 1');
+  q('[data-reset]').click();
+  assert.equal(q('#wording-results').textContent, '0–0 / 0');
+  assert.equal(q('#wording-prev').disabled, true);
+  dom.window.close();
+});

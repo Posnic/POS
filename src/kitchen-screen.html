@@ -749,6 +749,11 @@
     }
     if (((config || {}).orderSort || 'oldest') !== ((cfg || {}).orderSort || 'oldest')) page = 0;
     config = cfg || {};
+    if (window.DisplayI18n && window.DisplayI18n.setWording) {
+      var wording = !config.setupMode && config._wording;
+      window.DisplayI18n.setWording(window.DisplayI18n.language,
+        wording && wording.bundles && wording.bundles[window.DisplayI18n.language] || {});
+    }
     $('refresh-orders').hidden = !!config.setupMode;
     cancellationSeen.forEach(function (at, id) { cancellationExpiry.set(id, at + cancelledSeconds() * 1000); });
     updateRotation();
