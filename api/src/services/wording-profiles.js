@@ -1,5 +1,6 @@
 'use strict';
 
+const { applyRules } = require('./wording-rules');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -99,7 +100,18 @@ function validateDraft(input, labels, locales) {
       fail('Keep the placeholders in ' + label.english);
     overrides[id] = value.trim();
   }
-  return { name: input.name.trim(), locale: input.locale, overrides };
+  const rules = input.rules || [];
+  if (!Array.isArray(rules) || rules.length > 50) fail('Use up to 50 word replacements');
+  const seen = new Set();
+  for (const rule of rules) {
+    if (!rule || typeof rule.from !== 'string' || typeof rule.to !== 'string' ||
+        !rule.from.trim() || !rule.to.trim() || rule.from.length > 100 || rule.to.length > 100 ||
+        /[<>{}%]/.test(rule.from + rule.to) || Array.from(rule.from + rule.to).some(c => c.charCodeAt(0) < 32) || seen.has(rule.from.trim().toLowerCase()))
+      fail('Enter unique existing words and plain text replacements');
+    seen.add(rule.from.trim().toLowerCase());
+  }
+  return { name: input.name.trim(), locale: input.locale, overrides,
+    ...(rules.length ? { rules: rules.map(r => ({ from: r.from.trim(), to: r.to.trim() })) } : {}) };
 }
 function resolveBundle(state, branch, locale, labels) {
   if (state.schemaVersion !== 1)
@@ -108,6 +120,18 @@ function resolveBundle(state, branch, locale, labels) {
   const profile = state.profiles?.find((p) => p.id === assignment?.profileId);
   const revision = profile?.revisions.find((r) => r.id === assignment?.revisionId);
   const values = Object.create(null);
+  if (revision?.locale === locale && revision.rules?.length) {
+    let translated = {};
+    if (locale !== 'en') {
+      try { translated = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../frontend/public/languages', locale + '.json'), 'utf8')); } catch { /* Only transform available base-language text. */ }
+    }
+    for (const label of labels.values()) {
+      const base = label.defaults?.[locale] || translated[label.key];
+      if (typeof base !== 'string') continue;
+      const replacement = applyRules(base, revision.rules);
+      if (replacement !== base && placeholders(replacement) === placeholders(base)) values[label.key] = replacement;
+    }
+  }
   if (revision?.locale === locale)
     for (const [id, value] of Object.entries(revision.overrides)) {
       const label = labels.get(id);

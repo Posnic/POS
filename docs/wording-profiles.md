@@ -300,3 +300,23 @@ Remaining verification includes the full release gates and live installed-device
 physical-printer checks. No new release or deployment is claimed. Historical
 extension labels are captured under their namespaced keys as well; removed
 extensions cannot erase the wording already stored on an issued document.
+
+### Simplified terminology demo (21 October 2026)
+
+The isolated Sridhar test shop now has generic Existing word / Use instead rows,
+a single Save changes button, optional profile naming and collapsed advanced
+phrase overrides. Manage now includes Language & labels. Rules persist inside
+profile draft/published revisions in the existing tenant settings sync lane.
+The resolver applies non-cascading whole-word rules to registered base-language
+labels, preserving placeholders and letting explicit phrase overrides win.
+New catalog/extension labels are resolved with saved rules. Historical document
+snapshots retain their issued wording. Actual customer/product data is untouched.
+
+20 focused tests passed (rules, editor, access, profile lifecycle, snapshot/PDF),
+API lint and frontend build passed. Authenticated live UI save and reload passed:
+Item -> Product and Items -> Products were published for the user's test branch,
+and Product Details / Product Position updated. This is an isolated demo patch,
+not yet merged or packaged for offline tills. Offline API consumers must receive
+the new rule resolver; existing mobile clients consume resolved values from this
+updated server. New demo UI copy still needs translation catalog integration.
+Backup: /home/ubuntu/apps/staging/before-simple-wording-demo.tgz.
