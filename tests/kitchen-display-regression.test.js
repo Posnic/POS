@@ -234,12 +234,12 @@ test('arrival sorting defaults to oldest, applies before pagination and keeps un
    {table:'New',placedAt:'2026-09-30T10:00:00Z',items:[]},
    {table:'Old',placedAt:'2026-09-30T09:00:00Z',items:[]}
   ]);
-  assert.equal(board.querySelector('.table').textContent,'Old');
+  assert.equal(board.querySelector('.table').textContent,'Table Old');
   assert.equal(w.document.getElementById('pager').textContent,'1 of 3');
   w.kitchenScreen.setConfig({...cfg,orderSort:'newest'});
-  assert.equal(board.querySelector('.table').textContent,'New');
+  assert.equal(board.querySelector('.table').textContent,'Table New');
   w.kitchenScreen.setConfig({...cfg,orderSort:'oldest'});
-  assert.equal(board.querySelector('.table').textContent,'Old');
+  assert.equal(board.querySelector('.table').textContent,'Table Old');
  } finally {dom.window.close();}
 });
 
@@ -317,7 +317,7 @@ test('one table has one box across rounds, all dishes and cancellations; untable
   assert.equal(board.querySelectorAll('.ticket').length,3);
   const table=board.querySelector('.table').closest('.ticket');
   assert.equal(table.querySelectorAll('.name').length,10);
-  assert.equal(table.querySelector('.table').textContent,'T - 7');
+  assert.equal(table.querySelector('.table').textContent,'Table 7');
   assert.match(table.querySelector('.ticket-body').textContent,/2 - Added fish \(500 each\)/);
   assert.ok(table.querySelector('.ticket-meta > .top .table'),'table heading belongs above the dishes');
   assert.ok(table.querySelector('.ticket-body > .items'),'full dish list follows the heading');
