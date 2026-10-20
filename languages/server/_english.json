@@ -435,6 +435,9 @@
     "src/controllers/categories.controller.js",
     "src/controllers/customer-categories.controller.js"
   ],
+  "Choose a Kural number from 1 to 1330.": [
+    "src/controllers/settings.controller.js"
+  ],
   "Choose a PNG, JPEG or WebP signature under 400 KB.": [
     "src/models/setting.model.js",
     "src/repositories/settings.repository.js"

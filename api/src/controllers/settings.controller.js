@@ -549,6 +549,21 @@ class SettingController extends BaseController {
     }
   }
 
+  async previewReceiptQuote(req, res) {
+    const number = Number(req.body?.number);
+    if (!Number.isInteger(number) || number < 1 || number > 1330)
+      return res
+        .status(400)
+        .json({ type: 'error', message: 'Choose a Kural number from 1 to 1330.' });
+    const data = require('../helpers/receipt-quote').select({
+      source: 'thirukkural',
+      order: 'fixed',
+      selectedNumber: number,
+      showQr: true,
+    });
+    return res.json({ type: 'success', data });
+  }
+
   async previewReceiptQr(req, res) {
     const text = req.body && req.body.text;
     if (typeof text !== 'string' || !text.trim() || text.length > 1000) {

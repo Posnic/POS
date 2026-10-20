@@ -864,9 +864,16 @@ describe('updateCommonSettings', () => {
         blocks: contract.required.map((type) => ({ id: type, type, align: 'left' })),
       };
     }
+    designs.quoteFooter = {
+      source: 'custom',
+      order: 'fixed',
+      selectedNumber: 2,
+      quotes: ['First', 'Second'],
+    };
     const result = await m.updateCommonSettings({ receipt_designs: designs });
     expect(result.status).toBe(true);
     expect(setOf(col).receipt_designs.defaultFormat).toBe('letter');
+    expect(setOf(col).receipt_designs.quoteFooter).toEqual(designs.quoteFooter);
     expect(Object.keys(setOf(col))).toEqual(
       expect.arrayContaining(['receipt_designs', 'updated_date'])
     );

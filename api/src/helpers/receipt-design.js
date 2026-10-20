@@ -158,7 +158,7 @@
       if (
         !q ||
         !['none', 'custom', 'thirukkural'].includes(q.source) ||
-        !['sequential', 'random'].includes(q.order)
+        !['sequential', 'random', 'fixed'].includes(q.order)
       )
         throw new Error('Choose a valid quote library and order.');
       if (
@@ -170,6 +170,16 @@
       const quotes = q.quotes.map((text) => text.trim()).filter(Boolean);
       if (q.source === 'custom' && !quotes.length) throw new Error('Add at least one quote.');
       out.quoteFooter = { source: q.source, order: q.order, quotes };
+      if (q.order === 'fixed' && q.source !== 'none') {
+        const maximum = q.source === 'thirukkural' ? 1330 : quotes.length;
+        if (
+          !Number.isInteger(q.selectedNumber) ||
+          q.selectedNumber < 1 ||
+          q.selectedNumber > maximum
+        )
+          throw new Error('Choose a quote number between 1 and ' + maximum + '.');
+        out.quoteFooter.selectedNumber = q.selectedNumber;
+      }
       if (q.qrSizeMm !== undefined) {
         if (![18, 22, 26].includes(q.qrSizeMm))
           throw new Error('Choose a QR size of 18, 22 or 26 mm.');

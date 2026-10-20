@@ -24,7 +24,7 @@ const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label
     await page.addStyleTag({ path: path.join(ROOT, 'frontend/public/style', styles) });
     await page.addStyleTag({ path: path.join(ROOT, 'frontend/static/style/css/theme-variables.css') });
     await page.addStyleTag({ content: html.slice(start + 7, html.indexOf('</style>', start)) });
-    for (const script of ['jquery.min.js', 'popper.min.js', 'bootstrap.min.js', 'JsBarcode.all.min.js']) await page.addScriptTag({ path: path.join(ROOT, 'frontend/static/script/js', script) });
+    for (const script of ['jquery.min.js', 'popper.min.js', 'bootstrap.min.js', 'JsBarcode.all.min.js', 'vendor/label-qr.js']) await page.addScriptTag({ path: path.join(ROOT, 'frontend/static/script/js', script) });
     await page.evaluate(() => {
       const products = Array.from({ length: 36 }, (_, i) => ({ _id: String(i), name: ['Dairy Milk', 'Dairy Milk Daim', 'Washing-up liquid', 'Kitchen foil'][i % 4] + (i > 3 ? ' ' + i : ''), barcode_id: '7622202828256', category_id: 'chocolate', label_price: 1.75, label_currency_digits: 2 }));
       window.PosnicPro = { items: {}, listFilter: { legacyFilters: () => ({}) }, i18n: { t: (key, fallback) => fallback }, local: { get: key => ({ branchname: 'Top Discount and DIY Store', currencySign: '£' })[key] }, get: (params, done) => {
@@ -67,6 +67,12 @@ const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label
     await page.select('#font', 'Arial');
     await page.$eval('#bar-fontSize', el => { el.value = 12; el.dispatchEvent(new Event('change', { bubbles: true })); });
     await page.screenshot({ path: path.join(OUT, '03-layout.png') });
+    const originalPrice = await page.$eval('#sl-sample .sl-price', el => getComputedStyle(el).fontSize);
+    await page.$eval('#sl-name-size', el => { el.value = 22; el.dispatchEvent(new Event('change', { bubbles: true })); el.scrollIntoView({block:'center'}); });
+    assert.equal(await page.$eval('#sl-sample .sl-name', el => getComputedStyle(el).fontSize), '22px');
+    assert.equal(await page.$eval('#sl-sample .sl-price', el => getComputedStyle(el).fontSize), originalPrice);
+    await page.screenshot({ path: path.join(OUT, '03-text-customization.png') });
+    await page.$eval('#sl-name-size', el => { el.value = 16.2; el.dispatchEvent(new Event('change', { bubbles: true })); });
     await page.click('#sl-next-step');
     await page.waitForFunction(() => !document.querySelector('[data-sl-panel="2"]').hidden);
     assert.equal(await page.$eval('#sl-preview', el => el.querySelectorAll('.sl-label').length), 24);
@@ -94,6 +100,23 @@ const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label
     await roll.setContent('<style>' + rollJob.style + '</style>' + rollJob.printable);
     await roll.pdf({ path: path.join(OUT, 'roll-print-proof.pdf'), preferCSSPageSize: true, printBackground: true });
     await roll.close();
+    // Render an image + QR label in Chromium with the same renderer used for print.
+    await page.evaluate(() => {
+      const canvas=document.createElement('canvas'); canvas.width=80; canvas.height=80;
+      const ctx=canvas.getContext('2d'); ctx.fillStyle='#f28b19';ctx.fillRect(0,0,80,80);
+      const settings={paper:'roll',width:72,height:40,margin:0,gap:0,start:1,font:'Arial',fontSize:10,
+        align:'center',ink:'#000000',background:'#ffffff',nameSize:16,priceSize:28,shopSize:9,
+        currency:'£',shop:'Sample shop',codeKind:'qr',qrSource:'custom',qrCustom:'https://posnic.io/product/123',qrSize:12,photo:true,photoSide:'left',photoWidth:30};
+      const geometry=PosnicShelfLabels.geometry(settings);
+      const label=PosnicShelfLabels.sheet(document,[{name:'Photo product',label_price:1.50,image:canvas.toDataURL()}],settings,JsBarcode);
+      const host=document.createElement('div');host.id='qr-photo-proof';host.style='position:fixed;inset:0;background:white;z-index:99999;padding:30px';
+      const style=document.createElement('style');style.textContent=PosnicShelfLabels.css(settings,geometry);
+      host.append(style,label);document.body.append(host);
+    });
+    await page.waitForFunction(() => document.querySelector('#qr-photo-proof img').complete);
+    assert.equal(await page.$eval('#qr-photo-proof .sl-qr',node=>node.getBoundingClientRect().width>0),true);
+    await page.screenshot({path:path.join(OUT,'07-qr-photo.png')});
+    await page.evaluate(()=>document.querySelector('#qr-photo-proof').remove());
     await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
     await page.evaluate(() => PosnicShelfLabels.open());
     await page.waitForFunction(() => $('#sl-products input[type=checkbox]').length === 30);
