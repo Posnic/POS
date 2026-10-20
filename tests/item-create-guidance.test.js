@@ -23,7 +23,50 @@ test('save lock rejects repeated submission and unlocks for retry without cleari
   const $=jquery(dom.window);
   const src=fs.readFileSync('frontend/static/script/js/modules/js/items.js','utf8');
   const block=src.slice(src.indexOf('    _saving:'),src.indexOf('    stockMessage:'));
-  const app={items:null};app.items=new Function('$','PosnicPro','return ({'+block+'});')($,app);
+  const app={items:null};app.items=new Function(';
+  $('#items_name').val('Tea');
+  assert.equal(app.items.beginSave(),true);assert.equal(app.items.beginSave(),false);
+  assert.equal($('#item_save_bar button[type="submit"]').prop('disabled'),true);
+  app.items.finishSave();
+  assert.equal($('#items_name').val(),'Tea');assert.equal(app.items.beginSave(),true);
+  app.items.finishSave();dom.window.close();
+});
+
+test('upload failures release the save lock and retain the draft',()=>{
+  const dom=new JSDOM(fs.readFileSync('frontend/modules/items_write.html','utf8'));
+  const $=jquery(dom.window);let ok,fail,finished=0,saved=0;
+  const app={i18n:{t:(_k,v)=>v},alert(){},post(_p,a,b){ok=a;fail=b;},items:{imageParams:[],finishSave(){finished++;},item(){saved++;}}};
+  const src=fs.readFileSync('frontend/static/script/js/modules/js/items.js','utf8');
+  const block=src.slice(src.indexOf('    itemImageFormSubmit:'),src.indexOf('    updateItemAvailability:'));
+  const upload=new Function('$','PosnicPro','return ({'+block+'}).itemImageFormSubmit;')($,app);
+  $('#items_name').val('Tea');upload();fail({responseText:'not JSON'});
+  assert.equal(finished,1);assert.equal(saved,0);assert.equal($('#items_name').val(),'Tea');
+  upload();ok({type:'error',message:'Upload failed'});assert.equal(finished,2);assert.equal(saved,0);
+  upload();ok({type:'success',data:[]});assert.equal(saved,1);assert.equal($('#item_upload_image_status').val(),'no');
+  dom.window.close();
+});
+
+test('stale price previews cannot replace newer prices or open-price mode',async()=>{
+  const dom=new JSDOM(fs.readFileSync('frontend/modules/items_write.html','utf8'));
+  const $=jquery(dom.window);const calls=[];
+  const app={i18n:{t:(_k,v)=>v},local:{get:()=>''},post(p,ok){calls.push({p,ok});},items:{}};
+  const src=fs.readFileSync('frontend/static/script/js/modules/js/items.js','utf8');
+  const block=src.slice(src.indexOf('    _saving:'),src.indexOf('    // Ask before upload/save;'));
+  app.items=new Function('$','PosnicPro','return ({'+block+'});')($,app);
+  app.items.selectAttr=()=>0;
+  $('#items_selling_price').val('100');app.items.refreshCreateSummary();
+  await new Promise(r=>setTimeout(r,330));
+  $('#items_selling_price').val('200');app.items.refreshCreateSummary();
+  await new Promise(r=>setTimeout(r,330));
+  calls[1].ok({type:'success',data:{base:200,discount:0,tax:0,total:200}});
+  calls[0].ok({type:'success',data:{base:100,discount:0,tax:0,total:100}});
+  assert.match($('#item_price_preview').text(),/200\.00/);
+  $('#item_open_price').prop('checked',true);app.items.refreshCreateSummary();
+  calls[1].ok({type:'success',data:{base:200,discount:0,tax:0,total:200}});
+  assert.match($('#item_price_preview').text(),/entered at the sale/);
+  dom.window.close();
+});
+,'PosnicPro',src.slice(0,src.indexOf('PosnicPro.items ='))+'return ({'+block+'});')($,app);
   $('#items_name').val('Tea');
   assert.equal(app.items.beginSave(),true);assert.equal(app.items.beginSave(),false);
   assert.equal($('#item_save_bar button[type="submit"]').prop('disabled'),true);
