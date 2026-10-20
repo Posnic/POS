@@ -21,6 +21,7 @@ const isOwner = (user) =>
 
 async function authorize(db, schedule) {
   if (
+    schedule.source !== 'messaging' &&
     !(await require('./ask-posnic-feature').enabled({
       licenseId: schedule.license,
       branchId: schedule.branch_id,
@@ -50,14 +51,21 @@ async function authorize(db, schedule) {
       branchName: branch.branch_name || '',
     },
   };
-  if (!platform.capabilityAllowed(await platform.getPreferences(req), 'insights', user))
+  if (
+    schedule.source !== 'messaging' &&
+    !platform.capabilityAllowed(await platform.getPreferences(req), 'insights', user)
+  )
     throw new Error('Insights are disabled for the schedule owner.');
   return { req, branch };
 }
 
 function reportRange(schedule, at = new Date()) {
   const end = moment.tz(at, schedule.timezone || 'UTC').startOf('day');
-  const start = end.clone().subtract(schedule.frequency === 'weekly' ? 7 : 1, 'days');
+  if (schedule.frequency === 'monthly') end.startOf('month');
+  const start =
+    schedule.frequency === 'monthly'
+      ? end.clone().subtract(1, 'month')
+      : end.clone().subtract(schedule.frequency === 'weekly' ? 7 : 1, 'days');
   return {
     starting_date: start.toDate(),
     ending_date: end.subtract(1, 'millisecond').toDate(),
@@ -82,7 +90,11 @@ async function buildReport(schedule, at, db) {
         ...assistant.answerOverview(
           schedule.report,
           overview.data,
-          schedule.frequency === 'weekly' ? 'the previous seven complete days' : 'yesterday'
+          schedule.frequency === 'monthly'
+            ? 'the previous complete month'
+            : schedule.frequency === 'weekly'
+              ? 'the previous seven complete days'
+              : 'yesterday'
         ),
         branch,
         range,
@@ -92,6 +104,21 @@ async function buildReport(schedule, at, db) {
 }
 
 async function deliver(schedule, report) {
+  // Timer callbacks have a tenant database, but no HTTP request context.
+  // Messaging settings and audit records must use the schedule's own license.
+  return runWithRequestContext(
+    {
+      license: ObjectId.isValid(String(schedule.license))
+        ? new ObjectId(String(schedule.license))
+        : schedule.license,
+      currentBranch: schedule.branch_id,
+      loggedUser: schedule.user_id,
+    },
+    () => deliverScoped(schedule, report)
+  );
+}
+
+async function deliverScoped(schedule, report) {
   const metrics = (report.metrics || [])
     .map((metric) => `${metric.label}: ${metric.value}`)
     .join('\n');
@@ -103,13 +130,18 @@ async function deliver(schedule, report) {
       schedule.destination,
       text,
       {
-        scheduled: {
-          id: String(schedule._id),
-          license: schedule.license,
-          branch_id: schedule.branch_id,
-          user_id: schedule.user_id,
-          claim: schedule.running_claim,
-        },
+        purpose: schedule.test ? 'Report test' : 'Scheduled report',
+        ...(schedule.test
+          ? {}
+          : {
+              scheduled: {
+                id: String(schedule._id),
+                license: schedule.license,
+                branch_id: schedule.branch_id,
+                user_id: schedule.user_id,
+                claim: schedule.running_claim,
+              },
+            }),
       }
     );
     if (!sent.ok || typeof sent.messageId !== 'string' || !sent.messageId.trim())

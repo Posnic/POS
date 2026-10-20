@@ -388,8 +388,8 @@ function generateInvoicePDF(options) {
   });
 
   // ---- totals, right column ----
-  const subtotal = parseFloat(data.items_subtotal || 0);
-  const grandTotal = parseFloat(data.items_total || data.grand_total || 0);
+  const subtotal = parseFloat(data.sales_sub_total ?? data.items_subtotal ?? 0);
+  const grandTotal = parseFloat(data.sales_total ?? data.items_total ?? data.grand_total ?? 0);
   const totalQty = items.reduce((sum, item) => sum + parseFloat(item.item_quantity || 0), 0);
   const saleExtraDiscount = Math.abs(parseFloat(data.sale_extra_discount || 0));
 

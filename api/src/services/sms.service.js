@@ -8,6 +8,15 @@ const Encryption = require('../utils/encryption');
  * Matches PHP implementation in setting_model.php:2644-2780
  */
 class SmsService {
+  receiptUrl(data, encryptedId) {
+    if (!data.receiptPublicBase) throw new Error('Receipt sharing needs the shop website address.');
+    const base = new URL(data.receiptPublicBase);
+    if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password) {
+      throw new Error('Invalid shop website address.');
+    }
+    return `${base.origin}/customersMailPrint.html?id=${encodeURIComponent(encryptedId)}`;
+  }
+
   constructor() {
     this.provider = config.sms.provider;
     this.s3Client = new S3Client({
@@ -161,7 +170,7 @@ class SmsService {
 
     try {
       const url = 'https://api.brevo.com/v3/transactionalSMS/sms';
-      const receiptUrl = `www.posnic.com/customersMailPrint.html?id=${encryptedId}`;
+      const receiptUrl = this.receiptUrl(data, encryptedId);
 
       const payload = {
         sender: config.sms.brevo.sender,
@@ -203,7 +212,7 @@ class SmsService {
     try {
       // Remove '+' from phone number (matching PHP line 2708)
       const userPhone = data.customer_sms_fullphone.replace('+', '');
-      const receiptUrl = `www.posnic.com/customersMailPrint.html?id=${encryptedId}`;
+      const receiptUrl = this.receiptUrl(data, encryptedId);
 
       // Construct payload (matching PHP lines 2711-2723)
       const payload = {
