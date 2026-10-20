@@ -164,6 +164,7 @@
   .ticket { --service-ink: var(--ink); }
   .ticket.service-parcel { --service-ink: #ffe066; }
   .ticket.service-room { --service-ink: #70bdff; }
+  .service-venue { display:block;font-size:.65em;line-height:1.4; }
   .ticket-meta .top > .table {
     display:flex;align-items:center;justify-content:center;gap:.35em;width:100%;text-align:center;
     color:var(--service-ink);line-height:1.15;
@@ -453,7 +454,9 @@
       kindPath.setAttribute('fill', 'none'); kindPath.setAttribute('stroke', 'currentColor');
       kindPath.setAttribute('stroke-width', '2'); kindPath.setAttribute('stroke-linejoin', 'round');kindIcon.appendChild(kindPath);
       heading.appendChild(kindIcon);
-      heading.appendChild(el('span', 'service-label', tableLabel.trim()));
+      var serviceLabel = el('span', 'service-label', tableLabel.trim());
+      if (roomName && ticket.venueName) serviceLabel.appendChild(el('small', 'service-venue', ticket.venueName));
+      heading.appendChild(serviceLabel);
       top.appendChild(heading);
     }
     if (cfg.showAge !== false) {
