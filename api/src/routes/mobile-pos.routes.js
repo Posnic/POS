@@ -126,6 +126,32 @@ router.post(
   })
 );
 router.use(protect);
+router.get(
+  '/wording',
+  wrap(async (req) => {
+    const c = await mobile.context(req);
+    if (!mobile.canConnect(req.user, c.branch))
+      mobile.fail('This account cannot use Mobile POS.', 403);
+    const {
+      WordingProfiles,
+      resolveBundle,
+      supportedLocales,
+    } = require('../services/wording-profiles');
+    const locale = req.query.locale;
+    if (
+      Object.keys(req.query).some((key) => key !== 'locale') ||
+      typeof locale !== 'string' ||
+      !supportedLocales().includes(locale)
+    )
+      mobile.fail('Choose a supported language.', 400);
+    const service = new WordingProfiles(req.db.collection('settings'), c.license);
+    return {
+      ...resolveBundle(await service.read(), String(c.branchId), locale, service.labels),
+      shopId: c.shopId,
+      staffId: String(c.userId),
+    };
+  })
+);
 const inventory = require('../services/mobile-inventory');
 router.get('/products/options', wrap(require('../services/mobile-products').options));
 router.get('/products/lookup', wrap(require('../services/mobile-products').lookup));

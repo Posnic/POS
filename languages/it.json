@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "Cerca parole o estensioni esistenti",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "corrispondenti alle etichette e supporta la funzione Aggiungi/Ricerca/Vendita per frasi. I nomi dei prodotti, le note e le altre lingue",
-  "lang_your_wording": "La tua formulazione"
+  "lang_your_wording": "La tua formulazione",
+  "lang_wording_changed_only": "Solo modificato",
+  "lang_wording_labels_per_page": "Etichette per pagina"
 }

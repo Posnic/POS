@@ -2,8 +2,15 @@
 const BaseModel = require('../models/base.model');
 const { WordingProfiles, resolveBundle } = require('./wording-profiles');
 /** Documents resolve independently of a browser's selected UI language. */
-async function loadDocumentWording({ branchId, licenseId, locale = 'en' }) {
+async function loadDocumentWording({ branchId, licenseId, locale = 'en', document }) {
   if (!branchId || !licenseId) return null;
+  const snapshot = require('./document-wording-snapshot').resolve(
+    document,
+    branchId,
+    licenseId,
+    locale
+  );
+  if (snapshot !== undefined) return snapshot;
   const model = new BaseModel('settings');
   try {
     const service = new WordingProfiles(await model.getCollection('settings'), licenseId);

@@ -54,6 +54,11 @@ function electron() {
 /* One window per display id. */
 const windows = new Map();
 const renderReceipts = new Map();
+const wordings = new Map();
+function setWording(value, displayId) {
+  wordings.set(String(displayId), value);
+  push(displayId);
+}
 let _watching = false;
 let _running = false;
 let _pollTimer = null;
@@ -522,7 +527,7 @@ function push(displayId, { setupMode = false } = {}) {
   });
 
   try {
-    win.webContents.send('kitchen-screen:config', { ...cfg, setupMode, _fit: computed, _feedStatus: feedStatuses.has(id) ? feedStatuses.get(id) : 'Connecting to kitchen orders...' });
+    win.webContents.send('kitchen-screen:config', { ...cfg, setupMode, _wording: wordings.get(id) || null, _fit: computed, _feedStatus: feedStatuses.has(id) ? feedStatuses.get(id) : 'Connecting to kitchen orders...' });
     win.webContents.send('kitchen-screen:tickets', setupMode ? sampleTickets() : (feeds.get(id) || []));
     return true;
   } catch (err) {
@@ -561,6 +566,7 @@ function acknowledgeRender(sender,token) {
 
 module.exports = {
   DEFAULTS,
+  setWording,
   setFeedStatus,
   displays,
   push,

@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "දැනට පවතින වචන හෝ දිග",
   "lang_wording_takeaway": "away",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "ාවත්කාලීන කිරීම් ගැලපෙන ලේබල් සහ සහාය වාක්ය ඛණ්ඩ මගින් එකතු කරන්න/ නිෂ්පාදන නම්, සටහන් සහ වෙනත් භාෂා නොවෙනස්ව පවතී.",
-  "lang_your_wording": "ඔබේ වචන"
+  "lang_your_wording": "ඔබේ වචන",
+  "lang_wording_changed_only": "වෙනස් කළා විතරයි",
+  "lang_wording_labels_per_page": "පිටුවකට ලේබල්"
 }

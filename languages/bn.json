@@ -4977,5 +4977,7 @@
   "lang_wording_search_existing_wording_or_extension": "বিদ্যমান শব্দ বা এক্স",
   "lang_wording_takeaway": "টে",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "ধান করুন টেকওয়ে আপডেট মেলে লেবেল এবং সমর্থিত বাক্যাংশ পণ্যের নাম, নোট এবং অন্যান্য ভাষা অপরিবর্তিত।",
-  "lang_your_wording": "আপনার শব্দ"
+  "lang_your_wording": "আপনার শব্দ",
+  "lang_wording_changed_only": "শুধুমাত্র পরিবর্তিত",
+  "lang_wording_labels_per_page": "প্রতি পৃষ্ঠা লেবেল"
 }

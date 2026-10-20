@@ -1370,6 +1370,12 @@ class ReceivingsController extends BaseController {
         data: receiving,
         branch,
         res,
+        wording: await require('../services/document-wording').loadDocumentWording({
+          document: receiving,
+          branchId,
+          licenseId: req.tenantContext?.licenseId || receiving.license,
+          locale: 'en',
+        }),
         config: {
           title: 'Purchase Invoice.',
           idField: 'receiving_id',
@@ -1449,6 +1455,12 @@ class ReceivingsController extends BaseController {
         data: receiving,
         branch,
         res: sink,
+        wording: await require('../services/document-wording').loadDocumentWording({
+          document: receiving,
+          branchId,
+          licenseId: req.tenantContext?.licenseId || receiving.license,
+          locale: 'en',
+        }),
         config: {
           title: 'Purchase Invoice.',
           idField: 'receiving_id',

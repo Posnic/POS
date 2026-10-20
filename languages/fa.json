@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "جستجوی عبارات موجود یا افزونه Takeaway برچسب های",
   "lang_wording_takeaway": "مطاب",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "قت را به روز می کند و افزودن/جستجو/فروش پشتیبانی شده توسط عبارات را به روز می کند. نام محصولات، یادداشت ها و سایر زبان ها بدون تغییر هستند.",
-  "lang_your_wording": "اصطلاحات شما"
+  "lang_your_wording": "اصطلاحات شما",
+  "lang_wording_changed_only": "فقط تغییر کرد",
+  "lang_wording_labels_per_page": "برچسب ها در هر صفحه"
 }

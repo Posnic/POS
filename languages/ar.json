@@ -5055,5 +5055,7 @@
   "lang_wording_search_existing_wording_or_extension": "ابحث في الصياغة الحالية أو الإضافة",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "Updates المطابقة والتسميات المدعومة إضافة/بحث/مبيعات حسب العبارات. لم تتغير أسماء المنتجات والملاحظات واللغات الأخرى.",
-  "lang_your_wording": "الصياغة الخاصة بك"
+  "lang_your_wording": "الصياغة الخاصة بك",
+  "lang_wording_changed_only": "تم تغييره فقط",
+  "lang_wording_labels_per_page": "التصنيفات لكل صفحة"
 }

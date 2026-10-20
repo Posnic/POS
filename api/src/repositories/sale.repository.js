@@ -8352,6 +8352,34 @@ class SalesRepository {
     };
   }
 
+  async kitchenScreenWording(branchId) {
+    if (!mongoose.Types.ObjectId.isValid(String(branchId)))
+      throw Object.assign(new Error('Choose an orders branch.'), { status: 400 });
+    if (BaseModel.currentBranch && String(BaseModel.currentBranch) !== String(branchId))
+      throw Object.assign(new Error('Branch not found.'), { status: 403 });
+    const db = await BaseModel.getDb();
+    const branch = await db.collection('branches').findOne({
+      _id: new mongoose.Types.ObjectId(String(branchId)),
+      ...(BaseModel.license ? { license: BaseModel.license } : {}),
+    });
+    if (!branch?.license) throw Object.assign(new Error('Branch not found.'), { status: 403 });
+    const { WordingProfiles, resolveBundle } = require('../services/wording-profiles');
+    const profiles = new WordingProfiles(db.collection('settings'), branch.license);
+    const state = await profiles.read();
+    const bundles = {};
+    for (const locale of new Set([
+      'en',
+      ...Object.keys(state.assignments?.[String(branchId)] || {}),
+    ]))
+      bundles[locale] = resolveBundle(
+        state,
+        String(branchId),
+        locale,
+        profiles.labels
+      ).sourceValues;
+    return { branchId: String(branchId), bundles };
+  }
+
   async kitchenScreenTickets(branchId) {
     try {
       const db = await BaseModel.getDb();
@@ -14840,6 +14868,14 @@ class SalesRepository {
    */
   async insertSaleWithFreshNumber(salesCollection, document, branchId, { attempts = 5 } = {}) {
     document.origin = require('../utils/sale-origin').stamp(document);
+    if (document.license && branchId) {
+      const settings = await new BaseModel('settings').getCollection('settings');
+      document.wording_snapshot = await require('../services/document-wording-snapshot').capture(
+        settings,
+        document.license,
+        branchId
+      );
+    }
     for (let attempt = 1; ; attempt++) {
       try {
         return await salesCollection.insertOne(document);

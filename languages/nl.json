@@ -5141,5 +5141,7 @@
   "lang_sl_text_sizes_help": "Pas elke regel afzonderlijk aan. Groottes zijn in pixels; het voorbeeld gebruikt hetzelfde ontwerp als de afdruk.",
   "lang_sl_type_foot": "Aanvullende details",
   "lang_cancel_item": "Artikel annuleren:",
-  "lang_cancel_item_action": "Artikel annuleren"
+  "lang_cancel_item_action": "Artikel annuleren",
+  "lang_wording_changed_only": "Alleen gewijzigd",
+  "lang_wording_labels_per_page": "Labels per pagina"
 }

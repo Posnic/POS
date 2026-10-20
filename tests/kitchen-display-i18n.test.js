@@ -7,6 +7,24 @@ const {JSDOM} = require('jsdom');
 const root = path.join(__dirname,'../api/src/kitchen-board');
 const read = file => fs.readFileSync(path.join(root,file),'utf8');
 const tick = () => new Promise(resolve => setImmediate(resolve));
+test('shop wording changes registered display text, preserves values and clears on language change', async () => {
+  const dom = new JSDOM('<html><body>Settings<span translate="no">Product customer</span></body></html>',
+    {url:'https://example.test/kitchen/index.html',runScripts:'outside-only'});
+  const w = dom.window;
+  Object.defineProperty(w.document, 'currentScript', {value:{src:'https://example.test/kitchen/i18n.js'}});
+  w.fetch = async () => ({ok:true,json:async()=>({})});
+  try {
+    w.eval(read('i18n.js'));
+    await w.DisplayI18n.setLanguage('en');
+    assert.equal(w.DisplayI18n.setWording('en', {Settings:'Preferences', 'Updated {time}':'Checked {time}'}), true);
+    assert.ok(w.document.body.textContent.includes('Preferences'));
+    assert.equal(w.DisplayI18n.t('Updated {time}', {time:'Product customer'}), 'Checked Product customer');
+    assert.equal(w.document.querySelector('[translate="no"]').textContent, 'Product customer');
+    assert.equal(w.DisplayI18n.setWording('fr', {Settings:'Wrong shop'}), false);
+    await w.DisplayI18n.setLanguage('ta');
+    assert.equal(w.DisplayI18n.t('Settings'), 'Settings');
+  } finally {dom.window.close();}
+});
 
 for (const protocol of ['https:', 'file:']) test(`language input cannot escape bundled locales in ${protocol}`, async () => {
   const base = protocol === 'file:' ? 'file:///app/api/src/kitchen-board/' : 'https://example.test/kitchen/';

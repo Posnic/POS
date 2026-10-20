@@ -4977,5 +4977,7 @@
   "lang_wording_search_existing_wording_or_extension": "विद्यमान शब्द किंवा विस्ता",
   "lang_wording_takeaway": "टेकआउट",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "उत्पादनांची नावे, नोट्स आणि इतर भाषा बदल",
-  "lang_your_wording": "आपले शब्द"
+  "lang_your_wording": "आपले शब्द",
+  "lang_wording_changed_only": "फक्त बदलले",
+  "lang_wording_labels_per_page": "प्रत्येक पृष्ठ"
 }

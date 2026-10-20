@@ -32,6 +32,7 @@ const authenticateKitchen = async (req, res, next) => {
   }
 };
 router.get('/', authenticateKitchen, wrap(service.list));
+router.get('/wording', authenticateKitchen, wrap(service.wording));
 router.get(
   '/voice/:saleId/:voiceId',
   authenticateKitchen,

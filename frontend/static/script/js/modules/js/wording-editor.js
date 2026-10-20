@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    var data, selected = '', draft, search = '', baseWords = {};
+    var data, selected = '', draft, search = '', baseWords = {}, page = 0, pageSize = 25, changedOnly = false;
     function loadBaseWords() {
         var locale = draft.locale;
         baseWords = {};
@@ -27,12 +27,16 @@
         var profile = data.state.profiles.find(function (p) { return p.id === id; });
         if (!profile) selected = '';
         draft = profile ? JSON.parse(JSON.stringify(profile.draft)) : { name: '', locale: 'en', overrides: {} };
-        search = ''; baseWords = {}; render(); loadBaseWords();
+        search = ''; baseWords = {}; page = 0; changedOnly = false; render(); loadBaseWords();
     }
     function rows() {
-        var all = data.labels.filter(function (l) { return [l.english, baseWords[l.id.replace(/^posnic\./, '')] || '', l.module, draft.overrides[l.id] || ''].join(' ').toLowerCase().includes(search.toLowerCase()); });
-        document.getElementById('wording-results').textContent = all.length + ' ' + PosnicPro.i18n.t('lang_wording_matching_labels_showing_up_to_100', ' matching labels · showing up to 100');
-        document.getElementById('wording-rows').innerHTML = all.slice(0, 100).map(function (l) {
+        var all = data.labels.filter(function (l) { return (!changedOnly || Object.prototype.hasOwnProperty.call(draft.overrides, l.id)) && [l.english, l.id, baseWords[l.id.replace(/^posnic\./, '')] || '', l.module, draft.overrides[l.id] || ''].join(' ').toLowerCase().includes(search.toLowerCase()); });
+        page = Math.max(0, Math.min(page, Math.ceil(all.length / pageSize) - 1));
+        var start = page * pageSize;
+        document.getElementById('wording-results').textContent = (all.length ? start + 1 : 0) + '–' + Math.min(start + pageSize, all.length) + ' / ' + all.length;
+        document.getElementById('wording-prev').disabled = page === 0;
+        document.getElementById('wording-next').disabled = start + pageSize >= all.length;
+        document.getElementById('wording-rows').innerHTML = all.slice(start, start + pageSize).map(function (l) {
             return '<tr><td>' + esc(baseWords[l.id.replace(/^posnic\./, '')] || l.english) + '<div class="text-muted small">' + esc(l.module) + '</div></td><td><input class="form-control" aria-label="Replacement for ' + esc(l.english) + '" data-word="' + esc(l.id) + '" maxlength="2000" placeholder="Use standard wording" data-t-placeholder="lang_use_standard_wording" value="' + esc(draft.overrides[l.id] || '') + '" ' + (!data.writable ? 'disabled' : '') + '></td><td><button type="button" class="btn btn-link" data-reset="' + esc(l.id) + '" ' + (!data.writable ? 'disabled' : '') + '><lang class="lang_wording_restore_default">Restore default</lang></button></td></tr>';
         }).join('');
     }
@@ -44,12 +48,22 @@
             '<div class="row mt-3"><label class="col-md-7"><lang class="lang_wording_profile_name">Profile name</lang><input id="wording-name" class="form-control" maxlength="100" value="' + esc(draft.name) + '"></label><label class="col-md-5"><lang class="lang_wording_base_language">Base language</lang><select id="wording-locale" class="form-control">' + data.locales.map(function (l) { return '<option ' + (l === draft.locale ? 'selected' : '') + '>' + l + '</option>'; }).join('') + '</select></label></div>' +
             '<details class="my-3"><summary><lang class="lang_wording_change_related_wording_together">Change related wording together</lang></summary><div class="row mt-2"><label class="col-md-4"><lang class="lang_wording_takeaway">Takeaway</lang><input id="wording-takeaway" class="form-control" placeholder="Parcel" data-t-placeholder="lang_parcel"></label><label class="col-md-4"><lang class="lang_wording_product_singular">Product (singular)</lang><input id="wording-singular" class="form-control" placeholder="Item" data-t-placeholder="lang_newitem_title"></label><label class="col-md-4"><lang class="lang_wording_products_plural">Products (plural)</lang><input id="wording-plural" class="form-control" placeholder="Items" data-t-placeholder="lang_itemdetail_title"></label></div><button class="btn btn-outline-primary" id="wording-group"><lang class="lang_apply_linked_english_labels">Apply linked English labels</lang></button><p class="text-muted small"><lang class="lang_wording_updates_matching_labels_and_supported_add_search_sales_">Updates matching labels and supported Add / Search / Sales by phrases. Product names, notes and other languages are unchanged.</lang></p></details>' +
             '<label class="d-block mt-3"><lang class="lang_wording_search_existing_wording_or_extension">Search existing wording or extension</lang><input id="wording-search" class="form-control" placeholder="Search e.g. takeaway or product" data-t-placeholder="lang_search_e_g_takeaway_or_product"></label><p id="wording-results" class="small text-muted"></p><div class="table-responsive"><table class="table"><thead><tr><th><lang class="lang_existing_wording">Existing wording</lang></th><th><lang class="lang_your_wording">Your wording</lang></th><th></th></tr></thead><tbody id="wording-rows"></tbody></table></div>' +
+            '<div class="d-flex flex-wrap align-items-center mb-3" style="gap:12px"><label><input id="wording-changed" type="checkbox" ' + (changedOnly ? 'checked' : '') + '> <lang class="lang_wording_changed_only">Changed only</lang></label><label><lang class="lang_wording_labels_per_page">Labels per page</lang> <select id="wording-page-size">' + [25,50,100].map(function(n){return '<option ' + (n === pageSize ? 'selected' : '') + '>' + n + '</option>';}).join('') + '</select></label><button type="button" class="btn btn-outline-primary" id="wording-prev" aria-label="Previous page" data-t-aria-label="lang_previous_page">←</button><button type="button" class="btn btn-outline-primary" id="wording-next" aria-label="Next page" data-t-aria-label="lang_next_page">→</button></div>' +
             '<h5><lang class="lang_assign_to_branches">Assign to branches</lang></h5>' + data.branches.map(function (b) { var a = data.state.assignments[b.id]; return '<label class="d-block"><input type="checkbox" data-branch="' + b.id + '" ' + (a && a[draft.locale]?.profileId === selected ? 'checked' : '') + '> ' + esc(b.name) + '</label>'; }).join('') +
             '<p id="wording-notice" role="status"></p><button class="btn btn-outline-primary mr-2" id="wording-save" ' + (!data.writable ? 'disabled' : '') + '><lang class="lang_wording_save_draft">Save draft</lang></button><button class="btn btn-primary" id="wording-publish" ' + (!data.writable ? 'disabled' : '') + '><lang class="lang_wording_save_publish">Save & publish</lang></button><p class="text-muted small mt-3"><lang class="lang_wording_offline_tills_apply_changes_after_synchronization_publi">Offline tills apply changes after synchronization. Publishing does not confirm every device has applied them.</lang></p>';
         rows();
-        h.oninput = function (e) { if (e.target.id === 'wording-search') { search = e.target.value; rows(); } else if (e.target.dataset.word) { if (e.target.value.trim()) draft.overrides[e.target.dataset.word] = e.target.value; else delete draft.overrides[e.target.dataset.word]; } else if (e.target.id === 'wording-name') draft.name = e.target.value; };
+        document.getElementById('wording-search').value = search;
+        h.oninput = function (e) { if (e.target.id === 'wording-search') { search = e.target.value; page = 0; rows(); } else if (e.target.dataset.word) { if (e.target.value.trim()) draft.overrides[e.target.dataset.word] = e.target.value; else delete draft.overrides[e.target.dataset.word]; } else if (e.target.id === 'wording-name') draft.name = e.target.value; };
         h.onchange = function (e) { if (e.target.id === 'wording-profile') choose(e.target.value); if (e.target.id === 'wording-locale') { if (Object.keys(draft.overrides).length) { e.target.value = draft.locale; tell(PosnicPro.i18n.t('lang_wording_create_a_separate_profile_for_a_different_language_to_k', 'Create a separate profile for a different language to keep its wording separate.')); } else { draft.locale = e.target.value; loadBaseWords(); } } };
-        h.onclick = function (e) { var b = e.target.closest('button'); if (!b || !data.writable) return; if (b.dataset.reset) { delete draft.overrides[b.dataset.reset]; rows(); } else if (b.id === 'wording-group') {
+        var changeProfile = h.onchange;
+        h.onchange = function(e) {
+            if (e.target.id === 'wording-page-size') { pageSize = [25,50,100].includes(Number(e.target.value)) ? Number(e.target.value) : 25; page = 0; rows(); }
+            else if (e.target.id === 'wording-changed') { changedOnly = e.target.checked; page = 0; rows(); }
+            else changeProfile(e);
+        };
+        h.onclick = function (e) { var b = e.target.closest('button'); if (!b) return;
+            if (b.id === 'wording-prev' || b.id === 'wording-next') { page += b.id === 'wording-next' ? 1 : -1; rows(); return; }
+            if (!data.writable) return; if (b.dataset.reset) { delete draft.overrides[b.dataset.reset]; rows(); } else if (b.id === 'wording-group') {
             if (draft.locale !== 'en') return tell(PosnicPro.i18n.t('lang_wording_edit_phrases_individually_for_this_language_english_phr', 'Edit phrases individually for this language. English phrase grouping is only available for English profiles.'));
             var take = document.getElementById('wording-takeaway').value.trim(), one = document.getElementById('wording-singular').value.trim(), many = document.getElementById('wording-plural').value.trim();
             var changes = {};
