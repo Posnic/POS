@@ -127,3 +127,17 @@
 #message_centre #message_automatic .card-body > .d-flex { display:grid!important; grid-template-columns:minmax(180px,1fr) auto auto; gap:16px; }
 #message_centre #message_automatic .card-body > .d-flex p { margin:0; }
 @media(max-width:1000px) { #message_centre #message_automatic .card-body > .d-flex { grid-template-columns:minmax(0,1fr); } }
+
+.email-setup-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin-bottom:20px; }
+.email-setup-grid label { display:block; min-width:0; }
+.email-setup-grid .form-control { margin-top:8px; width:100%; }
+.email-provider-help { background:#f5f8fc; border:1px solid #dce4ee; border-radius:8px; padding:20px; margin-bottom:24px; line-height:1.6; overflow-wrap:anywhere; }
+#email_api_fields,#email_oauth_fields { margin-top:20px; }
+#email_api_key { max-width:640px; }
+@media(max-width:640px) { .email-setup-grid {grid-template-columns:1fr;} }
+
+.email-test-panel { border-top:1px solid #dce4ee; margin-top:24px; padding-top:24px; }
+.email-test-panel .email-setup-grid { align-items:end; }
+
+.email-provider-help { color:#34465c; }
+.email-setup-grid label { color:#34465c; }

@@ -5218,5 +5218,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppต้องเปิดใช้งานและเชื่อมต่ออีเมลใช้การตั้งค่าอีเมลที่บันทึกไว้ของคุณ",
   "lang_whatsapp_provider": "WhatsAppผู้ให้บริการ",
   "lang_when_a_receipt_template_is_saved_send_test": "เมื่อบันทึกเทมเพลตใบเสร็จรับเงิน ส่งการทดสอบจะส่งใบเสร็จตัวอย่างไปยังหมายเลขของคุณ",
-  "lang_your_message": "ข้อความของคุณ"
+  "lang_your_message": "ข้อความของคุณ",
+  "lang_api_key_server_token": "APIคีย์/โทเค็นเซิร์ฟเวอร์",
+  "lang_check_email_delivery": "ตรวจสอบการส่งอีเมล",
+  "lang_connection_security": "ความปลอดภัยในการเชื่อมต่อ",
+  "lang_could_not_confirm_submission_check_provide": "ไม่สามารถยืนยันการส่งได้ตรวจสอบบันทึกของผู้ให้บริการก่อนลองอีกครั้ง",
+  "lang_could_not_load_email_settings_refresh_befo": "ไม่สามารถโหลดการตั้งค่าอีเมลได้รีเฟรชก่อนทำการเปลี่ยนแปลง",
+  "lang_enter_credentials_for_this_provider": "ป้อนข้อมูลประจำตัวสำหรับผู้ให้บริการรายนี้",
+  "lang_microsoft_administrator_setup": "การตั้งค่าผู้ดูแลระบบไมโครซอฟท์",
+  "lang_not_configured": "ไม่ได้กำหนดค่า",
+  "lang_save_your_settings_first_this_test_uses_th": "บันทึกการตั้งค่าของคุณก่อนการทดสอบนี้ใช้บัญชีที่บันทึกไว้",
+  "lang_saved_leave_blank_to_keep": "บันทึก - เว้นว่างไว้เพื่อเก็บไว้",
+  "lang_send_test_email": "ส่งอีเมลทดสอบ",
+  "lang_sending_test_email": "ส่งอีเมลทดสอบ...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (ปกติ 465)",
+  "lang_starttls_usually_587_or_2525": "สตาร์ททอลส์ (ปกติ 587 หรือ 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "ใช้อีเมล Posnic คลาวด์หรือเชื่อมต่อบัญชีของคุณเองเพื่อรับการเรียกเก็บเงินและรายงาน"
 }

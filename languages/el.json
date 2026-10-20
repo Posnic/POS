@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppπρέπει να ενεργοποιηθεί και να συνδεθεί. Το ηλεκτρονικό ταχυδρομείο χρησιμοποιεί τις αποθηκευμένες ρυθμίσεις email σας.",
   "lang_whatsapp_provider": "WhatsAppπάροχος",
   "lang_when_a_receipt_template_is_saved_send_test": "Όταν αποθηκεύεται ένα πρότυπο απόδειξης, η Αποστολή δοκιμής στέλνει ένα δείγμα απόδειξης στον αριθμό σας.",
-  "lang_your_message": "Το μήνυμά σας"
+  "lang_your_message": "Το μήνυμά σας",
+  "lang_api_key_server_token": "APIκλειδί/διακριτικό διακομιστή",
+  "lang_check_email_delivery": "Ελέγξτε την παράδοση μέσω email",
+  "lang_connection_security": "Ασφάλεια σύνδεσης",
+  "lang_could_not_confirm_submission_check_provide": "Δεν ήταν δυνατή η επιβεβαίωση της υποβολής. Ελέγξτε τα αρχεία καταγραφής παροχέα πριν προσπαθήσετε ξανά.",
+  "lang_could_not_load_email_settings_refresh_befo": "Δεν ήταν δυνατή η φόρτωση των ρυθμίσεων ηλεκτρονικού ταχυδρομείου. Ανανεώστε πριν κάνετε αλλαγές.",
+  "lang_enter_credentials_for_this_provider": "Εισαγάγετε διαπιστευτήρια για αυτόν τον πάροχο",
+  "lang_microsoft_administrator_setup": "Ρύθμιση διαχειριστή της Microsoft",
+  "lang_not_configured": "Δεν έχει ρυθμιστεί",
+  "lang_save_your_settings_first_this_test_uses_th": "Αποθηκεύστε πρώτα τις ρυθμίσεις σας. Αυτή η δοκιμή χρησιμοποιεί τον αποθηκευμένο λογαριασμό.",
+  "lang_saved_leave_blank_to_keep": "Αποθηκεύτηκε - αφήστε κενό για να διατηρήσετε",
+  "lang_send_test_email": "Αποστολή δοκιμαστικής αλληλογραφίας",
+  "lang_sending_test_email": "Αποστολή δοκιμαστικής αλληλογραφίας...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (συνήθως 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (συνήθως 587 ή 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Χρησιμοποιήστε Posnic το cloud email ή συνδέστε τον δικό σας λογαριασμό για λογαριασμούς και αναφορές."
 }

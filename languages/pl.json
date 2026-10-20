@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppmusi być włączony i podłączony. E-mail wykorzystuje zapisane ustawienia poczty e-mail.",
   "lang_whatsapp_provider": "WhatsAppdostawca",
   "lang_when_a_receipt_template_is_saved_send_test": "Po zapisaniu szablonu pokwitowania Wyślij test wysyła próbkę pokwitowania na Twój numer.",
-  "lang_your_message": "Twoja wiadomość"
+  "lang_your_message": "Twoja wiadomość",
+  "lang_api_key_server_token": "APIklucz/token serwera",
+  "lang_check_email_delivery": "Sprawdź dostawę poczty e-mail",
+  "lang_connection_security": "Bezpieczeństwo połączenia",
+  "lang_could_not_confirm_submission_check_provide": "Nie można potwierdzić przesłania. Sprawdź dzienniki dostawcy przed ponowną próbą.",
+  "lang_could_not_load_email_settings_refresh_befo": "Nie można załadować ustawień poczty e-mail. Odśwież przed wprowadzeniem zmian.",
+  "lang_enter_credentials_for_this_provider": "Wprowadź dane uwierzytelniające tego dostawcy",
+  "lang_microsoft_administrator_setup": "Konfiguracja administratora Microsoft",
+  "lang_not_configured": "Nie skonfigurowany",
+  "lang_save_your_settings_first_this_test_uses_th": "Najpierw zapisz ustawienia. Ten test wykorzystuje zapisane konto.",
+  "lang_saved_leave_blank_to_keep": "Zapisane - pozostaw puste, aby zachować",
+  "lang_send_test_email": "Wyślij testowy e-mail",
+  "lang_sending_test_email": "Wysyłanie testowego e-maila...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (zwykle 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (zwykle 587 lub 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Użyj poczty e-mail Posnic w chmurze lub połącz własne konto do rachunków i raportów."
 }

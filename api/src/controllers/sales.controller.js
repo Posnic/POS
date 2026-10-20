@@ -12,7 +12,7 @@ const salesService = require('../services/sale.service');
    theirs first, the platform chain otherwise. Absent config, bad ids
    and read errors all fall through to the platform transport. */
 async function shopTransportOf(req) {
-  const { resolveShopTransport } = require('../utils/email');
+  const { resolveConfiguredShopTransport } = require('../utils/email');
   let branchDoc = null;
   try {
     const { ObjectId } = require('mongodb');
@@ -25,7 +25,7 @@ async function shopTransportOf(req) {
   }
   /* The branch rides along: the mail LAYOUT needs the same document the
      transport was resolved from (shop name, address, white-label). */
-  return { ...resolveShopTransport(branchDoc), branch: branchDoc };
+  return { ...(await resolveConfiguredShopTransport(branchDoc)), branch: branchDoc };
 }
 const ItemService = require('../services/item.service');
 const LoyaltyService = require('../services/loyalty.service');

@@ -5218,5 +5218,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppతప్పనిసరిగా ప్రారంభించబడాలి మరియు కనెక్ట్ చేయాలి. ఇమెయిల్ మీ సేవ్ చేసిన ఇమెయిల్ సెట్టింగ్లను ఉపయోగిస్తుంది.",
   "lang_whatsapp_provider": "WhatsAppప్రొవైడర్",
   "lang_when_a_receipt_template_is_saved_send_test": "ఒక రసీదు టెంప్లేట్ సేవ్ చేయబడినప్పుడు, పరీక్ష పంపండి మీ నంబర్కు నమూనా రసీదును పంపుతుంది.",
-  "lang_your_message": "మీ సందేశం"
+  "lang_your_message": "మీ సందేశం",
+  "lang_api_key_server_token": "APIకీ/సర్వర్ టోకెన్",
+  "lang_check_email_delivery": "ఇమెయిల్ డెలివరీ తనిఖీ",
+  "lang_connection_security": "కనెక్షన్ భద్రత",
+  "lang_could_not_confirm_submission_check_provide": "సమర్పణను నిర్ధారించలేకపోయింది. తిరిగి ప్రయత్నించే ముందు ప్రొవైడర్ లాగ్లను తనిఖీ చేయండి.",
+  "lang_could_not_load_email_settings_refresh_befo": "ఇమెయిల్ సెట్టింగులను లోడ్ చేయలేకపోయింది. మార్పులు చేసే ముందు రిఫ్రెష్ చేయండి.",
+  "lang_enter_credentials_for_this_provider": "ఈ ప్రొవైడర్ కోసం ఆధారాలను నమోదు చేయండి",
+  "lang_microsoft_administrator_setup": "మైక్రోసాఫ్ట్ అడ్మినిస్ట్రేటర్",
+  "lang_not_configured": "కాన్ఫిగర్ చేయబడలేదు",
+  "lang_save_your_settings_first_this_test_uses_th": "మొదట మీ సెట్టింగులను సేవ్ చేయండి. ఈ పరీక్ష సేవ్ చేసిన ఖాతాను ఉపయోగిస్తుంది.",
+  "lang_saved_leave_blank_to_keep": "సేవ్ చేయబడింది - ఉంచడానికి ఖాళీగా ఉంచండి",
+  "lang_send_test_email": "పరీక్ష ఇమెయిల్ పంపండి",
+  "lang_sending_test_email": "పరీక్ష ఇమెయిల్ పంపడం...",
+  "lang_ssl_tls_usually_465": "ఎస్ఎస్ఎల్/టిఎల్ఎస్ (సాధారణంగా 465)",
+  "lang_starttls_usually_587_or_2525": "స్టార్ట్టిల్స్ (సాధారణంగా 587 లేదా 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicక్లౌడ్ ఇమెయిల్ను ఉపయోగించండి లేదా బిల్లులు మరియు నివేదికల కోసం మీ స్వంత ఖాతాను కనెక్ట్ చేయండి."
 }

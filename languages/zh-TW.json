@@ -5140,5 +5140,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsApp必須啟用並連接。電子郵件使用您儲存的電子郵件設定。",
   "lang_whatsapp_provider": "WhatsApp提供者",
   "lang_when_a_receipt_template_is_saved_send_test": "儲存收據範本時，「傳送測試」會將樣本收據傳送到您的號碼。",
-  "lang_your_message": "您的訊息"
+  "lang_your_message": "您的訊息",
+  "lang_api_key_server_token": "API鑰匙/服務器令牌",
+  "lang_check_email_delivery": "檢查電子郵件傳送",
+  "lang_connection_security": "連線安全性",
+  "lang_could_not_confirm_submission_check_provide": "無法確認提交。在重試之前，請檢查提供者日誌。",
+  "lang_could_not_load_email_settings_refresh_befo": "無法載入電子郵件設定。在進行更改之前重新整理。",
+  "lang_enter_credentials_for_this_provider": "輸入此提供者的認證",
+  "lang_microsoft_administrator_setup": "微軟管理員設置",
+  "lang_not_configured": "未配置",
+  "lang_save_your_settings_first_this_test_uses_th": "請先儲存您的設定。此測試使用已儲存的帳戶。",
+  "lang_saved_leave_blank_to_keep": "已保存-保留空白以保留",
+  "lang_send_test_email": "發送測試電子郵件",
+  "lang_sending_test_email": "正在傳送測試電子郵件...",
+  "lang_ssl_tls_usually_465": "SSL/TLS（通常是 465）",
+  "lang_starttls_usually_587_or_2525": "開始時間 (通常是 587 或 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "使用Posnic雲端電子郵件或連接您自己的帳戶以獲取帳單和報告。"
 }

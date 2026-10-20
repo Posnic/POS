@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppਸਮਰੱਥ ਅਤੇ ਜੁੜਿਆ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ. ਈਮੇਲ ਤੁਹਾਡੀ ਸੁਰੱਖਿਅਤ ਈਮੇਲ ਸੈਟਿੰਗਾਂ ਦੀ ਵਰਤੋਂ ਕਰਦੀ",
   "lang_whatsapp_provider": "WhatsAppਪ੍ਰਦਾਤਾ",
   "lang_when_a_receipt_template_is_saved_send_test": "ਜਦੋਂ ਇੱਕ ਰਸੀਦ ਟੈਂਪਲੇਟ ਸੁਰੱਖਿਅਤ ਕੀਤਾ ਜਾਂਦਾ ਹੈ, ਤਾਂ ਟੈਸਟ ਭੇਜੋ ਤੁਹਾਡੇ ਨੰਬਰ ਤੇ ਨਮੂਨਾ ਰਸੀਦ ਭੇਜਦਾ ਹੈ",
-  "lang_your_message": "ਤੁਹਾਡਾ ਸੁਨੇਹਾ"
+  "lang_your_message": "ਤੁਹਾਡਾ ਸੁਨੇਹਾ",
+  "lang_api_key_server_token": "APIਕੁੰਜੀ/ਸਰਵਰ ਟੋਕਨ",
+  "lang_check_email_delivery": "ਈਮੇਲ ਡਿਲਿਵਰੀ ਚੈੱਕ",
+  "lang_connection_security": "ਕੁਨੈਕਸ਼ਨ ਸੁਰੱਖਿਆ",
+  "lang_could_not_confirm_submission_check_provide": "ਸਬਮਿਸ਼ਨ ਦੀ ਪੁਸ਼ਟੀ ਨਹੀਂ ਕਰ ਸਕਿਆ. ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਪ੍ਰਦਾਤਾ ਲੌਗਸ ਦੀ ਜਾਂਚ ਕਰੋ",
+  "lang_could_not_load_email_settings_refresh_befo": "ਈਮੇਲ ਸੈਟਿੰਗਾਂ ਲੋਡ ਨਹੀਂ ਕਰ ਸਕਿਆ. ਤਬਦੀਲੀਆਂ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਤਾਜ਼ਾ ਕਰੋ।",
+  "lang_enter_credentials_for_this_provider": "ਇਸ ਪ੍ਰਦਾਤਾ ਲਈ ਪ੍ਰਮਾਣ ਪੱਤਰ ਦਰਜ ਕਰੋ",
+  "lang_microsoft_administrator_setup": "ਮਾਈਕ੍ਰੋਸਾਫਟ ਪ੍ਰਬੰਧਕ",
+  "lang_not_configured": "ਕੌਂਫਿਗਰ ਨਹੀਂ",
+  "lang_save_your_settings_first_this_test_uses_th": "ਪਹਿਲਾਂ ਆਪਣੀਆਂ ਸੈਟਿੰਗਾਂ ਨੂੰ ਸੁਰੱਖਿਅਤ ਕਰੋ। ਇਹ ਟੈਸਟ ਸੁਰੱਖਿਅਤ ਖਾਤੇ ਦੀ ਵਰਤੋਂ ਕਰਦਾ ਹੈ.",
+  "lang_saved_leave_blank_to_keep": "ਸੁਰੱਖਿਅਤ - ਰੱਖਣ ਲਈ ਖਾਲੀ ਛੱਡੋ",
+  "lang_send_test_email": "ਟੈਸਟ ਈਮੇਲ ਭੇਜੋ",
+  "lang_sending_test_email": "ਟੈਸਟ ਈਮੇਲ ਭੇਜਣਾ...",
+  "lang_ssl_tls_usually_465": "ਐਸਐਸਐਲ/ਟੀਐਲਐਸ (ਆਮ ਤੌਰ 'ਤੇ 465)",
+  "lang_starttls_usually_587_or_2525": "ਸਟਾਰਟਲਸ (ਆਮ ਤੌਰ 'ਤੇ 587 ਜਾਂ 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicਕਲਾਉਡ ਈਮੇਲ ਦੀ ਵਰਤੋਂ ਕਰੋ ਜਾਂ ਬਿੱਲਾਂ ਅਤੇ ਰਿਪੋਰਟਾਂ ਲਈ ਆਪਣੇ ਖੁਦ ਦੇ ਖਾਤੇ ਨੂੰ ਜੋੜੋ."
 }

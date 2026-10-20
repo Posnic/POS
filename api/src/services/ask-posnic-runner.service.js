@@ -152,8 +152,10 @@ async function deliverScoped(schedule, report) {
       reference: sent.messageId,
     };
   }
-  const { resolveShopTransport } = require('../utils/email');
-  const { transporter, from } = resolveShopTransport(report.branch, { scheduledReport: true });
+  const { resolveConfiguredShopTransport } = require('../utils/email');
+  const { transporter, from } = await resolveConfiguredShopTransport(report.branch, {
+    scheduledReport: true,
+  });
   if (transporter.options?.jsonTransport)
     throw new Error('Configure email delivery before enabling scheduled summaries.');
   const info = await transporter.sendMail({
@@ -175,7 +177,7 @@ async function deliverScoped(schedule, report) {
     throw new Error('The email provider did not acknowledge the destination.');
   return {
     status: 'sent',
-    provider: transporter.options?.brevo ? 'brevo' : 'smtp',
+    provider: transporter.options?.emailApi || (transporter.options?.brevo ? 'brevo' : 'smtp'),
     reference: String(info.messageId),
   };
 }

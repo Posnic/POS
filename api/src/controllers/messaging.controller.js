@@ -41,6 +41,69 @@ class MessagingController extends BaseController {
     };
   }
 
+  async testEmail(req, res) {
+    if (!this._isSuperAdmin(req)) return this._denied(res);
+    const to = String(req.body?.to || '').trim();
+    if (to.length > 254 || !/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(to))
+      return this.error(res, 'Enter one valid test email address.', 400);
+    try {
+      const { ObjectId } = require('mongodb');
+      const db = await BaseModel.getDb();
+      const branch = await db.collection('branches').findOne({
+        _id: new ObjectId(String(this._ctx(req).branchId)),
+        license: BaseModel.license,
+      });
+      if (!branch) return this.error(res, 'Branch not found.', 404);
+      const { transporter, from } =
+        await require('../utils/email').resolveConfiguredShopTransport(branch);
+      if (transporter.options?.jsonTransport) throw new Error('Email sending is not configured.');
+      const result = await transporter.sendMail({
+        from,
+        to,
+        subject: 'Posnic email delivery test',
+        text: 'This is a test from your Posnic email settings. No payment or action is required.',
+      });
+      if (
+        !result.messageId ||
+        result.rejected?.length ||
+        !result.accepted?.some((a) => String(a.address || a).toLowerCase() === to.toLowerCase())
+      )
+        throw new Error('Submission not confirmed.');
+      return this.success(
+        res,
+        { messageId: result.messageId },
+        'Accepted by your email service. Check the inbox, spam folder and provider delivery logs.'
+      );
+    } catch (_) {
+      return this.error(
+        res,
+        'Could not confirm email submission. Check saved credentials, sender verification, allowed server IPs and provider logs before retrying.',
+        400
+      );
+    }
+  }
+
+  async emailSettings(req, res) {
+    if (!this._isSuperAdmin(req)) return this._denied(res);
+    try {
+      const { ObjectId } = require('mongodb');
+      const db = await BaseModel.getDb();
+      const branch = await db.collection('branches').findOne({
+        _id: new ObjectId(String(this._ctx(req).branchId)),
+        license: BaseModel.license,
+      });
+      if (!branch) return this.error(res, 'Branch not found.', 404);
+      const service = require('../services/shop-email');
+      const config =
+        req.method === 'GET'
+          ? service.publicConfig(await service.read(branch))
+          : await service.save(branch, req.body || {});
+      return this.success(res, config, 'Email settings saved.');
+    } catch (error) {
+      return this.error(res, error.message, 400);
+    }
+  }
+
   async reportSchedules(req, res) {
     if (!this._isSuperAdmin(req)) return this._denied(res);
     try {

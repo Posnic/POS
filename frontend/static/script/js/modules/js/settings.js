@@ -906,6 +906,7 @@ PosnicPro.settings = {
                 $('#email_smtp_username').val(data.email_smtp_username || '');
                 $('#email_smtp_password').val(data.email_smtp_password || '');
                 $('#email_smtp_from').val(data.email_smtp_from || '');
+                if (PosnicPro.emailProviders) PosnicPro.emailProviders.fetch();
                 PosnicPro.settings.markSavedSecrets(data.secrets_configured);
                 $('#quote_pricing_mode').val(data.quote_pricing_mode === 'markup' ? 'markup' : 'discount');
                 $('#quote_show_markup').prop('checked', data.quote_show_markup === true);

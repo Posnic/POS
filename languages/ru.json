@@ -5140,5 +5140,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppдолжен быть включен и подключен. Электронная почта использует сохраненные настройки электронной почты.",
   "lang_whatsapp_provider": "WhatsAppпровайдер",
   "lang_when_a_receipt_template_is_saved_send_test": "После сохранения шаблона чека Send test отправит образец чека на ваш номер.",
-  "lang_your_message": "Ваше сообщение"
+  "lang_your_message": "Ваше сообщение",
+  "lang_api_key_server_token": "APIключ/токен сервера",
+  "lang_check_email_delivery": "Проверьте доставку электронной почты",
+  "lang_connection_security": "Безопасность соединения",
+  "lang_could_not_confirm_submission_check_provide": "Не удалось подтвердить отправку. Перед повторной попыткой проверьте журналы поставщика.",
+  "lang_could_not_load_email_settings_refresh_befo": "Не удалось загрузить настройки электронной почты. Обновите перед внесением изменений.",
+  "lang_enter_credentials_for_this_provider": "Введите учетные данные этого поставщика",
+  "lang_microsoft_administrator_setup": "Настройка администратора Майкрософт",
+  "lang_not_configured": "Не настроено",
+  "lang_save_your_settings_first_this_test_uses_th": "Сначала сохраните настройки. В этом тесте используется сохраненная учетная запись.",
+  "lang_saved_leave_blank_to_keep": "Сохранено - оставьте поле пустым, чтобы сохранить",
+  "lang_send_test_email": "Отправьте тестовое письмо",
+  "lang_sending_test_email": "Отправка тестового письма...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (обычно 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (обычно 587 или 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Используйте Posnic облачную электронную почту или подключите свою учетную запись для счетов и отчетов."
 }

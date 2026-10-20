@@ -149,10 +149,12 @@ $(document).on('click', '#message_email_save', function () {
   var button = $(this), data = {};
   ['host','port','username','password','from'].forEach(function (key) { data['email_smtp_' + key] = $('#email_smtp_' + key).val() || ''; });
   data.email_smtp_secure = $('#email_smtp_secure').is(':checked');
+  if (PosnicPro.emailProviders) Object.assign(data, PosnicPro.emailProviders.values());
   button.prop('disabled', true);
-  PosnicPro.put({url:'setting/updateCommonSettings',data:JSON.stringify(data)}, function (res) {
-    button.prop('disabled', false); $('#message_email_result').text(res && res.type === 'success' ? PosnicPro.i18n.t('lang_email_settings_saved', 'Email settings saved.') : PosnicPro.i18n.t('lang_could_not_save_email_settings', 'Could not save email settings.'));
-  }, function () { button.prop('disabled', false); $('#message_email_result').text(PosnicPro.i18n.t('lang_desktop_save_failed', 'Could not save. Please try again.')); });
+  PosnicPro.put({url:PosnicPro.emailProviders ? 'messaging/email' : 'setting/updateCommonSettings',data:JSON.stringify(data)}, function (res) {
+    if (res && res.type === 'success' && PosnicPro.emailProviders) PosnicPro.emailProviders.load(res.data || {});
+    button.prop('disabled', false); $('#message_email_result').text(res && res.type === 'success' ? PosnicPro.i18n.t('lang_email_settings_saved', 'Email settings saved.') : (res && res.message || PosnicPro.i18n.t('lang_could_not_save_email_settings', 'Could not save email settings.')));
+  }, function (xhr) { button.prop('disabled', false); $('#message_email_result').text(xhr && xhr.responseJSON && xhr.responseJSON.message || PosnicPro.i18n.t('lang_desktop_save_failed', 'Could not save. Please try again.')); });
 });
 PosnicPro.messageCentre.reports = function () {
   $('#message_report_list').html('<p role="status">Loading reports…</p>');

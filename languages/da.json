@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppskal være aktiveret og tilsluttet. E-mail bruger dine gemte e-mail-indstillinger.",
   "lang_whatsapp_provider": "WhatsAppudbyder",
   "lang_when_a_receipt_template_is_saved_send_test": "Når en kvitteringsskabelon er gemt, sender Send test en prøvekvittering til dit nummer.",
-  "lang_your_message": "Din besked"
+  "lang_your_message": "Din besked",
+  "lang_api_key_server_token": "APInøgle-/servertoken",
+  "lang_check_email_delivery": "Tjek e-mail-levering",
+  "lang_connection_security": "Forbindelsessikkerhed",
+  "lang_could_not_confirm_submission_check_provide": "Kunne ikke bekræfte indsendelse. Kontroller udbyderlogfiler, før du prøver igen.",
+  "lang_could_not_load_email_settings_refresh_befo": "Kunne ikke indlæse e-mail-indstillinger. Opdater, før du foretager ændringer.",
+  "lang_enter_credentials_for_this_provider": "Indtast legitimationsoplysninger for denne udbyder",
+  "lang_microsoft_administrator_setup": "Microsoft-administratoropsætning",
+  "lang_not_configured": "Ikke konfigureret",
+  "lang_save_your_settings_first_this_test_uses_th": "Gem dine indstillinger først. Denne test bruger den gemte konto.",
+  "lang_saved_leave_blank_to_keep": "Gemt - lad det være tomt for at beholde",
+  "lang_send_test_email": "Send test-e-mail",
+  "lang_sending_test_email": "Afsendelse af test-e-mail...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (normalt 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (normalt 587 eller 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Brug Posnic cloud-e-mail eller tilslut din egen konto til regninger og rapporter."
 }

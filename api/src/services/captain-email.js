@@ -67,7 +67,7 @@ async function start(req) {
       { $set: { email_verification_id: challenge } }
     );
     if (!marked.matchedCount) fail('Your account changed. Sign in again.', 409);
-    const delivery = mail.resolveShopTransport(c.branch);
+    const delivery = await mail.resolveConfiguredShopTransport(c.branch);
     if (delivery.transporter.options?.jsonTransport || require('../config/demo-mode').isDemoMode())
       throw new Error('email_delivery_unavailable');
     await delivery.transporter.sendMail({

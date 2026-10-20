@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppповинен бути включений і підключений. Електронна пошта використовує збережені налаштування електронної пошти.",
   "lang_whatsapp_provider": "WhatsAppпровайдер",
   "lang_when_a_receipt_template_is_saved_send_test": "Коли шаблон квитанції збережено, програма Send test надсилає зразок квитанції на ваш номер.",
-  "lang_your_message": "Ваше повідомлення"
+  "lang_your_message": "Ваше повідомлення",
+  "lang_api_key_server_token": "APIключ/маркер сервера",
+  "lang_check_email_delivery": "Перевірте доставку електронної пошти",
+  "lang_connection_security": "Безпека підключення",
+  "lang_could_not_confirm_submission_check_provide": "Не вдалося підтвердити подання. Перевірте журнали провайдера перед повторною спробою.",
+  "lang_could_not_load_email_settings_refresh_befo": "Не вдалося завантажити налаштування електронної пошти. Оновіть перед внесенням змін.",
+  "lang_enter_credentials_for_this_provider": "Введіть облікові дані для цього провайдера",
+  "lang_microsoft_administrator_setup": "Налаштування адміністратора Microsoft",
+  "lang_not_configured": "Не налаштовано",
+  "lang_save_your_settings_first_this_test_uses_th": "Спочатку збережіть свої налаштування. Цей тест використовує збережений обліковий запис.",
+  "lang_saved_leave_blank_to_keep": "Збережено - залиште порожнім для збереження",
+  "lang_send_test_email": "Надіслати тестовий лист",
+  "lang_sending_test_email": "Відправлення тестового листа...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (зазвичай 465)",
+  "lang_starttls_usually_587_or_2525": "СТАРТТЛС (зазвичай 587 або 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Використовуйте Posnic хмарну електронну пошту або підключіть власний обліковий запис для рахунків та звітів."
 }

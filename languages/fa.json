@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppباید فعال و متصل شود. ایمیل از تنظیمات ایمیل ذخیره شده شما استفاده می کند.",
   "lang_whatsapp_provider": "WhatsAppارائه دهنده",
   "lang_when_a_receipt_template_is_saved_send_test": "هنگامی که یک قالب رسید ذخیره می شود، تست ارسال یک رسید نمونه را به شماره شما ارسال می کند.",
-  "lang_your_message": "پیام شما"
+  "lang_your_message": "پیام شما",
+  "lang_api_key_server_token": "APIکلید/نشانه سرور",
+  "lang_check_email_delivery": "بررسی تحویل ایمیل",
+  "lang_connection_security": "امنیت اتصال",
+  "lang_could_not_confirm_submission_check_provide": "نتوانست ارسال را تأیید کند. قبل از امتحان مجدد، گزارش های ارائه دهنده را بررسی کنید.",
+  "lang_could_not_load_email_settings_refresh_befo": "نمی توان تنظیمات ایمیل را بارگیری کرد. قبل از ایجاد تغییرات، تازه کنید.",
+  "lang_enter_credentials_for_this_provider": "اعتبارنامه برای این ارائه دهنده را وارد کنید",
+  "lang_microsoft_administrator_setup": "راه اندازی مدیر مایکروسافت",
+  "lang_not_configured": "پیکربندی نشده است",
+  "lang_save_your_settings_first_this_test_uses_th": "ابتدا تنظیمات خود را ذخیره کنید. این تست از حساب ذخیره شده استفاده می کند.",
+  "lang_saved_leave_blank_to_keep": "ذخیره شده - خالی بگذارید تا نگه داشته شود",
+  "lang_send_test_email": "ارسال ایمیل تست",
+  "lang_sending_test_email": "ارسال ایمیل آزمایشی...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (معمولا ۴۶۵)",
+  "lang_starttls_usually_587_or_2525": "استارت‌لز (معمولاً ۵۸۷ یا ۲۵۲۵)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "از ایمیل Posnic ابری استفاده کنید یا حساب خود را برای صورتحساب و گزارش ها وصل کنید."
 }

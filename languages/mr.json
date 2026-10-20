@@ -5140,5 +5140,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppसक्षम आणि कनेक्ट केले पाहिजे. ईमेल तुमच्या जतन केलेल्या ईमेल सेट",
   "lang_whatsapp_provider": "WhatsAppप्रदाता",
   "lang_when_a_receipt_template_is_saved_send_test": "जेव्हा पावती टेम्पलेट जतन केला जातो तेव्हा चाचणी पाठवा आपल्या नंबरवर",
-  "lang_your_message": "आपला संदेश"
+  "lang_your_message": "आपला संदेश",
+  "lang_api_key_server_token": "APIकी/सर्व्हर टोकन",
+  "lang_check_email_delivery": "ईमेल वितरण तपा",
+  "lang_connection_security": "कनेक्शन सुर",
+  "lang_could_not_confirm_submission_check_provide": "सबमिशन करण्याची पुष्टी केली पुनर्प्रयत्न करण्यापूर्वी प्रदाता लॉग",
+  "lang_could_not_load_email_settings_refresh_befo": "ईमेल सेटिंग्ज लोड करू शकत नाही बदल करण्यापूर्वी रिफ्रेश करा",
+  "lang_enter_credentials_for_this_provider": "या प्रदात्यासाठी क्रेडेंशन्ट",
+  "lang_microsoft_administrator_setup": "मायक्रोसॉफ्ट",
+  "lang_not_configured": "संरचित नाही",
+  "lang_save_your_settings_first_this_test_uses_th": "प्रथम आपल्या सेटिंग्ज जतन ही चाचणी जतन केलेले खाते वापरते.",
+  "lang_saved_leave_blank_to_keep": "जतन केलेले - ठेवण्यासाठी रिक्त",
+  "lang_send_test_email": "चाचणी ईमेल पाठ",
+  "lang_sending_test_email": "चाचणी ईमेल पाठवणे",
+  "lang_ssl_tls_usually_465": "एसएसएल/टीएलएस (सामान्यत: 465)",
+  "lang_starttls_usually_587_or_2525": "स्टार्टटल्स (सामान्यत: 587 किंवा 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "क्लाउ Posnic ड ईमेल वापरा किंवा बिल आणि अहवालांसाठी आपले स्वतःचे खाते ज"
 }

@@ -164,6 +164,7 @@
             "static/script/js/modules/js/coupons.js",
             "static/script/js/modules/js/campaigns.js",
             "static/script/js/modules/js/messaging.js",
+            "static/script/js/modules/js/email-providers.js",
             "static/script/js/modules/js/message-centre.js",
             "static/script/js/modules/js/credit.js",
             "static/script/js/modules/js/cashback.js",

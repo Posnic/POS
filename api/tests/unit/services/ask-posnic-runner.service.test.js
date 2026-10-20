@@ -3,7 +3,7 @@ jest.mock('../../../src/models/base.model', () => function MockBaseModel() {});
 const mockSendMail = jest.fn();
 const mockSendWhatsapp = jest.fn();
 jest.mock('../../../src/utils/email', () => ({
-  resolveShopTransport: () => ({
+  resolveConfiguredShopTransport: () => ({
     transporter: { options: {}, sendMail: mockSendMail },
     from: 'sender@example.invalid',
   }),

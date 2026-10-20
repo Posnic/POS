@@ -5218,5 +5218,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsApplazima iwezeshwe na kuunganishwa. Barua pepe hutumia mipangilio yako ya barua pepe iliyo",
   "lang_whatsapp_provider": "WhatsAppmtoa huduma",
   "lang_when_a_receipt_template_is_saved_send_test": "Wakati template ya risiti imehifadhiwa, Tuma mtihani hutuma risiti ya sampuli kwa nambari yako.",
-  "lang_your_message": "Ujumbe wako"
+  "lang_your_message": "Ujumbe wako",
+  "lang_api_key_server_token": "APIishara ya ufunguo/ seva",
+  "lang_check_email_delivery": "Angalia utoaji wa barua pepe",
+  "lang_connection_security": "Usalama wa unganish",
+  "lang_could_not_confirm_submission_check_provide": "Haikuweza kuthibitisha uwasilish Angalia kumbukumbu za mtoaji kabla ya kujaribu tena.",
+  "lang_could_not_load_email_settings_refresh_befo": "Haiwezi kupakia mipangilio ya barua pepe. Fanya upya kabla ya kufanya mabadiliko.",
+  "lang_enter_credentials_for_this_provider": "Ingiza sifa za mtoa huduma huyu",
+  "lang_microsoft_administrator_setup": "Usanidi msimamizi wa Microsoft",
+  "lang_not_configured": "Haijasanidiwa",
+  "lang_save_your_settings_first_this_test_uses_th": "Hifadhi mipangilio yako kwanza. Mtihani huu hutumia akaunti iliyohifadhiwa.",
+  "lang_saved_leave_blank_to_keep": "Imehifadhiwa - acha tupu ili kuweka",
+  "lang_send_test_email": "Tuma barua pepe ya jaribio",
+  "lang_sending_test_email": "Kutuma barua pepe ya mtihani...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (kawaida 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (kawaida 587 au 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Tumia bar Posnic ua pepe ya wingu au unganisha akaunti yako mwenyewe kwa bili na ripoti."
 }

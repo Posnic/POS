@@ -12,6 +12,9 @@ const bindController = (handler) => {
 // since these settings hold the shop's SMS provider secrets.
 router.use(protect);
 
+router.post('/email/test', bindController(messagingController.testEmail));
+router.get('/email', bindController(messagingController.emailSettings));
+router.put('/email', bindController(messagingController.emailSettings));
 router.get('/providers', bindController(messagingController.providers));
 router.get('/settings', bindController(messagingController.getSettings));
 router.get('/reports', bindController(messagingController.reportSchedules));

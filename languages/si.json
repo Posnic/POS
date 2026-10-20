@@ -5218,5 +5218,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppසක්රීය කර සම්බන්ධ කළ යුතුය. ඊමේල් ඔබගේ සුරකින ඊමේල් සැකසුම් භාවිතා කරයි.",
   "lang_whatsapp_provider": "WhatsAppසැපයුම්කරු",
   "lang_when_a_receipt_template_is_saved_send_test": "රිසිට්පත් සැකිල්ලක් සුරකින විට, පරීක්ෂණය යවන්න ඔබේ අංකයට සාම්පල රිසිට්පතක් යවයි.",
-  "lang_your_message": "ඔබේ පණිවිඩය"
+  "lang_your_message": "ඔබේ පණිවිඩය",
+  "lang_api_key_server_token": "APIයතුර/සේවාදායක ටෝකනය",
+  "lang_check_email_delivery": "ඊමේල් බෙදා හැරීම පරීක්ෂා",
+  "lang_connection_security": "සම්බන්ධතා ආරක්ෂාව",
+  "lang_could_not_confirm_submission_check_provide": "ඉදිරිපත් කිරීම තහවුරු කිරීමට නොහැකි විය. නැවත උත්සාහ කිරීමට පෙර සැපයුම්කරුවන්ගේ ලොග් පරීක්ෂා කරන්න.",
+  "lang_could_not_load_email_settings_refresh_befo": "විද්යුත් තැපැල් සැකසුම් පැටවීමට නොහැකි විය. වෙනස්කම් කිරීමට පෙර නැවුම් කරන්න.",
+  "lang_enter_credentials_for_this_provider": "මෙම සැපයුම්කරු සඳහා අක්තපත්ර ඇතුළත් කරන්න",
+  "lang_microsoft_administrator_setup": "Microsoft පරිපාලක සැකසුම",
+  "lang_not_configured": "වින්යාස කර නැත",
+  "lang_save_your_settings_first_this_test_uses_th": "මුලින්ම ඔබේ සැකසුම් සුරකින්න. මෙම පරීක්ෂණය සුරකින ගිණුම භාවිතා කරයි.",
+  "lang_saved_leave_blank_to_keep": "සුරකින - තබා ගැනීමට හිස් තබන්න",
+  "lang_send_test_email": "පරීක්ෂණ විද්යුත් තැපෑල යවන්න",
+  "lang_sending_test_email": "පරීක්ෂණ විද්යුත් තැපෑල යැවීම...",
+  "lang_ssl_tls_usually_465": "එස්එල්/ටීඑල්එස් (සාමාන්යයෙන් 465)",
+  "lang_starttls_usually_587_or_2525": "ස්ටාර්ට්ල්ස් (සාමාන්යයෙන් 587 හෝ 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "ව Posnic ලාකුළු විද්යුත් තැපෑල භාවිතා කරන්න හෝ බිල්පත් සහ වාර්තා සඳහා ඔබේම ගිණුමක් සම්බන්ධ කරන්න."
 }

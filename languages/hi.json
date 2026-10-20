@@ -5218,5 +5218,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppसक्षम और कनेक्ट होना चाहिए। ईमेल आपकी सहेजी गई ईमेल सेटिंग का उपयोग करता है।",
   "lang_whatsapp_provider": "WhatsAppप्रोवाइडर",
   "lang_when_a_receipt_template_is_saved_send_test": "जब रसीद टेम्पलेट सहेजा जाता है, तो सेंड टेस्ट आपके नंबर पर एक नमूना रसीद भेजता है।",
-  "lang_your_message": "आपका संदेश"
+  "lang_your_message": "आपका संदेश",
+  "lang_api_key_server_token": "APIकुंजी/सर्वर टोकन",
+  "lang_check_email_delivery": "ईमेल डिलीवरी जाँचें",
+  "lang_connection_security": "कनेक्शन की सुरक्षा",
+  "lang_could_not_confirm_submission_check_provide": "सबमिशन की पुष्टि नहीं कर सका। पुनः प्रयास करने से पहले प्रदाता लॉग की जाँच करें।",
+  "lang_could_not_load_email_settings_refresh_befo": "ईमेल सेटिंग लोड नहीं कर सका। परिवर्तन करने से पहले रीफ़्रेश करें।",
+  "lang_enter_credentials_for_this_provider": "इस प्रोवाइडर के लिए क्रेडेंशियल दर्ज करें",
+  "lang_microsoft_administrator_setup": "माइक्रोसॉफ्ट एडमिनिस्ट्रेटर सेटअप",
+  "lang_not_configured": "कॉन्फ़िगर नहीं किया गया",
+  "lang_save_your_settings_first_this_test_uses_th": "पहले अपनी सेटिंग सेव करें। यह परीक्षण सहेजे गए खाते का उपयोग करता है।",
+  "lang_saved_leave_blank_to_keep": "सहेजा गया - रखने के लिए खाली छोड़ दें",
+  "lang_send_test_email": "टेस्ट ईमेल भेजें",
+  "lang_sending_test_email": "टेस्ट ईमेल भेजा जा रहा है...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (आमतौर पर 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (आमतौर पर 587 या 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicक्लाउड ईमेल का उपयोग करें या बिल और रिपोर्ट के लिए अपना खुद का अकाउंट कनेक्ट करें।"
 }

@@ -5214,5 +5214,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppdebe estar activado y conectado. El correo electrónico usa la configuración de correo electrónico guardada.",
   "lang_whatsapp_provider": "WhatsAppproveedor",
   "lang_when_a_receipt_template_is_saved_send_test": "Cuando se guarda una plantilla de recibo, Send test envía un recibo de muestra a tu número.",
-  "lang_your_message": "Tu mensaje"
+  "lang_your_message": "Tu mensaje",
+  "lang_api_key_server_token": "APIclave/token de servidor",
+  "lang_check_email_delivery": "Compruebe la entrega del correo electrónico",
+  "lang_connection_security": "Seguridad de la conexión",
+  "lang_could_not_confirm_submission_check_provide": "No se ha podido confirmar el envío. Comprueba los registros del proveedor antes de volver a intentarlo.",
+  "lang_could_not_load_email_settings_refresh_befo": "No se pudo cargar la configuración del correo electrónico. Actualiza antes de realizar cambios.",
+  "lang_enter_credentials_for_this_provider": "Introduzca las credenciales de este proveedor",
+  "lang_microsoft_administrator_setup": "Configuración de administrador de Microsoft",
+  "lang_not_configured": "No está configurado",
+  "lang_save_your_settings_first_this_test_uses_th": "Guarde primero la configuración. En esta prueba, se usa la cuenta guardada.",
+  "lang_saved_leave_blank_to_keep": "Guardada: déjala en blanco para guardarla",
+  "lang_send_test_email": "Enviar correo electrónico de prueba",
+  "lang_sending_test_email": "Enviando un correo electrónico de prueba...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (normalmente 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (normalmente 587 o 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Usa el correo electrónico Posnic en la nube o conecta tu propia cuenta para recibir facturas e informes."
 }

@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppjābūt iespējotam un savienotam. E-pasts izmanto jūsu saglabātos e-pasta iestatījumus.",
   "lang_whatsapp_provider": "WhatsApppakalpojumu sniedzējs",
   "lang_when_a_receipt_template_is_saved_send_test": "Kad tiek saglabāta kvīta veidne, Send test nosūta kvīta paraugu uz jūsu numuru.",
-  "lang_your_message": "Jūsu ziņojums"
+  "lang_your_message": "Jūsu ziņojums",
+  "lang_api_key_server_token": "APIatslēga/servera marķieris",
+  "lang_check_email_delivery": "Pārbaudiet e-pasta piegādi",
+  "lang_connection_security": "Savienojuma drošība",
+  "lang_could_not_confirm_submission_check_provide": "Nevarēja apstiprināt iesniegšanu. Pirms atkārtotas mēģināšanas pārbaudiet pakalpojumu sniedzēja žurnālus.",
+  "lang_could_not_load_email_settings_refresh_befo": "Nevarēja ielādēt e-pasta iestatījumus. Pirms izmaiņu veikšanas atsvaidziniet.",
+  "lang_enter_credentials_for_this_provider": "Ievadiet šī pakalpojumu sniedzēja akreditācijas datus",
+  "lang_microsoft_administrator_setup": "Microsoft administratora iestatīšana",
+  "lang_not_configured": "Nav konfigurēts",
+  "lang_save_your_settings_first_this_test_uses_th": "Vispirms saglabājiet iestatījumus. Šajā testā tiek izmantots saglabātais konts.",
+  "lang_saved_leave_blank_to_keep": "Saglabāts - atstājiet tukšu, lai saglabātu",
+  "lang_send_test_email": "Nosūtīt testa e-pastu",
+  "lang_sending_test_email": "Pārbaudes e-pasta sūtīšana...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (parasti 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (parasti 587 vai 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Izmantojiet Posnic mākoņa e-pastu vai pievienojiet savu kontu rēķiniem un pārskatiem."
 }

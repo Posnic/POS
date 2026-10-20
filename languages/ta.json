@@ -5222,5 +5222,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppஇயக்கப்பட்டு இணைக்கப்பட வேண்டும். உங்கள் சேமித்த மின்னஞ்சல் அமைப்புகளை மின்னஞ்சல்",
   "lang_whatsapp_provider": "WhatsAppவழங்குநர்",
   "lang_when_a_receipt_template_is_saved_send_test": "ரசீது டெம்ப்ளேட் சேமிக்கப்படும் போது, சோதனை அனுப்புதல் உங்கள் எண்ணுக்கு மாதிரி ரசீதை அனுப்புகிறது.",
-  "lang_your_message": "உங்கள் செய்தி"
+  "lang_your_message": "உங்கள் செய்தி",
+  "lang_api_key_server_token": "APIவிசை/சர்வர் டோக்கன்",
+  "lang_check_email_delivery": "மின்னஞ்சல் டெலிவரி",
+  "lang_connection_security": "இணைப்பு பாதுகாப்பு",
+  "lang_could_not_confirm_submission_check_provide": "சமர்ப்பிப்பை உறுதிப்படுத்த முடியவில்லை. மறுமுயற்சிப்பதற்கு முன் வழங்குநர் பதிவுகளை",
+  "lang_could_not_load_email_settings_refresh_befo": "மின்னஞ்சல் அமைப்புகளை ஏற்ற முடியவில்லை. மாற்றங்களைச் செய்வதற்கு முன் புதுப்பிக்கவும்.",
+  "lang_enter_credentials_for_this_provider": "இந்த வழங்குநருக்கான சான்றுகளை உள்ளிடவும்",
+  "lang_microsoft_administrator_setup": "மைக்ரோசாப்ட் நிர்வா",
+  "lang_not_configured": "கட்டமைக்கப்படவில்லை",
+  "lang_save_your_settings_first_this_test_uses_th": "முதலில் உங்கள் அமைப்புகளை சேமிக்கவும். இந்த சோதனை சேமிக்கப்பட்ட கணக்கைப் பயன்படுத்துகிறது.",
+  "lang_saved_leave_blank_to_keep": "சேமிக்கப்பட்டது - வைத்திருக்க காலியாக விடுங்கள்",
+  "lang_send_test_email": "பரிசோதனை மின்னஞ்சலை",
+  "lang_sending_test_email": "சோதனை மின்னஞ்சல் அனுப்ப",
+  "lang_ssl_tls_usually_465": "எஸ்எஸ்எல்/டிஎல்எஸ் (பொதுவாக 465)",
+  "lang_starttls_usually_587_or_2525": "ஸ்டார்ட்டில்ஸ் (பொதுவாக 587 அல்லது 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "கிளவ Posnic ுட் மின்னஞ்சலைப் பயன்படுத்தவும் அல்லது பில்கள் மற்றும் அறிக்கைகளுக்கு உங்கள் சொந்த கணக்கை இண"
 }

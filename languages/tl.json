@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppdapat na paganahin at konektado. Ginagamit ng email ang iyong naka-save na mga setting ng email.",
   "lang_whatsapp_provider": "WhatsApptagapagbigay",
   "lang_when_a_receipt_template_is_saved_send_test": "Kapag nai-save ang isang template ng resibo, nagpapadala ang Ipadala ng test ng sample na resibo sa iyong numero.",
-  "lang_your_message": "Ang iyong mensahe"
+  "lang_your_message": "Ang iyong mensahe",
+  "lang_api_key_server_token": "APIkey/server token",
+  "lang_check_email_delivery": "Tingnan ang paghahatid ng email",
+  "lang_connection_security": "Seguridad ng koneksyon",
+  "lang_could_not_confirm_submission_check_provide": "Hindi nakumpirma ang pagsusumite. Suriin ang mga log ng provider bago muling subukan.",
+  "lang_could_not_load_email_settings_refresh_befo": "Hindi ma-load ang mga setting ng email. I-refresh bago gumawa ng mga pagbabago.",
+  "lang_enter_credentials_for_this_provider": "Ipasok ang mga kredensyal para sa provider na ito",
+  "lang_microsoft_administrator_setup": "Pag-setup ng administrator ng Microsoft",
+  "lang_not_configured": "Hindi naka-configure",
+  "lang_save_your_settings_first_this_test_uses_th": "I-save muna ang iyong mga setting. Ginagamit ng pagsubok na ito ang naka-save na account.",
+  "lang_saved_leave_blank_to_keep": "I-save - iwanan ang blangko upang mapanatili",
+  "lang_send_test_email": "Magpadala ng email ng pagsubok",
+  "lang_sending_test_email": "Pagpapadala ng pagsubok na email...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (karaniwan 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (karaniwang 587 o 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Gumamit Posnic ng cloud email o ikonekta ang iyong sariling account para sa mga bayarin at ulat."
 }

@@ -5218,5 +5218,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppಸಕ್ರಿಯಗೊಳಿಸಬೇಕು ಮತ್ತು ಸಂಪರ್ಕಿಸಬೇಕು. ಇಮೇಲ್ ನಿಮ್ಮ ಉಳಿಸಿದ ಇಮೇಲ್ ಸೆಟ್ಟಿಂಗ್ಗಳನ್ನು ಬಳಸುತ್ತದೆ.",
   "lang_whatsapp_provider": "WhatsAppಒದಗಿಸುವವರು",
   "lang_when_a_receipt_template_is_saved_send_test": "ರಸೀದಿ ಟೆಂಪ್ಲೇಟ್ ಅನ್ನು ಉಳಿಸಿದಾಗ, ಪರೀಕ್ಷೆಯನ್ನು ಕಳುಹಿಸಿ ನಿಮ್ಮ ಸಂಖ್ಯೆಗೆ ಮಾದರಿ ರಸೀದಿಯನ್ನು ಕಳುಹಿಸುತ್ತದೆ.",
-  "lang_your_message": "ನಿಮ್ಮ ಸಂದೇಶ"
+  "lang_your_message": "ನಿಮ್ಮ ಸಂದೇಶ",
+  "lang_api_key_server_token": "APIಕೀ/ಸರ್ವರ್ ಟೋಕನ್",
+  "lang_check_email_delivery": "ಇಮೇಲ್ ವಿತರಣೆಯನ್ನು ಪರಿಶೀಲಿಸಿ",
+  "lang_connection_security": "ಸಂಪರ್ಕ ಭದ್ರತೆ",
+  "lang_could_not_confirm_submission_check_provide": "ಸಲ್ಲಿಕೆಯನ್ನು ಖಚಿತಪಡಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮರುಪ್ರಯತ್ನಿಸುವ ಮೊದಲು ಒದಗಿಸುವವರ ಲಾಗ್ಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.",
+  "lang_could_not_load_email_settings_refresh_befo": "ಇಮೇಲ್ ಸೆಟ್ಟಿಂಗ್ಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಬದಲಾವಣೆಗಳನ್ನು ಮಾಡುವ ಮೊದಲು ರಿಫ್ರೆಶ್ ಮಾಡಿ.",
+  "lang_enter_credentials_for_this_provider": "ಈ ಒದಗಿಸುವವರಿಗಾಗಿ ರುಜುವಾತುಗಳನ್ನು",
+  "lang_microsoft_administrator_setup": "ಮೈಕ್ರೋಸಾಫ್ಟ್ ನಿರ್ವಾಹಕ",
+  "lang_not_configured": "ಕಾನ್ಫಿಗರ್ ಮಾಡಿಲ್ಲ",
+  "lang_save_your_settings_first_this_test_uses_th": "ಮೊದಲು ನಿಮ್ಮ ಸೆಟ್ಟಿಂಗ್ಗಳನ್ನು ಉಳಿಸಿ. ಈ ಪರೀಕ್ಷೆಯು ಉಳಿಸಿದ ಖಾತೆಯನ್ನು ಬಳಸುತ್ತದೆ.",
+  "lang_saved_leave_blank_to_keep": "ಉಳಿಸಲಾಗಿದೆ - ಇರಿಸಿಕೊಳ್ಳಲು ಖಾಲಿ ಬಿಡಿ",
+  "lang_send_test_email": "ಪರೀಕ್ಷಾ ಇಮೇಲ್ ಕಳುಹಿಸಿ",
+  "lang_sending_test_email": "ಪರೀಕ್ಷಾ ಇಮೇಲ್ ಕಳುಹಿಸುತ್ತಿದೆ...",
+  "lang_ssl_tls_usually_465": "ಎಸ್ಎಸ್ಎಲ್/ಟಿಎಲ್ಎಸ್ (ಸಾಮಾನ್ಯವಾಗಿ 465)",
+  "lang_starttls_usually_587_or_2525": "ಸ್ಟಾರ್ಟ್ಟಿಲ್ಸ್ (ಸಾಮಾನ್ಯವಾಗಿ 587 ಅಥವಾ 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicಕ್ಲೌಡ್ ಇಮೇಲ್ ಬಳಸಿ ಅಥವಾ ಬಿಲ್ಗಳು ಮತ್ತು ವರದಿಗಳಿಗಾಗಿ ನಿಮ್ಮ ಸ್ವಂತ ಖಾತೆಯನ್ನು ಸಂಪರ್ಕಿಸಿ."
 }

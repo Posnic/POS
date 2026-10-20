@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppcaithfear a chumasú agus a nascadh. Úsáideann ríomhphost do chuid socruithe ríomhphoist",
   "lang_whatsapp_provider": "WhatsAppsoláthraí",
   "lang_when_a_receipt_template_is_saved_send_test": "Nuair a shábháiltear teimpléad admháil, Seolann tástáil Seol admháil samplach chuig d'uimhir.",
-  "lang_your_message": "Do theachtaireacht"
+  "lang_your_message": "Do theachtaireacht",
+  "lang_api_key_server_token": "APIcomhartha eochair/freastalaí",
+  "lang_check_email_delivery": "Seiceáil seachadadh ríomh",
+  "lang_connection_security": "Slándáil nasc",
+  "lang_could_not_confirm_submission_check_provide": "Níor féidir aighneacht a dhearbhú. Seiceáil logaí soláthraithe sula ndéantar iarracht",
+  "lang_could_not_load_email_settings_refresh_befo": "Ní féidir socruithe ríomhphoist a luchtú. Athnuachan sula ndéanann tú athruithe.",
+  "lang_enter_credentials_for_this_provider": "Cuir isteach dintiúir don soláthraí seo",
+  "lang_microsoft_administrator_setup": "Socrú riarthóra Microsoft",
+  "lang_not_configured": "Níl cumraithe",
+  "lang_save_your_settings_first_this_test_uses_th": "Sábháil do shocruithe ar dtús. Úsáideann an tástáil seo an cuntas sábhálta.",
+  "lang_saved_leave_blank_to_keep": "Sábháilte - fág bán le coinneáil",
+  "lang_send_test_email": "Seol ríomhphost tástála",
+  "lang_sending_test_email": "Seoladh ríomhphost tástála...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (de ghnáth 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (587 nó 2525 de ghnáth)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Úsáid Posnic ríomhphost scamall nó ceangail do chuntas féin le haghaidh billí agus tuarascálacha."
 }

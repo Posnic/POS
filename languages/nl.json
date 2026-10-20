@@ -5231,5 +5231,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppmoet ingeschakeld en verbonden zijn. E-mail maakt gebruik van je opgeslagen e-mailinstellingen.",
   "lang_whatsapp_provider": "WhatsAppaanbieder",
   "lang_when_a_receipt_template_is_saved_send_test": "Wanneer een kwitantiesjabloon is opgeslagen, stuurt Send Test een voorbeeldbon naar uw nummer.",
-  "lang_your_message": "Jouw bericht"
+  "lang_your_message": "Jouw bericht",
+  "lang_api_key_server_token": "APIsleutel-/servertoken",
+  "lang_check_email_delivery": "Controleer de bezorging van e-mails",
+  "lang_connection_security": "Beveiliging van de verbinding",
+  "lang_could_not_confirm_submission_check_provide": "Kon de inzending niet bevestigen. Controleer de providerlogboeken voordat u het opnieuw probeert.",
+  "lang_could_not_load_email_settings_refresh_befo": "Kon de e-mailinstellingen niet laden. Vernieuw voordat u wijzigingen aanbrengt.",
+  "lang_enter_credentials_for_this_provider": "Voer inloggegevens in voor deze provider",
+  "lang_microsoft_administrator_setup": "Configuratie van Microsoft Administrator",
+  "lang_not_configured": "Niet geconfigureerd",
+  "lang_save_your_settings_first_this_test_uses_th": "Sla eerst je instellingen op. Deze test maakt gebruik van het opgeslagen account.",
+  "lang_saved_leave_blank_to_keep": "Opgeslagen - laat dit veld leeg om te bewaren",
+  "lang_send_test_email": "Stuur een test-e-mail",
+  "lang_sending_test_email": "Test-e-mail verzenden...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (meestal 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (meestal 587 of 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Gebruik e-mail in de Posnic cloud of koppel je eigen account voor facturen en rapporten."
 }

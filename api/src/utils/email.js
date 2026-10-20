@@ -165,6 +165,8 @@ const sendEmail = async (options) => {
  */
 const resolveShopTransport = (branchDoc, { scheduledReport = false } = {}) => {
   const b = branchDoc || {};
+  const explicit = require('../services/shop-email').resolve(b);
+  if (explicit) return explicit;
   // Keep a stalled SMTP peer from holding the shared schedule worker for ten
   // minutes. A timeout after submission remains an uncertain delivery.
   const transportOptions = scheduledReport
@@ -172,7 +174,12 @@ const resolveShopTransport = (branchDoc, { scheduledReport = false } = {}) => {
     : {};
   /* A HALF-filled card (password missing) must not outrank the working
      platform path - 'Missing credentials for PLAIN' taught this. */
-  if (b.email_smtp_host && b.email_smtp_username && b.email_smtp_password) {
+  if (
+    b.email_method !== 'platform' &&
+    b.email_smtp_host &&
+    b.email_smtp_username &&
+    b.email_smtp_password
+  ) {
     return {
       transporter: nodemailer.createTransport({
         ...transportOptions,
@@ -267,7 +274,14 @@ const resolveShopTransport = (branchDoc, { scheduledReport = false } = {}) => {
   };
 };
 
+async function resolveConfiguredShopTransport(branch, options) {
+  if (!branch || !branch._id) throw new Error('Branch context is required for email delivery.');
+  const config = await require('../services/shop-email').read(branch);
+  return resolveShopTransport({ ...branch, ...config }, options);
+}
+
 module.exports = {
+  resolveConfiguredShopTransport,
   Email,
   sendEmail,
   resolveShopTransport,

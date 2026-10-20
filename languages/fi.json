@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppon oltava käytössä ja kytketty. Sähköposti käyttää tallennettuja sähköpostiasetuksia.",
   "lang_whatsapp_provider": "WhatsApppalveluntarjoaja",
   "lang_when_a_receipt_template_is_saved_send_test": "Kun kuittimalli on tallennettu, Lähetä testi lähettää näytekuitin numeroon.",
-  "lang_your_message": "Viestisi"
+  "lang_your_message": "Viestisi",
+  "lang_api_key_server_token": "APIavain/palvelimen tunnus",
+  "lang_check_email_delivery": "Tarkista sähköpostin toimitus",
+  "lang_connection_security": "Yhteyden suojaus",
+  "lang_could_not_confirm_submission_check_provide": "Lähetystä ei voitu vahvistaa. Tarkista palveluntarjoajan lokit ennen uudelleenyritystä.",
+  "lang_could_not_load_email_settings_refresh_befo": "Sähköpostiasetuksia ei voitu ladata. Päivitä ennen muutosten tekemistä.",
+  "lang_enter_credentials_for_this_provider": "Anna tämän palveluntarjoajan tunnistetiedot",
+  "lang_microsoft_administrator_setup": "Microsoftin järjestelmänvalvojan asetukset",
+  "lang_not_configured": "Ei määritetty",
+  "lang_save_your_settings_first_this_test_uses_th": "Tallenna asetukset ensin. Tämä testi käyttää tallennettua tiliä.",
+  "lang_saved_leave_blank_to_keep": "Tallennettu - jätä tyhjäksi säilyttääksesi",
+  "lang_send_test_email": "Lähetä testisähköposti",
+  "lang_sending_test_email": "Lähetetään testisähköpostia...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (yleensä 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (yleensä 587 tai 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Käytä Posnic pilvisähköpostia tai liitä oma tili laskuja ja raportteja varten."
 }

@@ -5140,5 +5140,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsApp有効にして接続する必要があります。メールは保存したメール設定を使用します。",
   "lang_whatsapp_provider": "WhatsAppプロバイダー",
   "lang_when_a_receipt_template_is_saved_send_test": "領収書テンプレートが保存されると、Send testはサンプル領収書をお客様の番号に送信します。",
-  "lang_your_message": "あなたのメッセージ"
+  "lang_your_message": "あなたのメッセージ",
+  "lang_api_key_server_token": "APIキー/サーバートークン",
+  "lang_check_email_delivery": "E メール配信を確認",
+  "lang_connection_security": "接続セキュリティ",
+  "lang_could_not_confirm_submission_check_provide": "送信を確認できませんでした。再試行する前にプロバイダのログを確認してください。",
+  "lang_could_not_load_email_settings_refresh_befo": "E メールの設定を読み込めませんでした。変更を加える前に更新してください。",
+  "lang_enter_credentials_for_this_provider": "このプロバイダーの認証情報を入力してください。",
+  "lang_microsoft_administrator_setup": "マイクロソフトの管理者セットアップ",
+  "lang_not_configured": "未設定です。",
+  "lang_save_your_settings_first_this_test_uses_th": "まず設定を保存してください。このテストでは、保存したアカウントを使用します。",
+  "lang_saved_leave_blank_to_keep": "保存済み-空欄のままにしておきます",
+  "lang_send_test_email": "テストメールを送信",
+  "lang_sending_test_email": "テスト E メールを送信中...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (通常は 465)",
+  "lang_starttls_usually_587_or_2525": "StartTLS (通常は 587 または 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "請求書やレポートには、Posnicクラウドメールを使用するか、独自のアカウントを接続してください。"
 }

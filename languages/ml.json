@@ -5218,5 +5218,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsAppപ്രവർത്തനക്ഷമമാക്കുകയും കണക്റ്റുചെയ്യുകയും വേണം. ഇമെയിൽ നിങ്ങളുടെ സംരക്ഷിച്ച ഇമെയിൽ ക്രമീകരണങ്ങൾ ഉപയോഗിക്കുന്നു.",
   "lang_whatsapp_provider": "WhatsAppദാതാവ്",
   "lang_when_a_receipt_template_is_saved_send_test": "ഒരു രസീത് ടെംപ്ലേറ്റ് സംരക്ഷിക്കുമ്പോൾ, ടെസ്റ്റ് അയയ്ക്കുക നിങ്ങളുടെ നമ്പറിലേക്ക് ഒരു സാമ്പിൾ രസീത് അയയ്ക്കുന്നു.",
-  "lang_your_message": "നിങ്ങളുടെ സന്ദേശം"
+  "lang_your_message": "നിങ്ങളുടെ സന്ദേശം",
+  "lang_api_key_server_token": "APIകീ/സെർവർ ടോക്കൺ",
+  "lang_check_email_delivery": "ഇമെയിൽ ഡെലിവറി പരിശോധിക്കുക",
+  "lang_connection_security": "കണക്ഷൻ സുരക്ഷ",
+  "lang_could_not_confirm_submission_check_provide": "സമർപ്പണം സ്ഥിരീകരിക്കാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുന്നതിന് മുമ്പ് ദാതാവിന്റെ ലോഗുകൾ പരിശോധിക്കുക.",
+  "lang_could_not_load_email_settings_refresh_befo": "ഇമെയിൽ ക്രമീകരണങ്ങൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല. മാറ്റങ്ങൾ വരുത്തുന്നതിന് മുമ്പ് പുതുക്കുക.",
+  "lang_enter_credentials_for_this_provider": "ഈ ദാതാവിന് ക്രെഡൻഷ്യലുകൾ നൽകുക",
+  "lang_microsoft_administrator_setup": "മൈക്രോസോഫ്റ്റ് അഡ്മിനിസ്ട്രേറ്റർ",
+  "lang_not_configured": "കോൺഫിഗർ ചെയ്തിട്ടില്ല",
+  "lang_save_your_settings_first_this_test_uses_th": "ആദ്യം നിങ്ങളുടെ ക്രമീകരണങ്ങൾ സംരക്ഷിക്കുക. ഈ പരിശോധന സംരക്ഷിച്ച അക്കൗണ്ട് ഉപയോഗിക്കുന്നു.",
+  "lang_saved_leave_blank_to_keep": "സംരക്ഷിച്ചു - സൂക്ഷിക്കാൻ ശൂന്യമായി വിടുക",
+  "lang_send_test_email": "ടെസ്റ്റ് ഇമെയിൽ അയയ്ക്കുക",
+  "lang_sending_test_email": "ടെസ്റ്റ് ഇമെയിൽ അയയ്ക്കുന്നു...",
+  "lang_ssl_tls_usually_465": "എസ്എസ്എൽ/ടിഎൽഎസ് (സാധാരണയായി 465)",
+  "lang_starttls_usually_587_or_2525": "സ്റ്റാർട്ട്ൽസ് (സാധാരണയായി 587 അല്ലെങ്കിൽ 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicക്ലൗഡ് ഇമെയിൽ ഉപയോഗിക്കുക അല്ലെങ്കിൽ ബില്ലുകൾക്കും റിപ്പോർട്ടുകൾക്കുമായി നിങ്ങളുടെ സ്വന്തം അക്കൗണ്ട് ബന്ധിപ്പിക്കുക."
 }

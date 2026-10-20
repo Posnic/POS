@@ -5137,5 +5137,20 @@
   "lang_whatsapp_must_be_enabled_and_connected_ema": "WhatsApppeab olema lubatud ja ühendatud. E-post kasutab teie salvestatud e-posti sätteid.",
   "lang_whatsapp_provider": "WhatsApppakkuja",
   "lang_when_a_receipt_template_is_saved_send_test": "Kui kviitungi mall on salvestatud, saadab Send test teie numbrile näidiskviitungi.",
-  "lang_your_message": "Teie sõnum"
+  "lang_your_message": "Teie sõnum",
+  "lang_api_key_server_token": "APIvõtme/serveri märk",
+  "lang_check_email_delivery": "Kontrollige e-posti kohaletoimetamist",
+  "lang_connection_security": "Ühenduse turvalisus",
+  "lang_could_not_confirm_submission_check_provide": "Esitamist ei õnnestunud kinnitada. Enne uuesti proovimist kontrollige pakkuja logisid.",
+  "lang_could_not_load_email_settings_refresh_befo": "E-posti seadeid ei õnnestunud laadida. Värskendage enne muudatuste tegemist.",
+  "lang_enter_credentials_for_this_provider": "Sisestage selle teenusepakkuja mandaadid",
+  "lang_microsoft_administrator_setup": "Microsofti administraatori häälestus",
+  "lang_not_configured": "Ei ole konfigureeritud",
+  "lang_save_your_settings_first_this_test_uses_th": "Kõigepealt salvestage seaded. See test kasutab salvestatud kontot.",
+  "lang_saved_leave_blank_to_keep": "Salvestatud - jätke säilitamiseks tühjaks",
+  "lang_send_test_email": "Saada testmeili",
+  "lang_sending_test_email": "Teste-posti saatmine...",
+  "lang_ssl_tls_usually_465": "SSL/TLS (tavaliselt 465)",
+  "lang_starttls_usually_587_or_2525": "STARTTLS (tavaliselt 587 või 2525)",
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Kasutage Posnic pilvemeili või ühendage arvete ja aruannete jaoks oma konto."
 }
