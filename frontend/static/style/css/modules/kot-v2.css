@@ -358,3 +358,8 @@
 .kv2-dialog [data-room-agreement]:not([hidden]){display:flex;align-items:center;gap:10px;cursor:pointer}
 .kv2-dialog [data-room-agreement] input[type="checkbox"]{width:18px;height:18px;min-height:18px;padding:0;flex:0 0 18px;margin:0}
 .kv2-room-venue{margin:0 0 16px}
+
+/* Ordered-dish actions stay readable instead of squeezing into the old icon column. */
+#kot_v2 .kv2-line{grid-template-columns:minmax(36px,max-content) minmax(100px,1fr) max-content max-content max-content max-content max-content}
+#kot_v2 .kv2-line [data-action=cancelLine]{color:var(--danger,#c53030)}
+@media(max-width:1500px){#kot_v2 .kv2-line{grid-template-columns:38px minmax(0,1fr) max-content}#kot_v2 .kv2-line>span{grid-column:3;grid-row:1}#kot_v2 .kv2-line>button{grid-row:auto;min-height:36px}#kot_v2 .kv2-line>[data-action=again]{grid-column:2}#kot_v2 .kv2-line>[data-action=editLine]{grid-column:2}}

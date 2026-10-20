@@ -369,3 +369,18 @@ test('multiple room venues preserve optional guest count and reset agreement whe
  assert.equal(h.calls.find(c=>c.url==='sales/qrOrder').body.person_count,3);
  }finally{setup.roomVenues=null;h.close();}
 });
+
+test('cancel item requires a reason and cancelling the last dish uses audited order cancellation',async()=>{
+ const h=setup();try{h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('cancelLine');
+ const d=h.w.document.querySelector('dialog'),form=d.querySelector('form');assert.equal(d.querySelector('[name=qty]').value,'0');assert.equal(d.querySelector('[name=reason]').required,true);
+ form.dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();assert.equal(h.calls.filter(c=>c.method==='post').length,0);
+ d.querySelector('[name=reason]').value='Customer changed their mind';form.dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
+ const sent=h.calls.find(c=>c.url==='sales/updateOrder');assert.equal(sent.body.status,'cancelled');assert.equal(sent.body.change_reason,'Customer changed their mind');assert.equal(sent.body.items[0].quantity,2);
+ }finally{h.close();}
+});
+test('cancelling one dish preserves the other dishes and sends the reason',async()=>{
+ const h=setup();try{h.sale.items.push({item_id:'rice',line_id:'rice',item_quantity:1,item_price:50});h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('cancelLine');
+ const d=h.w.document.querySelector('dialog');d.querySelector('[name=reason]').value='Wrong item';d.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
+ const sent=h.calls.find(c=>c.url==='sales/updateOrder');assert.equal(sent.body.status,undefined);assert.equal(sent.body.items.length,1);assert.equal(sent.body.items[0].product_id,'rice');assert.equal(sent.body.change_reason,'Wrong item');
+ }finally{h.close();}
+});
