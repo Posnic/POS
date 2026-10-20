@@ -141,3 +141,28 @@
 
 .email-provider-help { color:#34465c; }
 .email-setup-grid label { color:#34465c; }
+
+/* Keep connection setup readable on large tills without squeezing small screens. */
+#message_centre #message_connection { width:100%; max-width:960px; min-width:0; }
+#message_centre #message_connection .card,
+#message_centre #message_connection .card-body,
+#message_centre #message_connection .card-header { min-width:0; max-width:100%; }
+#message_centre #message_connection .card-header { justify-content:flex-start!important; gap:12px 32px; }
+#message_centre #message_connection .card-header h5,
+#message_centre #message_connection .card-header h6 { margin-bottom:0; }
+#message_centre .message-status-row { justify-content:flex-start; align-items:flex-start; gap:20px 32px; }
+#message_centre .message-status-row > div { min-width:0; }
+#message_centre .message-status-actions { align-self:center; }
+#message_centre .message-phone-status { margin-bottom:0; }
+#message_centre #message_connection p,
+#message_centre #message_connection .alert,
+#message_centre #message_connection .badge { overflow-wrap:anywhere; white-space:normal; }
+#message_centre #whatsapp_qr_code img,
+#message_centre #whatsapp_qr_code canvas { max-width:100%; height:auto!important; }
+#message_centre .message-channel-nav { flex-wrap:wrap; }
+@media(max-width:600px) {
+ #message_centre .message-status-row { flex-direction:column; gap:16px; }
+ #message_centre .message-status-actions { align-self:flex-start; }
+ #message_centre .message-status-actions .btn { min-height:44px; white-space:normal; }
+ #message_centre .message-connection-actions { flex-wrap:wrap; }
+}
