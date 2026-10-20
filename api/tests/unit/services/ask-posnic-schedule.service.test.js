@@ -112,6 +112,13 @@ describe('Ask Posnic summary schedules', () => {
   });
 });
 
- test('monthly delivery rolls into January and retains the local send hour', () => {
-   expect(service.nextRun({frequency:'monthly',hour:8,timezone:'Asia/Kolkata'}, new Date('2026-12-01T03:00:00Z')).toISOString()).toBe('2027-01-01T02:30:00.000Z');
- });
+test('monthly delivery rolls into January and retains the local send hour', () => {
+  expect(
+    service
+      .nextRun(
+        { frequency: 'monthly', hour: 8, timezone: 'Asia/Kolkata' },
+        new Date('2026-12-01T03:00:00Z')
+      )
+      .toISOString()
+  ).toBe('2027-01-01T02:30:00.000Z');
+});

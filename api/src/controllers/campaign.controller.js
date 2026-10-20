@@ -31,7 +31,12 @@ class CampaignController extends BaseController {
     try {
       if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const q = req.query || {};
-      const r = await this.service.audienceOptions(q.kind, q.search, q.ids, this._ctx(req).branchId);
+      const r = await this.service.audienceOptions(
+        q.kind,
+        q.search,
+        q.ids,
+        this._ctx(req).branchId
+      );
       if (!r.status) return this.error(res, r.message, 400);
       return this.success(res, r.data, r.message);
     } catch (e) {

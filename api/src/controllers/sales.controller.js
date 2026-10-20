@@ -5451,11 +5451,13 @@ class SalesController extends BaseController {
         saleId,
         req.tenantContext?.branchId || req.user?.branch_id || sale.branch_id || sale.branch
       );
-      emailContent.attachments = [{
-        filename: receiptDocument.filename,
-        content: receiptDocument.buffer,
-        contentType: 'application/pdf',
-      }];
+      emailContent.attachments = [
+        {
+          filename: receiptDocument.filename,
+          content: receiptDocument.buffer,
+          contentType: 'application/pdf',
+        },
+      ];
 
       try {
         await transporter.sendMail(emailContent);

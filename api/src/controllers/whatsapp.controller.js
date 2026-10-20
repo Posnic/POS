@@ -200,7 +200,6 @@ class WhatsAppController extends BaseController {
     try {
       const { device_id } = req.query;
 
-
       const resolvedBranchId = activeBranchId(req);
 
       console.log('Resolved branch ID:', resolvedBranchId);
@@ -565,12 +564,20 @@ class WhatsAppController extends BaseController {
         : null;
       if (document?.url) finalMessage += '\n\nView or download your bill:\n' + document.url;
       const MessagingService = require('../services/messaging.service');
-      const result = await new MessagingService().sendWhatsapp(branchId, phone_number, finalMessage,
-        { purpose: sale_id ? 'Sales receipt' : 'Message', ...(document ? { document } : {}) });
+      const result = await new MessagingService().sendWhatsapp(
+        branchId,
+        phone_number,
+        finalMessage,
+        { purpose: sale_id ? 'Sales receipt' : 'Message', ...(document ? { document } : {}) }
+      );
 
       return res.json({
         type: result.ok ? 'success' : 'error',
-        message: result.ok ? (result.queued ? 'Message waiting to send' : 'Message accepted by sender') : result.error,
+        message: result.ok
+          ? result.queued
+            ? 'Message waiting to send'
+            : 'Message accepted by sender'
+          : result.error,
         data: { queued: !!result.queued, messageId: result.messageId || null },
       });
     } catch (error) {

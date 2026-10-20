@@ -3,7 +3,9 @@
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 jest.mock('../../../src/services/sale.service');
 jest.mock('../../../src/services/receipt-document.service', () => ({
-  prepare: jest.fn().mockResolvedValue({ buffer: Buffer.from('%PDF-test'), filename: 'invoice.pdf' }),
+  prepare: jest
+    .fn()
+    .mockResolvedValue({ buffer: Buffer.from('%PDF-test'), filename: 'invoice.pdf' }),
 }));
 jest.mock('../../../src/services/sales-history-summary');
 jest.mock('../../../src/services/paid-bill-edit', () => ({ amend: jest.fn() }));

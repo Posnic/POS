@@ -69,7 +69,8 @@ class MessagingService {
     }
     // WhatsApp Cloud API access token is a secret too - blank it on read.
     const wa = whatsappProviders.publicConfig(raw.whatsapp_cloud || {});
-    const cloud = wa.config, waSecretsSet = wa.secrets;
+    const cloud = wa.config,
+      waSecretsSet = wa.secrets;
 
     return {
       branch_id: raw.branch_id || (branchId ? oid(branchId) : null),
@@ -101,7 +102,9 @@ class MessagingService {
     const now = new Date();
     const existing = await this._raw(branchId);
 
-    const provider = String(data.sms_provider === undefined ? existing.sms_provider || '' : data.sms_provider || '').trim();
+    const provider = String(
+      data.sms_provider === undefined ? existing.sms_provider || '' : data.sms_provider || ''
+    ).trim();
     const known = provider ? providers.getProvider(provider) : null;
     const incoming = data.sms_config || {};
     const merged = {};
@@ -123,13 +126,22 @@ class MessagingService {
     }
 
     const set = {
-      sms_enabled: data.sms_enabled === undefined ? !!existing.sms_enabled : data.sms_enabled === true || data.sms_enabled === 'true',
+      sms_enabled:
+        data.sms_enabled === undefined
+          ? !!existing.sms_enabled
+          : data.sms_enabled === true || data.sms_enabled === 'true',
       sms_provider: provider,
       sms_config: merged,
       sms_template:
         data.sms_template !== undefined ? String(data.sms_template) : existing.sms_template || '',
-      whatsapp_enabled: data.whatsapp_enabled === undefined ? !!existing.whatsapp_enabled : data.whatsapp_enabled === true || data.whatsapp_enabled === 'true',
-      whatsapp_mode: (data.whatsapp_mode === undefined ? existing.whatsapp_mode : data.whatsapp_mode) === 'cloud' ? 'cloud' : 'web',
+      whatsapp_enabled:
+        data.whatsapp_enabled === undefined
+          ? !!existing.whatsapp_enabled
+          : data.whatsapp_enabled === true || data.whatsapp_enabled === 'true',
+      whatsapp_mode:
+        (data.whatsapp_mode === undefined ? existing.whatsapp_mode : data.whatsapp_mode) === 'cloud'
+          ? 'cloud'
+          : 'web',
       whatsapp_transport: TRANSPORTS.includes(data.whatsapp_transport)
         ? data.whatsapp_transport
         : TRANSPORTS.includes(existing.whatsapp_transport)
@@ -179,10 +191,20 @@ class MessagingService {
     try {
       const db = await BaseModel.getDb();
       await db.collection('messaging_events').insertOne({
-        license: BaseModel.license, branch_id: oid(branchId), created_date: new Date(),
-        purpose: delivery.purpose || 'Message', recipient_last4: digits(phone).slice(-4),
-        status: result.ok ? (result.queued ? 'queued' : 'accepted') : result.uncertain ? 'needs_review' : 'failed',
-        provider: result.provider || '', provider_message_id: result.messageId || null,
+        license: BaseModel.license,
+        branch_id: oid(branchId),
+        created_date: new Date(),
+        purpose: delivery.purpose || 'Message',
+        recipient_last4: digits(phone).slice(-4),
+        status: result.ok
+          ? result.queued
+            ? 'queued'
+            : 'accepted'
+          : result.uncertain
+            ? 'needs_review'
+            : 'failed',
+        provider: result.provider || '',
+        provider_message_id: result.messageId || null,
       });
     } catch (e) {
       console.warn('[messaging] Could not record send status');
@@ -193,17 +215,33 @@ class MessagingService {
   async history(branchId) {
     if (!branchId) return [];
     const db = await BaseModel.getDb();
-    const rows = await db.collection('messaging_events').find({ license: BaseModel.license, branch_id: oid(branchId) })
-      .sort({ created_date: -1 }).limit(100).toArray();
-    const queued = rows.filter(r => r.status === 'queued' && r.provider === 'whatsapp_connector');
+    const rows = await db
+      .collection('messaging_events')
+      .find({ license: BaseModel.license, branch_id: oid(branchId) })
+      .sort({ created_date: -1 })
+      .limit(100)
+      .toArray();
+    const queued = rows.filter((r) => r.status === 'queued' && r.provider === 'whatsapp_connector');
     if (queued.length) {
-      const jobs = await db.collection('whatsapp_outbox').find({
-        license: BaseModel.license, branch_id: oid(branchId),
-        _id: { $in: queued.map(r => oid(r.provider_message_id)) },
-      }).toArray();
-      const states = new Map(jobs.map(job => [String(job._id), job.status]));
-      const display = { sent: 'accepted', dead: 'failed', pending: 'queued', claimed: 'sending', needs_review: 'needs_review' };
-      queued.forEach(row => { row.status = display[states.get(String(row.provider_message_id))] || 'needs_review'; });
+      const jobs = await db
+        .collection('whatsapp_outbox')
+        .find({
+          license: BaseModel.license,
+          branch_id: oid(branchId),
+          _id: { $in: queued.map((r) => oid(r.provider_message_id)) },
+        })
+        .toArray();
+      const states = new Map(jobs.map((job) => [String(job._id), job.status]));
+      const display = {
+        sent: 'accepted',
+        dead: 'failed',
+        pending: 'queued',
+        claimed: 'sending',
+        needs_review: 'needs_review',
+      };
+      queued.forEach((row) => {
+        row.status = display[states.get(String(row.provider_message_id))] || 'needs_review';
+      });
     }
     return rows;
   }
@@ -216,7 +254,11 @@ class MessagingService {
 
     if (raw.whatsapp_mode === 'cloud') {
       if (delivery.document && !delivery.document.url)
-        return { ok: false, error: 'Bill links are not configured. Configure invoice sharing before sending API receipts.' };
+        return {
+          ok: false,
+          error:
+            'Bill links are not configured. Configure invoice sharing before sending API receipts.',
+        };
       return whatsappProviders.send(raw.whatsapp_cloud || {}, phone, message);
     }
 
@@ -258,7 +300,13 @@ class MessagingService {
     if (!deviceId) return { ok: false, error: 'No WhatsApp device linked for this branch' };
     let result;
     try {
-      const r = await whatsappService.sendMessage(deviceId, branchId, phone, message, delivery.document);
+      const r = await whatsappService.sendMessage(
+        deviceId,
+        branchId,
+        phone,
+        message,
+        delivery.document
+      );
       result = {
         ok: r && r.status === true,
         error: r && r.message,
@@ -300,12 +348,19 @@ class MessagingService {
     try {
       const db = await BaseModel.getDb();
       await db.collection('messaging_events').insertOne({
-        license: BaseModel.license, branch_id: oid(branchId), created_date: new Date(),
-        channel: 'sms', purpose: context.purpose || 'Message',
-        recipient_last4: digits(phone).slice(-4), status: result.ok ? 'accepted' : 'failed',
-        provider: result.provider || 'sms', provider_message_id: result.messageId || null,
+        license: BaseModel.license,
+        branch_id: oid(branchId),
+        created_date: new Date(),
+        channel: 'sms',
+        purpose: context.purpose || 'Message',
+        recipient_last4: digits(phone).slice(-4),
+        status: result.ok ? 'accepted' : 'failed',
+        provider: result.provider || 'sms',
+        provider_message_id: result.messageId || null,
       });
-    } catch (_) { console.warn('[messaging] Could not record SMS status'); }
+    } catch (_) {
+      console.warn('[messaging] Could not record SMS status');
+    }
     return result;
   }
 
@@ -345,10 +400,18 @@ class MessagingService {
       }
       const resp = await axios(req);
       const ok = !!spec.success(resp.data, resp.status);
-      return { ok, error: ok ? null : `Provider responded ${resp.status}`, status: resp.status,
-        provider: raw.sms_provider, messageId: raw.sms_provider === 'msg91' && ok && typeof resp.data?.message === 'string'
-          ? resp.data.message
-          : raw.sms_provider === 'vonage_messages' && ok ? resp.data.message_uuid : null };
+      return {
+        ok,
+        error: ok ? null : `Provider responded ${resp.status}`,
+        status: resp.status,
+        provider: raw.sms_provider,
+        messageId:
+          raw.sms_provider === 'msg91' && ok && typeof resp.data?.message === 'string'
+            ? resp.data.message
+            : raw.sms_provider === 'vonage_messages' && ok
+              ? resp.data.message_uuid
+              : null,
+      };
     } catch (e) {
       return {
         ok: false,
@@ -365,16 +428,27 @@ class MessagingService {
     if (!phone) return { status: false, message: 'Enter a phone number to test' };
     const text = 'Test message from your POS. Messaging is configured correctly.';
     const raw = channel === 'sms' ? await this._raw(branchId) : {};
-    const smsContext = raw.sms_provider === 'msg91' && raw.sms_config?.receipt_template_id
-      ? { purpose: 'receipt', name: 'Posnic TEST', url: 'https://www.posnic.com/' } : {};
+    const smsContext =
+      raw.sms_provider === 'msg91' && raw.sms_config?.receipt_template_id
+        ? { purpose: 'receipt', name: 'Posnic TEST', url: 'https://www.posnic.com/' }
+        : {};
     const r =
       channel === 'whatsapp'
         ? await this.sendWhatsapp(branchId, phone, text, { purpose: 'Connection test' })
         : await this.sendSms(branchId, phone, text, smsContext);
     return {
       status: r.ok,
-      data: { ok: r.ok, queued: !!r.queued, messageId: r.messageId || null, error: r.error || null },
-      message: r.ok ? (r.queued ? 'Test message waiting to send' : 'Test message accepted by sender') : 'Test failed: ' + (r.error || 'unknown error'),
+      data: {
+        ok: r.ok,
+        queued: !!r.queued,
+        messageId: r.messageId || null,
+        error: r.error || null,
+      },
+      message: r.ok
+        ? r.queued
+          ? 'Test message waiting to send'
+          : 'Test message accepted by sender'
+        : 'Test failed: ' + (r.error || 'unknown error'),
     };
   }
 }

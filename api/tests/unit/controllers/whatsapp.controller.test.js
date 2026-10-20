@@ -75,7 +75,9 @@ jest.spyOn(global, 'setTimeout').mockImplementation((fn) => {
 // ─── Load controller & mocks ──────────────────────────────────────────────────
 const ctrl = require('../../../src/controllers/whatsapp.controller');
 jest.mock('../../../src/services/receipt-document.service', () => ({
-  prepare: jest.fn().mockResolvedValue({ buffer: Buffer.from('%PDF-test'), filename: 'test.pdf', url: null }),
+  prepare: jest
+    .fn()
+    .mockResolvedValue({ buffer: Buffer.from('%PDF-test'), filename: 'test.pdf', url: null }),
 }));
 const mockService = require('../../../src/services/whatsapp.service');
 const mockMessaging = require('../../../src/services/messaging.service');
@@ -500,7 +502,11 @@ describe('sendMessage', () => {
       'Hello!',
       { purpose: 'Message' }
     );
-    expect(res.json).toHaveBeenCalledWith({ type: 'success', message: 'Message accepted by sender', data: { queued: false, messageId: null } });
+    expect(res.json).toHaveBeenCalledWith({
+      type: 'success',
+      message: 'Message accepted by sender',
+      data: { queued: false, messageId: null },
+    });
   });
 
   test('error: missing phone_number', async () => {
@@ -528,12 +534,9 @@ describe('sendMessage', () => {
     const req = mockReq({ body: { phone_number: '+91999', message: 'Hi' } }); // no device_id
     const res = mockRes();
     await ctrl.sendMessage(req, res);
-    expect(mockMessaging.sendWhatsapp).toHaveBeenCalledWith(
-      'branch001',
-      '+91999',
-      'Hi',
-      { purpose: 'Message' }
-    );
+    expect(mockMessaging.sendWhatsapp).toHaveBeenCalledWith('branch001', '+91999', 'Hi', {
+      purpose: 'Message',
+    });
   });
 
   test('allows API sending without a branch QR device', async () => {
@@ -542,12 +545,9 @@ describe('sendMessage', () => {
     const req = mockReq({ body: { phone_number: '+91999', message: 'Hi' } });
     const res = mockRes();
     await ctrl.sendMessage(req, res);
-    expect(mockMessaging.sendWhatsapp).toHaveBeenCalledWith(
-      'branch001',
-      '+91999',
-      'Hi',
-      { purpose: 'Message' }
-    );
+    expect(mockMessaging.sendWhatsapp).toHaveBeenCalledWith('branch001', '+91999', 'Hi', {
+      purpose: 'Message',
+    });
   });
 
   test('error: no branch_id resolved after device lookup', async () => {
@@ -566,7 +566,11 @@ describe('sendMessage', () => {
     const req = mockReq({ body: validBody });
     const res = mockRes();
     await ctrl.sendMessage(req, res);
-    expect(res.json).toHaveBeenCalledWith({ type: 'error', message: 'Send failed', data: { queued: false, messageId: null } });
+    expect(res.json).toHaveBeenCalledWith({
+      type: 'error',
+      message: 'Send failed',
+      data: { queued: false, messageId: null },
+    });
   });
 
   test('500: exception returns error json', async () => {
@@ -589,13 +593,14 @@ describe('sendMessage', () => {
       const req = mockReq({ body: templateBody });
       const res = mockRes();
       await ctrl.sendMessage(req, res);
-      expect(mockMessaging.sendWhatsapp).toHaveBeenCalledWith(
-        'branch001',
-        '+91999',
-        tpl.message,
-      { purpose: 'Message' }
-      );
-      expect(res.json).toHaveBeenCalledWith({ type: 'success', message: 'Message accepted by sender', data: { queued: false, messageId: null } });
+      expect(mockMessaging.sendWhatsapp).toHaveBeenCalledWith('branch001', '+91999', tpl.message, {
+        purpose: 'Message',
+      });
+      expect(res.json).toHaveBeenCalledWith({
+        type: 'success',
+        message: 'Message accepted by sender',
+        data: { queued: false, messageId: null },
+      });
     });
 
     test('error: invalid template_id format (ObjectId throws)', async () => {

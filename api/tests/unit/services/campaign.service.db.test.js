@@ -146,31 +146,49 @@ function recordingAdapters(resultFor) {
 }
 
 describe('Selected campaign audiences', () => {
-  beforeEach(() => { BaseModel.license = 'lic-test'; });
-  afterEach(() => { BaseModel.getDb = undefined; });
+  beforeEach(() => {
+    BaseModel.license = 'lic-test';
+  });
+  afterEach(() => {
+    BaseModel.getDb = undefined;
+  });
   test('selected customers respect branch, tenant, deletion and channel opt-out', async () => {
-    const ids = ['64d000000000000000000011','64d000000000000000000012','64d000000000000000000013','64d000000000000000000014','64d000000000000000000015'];
+    const ids = [
+      '64d000000000000000000011',
+      '64d000000000000000000012',
+      '64d000000000000000000013',
+      '64d000000000000000000014',
+      '64d000000000000000000015',
+    ];
     const customers = makeCollection([
-      cust(ids[0]), cust(ids[1], { branch_id: new ObjectId('64d000000000000000000088') }),
-      cust(ids[2], { license: 'another-shop' }), cust(ids[3], { is_deleted: true }),
+      cust(ids[0]),
+      cust(ids[1], { branch_id: new ObjectId('64d000000000000000000088') }),
+      cust(ids[2], { license: 'another-shop' }),
+      cust(ids[3], { is_deleted: true }),
       cust(ids[4], { preferences: { whatsappNotifications: false } }),
     ]);
-    const campaigns = makeCollection([makeCampaign({segment:{type:'customers', customer_ids:ids}})]);
-    BaseModel.getDb = jest.fn().mockResolvedValue(makeDb({customers, campaigns}));
-    const adapters = recordingAdapters(() => ({ok:true}));
-    const result = await new CampaignService().send(CID,{adapters:adapters.adapters});
-    expect(result.data.sent).toBe(1); expect(result.data.skipped).toBe(1);
-    expect(adapters.called.map(r=>r.phone)).toEqual([cust(ids[0]).phone]);
+    const campaigns = makeCollection([
+      makeCampaign({ segment: { type: 'customers', customer_ids: ids } }),
+    ]);
+    BaseModel.getDb = jest.fn().mockResolvedValue(makeDb({ customers, campaigns }));
+    const adapters = recordingAdapters(() => ({ ok: true }));
+    const result = await new CampaignService().send(CID, { adapters: adapters.adapters });
+    expect(result.data.sent).toBe(1);
+    expect(result.data.skipped).toBe(1);
+    expect(adapters.called.map((r) => r.phone)).toEqual([cust(ids[0]).phone]);
   });
   test('dry run does not consume the real delivery', async () => {
     const customers = makeCollection([cust('64d000000000000000000011')]);
-    BaseModel.getDb = jest.fn().mockResolvedValue(makeDb({customers,campaigns:makeCollection([makeCampaign()])}));
-    const svc = new CampaignService(), adapters = recordingAdapters(() => ({ok:true}));
-    await svc.send(CID,{dryRun:true,adapters:adapters.adapters});
+    BaseModel.getDb = jest
+      .fn()
+      .mockResolvedValue(makeDb({ customers, campaigns: makeCollection([makeCampaign()]) }));
+    const svc = new CampaignService(),
+      adapters = recordingAdapters(() => ({ ok: true }));
+    await svc.send(CID, { dryRun: true, adapters: adapters.adapters });
     expect(adapters.called).toHaveLength(0);
-    await svc.send(CID,{adapters:adapters.adapters});
+    await svc.send(CID, { adapters: adapters.adapters });
     expect(adapters.called).toHaveLength(1);
-    await svc.send(CID,{adapters:adapters.adapters});
+    await svc.send(CID, { adapters: adapters.adapters });
     expect(adapters.called).toHaveLength(1);
   });
 });

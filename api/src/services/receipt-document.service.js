@@ -15,13 +15,21 @@ async function prepare(saleId, branchId) {
   sink.setHeader = () => {};
   const chunks = [];
   const done = new Promise((resolve, reject) => {
-    sink.on('data', chunk => chunks.push(chunk));
+    sink.on('data', (chunk) => chunks.push(chunk));
     sink.on('end', resolve);
     sink.on('error', reject);
   });
   require('../utils/pdfGenerator').generateInvoicePDF({
-    data: sale, branch, res: sink,
-    config: { title: 'Sales Invoice.', idField: 'sales_id', itemsField: 'items', customerField: 'customer', dateField: 'date' },
+    data: sale,
+    branch,
+    res: sink,
+    config: {
+      title: 'Sales Invoice.',
+      idField: 'sales_id',
+      itemsField: 'items',
+      customerField: 'customer',
+      dateField: 'date',
+    },
   });
   await done;
   const buffer = Buffer.concat(chunks);
@@ -33,10 +41,15 @@ async function prepare(saleId, branchId) {
     // correction. Do not overwrite a link already sent to another recipient.
     const key = `${process.env.SHARE_LINK_PREFIX || ''}i/${require('crypto').randomBytes(16).toString('base64url')}`;
     const { PutObjectCommand } = require('@aws-sdk/client-s3');
-    await getS3Client().send(new PutObjectCommand({
-      Bucket: s3Config().bucket, Key: key, Body: buffer,
-      ContentType: 'application/pdf', ContentDisposition: `inline; filename="${filename}"`,
-    }));
+    await getS3Client().send(
+      new PutObjectCommand({
+        Bucket: s3Config().bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: 'application/pdf',
+        ContentDisposition: `inline; filename="${filename}"`,
+      })
+    );
     url = publicUrlFor(key);
   }
   return { buffer, filename, url };

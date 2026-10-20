@@ -1,7 +1,11 @@
 const restore = require('../../../scripts/whatsapp-msgkey-compat.cjs');
 
 test('new message keys resolve both sent-message and chat-history lookups', () => {
-  class Key { toString() { return 'true_chat_message'; } }
+  class Key {
+    toString() {
+      return 'true_chat_message';
+    }
+  }
   restore({ require: () => Key });
   const key = new Key();
   const messages = new Map([['true_chat_message', { text: 'test' }]]);
@@ -12,7 +16,11 @@ test('new message keys resolve both sent-message and chat-history lookups', () =
 });
 
 test('existing serialization getter remains unchanged and installation is idempotent', () => {
-  class Key { get _serialized() { return 'existing'; } }
+  class Key {
+    get _serialized() {
+      return 'existing';
+    }
+  }
   const descriptor = Object.getOwnPropertyDescriptor(Key.prototype, '_serialized');
   restore({ require: () => Key });
   restore({ require: () => Key });

@@ -9,12 +9,15 @@ module.exports = function customerReceiptLink(req, res, next) {
     const encryption = require('../utils/encryption');
     const normalized = token.replace(/ /g, '+').trim();
     const id = encryption.decryptId(normalized);
-    if (!/^[a-f0-9]{24}$/i.test(id) ||
-        encryption.generateEncryptedId(id) !== normalized) throw new Error('Invalid link');
+    if (!/^[a-f0-9]{24}$/i.test(id) || encryption.generateEncryptedId(id) !== normalized)
+      throw new Error('Invalid link');
     return next();
   } catch {
     return res.status(400).json({
-      type: 'error', status: false, message: 'This receipt link is invalid. Ask the shop to send it again.', data: null,
+      type: 'error',
+      status: false,
+      message: 'This receipt link is invalid. Ask the shop to send it again.',
+      data: null,
     });
   }
 };

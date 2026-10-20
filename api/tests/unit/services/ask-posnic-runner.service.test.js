@@ -121,39 +121,63 @@ test('distinguishes queued WhatsApp from a sent message and passes the execution
 });
 
 test('monthly report covers the complete previous month including leap day', () => {
- const range=runner.reportRange({frequency:'monthly',timezone:'Asia/Kolkata'},new Date('2028-03-01T03:00:00Z'));
- expect(range.starting_date.toISOString()).toBe('2028-01-31T18:30:00.000Z');
- expect(range.ending_date.toISOString()).toBe('2028-02-29T18:29:59.999Z');
+  const range = runner.reportRange(
+    { frequency: 'monthly', timezone: 'Asia/Kolkata' },
+    new Date('2028-03-01T03:00:00Z')
+  );
+  expect(range.starting_date.toISOString()).toBe('2028-01-31T18:30:00.000Z');
+  expect(range.ending_date.toISOString()).toBe('2028-02-29T18:29:59.999Z');
 });
 test('background delivery keeps its shop context across awaits and restores the caller', async () => {
- const {getRequestContext,runWithRequestContext}=require('../../../src/utils/request-context');
- mockSendWhatsapp.mockImplementationOnce(async()=>{
-   await Promise.resolve();
-   expect(getRequestContext()).toMatchObject({license:'shop',currentBranch:'outlet',loggedUser:'owner'});
-   return {ok:true,messageId:'scheduled-reference',provider:'whatsapp_web'};
- });
- await runWithRequestContext({license:'different-shop'},async()=>{
-   await runner.deliver({...schedule,channel:'whatsapp'},report);
-   expect(getRequestContext()).toEqual({license:'different-shop'});
- });
+  const {
+    getRequestContext,
+    runWithRequestContext,
+  } = require('../../../src/utils/request-context');
+  mockSendWhatsapp.mockImplementationOnce(async () => {
+    await Promise.resolve();
+    expect(getRequestContext()).toMatchObject({
+      license: 'shop',
+      currentBranch: 'outlet',
+      loggedUser: 'owner',
+    });
+    return { ok: true, messageId: 'scheduled-reference', provider: 'whatsapp_web' };
+  });
+  await runWithRequestContext({ license: 'different-shop' }, async () => {
+    await runner.deliver({ ...schedule, channel: 'whatsapp' }, report);
+    expect(getRequestContext()).toEqual({ license: 'different-shop' });
+  });
 });
 test('scheduled delivery uses the BSON license type used by messaging settings', async () => {
- const {getRequestContext}=require('../../../src/utils/request-context');
- mockSendWhatsapp.mockImplementationOnce(async()=>{
-   expect(getRequestContext().license._bsontype).toBe('ObjectId');
-   expect(String(getRequestContext().license)).toBe('64a000000000000000000003');
-   return {ok:true,messageId:'scheduled-reference',provider:'whatsapp_web'};
- });
- await runner.deliver({...schedule,license:'64a000000000000000000003',channel:'whatsapp'},report);
+  const { getRequestContext } = require('../../../src/utils/request-context');
+  mockSendWhatsapp.mockImplementationOnce(async () => {
+    expect(getRequestContext().license._bsontype).toBe('ObjectId');
+    expect(String(getRequestContext().license)).toBe('64a000000000000000000003');
+    return { ok: true, messageId: 'scheduled-reference', provider: 'whatsapp_web' };
+  });
+  await runner.deliver(
+    { ...schedule, license: '64a000000000000000000003', channel: 'whatsapp' },
+    report
+  );
 });
 test('messaging reports still require an active owner with outlet access', async () => {
- const schedule={source:'messaging',license:'shop',branch_id:'outlet',user_id:'owner'};
- const lookup=jest.fn(async()=>({_id:'owner',role:'cashier',branch_access:[{branch_id:'outlet'}]}));
- const db={collection:()=>({findOne:lookup})};
- await expect(runner.authorize(db,schedule)).rejects.toThrow(/owner no longer/);
- lookup.mockResolvedValue({role:'super_admin',branch_access:[{branch_id:'other'}]});
- await expect(runner.authorize(db,schedule)).rejects.toThrow(/owner no longer/);
- lookup.mockResolvedValueOnce({role:'super_admin',branch_access:[{branch_id:'outlet'}]}).mockResolvedValueOnce({_id:'outlet',branch_name:'Test'});
- await expect(runner.authorize(db,schedule)).resolves.toHaveProperty('branch.branch_name','Test');
- expect(lookup.mock.calls[0][0]).toHaveProperty('status',{$nin:['inactive','suspended','pending']});
+  const schedule = { source: 'messaging', license: 'shop', branch_id: 'outlet', user_id: 'owner' };
+  const lookup = jest.fn(async () => ({
+    _id: 'owner',
+    role: 'cashier',
+    branch_access: [{ branch_id: 'outlet' }],
+  }));
+  const db = { collection: () => ({ findOne: lookup }) };
+  await expect(runner.authorize(db, schedule)).rejects.toThrow(/owner no longer/);
+  lookup.mockResolvedValue({ role: 'super_admin', branch_access: [{ branch_id: 'other' }] });
+  await expect(runner.authorize(db, schedule)).rejects.toThrow(/owner no longer/);
+  lookup
+    .mockResolvedValueOnce({ role: 'super_admin', branch_access: [{ branch_id: 'outlet' }] })
+    .mockResolvedValueOnce({ _id: 'outlet', branch_name: 'Test' });
+  await expect(runner.authorize(db, schedule)).resolves.toHaveProperty(
+    'branch.branch_name',
+    'Test'
+  );
+  expect(lookup.mock.calls[0][0]).toHaveProperty('status', {
+    $nin: ['inactive', 'suspended', 'pending'],
+  });
 });

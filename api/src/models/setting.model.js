@@ -2709,21 +2709,35 @@ class SettingModel extends BaseModel {
       const messaging = new MessagingService();
       const settings = await messaging._raw(this.branchId);
       if (settings.sms_provider) {
-        let { url } = await require('../services/receipt-document.service')
-          .prepare(data.customer_sms_id, this.branchId);
+        let { url } = await require('../services/receipt-document.service').prepare(
+          data.customer_sms_id,
+          this.branchId
+        );
         if (!url && this.receiptPublicBase) {
-          const encryptedId = require('../utils/encryption').generateEncryptedId(data.customer_sms_id);
+          const encryptedId = require('../utils/encryption').generateEncryptedId(
+            data.customer_sms_id
+          );
           url = `${this.receiptPublicBase}/customersMailPrint.html?id=${encodeURIComponent(encryptedId)}`;
         }
         if (!url) {
-          return { status: false, data: null,
-            message: 'Receipt sharing is unavailable. Configure receipt file storage before sending an SMS bill.' };
+          return {
+            status: false,
+            data: null,
+            message:
+              'Receipt sharing is unavailable. Configure receipt file storage before sending an SMS bill.',
+          };
         }
-        const sent = await messaging.sendSms(this.branchId, data.customer_sms_fullphone,
+        const sent = await messaging.sendSms(
+          this.branchId,
+          data.customer_sms_fullphone,
           `Hi ${data.customer_sms_name}, view your receipt: ${url}`,
-          { purpose: 'receipt', name: data.customer_sms_name, url });
-        return { status: sent.ok, data: sent.ok ? 'accepted' : null,
-          message: sent.ok ? 'Receipt accepted by SMS provider' : sent.error };
+          { purpose: 'receipt', name: data.customer_sms_name, url }
+        );
+        return {
+          status: sent.ok,
+          data: sent.ok ? 'accepted' : null,
+          message: sent.ok ? 'Receipt accepted by SMS provider' : sent.error,
+        };
       }
       const result = await smsService.sendSalesReceipt(smsData);
 

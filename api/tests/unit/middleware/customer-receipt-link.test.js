@@ -12,7 +12,7 @@ describe('customer receipt links', () => {
   test('allows a valid receipt link without a login', () => {
     expect(check(encryption.generateEncryptedId(id)).next).toHaveBeenCalledTimes(1);
   });
-  test.each([id, 'bad', null, ['bad']])('rejects a plain or malformed identifier: %p', token => {
+  test.each([id, 'bad', null, ['bad']])('rejects a plain or malformed identifier: %p', (token) => {
     const { res, next } = check(token);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(next).not.toHaveBeenCalled();

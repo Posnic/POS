@@ -48,15 +48,21 @@ jest.mock('whatsapp-web.js', () => {
     on: jest.fn(),
     initialize: jest.fn().mockResolvedValue(undefined),
     getState: jest.fn().mockResolvedValue('CONNECTED'),
-    getNumberId: jest.fn(async number => ({ _serialized: number + '@c.us' })),
+    getNumberId: jest.fn(async (number) => ({ _serialized: number + '@c.us' })),
     getContactLidAndPhone: jest.fn(async () => []),
     logout: jest.fn().mockResolvedValue(undefined),
     destroy: jest.fn().mockResolvedValue(undefined),
-    sendMessage: jest.fn().mockResolvedValue({id:{_serialized:'test-message-id'}}),
+    sendMessage: jest.fn().mockResolvedValue({ id: { _serialized: 'test-message-id' } }),
   };
   const Client = jest.fn(() => mockInstance);
   Client.__mockInstance = mockInstance;
-  return { Client, LocalAuth: jest.fn(), MessageMedia: jest.fn(function(mimetype, data, filename) { Object.assign(this, { mimetype, data, filename }); }) };
+  return {
+    Client,
+    LocalAuth: jest.fn(),
+    MessageMedia: jest.fn(function (mimetype, data, filename) {
+      Object.assign(this, { mimetype, data, filename });
+    }),
+  };
 });
 
 jest.mock('qrcode', () => ({
@@ -80,7 +86,10 @@ test('transient cleanup preserves disk authentication; explicit logout removes i
   service._safeCleanupClient('branch_device');
   expect(fs.rmSync).not.toHaveBeenCalled();
   service._safeCleanupClient('branch_device', true);
-  expect(fs.rmSync).toHaveBeenCalledWith(expect.stringContaining('session-branch_device'), {recursive:true,force:true});
+  expect(fs.rmSync).toHaveBeenCalledWith(expect.stringContaining('session-branch_device'), {
+    recursive: true,
+    force: true,
+  });
 });
 
 // Service is loaded AFTER mocks — constructor receives mocked fs
@@ -111,7 +120,7 @@ describe('WhatsAppService (singleton, extends EventEmitter)', () => {
     mockClient.getState.mockResolvedValue('CONNECTED');
     mockClient.logout.mockResolvedValue(undefined);
     mockClient.destroy.mockResolvedValue(undefined);
-    mockClient.sendMessage.mockResolvedValue({id:{_serialized:'test-message-id'}});
+    mockClient.sendMessage.mockResolvedValue({ id: { _serialized: 'test-message-id' } });
     fs.existsSync.mockReturnValue(true);
     qrcode.toDataURL.mockResolvedValue('data:image/png;base64,mockqrdataurl');
 
@@ -534,7 +543,7 @@ describe('WhatsAppService (singleton, extends EventEmitter)', () => {
       const result = await service.sendMessage(DEVICE_ID, BRANCH_ID, '919008427482', 'Test');
       expect(result.status).toBe(false);
       expect(result.message).toContain('Delivery is unconfirmed');
-        expect(result.uncertain).toBe(true);
+      expect(result.uncertain).toBe(true);
       expect(mockClient.sendMessage).toHaveBeenCalledTimes(1);
     });
     test('returns status:false when no client found for device/branch', async () => {
@@ -570,39 +579,52 @@ describe('WhatsAppService (singleton, extends EventEmitter)', () => {
       service.clients.set(CLIENT_KEY, mockClient);
       mockClient.getState.mockResolvedValue('CONNECTED');
       await service.sendMessage(DEVICE_ID, BRANCH_ID, '919876543210', 'Hi');
-      expect(mockClient.sendMessage).toHaveBeenCalledWith('919876543210@c.us', 'Hi', { sendSeen: false });
+      expect(mockClient.sendMessage).toHaveBeenCalledWith('919876543210@c.us', 'Hi', {
+        sendSeen: false,
+      });
     });
 
     test('normalizes international plus notation before sending', async () => {
       service.clients.set(CLIENT_KEY, mockClient);
       mockClient.getState.mockResolvedValue('CONNECTED');
       await service.sendMessage(DEVICE_ID, BRANCH_ID, '+91 90084 27482', 'Hi');
-      expect(mockClient.sendMessage).toHaveBeenCalledWith('919008427482@c.us', 'Hi', { sendSeen: false });
+      expect(mockClient.sendMessage).toHaveBeenCalledWith('919008427482@c.us', 'Hi', {
+        sendSeen: false,
+      });
     });
 
     test('does not modify phone number that already contains @c.us', async () => {
       service.clients.set(CLIENT_KEY, mockClient);
       mockClient.getState.mockResolvedValue('CONNECTED');
       await service.sendMessage(DEVICE_ID, BRANCH_ID, '919876543210@c.us', 'Hi');
-      expect(mockClient.sendMessage).toHaveBeenCalledWith('919876543210@c.us', 'Hi', { sendSeen: false });
+      expect(mockClient.sendMessage).toHaveBeenCalledWith('919876543210@c.us', 'Hi', {
+        sendSeen: false,
+      });
     });
 
     test('returns {status:true} on successful send', async () => {
       service.clients.set(CLIENT_KEY, mockClient);
       mockClient.getState.mockResolvedValue('CONNECTED');
       const r = await service.sendMessage(DEVICE_ID, BRANCH_ID, '9876543210', 'Test message');
-      expect(r).toEqual({ status: true, message: 'Message sent successfully', messageId: 'test-message-id' });
+      expect(r).toEqual({
+        status: true,
+        message: 'Message sent successfully',
+        messageId: 'test-message-id',
+      });
     });
 
     test('sends the PDF and caption together without an extra text message', async () => {
       service.clients.set(CLIENT_KEY, mockClient);
       await service.sendMessage(DEVICE_ID, BRANCH_ID, '919008427482', 'Your bill', {
-        buffer: Buffer.from('%PDF-test'), filename: 'invoice.pdf',
+        buffer: Buffer.from('%PDF-test'),
+        filename: 'invoice.pdf',
       });
       expect(mockClient.sendMessage).toHaveBeenCalledTimes(1);
-      expect(mockClient.sendMessage).toHaveBeenCalledWith('919008427482@c.us',
+      expect(mockClient.sendMessage).toHaveBeenCalledWith(
+        '919008427482@c.us',
         expect.objectContaining({ mimetype: 'application/pdf', filename: 'invoice.pdf' }),
-        { sendSeen: false, sendMediaAsDocument: true, caption: 'Your bill' });
+        { sendSeen: false, sendMediaAsDocument: true, caption: 'Your bill' }
+      );
     });
 
     test('passes message body unchanged to client.sendMessage', async () => {
@@ -610,7 +632,9 @@ describe('WhatsAppService (singleton, extends EventEmitter)', () => {
       mockClient.getState.mockResolvedValue('CONNECTED');
       const body = 'Your order #INV-001 is ready! Total: ₹500 😊\nPlease collect it.';
       await service.sendMessage(DEVICE_ID, BRANCH_ID, '9876543210', body);
-      expect(mockClient.sendMessage).toHaveBeenCalledWith('9876543210@c.us', body, { sendSeen: false });
+      expect(mockClient.sendMessage).toHaveBeenCalledWith('9876543210@c.us', body, {
+        sendSeen: false,
+      });
     });
 
     test('returns {status:false} when client.sendMessage throws', async () => {
@@ -640,82 +664,112 @@ describe('WhatsAppService (singleton, extends EventEmitter)', () => {
   });
 });
 test('concurrent connection requests share one browser initialization', async () => {
-  service.clients.clear(); service.connectionStatus.clear();
+  service.clients.clear();
+  service.connectionStatus.clear();
   let finish;
-  mockClient.initialize.mockImplementationOnce(() => new Promise(resolve => { finish=resolve; }));
-  const before=Client.mock.calls.length;
-  const one=service.initializeClient('concurrent','branch');
-  const two=service.initializeClient('concurrent','branch');
-  expect(Client.mock.calls.length-before).toBe(1);
-  finish(); await Promise.all([one,two]);
+  mockClient.initialize.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+  );
+  const before = Client.mock.calls.length;
+  const one = service.initializeClient('concurrent', 'branch');
+  const two = service.initializeClient('concurrent', 'branch');
+  expect(Client.mock.calls.length - before).toBe(1);
+  finish();
+  await Promise.all([one, two]);
   expect(service.initializations.size).toBe(0);
-  service.clients.clear(); service.connectionStatus.clear();
+  service.clients.clear();
+  service.connectionStatus.clear();
 });
 
 test('uses the verified LID mapping before sending, without retrying', async () => {
- service.clients.set('branch_lid', mockClient);
- mockClient.getState.mockResolvedValue('CONNECTED');
- mockClient.getNumberId.mockResolvedValueOnce({_serialized:'919008427482@c.us'});
- mockClient.getContactLidAndPhone.mockResolvedValueOnce([{pn:'919008427482@c.us',lid:'1234567890@lid'}]);
- mockClient.sendMessage.mockClear();
- await service.sendMessage('lid','branch','+919008427482','Test');
- expect(mockClient.sendMessage).toHaveBeenCalledTimes(1);
- expect(mockClient.sendMessage).toHaveBeenCalledWith('1234567890@lid','Test',{sendSeen:false});
+  service.clients.set('branch_lid', mockClient);
+  mockClient.getState.mockResolvedValue('CONNECTED');
+  mockClient.getNumberId.mockResolvedValueOnce({ _serialized: '919008427482@c.us' });
+  mockClient.getContactLidAndPhone.mockResolvedValueOnce([
+    { pn: '919008427482@c.us', lid: '1234567890@lid' },
+  ]);
+  mockClient.sendMessage.mockClear();
+  await service.sendMessage('lid', 'branch', '+919008427482', 'Test');
+  expect(mockClient.sendMessage).toHaveBeenCalledTimes(1);
+  expect(mockClient.sendMessage).toHaveBeenCalledWith('1234567890@lid', 'Test', {
+    sendSeen: false,
+  });
 });
 test('unregistered recipients do not reach sending', async () => {
- service.clients.set('branch_missing',mockClient);
- mockClient.getNumberId.mockResolvedValueOnce(null); mockClient.sendMessage.mockClear();
- const result=await service.sendMessage('missing','branch','+919008427482','Test');
- expect(result.status).toBe(false);expect(mockClient.sendMessage).not.toHaveBeenCalled();
+  service.clients.set('branch_missing', mockClient);
+  mockClient.getNumberId.mockResolvedValueOnce(null);
+  mockClient.sendMessage.mockClear();
+  const result = await service.sendMessage('missing', 'branch', '+919008427482', 'Test');
+  expect(result.status).toBe(false);
+  expect(mockClient.sendMessage).not.toHaveBeenCalled();
 });
 
 test('late events from a replaced browser cannot overwrite the new connection', async () => {
- service.clients.clear(); mockClient.on.mockClear();
- await service.initializeClient('late','branch');
- const handlers = Object.fromEntries(mockClient.on.mock.calls);
- service.clients.set('branch_late', {});
- service.connectionStatus.set('branch_late','connected');
- handlers.qr('stale'); handlers.authenticated(); handlers.auth_failure('old'); handlers.ready();
- expect(service.getConnectionStatus('late','branch')).toBe('connected');
- expect(service.getQRCode('late','branch')).toBeNull();
+  service.clients.clear();
+  mockClient.on.mockClear();
+  await service.initializeClient('late', 'branch');
+  const handlers = Object.fromEntries(mockClient.on.mock.calls);
+  service.clients.set('branch_late', {});
+  service.connectionStatus.set('branch_late', 'connected');
+  handlers.qr('stale');
+  handlers.authenticated();
+  handlers.auth_failure('old');
+  handlers.ready();
+  expect(service.getConnectionStatus('late', 'branch')).toBe('connected');
+  expect(service.getQRCode('late', 'branch')).toBeNull();
 });
 test('string initialization errors retain their diagnostic message', async () => {
- service.clients.clear();
- mockClient.initialize.mockRejectedValueOnce('auth timeout');
- const result = await service.initializeClient('timeout','branch');
- expect(result).toMatchObject({status:false,message:'auth timeout'});
- expect(service.getConnectionStatus('timeout','branch')).toBe('auth_failed');
+  service.clients.clear();
+  mockClient.initialize.mockRejectedValueOnce('auth timeout');
+  const result = await service.initializeClient('timeout', 'branch');
+  expect(result).toMatchObject({ status: false, message: 'auth timeout' });
+  expect(service.getConnectionStatus('timeout', 'branch')).toBe('auth_failed');
 });
 test('recovery waits for the matching ready event and removes its listeners', async () => {
- service.connectionStatus.set('branch_recover','authenticated');
- let finished=false;
- const waiting=service._waitForReady('branch_recover',1000).then(value=>{finished=true;return value;});
- service.emit('ready',{clientKey:'another_branch'});
- await Promise.resolve();
- expect(finished).toBe(false);
- service.emit('ready',{clientKey:'branch_recover'});
- expect(await waiting).toBe(true);
- expect(service.listenerCount('ready')).toBe(0);
+  service.connectionStatus.set('branch_recover', 'authenticated');
+  let finished = false;
+  const waiting = service._waitForReady('branch_recover', 1000).then((value) => {
+    finished = true;
+    return value;
+  });
+  service.emit('ready', { clientKey: 'another_branch' });
+  await Promise.resolve();
+  expect(finished).toBe(false);
+  service.emit('ready', { clientKey: 'branch_recover' });
+  expect(await waiting).toBe(true);
+  expect(service.listenerCount('ready')).toBe(0);
 });
 test('recovery timeout and fresh QR stop before sending', async () => {
- service.connectionStatus.set('branch_timeout','initializing');
- expect(await service._waitForReady('branch_timeout',1)).toBe(false);
- service.connectionStatus.set('branch_qr','qr_ready');
- expect(await service._waitForReady('branch_qr',1)).toBe(false);
- expect(service.listenerCount('ready')).toBe(0);
+  service.connectionStatus.set('branch_timeout', 'initializing');
+  expect(await service._waitForReady('branch_timeout', 1)).toBe(false);
+  service.connectionStatus.set('branch_qr', 'qr_ready');
+  expect(await service._waitForReady('branch_qr', 1)).toBe(false);
+  expect(service.listenerCount('ready')).toBe(0);
 });
-test.each([undefined, new Error('LID chat has not synced')])('resolves a synced phone chat before sending when the LID chat is unavailable: %s', async (lookupError) => {
- service.clients.set('branch_chat',mockClient);
- mockClient.getContactLidAndPhone.mockResolvedValueOnce([{pn:'919008427482@c.us',lid:'123@lid'}]);
-  mockClient.getChatById=jest.fn();
-  if (lookupError) mockClient.getChatById.mockRejectedValueOnce(lookupError);
-  else mockClient.getChatById.mockResolvedValueOnce(undefined);
-  mockClient.getChatById.mockResolvedValueOnce({id:'phone-chat'});
- mockClient.sendMessage.mockClear();
- try {
-  const result=await service.sendMessage('chat','branch','919008427482','Test');
-  expect(result.status).toBe(true);
-  expect(mockClient.sendMessage).toHaveBeenCalledTimes(1);
-  expect(mockClient.sendMessage).toHaveBeenCalledWith('919008427482@c.us','Test',{sendSeen:false});
- } finally { delete mockClient.getChatById; }
-});
+test.each([undefined, new Error('LID chat has not synced')])(
+  'resolves a synced phone chat before sending when the LID chat is unavailable: %s',
+  async (lookupError) => {
+    service.clients.set('branch_chat', mockClient);
+    mockClient.getContactLidAndPhone.mockResolvedValueOnce([
+      { pn: '919008427482@c.us', lid: '123@lid' },
+    ]);
+    mockClient.getChatById = jest.fn();
+    if (lookupError) mockClient.getChatById.mockRejectedValueOnce(lookupError);
+    else mockClient.getChatById.mockResolvedValueOnce(undefined);
+    mockClient.getChatById.mockResolvedValueOnce({ id: 'phone-chat' });
+    mockClient.sendMessage.mockClear();
+    try {
+      const result = await service.sendMessage('chat', 'branch', '919008427482', 'Test');
+      expect(result.status).toBe(true);
+      expect(mockClient.sendMessage).toHaveBeenCalledTimes(1);
+      expect(mockClient.sendMessage).toHaveBeenCalledWith('919008427482@c.us', 'Test', {
+        sendSeen: false,
+      });
+    } finally {
+      delete mockClient.getChatById;
+    }
+  }
+);

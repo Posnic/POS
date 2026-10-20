@@ -35,7 +35,8 @@ function nextRun(schedule, from = new Date()) {
 async function save(context, input) {
   if (!context.licenseId || !context.branchId || !context.userId)
     throw new Error('A shop, outlet and owner are required.');
-  if (!FREQUENCIES.has(input.frequency)) throw new Error('Choose daily, weekly or monthly delivery.');
+  if (!FREQUENCIES.has(input.frequency))
+    throw new Error('Choose daily, weekly or monthly delivery.');
   if (!REPORTS.has(input.report)) throw new Error('Choose a supported report.');
   if (typeof input.destination !== 'string' || input.destination.length > 254)
     throw new Error('Enter a valid delivery destination (maximum 254 characters).');

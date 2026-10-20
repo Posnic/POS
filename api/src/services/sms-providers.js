@@ -72,8 +72,11 @@ const PROVIDERS = {
         headers: { Authorization: basic(c.api_key, c.api_secret) },
         bodyType: 'json',
         body: {
-          to: digits(to), from: c.sender, channel: 'sms',
-          message_type: 'text', text: message,
+          to: digits(to),
+          from: c.sender,
+          channel: 'sms',
+          message_type: 'text',
+          text: message,
         },
         success: (data, status) => Number(status) === 202 && !!data?.message_uuid,
       };
@@ -304,13 +307,23 @@ const PROVIDERS = {
       { key: 'authkey', label: 'Auth Key', required: true, secret: true },
       { key: 'sender', label: 'Sender ID (DLT approved, 6 char)', required: true },
       { key: 'template_id', label: 'Message template ID (uses VAR1)', required: false },
-      { key: 'receipt_template_id', label: 'Receipt template ID (uses name and url)', required: false },
+      {
+        key: 'receipt_template_id',
+        label: 'Receipt template ID (uses name and url)',
+        required: false,
+      },
     ],
     build(c, to, message, context = {}) {
       const receipt = context.purpose === 'receipt';
       const templateId = receipt ? c.receipt_template_id : c.template_id;
-      if (!templateId) throw new Error(receipt ? 'Set up an approved receipt template first' : 'Set up an approved message template first; receipt templates cannot send campaigns or reminders');
-      if (receipt && (!context.name || !context.url)) throw new Error('Receipt name and link are required');
+      if (!templateId)
+        throw new Error(
+          receipt
+            ? 'Set up an approved receipt template first'
+            : 'Set up an approved message template first; receipt templates cannot send campaigns or reminders'
+        );
+      if (receipt && (!context.name || !context.url))
+        throw new Error('Receipt name and link are required');
       return {
         method: 'POST',
         url: 'https://control.msg91.com/api/v5/flow',
@@ -325,7 +338,11 @@ const PROVIDERS = {
           template_id: templateId,
           sender: c.sender,
           short_url: '0',
-          recipients: [receipt ? { mobiles: digits(to), name: String(context.name), url: String(context.url) } : { mobiles: digits(to), VAR1: message }],
+          recipients: [
+            receipt
+              ? { mobiles: digits(to), name: String(context.name), url: String(context.url) }
+              : { mobiles: digits(to), VAR1: message },
+          ],
         },
         success: (data, status) => ok2xx(data, status) && data?.type === 'success',
       };

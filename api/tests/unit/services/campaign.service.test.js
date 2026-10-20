@@ -32,10 +32,19 @@ describe('CampaignService.renderMessage', () => {
 
 describe('CampaignService.buildAudienceQuery', () => {
   test('empty, invalid and duplicate explicit selections cannot expand to all customers', () => {
-    expect(CampaignService.buildAudienceQuery({type:'customers',customer_ids:[]})).toEqual({_id:{$in:[]}});
-    expect(CampaignService.buildAudienceQuery({type:'category',category_ids:['bad']})).toEqual({category_id:{$in:[]}});
-    const id='64c111111111111111111111';
-    expect(CampaignService.buildAudienceQuery({type:'customers',customer_ids:[id,id,'bad']})._id.$in.map(String)).toEqual([id]);
+    expect(CampaignService.buildAudienceQuery({ type: 'customers', customer_ids: [] })).toEqual({
+      _id: { $in: [] },
+    });
+    expect(CampaignService.buildAudienceQuery({ type: 'category', category_ids: ['bad'] })).toEqual(
+      { category_id: { $in: [] } }
+    );
+    const id = '64c111111111111111111111';
+    expect(
+      CampaignService.buildAudienceQuery({
+        type: 'customers',
+        customer_ids: [id, id, 'bad'],
+      })._id.$in.map(String)
+    ).toEqual([id]);
   });
   test('all -> no filter', () => {
     expect(CampaignService.buildAudienceQuery({ type: SEGMENT_TYPE.ALL })).toEqual({});

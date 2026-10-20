@@ -43,13 +43,19 @@ class WhatsAppService extends EventEmitter {
 
   async initializeClient(deviceId, branchId) {
     let key;
-    try { key = this._clientKey(deviceId, branchId); }
-    catch (error) { return { status: false, message: error.message, connected: false }; }
+    try {
+      key = this._clientKey(deviceId, branchId);
+    } catch (error) {
+      return { status: false, message: error.message, connected: false };
+    }
     if (this.initializations.has(key)) return this.initializations.get(key);
     const attempt = this._initializeClient(deviceId, branchId);
     this.initializations.set(key, attempt);
-    try { return await attempt; }
-    finally { this.initializations.delete(key); }
+    try {
+      return await attempt;
+    } finally {
+      this.initializations.delete(key);
+    }
   }
 
   async _initializeClient(deviceId, branchId) {
@@ -169,7 +175,9 @@ class WhatsAppService extends EventEmitter {
           await client.destroy().catch(() => {});
           this.connectionStatus.set(failedKey, 'auth_failed');
         }
-      } catch (_) { /* Invalid identifiers never create sessions. */ }
+      } catch (_) {
+        /* Invalid identifiers never create sessions. */
+      }
       return { status: false, message: String(error?.message || error), connected: false };
     }
   }
@@ -262,7 +270,11 @@ class WhatsAppService extends EventEmitter {
       await this.initializeClient(deviceId, branchId);
       client = this.clients.get(clientKey);
       if (client && !(await this._waitForReady(clientKey))) {
-        return { status: false, message: 'WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.' };
+        return {
+          status: false,
+          message:
+            'WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.',
+        };
       }
     }
 
@@ -274,9 +286,14 @@ class WhatsAppService extends EventEmitter {
       };
     }
 
-    if (['initializing', 'authenticated'].includes(this.connectionStatus.get(clientKey)) &&
-        !(await this._waitForReady(clientKey))) {
-      return { status: false, message: 'WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.' };
+    if (
+      ['initializing', 'authenticated'].includes(this.connectionStatus.get(clientKey)) &&
+      !(await this._waitForReady(clientKey))
+    ) {
+      return {
+        status: false,
+        message: 'WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.',
+      };
     }
     const state = await client.getState();
     if (state !== 'CONNECTED') {
@@ -288,18 +305,23 @@ class WhatsAppService extends EventEmitter {
 
     try {
       // WhatsApp IDs require digits only, even when the UI accepts E.164 + notation.
-      const digits = String(phoneNumber || '').replace(/@c\.us$/, '').replace(/[\s()+-]/g, '');
+      const digits = String(phoneNumber || '')
+        .replace(/@c\.us$/, '')
+        .replace(/[\s()+-]/g, '');
       if (!/^[1-9]\d{7,14}$/.test(digits)) {
         return { status: false, message: 'Enter a valid phone number including country code.' };
       }
       const recipient = await client.getNumberId(digits);
       if (!recipient?._serialized) {
-        return { status: false, message: 'This number could not be found on WhatsApp. Check the country code and number.' };
+        return {
+          status: false,
+          message: 'This number could not be found on WhatsApp. Check the country code and number.',
+        };
       }
       let chatId = recipient._serialized;
       if (chatId.endsWith('@c.us')) {
         const addresses = await client.getContactLidAndPhone([chatId]);
-        const matched = addresses.find(address => address.pn === chatId);
+        const matched = addresses.find((address) => address.pn === chatId);
         if (matched?.lid) chatId = matched.lid;
       }
       if (typeof client.getChatById === 'function') {
@@ -316,7 +338,11 @@ class WhatsAppService extends EventEmitter {
           chat = await client.getChatById(chatId);
         }
         if (!chat) {
-          return { status: false, message: 'WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.' };
+          return {
+            status: false,
+            message:
+              'WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.',
+          };
         }
       }
       // Sending a receipt must not mark incoming customer messages as read.
@@ -324,17 +350,29 @@ class WhatsAppService extends EventEmitter {
       const options = { sendSeen: false };
       if (document) {
         if (!Buffer.isBuffer(document.buffer) || !document.buffer.length) {
-          return { status: false, message: 'The bill PDF could not be prepared. Nothing was sent.' };
+          return {
+            status: false,
+            message: 'The bill PDF could not be prepared. Nothing was sent.',
+          };
         }
         const { MessageMedia } = require('whatsapp-web.js');
-        content = new MessageMedia('application/pdf', document.buffer.toString('base64'), document.filename);
+        content = new MessageMedia(
+          'application/pdf',
+          document.buffer.toString('base64'),
+          document.filename
+        );
         options.sendMediaAsDocument = true;
         options.caption = message;
       }
       const sent = await client.sendMessage(chatId, content, options);
       const messageId = sent?.id?._serialized || sent?.id?.$1;
       if (typeof messageId !== 'string' || !messageId) {
-        return { status: false, uncertain: true, message: 'WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.' };
+        return {
+          status: false,
+          uncertain: true,
+          message:
+            'WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.',
+        };
       }
       return {
         status: true,
@@ -363,8 +401,12 @@ class WhatsAppService extends EventEmitter {
         this.off('disconnected', failed);
         resolve(ok);
       };
-      const ready = (event) => { if (event.clientKey === clientKey) finish(true); };
-      const failed = (event) => { if (event.clientKey === clientKey) finish(false); };
+      const ready = (event) => {
+        if (event.clientKey === clientKey) finish(true);
+      };
+      const failed = (event) => {
+        if (event.clientKey === clientKey) finish(false);
+      };
       this.on('ready', ready);
       this.on('qr', failed);
       this.on('auth_failure', failed);

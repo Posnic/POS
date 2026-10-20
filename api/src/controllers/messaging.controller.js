@@ -33,16 +33,28 @@ class MessagingController extends BaseController {
 
   _reportContext(req) {
     const ctx = this._ctx(req);
-    return { branchId: ctx.branchId, licenseId: req.tenantContext?.licenseId || req.user?.license || req.user?.license_id,
-      userId: req.user?._id, source: 'messaging' };
+    return {
+      branchId: ctx.branchId,
+      licenseId: req.tenantContext?.licenseId || req.user?.license || req.user?.license_id,
+      userId: req.user?._id,
+      source: 'messaging',
+    };
   }
 
   async reportSchedules(req, res) {
     if (!this._isSuperAdmin(req)) return this._denied(res);
     try {
-      const rows = await require('../services/ask-posnic-schedule.service').list(this._reportContext(req));
-      return this.success(res, rows.filter(row => row.source === 'messaging'), 'Your report deliveries');
-    } catch (error) { return this.error(res, error.message, 400); }
+      const rows = await require('../services/ask-posnic-schedule.service').list(
+        this._reportContext(req)
+      );
+      return this.success(
+        res,
+        rows.filter((row) => row.source === 'messaging'),
+        'Your report deliveries'
+      );
+    } catch (error) {
+      return this.error(res, error.message, 400);
+    }
   }
 
   async saveReportSchedule(req, res) {
@@ -52,28 +64,45 @@ class MessagingController extends BaseController {
       const schedules = require('../services/ask-posnic-schedule.service');
       const input = req.body || {};
       if (input.id) {
-        const row = (await schedules.list(context)).find(row => String(row._id) === String(input.id) && row.source === 'messaging');
+        const row = (await schedules.list(context)).find(
+          (row) => String(row._id) === String(input.id) && row.source === 'messaging'
+        );
         if (!row) return this.error(res, 'Report delivery not found.', 404);
       }
-      if (!['email', 'whatsapp'].includes(input.channel)) return this.error(res, 'Choose Email or WhatsApp.', 400);
+      if (!['email', 'whatsapp'].includes(input.channel))
+        return this.error(res, 'Choose Email or WhatsApp.', 400);
       const moment = require('moment-timezone');
       if (!moment.tz.zone(input.timezone)) return this.error(res, 'Choose a valid time zone.', 400);
       const result = await schedules.save(context, { ...input, enabled: input.enabled === true });
-      return this.success(res, result, input.enabled === true ? 'Report delivery enabled.' : 'Report delivery saved, switched off.');
-    } catch (error) { return this.error(res, error.message, 400); }
+      return this.success(
+        res,
+        result,
+        input.enabled === true ? 'Report delivery enabled.' : 'Report delivery saved, switched off.'
+      );
+    } catch (error) {
+      return this.error(res, error.message, 400);
+    }
   }
 
   async testReport(req, res) {
     if (!this._isSuperAdmin(req)) return this._denied(res);
     try {
-      const rows = await require('../services/ask-posnic-schedule.service').list(this._reportContext(req));
-      const row = rows.find(r => String(r._id) === String(req.params.id) && r.source === 'messaging');
+      const rows = await require('../services/ask-posnic-schedule.service').list(
+        this._reportContext(req)
+      );
+      const row = rows.find(
+        (r) => String(r._id) === String(req.params.id) && r.source === 'messaging'
+      );
       if (!row) return this.error(res, 'Report delivery not found.', 404);
       const runner = require('../services/ask-posnic-runner.service');
       const report = await runner.buildReport(row, new Date(), await BaseModel.getDb());
       report.answer = 'POSNIC TEST — report delivery check.\n' + report.answer;
       const result = await runner.deliver({ ...row, test: true }, report);
-      return this.success(res, result, 'Test accepted by sender. Check the recipient before sending again.');
+      return this.success(
+        res,
+        result,
+        'Test accepted by sender. Check the recipient before sending again.'
+      );
     } catch (error) {
       return this.error(res, error.message, 400);
     }
@@ -120,7 +149,11 @@ class MessagingController extends BaseController {
   async history(req, res) {
     try {
       if (!this._isSuperAdmin(req)) return this._denied(res);
-      return this.success(res, await this.service.history(this._ctx(req).branchId), 'Message history');
+      return this.success(
+        res,
+        await this.service.history(this._ctx(req).branchId),
+        'Message history'
+      );
     } catch (e) {
       return this.error(res, e.message, 500);
     }

@@ -44,13 +44,18 @@ const BRANCH = '64e000000000000000000001';
 test('Vonage Messages API retains the provider reference without exposing credentials', async () => {
   const svc = new MessagingService();
   jest.spyOn(svc, '_raw').mockResolvedValue({
-    sms_enabled: true, sms_provider: 'vonage_messages',
-    sms_config: {api_key: 'key', api_secret: 'private', sender: 'Posnic'},
+    sms_enabled: true,
+    sms_provider: 'vonage_messages',
+    sms_config: { api_key: 'key', api_secret: 'private', sender: 'Posnic' },
   });
   axios.mockReset();
-  axios.mockResolvedValue({status: 202, data: {message_uuid: 'provider-reference'}});
+  axios.mockResolvedValue({ status: 202, data: { message_uuid: 'provider-reference' } });
   const result = await svc._sendSms(BRANCH, '+919494111161', 'POSNIC TEST');
-  expect(result).toMatchObject({ok: true, provider: 'vonage_messages', messageId: 'provider-reference'});
+  expect(result).toMatchObject({
+    ok: true,
+    provider: 'vonage_messages',
+    messageId: 'provider-reference',
+  });
   expect(JSON.stringify(result)).not.toContain('private');
 });
 
@@ -95,13 +100,18 @@ describe('MessagingService.saveSettings (secret preservation)', () => {
   });
 
   test('saving one channel preserves the other channel and its sending credentials', async () => {
-    const settings = makeCollection([{
-      license: 'lic-test', branch_id: new ObjectId(BRANCH),
-      sms_enabled: true, sms_provider: 'msg91',
-      sms_config: { authkey: 'saved-key', sender: 'POSNIC', receipt_template_id: 'receipt' },
-      whatsapp_enabled: true, whatsapp_mode: 'cloud',
-      whatsapp_cloud: { access_token: 'saved-token', phone_number_id: '123' },
-    }]);
+    const settings = makeCollection([
+      {
+        license: 'lic-test',
+        branch_id: new ObjectId(BRANCH),
+        sms_enabled: true,
+        sms_provider: 'msg91',
+        sms_config: { authkey: 'saved-key', sender: 'POSNIC', receipt_template_id: 'receipt' },
+        whatsapp_enabled: true,
+        whatsapp_mode: 'cloud',
+        whatsapp_cloud: { access_token: 'saved-token', phone_number_id: '123' },
+      },
+    ]);
     BaseModel.getDb = jest.fn().mockResolvedValue(makeDb({ messaging_settings: settings }));
     await svc.saveSettings(BRANCH, { whatsapp_enabled: false });
     expect(settings._docs[0].sms_enabled).toBe(true);
@@ -262,21 +272,48 @@ describe('MessagingService WhatsApp (mode + cloud)', () => {
     expect(req.data.text.body).toBe('hello');
   });
 
-  test.each([{}, {messages:[{}]}, {messages:[{id:''}]}])('cloud mode cannot claim success without a message ID: %j', async (data) => {
-    const svc = new MessagingService();
-    jest.spyOn(svc, '_raw').mockResolvedValue({whatsapp_enabled:true,whatsapp_mode:'cloud',whatsapp_cloud:{access_token:'synthetic',phone_number_id:'12345'}});
-    axios.mockResolvedValue({status:200,data});
-    const result = await svc.sendWhatsapp(BRANCH,'+15551234567','Synthetic test');
-    expect(result.ok).toBe(false);
-    expect(result.messageId).toBeUndefined();
-  });
+  test.each([{}, { messages: [{}] }, { messages: [{ id: '' }] }])(
+    'cloud mode cannot claim success without a message ID: %j',
+    async (data) => {
+      const svc = new MessagingService();
+      jest
+        .spyOn(svc, '_raw')
+        .mockResolvedValue({
+          whatsapp_enabled: true,
+          whatsapp_mode: 'cloud',
+          whatsapp_cloud: { access_token: 'synthetic', phone_number_id: '12345' },
+        });
+      axios.mockResolvedValue({ status: 200, data });
+      const result = await svc.sendWhatsapp(BRANCH, '+15551234567', 'Synthetic test');
+      expect(result.ok).toBe(false);
+      expect(result.messageId).toBeUndefined();
+    }
+  );
 
   test('approved template uses the configured language and body parameter', async () => {
     const svc = new MessagingService();
-    jest.spyOn(svc, '_raw').mockResolvedValue({whatsapp_enabled:true,whatsapp_mode:'cloud',whatsapp_cloud:{access_token:'synthetic',phone_number_id:'12345',template_name:'receipt_update',template_lang:'en'}});
-    axios.mockResolvedValue({status:200,data:{messages:[{id:'wamid.test'}]}});
-    expect((await svc.sendWhatsapp(BRANCH,'+15551234567','Synthetic receipt')).ok).toBe(true);
-    expect(axios.mock.calls[0][0].data).toMatchObject({type:'template',template:{name:'receipt_update',language:{code:'en'},components:[{type:'body',parameters:[{type:'text',text:'Synthetic receipt'}]}]}});
+    jest
+      .spyOn(svc, '_raw')
+      .mockResolvedValue({
+        whatsapp_enabled: true,
+        whatsapp_mode: 'cloud',
+        whatsapp_cloud: {
+          access_token: 'synthetic',
+          phone_number_id: '12345',
+          template_name: 'receipt_update',
+          template_lang: 'en',
+        },
+      });
+    axios.mockResolvedValue({ status: 200, data: { messages: [{ id: 'wamid.test' }] } });
+    expect((await svc.sendWhatsapp(BRANCH, '+15551234567', 'Synthetic receipt')).ok).toBe(true);
+    expect(axios.mock.calls[0][0].data).toMatchObject({
+      type: 'template',
+      template: {
+        name: 'receipt_update',
+        language: { code: 'en' },
+        components: [{ type: 'body', parameters: [{ type: 'text', text: 'Synthetic receipt' }] }],
+      },
+    });
   });
 
   test('cloud mode refuses when not configured', async () => {
@@ -314,21 +351,46 @@ describe('MessagingService WhatsApp (mode + cloud)', () => {
   });
 });
 
-describe('WhatsApp provider switching',()=>{
- test('preserves credentials on unrelated saves and isolates a new provider',async()=>{
-  BaseModel.license='lic-test';const svc=new MessagingService();
-  const settings=makeCollection([{license:'lic-test',branch_id:new ObjectId(BRANCH),whatsapp_mode:'cloud',whatsapp_cloud:{provider:'brevo',api_key:'brevo-secret',sender_number:'919008427482'}}]);
-  BaseModel.getDb=jest.fn().mockResolvedValue(makeDb({messaging_settings:settings}));
-  await svc.saveSettings(BRANCH,{sms_template:'note'});
-  expect(settings._docs[0].whatsapp_cloud.api_key).toBe('brevo-secret');
-  const out=await svc.saveSettings(BRANCH,{whatsapp_cloud:{provider:'msg91',api_key:''}});
-  expect(settings._docs[0].whatsapp_cloud.api_key).toBe('');expect(out.whatsapp_cloud.api_key).toBeUndefined();
-  expect(out.whatsapp_providers.map(p=>p.id)).toContain('brevo');
- });
- test('all WhatsApp workflows route through the branch-selected provider',async()=>{
-  const svc=new MessagingService();jest.spyOn(svc,'_raw').mockResolvedValue({whatsapp_enabled:true,whatsapp_mode:'cloud',whatsapp_cloud:{provider:'brevo',api_key:'private',sender_number:'919008427482'}});
-  axios.mockReset();axios.mockResolvedValue({status:201,data:{messageId:'brevo-ref'}});
-  expect(await svc.sendWhatsapp(BRANCH,'+919008427482','Report TEST',{purpose:'Report'})).toMatchObject({ok:true,provider:'whatsapp_brevo',messageId:'brevo-ref'});
-  expect(axios.mock.calls[0][0].url).toBe('https://api.brevo.com/v3/whatsapp/sendMessage');
- });
+describe('WhatsApp provider switching', () => {
+  test('preserves credentials on unrelated saves and isolates a new provider', async () => {
+    BaseModel.license = 'lic-test';
+    const svc = new MessagingService();
+    const settings = makeCollection([
+      {
+        license: 'lic-test',
+        branch_id: new ObjectId(BRANCH),
+        whatsapp_mode: 'cloud',
+        whatsapp_cloud: {
+          provider: 'brevo',
+          api_key: 'brevo-secret',
+          sender_number: '919008427482',
+        },
+      },
+    ]);
+    BaseModel.getDb = jest.fn().mockResolvedValue(makeDb({ messaging_settings: settings }));
+    await svc.saveSettings(BRANCH, { sms_template: 'note' });
+    expect(settings._docs[0].whatsapp_cloud.api_key).toBe('brevo-secret');
+    const out = await svc.saveSettings(BRANCH, {
+      whatsapp_cloud: { provider: 'msg91', api_key: '' },
+    });
+    expect(settings._docs[0].whatsapp_cloud.api_key).toBe('');
+    expect(out.whatsapp_cloud.api_key).toBeUndefined();
+    expect(out.whatsapp_providers.map((p) => p.id)).toContain('brevo');
+  });
+  test('all WhatsApp workflows route through the branch-selected provider', async () => {
+    const svc = new MessagingService();
+    jest
+      .spyOn(svc, '_raw')
+      .mockResolvedValue({
+        whatsapp_enabled: true,
+        whatsapp_mode: 'cloud',
+        whatsapp_cloud: { provider: 'brevo', api_key: 'private', sender_number: '919008427482' },
+      });
+    axios.mockReset();
+    axios.mockResolvedValue({ status: 201, data: { messageId: 'brevo-ref' } });
+    expect(
+      await svc.sendWhatsapp(BRANCH, '+919008427482', 'Report TEST', { purpose: 'Report' })
+    ).toMatchObject({ ok: true, provider: 'whatsapp_brevo', messageId: 'brevo-ref' });
+    expect(axios.mock.calls[0][0].url).toBe('https://api.brevo.com/v3/whatsapp/sendMessage');
+  });
 });

@@ -81,7 +81,9 @@ class CampaignService {
   /** Whether a customer may be messaged on this channel (per-channel opt-out). */
   static ids(values) {
     return [...new Set((Array.isArray(values) ? values : []).map(String))]
-      .filter((v) => /^[a-f0-9]{24}$/i.test(v)).slice(0, 2000).map(oid);
+      .filter((v) => /^[a-f0-9]{24}$/i.test(v))
+      .slice(0, 2000)
+      .map(oid);
   }
 
   static optedIn(customer, channel) {
@@ -139,8 +141,10 @@ class CampaignService {
     const message = String(data.message || '').trim();
     if (!message) return { status: false, message: MESSAGES.MESSAGE_REQUIRED };
     const segment = this._cleanSegment(data.segment);
-    if ((segment.type === SEGMENT_TYPE.CUSTOMERS && !segment.customer_ids.length) ||
-        (segment.type === SEGMENT_TYPE.CATEGORY && !segment.category_ids.length)) {
+    if (
+      (segment.type === SEGMENT_TYPE.CUSTOMERS && !segment.customer_ids.length) ||
+      (segment.type === SEGMENT_TYPE.CATEGORY && !segment.category_ids.length)
+    ) {
       return { status: false, message: 'Select at least one customer or category' };
     }
 
@@ -193,8 +197,14 @@ class CampaignService {
 
   async _recipients(segment, branchId = BaseModel.currentBranch) {
     const db = await BaseModel.getDb();
-    const q = withBranchScope({ ...CampaignService.buildAudienceQuery(segment), license: BaseModel.license,
-      is_deleted: { $ne: true } }, branchId);
+    const q = withBranchScope(
+      {
+        ...CampaignService.buildAudienceQuery(segment),
+        license: BaseModel.license,
+        is_deleted: { $ne: true },
+      },
+      branchId
+    );
     return db.collection('customers').find(q).toArray();
   }
 
@@ -203,16 +213,26 @@ class CampaignService {
     if (!branchId) return { status: false, message: 'Select a branch first' };
     const db = await BaseModel.getDb();
     const category = kind === 'category';
-    const query = withBranchScope({ license: BaseModel.license, is_deleted: { $ne: true } }, branchId);
+    const query = withBranchScope(
+      { license: BaseModel.license, is_deleted: { $ne: true } },
+      branchId
+    );
     const selected = CampaignService.ids(String(ids || '').split(','));
     if (selected.length) query._id = { $in: selected };
     else if (search) {
-      const term = String(search).slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const term = String(search)
+        .slice(0, 100)
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [{ name: { $regex: term, $options: 'i' } }];
       if (!category) query.$or.push({ phone: { $regex: term, $options: 'i' } });
     }
-    const rows = await db.collection(category ? 'customer_category' : 'customers')
-      .find(query).project({ name: 1, phone: 1 }).sort({ name: 1, _id: 1 }).limit(selected.length || 50).toArray();
+    const rows = await db
+      .collection(category ? 'customer_category' : 'customers')
+      .find(query)
+      .project({ name: 1, phone: 1 })
+      .sort({ name: 1, _id: 1 })
+      .limit(selected.length || 50)
+      .toArray();
     return { status: true, data: rows, message: 'Audience choices' };
   }
 
@@ -245,7 +265,9 @@ class CampaignService {
     return {
       [CHANNEL.WHATSAPP]: async (phone, message) => {
         try {
-          return await messagingService.sendWhatsapp(branchId, phone, message, { purpose: 'Campaign' });
+          return await messagingService.sendWhatsapp(branchId, phone, message, {
+            purpose: 'Campaign',
+          });
         } catch (e) {
           return { ok: false, error: e.message };
         }
