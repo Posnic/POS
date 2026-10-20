@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "Velg en lagret kunde for kundekreditt.",
   "Exact numeric search must be on or off": "Eksakt numerisk søk må være på eller av",
   "Item not found or selling price is held. Review it in Edit prices.": "Varen ble ikke funnet eller salgsprisen holdes. Gjennomgå det i Rediger priser.",
-  "Password must contain between 5 and 20 characters": "Passordet må inneholde mellom 5 og 20 tegn"
+  "Password must contain between 5 and 20 characters": "Passordet må inneholde mellom 5 og 20 tegn",
+  "Branch access required": "Filialtilgang kreves",
+  "Branch and supported language required": "Filial og støttet språk kreves"
 }

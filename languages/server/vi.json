@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "Chọn một khách hàng đã lưu cho tín dụng khách hàng.",
   "Exact numeric search must be on or off": "Tìm kiếm số chính xác phải được bật hoặc tắt",
   "Item not found or selling price is held. Review it in Edit prices.": "Không tìm thấy mặt hàng hoặc giá bán được giữ. Xem lại nó trong Chỉnh sửa giá.",
-  "Password must contain between 5 and 20 characters": "Mật khẩu phải chứa từ 5 đến 20 ký tự"
+  "Password must contain between 5 and 20 characters": "Mật khẩu phải chứa từ 5 đến 20 ký tự",
+  "Branch access required": "Yêu cầu quyền truy cập",
+  "Branch and supported language required": "chi nhánh Chi nhánh và ngôn ngữ được hỗ trợ"
 }

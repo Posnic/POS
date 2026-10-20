@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "Επιλέξτε έναν αποθηκευμένο πελάτη για πίστωση πελάτη.",
   "Exact numeric search must be on or off": "Η ακριβής αριθμητική αναζήτηση πρέπει να είναι ενεργοποιημένη ή απενεργοποιημένη",
   "Item not found or selling price is held. Review it in Edit prices.": "Το αντικείμενο δεν βρέθηκε ή διατηρείται η τιμή πώλησης. Ελέγξτε το στην Επεξεργασία τιμών.",
-  "Password must contain between 5 and 20 characters": "Ο κωδικός πρόσβασης πρέπει να περιέχει μεταξύ 5 και 20 χαρακτήρων"
+  "Password must contain between 5 and 20 characters": "Ο κωδικός πρόσβασης πρέπει να περιέχει μεταξύ 5 και 20 χαρακτήρων",
+  "Branch access required": "Απαιτείται πρόσβαση σε υποκατάστημα Απαι",
+  "Branch and supported language required": "τείται υποκατάστημα και υποστηριζόμενη γλώσσα"
 }

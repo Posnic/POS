@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "Izberite shranjeno stranko za kredit stranke.",
   "Exact numeric search must be on or off": "Natančno številsko iskanje mora biti vklopljeno ali izklopljeno",
   "Item not found or selling price is held. Review it in Edit prices.": "Artikel ni najden ali prodajna cena je zadržana. Preglejte ga v Uredi cene.",
-  "Password must contain between 5 and 20 characters": "Geslo mora vsebovati od 5 do 20 znakov"
+  "Password must contain between 5 and 20 characters": "Geslo mora vsebovati od 5 do 20 znakov",
+  "Branch access required": "Potreben je dostop do podružnice Zah",
+  "Branch and supported language required": "tevan podružnica in podprti jezik"
 }

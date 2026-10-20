@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "ഉപഭോക്തൃ ക്രെഡിറ്റിനായി സംരക്ഷിച്ച ഉപഭോക്താവിനെ തിരഞ്ഞെടുക്കുക.",
   "Exact numeric search must be on or off": "കൃത്യമായ സംഖ്യാ തിരയൽ ഓണോ ഓഫോ ആയിരിക്കണം",
   "Item not found or selling price is held. Review it in Edit prices.": "ഇനം കണ്ടെത്തുകയോ വിൽപന വില കൈവശം വയ്ക്കുകയോ ചെയ്തിട്ടില്ല. വിലകൾ എഡിറ്റ് ചെയ്യുന്നതിൽ ഇത് അവലോകനം ചെയ്യുക.",
-  "Password must contain between 5 and 20 characters": "പാസ്വേഡിൽ 5 മുതൽ 20 വരെ പ്രതീകങ്ങൾ അടങ്ങിയിരിക്കണം"
+  "Password must contain between 5 and 20 characters": "പാസ്വേഡിൽ 5 മുതൽ 20 വരെ പ്രതീകങ്ങൾ അടങ്ങിയിരിക്കണം",
+  "Branch access required": "ബ്രാഞ്ച് ആക്സസ് ആവശ്യമാണ്",
+  "Branch and supported language required": "ബ്രാഞ്ചും പിന്തുണയ്ക്കുന്ന ഭാഷയും ആവശ്യമാണ്"
 }
