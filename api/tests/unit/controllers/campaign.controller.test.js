@@ -348,7 +348,7 @@ describe('preview', () => {
       res
     );
 
-    expect(svc.preview).toHaveBeenCalledWith({ type: 'all' }, 'sms');
+    expect(svc.preview).toHaveBeenCalledWith({ type: 'all' }, 'sms', VALID_ID);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'success', message: 'Audience preview' })
@@ -360,7 +360,7 @@ describe('preview', () => {
     const res = mockRes();
     await controller.preview(mockReq({ body: {} }), res);
 
-    expect(svc.preview).toHaveBeenCalledWith({}, undefined);
+    expect(svc.preview).toHaveBeenCalledWith({}, undefined, VALID_ID);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 

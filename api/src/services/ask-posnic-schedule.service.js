@@ -7,7 +7,7 @@ const { isEmail } = require('validator');
 const BaseModel = require('../models/base.model');
 
 const COLLECTION = 'ask_posnic_schedules';
-const FREQUENCIES = new Set(['daily', 'weekly']);
+const FREQUENCIES = new Set(['daily', 'weekly', 'monthly']);
 const REPORTS = new Set(['sales', 'profit', 'low_stock']);
 const bounded = (value, fallback, maximum) =>
   Number.isInteger(Number(value)) &&
@@ -22,7 +22,10 @@ function nextRun(schedule, from = new Date()) {
   const zone = moment.tz.zone(schedule.timezone) ? schedule.timezone : 'UTC';
   const hour = bounded(schedule.hour, 8, 23);
   const next = moment.tz(from, zone).startOf('hour').hour(hour).minute(0).second(0).millisecond(0);
-  if (schedule.frequency === 'weekly') {
+  if (schedule.frequency === 'monthly') {
+    next.startOf('month').hour(hour);
+    if (!next.isAfter(moment(from))) next.add(1, 'month');
+  } else if (schedule.frequency === 'weekly') {
     const weekday = bounded(schedule.weekday, 1, 6);
     while (next.day() !== weekday || !next.isAfter(moment(from))) next.add(1, 'day');
   } else if (!next.isAfter(moment(from))) next.add(1, 'day');
@@ -32,7 +35,8 @@ function nextRun(schedule, from = new Date()) {
 async function save(context, input) {
   if (!context.licenseId || !context.branchId || !context.userId)
     throw new Error('A shop, outlet and owner are required.');
-  if (!FREQUENCIES.has(input.frequency)) throw new Error('Schedule must be daily or weekly.');
+  if (!FREQUENCIES.has(input.frequency))
+    throw new Error('Choose daily, weekly or monthly delivery.');
   if (!REPORTS.has(input.report)) throw new Error('Choose a supported report.');
   if (typeof input.destination !== 'string' || input.destination.length > 254)
     throw new Error('Enter a valid delivery destination (maximum 254 characters).');
@@ -47,6 +51,7 @@ async function save(context, input) {
     license: String(context.licenseId || ''),
     branch_id: String(context.branchId || ''),
     user_id: String(context.userId || ''),
+    ...(context.source === 'messaging' ? { source: 'messaging' } : {}),
     report: input.report,
     frequency: input.frequency,
     weekday: bounded(input.weekday, 1, 6),

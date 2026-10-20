@@ -14,6 +14,7 @@
             "static/style/css/daterangepicker.css",
             "static/style/plugins/bootstrap-xeditable/css/bootstrap-editable.css",
             "static/style/css/custom.css",
+            "static/style/css/message-centre.css",
             "static/style/css/receipt-designer.css",
             "static/style/css/printable-menu.css",
             "static/style/css/about-posnic.css",
@@ -163,6 +164,7 @@
             "static/script/js/modules/js/coupons.js",
             "static/script/js/modules/js/campaigns.js",
             "static/script/js/modules/js/messaging.js",
+            "static/script/js/modules/js/message-centre.js",
             "static/script/js/modules/js/credit.js",
             "static/script/js/modules/js/cashback.js",
             "static/script/js/modules/js/whatsapp.js",
@@ -302,6 +304,7 @@
         "js": [
             "static/script/js/jquery.min.js",
             "static/script/js/moment.js",
+            "static/script/js/moment-timezone-with-data.min.js",
             "static/script/js/dexie.min.js",
             "static/script/js/jquery-barcode.min.js",
             "static/script/js/JsBarcode.all.min.js",

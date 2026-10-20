@@ -1834,6 +1834,7 @@ class SettingController extends BaseController {
   async salesSmsReceipt(req, res) {
     try {
       const settingModel = this.createModelWithContext(req);
+      settingModel.receiptPublicBase = require('../utils/public-url').publicBaseUrl(req);
       const result = await settingModel.salesSmsReceiptModel(req.body);
       if (result.status) {
         return res

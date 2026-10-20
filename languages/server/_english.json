@@ -218,6 +218,9 @@
   "At most 50 variants per family.": [
     "src/services/item.service.js"
   ],
+  "Audience choices": [
+    "src/services/campaign.service.js"
+  ],
   "Audience preview": [
     "src/services/campaign.service.js"
   ],
@@ -791,6 +794,9 @@
   ],
   "Enter a valid email address": [
     "app.js"
+  ],
+  "Enter a valid phone number including country code.": [
+    "src/services/whatsapp.service.js"
   ],
   "Enter an item name and choose a different translation language.": [
     "src/services/ai-item-translation.js"
@@ -1853,6 +1859,9 @@
   "Quote updated": [
     "src/repositories/quote.repository.js"
   ],
+  "Receipt sharing is unavailable. Configure receipt file storage before sending an SMS bill.": [
+    "src/models/setting.model.js"
+  ],
   "Receiving Data Exported": [
     "src/models/receiving.model.js"
   ],
@@ -2035,8 +2044,14 @@
   "Search term is required": [
     "src/services/customer.service.js"
   ],
+  "Select a branch first": [
+    "src/services/campaign.service.js"
+  ],
   "Select a branch first.": [
     "src/routes/billing-outlets.routes.js"
+  ],
+  "Select at least one customer or category": [
+    "src/services/campaign.service.js"
   ],
   "Select at least one item": [
     "src/repositories/item.repository.js"
@@ -2332,6 +2347,9 @@
   "The audio could not be read": [
     "src/services/transcribe.service.js"
   ],
+  "The bill PDF could not be prepared. Nothing was sent.": [
+    "src/services/whatsapp.service.js"
+  ],
   "The family needs a product name.": [
     "src/services/item.service.js"
   ],
@@ -2442,6 +2460,9 @@
   "This menu is for viewing only. Please order at the counter.": [
     "src/utils/online-ordering.js"
   ],
+  "This number could not be found on WhatsApp. Check the country code and number.": [
+    "src/services/whatsapp.service.js"
+  ],
   "This order changed while payment was being saved. Reopen the order and check its payment status before retrying.": [
     "src/services/sale.service.js"
   ],
@@ -2485,6 +2506,9 @@
   ],
   "This quote was already converted to a sale": [
     "src/repositories/quote.repository.js"
+  ],
+  "This receipt link is invalid. Ask the shop to send it again.": [
+    "src/middleware/customer-receipt-link.js"
   ],
   "This refund has already been processed for this sale": [
     "src/repositories/sale.repository.js"
@@ -2807,7 +2831,16 @@
   "WhatsApp connection lost. Please reconnect from Settings → WhatsApp Connection.": [
     "src/services/whatsapp.service.js"
   ],
+  "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": [
+    "src/services/whatsapp.service.js"
+  ],
+  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": [
+    "src/services/whatsapp.service.js"
+  ],
   "WhatsApp is not connected. Please go to Settings → WhatsApp Connection and connect your WhatsApp first.": [
+    "src/services/whatsapp.service.js"
+  ],
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": [
     "src/services/whatsapp.service.js"
   ],
   "WhatsApp receipt setting retrieved successfully": [

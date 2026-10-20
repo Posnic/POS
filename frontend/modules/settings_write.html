@@ -2093,6 +2093,22 @@
                                         </div>
 
                                         <div id="messaging_wa_cloud" style="display:none;">
+                                            <div class="form-group"><label for="messaging_wa_provider"><lang class="lang_whatsapp_provider">WhatsApp provider</lang></label>
+                                                <select class="form-control" id="messaging_wa_provider"><option value="meta"><lang class="lang_meta_direct">Meta (direct)</lang></option></select>
+                                            </div>
+                                            <div id="messaging_wa_provider_fields"></div>
+                                            <div id="messaging_wa_meta_fields">
+                                            <details class="border rounded p-3 mb-3 messaging-setup-help" open>
+                                                <summary class="font-weight-bold"><lang class="lang_how_to_set_up_whatsapp_api">How to set up WhatsApp API</lang></summary>
+                                                <ol class="mt-2 mb-2 pl-3">
+                                                    <li><lang class="lang_open_meta_for_developers_create_or_choose">Open Meta for Developers, create or choose your business app, and add WhatsApp.</lang></li>
+                                                    <li><lang class="lang_in_whatsapp_api_setup_follow_meta_s_steps">In WhatsApp API setup, follow Meta's steps to connect your business and phone number. Copy the Phone number ID and access token into the fields below.</lang></li>
+                                                    <li><lang class="lang_for_ongoing_sending_follow_meta_s_access_t">For ongoing sending, follow Meta's access-token guide; temporary test tokens expire. Add the approved message template name and its language.</lang></li>
+                                                    <li><lang class="lang_save_and_send_a_test_to_your_own_whatsapp">Save and send a test to your own WhatsApp number. Meta test numbers can send only to recipients added and verified in Meta.</lang></li>
+                                                </ol>
+                                                <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer"><lang class="lang_open_meta_apps">Open Meta apps</lang></a>
+                                                · <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" target="_blank" rel="noopener noreferrer"><lang class="lang_official_whatsapp_api_setup_guide_opens_a">Official WhatsApp API setup guide (opens a new tab)</lang></a>
+                                            </details>
                                             <p class="text-muted small mb-2"><lang class="lang_register_a_meta_app_add_a_whatsapp_phone_n">Register a Meta app, add a WhatsApp phone
                                                 number, and paste its credentials. Marketing messages need an approved
                                                 Meta template, set its name below.</lang></p>
@@ -2112,7 +2128,7 @@
                                                         placeholder="v20.0">
                                                 </div>
                                                 <div class="col-md-4 mb-2">
-                                                    <label><lang class="lang_template_name_marketing">Template name (marketing)</lang></label>
+                                                    <label><lang class="lang_template_name_marketing">Approved template name</lang></label>
                                                     <input type="text" class="form-control" id="messaging_wa_tplname" aria-label="Messaging wa tplname" data-t-aria-label="lang_messaging_wa_tplname">
                                                 </div>
                                                 <div class="col-md-4 mb-2">
@@ -2121,6 +2137,8 @@
                                                         placeholder="en_US" data-t-placeholder="lang_en_us">
                                                 </div>
                                             </div>
+                                        </div>
+
                                         </div>
 
                                         <div class="d-flex flex-wrap align-items-center mt-2">
@@ -2344,6 +2362,20 @@
                                                 <small class="text-muted"><lang class="lang_email_sending_hint">Your own mail account sends the shop's emails. Leave empty to use Posnic's cloud email.</lang></small>
                                             </div>
                                             <div class="card-body">
+                                                <details id="messaging_email_help" class="border rounded p-3 mb-3 messaging-setup-help" open>
+                                                    <summary class="font-weight-bold"><lang class="lang_how_to_connect_your_email_account">How to connect your email account</lang></summary>
+                                                    <ol class="mt-2 mb-2 pl-3">
+                                                        <li><lang class="lang_open_your_email_provider_s_smtp_settings_c">Open your email provider's SMTP settings. Copy its SMTP host, port, username and SMTP password or app password into the fields below.</lang></li>
+                                                        <li><lang class="lang_use_a_from_address_that_your_provider_allo">Use a From address that your provider allows. Complete sender or domain verification if your provider asks for it.</lang></li>
+                                                        <li><lang class="lang_match_the_provider_s_encryption_settings_s">Match the provider's encryption settings: select SSL for port 465; leave it unchecked for STARTTLS on port 587.</lang></li>
+                                                        <li><lang class="lang_save_the_settings_then_send_a_test_receipt">Save the settings, then send a test receipt or report to your own email address. Check the inbox, spam folder and provider delivery logs.</lang></li>
+                                                    </ol>
+                                                    <p class="small mb-2"><strong><lang class="lang_using_brevo">Using Brevo?</lang></strong> <lang class="lang_open_smtp_api_smtp_use_the_smtp_login_and">Open SMTP &amp; API → SMTP. Use the SMTP login and an active SMTP key, not your Brevo account password or API key. The host is smtp-relay.brevo.com.</lang></p>
+                                                    <a href="https://app.brevo.com/settings/keys/smtp" target="_blank" rel="noopener noreferrer"><lang class="lang_open_brevo_smtp_settings">Open Brevo SMTP settings</lang></a>
+                                                    · <a href="https://help.brevo.com/hc/en-us/articles/7924908994450-Send-transactional-emails-using-Brevo-SMTP" target="_blank" rel="noopener noreferrer"><lang class="lang_brevo_smtp_guide">Brevo SMTP guide</lang></a>
+                                                    · <a href="https://support.google.com/a/answer/176600" target="_blank" rel="noopener noreferrer"><lang class="lang_google_email_setup_guide">Google email setup guide</lang></a>
+                                                    <p class="text-muted small mt-2 mb-0"><lang class="lang_help_links_open_in_a_new_tab_for_another_e">Help links open in a new tab. For another email service, ask your provider for its official SMTP settings. Leave these fields empty to use Posnic's cloud email.</lang></p>
+                                                </details>
                                                 <div class="form-row">
                                                     <div class="form-group col-md-4">
                                                         <label class="form-control-placeholder" for="email_smtp_host"><lang class="lang_smtp_host">SMTP host</lang></label>
@@ -5203,7 +5235,7 @@
                                                             
 <div class="tab-pane fade" id="inv-sub-stock" role="tabpanel">
 <div class="card mb-3"><div class="card-header"><h5><lang class="lang_stock_preference">Stock preference</lang></h5></div><div class="card-body">
- <select id="item_stock_preference" class="form-control mb-3" aria-label="Stock for new items" data-t-aria-label="lang_stock_for_new_items"><option value="" data-t="lang_choose_a_preference">Choose a preference</option><option value="always_available" data-t="lang_always_available">Always available</option><option value="track_quantities" data-t="lang_track_quantities">Track quantities</option></select>
+ <select id="item_stock_preference" class="form-control mb-3" aria-label="Stock for new items" data-t-aria-label="lang_stock_for_new_items"><option value="" data-t="lang_choose_a_preference"><lang class="lang_choose_a_preference">Choose a preference</lang></option><option value="always_available" data-t="lang_always_available"><lang class="lang_always_available">Always available</lang></option><option value="track_quantities" data-t="lang_track_quantities"><lang class="lang_track_quantities">Track quantities</lang></option></select>
  <p><strong><lang class="lang_always_available_2">Always available:</lang></strong> <lang class="lang_sell_without_entering_stock_quantities_no">Sell without entering stock quantities. No low-stock alerts. Suitable for made-to-order dishes.</lang></p>
  <p><strong><lang class="lang_track_quantities_2">Track quantities:</lang></strong> <lang class="lang_enter_stock_received_and_count_each_sale_l">Enter stock received and count each sale. Low-stock alerts apply. Suitable for packaged goods.</lang></p>
  <p><lang class="lang_applies_to_new_items_in_this_branch_existi">Applies to new items in this branch. Existing items keep their stock settings. You can still mark an item sold out manually.</lang></p>

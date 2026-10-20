@@ -14,6 +14,10 @@ router.use(protect);
 
 router.get('/providers', bindController(messagingController.providers));
 router.get('/settings', bindController(messagingController.getSettings));
+router.get('/reports', bindController(messagingController.reportSchedules));
+router.post('/reports', bindController(messagingController.saveReportSchedule));
+router.post('/reports/:id/test', bindController(messagingController.testReport));
+router.get('/history', bindController(messagingController.history));
 router.put('/settings', bindController(messagingController.saveSettings));
 router.post('/settings', bindController(messagingController.saveSettings));
 router.post('/test', bindController(messagingController.test));

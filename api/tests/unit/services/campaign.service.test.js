@@ -31,6 +31,21 @@ describe('CampaignService.renderMessage', () => {
 });
 
 describe('CampaignService.buildAudienceQuery', () => {
+  test('empty, invalid and duplicate explicit selections cannot expand to all customers', () => {
+    expect(CampaignService.buildAudienceQuery({ type: 'customers', customer_ids: [] })).toEqual({
+      _id: { $in: [] },
+    });
+    expect(CampaignService.buildAudienceQuery({ type: 'category', category_ids: ['bad'] })).toEqual(
+      { category_id: { $in: [] } }
+    );
+    const id = '64c111111111111111111111';
+    expect(
+      CampaignService.buildAudienceQuery({
+        type: 'customers',
+        customer_ids: [id, id, 'bad'],
+      })._id.$in.map(String)
+    ).toEqual([id]);
+  });
   test('all -> no filter', () => {
     expect(CampaignService.buildAudienceQuery({ type: SEGMENT_TYPE.ALL })).toEqual({});
   });
@@ -46,7 +61,7 @@ describe('CampaignService.buildAudienceQuery', () => {
       type: SEGMENT_TYPE.CATEGORY,
       category_id: '64c111111111111111111111',
     });
-    expect(String(cat.category_id)).toBe('64c111111111111111111111');
+    expect(cat.category_id.$in.map(String)).toEqual(['64c111111111111111111111']);
   });
 
   test('lapsed builds a cutoff from now minus the window', () => {

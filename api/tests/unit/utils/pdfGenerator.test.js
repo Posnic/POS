@@ -44,6 +44,25 @@ const PDFDocument = require('pdfkit');
 const { generateInvoicePDF, generateReceivingPDF } = require('../../../src/utils/pdfGenerator');
 
 describe('pdfGenerator', () => {
+  test.each([420, 0])('uses persisted sale totals, including a legitimate zero: %s', (total) => {
+    generateInvoicePDF({
+      data: {
+        sales_id: 'TEST',
+        items: [],
+        sales_sub_total: total,
+        sales_total: total,
+        items_subtotal: 999,
+        items_total: 999,
+      },
+      branch: { currency_type: 'INR' },
+      res: { setHeader: jest.fn() },
+    });
+    const texts = PDFDocument.mock.results.at(-1).value.text.mock.calls.map((call) => call[0]);
+    expect(
+      texts.filter((text) => text === `INR ${total.toFixed(2)}`).length
+    ).toBeGreaterThanOrEqual(2);
+    expect(texts).not.toContain('INR 999.00');
+  });
   beforeEach(() => {
     jest.clearAllMocks();
   });

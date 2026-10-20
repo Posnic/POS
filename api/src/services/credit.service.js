@@ -178,8 +178,8 @@ class CreditService {
     const MessagingService = require('./messaging.service');
     const messagingService = new MessagingService();
     return channel === 'whatsapp'
-      ? messagingService.sendWhatsapp(branchId, phone, message)
-      : messagingService.sendSms(branchId, phone, message);
+      ? messagingService.sendWhatsapp(branchId, phone, message, { purpose: 'Credit reminder' })
+      : messagingService.sendSms(branchId, phone, message, { purpose: 'Credit reminder' });
   }
 
   async _logReminder(db, e) {

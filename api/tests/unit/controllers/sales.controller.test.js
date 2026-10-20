@@ -2,6 +2,11 @@
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 jest.mock('../../../src/services/sale.service');
+jest.mock('../../../src/services/receipt-document.service', () => ({
+  prepare: jest
+    .fn()
+    .mockResolvedValue({ buffer: Buffer.from('%PDF-test'), filename: 'invoice.pdf' }),
+}));
 jest.mock('../../../src/services/sales-history-summary');
 jest.mock('../../../src/services/paid-bill-edit', () => ({ amend: jest.fn() }));
 jest.mock('../../../src/services/business-checkout-decisions', () => ({
@@ -1855,6 +1860,7 @@ describe('SalesController', () => {
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
+      expect(require('../../../src/services/receipt-document.service').prepare).toHaveBeenCalled();
     });
 
     test('400 invalid email', async () => {

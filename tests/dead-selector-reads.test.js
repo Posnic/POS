@@ -47,7 +47,6 @@ const { analyse } = require('./tools/dead-selectors');
  *   #user_verify_password     a FALLBACK behind #verify_password, which exists
  *                             in delete_collection.html - the branch never runs.
  *   #user_access              read inside errorPlacement, a validator callback.
- *   #customer_sms_message     read in sendWhatsAppReceipt.
  *
  * Eight, not nine: a first pass counted #view_instantdetails_page_perpage_total
  * as a read because `.length` appeared on the line, but that is the length of
@@ -83,7 +82,6 @@ const KNOWN = new Set([
   'tender_amount',
   'user_verify_password',
   'user_access',
-  'customer_sms_message',
 ]);
 
 const readSites = () => {
@@ -125,7 +123,7 @@ test('no NEW dead selector is read anywhere', () => {
   );
 });
 
-test('the known eight are still only the known eight', () => {
+test('the known dead reads are still current', () => {
   /* The other direction: fixing one should shrink this list, and the entry
      above should go with it. A verdict for an id nobody reads any more is a
      comment that has stopped being true. */
