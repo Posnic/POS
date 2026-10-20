@@ -4,10 +4,13 @@
   const base = new URL('locales/', document.currentScript.src);
   let language = 'en',
     pack = {},
+    wording = {},
     generation = 0;
   const normalize = (text) => String(text).replace(/\s+/g, ' ').trim();
   function t(source, values = {}) {
-    const translated = Object.prototype.hasOwnProperty.call(pack, normalize(source))
+    const translated = Object.prototype.hasOwnProperty.call(wording, normalize(source))
+      ? wording[normalize(source)]
+      : Object.prototype.hasOwnProperty.call(pack, normalize(source))
       ? pack[normalize(source)]
       : source;
     return translated.replace(/\{(\w+)\}/g, (token, key) =>
@@ -89,6 +92,7 @@
     if (request !== generation) return;
     language = code;
     pack = next;
+    wording = {};
     apply();
     document.dispatchEvent(new CustomEvent('display-language-change'));
   }
@@ -113,6 +117,16 @@
     bind,
     capture,
     setLanguage,
+    setWording(locale, values) {
+      if (locale !== language || !values || typeof values !== 'object' || Array.isArray(values) ||
+          Object.keys(values).length > 10000 ||
+          Object.values(values).some(value => typeof value !== 'string' || value.length > 4096)) return false;
+      const tokens = text => (text.match(/\{\w+\}/g) || []).sort().join('|');
+      wording = Object.fromEntries(Object.entries(values).filter(([source, value]) =>
+        value.trim() && tokens(source) === tokens(value)));
+      apply();
+      return true;
+    },
     get language() {
       return language;
     },

@@ -59,6 +59,7 @@ const receivingItemSchema = new mongoose.Schema({
 
 const receivingSchema = new mongoose.Schema(
   {
+    wording_snapshot: { type: mongoose.Schema.Types.Mixed, immutable: true },
     // PHP model exposes both an internal Mongo _id and a human-friendly
     // receiving_id that uses the branch's receiving_prefix (RID) plus a
     // zero‑padded increment. We keep both receiving_id and receiving_number
@@ -159,6 +160,13 @@ receivingSchema.plugin(paginate);
 // We rely on BaseModel.currentBranch / BaseModel.license being wired by the
 // controller layer (similar to other models that use plan/branch context).
 receivingSchema.pre('validate', async function () {
+  if (this.isNew && this.constructor.db?.db) {
+    this.wording_snapshot = await require('../services/document-wording-snapshot').capture(
+      this.constructor.db.db.collection('settings'),
+      BaseModel.license || this.license || this.license_id,
+      BaseModel.currentBranch || this.branch_id
+    );
+  }
   // Only assign on first creation; edits keep their existing identifiers.
   if (!this.isNew && (this.receiving_id || this.receiving_number)) {
     return;
@@ -2299,6 +2307,10 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
     if (!id) {
       // INSERT new receiving
       const receivingData = { ...insertData, ...updateData };
+      receivingData.wording_snapshot = await require('../services/document-wording-snapshot').capture(
+        await new BaseModel('settings').getCollection('settings'),
+        receivingData.license || BaseModel.license, receivingData.branch_id || BaseModel.currentBranch
+      );
       let insertResult;
       // Concurrent creates can read the same last ID. On a duplicate-key race,
       // read the new maximum and retry with the next value.

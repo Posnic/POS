@@ -15,7 +15,8 @@ const output = { schemaVersion: 1, registeredLabels: keys.size, consumers: [], e
 function walk(dir, app) {
   if (!fs.existsSync(dir)) return;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (/^(node_modules|vendor|dist|build|locales|languages|catalogs|test-results|tests|scripts|artifacts|output|android|ios|\.git|\.expo)$/.test(entry.name)) continue;
+    if (/^(node_modules|vendor|dist|build|build-output|locales|languages|catalogs|test-results|tests|scripts|artifacts|output|android|ios|\.git|\.expo)$/.test(entry.name)) continue;
+    if (/\.min\.js$|^jspdf(?:[.-]|$)/i.test(entry.name)) continue;
     const file = path.join(dir, entry.name);
     if (entry.isDirectory()) { walk(file, app); continue; }
     if (!/\.(?:html|js|cjs|ts|tsx)$/.test(file)) continue;

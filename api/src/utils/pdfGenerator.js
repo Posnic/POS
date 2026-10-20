@@ -671,10 +671,10 @@ function generateReceivingPDF(options) {
     .text(`#${data[idField] || 'N/A'}`, 400, 105, { align: 'right' });
 
   // Date (right side, below invoice ID)
-  doc.fontSize(9).font('Helvetica').text(`Date: ${formattedDate}`, 400, 130, { align: 'right' });
+  doc.fontSize(9).font('Helvetica').text(`${wording('lang_date_title', 'Date')}: ${formattedDate}`, 400, 130, { align: 'right' });
 
   // Supplier Details (left side)
-  doc.fontSize(11).font('Helvetica-Bold').text('Supplier Details:', 50, 130);
+  doc.fontSize(11).font('Helvetica-Bold').text(wording('lang_supplydetails_title', 'Supplier Details') + ':', 50, 130);
   doc.fontSize(9).font('Helvetica');
   doc.fillColor('#8B0000'); // Dark red/maroon for supplier name
   doc.text(supplierName, 50, 148);

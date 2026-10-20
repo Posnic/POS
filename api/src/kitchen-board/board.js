@@ -8,6 +8,29 @@
     demo = new URLSearchParams(location.search).get('demo') === '1';
   const stages = ['new', 'preparing', 'ready'];
   let settings = { orangeMinutes: 5, redMinutes: 10, pulse: true };
+  let wordingScope = '', wordingBranch = '', wordingChecked = 0, wordingReading = false;
+  async function refreshWording() {
+    if (demo || !window.DisplayI18n) return;
+    const locale = window.DisplayI18n.language;
+    const scope = JSON.stringify([locale, wordingBranch, localStorage.getItem('posnic.kitchen.device')]);
+    if (scope !== wordingScope) {
+      wordingScope = scope; wordingChecked = 0;
+      window.DisplayI18n.setWording(locale, {});
+    }
+    if (wordingReading || Date.now() - wordingChecked < 60000) return;
+    wordingReading = true;
+    wordingChecked = Date.now();
+    try {
+      const bundle = await request('/api/kitchen/wording?locale=' + encodeURIComponent(locale));
+      if (scope === JSON.stringify([window.DisplayI18n.language, wordingBranch, localStorage.getItem('posnic.kitchen.device')]) &&
+          bundle.schemaVersion === 1 && bundle.locale === locale && bundle.branchId === wordingBranch) {
+        window.DisplayI18n.setWording(locale, bundle.sourceValues);
+        render();
+      }
+    } catch (error) {
+      if (scope === wordingScope && [401, 403, 404].includes(error.status)) window.DisplayI18n.setWording(locale, {});
+    } finally { wordingReading = false; }
+  }
   let tickets = [],
     online = false,
     reading = false,
@@ -474,12 +497,18 @@
         }
         online = true;
         $('branch').textContent = data.branch || t('Kitchen');
+        wordingBranch = data.branchId || '';
+        void refreshWording();
         $('signin').hidden = true;
       }
       $('updated').textContent = t('Updated {time}', { time: time(new Date().toISOString()) });
     } catch (e) {
       if (current !== revision) return;
       online = false;
+      if ([401, 403].includes(e.status) && window.DisplayI18n) {
+        window.DisplayI18n.setWording(window.DisplayI18n.language, {});
+        wordingChecked = 0;
+      }
       $('message').textContent = e.message;
       $('signin').hidden = e.status !== 401;
     } finally {
