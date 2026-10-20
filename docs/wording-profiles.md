@@ -87,8 +87,16 @@ the change after their normal sync and refresh.
 - POS shared translation runtime: registered UI labels, including English.
 - Receipt-designer labels already using that runtime, plus order-type wording.
 - Kitchen-ticket order-type wording.
-- Sales invoice PDF item, quantity, price and amount headings. This generator
-  currently renders in English and resolves the branch's English profile.
+- Sales invoice PDF item, quantity, price and amount headings, default document
+  title, recipient heading, quantity total, subtotal, discount, total, paid,
+  balance and payment heading. A deliberately configured document title stays literal.
+- Purchase/receiving PDF description, quantity, price, amount and summary/payment
+  headings, for both downloads and email attachments. These PDF generators still
+  resolve the branch's English profile; full multilingual PDF shaping is not
+  claimed.
+- Receipt-template item headings inherit the active profile when not explicitly
+  set. Explicit custom headings remain literal and escaped; clearing one restores
+  inheritance. This is verified across all registered paper formats.
 - Captain's shared Takeaway/Product terminology mapping, with offline cache.
   New bundles also carry `sourceValues` for exact registered source strings;
   conflicting uses of the same source text are omitted, rather than guessed.
@@ -148,8 +156,9 @@ Remaining from the broader research phases:
 
 - Complete legacy report/export/template migration and validate actual rendered
   outputs. Preserve machine-oriented field names and business data.
-- Historical document wording snapshots and custom-template inheritance are
-  not implemented; existing reprints still resolve current wording.
+- Historical document wording snapshots are not implemented; existing reprints
+  still resolve current wording. Item-heading inheritance is now verified for the
+  receipt designer; other legacy/custom output paths still require migration.
 - Business and Mobile POS integration needs its own implementation and checks.
   Mobile POS currently has unrelated uncommitted authorization work; do not
   overwrite it while integrating this contract.
@@ -164,3 +173,31 @@ Work continues on POS branch `feature/wording-pagination-mobile` in
 The POS branch inherits the still-open receipt PR #1447; separate these new
 commits from that PR before opening a standalone promotion. Do not publish that
 unrelated work accidentally.
+
+POS checkpoint: `a760a0f2`. Captain changes remain staged: its full pre-commit
+browser suite was stopped after an initial menu-loading timeout. The complete
+nine-test cancellation spec passed on retry (1.7 minutes); the full 1,040-test
+browser gate still needs a clean run. Do not treat that focused retry as a
+passed full gate or bypass it to publish.
+
+### Document follow-up, 2026-10-20
+
+Expanded sales PDF labels and wired purchase PDF download/email paths to the
+same tenant/branch-scoped resolver. This adds read-only resolution, with no new
+stored business fields or sync lanes. Authority, caching and profile publication
+remain unchanged. No customer database was changed and no email was sent.
+
+Verification: 91 receipt-designer, document wording and profile tests passed,
+including real PDF stream generation. All 135 receiving-controller checks passed.
+The PDF test used pdfkit 0.20.2 from the existing
+`pos-captain-main-20261018/api/node_modules` via NODE_PATH because this checkout's
+partial API dependency install lacks it; 0.20.2 matches this checkout's lockfile.
+Physical printing, every script/font combination and installed-device rollout
+remain unverified.
+
+Next historical-reprint work must capture wording at an authoritative document
+write/issuance boundary. Do not add profile writes to PDF/receipt GETs or mutate
+sales timestamps merely to record a label snapshot: that could race payment sync.
+Account for raw collection sales writes as well as Mongoose saves, immutable
+published revision references, missing historical defaults, copied templates,
+offline issuance and cloud/till conflict resolution before enabling it.

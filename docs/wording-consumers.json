@@ -4203,9 +4203,22 @@
       "kind": "pdf",
       "registeredKeys": [
         "lang_amount",
+        "lang_balance_due_2",
+        "lang_bill_print_total_qty",
+        "lang_bill_to",
+        "lang_description",
+        "lang_extra_discount",
         "lang_item",
+        "lang_module_tax",
+        "lang_paid",
+        "lang_payment",
         "lang_price_title",
-        "lang_qty_title"
+        "lang_qty_title",
+        "lang_quantity",
+        "lang_sales_receipt",
+        "lang_subtotal",
+        "lang_tax_invoice",
+        "lang_total"
       ],
       "review": "registered references; render verification required"
     },
