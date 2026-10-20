@@ -70,7 +70,8 @@ function addWatermark(doc, text, options = {}) {
  */
 function generateInvoicePDF(options) {
   const { data, branch, res, config = {} } = options;
-  const wording = (key, fallback) => require('../services/document-wording').label(options.wording, key, fallback);
+  const wording = (key, fallback) =>
+    require('../services/document-wording').label(options.wording, key, fallback);
 
   const {
     title = 'Sales Invoice.',
@@ -303,8 +304,15 @@ function generateInvoicePDF(options) {
   const drawItemsHead = (top) => {
     doc.font(FB).fontSize(7.5).fillColor(MUTED);
     doc.text('#', col.no.x, top, { width: col.no.w, characterSpacing: 0.8 });
-    doc.text(wording('lang_item', 'ITEM'), col.item.x, top, { width: col.item.w, characterSpacing: 0.8 });
-    doc.text(wording('lang_qty_title', 'QTY'), col.qty.x, top, { width: col.qty.w, align: 'right', characterSpacing: 0.8 });
+    doc.text(wording('lang_item', 'ITEM'), col.item.x, top, {
+      width: col.item.w,
+      characterSpacing: 0.8,
+    });
+    doc.text(wording('lang_qty_title', 'QTY'), col.qty.x, top, {
+      width: col.qty.w,
+      align: 'right',
+      characterSpacing: 0.8,
+    });
     doc.text(wording('lang_price_title', 'PRICE'), col.price.x, top, {
       width: col.price.w,
       align: 'right',
