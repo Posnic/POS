@@ -645,6 +645,7 @@ router.get(
 
 // Legacy endpoint: GET /sales/getLatestSales
 router.get('/getLatestSales', bindController(salesController.getLatestSales));
+router.post('/parked/clear', bindController(salesController.clearParkedSales));
 
 // Legacy user report routes that frontend still requests under /sales
 router.get(

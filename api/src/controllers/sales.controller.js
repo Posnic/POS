@@ -696,6 +696,14 @@ class SalesController extends BaseController {
     return !isApprovedFor(token, 'discount_apply', req.user && req.user._id);
   }
 
+  canOverrideCounterPrice(req, payload = {}) {
+    if (!req.user?._id) return false;
+    const token = payload.price_override_approval_token || payload.approval_token;
+    return (
+      canPos(req.user, 'price_override') || isApprovedFor(token, 'price_override', req.user._id)
+    );
+  }
+
   async buildSaleContext(req) {
     const { branch_id, branch_name } = this.resolveBranchContext(req);
     const user = req.user || {};
@@ -798,6 +806,7 @@ class SalesController extends BaseController {
 
       // Build Context for Service
       const context = await this.buildSaleContext(req);
+      context.allowCounterPriceOverride = this.canOverrideCounterPrice(req, payload);
 
       // Delegate core Add / Hold business logic to salesService.processSale,
       // which is a line-by-line port of PHP sales_model::salesInsertUpdate.
@@ -1001,6 +1010,7 @@ class SalesController extends BaseController {
       // salesInsertUpdate parity for $process = 'Edit').
       // Enrich the context with branch-specific settings via the service
       context = await salesService.enrichSaleContext(context);
+      context.allowCounterPriceOverride = this.canOverrideCounterPrice(req, payload);
 
       const result = payload.paid_bill_correction
         ? await require('../services/paid-bill-edit').amend(req, payload, context)
@@ -1359,7 +1369,16 @@ class SalesController extends BaseController {
         return this.success(res, result.data, SUCCESS_MESSAGES.SALES_DELETED, 200);
       }
 
-      return this.error(res, ERROR_MESSAGES.SALES_NOT_DELETED, 404, result.data);
+      // Known domain conflicts explain the required next action. Unexpected
+      // database failures keep the generic message rather than exposing internals.
+      const statusCode = Number(result.statusCode);
+      const domainError = [400, 403, 404, 409, 422].includes(statusCode);
+      return this.error(
+        res,
+        domainError && result.message ? result.message : ERROR_MESSAGES.SALES_NOT_DELETED,
+        domainError ? statusCode : statusCode >= 500 ? 500 : 404,
+        result.data
+      );
     } catch (error) {
       next(error);
     }
@@ -1369,6 +1388,24 @@ class SalesController extends BaseController {
    * Legacy endpoint: GET /sales/getLatestSales
    * Returns the latest 6 sales for the current branch.
    */
+  async clearParkedSales(req, res, next) {
+    try {
+      if (!this.checkPermission('sales', 'write', req.user))
+        return this.error(res, ERROR_MESSAGES.UNAUTHORIZED, 403);
+      if (req.body?.confirmed !== true)
+        return this.error(res, 'Confirm clearing parked sales first.', 400);
+      await this.ensureContext(req);
+      const result = await require('../services/parked-sales').clearAll(await BaseModel.getDb(), {
+        branchId: resolveBranchId(req.user, req.session) || BaseModel.currentBranch,
+        licenseId: BaseModel.license,
+        userId: req.user?._id,
+      });
+      return this.success(res, result, 'Parked sales cleared');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getLatestSales(req, res) {
     try {
       // PHP controller uses sales write access for this endpoint

@@ -54,6 +54,7 @@ test('advanced item fields from the v2 browser persist and read back', async () 
     unit_id: String(unitId),
     image: [],
     cover_image: 'item.svg',
+    selling_units: [{ unit: 'ft', factor: 0.3048, price: 32 }],
   };
   const result = await service.addItem({ data, ...ctx });
   assert.equal(result.status, true, JSON.stringify(result));
@@ -69,6 +70,7 @@ test('advanced item fields from the v2 browser persist and read back', async () 
     'discount_amount',
     'conversion_factor',
     'purchase_unit',
+    'selling_units',
     'brand',
     'items_mfg_date',
     'items_expiry_date',

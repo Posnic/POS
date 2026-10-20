@@ -1,3 +1,4 @@
+const { recordedUserName } = require('../utils/recorded-user-name');
 const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
 const pricingAuthority = require('../services/pricing-authority');
 const Money = require('../utils/currency');
@@ -1684,6 +1685,8 @@ class SalesRepository {
 
   async deleteSales(ids, { SaleModel, requireRecycleBackup = false } = {}) {
     const captainEdits = [];
+    let deletionStarted = false;
+    let deletionCompleted = false;
     try {
       if (!Array.isArray(ids) || ids.length === 0) {
         return { status: false, data: null, message: 'No IDs provided' };
@@ -1723,8 +1726,20 @@ class SalesRepository {
         })
         .toArray();
       for (const sale of paymentCandidates) {
-        const finish = await require('../services/captain-payment-guard').beginEdit(db, sale);
-        if (finish) captainEdits.push(finish);
+        if (sale.captain_payment_plan && sale.payment_status === 'Paid' && objectIds.length !== 1)
+          throw Object.assign(
+            new Error(
+              'Delete paid restaurant bills one at a time so each payment journal can be retained safely.'
+            ),
+            { statusCode: 409 }
+          );
+        if (sale.captain_payment_plan && sale.payment_status === 'Paid' && !requireRecycleBackup)
+          throw Object.assign(
+            new Error('Deleting a paid restaurant sale requires a retained Recycle Bin backup.'),
+            { statusCode: 409 }
+          );
+        const deletion = await require('../services/restaurant-sale-delete').begin(db, sale);
+        captainEdits.push(deletion);
       }
 
       // Write change logs for each sale id (PHP BaseModel::changeLog parity)
@@ -1741,25 +1756,35 @@ class SalesRepository {
       const salesFilter = {
         _id: { $in: objectIds },
         ...licenseFilter,
-        captain_payment_plan: { $exists: false },
+        $or: [
+          { captain_payment_plan: { $exists: false } },
+          ...captainEdits.filter((entry) => entry.filter).map((entry) => entry.filter),
+        ],
         ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
       };
 
       const salesDocs = await salesCollection.find(salesFilter).toArray();
       if (requireRecycleBackup) {
         for (const doc of salesDocs) {
-          const backup = await BaseModel.deletedDocumentBackup('sales', doc, {
+          const retained = { ...doc };
+          delete retained.captain_edit_token;
+          delete retained.captain_edit_until;
+          const backup = await BaseModel.deletedDocumentBackup('sales', retained, {
             requireRetention: true,
           });
           if (!backup || backup.status !== true) {
-            throw new Error(
-              'Sale was not deleted because its Recycle Bin backup could not be saved'
+            throw Object.assign(
+              new Error(
+                'Sale was not deleted because its Recycle Bin backup could not be saved. Check that Recycle Bin is enabled and retry.'
+              ),
+              { statusCode: 409 }
             );
           }
         }
       }
 
       // Clean register_sales references in cashregister collection
+      deletionStarted = true;
       try {
         await cashRegisterCollection.updateMany(
           {
@@ -1775,6 +1800,7 @@ class SalesRepository {
           }
         );
       } catch (e) {
+        if (captainEdits.some((entry) => entry.filter)) throw e;
         // Do not block delete flow on register cleanup issues
         console.error('Error cleaning cashregister for deleted sales:', e);
       }
@@ -1873,6 +1899,7 @@ class SalesRepository {
               $set: { balance: totalWalletAmount },
             });
           } catch (e) {
+            if (captainEdits.some((entry) => entry.filter)) throw e;
             console.error('Error updating customer wallet during sale delete:', e);
           }
         }
@@ -1905,6 +1932,7 @@ class SalesRepository {
               _id: normalizedBranchId,
             });
           } catch (e) {
+            if (captainEdits.some((entry) => entry.filter)) throw e;
             console.error('Error loading branch settings for sale delete stock log:', e);
           }
         }
@@ -1925,7 +1953,7 @@ class SalesRepository {
                 : item.quantity != null
                   ? item.quantity
                   : 0;
-            const itemQty = Number(quantity || 0);
+            const itemQty = require('../helpers/selling-units').stockQuantity(item, quantity || 0);
             if (!Number.isFinite(itemQty) || itemQty <= 0) continue;
 
             let itemObjectId = null;
@@ -1963,7 +1991,7 @@ class SalesRepository {
             if (stockLogStatus) {
               const countStr = String(itemQty);
 
-              await stockLogsRepository.createStockLog({
+              const stockLog = await stockLogsRepository.createStockLog({
                 stocklog: stockLogStatus,
                 branch_id: branchForStock,
                 view_item_id: itemObjectId,
@@ -1980,14 +2008,20 @@ class SalesRepository {
                 changed_by_userid: BaseModel.loggedUser,
                 changed_by: BaseModel.loggedUserName || 'System',
               });
+              if (captainEdits.some((entry) => entry.filter) && stockLog?.status === false)
+                throw new Error('Stock log could not be saved during deletion.');
             }
           } catch (e) {
+            if (captainEdits.some((entry) => entry.filter)) throw e;
             console.error('Error restoring stock for deleted sale item:', e);
           }
         }
       }
 
-      await salesCollection.deleteMany(salesFilter);
+      const deleted = await salesCollection.deleteMany(salesFilter);
+      if (typeof deleted?.deletedCount === 'number' && deleted.deletedCount !== salesDocs.length)
+        throw new Error('Sale deletion was interrupted and needs review.');
+      deletionCompleted = true;
 
       return {
         status: true,
@@ -1996,13 +2030,18 @@ class SalesRepository {
       };
     } catch (error) {
       console.error('Error in deleteSaleCollectionData:', error);
+      const needsReview = deletionStarted && captainEdits.some((entry) => entry.filter);
       return {
         status: false,
+        statusCode: needsReview ? 409 : error.statusCode || error.status || 500,
         data: null,
-        message: error.message,
+        message: needsReview
+          ? 'Sale deletion was interrupted. Payment and stock cleanup need review before retrying.'
+          : error.message,
       };
     } finally {
-      for (const finish of captainEdits) await finish();
+      for (const deletion of captainEdits)
+        await deletion.finish({ completed: deletionCompleted, started: deletionStarted });
     }
   }
 
@@ -4102,6 +4141,7 @@ class SalesRepository {
         branch_name: 1,
         user_id: 1,
         user_name: 1,
+        'origin.actor_name': 1,
         sales_id: 1,
         date: 1,
         items: 1,
@@ -4175,6 +4215,10 @@ class SalesRepository {
         .lean();
 
       const list = (Array.isArray(rawList) ? rawList : []).map((row) => {
+        row = {
+          ...row,
+          user_name: recordedUserName(row.user_name, row.created_by, row.origin?.actor_name),
+        };
         if (!row.captain_payments?.length || row.payment_status !== 'Paid') return row;
         const digits = row.captain_transfer_allocation?.currencyDigits;
         return {
@@ -4459,6 +4503,7 @@ class SalesRepository {
         branch_name: 1,
         user_id: 1,
         user_name: 1,
+        'origin.actor_name': 1,
         sales_id: 1,
         date: 1,
         items: 1,
@@ -4528,7 +4573,10 @@ class SalesRepository {
         .limit(limit)
         .lean();
 
-      const list = Array.isArray(rawList) ? rawList : [];
+      const list = (Array.isArray(rawList) ? rawList : []).map((row) => ({
+        ...row,
+        user_name: recordedUserName(row.user_name, row.created_by, row.origin?.actor_name),
+      }));
 
       const total = await Model.countDocuments(filters);
 
@@ -5259,7 +5307,19 @@ class SalesRepository {
           cgst_tax: cgst,
           sgst_tax: sgst,
           tax_fields: itemDoc.tax_fields,
-          item_unit: item.item_unit || 'qty',
+          item_unit:
+            (
+              originalSaleItems.find(
+                (line) => String(line.item_id || line.item) === String(rawItemId)
+              ) || {}
+            ).item_unit ||
+            item.item_unit ||
+            'qty',
+          unit_conversion: (
+            originalSaleItems.find(
+              (line) => String(line.item_id || line.item) === String(rawItemId)
+            ) || {}
+          ).unit_conversion,
         });
       }
 
@@ -5341,6 +5401,7 @@ class SalesRepository {
         }).replace(/[^0-9]/g, '')}${Math.floor(Math.random() * 1e4)}`;
 
         itemsReturn.push({
+          unit_conversion: originalLine && originalLine.unit_conversion,
           item_status: process,
           return: returnFlag,
           item_name: item.item_name,
@@ -5371,7 +5432,7 @@ class SalesRepository {
           cgst_tax: cgst,
           sgst_tax: sgst,
           tax_fields: itemDoc.tax_fields,
-          item_unit: item.item_unit || 'qty',
+          item_unit: (originalLine && originalLine.item_unit) || item.item_unit || 'qty',
         });
 
         itemsTotalAmount += totalAmount;
@@ -5487,7 +5548,14 @@ class SalesRepository {
           }
 
           const openingBalance = Number(itemDoc.available_quantity || 0);
-          const itemQty = Number(item.item_quantity || 0);
+          const sourceLine =
+            originalSaleItems.find(
+              (line) => String(line.item_id || line.item) === String(rawItemId)
+            ) || {};
+          const itemQty = require('../helpers/selling-units').stockQuantity(
+            sourceLine,
+            item.item_quantity || 0
+          );
           if (!itemQty || itemQty <= 0) {
             continue;
           }
@@ -8296,7 +8364,9 @@ class SalesRepository {
         .find(
           {
             branch_id: branchObjectId,
-            ...require('../helpers/kitchen-eligibility').kitchenEligibility(),
+            ...require('../helpers/kitchen-eligibility').kitchenEligibility({
+              excludeClosed: true,
+            }),
             ...activeTenantFilter(),
           },
           {
@@ -8304,6 +8374,7 @@ class SalesRepository {
             projection: {
               sales_id: 1,
               token_id: 1,
+              takeaway_number: 1,
               table_number: 1,
               'outlet_snapshot.name': 1,
               room_reference: 1,
@@ -8755,6 +8826,21 @@ class SalesRepository {
           status: false,
           message: 'Choose a table first.',
           data: { code: 'TABLE_REQUIRED' },
+        };
+      }
+
+      if (
+        staffOrder &&
+        requestedService === 'dinein' &&
+        branchDoc?.restaurant_require_guests === true &&
+        (!Number.isInteger(Number(person_count)) ||
+          Number(person_count) < 1 ||
+          Number(person_count) > 1000)
+      ) {
+        return {
+          status: false,
+          message: 'Enter the number of guests.',
+          data: { code: 'GUESTS_REQUIRED' },
         };
       }
 
@@ -9390,6 +9476,10 @@ class SalesRepository {
          */
         ready_minutes: readyMinutes,
       };
+      saleDocument.receipt_quote = require('../helpers/receipt-quote').select(
+        branchDoc?.receipt_designs?.quoteFooter,
+        saleDocument.sales_id
+      );
 
       /* A number taken a moment ago is taken again, not handed to the
          customer as a database error. */

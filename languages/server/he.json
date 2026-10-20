@@ -960,6 +960,7 @@
   "Choose a saved customer for customer credit.": "בחר לקוח שנשמר עבור אשראי לקוח.",
   "Exact numeric search must be on or off": "חיפוש מספרי מדויק חייב להיות מופעל או כבוי",
   "Item not found or selling price is held. Review it in Edit prices.": "הפריט לא נמצא או מחיר המכירה מוחזק. סקור אותו בעריכת מחירים.",
+  "Password must contain between 5 and 20 characters": "הסיסמה חייבת להכיל בין 5 ל -20 תווים",
   "Branch access required": "שת גישה לסניף נדר",
   "Branch and supported language required": "שת סניף ושפה נתמכת"
 }

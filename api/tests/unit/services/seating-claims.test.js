@@ -2983,3 +2983,32 @@ test.each([
     seating.forEdit(db, scope, order, { table: 'T1', guests: 2 }, { settling: true })
   ).rejects.toMatchObject({ status: 409 });
 });
+
+test('remote unpaid dish edits preserve seating and cannot reopen closed sales', async () => {
+  const order = {
+    _id: new ObjectId(),
+    seating_request_id: 'remote',
+    seating_table_ids: [ids[0]],
+    table_number: 'T1',
+    person_count: 2,
+    dine_type: 'Dine-in',
+    sale_process: 'KOT',
+    payment_status: 'Unpaid',
+  };
+  const next = { table: 'T1', guests: 2, dine_type: 'Dine-in', sale_process: 'KOT' };
+  await expect(seating.forEdit(db, scope, order, next)).resolves.toBeNull();
+  await expect(seating.reserveEditCapacity(db, scope, order, next)).resolves.toBeNull();
+  for (const change of [{ table: 'T2' }, { guests: 3 }, { guests: 1 }, { dine_type: 'Take away' }])
+    await expect(seating.forEdit(db, scope, order, { ...next, ...change })).rejects.toMatchObject({
+      status: 409,
+    });
+  for (const change of [
+    { payment_status: 'Paid' },
+    { floor_closed_at: new Date() },
+    { sale_process: 'Hold' },
+  ])
+    await expect(seating.forEdit(db, scope, { ...order, ...change }, next)).rejects.toMatchObject({
+      status: 409,
+    });
+  expect(await db.collection('table_seating').countDocuments()).toBe(0);
+});

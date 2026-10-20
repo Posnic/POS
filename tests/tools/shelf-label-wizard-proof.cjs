@@ -59,16 +59,17 @@ const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label
     assert.equal(await page.$eval('#sl-all', el => el.indeterminate), true);
     await page.click('#sl-clear');
     assert.equal(await page.$eval('#sl-products', el => el.querySelectorAll('input[type=checkbox]:checked').length), 0);
-    for (let i = 0; i < 3; i++) await page.click(`#sl-products .sl-product-row:nth-child(${i + 1}) input[type=checkbox]`);
+    for (let i = 0; i < 24; i++) await page.click(`#sl-products .sl-product-row:nth-child(${i + 1}) input[type=checkbox]`);
     await page.screenshot({ path: path.join(OUT, '02-products-selected.png') });
     await page.click('#sl-next-step');
     await page.waitForFunction(() => !document.querySelector('[data-sl-panel="1"]').hidden);
+    await page.evaluate(() => { $('#sl-paper').val('a4').trigger('change'); $('#sl-width').val(63).trigger('change'); $('#sl-height').val(33).trigger('change'); });
     await page.select('#font', 'Arial');
     await page.$eval('#bar-fontSize', el => { el.value = 12; el.dispatchEvent(new Event('change', { bubbles: true })); });
     await page.screenshot({ path: path.join(OUT, '03-layout.png') });
     await page.click('#sl-next-step');
     await page.waitForFunction(() => !document.querySelector('[data-sl-panel="2"]').hidden);
-    assert.equal(await page.$eval('#sl-preview', el => el.querySelectorAll('.sl-label').length), 3);
+    assert.equal(await page.$eval('#sl-preview', el => el.querySelectorAll('.sl-label').length), 24);
     assert.equal(await page.$eval('#sl-preview .sl-label p', el => getComputedStyle(el).color), 'rgb(0, 0, 0)');
     const paper = await page.$eval('#sl-preview .sl-sheet', el => ({ width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height }));
     assert.ok(Math.abs(paper.width / paper.height - 210 / 297) < 0.005);
@@ -77,13 +78,22 @@ const OUT = process.env.SHELF_LABEL_PROOF_DIR || path.join(ROOT, 'qa/shelf-label
     await page.screenshot({ path: path.join(OUT, '05-print.png') });
     await page.click('#sl-print');
     assert.equal(await page.evaluate(() => printJobs.length), 1);
-    assert.equal(await page.evaluate(() => (printJobs[0].printable.match(/class="sl-label"/g) || []).length), 3);
+    assert.equal(await page.evaluate(() => (printJobs[0].printable.match(/class="sl-label"/g) || []).length), 24);
     // A real print-to-PDF render verifies page breaks independently of DOM-only geometry tests.
     const job = await page.evaluate(() => printJobs[0]);
     const printed = await browser.newPage();
     await printed.setContent('<style>' + job.style + '</style>' + job.printable);
     await printed.pdf({ path: path.join(OUT, 'a4-print-proof.pdf'), preferCSSPageSize: true, printBackground: true });
     await printed.close();
+    // The same selected batch uses one exact-size page per roll label.
+    await page.evaluate(() => { $('[data-sl-step="1"]').trigger('click'); $('#sl-paper').val('roll').trigger('change'); $('#sl-next-step').trigger('click'); $('#sl-next-step').trigger('click'); });
+    await page.click('#sl-print');
+    const rollJob = await page.evaluate(() => printJobs[1]);
+    assert.equal((rollJob.printable.match(/class="sl-label"/g) || []).length, 24);
+    const roll = await browser.newPage();
+    await roll.setContent('<style>' + rollJob.style + '</style>' + rollJob.printable);
+    await roll.pdf({ path: path.join(OUT, 'roll-print-proof.pdf'), preferCSSPageSize: true, printBackground: true });
+    await roll.close();
     await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
     await page.evaluate(() => PosnicShelfLabels.open());
     await page.waitForFunction(() => $('#sl-products input[type=checkbox]').length === 30);

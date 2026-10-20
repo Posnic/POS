@@ -24,6 +24,8 @@ const itemSchema = new mongoose.Schema(
     cost_price: { type: Number, default: 0 },
     company_price: { type: Number, default: 0 },
     selling_price: { type: Number, default: 0 },
+    selling_units: { type: [mongoose.Schema.Types.Mixed], default: [] },
+    unit: { type: String },
     discount_amount: { type: Number, default: 0 },
     discount_percentage: { type: Number, default: 0 },
     tax: { type: Number, default: 0 },
@@ -286,6 +288,7 @@ class ItemModel {
     discount_percentage: { type: 'Number', select: true },
     unit: { type: 'String', select: true },
     unit_id: { type: 'String', select: true },
+    selling_units: { type: 'Array', select: true },
     track_inventory: { type: 'Boolean', select: true },
     ecommerce: { type: 'Boolean', select: true },
     available_for_sale: { type: 'Boolean', select: true },
@@ -320,6 +323,7 @@ class ItemModel {
        projecting through this map silently dropped them. */
     items_mfg_date: { type: 'String', select: true },
     items_expiry_date: { type: 'String', select: true },
+    parcel_details: { type: Object, default: undefined },
     item_weight_machine_based: { type: 'Boolean', select: true },
     modifier_group_ids: { type: 'Array', select: true },
     // IC1: deliberate ask-at-the-till pricing, set from the item form.

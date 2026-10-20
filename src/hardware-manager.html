@@ -370,8 +370,8 @@
             <!-- Only a shop running table service has anything to print a KOT
                  for; the dashboard mirrors the setting into preferences. -->
             <button class="tab" id="kotTabButton" onclick="switchTab('kot')" style="display:none;">Kitchen Printing</button>
-            <button class="tab" onclick="switchTab('screen')">📺 Kitchen Display</button>
-            <button class="tab" onclick="switchTab('sound')">🔔 Kitchen Sound</button>
+            <button class="tab" onclick="switchTab('screen')" style="display:none;">📺 Kitchen Display</button>
+            <button class="tab" onclick="switchTab('sound')" style="display:none;">🔔 Kitchen Sound</button>
             <button class="tab" onclick="switchTab('mobile')">📱 Mobile Devices</button>
             <button class="tab" onclick="switchTab('scanner')">🔎 Barcode Scanner</button>
         </div>
@@ -1241,6 +1241,7 @@
         });
 
         function switchTab(tabName) {
+            if (['kot', 'screen', 'sound'].includes(tabName) && !window.restaurantHardwareEnabled) return;
             const selectedButton = Array.from(document.querySelectorAll('.tabs .tab')).find(button => button.getAttribute('onclick') === "switchTab('" + tabName + "')");
             if (!selectedButton || selectedButton.classList.contains('tab-disabled')) {
                 return;
@@ -3655,16 +3656,7 @@
              * mirrors that setting into per-machine preferences, because this
              * window cannot read the dashboard's own storage.
              */
-            (async () => {
-                try {
-                    const kot = await window.electronAPI.preferences.get('kot.enabled');
-                    const tab = document.getElementById('kotTabButton');
-                    if (tab) tab.style.display = kot ? '' : 'none';
-                } catch (e) {
-                    // Unknown means leave it hidden: a grocery seeing a KOT tab
-                    // is worse than a restaurant having to open Config once.
-                }
-            })();
+            window.refreshRestaurantHardwareVisibility();
 
             // Weight machine: restore last connected port
             (async () => {

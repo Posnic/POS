@@ -370,6 +370,7 @@ const TAX = [
  * See utils/sales-channels.js for the vocabulary these values come from.
  */
 const CHANNELS = [
+  'parcel_cartons',
   /* The channel ids this shop uses: pos, kiosk, tableside, online, phone,
      whatsapp, marketplace, ecommerce. A list rather than one toggle per
      channel, so adding a channel is not a new settings key. */

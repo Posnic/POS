@@ -11,7 +11,7 @@ function setup(){
  const sale={_id:'a'.repeat(24),table_number:'6',dine_type:'Dine-in',person_count:2,updated_date:'2026-10-05T06:00:00Z',created_date:'2026-10-05T06:00:00Z',payment_status:'Unpaid',sale_process:'KOT',sales_total:60,items:[{item_id:'tea',line_id:'original',item_name:'Tea',item_quantity:2,item_price:30}],restaurant_details:{rounds:[{id:'c0',items:[{id:'c0i0',line_key:'original',product:'tea',name:'Tea',quantity:2,served:0,remaining:2}]}]}};
  let search;
  w.PosnicPro={i18n:{t:(_,fallback)=>fallback},local:{get:k=>({table_options:'enable',branch_id_set:'b',username:'owner',currencySign:'₹'}[k])},escapeHtml:s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),HideSideBarModal(){},alert:(_,m)=>errors.push(m),restaurantFeedback:{apply(){},load(){},play:k=>effects.push(k)},kot:{bindProductSearch:(_,callback)=>search=callback,editLine:(l,q)=>({product_id:l.item_id,line_id:l.line_id,quantity:q??l.item_quantity,price:l.item_price}),},kotWorkspace:{editPayload:(s,items)=>({order_id:s._id,items,seen_at:s.updated_date})}};
- for(const method of ['get','post','put'])w.PosnicPro[method]=(o,done,fail)=>{const body=typeof o.data==='string'?JSON.parse(o.data):o.data;calls.push({method,url:o.url,body});if(setup.failure&&method==='post'){fail({responseJSON:setup.failureResponse||{message:'Offline'}});return;}let data={};if(o.url==='captain/v1/tables')data={roomVenues:setup.roomVenues||[],tables:[{id:'t6',tableorder_value:'6',status:'occupied',orders:[{id:sale._id}]},{id:'t7',tableorder_value:'7',status:'available',orders:[]}]};else if(o.url==='sales')data={list:sale.payment_status==='Paid'&&!sale.floor_lifecycle?[]:[sale],total:1};else if(o.url==='sales/'+sale._id)data=JSON.parse(JSON.stringify(sale));else if(o.url==='items/instantItemTax')data={id:'tax',rate:5,name:'GST'};else if(o.url==='items/instanceItemInsert')data={id:'instant',selling_price:25};done({type:'success',data});};
+ for(const method of ['get','post','put'])w.PosnicPro[method]=(o,done,fail)=>{const body=typeof o.data==='string'?JSON.parse(o.data):o.data;calls.push({method,url:o.url,body});if(setup.failure&&method==='post'){fail({responseJSON:setup.failureResponse||{message:'Offline'}});return;}let data={};if(o.url==='captain/v1/tables')data={guestsRequired:setup.guestsRequired===true,roomVenues:setup.roomVenues||[],tables:[{id:'t6',tableorder_value:'6',status:'occupied',orders:[{id:sale._id}]},{id:'t7',tableorder_value:'7',status:'available',orders:[]}]};else if(o.url==='sales')data={list:sale.payment_status==='Paid'&&!sale.floor_lifecycle?[]:[sale],total:1};else if(o.url==='sales/'+sale._id)data=JSON.parse(JSON.stringify(sale));else if(o.url==='items/instantItemTax')data={id:'tax',rate:5,name:'GST'};else if(o.url==='items/instanceItemInsert')data={id:'instant',selling_price:25};done({type:'success',data});};
  w.eval(source);const app=w.PosnicPro.kot_v2;
  const click=async a=>{w.document.querySelector('[data-action="'+a+'"]').click();await flush();};
  return {dom,w,app,calls,effects,errors,sale,click,search:()=>search,close:()=>dom.window.close()};
@@ -281,4 +281,73 @@ test('rooms accept a typed number but wait for Next and preserve charge agreemen
  h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});await h.click('send');
  const request=h.calls.find(c=>c.url==='sales/qrOrder');assert.equal(request.body.venue,'hotel');assert.equal(request.body.unit,'35B');assert.equal(request.body.room_charge_accepted,true);
  } finally {setup.roomVenues=null;h.close();}
+});
+
+
+test('blocked draft exposes review latest order directly without resending accepted dishes', async () => {
+ const h=setup();
+ try {
+  h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');
+  h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});
+  setup.failure=true;await h.click('send');setup.failure=false;
+  const line=h.app.state.draft.items[0];
+  h.sale.items.push({item_id:line.product_id,line_id:line.line_id,item_quantity:line.quantity,item_price:line.price});
+  const posts=h.calls.filter(c=>c.method==='post').length;
+  await h.click('discard');
+  const modal=h.w.document.querySelector('dialog');
+  assert.ok(modal.querySelector('[data-action=reviewPendingOrder]'));
+  assert.ok(h.app.state.draft.intent);
+  modal.querySelector('[data-action=reviewPendingOrder]').click();await flush();
+  assert.equal(h.w.document.querySelector('dialog'),null);
+  assert.equal(h.app.state.draft.intent,undefined);
+  assert.equal(h.app.state.draft.items.length,0);
+  assert.equal(h.calls.filter(c=>c.method==='post').length,posts);
+  await h.click('discard');assert.equal(h.app.state.draft,null);
+  assert.equal(h.sale.items.length,2);
+ } finally {setup.failure=false;h.close();}
+});
+
+
+test('seating rejection unlocks the retained round after reading the current sale', async () => {
+ const h=setup();
+ try {
+  h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('add');
+  h.search()({item_id:'rice',selling_price:150,item_name:'Sambar Rice'},1,()=>{});
+  const key=h.app.state.draft.key;
+  setup.failure=true;setup.failureResponse={message:'The seating group changed. Refresh this order.'};
+  await h.click('send');
+  assert.equal(h.app.state.draft.intent,undefined);
+  assert.notEqual(h.app.state.draft.key,key);
+  assert.equal(h.app.state.draft.items.length,1);
+  assert.equal(h.app.state.draft.items[0].name,'Sambar Rice');
+  assert.equal(h.calls.filter(c=>c.method==='post').length,1);
+  await h.click('discard');assert.equal(h.app.state.draft,null);
+  assert.equal(h.sale.items.length,1);
+ } finally {setup.failure=false;setup.failureResponse=undefined;h.close();}
+});
+
+
+test('required guests cannot be omitted in the dine-in picker and takeaway stays optional',async()=>{
+ const h=setup();setup.guestsRequired=true;
+ try {h.app.showDataTablePage();await flush();await h.click('new');
+ const d=h.w.document.querySelector('dialog');const input=d.querySelector('[name=guests]');
+ assert.equal(input.required,true);assert.equal(input.min,'1');d.querySelector('[name=table][value=t7]').checked=true;
+ d.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();assert.equal(h.app.state.draft,null);
+ d.querySelector('[data-close]').click();await h.click('takeaway');assert.equal(h.w.document.querySelector('[name=guests]').required,false);
+ }finally{setup.guestsRequired=false;h.close();}
+});
+
+test('cancel item requires a reason and cancelling the last dish uses audited order cancellation',async()=>{
+ const h=setup();try{h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('cancelLine');
+ const d=h.w.document.querySelector('dialog'),form=d.querySelector('form');assert.equal(d.querySelector('[name=qty]').value,'0');assert.equal(d.querySelector('[name=reason]').required,true);
+ form.dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();assert.equal(h.calls.filter(c=>c.method==='post').length,0);
+ d.querySelector('[name=reason]').value='Customer changed their mind';form.dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
+ const sent=h.calls.find(c=>c.url==='sales/updateOrder');assert.equal(sent.body.status,'cancelled');assert.equal(sent.body.change_reason,'Customer changed their mind');assert.equal(sent.body.items[0].quantity,2);
+ }finally{h.close();}
+});
+test('cancelling one dish preserves the other dishes and sends the reason',async()=>{
+ const h=setup();try{h.sale.items.push({item_id:'rice',line_id:'rice',item_quantity:1,item_price:50});h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('cancelLine');
+ const d=h.w.document.querySelector('dialog');d.querySelector('[name=reason]').value='Wrong item';d.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
+ const sent=h.calls.find(c=>c.url==='sales/updateOrder');assert.equal(sent.body.status,undefined);assert.equal(sent.body.items.length,1);assert.equal(sent.body.items[0].product_id,'rice');assert.equal(sent.body.change_reason,'Wrong item');
+ }finally{h.close();}
 });

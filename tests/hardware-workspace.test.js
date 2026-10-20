@@ -118,3 +118,34 @@ test('active-order refresh gives progress, clears busy state and reports failed 
  await w.refreshKitchenOrders(button);
  assert.equal(button.disabled,false); assert.equal(status.textContent,'Connection unavailable');
 });
+
+test('kitchen hardware is opt-in and follows Restaurant changes without losing settings', async t => {
+  const { w, d, html } = setup(t);
+  w.eval(html.slice(html.indexOf('        function switchTab(tabName)'), html.indexOf('        // WEIGHT MACHINE FUNCTIONS')));
+  let enabled = null;
+  w.electronAPI = { preferences: { get: async key => { assert.equal(key, 'kot.enabled'); return enabled; } } };
+  const kitchenButtons = ['kot', 'screen', 'sound'].map(key => d.querySelector(`[onclick="switchTab('${key}')"]`));
+  for (const value of [null, false, 'false']) {
+    enabled = value;
+    await w.refreshRestaurantHardwareVisibility();
+    assert.ok(kitchenButtons.every(b => b.style.display === 'none'));
+    assert.equal(d.getElementById('hardwareKitchenGroup').style.display, 'none');
+    w.switchTab('screen');
+    assert.ok(d.getElementById('receiptTab').classList.contains('active'));
+  }
+  enabled = true;
+  await w.refreshRestaurantHardwareVisibility();
+  assert.ok(kitchenButtons.every(b => b.style.display === ''));
+  assert.equal(d.getElementById('hardwareKitchenGroup').style.display, '');
+  w.switchTab('sound');
+  assert.ok(d.getElementById('soundTab').classList.contains('active'));
+  enabled = false;
+  await w.refreshRestaurantHardwareVisibility();
+  assert.ok(d.getElementById('receiptTab').classList.contains('active'));
+  assert.ok(!d.getElementById('soundTab').classList.contains('active'));
+  enabled = true;
+  await w.refreshRestaurantHardwareVisibility();
+  w.electronAPI.preferences.get = async () => { throw Error('unavailable'); };
+  await w.refreshRestaurantHardwareVisibility();
+  assert.ok(kitchenButtons.every(b => b.style.display === 'none'));
+});

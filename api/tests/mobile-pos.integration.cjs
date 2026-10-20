@@ -569,20 +569,9 @@ test(
       await page.getByRole('textbox', { name: 'Username', exact: true }).fill(user.username);
       await page.getByRole('textbox', { name: 'Password', exact: true }).fill('test-password');
       await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-      try {
-        await page
-          .getByRole('textbox', { name: 'PIN', exact: true })
-          .fill('4829', { timeout: 8000 });
-      } catch (e) {
-        console.log('MOBILE UI:', await page.locator('body').innerText());
-        await page.screenshot({
-          path: path.resolve(__dirname, '../../tmp/mobile-pos-signin-error.png'),
-        });
-        throw e;
-      }
-      await page.getByRole('textbox', { name: 'Confirm PIN', exact: true }).fill('4829');
-      await page.getByRole('button', { name: 'Save', exact: true }).click();
       const product = page.getByTestId('item-' + String(item._id));
+      await expect(product).toBeVisible();
+      await expect(page.getByRole('textbox', { name: 'PIN', exact: true })).toHaveCount(0);
       await expect(product.locator('img')).toHaveAttribute('src', /^data:image\/png/);
       await page.getByTestId('item-' + String(item._id)).click();
       const before = await db.collection('sales').countDocuments();
@@ -689,8 +678,8 @@ test('branch payments migrate legacy data and mobile settings cannot overwrite f
 
 for (const useLocal of [false, true])
   test(
-    'account-first mobile UI reaches PIN using ' +
-      (useLocal ? 'the authenticated LAN till' : 'the cloud shop'),
+    'account-first mobile UI opens Sell without mandatory PIN ' +
+      (useLocal ? 'with a nearby LAN till advertised' : 'with only the cloud shop'),
     { skip: !process.env.MOBILE_PREVIEW_DIR || !process.env.MOBILE_PLAYWRIGHT_PATH },
     async () => {
       const { chromium, expect } = require(
@@ -773,11 +762,13 @@ for (const useLocal of [false, true])
         await page.goto(base.replace(/\/api$/, '/'));
         await expect(page.getByTestId('server-input')).toHaveCount(0);
         await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-        await expect(page.getByRole('textbox', { name: 'PIN', exact: true })).toBeVisible({
+        await expect(page.getByTestId('item-' + String(item._id))).toBeVisible({
           timeout: 15000,
         });
+        await expect(page.getByRole('textbox', { name: 'PIN', exact: true })).toHaveCount(0);
         assert.equal(request.intent, 'login');
-        assert.equal(pairedAt, useLocal ? '192.168.50.4' : 'mobile-test.example');
+        // Cloud sign-in retains its approved internet authority; LAN is an explicit later switch.
+        assert.equal(pairedAt, 'mobile-test.example');
       } finally {
         await browser.close();
       }
@@ -1309,4 +1300,100 @@ test('public mobile discovery exposes a shop name without credentials or interna
   const result = await call('/mobile/v1/discovery', undefined, null);
   assert.equal(result.status, 200);
   assert.deepEqual(result.data, { shopName: branch.branch_name });
+});
+
+test('new mobile product gets a signed sale catalogue; opening stock and sale each apply once', async () => {
+  const receiptContract = require('../src/helpers/receipt-design');
+  const receiptDesign = receiptContract.normalize({
+    version: 1,
+    defaultFormat: '80',
+    layouts: Object.fromEntries(
+      Object.keys(receiptContract.formats).map((k) => [
+        k,
+        {
+          fontSize: 12,
+          blocks: ['store', 'transaction', 'items', 'totals'].map((type) => ({
+            id: type,
+            type,
+            enabled: true,
+          })),
+        },
+      ])
+    ),
+  });
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch._id }, { $set: { receipt_designs: receiptDesign } });
+
+  const before = (await call('/mobile/v1/bootstrap')).data;
+  const body = {
+    id: crypto.randomUUID(),
+    scope: { shopId: before.shop.id, branchId: String(branch._id), staffId: String(user._id) },
+    product: {
+      name: 'New supermarket milk',
+      barcode: '890newproduct',
+      price: 6500,
+      cost: 5000,
+      mrp: 7000,
+      opening: 12000,
+      tracked: true,
+      weighed: false,
+      taxInclusive: true,
+      available: true,
+    },
+  };
+  const created = await call('/mobile/v1/products', body);
+  assert.equal(created.status, 200, JSON.stringify(created.data));
+  const after = (await call('/mobile/v1/bootstrap')).data;
+  assert.notEqual(after.shop.snapshotVersion, before.shop.snapshotVersion);
+  assert.ok(after.items.some((i) => i.id === created.data.item.id));
+  const purchase = sale({
+    snapshotVersion: after.shop.snapshotVersion,
+    cart: {
+      id: crypto.randomUUID(),
+      lines: [
+        {
+          id: crypto.randomUUID(),
+          itemId: created.data.item.id,
+          name: body.product.name,
+          quantity: 1,
+          price: 6500,
+          taxBps: 0,
+          taxInclusive: true,
+          snapshotVersion: after.shop.snapshotVersion,
+        },
+      ],
+    },
+    total: 6500,
+    tax: 0,
+    payment: { method: 'cash', received: 6500, change: 0 },
+  });
+  const accepted = await call('/mobile/v1/sales', { idempotencyKey: purchase.id, sale: purchase });
+  assert.equal(accepted.status, 200, JSON.stringify(accepted.data));
+  assert.equal((await call('/mobile/v1/products', body)).status, 200);
+  assert.equal(
+    (await db.collection('items').findOne({ _id: new ObjectId(created.data.item.id) }))
+      .available_quantity,
+    11
+  );
+  assert.equal(
+    await db
+      .collection('stocklogs')
+      .countDocuments({
+        view_item_id: new ObjectId(created.data.item.id),
+        process: 'Mobile opening stock',
+      }),
+    1
+  );
+  assert.deepEqual(after.shop.receiptProfile.data.receipt_designs, receiptDesign);
+  const print = await call('/mobile/v1/print-jobs', {
+    id: 'receipt:' + purchase.id,
+    saleId: purchase.id,
+    document: 'receipt',
+  });
+  assert.equal(print.status, 200, JSON.stringify(print.data));
+  const job = await db.collection('printjobs').findOne({ _id: new ObjectId(print.data.id) });
+  assert.equal(job.payload.receiptDocument.receipt_settled, true);
+  assert.deepEqual(job.payload.receiptDocument.receipt_designs, receiptDesign);
+  assert.equal(job.payload.receiptDocument.payment_mode, 'Cash');
 });

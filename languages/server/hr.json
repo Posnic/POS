@@ -960,6 +960,7 @@
   "Choose a saved customer for customer credit.": "Odaberite spremljenog kupca za kredit kupca.",
   "Exact numeric search must be on or off": "Točno numeričko pretraživanje mora biti uključeno ili isključeno",
   "Item not found or selling price is held. Review it in Edit prices.": "Artikal nije pronađen ili se zadržava prodajna cijena. Pregledajte ga u Uredi cijene.",
+  "Password must contain between 5 and 20 characters": "Lozinka mora sadržavati između 5 i 20 znakova",
   "Branch access required": "Potreban je pristup podruž",
   "Branch and supported language required": "nici Podružnica i podržani jezik"
 }

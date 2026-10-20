@@ -960,6 +960,7 @@
   "Choose a saved customer for customer credit.": "ગ્રાહક ક્રેડિટ માટે સાચવેલા ગ્રાહક પસંદ કરો.",
   "Exact numeric search must be on or off": "ચોક્કસ આંકડાકીય શોધ ચાલુ અથવા બંધ હોવી આવશ્યક છે",
   "Item not found or selling price is held. Review it in Edit prices.": "આઇટમ મળી નથી અથવા વેચાણની કિંમત રાખવામાં આવી છે. કિંમતોમાં તેની સમીક્ષા કરો.",
+  "Password must contain between 5 and 20 characters": "પાસવર્ડમાં 5 થી 20 અક્ષરો હોવા આવશ્યક છે",
   "Branch access required": "શાખાની ઍક્સેસ જરૂરી",
   "Branch and supported language required": "શાખા અને સપોર્ટેડ ભાષા જરૂરી છે"
 }

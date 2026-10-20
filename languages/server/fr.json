@@ -960,6 +960,7 @@
   "Choose a saved customer for customer credit.": "Choisissez un client enregistré pour obtenir un crédit client.",
   "Exact numeric search must be on or off": "La recherche numérique exacte doit être activée ou désactivée",
   "Item not found or selling price is held. Review it in Edit prices.": "L'article n'a pas été trouvé ou le prix de vente est maintenu. Regardez-le dans Modifier les prix.",
+  "Password must contain between 5 and 20 characters": "Le mot de passe doit contenir entre 5 et 20 caractères",
   "Branch access required": "Accès à la succursale requis",
   "Branch and supported language required": "Branche et langue prise en charge requises"
 }

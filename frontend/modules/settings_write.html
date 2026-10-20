@@ -39,6 +39,7 @@
                                     <lang class="lang_modules">Features</lang>
                                 </a>
                                 
+
                                 <div class="settings-nav-group" data-desktop-only><lang class="lang_desktop_this_computer">This computer</lang></div>
                                 <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-hardware-tab" data-toggle="pill" href="#v-pills-hardware" role="tab" aria-controls="v-pills-hardware" aria-selected="false"><i class="feather icon-printer mr-2"></i><lang class="lang_desktop_devices">Devices & Printing</lang></a>
                                 <a class="nav-link mb-2" data-desktop-only data-module="branch" data-access="write" id="v-pills-app-tab" data-toggle="pill" href="#v-pills-app" role="tab" aria-controls="v-pills-app" aria-selected="false"><i class="feather icon-monitor mr-2"></i><lang class="lang_desktop_app">App Settings</lang></a>
@@ -2997,17 +2998,9 @@
                                                 <p class="module-desc"><lang class="lang_model_assistance_for_item_descriptions_and">Model assistance for item descriptions and other enabled workflows. Configure your connection and usage limits in AI settings.</lang></p>
                                             </div>
 
-                                            <div class="module-card" style="--fg-accent: #6d28d9;">
-                                                <div class="module-card-head">
-                                                    <span class="module-ico"><i class="feather icon-message-circle"></i></span>
-                                                    <div class="module-title"><lang class="lang_ask_posnic">Ask Posnic</lang></div>
-                                                    <div class="custom-control custom-switch module-switch">
-                                                        <input type="checkbox" class="custom-control-input" id="ask_posnic_enabled" name="ask_posnic_enabled">
-                                                        <label class="custom-control-label" for="ask_posnic_enabled"><span class="sr-only"><lang class="lang_enable_ask_posnic">Enable Ask Posnic</lang></span></label>
-                                                    </div>
-                                                </div>
-                                                <p class="module-desc"><lang class="lang_optional_help_shop_insights_and_confirmed">Optional help, shop insights and confirmed actions. Off by default. Enable it to show Ask Posnic; manage its knowledge and access in AI settings.</lang></p>
-                                            </div>
+                                            <!-- Ask Posnic is not ready for public opt-in. Keep the saved value
+                                                 through legacy full-form saves without a discoverable feature card. -->
+                                            <input type="checkbox" id="ask_posnic_enabled" name="ask_posnic_enabled" aria-label="Ask Posnic" data-t-aria-label="lang_ask_posnic" hidden style="display:none">
 
                                             <div class="module-card" style="--fg-accent: #57534e;">
                                                 <div class="module-card-head">
@@ -3373,7 +3366,16 @@
                                         Features list: Features says whether the restaurant exists,
                                         this says how its floor behaves.
                                     -->
-                                    <div class="card m-b-30">
+                                    <div class="card m-b-30"><div class="card-body">
+<h5><lang class="lang_required_dine_in_details">Required dine-in details</lang></h5>
+<label class="d-block"><input type="checkbox" id="restaurant_table_required"> <lang class="lang_require_a_table">Require a table</lang></label>
+<p class="text-muted"><lang class="lang_staff_must_choose_a_table_or_enter_its_num">Staff must choose a table or enter its number before starting a dine-in order.</lang></p>
+<label class="d-block"><input type="checkbox" id="restaurant_guests_required"> <lang class="lang_require_guest_count_pax">Require guest count (pax)</lang></label>
+<p class="text-muted"><lang class="lang_staff_must_enter_how_many_people_are_dinin">Staff must enter how many people are dining. Off by default. Takeaway and delivery orders do not need a guest count.</lang></p>
+<button type="button" class="btn btn-primary" id="save_restaurant_requirements" disabled><lang class="lang_save_title">Save</lang></button>
+<p id="restaurant_requirements_message" role="status"></p>
+</div></div>
+<div class="card m-b-30">
                                         <div class="card-header">
                                             <h5 class="card-title">
                                                 <lang class="lang_orders_per_table">Orders per table</lang>
@@ -3612,7 +3614,7 @@
                         <div class="tab-pane fade" id="v-pills-ai" role="tabpanel" aria-labelledby="v-pills-ai-tab">
 <p class="text-muted" id="ask_settings_access" role="status"><lang class="lang_ask_checking_access">Checking access to Ask Posnic settings…</lang></p>
 <div id="ask_posnic_admin" class="card ask-settings-card" style="display:none"><div class="card-body">
-<div id="ask_feature_notice" class="alert alert-info"><lang class="lang_ask_posnic_is_off_enable_it_in">Ask Posnic is off. Enable it in</lang> <a href="#/settings/modules"><lang class="lang_modules">Features</lang></a> <lang class="lang_to_use_questions_insights_actions_and_sche">to use questions, insights, actions and schedules.</lang></div>
+<div id="ask_feature_notice" class="alert alert-info"><lang class="lang_ask_posnic_is_off">Ask Posnic is off</lang></div>
 <div class="ask-settings-heading"><div><h5><lang class="lang_ask_posnic">Ask Posnic</lang></h5><p class="text-muted mb-0"><lang class="lang_ask_settings_hint">Manage how Ask Posnic helps your team. These settings apply to your shop account.</lang></p></div><a class="btn btn-outline-primary" data-ask-entry style="display:none" href="#/askposnic"><lang class="lang_ask_open_chat">Open Ask Posnic</lang></a></div>
 <div class="ask-settings-tabs" role="tablist" aria-label="Ask Posnic settings" data-t-aria-label="lang_ask_settings_label"><button type="button" role="tab" id="ask-tab-general" data-ask-tab="general" aria-controls="ask-settings-general" aria-selected="true" tabindex="0"><lang class="lang_ask_tab_general">General</lang></button><button type="button" role="tab" id="ask-tab-knowledge" data-ask-tab="knowledge" aria-controls="ask-settings-knowledge" aria-selected="false" tabindex="-1"><lang class="lang_ask_tab_knowledge">Knowledge</lang></button><button type="button" role="tab" id="ask-tab-access" data-ask-tab="access" aria-controls="ask-settings-access" aria-selected="false" tabindex="-1"><lang class="lang_ask_tab_access">Access &amp; actions</lang></button><button type="button" role="tab" id="ask-tab-usage" data-ask-tab="usage" aria-controls="ask-settings-usage" aria-selected="false" tabindex="-1"><lang class="lang_ask_tab_usage">AI &amp; usage</lang></button><button type="button" role="tab" id="ask-tab-schedules" data-ask-tab="schedules" aria-controls="ask-settings-schedules" aria-selected="false" tabindex="-1"><lang class="lang_ask_tab_schedules">Schedules</lang></button></div>
 <form id="ask_posnic_preferences_form"></form>
@@ -5147,6 +5149,7 @@
                                                             
                                                         <a class="nav-link" data-toggle="pill" href="#inv-sub-stock" role="tab"><i class="feather icon-box mr-2"></i><lang class="lang_stock_preference">Stock preference</lang></a>
 <a class="nav-link" data-toggle="pill" href="#inv-sub-mobile" role="tab"><i class="feather icon-smartphone mr-2"></i><lang class="lang_mobile_inventory">Mobile inventory</lang></a>
+<a class="nav-link" id="inv-sub-packaging-tab" data-toggle="pill" href="#inv-sub-packaging" role="tab"><i class="feather icon-box mr-2"></i><lang class="lang_packaging">Packaging</lang></a>
 <a class="nav-link" data-toggle="pill" href="#inv-sub-expiry" role="tab"><i class="feather icon-bell mr-2"></i><lang class="lang_expiry_reminders">Expiry reminders</lang></a>
 </div>
                                                     </div>
@@ -5202,12 +5205,13 @@
                                                             
 <div class="tab-pane fade" id="inv-sub-stock" role="tabpanel">
 <div class="card mb-3"><div class="card-header"><h5><lang class="lang_stock_preference">Stock preference</lang></h5></div><div class="card-body">
- <select id="item_stock_preference" class="form-control mb-3" aria-label="Stock for new items" data-t-aria-label="lang_stock_for_new_items"><option value="" data-t="lang_choose_a_preference">Choose a preference</option><option value="always_available" data-t="lang_always_available">Always available</option><option value="track_quantities" data-t="lang_track_quantities">Track quantities</option></select>
+ <select id="item_stock_preference" class="form-control mb-3" aria-label="Stock for new items" data-t-aria-label="lang_stock_for_new_items"><option value="" data-t="lang_choose_a_preference"><lang class="lang_choose_a_preference">Choose a preference</lang></option><option value="always_available" data-t="lang_always_available"><lang class="lang_always_available">Always available</lang></option><option value="track_quantities" data-t="lang_track_quantities"><lang class="lang_track_quantities">Track quantities</lang></option></select>
  <p><strong><lang class="lang_always_available_2">Always available:</lang></strong> <lang class="lang_sell_without_entering_stock_quantities_no">Sell without entering stock quantities. No low-stock alerts. Suitable for made-to-order dishes.</lang></p>
  <p><strong><lang class="lang_track_quantities_2">Track quantities:</lang></strong> <lang class="lang_enter_stock_received_and_count_each_sale_l">Enter stock received and count each sale. Low-stock alerts apply. Suitable for packaged goods.</lang></p>
  <p><lang class="lang_applies_to_new_items_in_this_branch_existi">Applies to new items in this branch. Existing items keep their stock settings. You can still mark an item sold out manually.</lang></p>
  <button class="btn btn-primary" type="button" id="item_settings_save_stock"><lang class="lang_save_title">Save</lang></button></div></div>
 </div>
+<div class="tab-pane fade" id="inv-sub-packaging" role="tabpanel" aria-labelledby="inv-sub-packaging-tab"><div class="card"><div class="card-body"><h5><lang class="lang_saved_cartons_optional">Saved cartons (optional)</lang></h5><p class="text-muted"><lang class="lang_save_your_actual_box_dimensions_and_empty">Save your actual box dimensions and empty-box weight. Examples: Small, Medium, Large. No presets are applied automatically.</lang></p><div id="parcel_carton_status" role="status"></div><div class="table-responsive"><table class="table"><thead><tr><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_length_cm">Length (cm)</lang></th><th><lang class="lang_width_cm">Width (cm)</lang></th><th><lang class="lang_height_cm">Height (cm)</lang></th><th><lang class="lang_empty_weight_kg">Empty weight (kg)</lang></th><th></th></tr></thead><tbody id="parcel_carton_rows"></tbody></table></div><button type="button" class="btn btn-light" id="parcel_carton_add"><lang class="lang_add_carton">Add carton</lang></button> <button type="button" class="btn btn-primary" id="parcel_carton_save"><lang class="lang_save_cartons">Save cartons</lang></button></div></div></div>
 <div class="tab-pane fade" id="inv-sub-mobile" role="tabpanel"><div id="mobile_inventory_settings"></div></div>
 <div class="tab-pane fade" id="inv-sub-expiry" role="tabpanel">
 <div class="card"><div class="card-header"><h5><lang class="lang_expiry_reminders">Expiry reminders</lang></h5></div><div class="card-body">
@@ -6917,7 +6921,7 @@
                                                     <div style="max-width:560px">
                                                         <h6><lang class="lang_table_cleaning">Table cleaning</lang></h6>
                                                         <p class="text-muted"><lang class="lang_off_by_default_enable_only_if_staff_should">Off by default. When enabled, tables must be marked Available after service.</lang></p>
-                                                        <label class="d-block"><input type="checkbox" id="captain_allow_unassigned"> <lang class="lang_dine_in">Dine-in</lang> · <lang class="lang_table_no">Table No</lang> <lang class="lang_optional">(optional)</lang></label>
+
                                                         <label><input type="checkbox" id="captain_table_cleaning"> <lang class="lang_enable_table_cleaning">Enable table cleaning</lang></label>
                                                         <div class="mt-3"><button type="button" class="btn btn-primary" id="save_captain_tables" disabled><lang class="lang_save_title">Save</lang></button></div>
                                                         <p id="captain_tables_message" class="mt-2" role="status"></p>

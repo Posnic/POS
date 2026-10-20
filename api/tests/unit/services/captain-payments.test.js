@@ -65,6 +65,126 @@ const pay = (plan, overrides = {}) =>
     ...overrides,
   });
 
+test.each([false, true])(
+  'desktop paid sale deletion retains evidence and restores tracked stock once (%s)',
+  async (tracked) => {
+    const itemId = new ObjectId();
+    if (tracked) {
+      await db
+        .collection('items')
+        .insertOne({ _id: itemId, license, track_inventory: true, available_quantity: 8 });
+      sale.items[0].item_id = itemId;
+      await db.collection('sales').updateOne({ _id: sale._id }, { $set: { items: sale.items } });
+    }
+    const plan = await service.prepare({ ...req(), captainPaymentDesktop: true });
+    const payment = { ...pay(plan), captainPaymentDesktop: true };
+    await service.record(payment);
+    await db.collection('cashregister').insertOne({
+      branch_id: branch,
+      license,
+      register_sales: [{ sales_id: sale._id, multi_payment: { Cash: 105 } }],
+    });
+    const Base = require('../../../src/models/base.model');
+    const repo = require('../../../src/repositories/sale.repository');
+    Base.database = db;
+    Base.currentBranch = branch;
+    Base.license = license;
+    Base.loggedUser = user;
+    await db
+      .collection('branches')
+      .updateOne({ _id: branch }, { $set: { module_recyclebin_enable: true } });
+    const getDb = jest.spyOn(Base, 'getDb').mockResolvedValue(db);
+    const getCollection = jest
+      .spyOn(Base.prototype, 'getCollection')
+      .mockImplementation(async (name) => db.collection(name));
+    const changeLog = jest.spyOn(Base.prototype, 'changeLog').mockResolvedValue({ status: true });
+    try {
+      await db
+        .collection('branches')
+        .updateOne({ _id: branch }, { $set: { module_recyclebin_enable: false } });
+      const blocked = await repo.deleteSales([String(sale._id)], { requireRecycleBackup: true });
+      expect(blocked).toMatchObject({ status: false, statusCode: 409 });
+      expect((await db.collection('captain_payment_plans').findOne({ _id: plan.id })).state).toBe(
+        'paid'
+      );
+      expect(
+        (await db.collection('sales').findOne({ _id: sale._id })).captain_edit_token
+      ).toBeUndefined();
+      await db
+        .collection('branches')
+        .updateOne({ _id: branch }, { $set: { module_recyclebin_enable: true } });
+      const result = await repo.deleteSales([String(sale._id)], { requireRecycleBackup: true });
+      expect(result.status).toBe(true);
+      expect(await db.collection('sales').findOne({ _id: sale._id })).toBeNull();
+      const backup = await db.collection('recycle_bin').findOne({ _id: sale._id });
+      expect(backup).toMatchObject({ document_name: 'sales', payment_status: 'Paid' });
+      expect(backup.captain_edit_until).toBeUndefined();
+      const journal = await db.collection('captain_payment_plans').findOne({ _id: plan.id });
+      expect(journal.state).toBe('deleted');
+      expect(journal.payments).toHaveLength(1);
+      expect(
+        (await db.collection('cashregister').findOne({ branch_id: branch })).register_sales
+      ).toEqual([]);
+      expect(
+        (await repo.deleteSales([String(sale._id)], { requireRecycleBackup: true })).status
+      ).toBe(true);
+      if (tracked)
+        expect((await db.collection('items').findOne({ _id: itemId })).available_quantity).toBe(10);
+      await expect(service.record(payment)).rejects.toMatchObject({ status: 409 });
+      expect(await db.collection('sales').findOne({ _id: sale._id })).toBeNull();
+    } finally {
+      getDb.mockRestore();
+      getCollection.mockRestore();
+      changeLog.mockRestore();
+    }
+  }
+);
+
+test('restaurant deletion excludes concurrent payment replay and preserves failure locks', async () => {
+  const plan = await service.prepare({ ...req(), captainPaymentDesktop: true });
+  const payment = { ...pay(plan), captainPaymentDesktop: true };
+  await service.record(payment);
+  const saved = await db.collection('sales').findOne({ _id: sale._id });
+  const stalePlan = await db.collection('captain_payment_plans').findOne({ _id: plan.id });
+  const deletion = require('../../../src/services/restaurant-sale-delete');
+  const first = await deletion.begin(db, saved);
+  await expect(
+    service.reconcile(db, await service.scope({ ...req(), captainPaymentDesktop: true }), stalePlan)
+  ).rejects.toMatchObject({ status: 409 });
+  await expect(deletion.begin(db, saved)).rejects.toMatchObject({ statusCode: 409 });
+  await expect(service.record(payment)).rejects.toMatchObject({ status: 409 });
+  await first.finish({ started: false, completed: false });
+  expect((await service.record(payment)).dueMinor).toBe(0);
+  const second = await deletion.begin(db, await db.collection('sales').findOne({ _id: sale._id }));
+  await second.finish({ started: true, completed: false });
+  await expect(deletion.begin(db, saved)).rejects.toMatchObject({
+    statusCode: 409,
+    message: expect.stringContaining('previous deletion needs review'),
+  });
+  expect(
+    (await db.collection('captain_payment_plans').findOne({ _id: plan.id })).payments
+  ).toHaveLength(1);
+});
+
+test('restaurant deletion refuses shared, foreign and missing payment journals', async () => {
+  const plan = await service.prepare({ ...req(), captainPaymentDesktop: true });
+  await service.record({ ...pay(plan), captainPaymentDesktop: true });
+  const saved = await db.collection('sales').findOne({ _id: sale._id });
+  const deletion = require('../../../src/services/restaurant-sale-delete');
+  await expect(deletion.begin(db, { ...saved, license: new ObjectId() })).rejects.toMatchObject({
+    statusCode: 409,
+  });
+  await db
+    .collection('captain_payment_plans')
+    .updateOne({ _id: plan.id }, { $push: { sales: { _id: new ObjectId() } } });
+  await expect(deletion.begin(db, saved)).rejects.toMatchObject({ statusCode: 409 });
+  await db.collection('captain_payment_plans').deleteOne({ _id: plan.id });
+  await expect(deletion.begin(db, saved)).rejects.toMatchObject({ statusCode: 409 });
+  expect(
+    (await db.collection('sales').findOne({ _id: sale._id })).captain_edit_token
+  ).toBeUndefined();
+});
+
 test('unset collection defaults to all methods and reserves edits against payment preparation', async () => {
   await db.collection('branches').updateOne({ _id: branch }, { $unset: { captain_payments: '' } });
   expect((await service.scope(req())).options).toMatchObject({
@@ -101,6 +221,15 @@ test('desktop can prepare and settle a table when phone collection is disabled',
   const paid = await service.record({ ...pay(plan), captainPaymentDesktop: true });
   expect(paid.dueMinor).toBe(0);
   expect((await db.collection('sales').findOne({ _id: sale._id })).payment_status).toBe('Paid');
+  expect((await db.collection('sales').findOne({ _id: sale._id })).payment_description).toBe(
+    'Payment recorded'
+  );
+  await expect(
+    guard.beginEdit(db, await db.collection('sales').findOne({ _id: sale._id }))
+  ).rejects.toMatchObject({
+    status: 409,
+    message: expect.stringContaining('restaurant bill is already paid'),
+  });
 });
 
 test.each([false, 0, '0', 'false'])('disabled Captain module %s blocks the default', (disabled) => {
@@ -767,7 +896,7 @@ test('editing a paid Captain bill explains returns without suggesting another co
   await expect(guard.beginEdit(db, saved)).rejects.toMatchObject({
     status: 409,
     message:
-      'This bill is already paid through Captain. Use Return items to remove items, or Correct payment to change the payment method.',
+      'This restaurant bill is already paid. Use Return items to reverse the sale, or Correct payment to change the payment method.',
   });
   expect(await db.collection('sales').findOne({ _id: sale._id })).toEqual(saved);
   expect(await db.collection('captain_payment_plans').findOne({ _id: plan.id })).toEqual(journal);

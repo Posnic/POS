@@ -206,6 +206,7 @@ async function bootstrap(req) {
     snapshotVersion: key,
     offlineUntil: until.toISOString(),
     historyPolicy: { days: c.config.historyDays, maxReceipts: c.config.historyMaxReceipts },
+    receiptProfile: await require('./mobile-receipt-design').profile(c.branch),
     quickTaxBps: c.config.quickTaxBps,
     quickTaxInclusive: c.config.quickTaxInclusive,
     permissions: {
@@ -217,7 +218,7 @@ async function bootstrap(req) {
       voidLine: allowed(req.user, 'pos', 'void_line'),
       receiptPrint: allowed(req.user, 'pos', 'reprint_receipt'),
       customerWrite: allowed(req.user, 'customer'),
-      itemWrite: false,
+      itemWrite: allowed(req.user, 'item', 'read') && allowed(req.user, 'item', 'write'),
       priceOverride: false,
       manualUpi: c.config.paymentMethods.includes('upi') && c.config.upiAccounts.length > 0,
     },

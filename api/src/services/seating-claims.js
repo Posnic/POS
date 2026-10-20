@@ -1241,7 +1241,35 @@ async function forEdit(db, scope, order, next, { settling = false, cancelling = 
       );
     return own || null;
   }
-  if (order.seating_request_id && !own) fail('The seating group changed. Refresh this order.', 409);
+  if (order.seating_request_id && !own) {
+    // Reservation journals are local to their authority. Editing dishes on a
+    // synced open sale consumes no seats when the complete seating is unchanged.
+    const unchanged =
+      destination === String(order.table_number || '') &&
+      (!next.dine_type || next.dine_type === (order.dine_type || 'Dine-in')) &&
+      (next.guests == null ||
+        next.guests === '' ||
+        Number(next.guests) === Number(order.person_count || 0));
+    const knownClaim = claims.some((claim) => claim.order_id === String(order._id));
+    const conflictingOperation = claims.some(
+      (claim) =>
+        !terminal(claim) &&
+        capacityChanging(claim) &&
+        (claim.tables || []).some((table) =>
+          (order.seating_table_ids || []).map(String).includes(String(table))
+        )
+    );
+    if (
+      unchanged &&
+      !knownClaim &&
+      !conflictingOperation &&
+      !order.floor_closed_at &&
+      order.payment_status === 'Unpaid' &&
+      order.sale_process === 'KOT'
+    )
+      return null;
+    fail('The seating group changed. Refresh this order.', 409);
+  }
   if (
     own &&
     (destination !== String(order.table_number || '') ||

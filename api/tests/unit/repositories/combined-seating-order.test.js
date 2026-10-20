@@ -641,3 +641,15 @@ test('staff room ordering is opt-in', async () => {
   expect((await submit(roomRequest())).status).toBe(false);
   expect(await db.collection('sales').countDocuments({})).toBe(0);
 });
+
+test('guest requirement rejects omitted or zero dine-in pax before creating a sale', async () => {
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { restaurant_require_guests: true } });
+  for (const guests of [undefined, '', 0, -1, 1.5]) {
+    const result = await submit({ person_count: guests });
+    expect(result).toMatchObject({ status: false, data: { code: 'GUESTS_REQUIRED' } });
+  }
+  expect(await db.collection('sales').countDocuments()).toBe(0);
+  expect((await submit()).status).toBe(true);
+});

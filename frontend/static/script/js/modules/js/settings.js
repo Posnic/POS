@@ -976,6 +976,7 @@ PosnicPro.settings = {
                  * allows one, every time this screen loaded.
                  */
                 PosnicPro.settings.showTableOrderLimit(data.table_order_limit ?? 1);
+                PosnicPro.settings.loadRestaurantRequirements();
                 $('#staff_shifts_enable').prop('checked', data.staff_shifts_enable !== false);
                 $('#staff_tips_enable').prop('checked', data.staff_tips_enable === true);
                 $('#staff_roster_enable').prop('checked', data.staff_roster_enable !== false);
@@ -10388,16 +10389,41 @@ $(document).on('shown.bs.tab', '#captaintables-tab-line', function () {
     $('#save_captain_tables').prop('disabled',true);
     PosnicPro.get({url:'captain/v1/table-settings'},function(data){
         $('#captain_table_cleaning').prop('checked',data.cleaningEnabled === true);
-        $('#captain_allow_unassigned').prop('checked',data.tableRequired === false);
         $('#save_captain_tables').prop('disabled',false);
         $('#captain_tables_message').empty();
     },function(){ $('#captain_tables_message').text(PosnicPro.i18n.t('lang_could_not_load_table_settings_please_retry', 'Could not load table settings. Please retry.')); });
 });
 $(document).on('click','#save_captain_tables',function(){
     var button=$(this).prop('disabled',true);
-    PosnicPro.post({url:'captain/v1/table-settings',processData:false,data:JSON.stringify({cleaningEnabled:$('#captain_table_cleaning').is(':checked'),tableRequired:!$('#captain_allow_unassigned').is(':checked')})},function(){
+    PosnicPro.post({url:'captain/v1/table-settings',processData:false,data:JSON.stringify({cleaningEnabled:$('#captain_table_cleaning').is(':checked')})},function(){
         button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_successfully_completed','Successfully Completed'));
     },function(){button.prop('disabled',false);$('#captain_tables_message').text(PosnicPro.i18n.t('lang_could_not_save_table_settings_please_retry', 'Could not save table settings. Please retry.'));});
 });
 
 $(document).on("change", "#sharing_fieldset input", function () { PosnicPro.settings._sharingDirty = true; });
+
+/* Optional branch packaging presets, through the scoped shared settings API. */
+(function(){
+ var busy=false,loaded=false;
+ function status(text){$('#parcel_carton_status').text(text);}
+ function lock(value){busy=value;$('#parcel_carton_add,#parcel_carton_save,#parcel_carton_rows input,#parcel_carton_rows button').prop('disabled',value);}
+ function row(value){var tr=$('<tr>').attr('data-carton-id',value.id||crypto.randomUUID());['name','lengthCm','widthCm','heightCm','emptyWeightKg'].forEach(function(key){var input=$('<input>').addClass('form-control').attr({'data-field':key,'aria-label':key,type:key==='name'?'text':'number'}).val(value[key]==null?'':value[key]);if(key==='name')input.attr('maxlength','80');else input.attr({min:key==='emptyWeightKg'?0:0.001,step:'any'});tr.append($('<td>').append(input));});var remove=$('<button type="button" class="btn btn-light"><lang class="lang_remove">Remove</lang></button>').on('click',function(){tr.remove();status('Unsaved changes');});tr.append($('<td>').append(remove));$('#parcel_carton_rows').append(tr);}
+ $(document).on('click','#inv-sub-packaging-tab',function(){if(busy)return;loaded=false;lock(true);status('Loading saved cartons…');PosnicPro.get({url:'settings/group/channels',data:{}},function(response){lock(false);if(!response||response.type!=='success'){status('Could not load carton settings. Reopen Packaging to retry.');return;}$('#parcel_carton_rows').empty();((response.data&&response.data.values&&response.data.values.parcel_cartons)||[]).forEach(row);loaded=true;status('Loaded. Cartons are optional.');},function(){lock(false);status('Could not load carton settings. Reopen Packaging to retry.');});});
+ $(document).on('click','#parcel_carton_add',function(){if(busy||!loaded)return;row({});status('Unsaved changes');});
+ $(document).on('click','#parcel_carton_save',function(){if(busy||!loaded)return;var values=[];$('#parcel_carton_rows tr').each(function(){var tr=$(this),value={id:tr.attr('data-carton-id')};tr.find('input').each(function(){value[$(this).attr('data-field')]=$(this).val();});values.push(value);});lock(true);status('Saving cartons…');PosnicPro.put({url:'settings/group/channels',data:JSON.stringify({parcel_cartons:values})},function(response){lock(false);status(response&&response.type==='success'?'Cartons saved.':response&&response.message||'Could not save cartons.');},function(){lock(false);status('Could not save cartons. Your entries are preserved; try Save again.');});});
+})();
+PosnicPro.settings.loadRestaurantRequirements = function () {
+    $('#save_restaurant_requirements').prop('disabled', true);
+    PosnicPro.get({url:'captain/v1/table-settings'}, function(data) {
+        $('#restaurant_table_required').prop('checked', data.tableRequired !== false);
+        $('#restaurant_guests_required').prop('checked', data.guestsRequired === true);
+        $('#save_restaurant_requirements').prop('disabled', false);
+    }, function() { $('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_could_not_load_settings_please_retry', 'Could not load settings. Please retry.')); });
+};
+$(document).on('shown.bs.tab', '#restauranttables-tab-line, #v-pills-tableorder-tab', function () { PosnicPro.settings.loadRestaurantRequirements(); });
+$(document).on('click', '#save_restaurant_requirements', function() {
+    var button=$(this).prop('disabled',true);
+    PosnicPro.post({url:'captain/v1/table-settings',processData:false,data:JSON.stringify({tableRequired:$('#restaurant_table_required').is(':checked'),guestsRequired:$('#restaurant_guests_required').is(':checked')})},function(){
+        button.prop('disabled',false);$('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_saved', 'Saved.'));
+    },function(){button.prop('disabled',false);$('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_could_not_save_settings_please_retry', 'Could not save settings. Please retry.'));});
+});

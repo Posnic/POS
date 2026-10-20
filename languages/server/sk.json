@@ -960,6 +960,7 @@
   "Choose a saved customer for customer credit.": "Vyberte si uloženého zákazníka pre zákaznícky kredit.",
   "Exact numeric search must be on or off": "Presné číselné vyhľadávanie musí byť zapnuté alebo vypnuté",
   "Item not found or selling price is held. Review it in Edit prices.": "Položka nebola nájdená alebo je držaná predajná cena. Pozrite si to v časti Upraviť ceny.",
+  "Password must contain between 5 and 20 characters": "Heslo musí obsahovať 5 až 20 znakov",
   "Branch access required": "Vyžaduje sa prístup k po",
   "Branch and supported language required": "bočke Pobočka a podporovaný jazyk"
 }

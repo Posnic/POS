@@ -27,6 +27,16 @@ test('inclusive water stays 30 including tax, including after quantity changes',
 test('a channel label does not authorize an arbitrary price', () => {
   expect(() => quote({ channel: 'online', submitted: 60 })).toThrow(/does not match/);
 });
+test('counter override cannot bypass an outlet, price list or other channel', () => {
+  for (const context of [
+    { channel: 'online' },
+    { outlet: { id: 'room', markup_percent: 20 } },
+    { priceList: { _id: 'wholesale', percent_off: 10 } },
+    { venue: { code: 'hotel', price_adjust_percent: 20 } },
+  ]) {
+    expect(() => quote({ ...context, allowCounterPriceOverride: true, submitted: 70 })).toThrow();
+  }
+});
 test('configured outlet and customer prices are enforced', () => {
   expect(quote({ outlet: { id: 'room', markup_percent: 20 }, submitted: 54 }).source).toBe(
     'outlet'
@@ -42,6 +52,29 @@ test('stored snapshots preserve agreed price and tax after catalogue edits', () 
     quote({ product: { ...product, selling_price: 60, tax: 18 }, previous, submitted: 45 })
   ).toEqual(previous.pricing);
   expect(() => quote({ previous, submitted: 1 })).toThrow();
+});
+
+test('authorised parked counter price edits retain tax but not a stale price', () => {
+  const previous = { pricing: quote() };
+  const options = {
+    previous,
+    submitted: 70,
+    allowCounterPriceOverride: true,
+    allowParkedPriceOverride: true,
+  };
+  expect(quote({ ...options, product: { ...product, tax: 18 } })).toMatchObject({
+    selling_price: 70,
+    tax: 5,
+    source: 'counter_override',
+  });
+  expect(() => quote({ ...options, allowParkedPriceOverride: false })).toThrow();
+  expect(() => quote({ ...options, allowCounterPriceOverride: false })).toThrow();
+  expect(() =>
+    quote({ ...options, previous: { pricing: { ...previous.pricing, source: 'outlet' } } })
+  ).toThrow();
+  expect(() => quote({ ...options, channel: 'online' })).toThrow();
+  for (const submitted of [0, -1, 1000001, 'bad'])
+    expect(() => quote({ ...options, submitted })).toThrow();
 });
 test.each(['variable', 'quick'])('%s is explicit and bounded', (kind) => {
   const p = {

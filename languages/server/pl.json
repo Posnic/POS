@@ -960,6 +960,7 @@
   "Choose a saved customer for customer credit.": "Wybierz zapisanego klienta do kredytu klienta.",
   "Exact numeric search must be on or off": "Dokładne wyszukiwanie numeryczne musi być włączone lub wyłączone",
   "Item not found or selling price is held. Review it in Edit prices.": "Przedmiot nie został znaleziony lub cena sprzedaży jest utrzymywana. Przejrzyj to w Edytuj ceny.",
+  "Password must contain between 5 and 20 characters": "Hasło musi zawierać od 5 do 20 znaków",
   "Branch access required": "Wymagany dostęp do oddziału Wym",
   "Branch and supported language required": "agany oddział i obsługiwany język"
 }

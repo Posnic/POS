@@ -108,6 +108,7 @@ async function list(req) {
   return {
     orderFeedback:
       feedback.status === true && feedback.data?.values?.restaurant_playful_feedback === true,
+    guestsRequired: c.branch?.restaurant_require_guests === true,
     tableRequired: c.branch?.captain_allow_unassigned !== true,
     roomVenues,
     cleaningEnabled: require('./table-cleaning').enabled(c.branch),

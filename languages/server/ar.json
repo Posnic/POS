@@ -960,6 +960,7 @@
   "Choose a saved customer for customer credit.": "اختر عميلًا محفوظًا للحصول على رصيد العميل.",
   "Exact numeric search must be on or off": "يجب تشغيل البحث الرقمي الدقيق أو إيقاف تشغيله",
   "Item not found or selling price is held. Review it in Edit prices.": "لم يتم العثور على السلعة أو تم الاحتفاظ بسعر البيع. قم بمراجعتها في تحرير الأسعار.",
+  "Password must contain between 5 and 20 characters": "يجب أن تحتوي كلمة المرور على ما بين 5 و 20 حرفًا",
   "Branch access required": "الوصول إلى الفرع مطلوب",
   "Branch and supported language required": "الفرع واللغة المدعومة"
 }

@@ -451,7 +451,7 @@
                 .map((r, i) => {
                     const lines = r.items.filter((l) => !state.pending || l.remaining > 0);
                     if (!lines.length) return '';
-                    return `<div class="kv2-round"><strong>${i ? PosnicPro.i18n.t('lang_additional_order', 'Additional order') : PosnicPro.i18n.t('lang_first_order', 'First order')} · KOT ${i + 1}</strong><small>${esc(time(r.ordered_at || r.fired_at))}</small></div>${lines.map((l) => `<div class="kv2-line"><b>${esc(l.quantity)}</b><div><strong>${esc(l.name)}</strong><small>${esc([l.note, l.allergy_note, l.course].filter(Boolean).join(' · '))}</small></div>${sale.payment_status === 'Paid' ? '' : button('＋ Add again', 'again', `data-line="${esc(l.id)}"`)}<span>${esc(lineAmount(sale, l))}</span>${button(l.held ? 'Send now' : l.remaining <= 0 ? '✓ Served' : l.quantity === 1 ? 'Mark served' : 'Serve 1 · ' + l.served + '/' + l.quantity, 'serve', `data-line="${esc(l.id)}" ${l.remaining <= 0 ? 'disabled' : ''}`)}${sale.payment_status === 'Paid' ? '' : button('✎', 'editLine', `data-line="${esc(l.id)}" title="Edit dish" data-t-title="lang_edit_dish" aria-label="Edit dish" data-t-aria-label="lang_edit_dish"`)}</div>`).join('')}`;
+                    return `<div class="kv2-round"><strong>${i ? PosnicPro.i18n.t('lang_additional_order', 'Additional order') : PosnicPro.i18n.t('lang_first_order', 'First order')} · KOT ${i + 1}</strong><small>${esc(time(r.ordered_at || r.fired_at))}</small></div>${lines.map((l) => `<div class="kv2-line"><b>${esc(l.quantity)}</b><div><strong>${esc(l.name)}</strong><small>${esc([l.note, l.allergy_note, l.course].filter(Boolean).join(' · '))}</small></div>${sale.payment_status === 'Paid' ? '' : button(PosnicPro.i18n.t('lang_increase_quantity', 'Increase quantity'), 'again', `data-line="${esc(l.id)}"`)}<span>${esc(lineAmount(sale, l))}</span>${button(l.held ? 'Send now' : l.remaining <= 0 ? '✓ Served' : l.quantity === 1 ? 'Mark served' : 'Serve 1 · ' + l.served + '/' + l.quantity, 'serve', `data-line="${esc(l.id)}" ${l.remaining <= 0 ? 'disabled' : ''}`)}${sale.payment_status === 'Paid' ? '' : button(PosnicPro.i18n.t('lang_edit_dish', 'Edit dish'), 'editLine', `data-line="${esc(l.id)}"`) + (l.remaining > 0 ? button(PosnicPro.i18n.t('lang_cancel_item_action', 'Cancel item'), 'cancelLine', `data-line="${esc(l.id)}"`) : '')}</div>`).join('')}`;
                 })
                 .join('') ||
             '<p class="kv2-empty"><lang class="lang_no_pending_portions">No pending portions.</lang></p>'
@@ -633,16 +633,35 @@
             Number(saved.unit_price ?? saved.item_base_price ?? saved.item_price ?? 0) * line.quantity,
         );
     }
+    async function reviewLatestOrder() {
+        const d = state.draft;
+        if (!d.saleId) { pendingSendReview(); return; }
+        const latest = await api('get', 'sales/' + d.saleId);
+        const accepted = new Set((latest.items || []).map((l) => l.line_id));
+        d.items = d.items.filter((l) => !accepted.has(l.line_id));
+        delete d.intent;
+        state.sale = latest;
+        persist();
+        render();
+        notify('Latest order loaded. Review the remaining dishes before sending.');
+    }
     function pendingSendReview(afterRecovery) {
         if (!state.draft?.intent) return false;
-        dialog(P.i18n.t('lang_review_this_round', 'Review this round'),
-            '<p>' + esc(P.i18n.t('lang_submission_resolve_first', 'Resolve the previous submission before sending changes.')) + '</p>',
+        const modal = dialog(P.i18n.t('lang_review_this_round', 'Review this round'),
+            '<p>' + esc(P.i18n.t('lang_submission_resolve_first', 'Resolve the previous submission before sending changes.')) + '</p>' +
+                (state.draft.saleId ? button('Review latest order', 'reviewPendingOrder') : ''),
             async (_, modal) => {
                 await send();
                 if (state.draft?.intent) return;
                 modal.close();
                 if (afterRecovery) afterRecovery();
             }, P.i18n.t('lang_retry_saved_send', 'Retry saved send'));
+        const review = modal.querySelector('[data-action=reviewPendingOrder]');
+        if (review) review.onclick = () => {
+            if (modal.querySelector('[type=submit]').disabled) return;
+            modal.close();
+            run(reviewLatestOrder);
+        };
         return true;
     }
     function customer() {
@@ -810,7 +829,7 @@
                 notify(error.message);
                 return;
             }
-            if (d.saleId && error.message === 'order_changed') {
+            if (d.saleId && ['order_changed', 'The seating group changed. Refresh this order.'].includes(error.message)) {
                 // This is an explicit refusal, not an unknown network outcome.
                 // Reconcile accepted line IDs before unlocking the remaining draft.
                 const latest = await api('get', 'sales/' + d.saleId);
@@ -900,22 +919,24 @@ default: return text; } };
     async function newOrder(takeaway = false, tableId = '', movingDraft = null) {
         if (movingDraft && (state.draft !== movingDraft || movingDraft.intent || movingDraft.saleId)) return;
         if (!movingDraft && resolveDraftBeforeSwitch(() => newOrder(takeaway, tableId))) return;
-        let tableRequired = true;
+        let tableRequired = true, guestsRequired = false;
         if (!takeaway) {
             const floor = await api('get', 'captain/v1/tables', { branchId: branch() });
             state.floor = floor.tables || [];
             tableRequired = floor.tableRequired !== false;
+            guestsRequired = floor.guestsRequired === true;
         }
         const free = state.floor.filter((t) => t.status === 'available');
         const modal = dialog(
             takeaway ? PosnicPro.i18n.t('lang_new_takeaway', 'New takeaway') : PosnicPro.i18n.t('lang_start_a_table_order', 'Start a table order'),
-            `<div class="kv2-seating-layout">${takeaway ? '' : `<div class="kv2-table-section"><h4>${icon('table')} <lang class="lang_choose_a_table">Choose a table</lang></h4><div class="kv2-choices kv2-seat-grid">${[...state.floor].sort((a, b) => Number(b.status === 'available') - Number(a.status === 'available')).map((t) => `<label class="kv2-seat ${t.status !== 'available' ? 'occupied' : ''}"><input type="radio" name="table" value="${esc(t.id)}" ${tableId === t.id && t.status === 'available' ? 'checked' : ''} ${t.status !== 'available' ? 'disabled' : ''}>${icon('table')}<strong>${esc(t.tableorder_value)}</strong><small>${esc(t.status)}</small></label>`).join('')}</div><label>Other table number<input name="custom" maxlength="30" placeholder="For example, Garden 2" data-t-placeholder="lang_for_example_garden_2"></label></div>`}<div class="kv2-guest-section"><h4>${icon('guests')} <lang class="lang_kot_workspace_covers">Number of guests</lang></h4>${takeaway ? '' : `<div class="kv2-choices kv2-guest-grid">${[1, 2, 3, 4, 5, 6, 8, 10].map((n) => `<button type="button" data-guests="${n}" aria-pressed="false">${icon('guests')}<strong>${n}</strong></button>`).join('')}</div>`}<label>${PosnicPro.i18n.t('lang_guests_optional', 'Guests (optional)')}<input name="guests" inputmode="numeric" type="number" value="" min="0" max="1000"></label></div></div>`,
+            `<div class="kv2-seating-layout">${takeaway ? '' : `<div class="kv2-table-section"><h4>${icon('table')} <lang class="lang_choose_a_table">Choose a table</lang></h4><div class="kv2-choices kv2-seat-grid">${[...state.floor].sort((a, b) => Number(b.status === 'available') - Number(a.status === 'available')).map((t) => `<label class="kv2-seat ${t.status !== 'available' ? 'occupied' : ''}"><input type="radio" name="table" value="${esc(t.id)}" ${tableId === t.id && t.status === 'available' ? 'checked' : ''} ${t.status !== 'available' ? 'disabled' : ''}>${icon('table')}<strong>${esc(t.tableorder_value)}</strong><small>${esc(t.status)}</small></label>`).join('')}</div><label>Other table number<input name="custom" maxlength="30" placeholder="For example, Garden 2" data-t-placeholder="lang_for_example_garden_2"></label></div>`}<div class="kv2-guest-section"><h4>${icon('guests')} <lang class="lang_kot_workspace_covers">Number of guests</lang></h4>${takeaway ? '' : `<div class="kv2-choices kv2-guest-grid">${[1, 2, 3, 4, 5, 6, 8, 10].map((n) => `<button type="button" data-guests="${n}" aria-pressed="false">${icon('guests')}<strong>${n}</strong></button>`).join('')}</div>`}<label>${guestsRequired ? PosnicPro.i18n.t('lang_kot_workspace_covers', 'Number of guests') : PosnicPro.i18n.t('lang_guests_optional', 'Guests (optional)')}<input name="guests" inputmode="numeric" type="number" value="" min="${guestsRequired ? 1 : 0}" max="1000" ${guestsRequired ? 'required' : ''}></label></div></div>`,
 
             async (form) => {
                 let t = free.find((t) => t.id === form.get('table'));
                 const
                     custom = String(form.get('custom') || '').trim();
                 if (!takeaway && tableRequired && !t && !custom) throw new Error('Choose a table or enter its number.');
+                if (guestsRequired && (!Number.isInteger(Number(form.get('guests'))) || Number(form.get('guests')) < 1)) throw new Error('Enter the number of guests.');
                 if (custom.toUpperCase() === 'TA') throw new Error('Use Takeaway for an order to go.');
                 if (!takeaway && (t || custom)) {
                     const floor = await api('get', 'captain/v1/tables', { branchId: branch() });
@@ -987,17 +1008,19 @@ default: return text; } };
             );
         return modal;
     }
-    function editLine(lineId) {
+    function editLine(lineId, cancelling = false) {
         const sale = state.sale,
             line = sale.restaurant_details.rounds.flatMap((r) => r.items).find((l) => l.id === lineId),
             original = originalLine(sale, line);
         if (!original) throw new Error('Refresh the order before editing.');
         dialog(
-            'Edit ' + line.name,
-            `<label>Quantity for this round<input name="qty" type="number" min="${line.served}" step="1" required value="${line.quantity}"></label><label>Kitchen note<textarea name="note" maxlength="500">${esc(line.note)}</textarea></label>${templates(['No onion', 'Less spicy', 'Less oil'], 'note')}<label>Reason for reducing or removing<textarea name="reason" maxlength="200"></textarea></label>`,
+            (cancelling ? PosnicPro.i18n.t('lang_cancel_item', 'Cancel item: ') : PosnicPro.i18n.t('lang_edit_title', 'Edit ')) + line.name,
+            `<label>Quantity for this round<input name="qty" type="number" min="${line.served}" step="1" required value="${cancelling ? line.served : line.quantity}"></label><label>Kitchen note<textarea name="note" maxlength="500">${esc(line.note)}</textarea></label>${templates(['No onion', 'Less spicy', 'Less oil'], 'note')}<label>Reason for reducing or removing<textarea name="reason" maxlength="200" ${cancelling ? 'required' : ''}></textarea></label>`,
             async (f) => {
                 const qty = Number(f.get('qty')),
                     note = String(f.get('note'));
+                if (!Number.isInteger(qty) || qty < line.served || qty < 0) throw new Error('Check the quantity.');
+                if (cancelling && qty >= line.quantity) throw new Error('Reduce the quantity to cancel an item.');
                 if (qty > line.quantity) {
                     addLine({
                         ...P.kot.editLine(original, qty - line.quantity),
@@ -1027,9 +1050,10 @@ default: return text; } };
                         return edit;
                     })
                     .filter((l) => l.quantity > 0);
-                if (!items.length) throw new Error('Use Cancel order to remove the entire order.');
+                // Cancelling the final dish closes the order through the audited cancellation path.
                 await api('post', 'sales/updateOrder', {
-                    ...P.kotWorkspace.editPayload(sale, items),
+                    ...P.kotWorkspace.editPayload(sale, items.length ? items : sale.items.map(i => P.kot.editLine(i))),
+                    ...(!items.length ? {status: 'cancelled'} : {}),
                     change_reason: f.get('reason'),
                 });
                 await refresh();
@@ -1252,16 +1276,7 @@ default: return text; } };
             else if (a === 'offmenu') await offmenu();
             else if (a === 'send') await send();
             else if (a === 'rebase') {
-                const d = state.draft;
-                if (!d.saleId) { pendingSendReview(); return; }
-                const latest = await api('get', 'sales/' + d.saleId);
-                const accepted = new Set((latest.items || []).map((l) => l.line_id));
-                d.items = d.items.filter((l) => !accepted.has(l.line_id));
-                delete d.intent;
-                state.sale = latest;
-                persist();
-                render();
-                notify('Latest order loaded. Review the remaining dishes before sending.');
+                await reviewLatestOrder();
             } else if (a === 'discard') {
                 if (state.draft.intent)
                     throw new Error(
@@ -1330,7 +1345,8 @@ default: return text; } };
                     await refresh();
                     });
                 }
-            } else if (a === 'editLine') editLine(b.dataset.line);
+            } else if (a === 'cancelLine') editLine(b.dataset.line, true);
+            else if (a === 'editLine') editLine(b.dataset.line);
             else if (a === 'customer') customer();
             else if (a === 'notes') await P.kotWorkspace.notes(s._id);
             else if (a === 'move' || a === 'merge') await P.kotWorkspace.move(s._id, a === 'merge');

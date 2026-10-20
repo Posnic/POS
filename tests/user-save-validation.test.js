@@ -27,7 +27,7 @@ function fixture() {
     request: params => requests.push(params)
   };
   const u = w.PosnicPro.users;
-  for (const [name,next] of [['showPermissionError','clickNormalForm'],['clickNormalForm','clickApiForm'],['userForm','insertLocalStorage'],['user','viewUser'],['fillPosForm','collectPosForm'],['collectPosForm','updatePinRowVisibility'],['applyRoleToForm','setManagerPin']]) u[name] = method(w,name,next);
+  for (const [name,next] of [['setPasswordEditing','roleLabel'],['showPermissionError','clickNormalForm'],['clickNormalForm','clickApiForm'],['userForm','insertLocalStorage'],['user','viewUser'],['fillPosForm','collectPosForm'],['collectPosForm','updatePinRowVisibility'],['applyRoleToForm','setManagerPin']]) u[name] = method(w,name,next);
   u.POS_ACTION_KEYS = ['discount_apply', 'refund', 'register_open']; u.updatePinRowVisibility = () => {};
   w.eval(read('frontend/static/script/js/core/record-workspace.js')); u.rolesCache = [];
   w.PosnicPro.recordWorkspace.init();
@@ -79,5 +79,28 @@ test('missing Select2 branch selection has a visible error and never sends the r
   $('#clicksubmit')[0].click(); await tick(); 
   assert.equal(requests.length,0); assert.match($('#user_save_errors').text(),/Choose a shop/);
   assert.equal($('#user_form_upload-section-1')[0].hidden,false);
+  dom.window.close();
+});
+
+ test('editing keeps the password unless an explicit reset is selected and validated', async () => {
+  const {dom,$,u,requests} = fixture();
+  $('#users_id').val('existing-user');
+  $('#sales_read').prop('checked',true);
+  u.setPasswordEditing(false);
+  assert.equal($('#users_password').val(),'');
+  assert.equal($('#users_password').prop('disabled'),true);
+  assert.equal($('#check_password').val(),'no');
+  u.setPasswordEditing(true);
+  $('#clicksubmit')[0].click(); await tick();
+  assert.equal(requests.length,0);
+  $('#users_password,#users_retype_password').val('New@12345');
+  $('#clicksubmit')[0].click(); await tick();
+  assert.equal(requests.length,1);
+  const payload=JSON.parse(requests[0].data);
+  assert.equal(payload.password,'New@12345');
+  assert.equal(payload.check_password,'yes');
+  u.setPasswordEditing(false);
+  assert.equal($('#users_retype_password').val(),'');
+  assert.equal($('#check_password').val(),'no');
   dom.window.close();
 });

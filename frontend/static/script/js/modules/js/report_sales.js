@@ -159,7 +159,7 @@ PosnicPro.salereport = {
                                     tax_value = val.tax + '% (' + (updatePrice * (val.tax / 100)).toFixed(2) + ')';
                                 }
 
-                                var lineitem = '<tr><td><tbody><tr style="border: 1px solid wheat;"><td class="export-item-name">' + val.item_name + '</td><td class="export-item-barcode-id text-center">' + val.barcode_id + '</td><td class="export-item-price text-right">' + currency + '&nbsp;<span class="number">' + price + '</span></td><td class="export-item-qty text-right">' + val.item_quantity + '</td><td class="export-item-discount-amount text-right">' + discountDisplay + '</td><td class="export-item-tax text-right">' + tax_value + '</td><td class="export-item-total text-right">' + currency + '&nbsp;<span class="number">' + val.total_amount + '</span></td></tr></tbody></td></tr>';
+                                var lineitem = '<tr><td><tbody><tr style="border: 1px solid wheat;"><td class="export-item-name">' + val.item_name + '</td><td class="export-item-barcode-id text-center">' + $('<span>').text(val.item_sku == null ? '' : val.item_sku).html() + '</td><td class="export-item-price text-right">' + currency + '&nbsp;<span class="number">' + price + '</span></td><td class="export-item-qty text-right">' + val.item_quantity + '</td><td class="export-item-discount-amount text-right">' + discountDisplay + '</td><td class="export-item-tax text-right">' + tax_value + '</td><td class="export-item-total text-right">' + currency + '&nbsp;<span class="number">' + val.total_amount + '</span></td></tr></tbody></td></tr>';
                                 $("#" + row._id + 'reportaction').children('tbody').append(lineitem);
                             }
                             $('span.number').number(true, 2);
@@ -177,7 +177,7 @@ PosnicPro.salereport = {
                             
                             $(data[key].items).each(function (key, value) {
                                 var name = value.item_name;
-                                var sku = value.barcode_id;
+                                var sku = value.item_sku == null ? '' : value.item_sku;
                                 var quantity = value.item_quantity;
                                 var discount = (value.item_discount > 0) ? value.item_discount : value.item_discount_percentage;
                                 var discountSign = (value.item_discount > 0) ? currency : '%';
