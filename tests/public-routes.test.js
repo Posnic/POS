@@ -302,7 +302,10 @@ test('the routes that leaked are specifically closed', () => {
     const matching = calls.filter((c) => quoted.test(c));
     assert.ok(matching.length > 0, `${route} has vanished from the routes`);
     for (const call of matching) {
-      assert.match(call, /protectOrKioskKey|(?<!optional)protect\b/,
+      const guard = route === '/getCustomerPrint'
+        ? /require\(['"]\.\.\/middleware\/customer-receipt-link['"]\)/
+        : /protectOrKioskKey|(?<!optional)protect\b/;
+      assert.match(call, guard,
         `${route} is unguarded again - it exposes ${what}`);
     }
   }

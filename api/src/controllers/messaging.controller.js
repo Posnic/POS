@@ -96,7 +96,7 @@ class MessagingController extends BaseController {
       if (!row) return this.error(res, 'Report delivery not found.', 404);
       const runner = require('../services/ask-posnic-runner.service');
       const report = await runner.buildReport(row, new Date(), await BaseModel.getDb());
-      report.answer = 'POSNIC TEST — report delivery check.\n' + report.answer;
+      report.answer = 'POSNIC TEST - report delivery check.\n' + report.answer;
       const result = await runner.deliver({ ...row, test: true }, report);
       return this.success(
         res,

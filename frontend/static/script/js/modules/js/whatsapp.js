@@ -71,7 +71,7 @@ PosnicPro.whatsapp = {
         }, () => {
             this.showConnectButton();
             this.checkStatus(true);
-            PosnicPro.alert('error', 'Could not confirm the connection. Refresh the status before trying again.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_confirm_the_connection_refresh_t', 'Could not confirm the connection. Refresh the status before trying again.'));
         });
     },
 
@@ -200,7 +200,7 @@ PosnicPro.whatsapp = {
                 this.lastQRCode = response.data.qr_code;
                 $('#whatsapp_qr_code').html(`
                     <img loading="lazy" decoding="async" src="${response.data.qr_code}" alt="WhatsApp QR Code" style="max-width:300px; border:1px solid #ddd; padding:10px; border-radius:8px;">
-                    <p class="mt-3 text-muted"><lang class="lang_scan_this_qr_code_with_whatsapp_on_your_ph">Scan this QR code with WhatsApp on your phone</lang></p><p class="text-muted">Checks for a fresh QR code every 3 seconds while waiting for your phone.</p>
+                    <p class="mt-3 text-muted"><lang class="lang_scan_this_qr_code_with_whatsapp_on_your_ph">Scan this QR code with WhatsApp on your phone</lang></p><p class="text-muted"><lang class="lang_checks_for_a_fresh_qr_code_every_3_seconds">Checks for a fresh QR code every 3 seconds while waiting for your phone.</lang></p>
                 `);
                 
                 }

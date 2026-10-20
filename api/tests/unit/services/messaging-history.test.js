@@ -66,12 +66,10 @@ describe('WhatsApp attempt history', () => {
     const jobs = jest
       .fn()
       .mockReturnValue({ toArray: async () => [{ _id: 'job-a', status: 'sent' }] });
-    BaseModel.getDb = jest
-      .fn()
-      .mockResolvedValue({
-        collection: (name) =>
-          name === 'messaging_events' ? { find: () => eventCursor } : { find: jobs },
-      });
+    BaseModel.getDb = jest.fn().mockResolvedValue({
+      collection: (name) =>
+        name === 'messaging_events' ? { find: () => eventCursor } : { find: jobs },
+    });
     const result = await new MessagingService().history('branch-a');
     expect(result[0].status).toBe('accepted');
     expect(jobs).toHaveBeenCalledWith({

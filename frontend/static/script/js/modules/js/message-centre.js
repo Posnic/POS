@@ -6,16 +6,16 @@ PosnicPro.messageCentre = {
     $('#msg-sub-providers').closest('.col-lg-9').removeClass('col-lg-9').addClass('col-12');
     $('#v-pills-messagingmodule').addClass('message-module');
     var body = $('#messaging_body'), cards = body.children('.card'), sms = cards.eq(0), wa = cards.eq(1);
-    body.prepend('<section id="message_centre"><p class="text-muted">Receipts, reminders and customer messages.</p>' +
-      '<div class="message-navigation mb-3" role="tablist" aria-label="Messaging sections">' +
+    body.prepend('<section id="message_centre"><p class="text-muted"><lang class="lang_receipts_reminders_and_customer_messages">Receipts, reminders and customer messages.</lang></p>' +
+      '<div class="message-navigation mb-3" role="tablist" aria-label="Messaging sections" data-t-aria-label="lang_messaging_sections">' +
       [['connection','settings','Settings'],['campaigns','send','Customer messages'],['automatic','repeat','Automatic messages'],['reports','bar-chart-2','Reports'],['history','clock','Message history']].map(function (t) {
         return '<button type="button" class="message-nav-item" role="tab" data-message-tab="' + t[0] + '" aria-pressed="false" aria-selected="false" aria-controls="message_' + t[0] + '" id="message_tab_' + t[0] + '"><i class="feather icon-' + t[1] + ' mr-2" aria-hidden="true"></i>' + t[2] + '</button>';
       }).join('') + '</div><div id="message_connection"></div><div id="message_automatic" hidden></div><div id="message_campaigns" hidden></div><div id="message_history" hidden></div><div id="message_reports" hidden></div></section>');
-    $('#message_connection').html('<h5>Choose how your shop sends messages</h5><p class="text-muted">Set up each service once, then choose when to use it.</p><div class="message-channel-nav" role="group" aria-label="Message services"><button type="button" data-message-channel="whatsapp" aria-pressed="true">WhatsApp</button><button type="button" data-message-channel="sms" aria-pressed="false">SMS</button><button type="button" data-message-channel="email" aria-pressed="false">Email</button></div><div id="message_whatsapp"></div><div id="message_sms" hidden></div><div id="message_email" hidden></div>');
+    $('#message_connection').html('<h5><lang class="lang_choose_how_your_shop_sends_messages">Choose how your shop sends messages</lang></h5><p class="text-muted"><lang class="lang_set_up_each_service_once_then_choose_when">Set up each service once, then choose when to use it.</lang></p><div class="message-channel-nav" role="group" aria-label="Message services" data-t-aria-label="lang_message_services"><button type="button" data-message-channel="whatsapp" aria-pressed="true"><lang class="lang_whatsapp">WhatsApp</lang></button><button type="button" data-message-channel="sms" aria-pressed="false"><lang class="lang_sms">SMS</lang></button><button type="button" data-message-channel="email" aria-pressed="false"><lang class="lang_email_title">Email</lang></button></div><div id="message_whatsapp"></div><div id="message_sms" hidden></div><div id="message_email" hidden></div>');
     wa.appendTo('#message_whatsapp'); sms.appendTo('#message_sms');
     $('#email_smtp_host').closest('.card').appendTo('#message_email');
-    $('#message_email').append('<button type="button" class="btn btn-primary" id="message_email_save">Save email settings</button><p id="message_email_result" role="status"></p>');
-    $('#message_reports').html('<div class="message-section-heading"><div><h5>Reports delivered to you</h5><p class="text-muted">Receive sales, profit or stock summaries by email or WhatsApp.</p></div><button type="button" class="btn btn-primary" id="message_report_add">Add report</button></div><div id="message_report_editor" hidden></div><div id="message_report_list"></div><details class="mt-4"><summary>Previous email report settings</summary><p class="text-muted">Your previous settings are kept here. Check these before enabling another report to avoid duplicate emails.</p><div id="message_previous_reports"></div></details>');
+    $('#message_email').append('<button type="button" class="btn btn-primary" id="message_email_save"><lang class="lang_save_email_settings">Save email settings</lang></button><p id="message_email_result" role="status"></p>');
+    $('#message_reports').html('<div class="message-section-heading"><div><h5><lang class="lang_reports_delivered_to_you">Reports delivered to you</lang></h5><p class="text-muted"><lang class="lang_receive_sales_profit_or_stock_summaries_by">Receive sales, profit or stock summaries by email or WhatsApp.</lang></p></div><button type="button" class="btn btn-primary" id="message_report_add"><lang class="lang_add_report">Add report</lang></button></div><div id="message_report_editor" hidden></div><div id="message_report_list"></div><details class="mt-4"><summary>Previous email report settings</summary><p class="text-muted">Your previous settings are kept here. Check these before enabling another report to avoid duplicate emails.</p><div id="message_previous_reports"></div></details>');
     $('#msg-sub-email').children().appendTo('#message_previous_reports');
     $('#message_centre > div[id]').each(function () { $(this).attr({role:'tabpanel', 'aria-labelledby':'message_tab_' + this.id.replace('message_', '')}); });
     $('#messaging_wa_save').parent().addClass('message-connection-actions').before('<p id="messaging_wa_readiness" class="message-readiness" role="status"></p>').after('<p id="messaging_test_result" class="message-test-result" role="status"></p>');
@@ -25,7 +25,7 @@ PosnicPro.messageCentre = {
       '<button type="button" class="btn btn-outline-primary" data-wa-mode="cloud" aria-pressed="false"><i class="feather icon-cloud mr-2" aria-hidden="true"></i>WhatsApp API</button>' +
       '<button type="button" class="btn btn-outline-primary" data-wa-mode="web" aria-pressed="false"><i class="feather icon-smartphone mr-2" aria-hidden="true"></i>Scan with your phone</button></div>');
     $('#messaging_wa_mode').parent().removeClass('col-md-6').addClass('col-12');
-    $('#messaging_wa_web > p').text('Keep the linked WhatsApp account available to send messages.');
+    $('#messaging_wa_web > p').text(PosnicPro.i18n.t('lang_keep_the_linked_whatsapp_account_available', 'Keep the linked WhatsApp account available to send messages.'));
     $('#messaging_wa_host').closest('.col-md-6').hide();
     $('#messaging_wa_device').closest('.col-md-6').hide();
     $('#whatsapp-connection > .card').appendTo('#messaging_wa_web');
@@ -37,19 +37,19 @@ PosnicPro.messageCentre = {
     // Keep existing campaign IDs/handlers and data. Marketing remains a shortcut.
     $('#mkt-sub-campaigns > .card').appendTo('#message_campaigns');
     $('#mkt-sub-campaigns').append('<button type="button" class="btn btn-primary" data-open-message-campaigns><i class="feather icon-send mr-2" aria-hidden="true"></i>Open campaigns</button>');
-    $('#message_automatic').html('<div class="card"><div class="card-body"><h5>Messages after a sale</h5><div id="message_receipt_option"></div>' +
-      '<hr><div class="d-flex flex-wrap align-items-center justify-content-between"><div><h6>Customer credit reminders</h6><p class="text-muted">Manage balances, reminder text and sending.</p></div><button type="button" class="btn btn-outline-primary" data-message-config="credit">Set up reminders</button></div>' +
-      '<hr><div class="d-flex flex-wrap align-items-center justify-content-between"><div><h6>Cashback and reward codes</h6><p class="text-muted">Use your existing cashback rules and message settings.</p></div><button type="button" class="btn btn-outline-primary" data-message-config="cashback">Set up cashback</button></div>' +
+    $('#message_automatic').html('<div class="card"><div class="card-body"><h5><lang class="lang_messages_after_a_sale">Messages after a sale</lang></h5><div id="message_receipt_option"></div>' +
+      '<hr><div class="d-flex flex-wrap align-items-center justify-content-between"><div><h6><lang class="lang_customer_credit_reminders">Customer credit reminders</lang></h6><p class="text-muted"><lang class="lang_manage_balances_reminder_text_and_sending">Manage balances, reminder text and sending.</lang></p></div><button type="button" class="btn btn-outline-primary" data-message-config="credit"><lang class="lang_set_up_reminders">Set up reminders</lang></button></div>' +
+      '<hr><div class="d-flex flex-wrap align-items-center justify-content-between"><div><h6><lang class="lang_cashback_and_reward_codes">Cashback and reward codes</lang></h6><p class="text-muted"><lang class="lang_use_your_existing_cashback_rules_and_messa">Use your existing cashback rules and message settings.</lang></p></div><button type="button" class="btn btn-outline-primary" data-message-config="cashback"><lang class="lang_set_up_cashback">Set up cashback</lang></button></div>' +
       '<hr><p class="text-muted">Send greetings and offers from Customer messages. Automatic birthday and annual greetings are not available yet.</p></div></div>');
     $('#whatsapp_receipt').closest('.custom-control').appendTo('#message_receipt_option');
-    $('#message_receipt_option label').text('Offer WhatsApp receipt after a sale');
+    $('#message_receipt_option label').text(PosnicPro.i18n.t('lang_offer_whatsapp_receipt_after_a_sale', 'Offer WhatsApp receipt after a sale'));
     $('#message_automatic').append('<details id="message_templates"><summary>Receipt and message wording</summary></details>');
     $('#whatsapp-template > .card').appendTo('#message_templates');
     var connection = $('#whatsapp_status_badge').closest('.card');
     connection.addClass('message-phone-status');
     connection.children('.card-header').hide();
     var statusBody = connection.children('.card-body');
-    statusBody.prepend('<div class="message-status-row"><div><h6>Linked phone</h6><div id="message_phone_badge"></div></div><div class="message-status-actions"></div></div>');
+    statusBody.prepend('<div class="message-status-row"><div><h6><lang class="lang_linked_phone">Linked phone</lang></h6><div id="message_phone_badge"></div></div><div class="message-status-actions"></div></div>');
     $('#whatsapp_status_badge').appendTo('#message_phone_badge');
     $('#whatsapp_refresh_status, #whatsapp_connect_btn, #whatsapp_disconnect_btn').appendTo('.message-status-actions');
     statusBody.children('.row').first().hide();
@@ -90,16 +90,16 @@ PosnicPro.messageCentre = {
     PosnicPro.get('messaging/history', function (res) {
       if (!res || res.type !== 'success') { PosnicPro.messageCentre.historyError(); return; }
       var esc = PosnicPro.messaging.esc, states = {queued:'Waiting to send', sending:'Sending', needs_review:'Check delivery', accepted:'Accepted by sender', failed:'Not sent'};
-      $('#message_history').html('<div class="card"><div class="card-body"><h5>Recent messages</h5><p class="text-muted">Your latest 100 SMS and WhatsApp attempts. Accepted means the sending service received the message; delivery is not yet confirmed.</p>' +
+      $('#message_history').html('<div class="card"><div class="card-body"><h5><lang class="lang_recent_messages">Recent messages</lang></h5><p class="text-muted">Your latest 100 SMS and WhatsApp attempts. Accepted means the sending service received the message; delivery is not yet confirmed.</p>' +
         ((res.data || []).map(function (r) {
           return '<div class="message-history-row"><span><strong>' + esc(r.purpose) + '</strong><br><small class="text-muted">•••• ' + esc(r.recipient_last4) + ' · ' + esc(new Date(r.created_date).toLocaleString()) + '</small></span><span>' + esc(states[r.status] || r.status) + '</span></div>';
-        }).join('') || '<p>No messages yet.</p>') + '</div></div>');
+        }).join('') || '<p><lang class="lang_no_messages_yet">No messages yet.</lang></p>') + '</div></div>');
     }, function (xhr) { PosnicPro.messageCentre.historyError(xhr && xhr.status); });
   },
 
   historyError: function (status) {
     var text = status === 404 ? 'Message history is unavailable on this version. Refresh the page to load the latest update, then try again.' : 'We could not load your messages. Check your connection and try again.';
-    $('#message_history').html('<div class="card card-body"><p role="alert">' + text + '</p><div><button type="button" class="btn btn-outline-primary" data-message-history-retry>Retry</button></div></div>');
+    $('#message_history').html('<div class="card card-body"><p role="alert">' + text + '</p><div><button type="button" class="btn btn-outline-primary" data-message-history-retry><lang class="lang_retry">Retry</lang></button></div></div>');
   }
 };
 $(document).on('click', '[data-message-tab]', function () { PosnicPro.messageCentre.show($(this).data('message-tab')); });
@@ -109,7 +109,7 @@ $(document).on('change', '[data-message-rule]', function () {
   var data = Object.assign({}, input.data('settings') || {});
   if (kind === 'cashback' && enabled && !data.enabled) {
     input.prop('checked', false);
-    PosnicPro.alert('error', 'Set up and enable cashback rules first.');
+    PosnicPro.alert('error', PosnicPro.i18n.t('lang_set_up_and_enable_cashback_rules_first', 'Set up and enable cashback rules first.'));
     return;
   }
   if (kind === 'credit') { data.reminder_enabled = enabled; if (enabled) data.reminder_channel = 'whatsapp'; }
@@ -151,8 +151,8 @@ $(document).on('click', '#message_email_save', function () {
   data.email_smtp_secure = $('#email_smtp_secure').is(':checked');
   button.prop('disabled', true);
   PosnicPro.put({url:'setting/updateCommonSettings',data:JSON.stringify(data)}, function (res) {
-    button.prop('disabled', false); $('#message_email_result').text(res && res.type === 'success' ? 'Email settings saved.' : 'Could not save email settings.');
-  }, function () { button.prop('disabled', false); $('#message_email_result').text('Could not save. Please try again.'); });
+    button.prop('disabled', false); $('#message_email_result').text(res && res.type === 'success' ? PosnicPro.i18n.t('lang_email_settings_saved', 'Email settings saved.') : PosnicPro.i18n.t('lang_could_not_save_email_settings', 'Could not save email settings.'));
+  }, function () { button.prop('disabled', false); $('#message_email_result').text(PosnicPro.i18n.t('lang_desktop_save_failed', 'Could not save. Please try again.')); });
 });
 PosnicPro.messageCentre.reports = function () {
   $('#message_report_list').html('<p role="status">Loading reports…</p>');
@@ -161,13 +161,13 @@ PosnicPro.messageCentre.reports = function () {
     PosnicPro.messageCentre.reportRows = res.data || [];
     var esc = PosnicPro.messaging.esc, labels = {sales:'Sales summary',profit:'Profit summary',low_stock:'Low stock'}, frequency = {daily:'Every day',weekly:'Every week',monthly:'Every month'}, states = {sent:'Sent',failed:'Could not send',queued:'Waiting to send',needs_review:'Check delivery before restarting'};
     $('#message_report_list').html(PosnicPro.messageCentre.reportRows.map(function (row, i) {
-      return '<div class="message-report-row"><div><strong>' + esc(labels[row.report]) + '</strong><p>' + esc(frequency[row.frequency]) + ' at ' + esc(String(row.hour).padStart(2,'0')) + ':00 (' + esc(row.timezone) + ') · ' + esc(row.channel === 'email' ? 'Email' : 'WhatsApp') + ' · ' + esc(row.destination) + '</p><small class="text-muted">' + (row.enabled ? 'Next: ' + esc(new Date(row.next_run_at).toLocaleString()) : 'Delivery is off') + (row.last_status ? ' · Last result: ' + esc(states[row.last_status] || 'Check delivery') : '') + '</small></div><div class="message-status-actions"><button type="button" class="btn btn-outline-secondary" data-report-test="' + esc(row._id) + '">Send test</button><button type="button" class="btn btn-outline-primary" data-report-edit="' + i + '">Edit</button></div></div>';
-    }).join('') || '<div class="message-empty"><h6>No reports scheduled</h6><p>Add a report, choose who receives it and turn delivery on when you are ready.</p></div>');
+      return '<div class="message-report-row"><div><strong>' + esc(labels[row.report]) + '</strong><p>' + esc(frequency[row.frequency]) + ' at ' + esc(String(row.hour).padStart(2,'0')) + ':00 (' + esc(row.timezone) + ') · ' + esc(row.channel === 'email' ? PosnicPro.i18n.t('lang_email_title', 'Email') : PosnicPro.i18n.t('lang_whatsapp', 'WhatsApp')) + ' · ' + esc(row.destination) + '</p><small class="text-muted">' + (row.enabled ? 'Next: ' + esc(new Date(row.next_run_at).toLocaleString()) : 'Delivery is off') + (row.last_status ? ' · Last result: ' + esc(states[row.last_status] || 'Check delivery') : '') + '</small></div><div class="message-status-actions"><button type="button" class="btn btn-outline-secondary" data-report-test="' + esc(row._id) + '">Send test</button><button type="button" class="btn btn-outline-primary" data-report-edit="' + i + '">Edit</button></div></div>';
+    }).join('') || '<div class="message-empty"><h6><lang class="lang_no_reports_scheduled">No reports scheduled</lang></h6><p><lang class="lang_add_a_report_choose_who_receives_it_and_tu">Add a report, choose who receives it and turn delivery on when you are ready.</lang></p></div>');
   });
 };
 PosnicPro.messageCentre.editReport = function (row) {
   row = row || {}; var esc = PosnicPro.messaging.esc;
-  $('#message_report_editor').prop('hidden',false).html('<form id="message_report_form" class="card card-body"><h5>' + (row._id ? 'Edit report' : 'Add a report') + '</h5><div class="message-report-fields"><label>Report<select name="report" class="form-control"><option value="sales">Sales summary</option><option value="profit">Profit summary</option><option value="low_stock">Low stock</option></select></label><label>How often<select name="frequency" class="form-control"><option value="daily">Daily / day-end</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label><label>Send by<select name="channel" class="form-control"><option value="email">Email</option><option value="whatsapp">WhatsApp</option></select></label><label>Send to<input name="destination" class="form-control" required maxlength="254" placeholder="Email address or +country code and phone number"></label><label>Send at<select name="hour" class="form-control">' + Array.from({length:24},function(_,h){return '<option value="'+h+'">'+String(h).padStart(2,'0')+':00</option>';}).join('') + '</select></label><label>Time zone<input name="timezone" class="form-control" required></label><label id="message_report_weekday">Day of week<select name="weekday" class="form-control">' + ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map(function(d,i){return '<option value="'+i+'">'+d+'</option>';}).join('') + '</select></label></div><p class="text-muted">Daily sales and profit cover the previous completed day; weekly covers the previous seven days. Monthly reports arrive on the 1st and cover the previous month. Low stock shows current stock. This is not a register-closing report.</p><label class="message-report-enable"><input name="enabled" type="checkbox"> Send this report automatically</label><p class="small text-muted">WhatsApp must be enabled and connected. Email uses your saved email settings.</p><p id="message_report_result" role="status"></p><div class="message-status-actions"><button type="submit" class="btn btn-primary">Save report</button><button type="button" class="btn btn-outline-secondary" id="message_report_cancel">Cancel</button></div></form>');
+  $('#message_report_editor').prop('hidden',false).html('<form id="message_report_form" class="card card-body"><h5>' + (row._id ? PosnicPro.i18n.t('lang_edit_report', 'Edit report') : PosnicPro.i18n.t('lang_add_a_report', 'Add a report')) + '</h5><div class="message-report-fields"><label>Report<select name="report" class="form-control"><option value="sales" data-t="lang_sales_summary_2">Sales summary</option><option value="profit" data-t="lang_profit_summary">Profit summary</option><option value="low_stock" data-t="lang_low_stock">Low stock</option></select></label><label>How often<select name="frequency" class="form-control"><option value="daily" data-t="lang_daily_day_end">Daily / day-end</option><option value="weekly" data-t="lang_weekly">Weekly</option><option value="monthly" data-t="lang_monthly">Monthly</option></select></label><label>Send by<select name="channel" class="form-control"><option value="email" data-t="lang_email_title">Email</option><option value="whatsapp" data-t="lang_whatsapp">WhatsApp</option></select></label><label>Send to<input name="destination" class="form-control" required maxlength="254" placeholder="Email address or +country code and phone number"></label><label>Send at<select name="hour" class="form-control">' + Array.from({length:24},function(_,h){return '<option value="'+h+'">'+String(h).padStart(2,'0')+':00</option>';}).join('') + '</select></label><label>Time zone<input name="timezone" class="form-control" required></label><label id="message_report_weekday">Day of week<select name="weekday" class="form-control">' + ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map(function(d,i){return '<option value="'+i+'">'+d+'</option>';}).join('') + '</select></label></div><p class="text-muted">Daily sales and profit cover the previous completed day; weekly covers the previous seven days. Monthly reports arrive on the 1st and cover the previous month. Low stock shows current stock. This is not a register-closing report.</p><label class="message-report-enable"><input name="enabled" type="checkbox"> Send this report automatically</label><p class="small text-muted"><lang class="lang_whatsapp_must_be_enabled_and_connected_ema">WhatsApp must be enabled and connected. Email uses your saved email settings.</lang></p><p id="message_report_result" role="status"></p><div class="message-status-actions"><button type="submit" class="btn btn-primary"><lang class="lang_save_report">Save report</lang></button><button type="button" class="btn btn-outline-secondary" id="message_report_cancel"><lang class="lang_cancel_title">Cancel</lang></button></div></form>');
   var form = $('#message_report_form'); form.data('id',row._id || '');
   ['report','frequency','channel','destination','hour','timezone','weekday'].forEach(function(key){ var defaults={report:'sales',frequency:'daily',channel:'email',destination:'',hour:8,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',weekday:1}; form.find('[name="'+key+'"]').val(row[key] === undefined ? defaults[key] : row[key]); });
   form.find('[name="enabled"]').prop('checked',row.enabled === true);
@@ -185,7 +185,7 @@ $(document).on('submit','#message_report_form',function(event){
     form.find('[type="submit"]').prop('disabled',false);
     if(res && res.type === 'success'){ $('#message_report_editor').prop('hidden',true); PosnicPro.messageCentre.reports(); }
     else $('#message_report_result').text(res && res.message || 'Could not save report.');
-  },function(){form.find('[type="submit"]').prop('disabled',false);$('#message_report_result').text('Could not save report. Please try again.');});
+  },function(){form.find('[type="submit"]').prop('disabled',false);$('#message_report_result').text(PosnicPro.i18n.t('lang_could_not_save_report_please_try_again', 'Could not save report. Please try again.'));});
 });
 
 $(document).on('click', '[data-message-history-retry]', function () { PosnicPro.messageCentre.history(); });
@@ -193,7 +193,7 @@ $(document).on('click', '[data-message-history-retry]', function () { PosnicPro.
 $(document).on('click','[data-report-test]',function(){
   var button=$(this); if(button.prop('disabled')) return;
   button.prop('disabled',true).text('Sending test…');
-  function done(message,type){ button.prop('disabled',false).text('Send test'); PosnicPro.alert(type,message); }
+  function done(message,type){ button.prop('disabled',false).text(PosnicPro.i18n.t('lang_send_test', 'Send test')); PosnicPro.alert(type,message); }
   PosnicPro.post({url:'messaging/reports/'+encodeURIComponent(button.attr('data-report-test'))+'/test',data:JSON.stringify({})},function(res){
     done(res.message || 'Check the recipient for the report.',res.type || 'warning');
   },function(){done('Could not confirm sending. Check the recipient and message history before retrying.','warning');});

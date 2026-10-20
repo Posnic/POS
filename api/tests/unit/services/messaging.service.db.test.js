@@ -276,13 +276,11 @@ describe('MessagingService WhatsApp (mode + cloud)', () => {
     'cloud mode cannot claim success without a message ID: %j',
     async (data) => {
       const svc = new MessagingService();
-      jest
-        .spyOn(svc, '_raw')
-        .mockResolvedValue({
-          whatsapp_enabled: true,
-          whatsapp_mode: 'cloud',
-          whatsapp_cloud: { access_token: 'synthetic', phone_number_id: '12345' },
-        });
+      jest.spyOn(svc, '_raw').mockResolvedValue({
+        whatsapp_enabled: true,
+        whatsapp_mode: 'cloud',
+        whatsapp_cloud: { access_token: 'synthetic', phone_number_id: '12345' },
+      });
       axios.mockResolvedValue({ status: 200, data });
       const result = await svc.sendWhatsapp(BRANCH, '+15551234567', 'Synthetic test');
       expect(result.ok).toBe(false);
@@ -292,18 +290,16 @@ describe('MessagingService WhatsApp (mode + cloud)', () => {
 
   test('approved template uses the configured language and body parameter', async () => {
     const svc = new MessagingService();
-    jest
-      .spyOn(svc, '_raw')
-      .mockResolvedValue({
-        whatsapp_enabled: true,
-        whatsapp_mode: 'cloud',
-        whatsapp_cloud: {
-          access_token: 'synthetic',
-          phone_number_id: '12345',
-          template_name: 'receipt_update',
-          template_lang: 'en',
-        },
-      });
+    jest.spyOn(svc, '_raw').mockResolvedValue({
+      whatsapp_enabled: true,
+      whatsapp_mode: 'cloud',
+      whatsapp_cloud: {
+        access_token: 'synthetic',
+        phone_number_id: '12345',
+        template_name: 'receipt_update',
+        template_lang: 'en',
+      },
+    });
     axios.mockResolvedValue({ status: 200, data: { messages: [{ id: 'wamid.test' }] } });
     expect((await svc.sendWhatsapp(BRANCH, '+15551234567', 'Synthetic receipt')).ok).toBe(true);
     expect(axios.mock.calls[0][0].data).toMatchObject({
@@ -379,13 +375,11 @@ describe('WhatsApp provider switching', () => {
   });
   test('all WhatsApp workflows route through the branch-selected provider', async () => {
     const svc = new MessagingService();
-    jest
-      .spyOn(svc, '_raw')
-      .mockResolvedValue({
-        whatsapp_enabled: true,
-        whatsapp_mode: 'cloud',
-        whatsapp_cloud: { provider: 'brevo', api_key: 'private', sender_number: '919008427482' },
-      });
+    jest.spyOn(svc, '_raw').mockResolvedValue({
+      whatsapp_enabled: true,
+      whatsapp_mode: 'cloud',
+      whatsapp_cloud: { provider: 'brevo', api_key: 'private', sender_number: '919008427482' },
+    });
     axios.mockReset();
     axios.mockResolvedValue({ status: 201, data: { messageId: 'brevo-ref' } });
     expect(

@@ -285,7 +285,7 @@ PosnicPro.sales = {
     showWhatsapp: function (id) {
         PosnicPro.get('sales/' + id, function (response) {
             if (!response || response.type !== 'success' || !response.data) {
-                PosnicPro.alert('error', 'Could not load this receipt. No message was sent.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_this_receipt_no_message_was', 'Could not load this receipt. No message was sent.'));
                 return;
             }
             var sale = response.data;
@@ -344,7 +344,7 @@ PosnicPro.sales = {
         $('#sms_form').data('message-channel', 'sms');
         $('#whatsapp_template_group').remove();
         $('#whatsapp_receipt_message_group').remove();
-        $('#smsModal .modal-title .lang_autosmsaftersales_title').text('SMS Receipt');
+        $('#smsModal .modal-title .lang_autosmsaftersales_title').text(PosnicPro.i18n.t('lang_autosmsaftersales_title', 'SMS Receipt'));
         $('#customer_sms_message').val('');
         $('#smsModal').modal('show');
         $('#customer_sms_id').val(id);
@@ -359,7 +359,7 @@ PosnicPro.sales = {
         // Store sale ID for template variable replacement
         PosnicPro.sales.currentSaleId = id;
         if (!$('#customer_sms_message').length) {
-            $('#sms_form .modal-footer').before('<div class="form-group px-3" id="whatsapp_receipt_message_group"><label for="customer_sms_message">Receipt message</label><textarea class="form-control" id="customer_sms_message" rows="7"></textarea><p class="small text-muted mt-2">Your linked phone sends the bill as a PDF attachment. API senders include a link to view and download the bill.</p></div>');
+            $('#sms_form .modal-footer').before('<div class="form-group px-3" id="whatsapp_receipt_message_group"><label for="customer_sms_message"><lang class="lang_receipt_message">Receipt message</lang></label><textarea class="form-control" id="customer_sms_message" rows="7"></textarea><p class="small text-muted mt-2">Your linked phone sends the bill as a PDF attachment. API senders include a link to view and download the bill.</p></div>');
         }
         $('#customer_sms_message').val('');
         
