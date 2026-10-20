@@ -4,7 +4,6 @@ const crypto = require('crypto');
 const { spawnSync } = require('child_process');
 
 const rootDir = path.resolve(__dirname, '..');
-require('./build-wording-catalog');
 const sourceDir = path.join(rootDir, 'api', 'node_modules');
 const outputDir = path.join(rootDir, 'builds', 'api-runtime');
 const archivePath = path.join(outputDir, 'node_modules.zip');
@@ -120,6 +119,8 @@ function devOnlyTopLevelDirs() {
 // Resolved once: the answer is the same for the whole run, and asking npm is
 // not free.
 const DEV_DROP = fs.existsSync(sourceDir) ? devOnlyTopLevelDirs() : [];
+// Validate dependencies before generating or modifying packaged assets.
+require('./build-wording-catalog');
 const DEV_EXCLUDE = DEV_DROP.map((name) => `-x!${name}`);
 
 function createFingerprint() {

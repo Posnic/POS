@@ -52,7 +52,8 @@ test('stale price previews cannot replace newer prices or open-price mode',async
   const app={i18n:{t:(_k,v)=>v},local:{get:()=>''},post(p,ok){calls.push({p,ok});},items:{}};
   const src=fs.readFileSync('frontend/static/script/js/modules/js/items.js','utf8');
   const block=src.slice(src.indexOf('    _saving:'),src.indexOf('    // Ask before upload/save;'));
-  app.items=new Function('$','PosnicPro','return ({'+block+'});')($,app);
+  const helpers=src.slice(0,src.indexOf('PosnicPro.items ='));
+  app.items=new Function('$','PosnicPro',helpers+'return ({'+block+'});')($,app);
   app.items.selectAttr=()=>0;
   $('#items_selling_price').val('100');app.items.refreshCreateSummary();
   await new Promise(r=>setTimeout(r,330));
