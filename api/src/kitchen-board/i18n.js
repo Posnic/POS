@@ -11,8 +11,8 @@
     const translated = Object.prototype.hasOwnProperty.call(wording, normalize(source))
       ? wording[normalize(source)]
       : Object.prototype.hasOwnProperty.call(pack, normalize(source))
-      ? pack[normalize(source)]
-      : source;
+        ? pack[normalize(source)]
+        : source;
     return translated.replace(/\{(\w+)\}/g, (token, key) =>
       Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : token
     );
@@ -118,12 +118,21 @@
     capture,
     setLanguage,
     setWording(locale, values) {
-      if (locale !== language || !values || typeof values !== 'object' || Array.isArray(values) ||
-          Object.keys(values).length > 10000 ||
-          Object.values(values).some(value => typeof value !== 'string' || value.length > 4096)) return false;
-      const tokens = text => (text.match(/\{\w+\}/g) || []).sort().join('|');
-      wording = Object.fromEntries(Object.entries(values).filter(([source, value]) =>
-        value.trim() && tokens(source) === tokens(value)));
+      if (
+        locale !== language ||
+        !values ||
+        typeof values !== 'object' ||
+        Array.isArray(values) ||
+        Object.keys(values).length > 10000 ||
+        Object.values(values).some((value) => typeof value !== 'string' || value.length > 4096)
+      )
+        return false;
+      const tokens = (text) => (text.match(/\{\w+\}/g) || []).sort().join('|');
+      wording = Object.fromEntries(
+        Object.entries(values).filter(
+          ([source, value]) => value.trim() && tokens(source) === tokens(value)
+        )
+      );
       apply();
       return true;
     },

@@ -26,3 +26,13 @@ test('no assignment and unavailable wording freeze standard labels without block
   assert.deepEqual(failed, empty);
   assert.equal(await capture({}, null, branch), null);
 });
+test('extension document labels remain readable after the extension is removed or updated', async () => {
+  const { createRegistry } = require('../api/src/services/wording-profiles');
+  const labels = createRegistry({}, [{
+    extensionId: 'rooms', labelSchemaVersion: 1,
+    labels: [{ id: 'ext.rooms.charge', defaults: { en: 'Room charge' } }],
+  }]);
+  const saved = await capture({ findOne: async () => null }, license, branch, labels);
+  labels.clear();
+  assert.equal(resolve({ wording_snapshot: saved }, branch, license, 'en').values['ext.rooms.charge'], 'Room charge');
+});

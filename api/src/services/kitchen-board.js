@@ -387,7 +387,12 @@ module.exports = {
     if (typeof req.query?.locale !== 'string' || !supportedLocales().includes(req.query.locale))
       fail('Choose a supported language.', 400);
     const service = new WordingProfiles(req.db.collection('settings'), c.license);
-    return resolveBundle(await service.read(), String(c.branchId), req.query.locale, service.labels);
+    return resolveBundle(
+      await service.read(),
+      String(c.branchId),
+      req.query.locale,
+      service.labels
+    );
   },
   list,
   project,

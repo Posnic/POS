@@ -2307,10 +2307,12 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
     if (!id) {
       // INSERT new receiving
       const receivingData = { ...insertData, ...updateData };
-      receivingData.wording_snapshot = await require('../services/document-wording-snapshot').capture(
-        await new BaseModel('settings').getCollection('settings'),
-        receivingData.license || BaseModel.license, receivingData.branch_id || BaseModel.currentBranch
-      );
+      receivingData.wording_snapshot =
+        await require('../services/document-wording-snapshot').capture(
+          await new BaseModel('settings').getCollection('settings'),
+          receivingData.license || BaseModel.license,
+          receivingData.branch_id || BaseModel.currentBranch
+        );
       let insertResult;
       // Concurrent creates can read the same last ID. On a duplicate-key race,
       // read the new maximum and retry with the next value.

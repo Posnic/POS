@@ -185,7 +185,7 @@ test('Business wording exposes published labels only within current tenant and b
     { headers: { 'x-forwarded-proto': 'https', authorization: 'Bearer ' + token } }
   );
   const query = 'branchId=' + f.branch._id + '&locale=en';
-  let response = await call(query);
+  const response = await call(query);
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('cache-control'), 'no-store');
   const bundle = await response.json();

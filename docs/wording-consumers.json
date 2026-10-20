@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "registeredLabels": 4954,
+  "registeredLabels": 4957,
   "consumers": [
     {
       "app": "POS",
@@ -948,6 +948,7 @@
         "lang_select_products_to_print",
         "lang_shelf_label_products",
         "lang_sl_barcode_format",
+        "lang_sl_barcode_missing",
         "lang_sl_browser_unavailable",
         "lang_sl_catalogue_changed",
         "lang_sl_choose_layout",
@@ -2283,6 +2284,8 @@
         "lang_amount_title",
         "lang_apply_default_tax",
         "lang_cancel",
+        "lang_cancel_item",
+        "lang_cancel_item_action",
         "lang_cancel_title",
         "lang_captain_payment_recorded",
         "lang_card",

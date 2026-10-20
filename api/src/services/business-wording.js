@@ -15,7 +15,8 @@ async function readBusinessWording(db, context, query) {
     !/^[a-f0-9]{24}$/i.test(query.branchId) ||
     typeof query.locale !== 'string' ||
     !supportedLocales().includes(query.locale)
-  ) fail('invalid_request', 400);
+  )
+    fail('invalid_request', 400);
   if (!context?.branches?.some((branch) => branch.id === query.branchId))
     fail('access_denied', 403);
   const service = new WordingProfiles(db.collection('settings'), context.businessId);

@@ -4,9 +4,9 @@ const catalog = require('../catalogs/document-wording.json');
 
 /** Capture once at creation in the same document write, never in a print GET.
  * No totals, payment state or timestamps are changed by this helper. */
-async function capture(collection, licenseId, branchId) {
+async function capture(collection, licenseId, branchId, labels) {
   if (!licenseId || !branchId) return null;
-  const service = new WordingProfiles(collection, licenseId);
+  const service = new WordingProfiles(collection, licenseId, labels);
   let state;
   try {
     state = await service.read();
@@ -20,14 +20,23 @@ async function capture(collection, licenseId, branchId) {
   const locales = {};
   // Always freeze English document defaults. Also freeze explicitly assigned
   // locales; unassigned languages continue using shipped translations.
-  for (const locale of new Set(['en', ...Object.keys(state.assignments?.[String(branchId)] || {})])) {
+  for (const locale of new Set([
+    'en',
+    ...Object.keys(state.assignments?.[String(branchId)] || {}),
+  ])) {
     if (!catalog.locales[locale]) continue;
     const bundle = resolveBundle(state, String(branchId), locale, service.labels);
     const values = { ...catalog.locales[locale] };
+    for (const label of service.labels.values())
+      if (label.key.startsWith('ext.'))
+        values[label.key] =
+          typeof label.defaults?.[locale] === 'string' ? label.defaults[locale] : label.english;
     for (const key of Object.keys(values))
       if (typeof bundle.values[key] === 'string') values[key] = bundle.values[key];
     locales[locale] = {
-      profileId: bundle.profileId, profileRevision: bundle.profileRevision, values,
+      profileId: bundle.profileId,
+      profileRevision: bundle.profileRevision,
+      values,
     };
   }
   return { schemaVersion: 1, licenseId: String(licenseId), branchId: String(branchId), locales };
@@ -35,11 +44,18 @@ async function capture(collection, licenseId, branchId) {
 function resolve(document, branchId, licenseId, locale) {
   const saved = document?.wording_snapshot;
   if (!saved) return undefined; // Legacy documents retain their existing behavior.
-  if (saved.schemaVersion !== 1 || saved.branchId !== String(branchId) ||
-      saved.licenseId !== String(licenseId)) return null;
+  if (
+    saved.schemaVersion !== 1 ||
+    saved.branchId !== String(branchId) ||
+    saved.licenseId !== String(licenseId)
+  )
+    return null;
   const values = saved.locales?.[locale]?.values;
-  return values && typeof values === 'object' && !Array.isArray(values) &&
-    Object.values(values).every(value => typeof value === 'string')
-    ? { ...saved.locales[locale], locale, values } : null;
+  return values &&
+    typeof values === 'object' &&
+    !Array.isArray(values) &&
+    Object.values(values).every((value) => typeof value === 'string')
+    ? { ...saved.locales[locale], locale, values }
+    : null;
 }
 module.exports = { capture, resolve };

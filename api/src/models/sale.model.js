@@ -871,7 +871,9 @@ saleSchema.pre('save', async function () {
   if (this.isNew && this.license && this.branch_id && this.constructor.db?.db) {
     // Never trust a caller-supplied snapshot for a new sale.
     this.wording_snapshot = await require('../services/document-wording-snapshot').capture(
-      this.constructor.db.db.collection('settings'), this.license, this.branch_id
+      this.constructor.db.db.collection('settings'),
+      this.license,
+      this.branch_id
     );
   }
 
