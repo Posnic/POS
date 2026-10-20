@@ -59,3 +59,20 @@ re-reads that request's claim, requiring the same actor and payload before
 returning it. No stored fields, scopes or transport lanes change. A deterministic
 interleaving regression fails on the old implementation and passes on this fix;
 the existing competing-request test still requires a single winner.
+
+### Integration with current develop, 20 October 2026
+
+The develop integration retains the released room-service charge and its tax
+breakdown on bills and receipts. Room cards keep their room icon, blue double-line
+heading and separate venue. Room entry retains autofocus, optional guest buttons,
+the single-venue text display and explicit Next. As subsequently requested by the
+owner, a configured enabled room charge starts checked and staff can remove it;
+this supersedes the earlier unchecked-default description. Missing guest counts
+are omitted from order headings instead of displaying zero guests.
+
+Receipt column sizing and fixed quote selection remain in this change. Translation
+keys are merged by identity so wording-profile labels and receipt/parcel labels
+coexist. The bundled QR encoder emits its fixed Kanji range literally; output is
+compared with the locked upstream encoder for multilingual and escaped inputs.
+This integration adds no fields, collections or synchronization lanes and does not
+implement the separately documented tax-report source adapters.

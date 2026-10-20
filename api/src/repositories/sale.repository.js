@@ -8378,6 +8378,7 @@ class SalesRepository {
               table_number: 1,
               'outlet_snapshot.name': 1,
               room_reference: 1,
+              venue: 1,
               created_date: 1,
               date: 1,
               items: 1,
@@ -10731,6 +10732,8 @@ class SalesRepository {
           subtotal: doc.sales_sub_total || doc.subtotal || 0,
           charges: (doc.charges || []).map((c) => ({
             name: c.name,
+            source: c.source,
+            percent: c.percent,
             amount: c.amount,
             tax_amount: c.tax_amount,
           })),

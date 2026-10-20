@@ -30,6 +30,17 @@ function setup() {
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
 }
 
+test('room charge rate and saved amount print on thermal and A4 designs', () => {
+    const { dom, engine, sale } = setup();
+    sale.charges = [{ name: 'Room service charge', source: 'room', percent: 5, amount: 50, tax_amount: 2.5 }];
+    for (const layout of ['58mm', '80mm', 'a4']) {
+        const html = engine.render(sale, layout, true);
+        assert.ok(html.includes('Room service charge (5%)'));
+        assert.ok(html.includes('50.00'));
+    }
+    dom.window.close();
+});
+
 test('optional units, short row labels and heading render escaped across paper sizes', () => {
     const { dom, engine, sale, $ } = setup();
     sale.receipt_line_rows = [{ name: 'Pipe', qty: 2.5, unit: 'ft', rate: 32, amount: 80 }];

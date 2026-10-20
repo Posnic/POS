@@ -219,7 +219,7 @@
             customer_tax_number: taxNumber,
             customer_address: data.customer_address, sale_note: data.sales_description, brand_url: data.website || PosnicPro.BRAND_URL,
             total_quantity: receiptItems.reduce(function (n, i) { return n + Number(i.item_quantity || 0); }, 0),
-            table: data.table_number, order_type: data.dine_type, covers: data.covers || data.person_count,
+            table: data.table_number, order_type: PosnicPro.wording ? PosnicPro.wording.orderType(data.dine_type) : data.dine_type, covers: data.covers || data.person_count,
             steward: data.steward_name || data.steward || data.created_by || data.user_name, session: data.serving_session || data.session_name,
             fssai: (layout.blocks.find(function (block) { return block.type === 'store'; }) || {}).fssaiText || data.branch_fssai_number, source: data.order_source || data.source,
         };
@@ -339,7 +339,7 @@
                     if (hasTaxAmount(sgst)) content += pair('SGST', money(sgst));
                 }
                 else if (hasTaxAmount(data.tax)) content += pair(contract.taxLabel(data, PosnicPro.local.get('country_setting')), money(data.tax));
-                (data.charges || []).forEach(function (c) { content += pair(c.name || 'Charge', money(Number(c.amount || 0))); });
+                (data.charges || []).forEach(function (c) { content += pair((c.name || 'Charge') + (c.source === 'room' && Number(c.percent) > 0 ? ' (' + Number(c.percent) + '%)' : ''), money(Number(c.amount || 0))); });
                 if (Number(data.round_off)) content += pair('Round Off', money(data.round_off));
                 content += pair('Total', money(data.items_total), true);
                 if (!beforePayment && data.sales_id) {

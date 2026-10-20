@@ -219,7 +219,12 @@ function tickets(sale, settings = {}) {
             ownerName: String(owner.name || ''),
             table: String(sale.table_number || ''),
             outlet: String(sale.outlet_snapshot?.name || ''),
-            roomReference: String(sale.room_reference || ''),
+            roomReference: String(
+              sale.room_reference ||
+                (sale.dine_type === 'Room' ? sale.venue?.unit || sale.table_number : '') ||
+                ''
+            ),
+            venueName: sale.dine_type === 'Room' ? String(sale.venue?.venue_name || '') : '',
             orderNumber: String(sale.takeaway_number || sale.token_id || sale.sales_id || ''),
             takeaway:
               String(sale.fulfilment || sale.dine_type || '')

@@ -363,3 +363,6 @@
 #kot_v2 .kv2-line{grid-template-columns:minmax(36px,max-content) minmax(100px,1fr) max-content max-content max-content max-content max-content}
 #kot_v2 .kv2-line [data-action=cancelLine]{color:var(--danger,#c53030)}
 @media(max-width:1500px){#kot_v2 .kv2-line{grid-template-columns:38px minmax(0,1fr) max-content}#kot_v2 .kv2-line>span{grid-column:3;grid-row:1}#kot_v2 .kv2-line>button{grid-row:auto;min-height:36px}#kot_v2 .kv2-line>[data-action=again]{grid-column:2}#kot_v2 .kv2-line>[data-action=editLine]{grid-column:2}}
+
+#kot_v2 .kv2-table.kv2-room>strong { display:flex;gap:8px;color:var(--theme-primary-color,#2459de);border-block:3px double currentColor;padding-block:6px; }
+#kot_v2 .kv2-table.kv2-room>strong small { display:block;color:inherit; }

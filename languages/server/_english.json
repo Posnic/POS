@@ -269,6 +269,9 @@
   "Branch ID required": [
     "src/models/branch.model.js"
   ],
+  "Branch access required": [
+    "src/routes/wording.routes.js"
+  ],
   "Branch added successfully": [
     "src/models/branch.model.js"
   ],
@@ -280,6 +283,9 @@
     "src/models/setting.model.js",
     "src/models/supplier-legacy.model.js",
     "src/repositories/item.repository.js"
+  ],
+  "Branch and supported language required": [
+    "src/routes/wording.routes.js"
   ],
   "Branch context is missing for import": [
     "src/models/category.model.js"
