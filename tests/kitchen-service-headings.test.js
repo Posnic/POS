@@ -11,6 +11,7 @@ test('kitchen service headings distinguish room, parcel and table without changi
     screen.setConfig({_fit:{fontPx:32,lineHeightPx:40,columns:2,cards:8},pulseAlerts:false});
     for (const [fields, label, kind, instruction] of [
       [{table:'10'}, 'Table 10', 'table', 'PLATE'],
+      [{table:'SA - 56',roomReference:'56'}, 'Room 56', 'room', 'TRAY'],
       [{table:'ROOM 109'}, 'Room 109', 'room', 'TRAY'],
       [{table:'',roomReference:'205'}, 'Room 205', 'room', 'TRAY'],
       [{table:'Take Away 3',takeaway:true,orderNumber:'SID-123'}, 'Parcel 3', 'parcel', 'PACK'],

@@ -169,3 +169,12 @@ test('takeaway billing and collection never hide unserved dishes, while dine-in 
  const dineIn={...sale(),fulfilment:'dine_in',dine_type:'Takeaway',payment_status:'Paid'};
  assert.deepEqual(tickets(dineIn),[]);
 });
+
+test('staff room tickets retain venue and room identity', () => {
+  const order = sale();
+  Object.assign(order, {dine_type:'Room',table_number:'SA - 56',venue:{venue_name:'SA',unit:'56'}});
+  const ticket = tickets(order)[0];
+  assert.equal(ticket.roomReference,'56');
+  assert.equal(ticket.venueName,'SA');
+  assert.equal(ticket.takeaway,false);
+});

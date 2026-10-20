@@ -2244,6 +2244,7 @@ const getTablesWithActiveOrders = async (branchId) => {
            * earliest and summing the totals is three accumulators on a pass
            * that was happening anyway - no second query and no extra index.
            */
+          venue: { $first: '$venue' },
           orders: { $sum: 1 },
           paidOrders: { $sum: { $cond: [{ $eq: ['$payment_status', 'Paid'] }, 1, 0] } },
           sales: {
@@ -2264,6 +2265,7 @@ const getTablesWithActiveOrders = async (branchId) => {
           _id: 0,
           table_number: '$_id.table_number',
           dine_type: '$_id.dine_type',
+          venue: 1,
           orders: 1,
           paidOrders: 1,
           sales: 1,
@@ -2326,6 +2328,8 @@ const getTablesWithActiveOrders = async (branchId) => {
       const since =
         was && was.since && (!res.since || was.since <= res.since) ? was.since : res.since || null;
       detail.set(key, {
+        dine_type: was && was.dine_type !== res.dine_type ? 'Dine-in' : res.dine_type,
+        venue: res.venue,
         orders,
         amount,
         since,
@@ -2384,6 +2388,9 @@ const getTablesWithActiveOrders = async (branchId) => {
       const row = detail.get(name) || {};
       return {
         table_number: name,
+        dine_type: row.dine_type,
+        venue_name: row.dine_type === 'Room' ? String(row.venue?.venue_name || '') : '',
+        room_number: row.dine_type === 'Room' ? String(row.venue?.unit || name) : '',
         orders: row.orders || 0,
         awaiting_close: row.orders > 0 && row.paidOrders === row.orders,
         /* ISO, so a phone in a different timezone reads the same instant. */

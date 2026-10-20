@@ -275,9 +275,13 @@ test('rooms accept a typed number but wait for Next and preserve charge agreemen
  h.app.showDataTablePage();await flush();await h.click('rooms');
  const d=h.w.document.querySelector('dialog');d.querySelector('[name=unit]').value='35B';
  assert.equal(h.app.state.draft,null);
- d.querySelector('[name=acceptCharge]').checked=true;
+ assert.equal(d.querySelector('[name=venue]').type,'hidden');
+ assert.equal(h.w.document.activeElement.name,'unit');
+ assert.equal(d.querySelector('[name=acceptCharge]').checked,true);
+ d.querySelector('[data-guests="3"]').click();
+ assert.equal(h.app.state.draft,null);
  d.querySelector('[type=submit]').click();await flush();
- assert.equal(h.app.state.draft.unit,'35B');assert.equal(h.app.state.draft.roomChargeAccepted,true);
+ assert.equal(h.app.state.draft.unit,'35B');assert.equal(h.app.state.draft.roomChargeAccepted,true);assert.equal(h.app.state.draft.guests,3);
  h.search()({item_id:'new',selling_price:10,item_name:'Naan'},1,()=>{});await h.click('send');
  const request=h.calls.find(c=>c.url==='sales/qrOrder');assert.equal(request.body.venue,'hotel');assert.equal(request.body.unit,'35B');assert.equal(request.body.room_charge_accepted,true);
  } finally {setup.roomVenues=null;h.close();}
@@ -350,4 +354,28 @@ test('cancelling one dish preserves the other dishes and sends the reason',async
  const d=h.w.document.querySelector('dialog');d.querySelector('[name=reason]').value='Wrong item';d.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
  const sent=h.calls.find(c=>c.url==='sales/updateOrder');assert.equal(sent.body.status,undefined);assert.equal(sent.body.items.length,1);assert.equal(sent.body.items[0].product_id,'rice');assert.equal(sent.body.change_reason,'Wrong item');
  }finally{h.close();}
+});
+
+test('desktop room card uses room identity and venue on separate lines',async()=>{
+ const h=setup();try {
+ Object.assign(h.sale,{dine_type:'Room',table_number:'SA - 56',venue:{venue_name:'SA',unit:'56'}});
+ h.app.showDataTablePage();await flush();
+ const card=h.w.document.querySelector('.kv2-room');assert.ok(card);
+ assert.match(card.querySelector('strong').textContent,/Room 56SA/);
+ assert.equal(card.querySelector('strong small').textContent,'SA');
+ assert.equal(card.querySelector('strong').textContent.includes('Table'),false);
+ } finally {h.close();}
+});
+test('desktop room pax can stay empty and the charge can be removed',async()=>{
+ setup.roomVenues=[{code:'a',name:'SA',room_charge:{enabled:true,percent:5,name:'Service'}},{code:'b',name:'Other',room_charge:{enabled:false}}];
+ const h=setup();try {
+ h.app.showDataTablePage();await flush();await h.click('rooms');const d=h.w.document.querySelector('dialog');
+ assert.ok(d.querySelector('select[name=venue]'));d.querySelector('[name=venue]').value='b';d.querySelector('[name=venue]').dispatchEvent(new h.w.Event('change'));
+ assert.equal(d.querySelector('[name=acceptCharge]').checked,false);
+ assert.equal(d.querySelector('[data-room-agreement]').hidden,true);
+ d.querySelector('[name=venue]').value='a';d.querySelector('[name=venue]').dispatchEvent(new h.w.Event('change'));
+ assert.equal(d.querySelector('[name=acceptCharge]').checked,true);d.querySelector('[name=acceptCharge]').checked=false;
+ d.querySelector('[name=unit]').value='207';d.querySelector('[type=submit]').click();await flush();
+ assert.equal(h.app.state.draft.guests,0);assert.equal(h.app.state.draft.roomChargeAccepted,false);
+ }finally{setup.roomVenues=null;h.close();}
 });
