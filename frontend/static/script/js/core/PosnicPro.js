@@ -4749,6 +4749,8 @@ PosnicPro.i18n = {
      * all goes wrong.
      */
     t: function (key, english) {
+        var custom = PosnicPro.wording && PosnicPro.wording.values();
+        if (custom && Object.prototype.hasOwnProperty.call(custom, key)) return custom[key];
         var d = PosnicPro.i18n._dict;
         if (d && Object.prototype.hasOwnProperty.call(d, key)) {
             var value = d[key];
@@ -4995,6 +4997,8 @@ PosnicPro.i18n = {
 
     apply: function (root) {
         var dict = PosnicPro.i18n._dict;
+        var custom = PosnicPro.wording && PosnicPro.wording.values();
+        if (custom) dict = Object.assign({}, dict || {}, custom);
         if (!dict) return;
         var scope = root || document;
         var set = function (el, key) {
@@ -5158,7 +5162,7 @@ PosnicPro.i18n = {
             || (typeof MutationObserver !== 'undefined' ? MutationObserver : null);
         if (!Observer) return null;
         var observer = new Observer(function (records) {
-            if (!PosnicPro.i18n._dict) return;
+            if (!PosnicPro.i18n._dict && !(PosnicPro.wording && PosnicPro.wording.values())) return;
             for (var r = 0; r < records.length; r++) {
                 var added = records[r].addedNodes;
                 for (var a = 0; a < added.length; a++) {
@@ -5183,7 +5187,8 @@ PosnicPro.i18n = {
         PosnicPro.i18n.mark();
         return PosnicPro.i18n.load().then(function () {
             if (PosnicPro.i18n.code() === 'en') PosnicPro.i18n.restore();
-            else PosnicPro.i18n.apply();
+            PosnicPro.i18n.apply();
+            if (PosnicPro.wording) PosnicPro.wording.refresh();
         });
     }
 };

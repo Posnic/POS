@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "පාරිභෝගික ණය සඳහා සුරකින ගනුදෙනුකරුවෙකු තෝරන්න.",
   "Exact numeric search must be on or off": "නිශ්චිත සංඛ්යාත්මක සෙවීම සක්රිය හෝ අක්රිය කළ යුතුය",
   "Item not found or selling price is held. Review it in Edit prices.": "අයිතමය සොයාගත නොහැකි හෝ විකුණුම් මිල රඳවා ඇත. මිල ගණන් සංස්කරණය කිරීමේ දී එය සමාලෝචනය කරන්න.",
+  "Branch access required": "ශාඛා ප්රවේශය අවශ්ය",
+  "Branch and supported language required": "ශාඛාව සහ සහාය භාෂාව අවශ්ය වේ",
   "Password must contain between 5 and 20 characters": "මුරපදය අක්ෂර 5 ත් 20 ත් අතර ප්රමාණයක් අඩංගු විය යුතුය"
 }

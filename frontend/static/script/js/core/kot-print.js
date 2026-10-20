@@ -44,7 +44,7 @@
                 var dateText = date && !isNaN(new Date(date).getTime()) ? new Date(date).toLocaleString() : date || '';
                 return '<section><h1>' + esc(titles[job.type] || titles.new) + '</h1><p>' + esc(sale.sales_id || '') + '</p><p>' + esc(dateText) + '</p>' +
                     (sale.table_number ? '<p>' + esc(PosnicPro.i18n.t('lang_kot_print_table', 'Table')) + ': ' + esc(sale.table_number) + '</p>' : '') +
-                    (sale.dine_type ? '<p>' + esc(sale.dine_type) + '</p>' : '') +
+                    (sale.dine_type ? '<p>' + esc(PosnicPro.wording ? PosnicPro.wording.orderType(sale.dine_type) : sale.dine_type) + '</p>' : '') +
                     (sale.person_count ? '<p>' + esc(PosnicPro.i18n.t('lang_kot_print_covers', 'Covers')) + ': ' + esc(sale.person_count) + '</p>' : '') +
                     job.items.map(function (item) {
                         var note = item.item_note || item.item_description || '';

@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "Изберете запазен клиент за клиентски кредит.",
   "Exact numeric search must be on or off": "Точното числово търсене трябва да е включено или изключено",
   "Item not found or selling price is held. Review it in Edit prices.": "Артикулът не е намерен или се задържа продажната цена. Прегледайте го в Редактиране на цените.",
+  "Branch access required": "Необходим е достъп до кло",
+  "Branch and supported language required": "на Изисква се клон и поддържан език",
   "Password must contain between 5 and 20 characters": "Паролата трябва да съдържа между 5 и 20 знака"
 }

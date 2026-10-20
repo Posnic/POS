@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "Виберіть збереженого клієнта для кредиту клієнта.",
   "Exact numeric search must be on or off": "Точний числовий пошук повинен бути увімкненим або вимкненим",
   "Item not found or selling price is held. Review it in Edit prices.": "Товар не знайдено або ціна продажу збережена. Перегляньте його в розділі Редагувати ціни.",
+  "Branch access required": "Потрібний доступ до відділення Потрі",
+  "Branch and supported language required": "бна гілка та підтримувана мова",
   "Password must contain between 5 and 20 characters": "Пароль повинен містити від 5 до 20 символів"
 }

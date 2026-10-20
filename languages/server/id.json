@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "Pilih pelanggan yang disimpan untuk kredit pelanggan.",
   "Exact numeric search must be on or off": "Pencarian numerik yang tepat harus aktif atau nonaktif",
   "Item not found or selling price is held. Review it in Edit prices.": "Barang tidak ditemukan atau harga jual dipegang. Tinjau di Edit harga.",
+  "Branch access required": "Diperlukan akses cabang",
+  "Branch and supported language required": "Cabang dan bahasa yang didukung",
   "Password must contain between 5 and 20 characters": "Kata sandi harus berisi antara 5 dan 20 karakter"
 }

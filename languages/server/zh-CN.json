@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "选择已保存的客户作为客户积分。",
   "Exact numeric search must be on or off": "精确数字搜索必须开启或关闭",
   "Item not found or selling price is held. Review it in Edit prices.": "未找到商品或保留销售价格。在 “编辑价格” 中查看。",
+  "Branch access required": "分支访问权限需要",
+  "Branch and supported language required": "分支机构和支持的语言",
   "Password must contain between 5 and 20 characters": "密码必须包含 5 到 20 个字符"
 }
