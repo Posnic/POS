@@ -166,3 +166,23 @@
  #message_centre .message-status-actions .btn { min-height:44px; white-space:normal; }
  #message_centre .message-connection-actions { flex-wrap:wrap; }
 }
+
+/* Provider setup: restrained controls, readable fields, help on demand. */
+#message_centre #messaging_wa_cloud { max-width:800px; }
+#message_centre #messaging_wa_provider { max-width:400px; min-height:46px; border-radius:8px; font-weight:500; }
+#message_centre .wa-provider-names { max-width:680px; margin:10px 0 24px; color:var(--theme-text-muted,#617087); font-size:13px; line-height:1.8; }
+#message_centre .wa-provider-title { padding-top:20px; margin:0 0 16px; border-top:1px solid var(--theme-border-color,#dce4ee); font-weight:600; }
+#message_centre .wa-api-setup .form-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin:0 0 20px; }
+#message_centre .wa-api-setup .form-row > div { padding:0; width:100%; max-width:100%; margin:0!important; }
+#message_centre .wa-api-setup .form-control { min-height:44px; border-radius:7px; }
+#message_centre .wa-api-setup label { font-size:13px; margin-bottom:8px; }
+#message_centre .wa-api-setup details { background:var(--theme-table-header-bg,#f5f8fc); border-color:var(--theme-border-color,#dce4ee)!important; line-height:1.7; margin-top:8px; }
+#message_centre .wa-api-setup summary { cursor:pointer; color:var(--theme-text-color,#35465e); }
+#message_centre .wa-api-setup > div > p.small { line-height:1.7; max-width:680px; }
+#message_centre [data-wa-mode] { border-color:transparent; border-radius:6px; }
+#message_centre .message-choices:has([data-wa-mode]) { background:var(--theme-table-header-bg,#eef2f7); padding:4px; border-radius:9px; width:fit-content; max-width:100%; gap:4px; }
+#message_centre .message-choices [data-wa-mode][aria-pressed="true"] { background:var(--theme-card-bg,#fff)!important; color:#1255a1!important; border-color:transparent!important; box-shadow:0 1px 4px #182d4920; }
+@media(max-width:600px) {
+ #message_centre .wa-api-setup .form-row { grid-template-columns:minmax(0,1fr); gap:16px; }
+ #message_centre #messaging_wa_provider { max-width:100%; }
+}

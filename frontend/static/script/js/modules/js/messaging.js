@@ -150,6 +150,8 @@ PosnicPro.messaging = {
       providerSelect.append($('<option>').val(p.id).text(p.name));
     });
     providerSelect.val(cloud.provider || 'meta');
+    if (!$('#messaging_wa_provider_names').length) providerSelect.after('<p id="messaging_wa_provider_names" class="wa-provider-names"></p>');
+    $('#messaging_wa_provider_names').text(this.waProviders.map(function(p) { return p.name; }).join(' · '));
     this.renderWaProvider();
     $('#messaging_wa_token').val('').attr('placeholder', waSet.access_token ? '•••••• saved, leave blank to keep' : '');
     $('#messaging_wa_phoneid').val(cloud.phone_number_id || '');
@@ -164,12 +166,14 @@ PosnicPro.messaging = {
     var id = $('#messaging_wa_provider').val() || 'meta';
     $('#messaging_wa_meta_fields').toggle(id === 'meta');
     var wrap = $('#messaging_wa_provider_fields').empty();
+    $('#messaging_wa_cloud').addClass('wa-api-setup');
+    $('#messaging_wa_meta_fields > details').removeAttr('open').appendTo('#messaging_wa_meta_fields');
     if (id === 'meta') return;
     var p = this.waProviders.find(function(p) { return p.id === id; });
     if (!p) { wrap.text(PosnicPro.i18n.t('lang_this_provider_is_not_available_on_this_ser', 'This provider is not available on this server. Reload settings.')); return; }
     var same = (this.waSaved.provider || 'meta') === id;
     var c = same ? this.waSaved : {}, saved = same ? this.waSecrets : {};
-    var help = $('<details class="border rounded p-3 mb-3" open>');
+    var help = $('<details class="border rounded p-3 mb-3 wa-provider-help">');
     help.append($('<summary class="font-weight-bold">').text('Set up ' + p.name));
     var list = $('<ol class="mt-2 mb-2 pl-3">');
     [
@@ -189,7 +193,9 @@ PosnicPro.messaging = {
       if(f.secret) input.attr('placeholder',saved[f.key]?'Saved - leave blank to keep':''); else input.val(c[f.key] || '');
       row.append($('<div class="col-md-6 mb-3">').append($('<label>').attr('for',fieldId).text(f.label+(f.required?' *':'')),input));
     });
+    wrap.prepend($('<h6 class="wa-provider-title">').text(p.name));
     wrap.append(row);
+    wrap.append(help);
   },
 
   toggleWaMode: function () {
