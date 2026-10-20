@@ -162,7 +162,8 @@ class ReceivingRepository extends BaseModel {
     };
 
     dataToInsert.wording_snapshot = await require('../services/document-wording-snapshot').capture(
-      await this.getCollection('settings'), dataToInsert.license,
+      await this.getCollection('settings'),
+      dataToInsert.license,
       dataToInsert.branch_id || BaseModel.currentBranch
     );
     const result = await collection.insertOne(dataToInsert);
@@ -182,7 +183,8 @@ class ReceivingRepository extends BaseModel {
       updated_by_id: BaseModel.loggedUser,
     };
     for (const key of Object.keys(dataToUpdate))
-      if (key === 'wording_snapshot' || key.startsWith('wording_snapshot.')) delete dataToUpdate[key];
+      if (key === 'wording_snapshot' || key.startsWith('wording_snapshot.'))
+        delete dataToUpdate[key];
 
     await collection.updateOne(
       {
@@ -464,7 +466,9 @@ class ReceivingRepository extends BaseModel {
     const settings = await this.getCollection('settings');
     for (const row of dataToInsert)
       row.wording_snapshot = await require('../services/document-wording-snapshot').capture(
-        settings, row.license, row.branch_id || BaseModel.currentBranch
+        settings,
+        row.license,
+        row.branch_id || BaseModel.currentBranch
       );
     const result = await collection.insertMany(dataToInsert);
     const insertedIds = Object.values(result.insertedIds);

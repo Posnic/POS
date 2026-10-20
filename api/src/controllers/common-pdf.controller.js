@@ -53,7 +53,8 @@ class CommonPdfController extends BaseController {
         licenseId: req.tenantContext?.licenseId,
         locale: 'en',
       });
-      const wording = (key, fallback) => require('../services/document-wording').label(bundle, key, fallback);
+      const wording = (key, fallback) =>
+        require('../services/document-wording').label(bundle, key, fallback);
       // Add content to PDF based on type
       switch (type) {
         case 'invoice':
@@ -103,10 +104,15 @@ class CommonPdfController extends BaseController {
 
     // Add invoice details
     doc.fontSize(12);
-    doc.text(`${wording('lang_invoice', 'Invoice #')}: ${content.invoiceNumber || ''}`, { align: 'left' });
-    doc.text(`${wording('lang_date_title', 'Date')}: ${content.date || new Date().toLocaleDateString()}`, {
+    doc.text(`${wording('lang_invoice', 'Invoice #')}: ${content.invoiceNumber || ''}`, {
       align: 'left',
     });
+    doc.text(
+      `${wording('lang_date_title', 'Date')}: ${content.date || new Date().toLocaleDateString()}`,
+      {
+        align: 'left',
+      }
+    );
     doc.moveDown();
 
     // Add customer information
@@ -115,15 +121,23 @@ class CommonPdfController extends BaseController {
       doc.fontSize(12);
       doc.text(content.customer.name || '');
       if (content.customer.address) doc.text(content.customer.address);
-      if (content.customer.email) doc.text(`${wording('lang_email_title', 'Email')}: ${content.customer.email}`);
-      if (content.customer.phone) doc.text(`${wording('lang_phone_title', 'Phone')}: ${content.customer.phone}`);
+      if (content.customer.email)
+        doc.text(`${wording('lang_email_title', 'Email')}: ${content.customer.email}`);
+      if (content.customer.phone)
+        doc.text(`${wording('lang_phone_title', 'Phone')}: ${content.customer.phone}`);
       doc.moveDown();
     }
 
     // Add items table
     if (content.items && content.items.length > 0) {
       this.generateTable(doc, {
-        headers: [wording('lang_item', 'Item'), wording('lang_description', 'Description'), wording('lang_quantity', 'Quantity'), wording('lang_price_title', 'Price'), wording('lang_total', 'Total')],
+        headers: [
+          wording('lang_item', 'Item'),
+          wording('lang_description', 'Description'),
+          wording('lang_quantity', 'Quantity'),
+          wording('lang_price_title', 'Price'),
+          wording('lang_total', 'Total'),
+        ],
         rows: content.items.map((item) => [
           item.name || '',
           item.description || '',
@@ -142,16 +156,25 @@ class CommonPdfController extends BaseController {
       doc.fontSize(12);
 
       // Subtotal
-      doc.text(wording('lang_subtotal', 'Subtotal') + ':', startX, startY, { width: 100, align: 'right' });
+      doc.text(wording('lang_subtotal', 'Subtotal') + ':', startX, startY, {
+        width: 100,
+        align: 'right',
+      });
       doc.text(this.formatCurrency(content.totals.subtotal || 0), startX + 100, startY);
 
       // Tax
-      doc.text(wording('lang_module_tax', 'Tax') + ':', startX, startY + 25, { width: 100, align: 'right' });
+      doc.text(wording('lang_module_tax', 'Tax') + ':', startX, startY + 25, {
+        width: 100,
+        align: 'right',
+      });
       doc.text(this.formatCurrency(content.totals.tax || 0), startX + 100, startY + 25);
 
       // Total
       doc.font('Helvetica-Bold');
-      doc.text(wording('lang_total', 'TOTAL') + ':', startX, startY + 50, { width: 100, align: 'right' });
+      doc.text(wording('lang_total', 'TOTAL') + ':', startX, startY + 50, {
+        width: 100,
+        align: 'right',
+      });
       doc.text(this.formatCurrency(content.totals.total || 0), startX + 100, startY + 50);
       doc.font('Helvetica');
     }
@@ -170,10 +193,15 @@ class CommonPdfController extends BaseController {
     doc.moveDown();
 
     doc.fontSize(12);
-    doc.text(`${wording('lang_receipt_title', 'Receipt #')}: ${content.receiptNumber || ''}`, { align: 'left' });
-    doc.text(`${wording('lang_date_title', 'Date')}: ${content.date || new Date().toLocaleDateString()}`, {
+    doc.text(`${wording('lang_receipt_title', 'Receipt #')}: ${content.receiptNumber || ''}`, {
       align: 'left',
     });
+    doc.text(
+      `${wording('lang_date_title', 'Date')}: ${content.date || new Date().toLocaleDateString()}`,
+      {
+        align: 'left',
+      }
+    );
     doc.moveDown();
 
     // Add receipt items
@@ -192,7 +220,9 @@ class CommonPdfController extends BaseController {
       doc.moveDown();
       doc.text(wording('lang_payment_method', 'Payment Method') + ':', { underline: true });
       doc.text(`${wording('lang_type', 'Type')}: ${content.payment.type || ''}`);
-      doc.text(`${wording('lang_amount', 'Amount')}: ${this.formatCurrency(content.payment.amount || 0)}`);
+      doc.text(
+        `${wording('lang_amount', 'Amount')}: ${this.formatCurrency(content.payment.amount || 0)}`
+      );
       if (content.payment.reference) {
         doc.text(`${wording('lang_reference_title', 'Reference')}: ${content.payment.reference}`);
       }

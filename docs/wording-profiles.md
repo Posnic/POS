@@ -48,9 +48,7 @@ Installed extension packages may ship trusted JSON manifests under
 {
   "extensionId": "rooms",
   "labelSchemaVersion": 1,
-  "labels": [
-    {"id": "ext.rooms.charge", "defaults": {"en": "Room charge"}}
-  ]
+  "labels": [{ "id": "ext.rooms.charge", "defaults": { "en": "Room charge" } }]
 }
 ```
 
@@ -106,12 +104,12 @@ the change after their normal sync and refresh.
 - Captain Account → Language shows the published profile name. This comes from
   the immutable published revision, never its unpublished draft.
 
-Legacy hardcoded text and unrelated export/PDF generators are not automatically
-rewritten. Machine CSV field names are intentionally unchanged. An extension or
-new screen must use registered keys to participate. Reprints currently resolve
-the active profile; historical document-specific wording snapshots are not
-implemented. Do not advertise universal legacy-document coverage or frozen
-historical wording based on this implementation.
+Machine CSV field names and user-supplied report headings are intentionally
+unchanged. An extension or new screen must use registered keys to participate.
+New sale/purchase documents now capture document labels at creation; legacy
+documents without a snapshot retain current-profile resolution. The historical
+boundaries and verified consumers are detailed in the implementation update below.
+Do not advertise automatic translation of arbitrary business data or custom text.
 
 ## Verification and rollout
 
@@ -266,8 +264,9 @@ Local evidence:
 - Business: 121 checks, TypeScript, attribution and web export passed.
 - Documents/profiles: 94 checks; write models/repositories: 403 checks;
   receiving controller: 135 checks; generic PDF controller: 70 checks.
-- Kitchen browser/unit display checks: 22 passed. API authorization checks are
-  being rerun after adding coverage.
+- Kitchen browser/unit display checks: 22 passed; kitchen and generic-PDF API
+  checks: 100 passed. HDMI feed/accessory checks: 49 passed, including a delayed
+  label response that must not delay orders or overwrite a switched branch.
 - Actual Gateway router with disposable MongoDB: profile delivery/unassignment,
   offline cache, reconnect, two tills, tenant/branch isolation and stale retries;
   sale and receiving snapshots traverse existing sync lanes unchanged.
@@ -283,7 +282,21 @@ offline Mobile POS receipt and a server invoice issued after later synchronizati
 can legitimately have different wording revisions; neither silently rewrites
 the other's snapshot.
 
-Release preparation uses a separate main-based checkout to exclude inherited
-PR #1447. Remaining verification includes exact release-head checks, bundled-agent
-compatibility, upgrade/rollback with persisted profiles and snapshots, and live
-installed-device/physical-printer checks. No new release or deployment is claimed.
+Release preparation uses `C:/Users/Kayal/Documents/Codex/wording-main-release`
+on `feature/wording-main-release`, based on main, to exclude inherited PR #1447.
+The bundled Business Gateway agent matches all 27 POS collection lanes.
+With `WORDING_AGENT_ROOT` set to that bundle, the actual agent's pull, checkpoint
+resume, echo suppression, local-edit push and duplicate retry pass against the
+disposable Gateway. Its own MongoDB/BSON driver is used, matching deployment.
+The 114 release-head document/editor/display checks, 48 API integration checks
+(five pre-existing browser-only skips) and fresh frontend build passed.
+
+HDMI wording uses a dedicated kiosk-key-protected read endpoint and a separate
+background request, bounded to once per minute. It reuses the till's local API
+address and does not add a cloud dependency or await labels before rendering
+orders. Both browser and HDMI consumers clear stale branch wording.
+
+Remaining verification includes the full release gates and live installed-device/
+physical-printer checks. No new release or deployment is claimed. Historical
+extension labels are captured under their namespaced keys as well; removed
+extensions cannot erase the wording already stored on an issued document.

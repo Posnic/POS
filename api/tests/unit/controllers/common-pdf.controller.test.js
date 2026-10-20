@@ -111,12 +111,16 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 test('generic invoice wording changes registered headings without altering customer and item data', async () => {
   const words = { lang_item: 'Article', lang_total: 'Payable', lang_bill_to: 'Buyer' };
-  await ctrl.generateInvoicePdf(mockDoc, {
-    customer: { name: 'Item customer' },
-    items: [{ name: 'Item product', quantity: 1, price: 12 }],
-    totals: { subtotal: 12, total: 12 },
-  }, (key, fallback) => words[key] || fallback);
-  const text = mockDoc.text.mock.calls.map(call => call[0]);
+  await ctrl.generateInvoicePdf(
+    mockDoc,
+    {
+      customer: { name: 'Item customer' },
+      items: [{ name: 'Item product', quantity: 1, price: 12 }],
+      totals: { subtotal: 12, total: 12 },
+    },
+    (key, fallback) => words[key] || fallback
+  );
+  const text = mockDoc.text.mock.calls.map((call) => call[0]);
   expect(text).toContain('Article');
   expect(text).toContain('Payable:');
   expect(text).toContain('Buyer:');

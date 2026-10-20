@@ -209,3 +209,36 @@ test('only a renderer acknowledgment produces a kitchen display report', async (
     assert.deepEqual(calls[2].body.saleIds,['507f1f77bcf86cd799439011']);
   } finally { screens.setTickets=real; }
 });
+
+test('slow wording never delays orders and a previous branch cannot replace current labels', async () => {
+  const screens = require(path.join(ROOT, 'src', 'kitchen-screen.js'));
+  const originals = Object.fromEntries(['displays', 'configFor', 'setTickets', 'setFeedStatus', 'setWording'].map(key => [key, screens[key]]));
+  let branch = 'first', finish;
+  const labels = [], orders = [];
+  screens.displays = () => [{ id: 'wording-display', open: true, configured: true, config: { branchId: branch } }];
+  screens.configFor = () => ({ enabled: true, branchId: branch });
+  screens.setTickets = async rows => { orders.push(rows); return []; };
+  screens.setFeedStatus = () => {};
+  screens.setWording = value => labels.push(value);
+  const fetchImpl = async url => {
+    if (url.endsWith('kitchenScreenWording') && branch === 'first')
+      return new Promise(resolve => { finish = () => resolve({ ok: true, json: async () => ({ data: { branchId: 'first', bundles: { en: { Kitchen: 'Old' } } } }) }); });
+    return { ok: true, json: async () => ({ data: url.endsWith('kitchenScreenWording')
+      ? { branchId: branch, bundles: { en: { Kitchen: 'Current' } } }
+      : [{ table: branch, items: [] }] }) };
+  };
+  try {
+    assert.equal((await feed.pollScreens({ fetchImpl })).ok, true);
+    assert.equal(orders.at(-1)[0].table, 'first');
+    branch = 'second';
+    await feed.pollScreens({ fetchImpl });
+    finish();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(orders.at(-1)[0].table, 'second');
+    assert.equal(labels.at(-1).branchId, 'second');
+    assert.ok(!labels.some(value => value?.branchId === 'first'));
+  } finally {
+    feed.stop();
+    Object.assign(screens, originals);
+  }
+});
