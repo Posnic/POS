@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "υπάρχουσας διατύπωσης ή επέκτασης",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "Updates που ταιριάζουν με ετικέτες και υποστηρίζονται Προσθήκη/Αναζήτηση/Πωλήσεις ανά φράσεις. Τα ονόματα προϊόντων, οι σημειώσεις και άλλες γλώσσες παραμένουν αμετάβλητες.",
-  "lang_your_wording": "Η διατύπωσή σας"
+  "lang_your_wording": "Η διατύπωσή σας",
+  "lang_wording_changed_only": "Αλλαγή μόνο",
+  "lang_wording_labels_per_page": "Ετικέτες ανά σελίδα"
 }

@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "postojeće formulacije ili proši",
   "lang_wording_takeaway": "away",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "ranja koje odgovaraju oznakama i podržanim Dodaj/Pretraži/Prodaja po frazama. Nazivi proizvoda, bilješke i drugi jezici su nepromijenjeni.",
-  "lang_your_wording": "Vaša formulacija"
+  "lang_your_wording": "Vaša formulacija",
+  "lang_wording_changed_only": "Samo promijenjeno",
+  "lang_wording_labels_per_page": "Oznake po stranici"
 }

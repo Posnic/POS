@@ -4977,5 +4977,7 @@
   "lang_wording_search_existing_wording_or_extension": "既存の文言や拡張子を検索する",
   "lang_wording_takeaway": "既存の文言や拡張子を検索テイクアウト一致するラベルを更新し",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "、フレーズによる追加、検索、販売に対応しました。製品名、メモ、その他の言語に変更はありません。",
-  "lang_your_wording": "あなたの言葉遣い"
+  "lang_your_wording": "あなたの言葉遣い",
+  "lang_wording_changed_only": "変更のみ",
+  "lang_wording_labels_per_page": "1 ページあたりのラベル数"
 }

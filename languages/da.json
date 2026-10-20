@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "Søg i eksisterende ordlyd eller udvidelse",
   "lang_wording_takeaway": "Takeaway Op",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "daterer matchende etiketter og understøttede Tilføj/søg/Salg efter sætninger. Produktnavne, noter og andre sprog er uændrede.",
-  "lang_your_wording": "Din formulering"
+  "lang_your_wording": "Din formulering",
+  "lang_wording_changed_only": "Kun ændret",
+  "lang_wording_labels_per_page": "Etiketter pr. side"
 }

@@ -38,11 +38,34 @@ const { WordingProfiles, createRegistry, resolveBundle } = require(path.join(pos
     }
     assert.equal((await request('pull', { collection: 'settings', since: first.checkpoint })).docs.length, 0);
     assert.equal((await request('pull', { collection: 'settings' }, { 'x-test-tenant': 'another_shop' })).docs.length, 0);
+    state = await svc.save({ id: state.profiles[0].id, name: 'Shop wording', locale: 'en', overrides: { 'posnic.lang_takeaway': 'Pickup' }, expectedRevision: 2 }, 'owner');
+    state = await svc.publish({ id: state.profiles[0].id, expectedRevision: 3, branches: [branch] }, 'owner', [branch]);
+    const offline = new WordingProfiles(client.db('till2').collection('settings'), 'aaaaaaaaaaaaaaaaaaaaaaaa', labels);
+    assert.equal(resolveBundle(await offline.read(), branch, 'en', labels).values.lang_takeaway, 'Parcel');
+    const update = await request('pull', { collection: 'settings', since: first.checkpoint });
+    assert.equal(update.docs.length, 1);
+    for (const till of ['till1', 'till2']) {
+      await client.db(till).collection('settings').replaceOne({ _id: update.docs[0]._id }, update.docs[0]);
+      const local = new WordingProfiles(client.db(till).collection('settings'), 'aaaaaaaaaaaaaaaaaaaaaaaa', labels);
+      const bundle = resolveBundle(await local.read(), branch, 'en', labels);
+      assert.equal(bundle.values.lang_takeaway, 'Pickup');
+      assert.equal(bundle.profileName, 'Shop wording');
+      assert.equal(bundle.sourceValues.Takeaway, 'Pickup');
+    }
     const stale = first.docs[0]; stale.updated_date = new Date(0); stale.revision = 0;
     await request('push', { collection: 'settings', docs: [stale] });
-    assert.equal((await svc.read()).revision, 2);
+    assert.equal((await svc.read()).revision, 4);
     await request('push', { collection: 'settings', docs: [stale] });
-    assert.equal((await svc.read()).revision, 2);
-    console.log('PASS: actual gateway pull, two offline till databases, checkpoint resume, tenant isolation, stale retry protection');
+    assert.equal((await svc.read()).revision, 4);
+    await svc.publish({ id: state.profiles[0].id, expectedRevision: 4, branches: [] }, 'owner', [branch]);
+    const removed = await request('pull', { collection: 'settings', since: update.checkpoint });
+    assert.equal(removed.docs.length, 1);
+    for (const till of ['till1', 'till2']) {
+      await client.db(till).collection('settings').replaceOne({ _id: removed.docs[0]._id }, removed.docs[0]);
+      const local = new WordingProfiles(client.db(till).collection('settings'), 'aaaaaaaaaaaaaaaaaaaaaaaa', labels);
+      assert.deepEqual({ ...resolveBundle(await local.read(), branch, 'en', labels).values }, {});
+      assert.equal((await local.read()).profiles[0].revisions.length, 3);
+    }
+    console.log('PASS: actual gateway create/update/unassignment, offline retention, two-till reconnect, checkpoint resume, tenant isolation, stale duplicate retry protection');
   } finally { if (server) await new Promise(resolve => server.close(resolve)); await gatewayClient.close(); await client.close(); await memory.stop(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

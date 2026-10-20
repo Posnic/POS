@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "koni formulimet ose shtesën ekzist",
   "lang_wording_takeaway": "away",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "ditësimet që përputhen me etiketat dhe mbështetur Shtoj/Kërko/Shitje sipas Emrat e produkteve, shënimet dhe gjuhët e tjera janë të pandryshuara.",
-  "lang_your_wording": "Formulimi juaj"
+  "lang_your_wording": "Formulimi juaj",
+  "lang_wording_changed_only": "Ndryshuar vetëm",
+  "lang_wording_labels_per_page": "Etiketat për faqe"
 }

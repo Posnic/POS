@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "Cuardaigh foclaíocht nó síne",
   "lang_wording_takeaway": "away",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "ak",
-  "lang_your_wording": "Do fhoclaíocht"
+  "lang_your_wording": "Do fhoclaíocht",
+  "lang_wording_changed_only": "Athraithe amháin",
+  "lang_wording_labels_per_page": "Lipéid in aghaidh an leathanach"
 }

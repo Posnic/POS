@@ -9,6 +9,10 @@ branches. Clearing every branch and publishing removes that profile's
 assignments. Restore default removes an individual replacement. There is no
 preview stage.
 
+The list pages through 25, 50 or 100 labels. Search covers the full registry,
+including stable label IDs and extension names. Changed only filters the current
+draft. Page changes, page-size changes and searches preserve unsaved replacements.
+
 The English grouping controls update exact registered Takeaway/Product/Products
 labels and the listed related phrases. They do not perform substring replacement
 on business data, customer notes, product names or other languages.
@@ -86,6 +90,13 @@ the change after their normal sync and refresh.
 - Sales invoice PDF item, quantity, price and amount headings. This generator
   currently renders in English and resolves the branch's English profile.
 - Captain's shared Takeaway/Product terminology mapping, with offline cache.
+  New bundles also carry `sourceValues` for exact registered source strings;
+  conflicting uses of the same source text are omitted, rather than guessed.
+  Existing API clients can ignore this additive field. Older servers continue
+  to work with Captain's original mapping. Business data marked `translate="no"`
+  remains excluded.
+- Captain Account → Language shows the published profile name. This comes from
+  the immutable published revision, never its unpublished draft.
 
 Legacy hardcoded text and unrelated export/PDF generators are not automatically
 rewritten. Machine CSV field names are intentionally unchanged. An extension or
@@ -113,3 +124,43 @@ wording delivery tests and both web builds passed, but available agent checkouts
 did not exactly match this checkout's unrelated collection list. Desktop
 installer packaging remains blocked until release versions are aligned. No
 production deployment or customer profile changes were performed for this work.
+
+## Phase tracker — pagination and mobile follow-up
+
+The pagination mockup and implementation are complete locally. The API's
+published-name/source-wording contract and Captain Account display are implemented.
+All shipped POS languages have the two new editor labels, and all Captain
+languages have the five new account labels (AWS Translate, with Nepali supplied
+separately because that service does not support it).
+
+Local evidence: 93 wording/i18n checks passed; Captain's wording isolation test
+and production web build passed. The real Gateway router was exercised against
+disposable MongoDB: create/update/unassignment delivery, two tills, offline
+retention, checkpoint reconnect, tenant isolation and stale duplicate retries.
+This does not prove installed-agent or physical-device delivery.
+
+`scripts/wording-consumer-inventory.js` generates `docs/wording-consumers.json`.
+It records registered references by consumer type and flags document consumers
+without static keys for inspection. It is a static audit, not an exhaustive
+hardcoded-text counter or a claim that every output has been migrated.
+
+Remaining from the broader research phases:
+
+- Complete legacy report/export/template migration and validate actual rendered
+  outputs. Preserve machine-oriented field names and business data.
+- Historical document wording snapshots and custom-template inheritance are
+  not implemented; existing reprints still resolve current wording.
+- Business and Mobile POS integration needs its own implementation and checks.
+  Mobile POS currently has unrelated uncommitted authorization work; do not
+  overwrite it while integrating this contract.
+- Test the exact bundled agent, test-shop upgrade/rollback and physical printers,
+  then coordinate API/desktop/mobile releases. No release is claimed by this
+  local implementation pass.
+
+Work continues on POS branch `feature/wording-pagination-mobile` in
+`C:/Users/Kayal/Documents/Codex/receipt-room-release`, and Captain branch
+`feature/wording-account-status` in
+`C:/Users/Kayal/.codex/worktrees/captain-paper-orders`.
+The POS branch inherits the still-open receipt PR #1447; separate these new
+commits from that PR before opening a standalone promotion. Do not publish that
+unrelated work accidentally.

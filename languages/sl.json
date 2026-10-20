@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "čite obstoječe besedilo ali razšir",
   "lang_wording_takeaway": "away",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "sodobitve, ki se ujemajo z oznakami in podprtimi dodaji/iskanje/ prodajo po Imena izdelkov, opombe in drugi jeziki so nespremenjeni.",
-  "lang_your_wording": "Vaše besedilo"
+  "lang_your_wording": "Vaše besedilo",
+  "lang_wording_changed_only": "Samo spremenjeno",
+  "lang_wording_labels_per_page": "Oznake na stran"
 }

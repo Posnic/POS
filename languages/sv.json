@@ -4974,5 +4974,7 @@
   "lang_wording_search_existing_wording_or_extension": "Sök i befintlig formulering eller tillägg",
   "lang_wording_takeaway": "Takeaway",
   "lang_wording_updates_matching_labels_and_supported_add_search_sales_": "Uppdaterar matchande etiketter och stödda Lägg till/Sök/Försäljning efter fraser. Produktnamn, anteckningar och andra språk är oförändrade.",
-  "lang_your_wording": "Din formulering"
+  "lang_your_wording": "Din formulering",
+  "lang_wording_changed_only": "Ändrad endast",
+  "lang_wording_labels_per_page": "Etiketter per sida"
 }
