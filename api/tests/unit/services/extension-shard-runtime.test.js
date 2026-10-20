@@ -67,3 +67,17 @@ test('invalid package configuration does not stop other shops starting', async (
     'extension_trust_key_missing'
   );
 });
+
+test('a refused queued upgrade still loads previously installed verified packages', async () => {
+  const release = jest.fn();
+  const initialize = jest.fn().mockResolvedValue({ failures: [], release });
+  const log = jest.fn();
+  const queue = { read: () => ({ license: 'invalid' }), apply: jest.fn() };
+  expect(await start({ initialize, queue, options: { root: '/packages' }, log })).toBe(release);
+  expect(queue.apply).not.toHaveBeenCalled();
+  expect(initialize).toHaveBeenCalledWith({});
+  expect(log).toHaveBeenCalledWith(
+    '[EXTENSIONS] Queued installation not applied:',
+    'extension_install_scope_invalid'
+  );
+});

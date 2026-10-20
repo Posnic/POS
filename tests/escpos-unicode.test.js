@@ -211,3 +211,11 @@ test('desktop reports raster failures without spooling or logging a successful b
   assert.equal(app.jobs.length, 0);
   assert.equal(app.logs[0].printers[0].status, 'failed');
 });
+
+test('designed receipt can suppress cutting without changing raster data',async()=>{
+ const {renderDesignedReceipt}=require('../src/escpos-unicode');
+ const render=async()=>[{width:576,height:1,data:Buffer.alloc(72,255).toString('base64')}];
+ const cut=await renderDesignedReceipt('<p>label</p>','80',render);
+ const noCut=await renderDesignedReceipt('<p>label</p>','80',render,{cut:false});
+ assert.ok(cut.length>noCut.length);assert.deepEqual(cut.subarray(0,noCut.length),noCut);
+});

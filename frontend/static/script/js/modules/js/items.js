@@ -1,3 +1,6 @@
+function itemHsnAvailable() {
+    return ['india', 'in', 'ind'].includes(String(PosnicPro.local.get('country_setting') || '').trim().toLowerCase());
+}
 PosnicPro.items = {
     itemStatus: '',
     imageParams: [],
@@ -57,7 +60,7 @@ PosnicPro.items = {
         var settings = {};
         try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) {}
         var taxOff = settings.module_tax_enable === false;
-        var tax = taxOff ? 0 : ($('input[name="hsntax_radio_value"]:checked').val() === 'hsncode' ? $('#hsn_tax').val() : self.selectAttr('#items_tax', 'data-tax-value', 0));
+        var tax = taxOff ? 0 : (itemHsnAvailable() && $('input[name="hsntax_radio_value"]:checked').val() === 'hsncode' ? $('#hsn_tax').val() : self.selectAttr('#items_tax', 'data-tax-value', 0));
         self._previewTimer = setTimeout(function () {
             PosnicPro.post({ url: 'items/pricePreview', data: JSON.stringify({ price: $('#items_selling_price').val(), tax: tax,
                 tax_type: $('input[name="tax_radio_value"]:checked').val(),
@@ -939,7 +942,7 @@ PosnicPro.items = {
         var content = $('#items_description');
         var hsnValue = $("input[name='hsntax_radio_value']:checked").val();
         var tax_value, hsn_code, tax_id, tax_name, tax_method;
-        if (hsnValue === 'hsncode') {
+        if (itemHsnAvailable() && hsnValue === 'hsncode') {
             tax_value = $('#hsn_tax').val();
             hsn_code = $('#items_hsncode').val();
             tax_id = '';
@@ -1237,7 +1240,7 @@ PosnicPro.items = {
 
                 var content = $('#items_description');
                 var hsnValue = $("input[name='hsntax_radio_value']:checked").val();
-                if (hsnValue === 'hsncode') {
+                if (itemHsnAvailable() && hsnValue === 'hsncode') {
                     var tax_value = $('#hsn_tax').val();
                     var hsn_code = $('#items_hsncode').val();
                     var tax_id = '';
@@ -1525,7 +1528,7 @@ PosnicPro.items = {
         });
         let unit = (typeof (data.unit) != "undefined" && data.unit !== null) ? data.unit : "qty";
         $('#item_view_units').text(unit);
-        if (response.data.tax_method === 'default') {
+        if (!itemHsnAvailable() || response.data.tax_method === 'default') {
             $('.item-taxdefault').show();
             $('.item-hsntax').hide();
         } else {
@@ -1863,7 +1866,7 @@ PosnicPro.items = {
                     $('#items_discount_percentage').removeAttr('disabled', 'disabled').show();
                 }
 
-                if (data.hsncode > 0) {
+                if (itemHsnAvailable() && data.hsncode > 0) {
                     $('#item_tax_hsncode').prop('checked', true);
                     $('#hsn_code_show').show();
                     $('#hsn_tax').show().val(data.tax);
@@ -2713,7 +2716,7 @@ PosnicPro.items = {
                 $('#items_sort').val(data.sort_order);
                 $('#items_hsncode').val(data.hsncode);
                 $('#items_hsndescription').val(data.hsndescription);
-                if (data.hsncode > 0) {
+                if (itemHsnAvailable() && data.hsncode > 0) {
                     $('#item_tax_hsncode').prop('checked', true);
                     $('#hsn_code_show').show();
                     $('#hsn_tax').show().val(data.tax);
@@ -5154,6 +5157,7 @@ $('#bar-fontSize').change(function () {
  */
 PosnicPro.items._hsnRows = null;
 PosnicPro.items._hsnLoad = function (done) {
+    if (!itemHsnAvailable()) { done([]); return; }
     if (PosnicPro.items._hsnRows) { done(PosnicPro.items._hsnRows); return; }
     PosnicPro.get({ url: 'items/getJSONhsncode' }, function (data) {
         var rows = (data && data.data && data.data.hsn) || [];
@@ -5393,9 +5397,11 @@ $(document).ready(function () {
     });
     $("#load_price_fields").html('');
 });
+$('#item_tax_hsncode').closest('.custom-control').toggle(itemHsnAvailable());
+$('#items_hsncode').prop('required', false);
 $('.click-tax-value').click(function () {
     var hsnValue = $("input[name='hsntax_radio_value']:checked").val();
-    if (hsnValue === 'hsncode') {
+    if (itemHsnAvailable() && hsnValue === 'hsncode') {
         $('#hsn_code_show').show();
         $('#hsn_tax').show();
         $('#default_tax').hide();

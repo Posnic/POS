@@ -41,11 +41,17 @@ async function applyQueued({ tenants, queue, options }) {
 
 async function start({ initialize, tenants = [], queue, options, log = console.error } = {}) {
   initialize ||= require('./extension-package-loader').initializeInstalledExtensions;
-  try {
-    if (process.env.POSNIC_EXTENSIONS_ROOT || options) {
+  if (process.env.POSNIC_EXTENSIONS_ROOT || options) {
+    try {
       queue ||= require('./extension-install-queue');
       await applyQueued({ tenants, queue, options: options || queue.configuration() });
+    } catch (error) {
+      log('[EXTENSIONS] Queued installation not applied:', error.code || error.message);
     }
+  }
+  // A refused upgrade must not hide independently verified installed packages.
+  // The loader still performs its normal signature and compatibility checks.
+  try {
     const result = await initialize({});
     for (const failure of result.failures || [])
       log('[EXTENSIONS] Package not activated:', failure.id || 'configuration', failure.code);

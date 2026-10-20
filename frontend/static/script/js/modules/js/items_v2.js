@@ -27,7 +27,7 @@
     function readCapabilities() {
         var settings = {};
         try { settings = JSON.parse(P.local.get('general_settings') || '{}'); } catch (_) {}
-        return { restaurant: businessContext === 'restaurant' || (businessContext === null && P.local.get('table_options') === 'enable'), tax: settings.module_tax_enable !== false, weight: settings.hardware_weight_machine_enable === true, online: settings.module_online_ordering_enable !== false };
+        return { restaurant: businessContext === 'restaurant' || (businessContext === null && P.local.get('table_options') === 'enable'), tax: settings.module_tax_enable !== false, hsn: settings.module_tax_enable !== false && ['india', 'in', 'ind'].includes(String(P.local.get('country_setting') || '').trim().toLowerCase()), weight: settings.hardware_weight_machine_enable === true, online: settings.module_online_ordering_enable !== false };
     }
     function loadRestaurantOptions() {
         function fill(id, rows, empty) {
