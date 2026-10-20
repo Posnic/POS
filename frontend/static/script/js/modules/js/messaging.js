@@ -75,7 +75,7 @@ PosnicPro.messaging = {
       esc(p.name) + '</summary><ol class="mt-2 mb-2 pl-3">' +
       steps.map(function (s) { return '<li class="mb-1">' + esc(s) + '</li>'; }).join('') +
       '</ol>' + (url ? '<a href="' + url + '" target="_blank" rel="noopener noreferrer">Official ' + esc(p.name) + ' help / website (opens a new tab)</a>' : '') +
-      (p.id === 'msg91' ? ' · <a href="https://msg91.com/help/text-sms/where-to-find-my-flow-id" target="_blank" rel="noopener noreferrer">Find your MSG91 Template ID</a>' : '') +
+      (p.id === 'msg91' ? ' · <a href="https://msg91.com/help/text-sms/where-to-find-my-flow-id" target="_blank" rel="noopener noreferrer"><lang class="lang_find_your_msg91_template_id">Find your MSG91 Template ID</lang></a>' : '') +
       '</details>';
   },
 
@@ -166,7 +166,7 @@ PosnicPro.messaging = {
     var wrap = $('#messaging_wa_provider_fields').empty();
     if (id === 'meta') return;
     var p = this.waProviders.find(function(p) { return p.id === id; });
-    if (!p) { wrap.text('This provider is not available on this server. Reload settings.'); return; }
+    if (!p) { wrap.text(PosnicPro.i18n.t('lang_this_provider_is_not_available_on_this_ser', 'This provider is not available on this server. Reload settings.')); return; }
     var same = (this.waSaved.provider || 'meta') === id;
     var c = same ? this.waSaved : {}, saved = same ? this.waSecrets : {};
     var help = $('<details class="border rounded p-3 mb-3" open>');
@@ -186,7 +186,7 @@ PosnicPro.messaging = {
     p.fields.forEach(function(f){
       var fieldId='messaging_wa_field_'+f.key;
       var input=$('<input class="form-control wa-provider-field">').attr({id:fieldId,'data-key':f.key,type:f.secret?'password':'text',autocomplete:f.secret?'new-password':'off'});
-      if(f.secret) input.attr('placeholder',saved[f.key]?'Saved — leave blank to keep':''); else input.val(c[f.key] || '');
+      if(f.secret) input.attr('placeholder',saved[f.key]?'Saved - leave blank to keep':''); else input.val(c[f.key] || '');
       row.append($('<div class="col-md-6 mb-3">').append($('<label>').attr('for',fieldId).text(f.label+(f.required?' *':'')),input));
     });
     wrap.append(row);
@@ -205,10 +205,10 @@ PosnicPro.messaging = {
   updateReadiness: function () {
     var enabled = $('#messaging_wa_enabled').is(':checked');
     var scan = $('#messaging_wa_mode').val() !== 'cloud';
-    var reason = !this.settingsLoaded ? 'Loading settings…' : !enabled ? 'Sending is off. Enable WhatsApp above, then save or send a test.' : scan && !this.waConnected ? 'Link your phone before sending a test.' : 'Send a test to your own number to check delivery.';
+    var reason = !this.settingsLoaded ? 'Loading settings…' : !enabled ? 'Sending is off. Enable WhatsApp above, then save or send a test.' : scan && !this.waConnected ? PosnicPro.i18n.t('lang_link_your_phone_before_sending_a_test', 'Link your phone before sending a test.') : PosnicPro.i18n.t('lang_send_a_test_to_your_own_number_to_check_de', 'Send a test to your own number to check delivery.');
     $('#messaging_wa_readiness').text(reason);
     $('#messaging_wa_test_btn').prop('disabled', !this.settingsLoaded || !enabled || (scan && !this.waConnected) || this.testPending);
-    $('#whatsapp_connected_info .alert').text(enabled ? 'Phone linked. Send a test to check message delivery.' : 'Phone linked. Sending is currently off.');
+    $('#whatsapp_connected_info .alert').text(enabled ? PosnicPro.i18n.t('lang_phone_linked_send_a_test_to_check_message', 'Phone linked. Send a test to check message delivery.') : PosnicPro.i18n.t('lang_phone_linked_sending_is_currently_off', 'Phone linked. Sending is currently off.'));
   },
 
   // Draw the credential inputs for the chosen provider. Secret fields that are
@@ -222,7 +222,7 @@ PosnicPro.messaging = {
     }
     $('#messaging_provider_note').html(
       PosnicPro.messaging.setupHelp(p) + (p.id === 'msg91'
-        ? '<div class="alert alert-info mb-2 small">When a receipt template is saved, Send test sends a sample receipt to your number.</div>'
+        ? '<div class="alert alert-info mb-2 small"><lang class="lang_when_a_receipt_template_is_saved_send_test">When a receipt template is saved, Send test sends a sample receipt to your number.</lang></div>'
         : p.freeform === false
         ? '<div class="alert alert-warning mb-2 small">This provider uses approved templates (e.g. India DLT). Campaign text must match a template you registered with them; enter your Template ID below.</div>'
         : '<div class="text-muted small mb-2">Enter the credentials from your ' + PosnicPro.messaging.esc(p.name) + ' account.</div>')
@@ -301,7 +301,7 @@ PosnicPro.messaging = {
     var phone = String($(phoneSel).val() || '').replace(/[\s()-]/g, '');
     var fail = function (message) { $('#messaging_test_result').attr('role','alert').text(message); PosnicPro.alert('error', message); };
     if (!(wa ? $('#messaging_wa_enabled') : $('#messaging_sms_enabled')).is(':checked')) {
-      fail('Sending is off. Enable ' + (wa ? 'WhatsApp' : 'SMS') + ' before testing.'); return;
+      fail('Sending is off. Enable ' + (wa ? PosnicPro.i18n.t('lang_whatsapp', 'WhatsApp') : PosnicPro.i18n.t('lang_sms', 'SMS')) + ' before testing.'); return;
     }
     if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
       fail('Enter the full number with + and country code, for example +919008427482.'); return;
@@ -328,7 +328,7 @@ PosnicPro.messaging = {
         function (res) {
           finish();
           var ok = res && res.type === 'success';
-          var message = ok ? (res.data && res.data.queued ? 'Test queued. Check Message history for the sending result.' : 'Test accepted by the sender. Check ' + (wa ? 'WhatsApp' : 'SMS') + ' on the recipient’s phone to confirm delivery.') : (res && res.message) || 'Test failed. Check your connection and try again.';
+          var message = ok ? (res.data && res.data.queued ? PosnicPro.i18n.t('lang_test_queued_check_message_history_for_the', 'Test queued. Check Message history for the sending result.') : PosnicPro.i18n.t('lang_test_accepted_by_the_sender_check', 'Test accepted by the sender. Check ') + (wa ? PosnicPro.i18n.t('lang_whatsapp', 'WhatsApp') : PosnicPro.i18n.t('lang_sms', 'SMS')) + ' on the recipient’s phone to confirm delivery.') : (res && res.message) || 'Test failed. Check your connection and try again.';
           $('#messaging_test_result').attr('role', ok ? 'status' : 'alert').text(message);
           PosnicPro.alert(ok ? 'success' : 'error', message);
         },

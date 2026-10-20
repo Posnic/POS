@@ -15,25 +15,25 @@ PosnicPro.campaigns = {
 
   mountAudience: function () {
     if ($('#campaign_picker').length) return;
-    if (!$('#campaign_seg_type option[value="customers"]').length) $('#campaign_seg_type').append('<option value="customers">Choose customers</option>');
+    if (!$('#campaign_seg_type option[value="customers"]').length) $('#campaign_seg_type').append('<option value="customers" data-t="lang_choose_customers">Choose customers</option>');
     $('#campaign_seg_type').parent().removeClass('col-md-3').addClass('col-12');
     $('#campaign_seg_category_wrap').hide();
     $('#campaign_seg_type').closest('.form-row').after('<div id="campaign_picker" class="mb-3" hidden>' +
       '<div id="campaign_selected" class="message-choices mb-2" aria-live="polite"></div>' +
-      '<label for="campaign_search">Search by name or phone</label><input id="campaign_search" type="search" class="form-control" autocomplete="off">' +
-      '<div id="campaign_matches" class="message-matches" aria-live="polite"></div><small class="text-muted">Up to 50 matches. Refine your search to find more. Selections stay when you search again.</small></div>');
-    $('#campaign_message').before('<details class="campaign-starters"><summary>Use a message starter</summary><div class="message-choices" aria-label="Message starters">' +
+      '<label for="campaign_search"><lang class="lang_search_by_name_or_phone">Search by name or phone</lang></label><input id="campaign_search" type="search" class="form-control" autocomplete="off">' +
+      '<div id="campaign_matches" class="message-matches" aria-live="polite"></div><small class="text-muted"><lang class="lang_up_to_50_matches_refine_your_search_to_fin">Up to 50 matches. Refine your search to find more. Selections stay when you search again.</lang></small></div>');
+    $('#campaign_message').before('<details class="campaign-starters"><summary>Use a message starter</summary><div class="message-choices" aria-label="Message starters" data-t-aria-label="lang_message_starters">' +
       [['offer','tag','Offer'], ['christmas','gift','Christmas'], ['newyear','sun','New Year'], ['custom','edit-3','Custom']].map(function (p) {
         return '<button type="button" class="btn btn-light" data-message-preset="' + p[0] + '"><i class="feather icon-' + p[1] + ' mr-2" aria-hidden="true"></i>' + p[2] + '</button>';
       }).join('') + '</div></details>');
-    $('#campaign_message').after('<aside class="campaign-preview-panel"><div class="campaign-preview-label">CUSTOMER PREVIEW</div><p class="text-muted small">An example of your message</p><div class="message-preview"><div id="campaign_message_preview"></div></div><p class="text-muted small mt-3">Names and loyalty details are filled in for each customer.</p></aside>');
+    $('#campaign_message').after('<aside class="campaign-preview-panel"><div class="campaign-preview-label"><lang class="lang_customer_preview">CUSTOMER PREVIEW</lang></div><p class="text-muted small"><lang class="lang_an_example_of_your_message">An example of your message</lang></p><div class="message-preview"><div id="campaign_message_preview"></div></div><p class="text-muted small mt-3"><lang class="lang_names_and_loyalty_details_are_filled_in_fo">Names and loyalty details are filled in for each customer.</lang></p></aside>');
     PosnicPro.campaigns.layoutComposer();
   },
 
   layoutComposer: function () {
     var form = $('#campaigns_form_wrap'), body = form.children('.card-body');
     form.addClass('campaign-composer');
-    form.parent().children('p').first().text('Send offers, greetings and updates to your customers.');
+    form.parent().children('p').first().text(PosnicPro.i18n.t('lang_send_offers_greetings_and_updates_to_your', 'Send offers, greetings and updates to your customers.'));
     var meta = $('#campaign_name').closest('.form-row').addClass('campaign-meta');
     var audience = $('#campaign_seg_type').closest('.form-row');
     var message = $('#campaign_message').parent().addClass('campaign-message-field');
@@ -44,19 +44,19 @@ PosnicPro.campaigns = {
     body.append('<div class="campaign-compose-grid"><div class="campaign-editor"></div><div class="campaign-preview-column"></div></div>');
     var editor = body.find('.campaign-editor');
     meta.appendTo(editor);
-    editor.append('<section class="campaign-section campaign-recipients"><h3>Recipients</h3><p class="text-muted small">Choose who should receive this message.</p></section>');
+    editor.append('<section class="campaign-section campaign-recipients"><h3><lang class="lang_recipients">Recipients</lang></h3><p class="text-muted small"><lang class="lang_choose_who_should_receive_this_message">Choose who should receive this message.</lang></p></section>');
     audience.appendTo(editor.find('.campaign-recipients'));
     $('#campaign_picker').appendTo(editor.find('.campaign-recipients'));
     message.appendTo(editor);
     preview.appendTo(body.find('.campaign-preview-column'));
-    $('#campaign_message').siblings('label').text('Your message');
+    $('#campaign_message').siblings('label').text(PosnicPro.i18n.t('lang_your_message', 'Your message'));
     $('#campaign_message').siblings('.mb-1').addClass('campaign-personalise');
     $('#campaign_selected').removeClass('message-choices').addClass('campaign-selection-chips');
-    $('#campaign_picker > small').text('Search and select more than one. Your selections are kept.');
+    $('#campaign_picker > small').text(PosnicPro.i18n.t('lang_search_and_select_more_than_one_your_selec', 'Search and select more than one. Your selections are kept.'));
     var actions = $('#campaign_preview_btn').parent().empty();
-    actions.removeClass().addClass('campaign-footer').append('<button type="button" class="btn btn-link text-muted" id="campaign_form_cancel">Cancel</button><div class="campaign-footer-actions"><button type="button" class="btn btn-light" id="campaign_save_draft">Save draft</button><button type="button" class="btn btn-primary" id="campaign_preview_btn">Review message <span aria-hidden="true">→</span></button></div>');
+    actions.removeClass().addClass('campaign-footer').append('<button type="button" class="btn btn-link text-muted" id="campaign_form_cancel"><lang class="lang_cancel_title">Cancel</lang></button><div class="campaign-footer-actions"><button type="button" class="btn btn-light" id="campaign_save_draft"><lang class="lang_save_draft">Save draft</lang></button><button type="button" class="btn btn-primary" id="campaign_preview_btn">Review message <span aria-hidden="true">→</span></button></div>');
     actions.appendTo(body);
-    body.append('<section id="campaign_review" class="campaign-review" hidden tabindex="-1"><h3>Review before sending</h3><div id="campaign_review_message" class="message-preview"></div><div id="campaign_review_reach"></div><div class="campaign-review-actions"><button type="button" class="btn btn-primary" id="campaign_send_btn">Send now</button><button type="button" class="btn btn-link" id="campaign_edit_again">Back to editing</button></div><details class="campaign-delivery-options"><summary>Scheduling and checks</summary><p class="small text-muted mt-2">Scheduled sending requires the server’s campaign scheduler to be running.</p><label for="campaign_schedule_at">Send at</label><div class="campaign-schedule"><input type="datetime-local" class="form-control" id="campaign_schedule_at"><button type="button" class="btn btn-light" id="campaign_schedule_btn">Schedule</button></div><button type="button" class="btn btn-link" id="campaign_test_btn">Check without sending</button></details></section>');
+    body.append('<section id="campaign_review" class="campaign-review" hidden tabindex="-1"><h3><lang class="lang_review_before_sending">Review before sending</lang></h3><div id="campaign_review_message" class="message-preview"></div><div id="campaign_review_reach"></div><div class="campaign-review-actions"><button type="button" class="btn btn-primary" id="campaign_send_btn"><lang class="lang_send_now">Send now</lang></button><button type="button" class="btn btn-link" id="campaign_edit_again"><lang class="lang_back_to_editing">Back to editing</lang></button></div><details class="campaign-delivery-options"><summary>Scheduling and checks</summary><p class="small text-muted mt-2">Scheduled sending requires the server’s campaign scheduler to be running.</p><label for="campaign_schedule_at"><lang class="lang_send_at">Send at</lang></label><div class="campaign-schedule"><input type="datetime-local" class="form-control" id="campaign_schedule_at"><button type="button" class="btn btn-light" id="campaign_schedule_btn"><lang class="lang_schedule">Schedule</lang></button></div><button type="button" class="btn btn-link" id="campaign_test_btn"><lang class="lang_check_without_sending">Check without sending</lang></button></details></section>');
     $('#campaign_preview_out').remove();
   },
 
@@ -90,7 +90,7 @@ PosnicPro.campaigns = {
       $('#campaign_matches').html(rows.length ? rows.map(function (r) {
         return '<label class="message-match"><input type="checkbox" data-recipient="' + self.esc(r._id) + '" data-name="' + self.esc(r.name || r.phone || 'Unnamed') + '" ' +
           (self._selection[kind][String(r._id)] ? 'checked' : '') + '> <span>' + self.esc(r.name || 'Unnamed') + '<small class="d-block text-muted">' + self.esc(r.phone || '') + '</small></span></label>';
-      }).join('') : '<p class="text-muted py-2">No matches found.</p>');
+      }).join('') : '<p class="text-muted py-2"><lang class="lang_no_matches_found">No matches found.</lang></p>');
     });
   },
 
@@ -250,7 +250,7 @@ PosnicPro.campaigns = {
     $('#campaign_seg_category_wrap').hide();
     $('[data-audience]').each(function () { $(this).attr('aria-pressed', String($(this).data('audience') === t)); });
     $('#campaign_picker').prop('hidden', t !== 'category' && t !== 'customers');
-    $('label[for="campaign_search"]').text(t === 'category' ? 'Search categories' : 'Search customers by name or phone');
+    $('label[for="campaign_search"]').text(t === 'category' ? PosnicPro.i18n.t('lang_search_categories', 'Search categories') : PosnicPro.i18n.t('lang_search_customers_by_name_or_phone', 'Search customers by name or phone'));
     PosnicPro.campaigns.showSelected();
     PosnicPro.campaigns.searchAudience();
   },
@@ -279,7 +279,7 @@ PosnicPro.campaigns = {
     var data = PosnicPro.campaigns.collect();
     if ((data.segment.type === 'category' && !data.segment.category_ids.length) ||
         (data.segment.type === 'customers' && !data.segment.customer_ids.length)) {
-      PosnicPro.alert('error', 'Select at least one customer or category.');
+      PosnicPro.alert('error', PosnicPro.i18n.t('lang_select_at_least_one_customer_or_category', 'Select at least one customer or category.'));
       return;
     }
     if (!data.name) {
@@ -316,10 +316,10 @@ PosnicPro.campaigns = {
 
   preview: function () {
     var self = PosnicPro.campaigns, data = self.collect();
-    if (!data.name || !data.message) { PosnicPro.alert('error', 'Enter a campaign name and message.'); return; }
+    if (!data.name || !data.message) { PosnicPro.alert('error', PosnicPro.i18n.t('lang_enter_a_campaign_name_and_message', 'Enter a campaign name and message.')); return; }
     var seg = data.segment;
     if ((seg.type === 'category' && !seg.category_ids.length) || (seg.type === 'customers' && !seg.customer_ids.length)) {
-      PosnicPro.alert('error', 'Select at least one customer or category.'); return;
+      PosnicPro.alert('error', PosnicPro.i18n.t('lang_select_at_least_one_customer_or_category', 'Select at least one customer or category.')); return;
     }
     var version = ++self._reviewVersion;
     $('#campaign_preview_btn').prop('disabled', true).text('Checking recipients…');

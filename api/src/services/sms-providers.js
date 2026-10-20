@@ -57,7 +57,7 @@ const PROVIDERS = {
 
   vonage_messages: {
     id: 'vonage_messages',
-    name: 'Vonage — Messages API',
+    name: 'Vonage - Messages API',
     scope: 'global',
     freeform: true,
     fields: [
@@ -85,7 +85,7 @@ const PROVIDERS = {
 
   vonage: {
     id: 'vonage',
-    name: 'Vonage — SMS API (Legacy)',
+    name: 'Vonage - SMS API (Legacy)',
     scope: 'global',
     freeform: true,
     fields: [
