@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "Suriin ang bayad na pagwawasto ng bayad na bayad bago i-save",
   "Choose a saved customer for customer credit.": "Pumili ng isang naka-save na customer para sa kredito ng customer.",
   "Exact numeric search must be on or off": "Dapat na naka-on o off ang eksaktong paghahanap sa numero",
-  "Item not found or selling price is held. Review it in Edit prices.": "Hindi natagpuan ang item o ang presyo ng pagbebenta ay hawakan. Suriin ito sa I-edit ang mga presyo."
+  "Item not found or selling price is held. Review it in Edit prices.": "Hindi natagpuan ang item o ang presyo ng pagbebenta ay hawakan. Suriin ito sa I-edit ang mga presyo.",
+  "Branch access required": "Kinakailangan ang access sa branch Kin",
+  "Branch and supported language required": "akailangan ang sangay at sinusuportahang"
 }

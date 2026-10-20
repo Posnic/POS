@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "Irrevedi l-korrezzjoni tal-kont imħallas qabel tiffranka.",
   "Choose a saved customer for customer credit.": "Agħżel klijent ffrankat għall-kreditu tal-klijent.",
   "Exact numeric search must be on or off": "It-tfittxija numerika eżatta trid tkun mixgħula jew mitfija",
-  "Item not found or selling price is held. Review it in Edit prices.": "Oġġett li ma jinstabx jew jinżamm il-prezz tal-bejgħ. Irreveduha f'Editja l-prezzijiet."
+  "Item not found or selling price is held. Review it in Edit prices.": "Oġġett li ma jinstabx jew jinżamm il-prezz tal-bejgħ. Irreveduha f'Editja l-prezzijiet.",
+  "Branch access required": "Aċċess għall-fergħa meħtie",
+  "Branch and supported language required": "ġ Fergħa u lingwa appoġġjata meħtieġa"
 }

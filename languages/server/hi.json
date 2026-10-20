@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "बचत करने से पहले भुगतान किए गए बिल सुधार की समीक्षा करें।",
   "Choose a saved customer for customer credit.": "ग्राहक क्रेडिट के लिए सहेजा गया ग्राहक चुनें।",
   "Exact numeric search must be on or off": "सटीक संख्यात्मक खोज चालू या बंद होनी चाहिए।",
-  "Item not found or selling price is held. Review it in Edit prices.": "आइटम नहीं मिला या बिक्री मूल्य होल्ड किया गया है। कीमतों को संपादित करें में इसकी समीक्षा करें।"
+  "Item not found or selling price is held. Review it in Edit prices.": "आइटम नहीं मिला या बिक्री मूल्य होल्ड किया गया है। कीमतों को संपादित करें में इसकी समीक्षा करें।",
+  "Branch access required": "शाखा का उपयोग आवश्यक",
+  "Branch and supported language required": "शाखा और समर्थित भाषा आवश्यक है"
 }

@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "Прегледајте ја исправката на платената сметка пред да заштедите.",
   "Choose a saved customer for customer credit.": "Изберете зачуван клиент за кредит на клиентите.",
   "Exact numeric search must be on or off": "Точното нумеричко пребарување мора да биде вклучено или исклучено",
-  "Item not found or selling price is held. Review it in Edit prices.": "Предметот не е пронајден или продажната цена се одржува. Прегледајте го во Уреди цени."
+  "Item not found or selling price is held. Review it in Edit prices.": "Предметот не е пронајден или продажната цена се одржува. Прегледајте го во Уреди цени.",
+  "Branch access required": "Потребен е пристап до филијал",
+  "Branch and supported language required": "ата Потребен е гранка и поддржан јазик"
 }

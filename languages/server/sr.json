@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "Pregledajte ispravljanje plaćenog računa pre uštede.",
   "Choose a saved customer for customer credit.": "Izaberite sačuvanog kupca za kredit klijenta.",
   "Exact numeric search must be on or off": "Tačna numerička pretraga mora biti uključena ili isključena",
-  "Item not found or selling price is held. Review it in Edit prices.": "Artikal nije pronađen ili se održava prodajna cena. Pregledajte ga u Uredi cene."
+  "Item not found or selling price is held. Review it in Edit prices.": "Artikal nije pronađen ili se održava prodajna cena. Pregledajte ga u Uredi cene.",
+  "Branch access required": "Potreban je pristup ogran",
+  "Branch and supported language required": "ku Podružnica i podržani jezik"
 }

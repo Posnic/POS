@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "Rishikoni korrigjimin e faturës së paguar para kursimit",
   "Choose a saved customer for customer credit.": "Zgjidhni një klient të ruajtur për kredi të klientit.",
   "Exact numeric search must be on or off": "Kërkimi numerik i saktë duhet të jetë i ndezur ose i fikur",
-  "Item not found or selling price is held. Review it in Edit prices.": "Artikulli nuk gjendet ose çmimi i shitjes mbahet. Rishikoni atë në Redakto çmimet."
+  "Item not found or selling price is held. Review it in Edit prices.": "Artikulli nuk gjendet ose çmimi i shitjes mbahet. Rishikoni atë në Redakto çmimet.",
+  "Branch access required": "Kërkohet qasja në",
+  "Branch and supported language required": "degë Dega dhe gjuha e mbështetur"
 }

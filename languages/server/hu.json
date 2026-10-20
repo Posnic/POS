@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "Megtakarítás előtt tekintse át a fizetett számla korrekcióját.",
   "Choose a saved customer for customer credit.": "Válasszon egy mentett ügyfelet az ügyfélhitelhez.",
   "Exact numeric search must be on or off": "A pontos numerikus keresésnek be- vagy kikapcsolva kell lennie",
-  "Item not found or selling price is held. Review it in Edit prices.": "A tétel nem található, vagy az eladási ár megmarad. Tekintse át az Árak szerkesztése menüpontban."
+  "Item not found or selling price is held. Review it in Edit prices.": "A tétel nem található, vagy az eladási ár megmarad. Tekintse át az Árak szerkesztése menüpontban.",
+  "Branch access required": "Fiókhozzáférés szükséges Fi",
+  "Branch and supported language required": "óktelep és támogatott nyelv szükséges"
 }

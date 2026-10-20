@@ -5559,6 +5559,7 @@ class SalesController extends BaseController {
         data: sale,
         branch: branch,
         res: res,
+        wording: await require('../services/document-wording').loadDocumentWording({ branchId, licenseId: sale.license, locale: 'en' }),
         config: {
           title: 'Sales Invoice.',
           idField: 'sales_id',
@@ -5620,6 +5621,7 @@ class SalesController extends BaseController {
         data: sale,
         branch: branch,
         res: sink,
+        wording: await require('../services/document-wording').loadDocumentWording({ branchId, licenseId: sale.license, locale: 'en' }),
         config: {
           title: 'Sales Invoice.',
           idField: 'sales_id',

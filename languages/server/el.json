@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "Ελέγξτε τη διόρθωση του πληρωμένου λογαριασμού πριν από την αποθήκευση.",
   "Choose a saved customer for customer credit.": "Επιλέξτε έναν αποθηκευμένο πελάτη για πίστωση πελάτη.",
   "Exact numeric search must be on or off": "Η ακριβής αριθμητική αναζήτηση πρέπει να είναι ενεργοποιημένη ή απενεργοποιημένη",
-  "Item not found or selling price is held. Review it in Edit prices.": "Το αντικείμενο δεν βρέθηκε ή διατηρείται η τιμή πώλησης. Ελέγξτε το στην Επεξεργασία τιμών."
+  "Item not found or selling price is held. Review it in Edit prices.": "Το αντικείμενο δεν βρέθηκε ή διατηρείται η τιμή πώλησης. Ελέγξτε το στην Επεξεργασία τιμών.",
+  "Branch access required": "Απαιτείται πρόσβαση σε υποκατάστημα Απαι",
+  "Branch and supported language required": "τείται υποκατάστημα και υποστηριζόμενη γλώσσα"
 }

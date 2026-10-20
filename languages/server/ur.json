@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "بچت سے پہلے ادا شدہ بل اصلاح کا جائزہ لیں۔",
   "Choose a saved customer for customer credit.": "کسٹمر کریڈٹ کے لئے محفوظ کردہ گاہک کا انتخاب",
   "Exact numeric search must be on or off": "عین مطابق عددی تلاش آن یا بند ہونی چاہئے",
-  "Item not found or selling price is held. Review it in Edit prices.": "آئٹم نہیں ملا یا فروخت کی قیمت رکھی گئی ہے۔ قیمتیں ترمیم میں اس کا جائزہ لیں۔"
+  "Item not found or selling price is held. Review it in Edit prices.": "آئٹم نہیں ملا یا فروخت کی قیمت رکھی گئی ہے۔ قیمتیں ترمیم میں اس کا جائزہ لیں۔",
+  "Branch access required": "برانچ تک رسائی در",
+  "Branch and supported language required": "کار برانچ اور معاون زبان کی ضرورت ہے"
 }

@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "ಉಳಿಸುವ ಮೊದಲು ಪಾವತಿಸಿದ ಬಿಲ್ ತಿದ್ದುಪಡಿಯನ್ನು ಪರಿಶೀಲಿಸಿ.",
   "Choose a saved customer for customer credit.": "ಗ್ರಾಹಕ ಕ್ರೆಡಿಟ್ಗಾಗಿ ಉಳಿಸಿದ ಗ್ರಾಹಕರನ್ನು ಆರಿಸಿ.",
   "Exact numeric search must be on or off": "ನಿಖರವಾದ ಸಂಖ್ಯಾ ಹುಡುಕಾಟ ಆನ್ ಅಥವಾ ಆಫ್ ಆಗಿರಬೇಕು",
-  "Item not found or selling price is held. Review it in Edit prices.": "ಐಟಂ ಕಂಡುಬಂದಿಲ್ಲ ಅಥವಾ ಮಾರಾಟದ ಬೆಲೆ ನಡೆಯುತ್ತದೆ. ಸಂಪಾದಿಸಿ ಬೆಲೆಗಳಲ್ಲಿ ಅದನ್ನು ಪರಿಶೀಲಿಸಿ."
+  "Item not found or selling price is held. Review it in Edit prices.": "ಐಟಂ ಕಂಡುಬಂದಿಲ್ಲ ಅಥವಾ ಮಾರಾಟದ ಬೆಲೆ ನಡೆಯುತ್ತದೆ. ಸಂಪಾದಿಸಿ ಬೆಲೆಗಳಲ್ಲಿ ಅದನ್ನು ಪರಿಶೀಲಿಸಿ.",
+  "Branch access required": "ಶಾಖಾ ಪ್ರವೇಶ ಅಗತ್ಯವಿದೆ",
+  "Branch and supported language required": "ಶಾಖೆ ಮತ್ತು ಬೆಂಬಲಿತ ಭಾಷೆ ಅಗತ್ಯವಿದೆ"
 }

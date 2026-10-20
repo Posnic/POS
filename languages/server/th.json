@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "ตรวจสอบการแก้ไขบิลที่ชำระแล้วก่อนบันทึก",
   "Choose a saved customer for customer credit.": "เลือกลูกค้าที่บันทึกไว้สำหรับเครดิตของลูกค้า",
   "Exact numeric search must be on or off": "การค้นหาตัวเลขที่แน่นอนจะต้องเปิดหรือปิด",
-  "Item not found or selling price is held. Review it in Edit prices.": "ไม่พบสินค้า หรือราคาขายถูกเก็บไว้ตรวจสอบในแก้ไขราคา"
+  "Item not found or selling price is held. Review it in Edit prices.": "ไม่พบสินค้า หรือราคาขายถูกเก็บไว้ตรวจสอบในแก้ไขราคา",
+  "Branch access required": "ต้องเข้าถึงสาขา ต้อง",
+  "Branch and supported language required": "ใช้สาขาและภาษาที่รองรับ"
 }

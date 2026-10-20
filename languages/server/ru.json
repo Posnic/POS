@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "Ознакомьтесь с исправлением оплаченного счета, прежде чем экономить.",
   "Choose a saved customer for customer credit.": "Выберите сохраненного клиента для получения клиентского кредита.",
   "Exact numeric search must be on or off": "Точный числовой поиск должен быть включен или выключен",
-  "Item not found or selling price is held. Review it in Edit prices.": "Товар не найден или цена продажи сохранена. Ознакомьтесь с ним в разделе Редактирование цен."
+  "Item not found or selling price is held. Review it in Edit prices.": "Товар не найден или цена продажи сохранена. Ознакомьтесь с ним в разделе Редактирование цен.",
+  "Branch access required": "Требуется доступ к филиалу Требуется",
+  "Branch and supported language required": "ветка и поддерживаемый язык"
 }

@@ -959,5 +959,7 @@
   "Review the paid bill correction before saving.": "Enne säästmist vaadake üle tasutud arve korrigeerimine.",
   "Choose a saved customer for customer credit.": "Valige kliendikrediidi saamiseks salvestatud klient.",
   "Exact numeric search must be on or off": "Täpne numbriline otsing peab olema sisse või välja lülitatud",
-  "Item not found or selling price is held. Review it in Edit prices.": "Kauba ei leitud või müügihinda hoitakse. Vaadake see üle jaotises Muuda hindu."
+  "Item not found or selling price is held. Review it in Edit prices.": "Kauba ei leitud või müügihinda hoitakse. Vaadake see üle jaotises Muuda hindu.",
+  "Branch access required": "Vajalik on juurdepääs filiaalile",
+  "Branch and supported language required": "Vaja on filiaali ja toetatud keelt"
 }
