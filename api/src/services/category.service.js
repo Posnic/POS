@@ -38,7 +38,9 @@ class CategoryService {
         queryFilters.license = new Types.ObjectId(filters.license);
       }
 
-      if (filters.branch_name) {
+      // Stored display names can predate a branch rename. The stable ID is
+      // authoritative; retaining both predicates hides that branch's categories.
+      if (filters.branch_name && !queryFilters.branch_id) {
         queryFilters.branch_name = filters.branch_name;
       }
 
