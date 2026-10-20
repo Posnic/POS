@@ -354,3 +354,7 @@
     #kot_v2 .kv2-category-chips,.kv2-templates{gap:10px}
     .kv2-actions-menu section{gap:6px}
 }
+
+.kv2-dialog [data-room-agreement]:not([hidden]){display:flex;align-items:center;gap:10px;cursor:pointer}
+.kv2-dialog [data-room-agreement] input[type="checkbox"]{width:18px;height:18px;min-height:18px;padding:0;flex:0 0 18px;margin:0}
+.kv2-room-venue{margin:0 0 16px}

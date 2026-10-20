@@ -14,7 +14,7 @@
         var align = contract.formats[format].height ? 'left' : 'center';
         return { fontSize: contract.formats[format].font, blocks: [block('logo', { align: align }), block('store', { align: align, fssaiInHeader: !sheet }), block('transaction', sheet ? {} : { showTitle: false, fontSize: 10 })]
             .concat(['customer_name', 'customer_phone', 'customer_address', 'customer_tax_number'].map(function (field) { return block('field', { field: field }); }))
-            .concat([block('items', sheet ? {} : { itemLayout: 'columns', nameMaxChars: 20, lineStyle: 'dotted', fontSize: format === '58' ? 9 : 11 })].concat(sheet ? [] : [block('field', { field: 'total_quantity' })]).concat([block('totals'), block('text', { text: 'Thank you! Visit again.', align: 'center' })])) };
+            .concat([block('items', sheet ? {} : { itemLayout: 'columns', nameMaxChars: 80, lineStyle: 'dotted', fontSize: format === '58' ? 9 : 11 })].concat(sheet ? [] : [block('field', { field: 'total_quantity' })]).concat([block('totals'), block('text', { text: 'Thank you! Visit again.', align: 'center' })])) };
     }
     function defaults(branch) {
         var result = { version: 1, defaultFormat: branch.print_type === 'a4' ? 'a4' : ['58', '80', '112'].indexOf(branch.print_width) !== -1 ? branch.print_width : '80', layouts: {} };
@@ -29,7 +29,7 @@
                 var key = { order_type: 'dine_type' }[field] || field;
                 if (contract.fieldAvailable(field, branch) && on(branch['bill_print_' + key])) blocks.push(block('field', { field: field }));
             });
-            blocks.push(block('items', { hsn: on(branch.bill_print_hsn), itemLayout: sheet ? 'detailed' : 'columns', nameMaxChars: 20, lineStyle: 'dotted', fontSize: sheet ? undefined : format === '58' ? 9 : 11 }), block('totals'));
+            blocks.push(block('items', { hsn: on(branch.bill_print_hsn), itemLayout: sheet ? 'detailed' : 'columns', nameMaxChars: 80, lineStyle: 'dotted', fontSize: sheet ? undefined : format === '58' ? 9 : 11 }), block('totals'));
             if (on(branch.bill_print_total_qty) || (!sheet && branch.bill_print_total_qty == null)) blocks.push(block('field', { field: 'total_quantity' }));
             if (on(branch.print_sale_notes)) blocks.push(block('field', { field: 'sale_note' }));
             if (branch.footer_print == null) blocks.push(block('text', { text: 'Thank you! Visit again.', align: 'center' }));
@@ -173,7 +173,7 @@
             '.rd-document table{width:100%;border-collapse:collapse;table-layout:fixed;font:inherit;color:inherit;}' +
             '.rd-document th{font-weight:bold;border-top:1px solid #333;border-bottom:1px solid #333;text-align:left;padding:7px 3px;}' +
             '.rd-document td{padding:6px 3px;vertical-align:top;border-bottom:1px solid #ddd;}.rd-document tr{break-inside:avoid;}.rd-document thead{display:table-header-group;}' +
-            '.rd-row-number{white-space:nowrap;vertical-align:top;text-align:left;}.rd-item-fixed{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.rd-total-quantity{font-weight:bold;}' +
+            '.rd-row-number{white-space:nowrap;vertical-align:top;text-align:left;}.rd-item-fixed{white-space:normal;overflow-wrap:anywhere;}.rd-total-quantity{font-weight:bold;}' +
             '.rd-document:not(.rd-sheet) .rd-amount{padding-right:0;}.rd-unit{padding-left:6px!important;}' +
             '.rd-number{text-align:right!important;white-space:normal;}.rd-line-detail{font-size:.88em;color:#444;}' +
             '.rd-total-row{display:flex;justify-content:space-between;gap:12px;margin:3px 0;}.rd-grand-total{font-size:1.3em;font-weight:bold;border-top:2px solid #111;padding-top:7px;margin-top:8px;}' +
@@ -280,6 +280,30 @@
                 var unitWidth = b.showUnit ? 10 : 0;
                 var itemWidth = (hsnColumn ? 36 : sheet ? 46 : columns ? (format === '58' ? 40 : 46) : compact ? 68 : 60) - serialWidth - unitWidth;
                 var widths = sheet ? [12, 20, 22] : columns ? (hsnColumn ? [16, 18, 8, 22] : format === '58' ? [23, 12, 25] : [20, 10, 24]) : [compact ? 32 : 40];
+                if (columns) {
+                    // Reserve only the printed width of each short column. Wider paper
+                    // gives the remaining space to names instead of stretching gaps.
+                    var contentPixels = contract.formats[format].content * 96 / 25.4;
+                    var itemFont = Number(b.fontSize) || layout.fontSize;
+                    var columnWidth = function (heading, entries, padding) {
+                        var characters = Math.max.apply(null, [Array.from(String(heading)).length].concat(entries.map(function (value) { return Array.from(String(value)).length; })));
+                        return (characters * itemFont * 0.62 + padding) / contentPixels * 100;
+                    };
+                    serialWidth = b.showRowNumbers ? columnWidth(b.rowNumberLabel == null ? label('S.No') : b.rowNumberLabel, [Math.max(99, receiptItems.length)], 6) : 0;
+                    unitWidth = b.showUnit ? columnWidth(label('Unit'), receiptItems.map(function (item) { return item.item_unit || ''; }), 9) : 0;
+                    widths = [
+                        columnWidth(label('Rate'), receiptItems.map(function (item) { return Number(item.item_price || 0).toFixed(2); }), 6),
+                        columnWidth(label('Qty'), receiptItems.map(function (item) { return Number(item.item_quantity || 0); }).concat(hasField('total_quantity') ? [values.total_quantity] : []), 6),
+                        columnWidth(label('Amount'), receiptItems.map(function (item) { return Number(item.total_amount || 0).toFixed(2); }), 6)
+                    ];
+                    if (hsnColumn) widths.unshift(columnWidth(PosnicPro.i18n.t('lang_hsn_2', 'HSN'), receiptItems.map(function (item) { return item.hsncode || item.hsn_code || item.hsn || item.tax_name || ''; }), 6));
+                    var reserved = serialWidth + unitWidth + widths.reduce(function (sum, width) { return sum + width; }, 0);
+                    // Extreme values still leave a readable name column on narrow rolls.
+                    var scale = Math.min(1, 75 / reserved);
+                    serialWidth *= scale; unitWidth *= scale;
+                    widths = widths.map(function (width) { return width * scale; });
+                    itemWidth = 100 - serialWidth - unitWidth - widths.reduce(function (sum, width) { return sum + width; }, 0);
+                }
                 if (b.showUnit) widths.splice(sheet ? 1 : widths.length - 1, 0, unitWidth);
                 var unitHeading = b.showUnit ? '<th class="rd-unit">' + esc(label('Unit')) + '</th>' : '';
                 content = '<table' + (columns ? ' class="rd-fixed-columns"' : '') + '><colgroup>' + (b.showRowNumbers ? '<col style="width:' + serialWidth + '%">' : '') + '<col style="width:' + itemWidth + '%">' + widths.map(function (width) { return '<col style="width:' + width + '%">'; }).join('') + '</colgroup><thead><tr>' + (b.showRowNumbers ? '<th class="rd-row-number">' + esc(b.rowNumberLabel == null ? label('S.No') : b.rowNumberLabel) + '</th>' : '') + '<th>' + esc((b.heading || (columns ? label('Item name') : label('Item'))) + (compact ? ' × ' + label('Qty') : '')) + '</th>' + (hsnColumn ? '<th class="rd-number">' + esc(PosnicPro.i18n.t('lang_hsn_2', 'HSN')) + '</th>' : '') + (sheet ? '<th class="rd-number rd-quantity">' + esc(label('Qty')) + '</th>' + unitHeading + '<th class="rd-number">' + esc(label('Unit price')) + '</th>' : (columns ? '<th class="rd-number">' + esc(label('Rate')) + '</th><th class="rd-number rd-quantity">' + esc(label('Qty')) + '</th>' : '') + unitHeading) + '<th class="rd-number rd-amount">' + esc(label('Amount')) + '</th></tr></thead><tbody>';
@@ -289,7 +313,7 @@
                     var name = PosnicPro.printItemName ? PosnicPro.printItemName(item, 'receipt') : item.item_name;
                     if (columns) {
                         var chars = Array.from(String(name || ''));
-                        var limit = b.nameMaxChars || 24;
+                        var limit = b.nameMaxChars || 80;
                         name = chars.length > limit ? chars.slice(0, limit - 1).join('') + '…' : chars.join('');
                     }
                     content += '<tr>' + (b.showRowNumbers ? '<td class="rd-row-number">' + (index + 1) + '</td>' : '') + '<td' + (columns ? ' class="rd-item-fixed"' : '') + '>' + esc(name) + (compact ? ' × ' + esc(qty) : '') + (b.hsn && !hsnColumn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
@@ -380,7 +404,7 @@
             if (data.invoice_terms) notes += '<div class="rd-terms"><strong>' + esc(PosnicPro.i18n.t('lang_terms_conditions', 'Terms & conditions')) + '</strong><br>' + esc(data.invoice_terms) + '</div>';
             if (notes) html += '<div class="rd-invoice-end"><div class="rd-invoice-end-notes">' + notes + '</div></div>';
         }
-        return '<style>' + css(format, layout.fontSize) + (fixedItems ? '.rd-fixed-columns .rd-number{white-space:nowrap;}.rd-fixed-columns td{border-bottom:0;padding-top:2px;padding-bottom:2px;}.rd-fixed-columns th,.rd-total-quantity td,.rd-grand-total{border-color:#333;border-top-style:' + (fixedItems.lineStyle || 'dotted') + ';border-bottom-style:' + (fixedItems.lineStyle || 'dotted') + ';}.rd-transaction{border-bottom-style:' + (fixedItems.lineStyle || 'dotted') + ';}.rd-total-quantity td{border-top:1px ' + (fixedItems.lineStyle || 'dotted') + ' #333;padding-top:6px;}.rd-grand-total{border-top-width:1px;border-bottom:1px ' + (fixedItems.lineStyle || 'dotted') + ' #333;padding-bottom:6px;}' : '') + '</style><article class="rd-document' + (sheet ? ' rd-sheet' : '') + '" data-receipt-design="' + format + '">' + html + '</article>';
+        return '<style>' + css(format, layout.fontSize) + (fixedItems ? '.rd-fixed-columns .rd-number{white-space:normal;overflow-wrap:anywhere;}.rd-fixed-columns td{border-bottom:0;padding-top:2px;padding-bottom:2px;}.rd-fixed-columns th,.rd-total-quantity td,.rd-grand-total{border-color:#333;border-top-style:' + (fixedItems.lineStyle || 'dotted') + ';border-bottom-style:' + (fixedItems.lineStyle || 'dotted') + ';}.rd-transaction{border-bottom-style:' + (fixedItems.lineStyle || 'dotted') + ';}.rd-total-quantity td{border-top:1px ' + (fixedItems.lineStyle || 'dotted') + ' #333;padding-top:6px;}.rd-grand-total{border-top-width:1px;border-bottom:1px ' + (fixedItems.lineStyle || 'dotted') + ' #333;padding-bottom:6px;}' : '') + '</style><article class="rd-document' + (sheet ? ' rd-sheet' : '') + '" data-receipt-design="' + format + '">' + html + '</article>';
     }
     var activeSale = false;
     var printCount = 0;

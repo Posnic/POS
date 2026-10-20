@@ -1703,3 +1703,25 @@ test('fixed Kural preview ignores stale responses and uses the selected verse an
     assert.equal(preview.find('.rd-quote-qr').attr('src'), require('../api/src/data/thirukkural/qr.json')[51]);
     dom.window.close();
 });
+
+
+test('thermal columns reserve content space and give wider rolls more room for names', () => {
+    const { dom, engine, design, sale, $ } = setup();
+    const nameWidths = [];
+    sale.items[0].item_name = 'Everyday notebook with hard cover';
+    for (const format of ['80', '112']) {
+        Object.assign(design.layouts[format].blocks.find(b => b.type === 'items'), {
+            itemLayout: 'columns', showUnit: true, showRowNumbers: true, rowNumberLabel: 'No', nameMaxChars: 80, fontSize: 11
+        });
+        const output = $('<div>').html(engine.render(sale, format, false));
+        const widths = output.find('col').map((_, el) => parseFloat(el.style.width)).get();
+        assert.ok(Math.abs(widths.reduce((a,b)=>a+b,0)-100)<0.000001);
+        assert.ok(widths[0] < (format === '112' ? 6 : 9));
+        assert.equal(output.find('td.rd-item-fixed').text(), sale.items[0].item_name);
+        assert.equal(output.find('thead th').last().text(), 'Amount');
+        nameWidths.push(widths[1]);
+    }
+    assert.ok(nameWidths[1] > nameWidths[0]);
+    assert.ok(nameWidths[1] > 45);
+    dom.window.close();
+});
