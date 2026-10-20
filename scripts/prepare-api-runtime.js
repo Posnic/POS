@@ -119,6 +119,8 @@ function devOnlyTopLevelDirs() {
 // Resolved once: the answer is the same for the whole run, and asking npm is
 // not free.
 const DEV_DROP = fs.existsSync(sourceDir) ? devOnlyTopLevelDirs() : [];
+// Validate dependencies before generating or modifying packaged assets.
+require('./build-wording-catalog');
 const DEV_EXCLUDE = DEV_DROP.map((name) => `-x!${name}`);
 
 function createFingerprint() {

@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "Vyberte uloženého zákazníka pro zákaznický kredit.",
   "Exact numeric search must be on or off": "Přesné číselné vyhledávání musí být zapnuto nebo vypnuto",
   "Item not found or selling price is held. Review it in Edit prices.": "Položka nenalezena nebo je zachována prodejní cena. Zkontrolujte to v Upravit ceny.",
+  "Branch access required": "přístup k pobočce",
+  "Branch and supported language required": "Požaduje se pobočka a podporovaný jazyk",
   "Password must contain between 5 and 20 characters": "Heslo musí obsahovat 5 až 20 znaků"
 }

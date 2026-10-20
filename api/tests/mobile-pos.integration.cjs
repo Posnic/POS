@@ -204,6 +204,26 @@ test('real password login registers phone and downloads live branch catalogue', 
   assert.deepEqual(snapshot.shop.historyPolicy, { days: 90, maxReceipts: 10000 });
 });
 
+test('mobile wording resolves the signed-in branch and refuses caller-selected tenants', async () => {
+  const { WordingProfiles } = require('../src/services/wording-profiles');
+  const service = new WordingProfiles(db.collection('settings'), branch.license);
+  const state = await service.save({
+    name: 'Mobile shop wording', locale: 'en',
+    overrides: { 'posnic.lang_product': 'Item' }, expectedRevision: 0,
+  }, String(user._id));
+  await service.publish({
+    id: state.profiles[0].id, expectedRevision: 1, branches: [String(branch._id)],
+  }, String(user._id), [String(branch._id)]);
+  const result = await call('/mobile/v1/wording?locale=en');
+  assert.equal(result.status, 200);
+  assert.equal(result.data.branchId, String(branch._id));
+  assert.equal(result.data.staffId, String(user._id));
+  assert.equal(result.data.values.lang_product, 'Item');
+  assert.equal((await call('/mobile/v1/wording?locale=en&branchId=' + new ObjectId())).status, 400);
+  assert.equal((await call('/mobile/v1/wording?locale=invalid')).status, 400);
+  assert.equal((await call('/mobile/v1/wording?locale=en', undefined, 'invalid')).status, 401);
+});
+
 test('mobile retention settings are validated and delivered in authenticated bootstrap', async () => {
   const original = await call('/mobile/v1/settings');
   const settings = {
@@ -273,6 +293,9 @@ test('paid cash sale lands in normal desktop sales and concurrent retry deducts 
   assert.equal(saved.sales_total, 21);
   assert.equal(saved.payment_status, 'Paid');
   assert.equal(saved.items[0].item_name, 'Tea');
+  assert.equal(saved.wording_snapshot.schemaVersion, 1);
+  assert.equal(saved.wording_snapshot.branchId, String(branch._id));
+  assert.equal(saved.wording_snapshot.locales.en.values.lang_item, 'Item');
   assert.equal((await db.collection('items').findOne({ _id: item._id })).available_quantity, 98);
   const changed = await call('/mobile/v1/sales', {
     idempotencyKey: s.id,

@@ -48,16 +48,23 @@ class CommonPdfController extends BaseController {
       doc.pipe(fileStream);
       doc.pipe(res);
 
+      const bundle = await require('../services/document-wording').loadDocumentWording({
+        branchId: req.tenantContext?.branchId,
+        licenseId: req.tenantContext?.licenseId,
+        locale: 'en',
+      });
+      const wording = (key, fallback) =>
+        require('../services/document-wording').label(bundle, key, fallback);
       // Add content to PDF based on type
       switch (type) {
         case 'invoice':
-          await this.generateInvoicePdf(doc, content);
+          await this.generateInvoicePdf(doc, content, wording);
           break;
         case 'receipt':
-          await this.generateReceiptPdf(doc, content);
+          await this.generateReceiptPdf(doc, content, wording);
           break;
         case 'report':
-          await this.generateReportPdf(doc, content);
+          await this.generateReportPdf(doc, content, wording);
           break;
         default:
           await this.generateDefaultPdf(doc, content);
@@ -85,39 +92,52 @@ class CommonPdfController extends BaseController {
    * Generate invoice PDF
    * @private
    */
-  async generateInvoicePdf(doc, content) {
+  async generateInvoicePdf(doc, content, wording = (_key, fallback) => fallback) {
     // Add logo if available
     if (content.logo) {
       doc.image(content.logo, 50, 45, { width: 50 });
     }
 
     // Add header
-    doc.fontSize(20).text('INVOICE', { align: 'right' });
+    doc.fontSize(20).text(wording('lang_invoice', 'INVOICE'), { align: 'right' });
     doc.moveDown();
 
     // Add invoice details
     doc.fontSize(12);
-    doc.text(`Invoice #: ${content.invoiceNumber || ''}`, { align: 'left' });
-    doc.text(`Date: ${content.date || new Date().toLocaleDateString()}`, {
+    doc.text(`${wording('lang_invoice', 'Invoice #')}: ${content.invoiceNumber || ''}`, {
       align: 'left',
     });
+    doc.text(
+      `${wording('lang_date_title', 'Date')}: ${content.date || new Date().toLocaleDateString()}`,
+      {
+        align: 'left',
+      }
+    );
     doc.moveDown();
 
     // Add customer information
     if (content.customer) {
-      doc.fontSize(14).text('Bill To:', { underline: true });
+      doc.fontSize(14).text(wording('lang_bill_to', 'Bill To') + ':', { underline: true });
       doc.fontSize(12);
       doc.text(content.customer.name || '');
       if (content.customer.address) doc.text(content.customer.address);
-      if (content.customer.email) doc.text(`Email: ${content.customer.email}`);
-      if (content.customer.phone) doc.text(`Phone: ${content.customer.phone}`);
+      if (content.customer.email)
+        doc.text(`${wording('lang_email_title', 'Email')}: ${content.customer.email}`);
+      if (content.customer.phone)
+        doc.text(`${wording('lang_phone_title', 'Phone')}: ${content.customer.phone}`);
       doc.moveDown();
     }
 
     // Add items table
     if (content.items && content.items.length > 0) {
       this.generateTable(doc, {
-        headers: ['Item', 'Description', 'Quantity', 'Price', 'Total'],
+        headers: [
+          wording('lang_item', 'Item'),
+          wording('lang_description', 'Description'),
+          wording('lang_quantity', 'Quantity'),
+          wording('lang_price_title', 'Price'),
+          wording('lang_total', 'Total'),
+        ],
         rows: content.items.map((item) => [
           item.name || '',
           item.description || '',
@@ -136,16 +156,25 @@ class CommonPdfController extends BaseController {
       doc.fontSize(12);
 
       // Subtotal
-      doc.text('Subtotal:', startX, startY, { width: 100, align: 'right' });
+      doc.text(wording('lang_subtotal', 'Subtotal') + ':', startX, startY, {
+        width: 100,
+        align: 'right',
+      });
       doc.text(this.formatCurrency(content.totals.subtotal || 0), startX + 100, startY);
 
       // Tax
-      doc.text('Tax:', startX, startY + 25, { width: 100, align: 'right' });
+      doc.text(wording('lang_module_tax', 'Tax') + ':', startX, startY + 25, {
+        width: 100,
+        align: 'right',
+      });
       doc.text(this.formatCurrency(content.totals.tax || 0), startX + 100, startY + 25);
 
       // Total
       doc.font('Helvetica-Bold');
-      doc.text('TOTAL:', startX, startY + 50, { width: 100, align: 'right' });
+      doc.text(wording('lang_total', 'TOTAL') + ':', startX, startY + 50, {
+        width: 100,
+        align: 'right',
+      });
       doc.text(this.formatCurrency(content.totals.total || 0), startX + 100, startY + 50);
       doc.font('Helvetica');
     }
@@ -158,22 +187,27 @@ class CommonPdfController extends BaseController {
    * Generate receipt PDF
    * @private
    */
-  async generateReceiptPdf(doc, content) {
+  async generateReceiptPdf(doc, content, wording = (_key, fallback) => fallback) {
     // Similar structure to invoice but with receipt-specific formatting
-    doc.fontSize(20).text('RECEIPT', { align: 'center' });
+    doc.fontSize(20).text(wording('lang_receipt_title', 'RECEIPT'), { align: 'center' });
     doc.moveDown();
 
     doc.fontSize(12);
-    doc.text(`Receipt #: ${content.receiptNumber || ''}`, { align: 'left' });
-    doc.text(`Date: ${content.date || new Date().toLocaleDateString()}`, {
+    doc.text(`${wording('lang_receipt_title', 'Receipt #')}: ${content.receiptNumber || ''}`, {
       align: 'left',
     });
+    doc.text(
+      `${wording('lang_date_title', 'Date')}: ${content.date || new Date().toLocaleDateString()}`,
+      {
+        align: 'left',
+      }
+    );
     doc.moveDown();
 
     // Add receipt items
     if (content.items && content.items.length > 0) {
       this.generateTable(doc, {
-        headers: ['Description', 'Amount'],
+        headers: [wording('lang_description', 'Description'), wording('lang_amount', 'Amount')],
         rows: content.items.map((item) => [
           item.description || '',
           this.formatCurrency(item.amount || 0),
@@ -184,11 +218,13 @@ class CommonPdfController extends BaseController {
     // Add payment information
     if (content.payment) {
       doc.moveDown();
-      doc.text('Payment Method:', { underline: true });
-      doc.text(`Type: ${content.payment.type || ''}`);
-      doc.text(`Amount: ${this.formatCurrency(content.payment.amount || 0)}`);
+      doc.text(wording('lang_payment_method', 'Payment Method') + ':', { underline: true });
+      doc.text(`${wording('lang_type', 'Type')}: ${content.payment.type || ''}`);
+      doc.text(
+        `${wording('lang_amount', 'Amount')}: ${this.formatCurrency(content.payment.amount || 0)}`
+      );
       if (content.payment.reference) {
-        doc.text(`Reference: ${content.payment.reference}`);
+        doc.text(`${wording('lang_reference_title', 'Reference')}: ${content.payment.reference}`);
       }
     }
   }
@@ -197,12 +233,12 @@ class CommonPdfController extends BaseController {
    * Generate report PDF
    * @private
    */
-  async generateReportPdf(doc, content) {
-    doc.fontSize(16).text(content.title || 'REPORT', { align: 'center' });
+  async generateReportPdf(doc, content, wording = (_key, fallback) => fallback) {
+    doc.fontSize(16).text(content.title || wording('lang_report', 'REPORT'), { align: 'center' });
     doc.moveDown();
 
     doc.fontSize(10);
-    doc.text(`Generated on: ${new Date().toLocaleString()}`, {
+    doc.text(`${wording('lang_date_title', 'Generated on')}: ${new Date().toLocaleString()}`, {
       align: 'right',
     });
     doc.moveDown();
@@ -221,7 +257,7 @@ class CommonPdfController extends BaseController {
     // Add summary if available
     if (content.summary) {
       doc.moveDown();
-      doc.fontSize(12).text('Summary:', { underline: true });
+      doc.fontSize(12).text(wording('lang_summary', 'Summary') + ':', { underline: true });
       for (const [key, value] of Object.entries(content.summary)) {
         doc.text(`${key}: ${value}`);
       }

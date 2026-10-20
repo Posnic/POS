@@ -195,6 +195,26 @@ describe('CategoryService', () => {
   // getAllCategories
   // ══════════════════════════════════════════════════════════════════════════
   describe('getAllCategories', () => {
+    test.each([{ branch_id: BRANCH_ID }, { branch_ids: [BRANCH_ID] }])(
+      'branch IDs retain categories after a display-name change: %j',
+      async (scope) => {
+        const saved = makeMockCategory({ branch_name: 'Old shop name' });
+        repo.findAll.mockImplementation(async (query) =>
+          query.branch_name && query.branch_name !== saved.branch_name ? [] : [saved]
+        );
+        const result = await service.getAllCategories({
+          ...scope,
+          branch_name: 'New shop name',
+          license: LICENSE_ID,
+        });
+        expect(result.data).toEqual([saved]);
+        const [query] = repo.findAll.mock.calls[0];
+        expect(query.branch_id).toBeDefined();
+        expect(query.license.toString()).toBe(LICENSE_ID);
+        expect(query).not.toHaveProperty('branch_name');
+      }
+    );
+
     test('returns {status:true, data, message} on success with no filters', async () => {
       const data = [makeMockCategory()];
       repo.findAll.mockResolvedValue(data);

@@ -266,6 +266,11 @@ router.post(
   bindController(salesController.kitchenScreenTickets)
 );
 router.post(
+  '/kitchenScreenWording',
+  ensureKioskKey,
+  bindController(salesController.kitchenScreenWording)
+);
+router.post(
   '/multiKitchenPrint',
   ensureKioskKey,
   bindController(salesController.multiKitchenPrint)

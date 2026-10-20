@@ -160,6 +160,25 @@
   /* The table number is the thing being matched, so it is the biggest thing
      on the card. A cook finds the ticket by table, not by dish. */
   .table { font-size: calc(var(--font) * 1.2); font-weight: 800; letter-spacing: -0.01em; }
+  /* Service identity stays separate from the waiting-time strip and timer. */
+  .ticket { --service-ink: var(--ink); }
+  .ticket.service-parcel { --service-ink: #ffe066; }
+  .ticket.service-room { --service-ink: #70bdff; }
+  .service-venue { display:block;font-size:.65em;line-height:1.4; }
+  .ticket-meta .top > .table {
+    display:flex;align-items:center;justify-content:center;gap:.35em;width:100%;text-align:center;
+    color:var(--service-ink);line-height:1.15;
+  }
+  .service-icon { width:1.7em!important;height:1.7em!important;flex:0 0 1.7em; }
+  .service-label { min-width:0; }
+  .service-task {
+    color:var(--service-ink);text-align:center;font-weight:800;font-size:.6em;
+    border-top:3px solid currentColor;border-bottom:3px solid currentColor;padding:.25em 0;
+  }
+  .service-parcel .service-task { border-top-style:dashed;border-bottom-style:dashed; }
+  .service-room .service-task { border-top-style:double;border-bottom-style:double;border-width:5px; }
+  [data-theme="light"] .service-parcel { --service-ink:#805600; }
+  [data-theme="light"] .service-room { --service-ink:#075a9e; }
 
   .age { font-size: calc(var(--font) * 0.78); color: var(--muted); font-variant-numeric: tabular-nums; }
   .ticket.warm .age { color: var(--warm); font-weight: 700; }
@@ -411,27 +430,40 @@
       return node;
     }
 
+    var tableName = String(ticket.table || '').trim();
+    var roomReference = String(ticket.roomReference || '').trim();
+    var roomName = !!roomReference || /^room\b/i.test(tableName);
+    var serviceKind = ticket.takeaway ? 'parcel' : roomName ? 'room' : 'table';
+    node.classList.add('service-' + serviceKind);
     var top = el('div', 'top');
-    if (cfg.showTable !== false && (ticket.takeaway || String(ticket.table || '').trim())) {
-      var tableLabel = ticket.takeaway ? 'Take Away ' + (ticket.orderNumber || '') : String(ticket.table || '').trim();
-      if (/^(?:T\s*-?\s*)?\d+$/i.test(tableLabel)) tableLabel = 'T - ' + tableLabel.replace(/^T\s*-?\s*/i, '');
-      var heading = el('span', 'table', tableLabel);
+    if (cfg.showTable !== false && (ticket.takeaway || tableName || roomReference)) {
+      var parcelNumber = tableName.replace(/^(?:take\s*away|parcel)\s*[-:#]?\s*/i, '');
+      if (parcelNumber === tableName) parcelNumber = String(ticket.orderNumber || '');
+      var tableLabel = ticket.takeaway ? t('Parcel {number}', {number:parcelNumber})
+        : roomName ? t('Room {number}', {number:(roomReference || tableName).replace(/^room\s*[-:#]?\s*/i, '')})
+        : t('Table {number}', {number:tableName.replace(/^(?:table\s*|T\s*-\s*)/i, '')});
+      var heading = el('span', 'table');
       var kindIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       kindIcon.setAttribute('viewBox', '0 0 24 24');
-      kindIcon.setAttribute('width', '1em'); kindIcon.setAttribute('height', '1em');
+      kindIcon.setAttribute('class', 'service-icon');
       kindIcon.setAttribute('aria-hidden', 'true');
       var kindPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      kindPath.setAttribute('d', ticket.takeaway ? 'M5 7h14l2 14H3L5 7z M9 8V5a3 3 0 0 1 6 0v3' : 'M3 9h18v3H3z M5 12v9 M19 12v9 M5 3v6 M19 3v6');
+      kindPath.setAttribute('d', ticket.takeaway ? 'M5 7h14l2 14H3L5 7z M9 8V5a3 3 0 0 1 6 0v3'
+        : roomName ? 'M3 20V10h18v10 M3 17h18 M5 10V5h14v5 M12 5v5'
+        : 'M5 10h14v3H5z M7 13v8 M17 13v8 M2 5v10h3 M22 5v10h-3');
       kindPath.setAttribute('fill', 'none'); kindPath.setAttribute('stroke', 'currentColor');
-      kindPath.setAttribute('stroke-width', '2'); kindIcon.appendChild(kindPath);
-      kindIcon.style.marginRight = '0.25em';
-      heading.prepend(kindIcon);
+      kindPath.setAttribute('stroke-width', '2'); kindPath.setAttribute('stroke-linejoin', 'round');kindIcon.appendChild(kindPath);
+      heading.appendChild(kindIcon);
+      var serviceLabel = el('span', 'service-label', tableLabel.trim());
+      if (roomName && ticket.venueName) serviceLabel.appendChild(el('small', 'service-venue', ticket.venueName));
+      heading.appendChild(serviceLabel);
       top.appendChild(heading);
     }
     if (cfg.showAge !== false) {
       top.appendChild(el('span', 'age', mins < 60 ? mins + 'm' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'));
     }
     node.appendChild(top);
+    node.appendChild(el('div', 'service-task', t(serviceKind === 'parcel' ? 'PACK' : serviceKind === 'room' ? 'TRAY' : 'PLATE')));
     if (ticket.ownerName) node.appendChild(el('div', 'ordered-by', t('Taken by {name}', {name:ticket.ownerName})));
     if (ticket.preparationNote) node.appendChild(el('div', 'note', ticket.preparationNote));
     if (complete) node.appendChild(el('div', 'item-progress', ticket.items.some(function (i) { return i.readyToCollect > 0; }) ? '✓ Ready to collect' : '↗ Picked up'));
@@ -717,6 +749,11 @@
     }
     if (((config || {}).orderSort || 'oldest') !== ((cfg || {}).orderSort || 'oldest')) page = 0;
     config = cfg || {};
+    if (window.DisplayI18n && window.DisplayI18n.setWording) {
+      var wording = !config.setupMode && config._wording;
+      window.DisplayI18n.setWording(window.DisplayI18n.language,
+        wording && wording.bundles && wording.bundles[window.DisplayI18n.language] || {});
+    }
     $('refresh-orders').hidden = !!config.setupMode;
     cancellationSeen.forEach(function (at, id) { cancellationExpiry.set(id, at + cancelledSeconds() * 1000); });
     updateRotation();

@@ -295,7 +295,7 @@ PosnicPro.sales.view = {
             var chargeViewRows = '';
             data.charges.forEach(function (c) {
                 var cTax = Number(c.tax_amount) || 0;
-                chargeViewRows += '<tr class="charge-view-row"><td>' + $('<i>').text(c.name || 'Charge').html()
+                chargeViewRows += '<tr class="charge-view-row"><td>' + $('<i>').text((c.name || 'Charge') + (c.source === 'room' && Number(c.percent) > 0 ? ' (' + Number(c.percent) + '%)' : '')).html()
                     + (cTax > 0 ? ' <small>(+' + (c.tax_name ? $('<i>').text(c.tax_name).html() : 'tax') + ' ' + cTax.toFixed(2) + ')</small>' : '')
                     + ' :</td>'
                     + '<td class="pull-right">' + currency + '&nbsp;<span class="number">' + (Number(c.amount) || 0).toFixed(2) + '</span></td></tr>';
@@ -1166,7 +1166,7 @@ PosnicPro.sales.view = {
                     var chargesA4 = '';
                     var chargesStd = '';
                     data.charges.forEach(function (c) {
-                        var cName = $('<i>').text(c.name || 'Charge').html();
+                        var cName = $('<i>').text((c.name || 'Charge') + (c.source === 'room' && Number(c.percent) > 0 ? ' (' + Number(c.percent) + '%)' : '')).html();
                         var cAmt = (Number(c.amount) || 0).toFixed(moneyDigits);
                         var cTax = Number(c.tax_amount) || 0;
                         var taxNote = cTax > 0

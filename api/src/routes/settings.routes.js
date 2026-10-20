@@ -2,6 +2,7 @@ const { passwordResetLimiter } = require('../middleware/auth-rate-limit');
 const express = require('express');
 const { demoGuard } = require('../config/demo-mode');
 const router = express.Router();
+router.use('/wording', require('./wording.routes'));
 require('express-validator');
 const { protect } = require('../middleware/auth');
 const { handleValidationErrors } = require('../middleware/validation');

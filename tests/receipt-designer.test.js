@@ -30,6 +30,60 @@ function setup() {
     return { dom, w, $: w.$, branch, design, sale, engine: w.PosnicPro.receiptDesigner };
 }
 
+test('template defaults inherit wording but explicit custom headings remain literal', () => {
+    const { dom, w, engine, sale, $ } = setup();
+    w.eval(read('frontend/static/script/js/core/receipt-design-labels.js'));
+    const words = { lang_item: 'Articles', lang_item_name: 'Article name', lang_qty_title: 'Count' };
+    w.PosnicPro.i18n.t = (key, fallback) => words[key] || fallback;
+    for (const format of Object.keys(contract.formats)) {
+        const items = sale.receipt_designs.layouts[format].blocks.find(b => b.type === 'items');
+        delete items.heading;
+        let output = $('<div>').html(engine.render(sale, format, false));
+        assert.match(output.find('thead').text(), /Articles|Article name/);
+        items.heading = 'Product <special>';
+        output = $('<div>').html(engine.render(sale, format, false));
+        assert.ok(output.find('thead').text().includes('Product <special>'));
+        assert.equal(output.find('special').length, 0);
+        words.lang_item = 'Goods';
+        words.lang_item_name = 'Goods name';
+        output = $('<div>').html(engine.render(sale, format, false));
+        assert.ok(output.find('thead').text().includes('Product <special>'));
+        delete items.heading;
+        output = $('<div>').html(engine.render(sale, format, false));
+        assert.match(output.find('thead').text(), /Goods/);
+        words.lang_item = 'Articles';
+        words.lang_item_name = 'Article name';
+    }
+    dom.window.close();
+});
+
+test('reprints use frozen wording while design previews use current wording', () => {
+    const { dom, w, engine, sale, $ } = setup();
+    w.eval(read('frontend/static/script/js/core/receipt-design-labels.js'));
+    w.PosnicPro.i18n.t = (key, fallback) => key === 'lang_item' ? 'Current article' : fallback;
+    sale.wording_snapshot = { schemaVersion: 1, locales: { en: { values: {
+        lang_item: 'Original article', lang_item_name: 'Original article name'
+    } } } };
+    for (const format of Object.keys(contract.formats)) {
+        delete sale.receipt_designs.layouts[format].blocks.find(b => b.type === 'items').heading;
+        const output = $('<div>').html(engine.render(sale, format, false));
+        assert.match(output.find('thead').text(), /Original article/);
+        assert.ok(!engine.render(sale, format, true).includes('Original article'));
+    }
+    dom.window.close();
+});
+
+test('room charge rate and saved amount print on thermal and A4 designs', () => {
+    const { dom, engine, sale } = setup();
+    sale.charges = [{ name: 'Room service charge', source: 'room', percent: 5, amount: 50, tax_amount: 2.5 }];
+    for (const layout of ['58mm', '80mm', 'a4']) {
+        const html = engine.render(sale, layout, true);
+        assert.ok(html.includes('Room service charge (5%)'));
+        assert.ok(html.includes('50.00'));
+    }
+    dom.window.close();
+});
+
 test('optional units, short row labels and heading render escaped across paper sizes', () => {
     const { dom, engine, sale, $ } = setup();
     sale.receipt_line_rows = [{ name: 'Pipe', qty: 2.5, unit: 'ft', rate: 32, amount: 80 }];

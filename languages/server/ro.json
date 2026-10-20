@@ -960,5 +960,7 @@
   "Choose a saved customer for customer credit.": "Alegeți un client salvat pentru creditul clientului.",
   "Exact numeric search must be on or off": "Căutarea numerică exactă trebuie să fie activată sau dezactivată",
   "Item not found or selling price is held. Review it in Edit prices.": "Articolul nu a fost găsit sau prețul de vânzare este menținut. Examinați-l în Editați prețurile.",
+  "Branch access required": "Este necesar accesul la su",
+  "Branch and supported language required": "cursală Sucursala și limba acceptată",
   "Password must contain between 5 and 20 characters": "Parola trebuie să conțină între 5 și 20 de caractere"
 }

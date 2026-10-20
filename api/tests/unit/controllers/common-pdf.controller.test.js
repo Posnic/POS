@@ -109,6 +109,24 @@ beforeEach(() => {
 });
 
 afterEach(() => jest.restoreAllMocks());
+test('generic invoice wording changes registered headings without altering customer and item data', async () => {
+  const words = { lang_item: 'Article', lang_total: 'Payable', lang_bill_to: 'Buyer' };
+  await ctrl.generateInvoicePdf(
+    mockDoc,
+    {
+      customer: { name: 'Item customer' },
+      items: [{ name: 'Item product', quantity: 1, price: 12 }],
+      totals: { subtotal: 12, total: 12 },
+    },
+    (key, fallback) => words[key] || fallback
+  );
+  const text = mockDoc.text.mock.calls.map((call) => call[0]);
+  expect(text).toContain('Article');
+  expect(text).toContain('Payable:');
+  expect(text).toContain('Buyer:');
+  expect(text).toContain('Item customer');
+  expect(text).toContain('Item product');
+});
 
 // =============================================================================
 // constructor / ensureDirectoryExists
@@ -275,7 +293,7 @@ describe('CommonPdfController — generatePdf (type routing)', () => {
   test('calls generateInvoicePdf for type="invoice" (default)', async () => {
     const spy = jest.spyOn(ctrl, 'generateInvoicePdf').mockResolvedValue();
     await ctrl.generatePdf(mockReq({ body: { content: { invoiceNumber: 'INV-1' } } }), mockRes());
-    expect(spy).toHaveBeenCalledWith(mockDoc, { invoiceNumber: 'INV-1' });
+    expect(spy).toHaveBeenCalledWith(mockDoc, { invoiceNumber: 'INV-1' }, expect.any(Function));
   });
 
   test('calls generateInvoicePdf when type="invoice" is explicit', async () => {
@@ -290,7 +308,7 @@ describe('CommonPdfController — generatePdf (type routing)', () => {
       mockReq({ body: { content: { receiptNumber: 'REC-1' }, type: 'receipt' } }),
       mockRes()
     );
-    expect(spy).toHaveBeenCalledWith(mockDoc, { receiptNumber: 'REC-1' });
+    expect(spy).toHaveBeenCalledWith(mockDoc, { receiptNumber: 'REC-1' }, expect.any(Function));
   });
 
   test('calls generateReportPdf when type="report"', async () => {
@@ -299,7 +317,7 @@ describe('CommonPdfController — generatePdf (type routing)', () => {
       mockReq({ body: { content: { title: 'Sales' }, type: 'report' } }),
       mockRes()
     );
-    expect(spy).toHaveBeenCalledWith(mockDoc, { title: 'Sales' });
+    expect(spy).toHaveBeenCalledWith(mockDoc, { title: 'Sales' }, expect.any(Function));
   });
 
   test('calls generateDefaultPdf for unknown type', async () => {

@@ -68,6 +68,7 @@ router.get('/discovery', (_req, res) =>
     authorization: 'business-pkce-v1',
     audience: 'posnic-business',
     reporting: 'bounded-summary-v2',
+    ...(_req.query.wording === '1' ? { wordingProfiles: 'published-wording-v1' } : {}),
     ...(_req.query.insights === '1' ? { insightReporting: 'bounded-insights-v1' } : {}),
     ...(_req.query.items === '1' ? { itemReporting: 'bounded-items-v1' } : {}),
     ...(_req.query.stock === '1' ? { stockReporting: 'bounded-stock-v1' } : {}),
@@ -447,6 +448,18 @@ router.get(
         await req.businessAccess.contextFor(req.businessIdentity.user),
         req.query,
         { cloud: true }
+      )
+    )
+  )
+);
+router.get(
+  '/wording',
+  wrap(async (req, res) =>
+    res.json(
+      await require('../services/business-wording').readBusinessWording(
+        req.db,
+        await req.businessAccess.contextFor(req.businessIdentity.user),
+        req.query
       )
     )
   )

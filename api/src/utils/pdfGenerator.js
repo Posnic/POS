@@ -70,6 +70,8 @@ function addWatermark(doc, text, options = {}) {
  */
 function generateInvoicePDF(options) {
   const { data, branch, res, config = {} } = options;
+  const wording = (key, fallback) =>
+    require('../services/document-wording').label(options.wording, key, fallback);
 
   const {
     title = 'Sales Invoice.',
@@ -233,8 +235,8 @@ function generateInvoicePDF(options) {
     config.title && config.title !== 'Sales Invoice.'
       ? config.title
       : storeGstinRaw
-        ? 'TAX INVOICE'
-        : 'SALES RECEIPT';
+        ? wording('lang_tax_invoice', 'TAX INVOICE')
+        : wording('lang_sales_receipt', 'SALES RECEIPT');
   let ry = 96;
   doc.font(FB).fontSize(14).fillColor(INK).text(docTitle, xL, ry, {
     width: W,
@@ -279,7 +281,11 @@ function generateInvoicePDF(options) {
   y += 14;
 
   // ---- BILL TO ----
-  doc.font(FB).fontSize(7.5).fillColor(MUTED).text('BILL TO', xL, y, { characterSpacing: 1.2 });
+  doc
+    .font(FB)
+    .fontSize(7.5)
+    .fillColor(MUTED)
+    .text(wording('lang_bill_to', 'BILL TO'), xL, y, { characterSpacing: 1.2 });
   y = doc.y + 3;
   doc.font(FB).fontSize(10.5).fillColor(INK).text(customerName, xL, y, { width: W });
   y = doc.y;
@@ -302,14 +308,21 @@ function generateInvoicePDF(options) {
   const drawItemsHead = (top) => {
     doc.font(FB).fontSize(7.5).fillColor(MUTED);
     doc.text('#', col.no.x, top, { width: col.no.w, characterSpacing: 0.8 });
-    doc.text('ITEM', col.item.x, top, { width: col.item.w, characterSpacing: 0.8 });
-    doc.text('QTY', col.qty.x, top, { width: col.qty.w, align: 'right', characterSpacing: 0.8 });
-    doc.text('PRICE', col.price.x, top, {
+    doc.text(wording('lang_item', 'ITEM'), col.item.x, top, {
+      width: col.item.w,
+      characterSpacing: 0.8,
+    });
+    doc.text(wording('lang_qty_title', 'QTY'), col.qty.x, top, {
+      width: col.qty.w,
+      align: 'right',
+      characterSpacing: 0.8,
+    });
+    doc.text(wording('lang_price_title', 'PRICE'), col.price.x, top, {
       width: col.price.w,
       align: 'right',
       characterSpacing: 0.8,
     });
-    doc.text('AMOUNT', col.amount.x, top, {
+    doc.text(wording('lang_amount', 'AMOUNT'), col.amount.x, top, {
       width: col.amount.w,
       align: 'right',
       characterSpacing: 0.8,
@@ -400,9 +413,10 @@ function generateInvoicePDF(options) {
     y += opts.bold ? 18 : 15;
   };
 
-  totalRow('Total qty', String(totalQty));
-  totalRow('Subtotal', money(subtotal));
-  if (saleExtraDiscount > 0) totalRow('Extra discount', `- ${money(saleExtraDiscount)}`);
+  totalRow(wording('lang_bill_print_total_qty', 'Total qty'), String(totalQty));
+  totalRow(wording('lang_subtotal', 'Subtotal'), money(subtotal));
+  if (saleExtraDiscount > 0)
+    totalRow(wording('lang_extra_discount', 'Extra discount'), `- ${money(saleExtraDiscount)}`);
 
   // the heavy rule before TOTAL - the q-grand border
   doc
@@ -411,14 +425,16 @@ function generateInvoicePDF(options) {
     .lineWidth(1.2)
     .stroke(INK);
   y += 7;
-  totalRow('TOTAL', money(grandTotal), { bold: true });
+  totalRow(wording('lang_total', 'TOTAL'), money(grandTotal), { bold: true });
 
   const partialBalance = parseFloat(data.partial_balance || 0);
   const paymentPending = parseFloat(data.payment_pending || 0);
   const isPartialPayment = data.partial_check === 'true' || data.partial_check === true;
   if (isPartialPayment && partialBalance > 0) {
-    totalRow('Paid', money(partialBalance));
-    totalRow('Balance due', money(paymentPending), { color: '#c0392b' });
+    totalRow(wording('lang_paid', 'Paid'), money(partialBalance));
+    totalRow(wording('lang_balance_due_2', 'Balance due'), money(paymentPending), {
+      color: '#c0392b',
+    });
   }
 
   // ---- payment, quiet block on the left ----
@@ -427,7 +443,11 @@ function generateInvoicePDF(options) {
     .filter(([, amount]) => parseFloat(amount) > 0)
     .map(([method, amount]) => `${method}  ${money(amount)}`);
   const payY = y + 6;
-  doc.font(FB).fontSize(7.5).fillColor(MUTED).text('PAYMENT', xL, payY, { characterSpacing: 1.2 });
+  doc
+    .font(FB)
+    .fontSize(7.5)
+    .fillColor(MUTED)
+    .text(wording('lang_payment', 'PAYMENT'), xL, payY, { characterSpacing: 1.2 });
   doc
     .font(F)
     .fontSize(9)
@@ -495,6 +515,8 @@ function generateInvoicePDF(options) {
  */
 function generateReceivingPDF(options) {
   const { data, branch, res, config = {} } = options;
+  const wording = (key, fallback) =>
+    require('../services/document-wording').label(options.wording, key, fallback);
   const {
     title = 'Purchase Invoice.',
     idField = 'receiving_id',
@@ -660,10 +682,16 @@ function generateReceivingPDF(options) {
     .text(`#${data[idField] || 'N/A'}`, 400, 105, { align: 'right' });
 
   // Date (right side, below invoice ID)
-  doc.fontSize(9).font('Helvetica').text(`Date: ${formattedDate}`, 400, 130, { align: 'right' });
+  doc
+    .fontSize(9)
+    .font('Helvetica')
+    .text(`${wording('lang_date_title', 'Date')}: ${formattedDate}`, 400, 130, { align: 'right' });
 
   // Supplier Details (left side)
-  doc.fontSize(11).font('Helvetica-Bold').text('Supplier Details:', 50, 130);
+  doc
+    .fontSize(11)
+    .font('Helvetica-Bold')
+    .text(wording('lang_supplydetails_title', 'Supplier Details') + ':', 50, 130);
   doc.fontSize(9).font('Helvetica');
   doc.fillColor('#8B0000'); // Dark red/maroon for supplier name
   doc.text(supplierName, 50, 148);
@@ -718,10 +746,21 @@ function generateReceivingPDF(options) {
   doc.fillColor('#000000');
   doc.fontSize(9).font('Helvetica-Bold');
   doc.text('S.No.', col1 + 5, tableTop + 5, { width: col1Width - 10 });
-  doc.text('Description', col2 + 5, tableTop + 5, { width: col2Width - 10 });
-  doc.text('Quantity', col3 + 5, tableTop + 5, { width: col3Width - 10, align: 'center' });
-  doc.text('Price', col4 + 5, tableTop + 5, { width: col4Width - 10, align: 'right' });
-  doc.text('Amount', col5 + 5, tableTop + 5, { width: col5Width - 10, align: 'right' });
+  doc.text(wording('lang_description', 'Description'), col2 + 5, tableTop + 5, {
+    width: col2Width - 10,
+  });
+  doc.text(wording('lang_quantity', 'Quantity'), col3 + 5, tableTop + 5, {
+    width: col3Width - 10,
+    align: 'center',
+  });
+  doc.text(wording('lang_price_title', 'Price'), col4 + 5, tableTop + 5, {
+    width: col4Width - 10,
+    align: 'right',
+  });
+  doc.text(wording('lang_amount', 'Amount'), col5 + 5, tableTop + 5, {
+    width: col5Width - 10,
+    align: 'right',
+  });
 
   // Table Rows
   let y = tableTop + 20;
@@ -831,7 +870,10 @@ function generateReceivingPDF(options) {
     .lineTo(col5, y + rowHeight)
     .stroke();
   doc.fontSize(9).font('Helvetica');
-  doc.text('Total Qty:', col4 + 5, y + 5, { width: col4Width - 10, align: 'right' });
+  doc.text(wording('lang_bill_print_total_qty', 'Total Qty') + ':', col4 + 5, y + 5, {
+    width: col4Width - 10,
+    align: 'right',
+  });
   doc.text(String(totalQty), col5 + 5, y + 5, { width: col5Width - 10, align: 'right' });
   y += rowHeight;
 
@@ -841,7 +883,10 @@ function generateReceivingPDF(options) {
     .moveTo(col5, y)
     .lineTo(col5, y + rowHeight)
     .stroke();
-  doc.text('Subtotal:', col4 + 5, y + 5, { width: col4Width - 10, align: 'right' });
+  doc.text(wording('lang_subtotal', 'Subtotal') + ':', col4 + 5, y + 5, {
+    width: col4Width - 10,
+    align: 'right',
+  });
   doc.text(`${currency} ${subtotal.toFixed(2)}`, col5 + 5, y + 5, {
     width: col5Width - 10,
     align: 'right',
@@ -855,7 +900,10 @@ function generateReceivingPDF(options) {
       .moveTo(col5, y)
       .lineTo(col5, y + rowHeight)
       .stroke();
-    doc.text('Tax:', col4 + 5, y + 5, { width: col4Width - 10, align: 'right' });
+    doc.text(wording('lang_module_tax', 'Tax') + ':', col4 + 5, y + 5, {
+      width: col4Width - 10,
+      align: 'right',
+    });
     doc.text(`${currency} ${tax.toFixed(2)}`, col5 + 5, y + 5, {
       width: col5Width - 10,
       align: 'right',
@@ -870,7 +918,10 @@ function generateReceivingPDF(options) {
     .lineTo(col5, y + rowHeight)
     .stroke();
   doc.fontSize(10).font('Helvetica-Bold');
-  doc.text('TOTAL:', col4 + 5, y + 5, { width: col4Width - 10, align: 'right' });
+  doc.text(wording('lang_total', 'TOTAL') + ':', col4 + 5, y + 5, {
+    width: col4Width - 10,
+    align: 'right',
+  });
   doc.text(`${currency} ${grandTotal.toFixed(2)}`, col5 + 5, y + 5, {
     width: col5Width - 10,
     align: 'right',
@@ -886,7 +937,10 @@ function generateReceivingPDF(options) {
     .lineTo(col5, y + rowHeight)
     .stroke();
   doc.fontSize(9).font('Helvetica');
-  doc.text('Payment:', col4 + 5, y + 5, { width: col4Width - 10, align: 'right' });
+  doc.text(wording('lang_payment', 'Payment') + ':', col4 + 5, y + 5, {
+    width: col4Width - 10,
+    align: 'right',
+  });
   doc.text(paymentMode, col5 + 5, y + 5, { width: col5Width - 10, align: 'right' });
   y += rowHeight;
 
