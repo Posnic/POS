@@ -98,6 +98,9 @@ async function readBusinessInsights(db, context, query, { now = Date.now } = {})
           paid_amount: 1,
           multi_payment: 1,
           payment_mode: 1,
+          table_id: 1,
+          table_number: 1,
+          venue: 1,
         },
       })
       .batchSize(100)
@@ -153,9 +156,11 @@ function summarizeInsights(sales, context, branch, range, checkedAt, deadline = 
     discounts: { amountMinor: 0, bills: 0 },
     returns: { amountMinor: 0, transactions: 0 },
     payments: null,
+    restaurant: null,
     details: [],
   };
   const items = new Map(),
+    tables = new Map(),
     staff = new Map(),
     methods = new Map();
   let itemValid = true,
@@ -177,6 +182,30 @@ function summarizeInsights(sales, context, branch, range, checkedAt, deadline = 
     result.refundsMinor = sum(result.refundsMinor, returned);
     const sold = entries.some((e) => e.completedSales > 0);
     if (sold) result.bills++;
+    if (branch.restaurantEnabled === true) {
+      // Rooms/partner venues can also have a table_number label; never rank them as tables.
+      const label =
+        !sale.venue && ['string', 'number'].includes(typeof sale.table_number)
+          ? String(sale.table_number).trim().slice(0, 100)
+          : '';
+      const tableId = label
+        ? String(sale.table_id || `label:${label}`).slice(0, 254)
+        : 'unrecorded';
+      if (!tables.has(tableId))
+        tables.set(tableId, {
+          id: tableId,
+          name: label || 'No recorded table',
+          bills: 0,
+          billedSalesMinor: 0,
+          refundsMinor: 0,
+          salesAfterReturnsMinor: 0,
+        });
+      const table = tables.get(tableId);
+      if (sold) table.bills++;
+      table.billedSalesMinor = sum(table.billedSalesMinor, billed);
+      table.refundsMinor = sum(table.refundsMinor, returned);
+      table.salesAfterReturnsMinor = sum(table.billedSalesMinor, -table.refundsMinor);
+    }
     // Use recorded ownership, never the device approver or latest payment/handover actor.
     if (context.capabilities.includes('reporting.manage')) {
       const { id: key, name: author } = businessSalesOwner(sale);
@@ -244,7 +273,10 @@ function summarizeInsights(sales, context, branch, range, checkedAt, deadline = 
                 throw Error();
               const value = minorUnits(amount, branch.currencyDigits);
               total = sum(total, value);
-              values.push([method.trim(), value]);
+              const trimmed = method.trim();
+              const canonical =
+                { cash: 'Cash', card: 'Card', upi: 'UPI' }[trimmed.toLowerCase()] || trimmed;
+              values.push([canonical, value]);
             }
             if (total !== paid || paid + pending !== billed) throw Error();
             received = sum(received, paid);
@@ -338,6 +370,18 @@ function summarizeInsights(sales, context, branch, range, checkedAt, deadline = 
     result.staff = [...staff.values()]
       .sort((a, b) => b.salesAfterReturnsMinor - a.salesAfterReturnsMinor)
       .slice(0, 20);
+  if (branch.restaurantEnabled === true) {
+    const rows = [...tables.values()].filter((t) => t.id !== 'unrecorded');
+    const bySales = (a, b) =>
+      b.salesAfterReturnsMinor - a.salesAfterReturnsMinor || a.id.localeCompare(b.id);
+    result.restaurant = {
+      basis: 'recorded-bill-table',
+      bySales: [...rows].sort(bySales).slice(0, 20),
+      byBills: [...rows].sort((a, b) => b.bills - a.bills || bySales(a, b)).slice(0, 20),
+      tableCount: rows.length,
+      withoutTable: tables.get('unrecorded') || null,
+    };
+  }
   if (context.capabilities.includes('tenders.read') && paymentValid)
     result.payments = {
       basis: 'invoice-date',

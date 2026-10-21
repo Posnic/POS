@@ -17,6 +17,45 @@ after(async () => {
   await client?.close();
   await mongo?.stop();
 });
+test('restaurant insights follow the current authorized branch module setting', async () => {
+  const { createBusinessAccess } = require('../src/services/business-access');
+  const license = new ObjectId(),
+    id = new ObjectId(),
+    foreign = new ObjectId();
+  await db.collection('branches').insertMany([
+    {
+      _id: id,
+      license,
+      branch_name: 'Restaurant',
+      currency: 'INR',
+      time_zone: 'UTC',
+      table_options: 'enable',
+    },
+    {
+      _id: foreign,
+      license: new ObjectId(),
+      branch_name: 'Other tenant',
+      currency: 'INR',
+      time_zone: 'UTC',
+      table_options: true,
+    },
+  ]);
+  const user = {
+    _id: new ObjectId(),
+    license,
+    activate: true,
+    usertype: 'admin',
+    branch_access: [{ branch_id: id }, { branch_id: foreign }],
+  };
+  const access = createBusinessAccess(db);
+  const enabled = await access.contextFor(user);
+  assert.equal(enabled.branches.length, 1);
+  assert.equal(enabled.branches[0].restaurantEnabled, true);
+  await db.collection('branches').updateOne({ _id: id }, { $set: { table_options: false } });
+  assert.equal((await access.contextFor(user)).branches[0].restaurantEnabled, false);
+  await db.collection('branches').updateOne({ _id: id }, { $unset: { table_options: '' } });
+  assert.equal((await access.contextFor(user)).branches[0].restaurantEnabled, false);
+});
 test('cloud projection retains Captain and desktop ownership without crediting a later cashier', async () => {
   const businessId = String(new ObjectId()),
     branchId = String(new ObjectId());
@@ -24,9 +63,19 @@ test('cloud projection retains Captain and desktop ownership without crediting a
   const context = {
     businessId,
     capabilities: ['overview.read', 'reporting.manage'],
-    branches: [{ id: branchId, currency: 'INR', currencyDigits: 2, timezone: 'Asia/Kolkata' }],
+    branches: [
+      {
+        id: branchId,
+        currency: 'INR',
+        currencyDigits: 2,
+        timezone: 'Asia/Kolkata',
+        restaurantEnabled: true,
+      },
+    ],
   };
   const base = {
+    table_id: 'table8',
+    table_number: 'Table 8',
     license: businessId,
     branch_id: branchId,
     date: new Date('2026-10-05T06:00:00Z'),
@@ -34,28 +83,26 @@ test('cloud projection retains Captain and desktop ownership without crediting a
     sales_total: 500,
     items_return_total: 0,
   };
-  await db
-    .collection('sales')
-    .insertMany([
-      {
-        ...base,
-        channel: 'tableside',
-        client: { staff_id: captainId, staff_name: 'Rajan' },
-        user_id: 'cashier',
-        user_name: 'Cashier',
-        created_by: 'Owner',
-      },
-      {
-        ...base,
-        channel: 'tableside',
-        client: { staff_id: String(captainId), staff_name: 'Rajan' },
-        kitchen_actor: { name: 'Handover staff' },
-      },
-      { ...base, user_id: 'karthi', user_name: 'Karthi' },
-      { ...base, origin: { actor_id: 'jack', actor_name: 'Jack' } },
-      { ...base },
-      { ...base, license: String(new ObjectId()), user_name: 'Other business' },
-    ]);
+  await db.collection('sales').insertMany([
+    {
+      ...base,
+      channel: 'tableside',
+      client: { staff_id: captainId, staff_name: 'Rajan' },
+      user_id: 'cashier',
+      user_name: 'Cashier',
+      created_by: 'Owner',
+    },
+    {
+      ...base,
+      channel: 'tableside',
+      client: { staff_id: String(captainId), staff_name: 'Rajan' },
+      kitchen_actor: { name: 'Handover staff' },
+    },
+    { ...base, user_id: 'karthi', user_name: 'Karthi' },
+    { ...base, origin: { actor_id: 'jack', actor_name: 'Jack' } },
+    { ...base },
+    { ...base, license: String(new ObjectId()), user_name: 'Other business' },
+  ]);
   const query = { branchId, from: '2026-10-05', to: '2026-10-11' };
   const options = { now: () => Date.parse('2026-10-14T10:00:00Z') };
   const result = await readBusinessInsights(db, context, query, options);
@@ -72,6 +119,8 @@ test('cloud projection retains Captain and desktop ownership without crediting a
     result.staff.reduce((n, s) => n + s.salesAfterReturnsMinor, 0),
     result.salesAfterReturnsMinor
   );
+  assert.equal(result.restaurant.bySales[0].name, 'Table 8');
+  assert.equal(result.restaurant.bySales[0].bills, 5);
   const restricted = await readBusinessInsights(
     db,
     { ...context, capabilities: ['overview.read'] },
