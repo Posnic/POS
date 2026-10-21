@@ -5194,5 +5194,18 @@
   "lang_published_tills_apply_this_revision_after": "게시됨.이 수정 버전은 동기화 이후에도 적용됩니다.",
   "lang_saved_without_branch_assignments_previousl": "브랜치 지정 없이 저장되었습니다.이전에 지정된 지점은 표준 문구를 사용합니다.",
   "lang_search_phrases": "검색 구문",
-  "lang_use_word_rules": "단어 규칙 사용"
+  "lang_use_word_rules": "단어 규칙 사용",
+  "lang_create_profile": "프로필 생성",
+  "lang_duplicate": "복제",
+  "lang_duplicate_profile": "중복 프로필",
+  "lang_new_profile": "새 프로필",
+  "lang_no_custom_profiles_yet": "아직 사용자 지정 프로필이 없습니다.",
+  "lang_rename": "이름 변경",
+  "lang_save_name": "이름 저장",
+  "lang_standard_language_is_in_use_create_a_profi": "표준 언어가 사용 중입니다.프로필을 만들어 문구를 사용자 정의하세요.",
+  "lang_the_copy_starts_without_branch_assignments": "복사는 지점 지정 없이 시작됩니다.",
+  "lang_your_standard_language_stays_unchanged_unt": "문구 변경 내용을 저장할 때까지 표준 언어는 변경되지 않습니다.",
+  "lang_wording_enter_profile_name": "프로필 이름을 입력합니다.",
+  "lang_wording_profile_actions": "프로필 작업",
+  "lang_wording_rename_profile": "프로필 이름 변경"
 }

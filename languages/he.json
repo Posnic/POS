@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "פורסם. עד להחיל גרסה זו לאחר הסנכרון.",
   "lang_saved_without_branch_assignments_previousl": "נשמר ללא הקצאות סניף. סניפים שהוקצו בעבר משתמשים בניסוח סטנדרטי.",
   "lang_search_phrases": "ביטויי חיפוש",
-  "lang_use_word_rules": "השתמש בכללי מילים"
+  "lang_use_word_rules": "השתמש בכללי מילים",
+  "lang_create_profile": "צור פרופיל",
+  "lang_duplicate": "שכפול",
+  "lang_duplicate_profile": "פרופיל כפול",
+  "lang_new_profile": "פרופיל חדש",
+  "lang_no_custom_profiles_yet": "עדיין אין פרופילים מותאמים אישית",
+  "lang_rename": "שינוי שם",
+  "lang_save_name": "שמור שם",
+  "lang_standard_language_is_in_use_create_a_profi": "השפה הסטנדרטית נמצאת בשימוש. צור פרופיל כדי להתאים אישית את הניסוח שלך.",
+  "lang_the_copy_starts_without_branch_assignments": "העותק מתחיל ללא הקצאות סניפים.",
+  "lang_your_standard_language_stays_unchanged_unt": "השפה הרגילה שלך נשארת ללא שינוי עד שתשמור את שינויי הניסוח.",
+  "lang_wording_enter_profile_name": "הזן שם פרופיל.",
+  "lang_wording_profile_actions": "פעולות פרופיל",
+  "lang_wording_rename_profile": "שינוי שם פרופיל"
 }

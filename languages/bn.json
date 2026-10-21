@@ -5194,5 +5194,18 @@
   "lang_published_tills_apply_this_revision_after": "প্রকাশিত। সিঙ্ক্রোনাইজেশনের পরে টিলস এই রিভিশন প্রয়োগ",
   "lang_saved_without_branch_assignments_previousl": "শাখা অ্যাসাইনমেন্ট ছাড়াই সংর আগে নির্ধারিত শাখাগুলি স্ট্যান্ডার্ড শব্দ ব্যবহার করে",
   "lang_search_phrases": "অনুসন্ধান বাক্যাংশ",
-  "lang_use_word_rules": "শব্দ নিয়ম ব্যবহার করুন"
+  "lang_use_word_rules": "শব্দ নিয়ম ব্যবহার করুন",
+  "lang_create_profile": "প্রোফাইল তৈরি করুন",
+  "lang_duplicate": "ডুপ্লিকেট",
+  "lang_duplicate_profile": "নকল প্রোফাইল",
+  "lang_new_profile": "নতুন প্রোফাইল",
+  "lang_no_custom_profiles_yet": "এখনও কোন কাস্টম প্রোফাইল নেই",
+  "lang_rename": "নাম পরিবর্তন করুন",
+  "lang_save_name": "নাম সংরক্ষণ করুন",
+  "lang_standard_language_is_in_use_create_a_profi": "স্ট্যান্ডার্ড ভাষা ব্যবহৃত হচ্ছে। আপনার শব্দগুলি কাস্টমাইজ করতে একটি প্রোফাইল তৈরি করুন।",
+  "lang_the_copy_starts_without_branch_assignments": "অনুলিপি শাখা অ্যাসাইনমেন্ট ছাড়াই শুরু হয়।",
+  "lang_your_standard_language_stays_unchanged_unt": "আপনি শব্দ পরিবর্তনগুলি সংরক্ষণ না করা পর্যন্ত আপনার স্ট্যান্ডার্ড ভাষা অপরি",
+  "lang_wording_enter_profile_name": "একটি প্রোফাইল নাম লিখুন।",
+  "lang_wording_profile_actions": "প্রোফাইল কর্ম",
+  "lang_wording_rename_profile": "প্রোফাইলের নাম পরিবর্তন করুন"
 }

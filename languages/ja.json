@@ -5194,5 +5194,18 @@
   "lang_published_tills_apply_this_revision_after": "公開されました。同期後にこのリビジョンが適用されます。",
   "lang_saved_without_branch_assignments_previousl": "ブランチ割り当てなしで保存されました。以前に割り当てられたブランチは標準的な表現を使います。",
   "lang_search_phrases": "検索フレーズ",
-  "lang_use_word_rules": "単語のルールを使う"
+  "lang_use_word_rules": "単語のルールを使う",
+  "lang_create_profile": "プロフィール作成",
+  "lang_duplicate": "複製",
+  "lang_duplicate_profile": "プロフィールが重複しています。",
+  "lang_new_profile": "新しいプロフィール",
+  "lang_no_custom_profiles_yet": "カスタムプロファイルはまだありません",
+  "lang_rename": "名前を変更",
+  "lang_save_name": "[名前を保存]",
+  "lang_standard_language_is_in_use_create_a_profi": "標準言語が使用されています。プロファイルを作成して文言をカスタマイズしてください。",
+  "lang_the_copy_starts_without_branch_assignments": "コピーはブランチ割り当てなしで開始されます。",
+  "lang_your_standard_language_stays_unchanged_unt": "標準言語は、文言の変更を保存するまで変更されません。",
+  "lang_wording_enter_profile_name": "プロファイル名を入力します。",
+  "lang_wording_profile_actions": "プロファイルアクション",
+  "lang_wording_rename_profile": "プロファイル名の変更"
 }

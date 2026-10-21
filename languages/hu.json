@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Megjelent. Tills a szinkronizálás után alkalmazza ezt a felülvizsgálatot.",
   "lang_saved_without_branch_assignments_previousl": "Elmentett fiókhozzárendelések nélkül. A korábban hozzárendelt ágak szabványos szöveget használnak.",
   "lang_search_phrases": "Keresés kifejezései",
-  "lang_use_word_rules": "Használja a szószabályokat"
+  "lang_use_word_rules": "Használja a szószabályokat",
+  "lang_create_profile": "Profil létrehozása",
+  "lang_duplicate": "Másolat",
+  "lang_duplicate_profile": "Duplikált profil",
+  "lang_new_profile": "Új profil",
+  "lang_no_custom_profiles_yet": "Még nincsenek egyéni profilok",
+  "lang_rename": "Átnevezés",
+  "lang_save_name": "Név mentése",
+  "lang_standard_language_is_in_use_create_a_profi": "A szokásos nyelv használatban van. Hozzon létre egy profilt a megfogalmazás testreszabásához.",
+  "lang_the_copy_starts_without_branch_assignments": "A másolás fiókhozzárendelések nélkül kezdődik.",
+  "lang_your_standard_language_stays_unchanged_unt": "A szokásos nyelv változatlan marad, amíg el nem menti a szövegmódosításokat.",
+  "lang_wording_enter_profile_name": "Adjon meg egy profilnevet.",
+  "lang_wording_profile_actions": "Profilműveletek",
+  "lang_wording_rename_profile": "Profil átnevezése"
 }

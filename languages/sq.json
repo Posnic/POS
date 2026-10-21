@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Publikuar. Tills zbaton këtë rishikim pas sinkronizimit.",
   "lang_saved_without_branch_assignments_previousl": "Ruhet pa detyrat e degës. Degët e caktuara më parë përdorin formulime standarde.",
   "lang_search_phrases": "Frazat e kërkimit",
-  "lang_use_word_rules": "Përdorni rregullat e fjalëve"
+  "lang_use_word_rules": "Përdorni rregullat e fjalëve",
+  "lang_create_profile": "Krijo profil",
+  "lang_duplicate": "Duplikimi",
+  "lang_duplicate_profile": "Profili i kopjimit",
+  "lang_new_profile": "Profil i ri",
+  "lang_no_custom_profiles_yet": "Ende nuk ka profile të personalizuara",
+  "lang_rename": "Riemëroni",
+  "lang_save_name": "Ruaj emrin",
+  "lang_standard_language_is_in_use_create_a_profi": "Gjuha standarde është në përdorim. Krijoni një profil për të personalizuar formulimin tuaj.",
+  "lang_the_copy_starts_without_branch_assignments": "Kopja fillon pa detyra të degës.",
+  "lang_your_standard_language_stays_unchanged_unt": "Gjuha juaj standarde mbetet e pandryshuar derisa të ruani ndryshimet e formulimit",
+  "lang_wording_enter_profile_name": "Shkruani një emër profili.",
+  "lang_wording_profile_actions": "Veprimet e profilit",
+  "lang_wording_rename_profile": "Riemëroni profilin"
 }

@@ -5284,5 +5284,18 @@
   "lang_published_tills_apply_this_revision_after": "Gepubliceerd. Tills past deze revisie toe na synchronisatie.",
   "lang_saved_without_branch_assignments_previousl": "Opgeslagen zonder branchetoewijzingen. Eerder toegewezen filialen gebruiken standaardformuleringen.",
   "lang_search_phrases": "Zoektermen",
-  "lang_use_word_rules": "Gebruik woordregels"
+  "lang_use_word_rules": "Gebruik woordregels",
+  "lang_create_profile": "Profiel aanmaken",
+  "lang_duplicate": "Duplicaat",
+  "lang_duplicate_profile": "Duplicaat profiel",
+  "lang_new_profile": "Nieuw profiel",
+  "lang_no_custom_profiles_yet": "Nog geen aangepaste profielen",
+  "lang_rename": "Hernoemen",
+  "lang_save_name": "Naam opslaan",
+  "lang_standard_language_is_in_use_create_a_profi": "De standaardtaal is in gebruik. Maak een profiel aan om je tekst aan te passen.",
+  "lang_the_copy_starts_without_branch_assignments": "De kopie begint zonder branchetoewijzingen.",
+  "lang_your_standard_language_stays_unchanged_unt": "Uw standaardtaal blijft ongewijzigd totdat u tekstwijzigingen opslaat.",
+  "lang_wording_enter_profile_name": "Voer een profielnaam in.",
+  "lang_wording_profile_actions": "Acties in het profiel",
+  "lang_wording_rename_profile": "Profiel hernoemen"
 }

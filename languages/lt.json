@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Paskelbta. Tills taiko šią pataisą po sinchronizavimo.",
   "lang_saved_without_branch_assignments_previousl": "Išsaugota be filialų užduočių. Anksčiau priskirtos šakos naudoja standartinę formuluotę.",
   "lang_search_phrases": "Ieškoti frazių",
-  "lang_use_word_rules": "Naudokite žodžių taisykles"
+  "lang_use_word_rules": "Naudokite žodžių taisykles",
+  "lang_create_profile": "Sukurti profilį",
+  "lang_duplicate": "Dublikatas",
+  "lang_duplicate_profile": "Pasikartojantys profiliai",
+  "lang_new_profile": "Naujas profilis",
+  "lang_no_custom_profiles_yet": "Dar nėra pasirinktinių profilių",
+  "lang_rename": "Pervardyti",
+  "lang_save_name": "Išsaugoti pavadinimą",
+  "lang_standard_language_is_in_use_create_a_profi": "Vartojama standartinė kalba. Sukurkite profilį, kad pritaikytumėte savo formuluotę.",
+  "lang_the_copy_starts_without_branch_assignments": "Kopija prasideda be šakų užduočių.",
+  "lang_your_standard_language_stays_unchanged_unt": "Jūsų standartinė kalba išlieka nepakitusi tol, kol įrašysite formuluotės pakeitimus.",
+  "lang_wording_enter_profile_name": "Įveskite profilio pavadinimą.",
+  "lang_wording_profile_actions": "Profilio veiksmai",
+  "lang_wording_rename_profile": "Pervardyti profilį"
 }

@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "ಪ್ರಕಟಿಸಲಾಗಿದೆ. ಸಿಂಕ್ರೊನೈಸೇಶನ್ ನಂತರ ಟಿಲ್ಲುಗಳು ಈ ಪರಿಷ್ಕರಣೆಯನ್ನು ಅನ್ವಯಿಸುತ್ತದೆ.",
   "lang_saved_without_branch_assignments_previousl": "ಶಾಖೆ ಕಾರ್ಯಯೋಜನೆಗಳಿಲ್ಲದೆ ಉಳಿಸಲಾಗಿದೆ. ಹಿಂದೆ ನಿಯೋಜಿಸಲಾದ ಶಾಖೆಗಳು ಪ್ರಮಾಣಿತ ಪದಗಳನ್ನು ಬಳಸುತ್ತವೆ.",
   "lang_search_phrases": "ನುಡಿಗಟ್ಟುಗಳನ್ನು ಹುಡುಕಿ",
-  "lang_use_word_rules": "ಪದ ನಿಯಮಗಳನ್ನು ಬಳಸಿ"
+  "lang_use_word_rules": "ಪದ ನಿಯಮಗಳನ್ನು ಬಳಸಿ",
+  "lang_create_profile": "ಪ್ರೊಫೈಲ್ ರಚಿಸಿ",
+  "lang_duplicate": "ನಕಲಿ",
+  "lang_duplicate_profile": "ನಕಲಿ ಪ್ರೊಫೈಲ್",
+  "lang_new_profile": "ಹೊಸ ಪ್ರೊಫೈಲ್",
+  "lang_no_custom_profiles_yet": "ಇನ್ನೂ ಕಸ್ಟಮ್ ಪ್ರೊಫೈಲ್ಗಳಿಲ್ಲ",
+  "lang_rename": "ಮರುಹೆಸರಿಸಿ",
+  "lang_save_name": "ಹೆಸರನ್ನು ಉಳಿಸಿ",
+  "lang_standard_language_is_in_use_create_a_profi": "ಪ್ರಮಾಣಿತ ಭಾಷೆ ಬಳಕೆಯಲ್ಲಿದೆ. ನಿಮ್ಮ ಮಾತುಗಳನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಲು ಪ್ರೊಫೈಲ್ ರಚಿಸಿ.",
+  "lang_the_copy_starts_without_branch_assignments": "ಶಾಖೆಯ ಕಾರ್ಯಯೋಜನೆಗಳಿಲ್ಲದೆ ನಕಲು ಪ್ರಾರಂಭವಾಗುತ್ತದೆ.",
+  "lang_your_standard_language_stays_unchanged_unt": "ನೀವು ಮಾತುಗಳ ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸುವವರೆಗೂ ನಿಮ್ಮ ಪ್ರಮಾಣಿತ ಭಾಷೆ ಬದಲಾಗದೆ ಉಳಿಯುತ್ತದೆ.",
+  "lang_wording_enter_profile_name": "ಪ್ರೊಫೈಲ್ ಹೆಸರನ್ನು ನಮೂದಿಸಿ.",
+  "lang_wording_profile_actions": "ಪ್ರೊಫೈಲ್ ಕ್ರಿಯೆಗಳು",
+  "lang_wording_rename_profile": "ಪ್ರೊಫೈಲ್ ಅನ್ನು ಮರುಹೆಸರಿಸಿ"
 }

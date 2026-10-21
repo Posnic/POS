@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "प्रकाशित किया गया। टिल्स सिंक्रोनाइज़ेशन के बाद इस संशोधन को लागू करते हैं।",
   "lang_saved_without_branch_assignments_previousl": "शाखा असाइनमेंट के बिना सहेजा गया। पहले से असाइन की गई शाखाएं मानक शब्दों का उपयोग करती हैं।",
   "lang_search_phrases": "वाक्यांश खोजें",
-  "lang_use_word_rules": "शब्द नियम इस्तेमाल करें"
+  "lang_use_word_rules": "शब्द नियम इस्तेमाल करें",
+  "lang_create_profile": "प्रोफ़ाइल बनाएं",
+  "lang_duplicate": "डुप्लीकेट",
+  "lang_duplicate_profile": "डुप्लीकेट प्रोफ़ाइल",
+  "lang_new_profile": "नई प्रोफ़ाइल",
+  "lang_no_custom_profiles_yet": "अभी तक कोई कस्टम प्रोफ़ाइल नहीं है",
+  "lang_rename": "नाम बदलें",
+  "lang_save_name": "नाम बचाओ",
+  "lang_standard_language_is_in_use_create_a_profi": "मानक भाषा उपयोग में है। अपने शब्दों को अनुकूलित करने के लिए एक प्रोफ़ाइल बनाएँ।",
+  "lang_the_copy_starts_without_branch_assignments": "कॉपी ब्रांच असाइनमेंट के बिना शुरू होती है।",
+  "lang_your_standard_language_stays_unchanged_unt": "आपकी मानक भाषा तब तक अपरिवर्तित रहती है जब तक आप शब्दों में किए गए परिवर्तनों को सहेज नहीं लेते हैं।",
+  "lang_wording_enter_profile_name": "एक प्रोफ़ाइल नाम दर्ज करें।",
+  "lang_wording_profile_actions": "प्रोफ़ाइल क्रियाएँ",
+  "lang_wording_rename_profile": "प्रोफ़ाइल का नाम बदलें"
 }

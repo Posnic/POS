@@ -5194,5 +5194,18 @@
   "lang_published_tills_apply_this_revision_after": "પ્રકાશિત. ટિલ્સ સિંક્રનાઇઝેશન પછી આ પુનરાવર્તન લાગુ કરે છે.",
   "lang_saved_without_branch_assignments_previousl": "શાખા સોંપણીઓ વિના સાચવવામાં આવ્યું. અગાઉ સોંપેલ શાખાઓ પ્રમાણભૂત શબ્દનો ઉપયોગ કરે છે",
   "lang_search_phrases": "શોધ શબ્દસમૂહો",
-  "lang_use_word_rules": "શબ્દ નિયમોનો ઉપયોગ કરો"
+  "lang_use_word_rules": "શબ્દ નિયમોનો ઉપયોગ કરો",
+  "lang_create_profile": "પ્રોફાઇલ બનાવો",
+  "lang_duplicate": "ડુપ્લિકેટ",
+  "lang_duplicate_profile": "ડુપ્લિકેટ પ્રોફાઇલ",
+  "lang_new_profile": "નવી પ્રોફાઇલ",
+  "lang_no_custom_profiles_yet": "હજી સુધી કોઈ કસ્ટમ પ્રોફાઇલ્સ નથી",
+  "lang_rename": "નામ બદલો",
+  "lang_save_name": "નામ સાચવો",
+  "lang_standard_language_is_in_use_create_a_profi": "પ્રમાણભૂત ભાષા ઉપયોગમાં છે. તમારા શબ્દને કસ્ટમાઇઝ કરવા માટે પ્રોફાઇલ બનાવો.",
+  "lang_the_copy_starts_without_branch_assignments": "કૉપિ શાખા સોંપણીઓ વિના શરૂ થાય છે.",
+  "lang_your_standard_language_stays_unchanged_unt": "જ્યાં સુધી તમે શબ્દોમાં ફેરફારો સાચવો ત્યાં સુધી તમારી માનક ભાષા યથાવત રહે છે",
+  "lang_wording_enter_profile_name": "પ્રોફાઇલ નામ દાખલ કરો.",
+  "lang_wording_profile_actions": "પ્રોફાઇલ ક્રિયાઓ",
+  "lang_wording_rename_profile": "પ્રોફાઇલનું નામ બદલો"
 }

@@ -5194,5 +5194,18 @@
   "lang_published_tills_apply_this_revision_after": "Đã xuất bản. Cho đến khi áp dụng sửa đổi này sau khi đồng bộ hóa.",
   "lang_saved_without_branch_assignments_previousl": "Đã lưu mà không cần gán chi nhánh. Các chi nhánh được chỉ định trước đây sử dụng từ ngữ tiêu chuẩn.",
   "lang_search_phrases": "Cụm từ tìm kiếm",
-  "lang_use_word_rules": "Sử dụng quy tắc từ"
+  "lang_use_word_rules": "Sử dụng quy tắc từ",
+  "lang_create_profile": "Tạo hồ sơ",
+  "lang_duplicate": "Nhân đôi",
+  "lang_duplicate_profile": "Hồ sơ trùng lặp",
+  "lang_new_profile": "Hồ sơ mới",
+  "lang_no_custom_profiles_yet": "Chưa có hồ sơ tùy chỉnh",
+  "lang_rename": "Đổi tên",
+  "lang_save_name": "Lưu tên",
+  "lang_standard_language_is_in_use_create_a_profi": "Ngôn ngữ chuẩn đang được sử dụng. Tạo một hồ sơ để tùy chỉnh từ ngữ của bạn.",
+  "lang_the_copy_starts_without_branch_assignments": "Bản sao bắt đầu mà không cần gán chi nhánh.",
+  "lang_your_standard_language_stays_unchanged_unt": "Ngôn ngữ tiêu chuẩn của bạn không thay đổi cho đến khi bạn lưu các thay đổi từ ngữ.",
+  "lang_wording_enter_profile_name": "Nhập tên hồ sơ.",
+  "lang_wording_profile_actions": "Hành động hồ sơ",
+  "lang_wording_rename_profile": "Đổi tên hồ sơ"
 }

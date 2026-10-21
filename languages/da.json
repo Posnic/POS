@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Udgivet. Tills anvender denne revision efter synkronisering.",
   "lang_saved_without_branch_assignments_previousl": "Gemt uden filialtildelinger. Tidligere tildelte filialer bruger standardformulering.",
   "lang_search_phrases": "Søgesætninger",
-  "lang_use_word_rules": "Brug ordregler"
+  "lang_use_word_rules": "Brug ordregler",
+  "lang_create_profile": "Opret profil",
+  "lang_duplicate": "Duplikat",
+  "lang_duplicate_profile": "Duplikat profil",
+  "lang_new_profile": "Ny profil",
+  "lang_no_custom_profiles_yet": "Ingen brugerdefinerede profiler endnu",
+  "lang_rename": "Omdøb",
+  "lang_save_name": "Gem navn",
+  "lang_standard_language_is_in_use_create_a_profi": "Standardsproget er i brug. Opret en profil for at tilpasse din formulering.",
+  "lang_the_copy_starts_without_branch_assignments": "Kopien starter uden filialtildelinger.",
+  "lang_your_standard_language_stays_unchanged_unt": "Dit standardsprog forbliver uændret, indtil du gemmer ordændringer.",
+  "lang_wording_enter_profile_name": "Indtast et profilnavn.",
+  "lang_wording_profile_actions": "Profilhandlinger",
+  "lang_wording_rename_profile": "Omdøb profil"
 }

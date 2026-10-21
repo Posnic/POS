@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Foilsithe. Cuireann Tills an t-athbhreithniú seo i bhfeidhm tar éis",
   "lang_saved_without_branch_assignments_previousl": "Sábháilte gan tascanna brainse. Úsáideann brainsí a sannadh roimhe seo foclaíocht",
   "lang_search_phrases": "Frásaí cuardaigh",
-  "lang_use_word_rules": "Úsáid rialacha focal"
+  "lang_use_word_rules": "Úsáid rialacha focal",
+  "lang_create_profile": "Cruthaigh próifíl",
+  "lang_duplicate": "Dúblach",
+  "lang_duplicate_profile": "Próifíl dúblach",
+  "lang_new_profile": "Próifíl nua",
+  "lang_no_custom_profiles_yet": "Gan próifílí saincheaptha fós",
+  "lang_rename": "Athainmnigh",
+  "lang_save_name": "Sábháil ainm",
+  "lang_standard_language_is_in_use_create_a_profi": "Tá teanga chaighdeánach in úsáid. Cruthaigh próifíl chun do fhoclaíocht a shaincheapadh.",
+  "lang_the_copy_starts_without_branch_assignments": "Tosaíonn an cóip gan tascanna brainse.",
+  "lang_your_standard_language_stays_unchanged_unt": "Fanann do theanga chaighdeánach gan athrú go dtí go sábhálann tú athruithe",
+  "lang_wording_enter_profile_name": "Cuir isteach ainm próifíle.",
+  "lang_wording_profile_actions": "Gníomhartha prói",
+  "lang_wording_rename_profile": "Athainmnigh próifíl"
 }

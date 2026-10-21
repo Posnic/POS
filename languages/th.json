@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "เผยแพร่Tills ใช้การแก้ไขนี้หลังจากการซิงโครไนซ์",
   "lang_saved_without_branch_assignments_previousl": "บันทึกโดยไม่ต้องมอบหมายสาขาสาขาที่ได้รับมอบหมายก่อนหน้านี้ใช้คำมาตรฐาน",
   "lang_search_phrases": "ค้นหาวลีค้นหา",
-  "lang_use_word_rules": "ใช้กฎคำ"
+  "lang_use_word_rules": "ใช้กฎคำ",
+  "lang_create_profile": "สร้างโปรไฟล์",
+  "lang_duplicate": "ซ้ำกัน",
+  "lang_duplicate_profile": "โปรไฟล์ที่ซ้ำกัน",
+  "lang_new_profile": "โปรไฟล์ใหม่",
+  "lang_no_custom_profiles_yet": "ยังไม่มีโปรไฟล์ที่กำหนดเอง",
+  "lang_rename": "เปลี่ยนชื่อ",
+  "lang_save_name": "บันทึกชื่อ",
+  "lang_standard_language_is_in_use_create_a_profi": "มีการใช้ภาษามาตรฐานสร้างโปรไฟล์เพื่อปรับแต่งคำของคุณ",
+  "lang_the_copy_starts_without_branch_assignments": "สำเนาเริ่มต้นโดยไม่ต้องมอบหมายสาขา",
+  "lang_your_standard_language_stays_unchanged_unt": "ภาษามาตรฐานของคุณจะไม่เปลี่ยนแปลงจนกว่าคุณจะบันทึกการเปลี่ยนแปลงคำ",
+  "lang_wording_enter_profile_name": "ป้อนชื่อโปรไฟล์",
+  "lang_wording_profile_actions": "การกระทำโปรไฟล์",
+  "lang_wording_rename_profile": "เปลี่ยนชื่อโปรไฟล์"
 }
