@@ -112,25 +112,48 @@ router.get(
         writable: authority(),
         locales: supportedLocales(),
         branches: await branches(req),
-        labels: req.query?.catalog === '0' ? undefined : Array.from(svc.labels.values()).map(({ id, english, module }) => ({
-          id,
-          english,
-          module,
-        })),
+        labels:
+          req.query?.catalog === '0'
+            ? undefined
+            : Array.from(svc.labels.values()).map(({ id, english, module }) => ({
+                id,
+                english,
+                module,
+              })),
       },
     });
   })
 );
-router.get('/labels', handler(async (req, res) => {
-  requireAdmin(req);
-  const svc = await service(req);
-  res.json({ type: 'success', data: Array.from(svc.labels.values()).map(({ id, english, module }) => ({ id, english, module })) });
-}));
-router.post('/remove', handler(async (req, res) => {
-  requireAdmin(req, true);
-  const svc = await service(req);
-  res.json({ type: 'success', data: await svc.remove(req.body, req.user?._id || req.user?.id, (await branches(req)).map((b) => b.id)) });
-}));
+router.get(
+  '/labels',
+  handler(async (req, res) => {
+    requireAdmin(req);
+    const svc = await service(req);
+    res.json({
+      type: 'success',
+      data: Array.from(svc.labels.values()).map(({ id, english, module }) => ({
+        id,
+        english,
+        module,
+      })),
+    });
+  })
+);
+router.post(
+  '/remove',
+  handler(async (req, res) => {
+    requireAdmin(req, true);
+    const svc = await service(req);
+    res.json({
+      type: 'success',
+      data: await svc.remove(
+        req.body,
+        req.user?._id || req.user?.id,
+        (await branches(req)).map((b) => b.id)
+      ),
+    });
+  })
+);
 router.put(
   '/draft',
   handler(async (req, res) => {
