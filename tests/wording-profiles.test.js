@@ -84,3 +84,22 @@ test('unsupported future schema is rejected instead of replacing a valid cached 
   assert.throws(() => resolveBundle({ schemaVersion: 2 }, branch, 'en', labels()), /newer Posnic/);
 });
 
+test('deletion removes assignments atomically, preserves revisions and rejects stale clients', async () => {
+  const store = memory(), svc = new WordingProfiles(store, tenant, labels());
+  let state = await svc.save({name:'Shop',locale:'en',overrides:{'posnic.lang_takeaway':'Parcel'},expectedRevision:0}, 'owner');
+  const id = state.profiles[0].id;
+  state = await svc.publish({id,branches:[branch],expectedRevision:1}, 'owner', [branch]);
+  const history = JSON.stringify(state.profiles[0].revisions);
+  await assert.rejects(svc.remove({id,expectedRevision:2}, 'owner', []), /every assigned branch/);
+  assert.equal((await svc.read()).revision, 2);
+  state = await svc.remove({id,expectedRevision:2}, 'owner', [branch]);
+  assert.ok(state.profiles[0].deletedAt);
+  assert.equal(JSON.stringify(state.profiles[0].revisions), history);
+  assert.deepEqual({...resolveBundle(state,branch,'en',labels()).values}, {});
+  await assert.rejects(svc.save({id,name:'Old client',locale:'en',overrides:{},expectedRevision:2}, 'owner'), /Reload/);
+  await assert.rejects(svc.save({id,name:'Old client',locale:'en',overrides:{},expectedRevision:3}, 'owner'), /deleted/);
+  await assert.rejects(svc.publish({id,branches:[branch],expectedRevision:3}, 'owner',[branch]), /active profile/);
+  const other = new WordingProfiles(store,'cccccccccccccccccccccccc',labels());
+  assert.equal((await other.read()).profiles.length, 0);
+});
+

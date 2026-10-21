@@ -25,7 +25,7 @@ test('simple screen saves rules and publishes with no profile-name or apply step
  d.window.eval(fs.readFileSync('frontend/static/script/js/modules/js/wording-editor.js','utf8'));
  d.window.PosnicPro.wordingEditor.open();const doc=d.window.document;
  for(const [field,value] of [['from','Item'],['to','Product']]){const el=doc.querySelector('[data-field="'+field+'"]');el.value=value;el.dispatchEvent(new d.window.Event('input',{bubbles:true}));}
- assert.equal(doc.querySelector('#wording-advanced').open,false);
+ assert.equal(doc.querySelector('#wording-advanced').hidden,true);
  assert.equal(doc.querySelector('#wording-group'),null);
  doc.querySelector('#wording-publish').click();
  assert.deepEqual(calls[0].rules,[{from:'Item',to:'Product'}]);assert.equal(calls[0].name,'Shop wording — en');assert.deepEqual(calls[1].branches,['b']);d.window.close();

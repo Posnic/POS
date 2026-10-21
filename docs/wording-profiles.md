@@ -320,3 +320,25 @@ not yet merged or packaged for offline tills. Offline API consumers must receive
 the new rule resolver; existing mobile clients consume resolved values from this
 updated server. New demo UI copy still needs translation catalog integration.
 Backup: /home/ubuntu/apps/staging/before-simple-wording-demo.tgz.
+
+### Tabbed editor and profile management (21 October 2026)
+
+Profile, language and multiple branch assignments are at the top. Replace words
+is the initial tab. Advanced fetches its label catalog on first access, shows
+added wording first, and retains searchable pagination. Manage profiles supports
+new profiles, rename through the name field, duplication without assignments,
+and confirmed deletion showing persisted affected branches. Switching profiles
+warns about unsaved edits; changing a saved profile's base language is blocked.
+
+Deletion writes a tombstone and removes assignments in the same revision-checked
+tenant settings write. Immutable published revisions remain stored. Paired tills
+cannot write; cloud is authoritative. No new collection or Gateway lane is needed:
+the existing settings lane transports this entire document and its update time.
+Stale writes cannot resurrect a deleted profile. Publishing/deleting a profile
+assigned outside the administrator's branch access is refused.
+
+Local evidence includes editor interaction tests, API authorization and deletion
+regressions, document snapshot/PDF tests, and the actual disposable Gateway
+two-till pull/reconnect test extended to verify deletion and stale retry rejection.
+Physical installed-device confirmation remains a rollout check; a cloud deployment
+does not update old offline API binaries with the word-rule resolver.

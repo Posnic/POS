@@ -117,7 +117,7 @@ function resolveBundle(state, branch, locale, labels) {
   if (state.schemaVersion !== 1)
     throw Object.assign(new Error('This profile requires a newer Posnic version'), { status: 409 });
   const assignment = state.assignments?.[branch]?.[locale];
-  const profile = state.profiles?.find((p) => p.id === assignment?.profileId);
+  const profile = state.profiles?.find((p) => !p.deletedAt && p.id === assignment?.profileId);
   const revision = profile?.revisions.find((r) => r.id === assignment?.revisionId);
   const values = Object.create(null);
   if (revision?.locale === locale && revision.rules?.length) {
@@ -224,8 +224,9 @@ class WordingProfiles {
     const draft = validateDraft(input, this.labels, supportedLocales());
     return this.update(input.expectedRevision, actor, (state) => {
       let profile = state.profiles.find((p) => p.id === input.id);
+      if (profile?.deletedAt) fail('Profile was deleted. Reload before saving.', 409);
       if (!profile) {
-        if (input.id || state.profiles.length >= 30)
+        if (input.id || state.profiles.filter((p) => !p.deletedAt).length >= 30)
           fail('Profile not found or profile limit reached');
         profile = { id: crypto.randomUUID(), revisions: [] };
         state.profiles.push(profile);
@@ -236,8 +237,11 @@ class WordingProfiles {
   async publish(input, actor, allowedBranches) {
     return this.update(input.expectedRevision, actor, (state) => {
       const profile = state.profiles.find((p) => p.id === input.id);
-      if (!profile?.draft) fail('Save the profile first');
+      if (!profile?.draft || profile.deletedAt) fail('Save an active profile first');
       const draft = validateDraft(profile.draft, this.labels, supportedLocales());
+      if (Object.entries(state.assignments).some(([branch, locales]) =>
+        !allowedBranches.includes(branch) && Object.values(locales).some((a) => a.profileId === profile.id)))
+        fail('Access to every assigned branch is required to publish this profile', 403);
       if (
         !Array.isArray(input.branches) ||
         input.branches.some((b) => !allowedBranches.includes(b))
@@ -261,6 +265,22 @@ class WordingProfiles {
           revisionId: revision.id,
         };
       }
+    });
+  }
+  async remove(input, actor, allowedBranches) {
+    return this.update(input.expectedRevision, actor, (state) => {
+      const profile = state.profiles.find((p) => p.id === input.id && !p.deletedAt);
+      if (!profile) fail('Profile not found');
+      const assigned = Object.entries(state.assignments).filter(([, locales]) =>
+        Object.values(locales).some((a) => a.profileId === profile.id));
+      if (assigned.some(([branch]) => !allowedBranches.includes(branch)))
+        fail('Access to every assigned branch is required to delete this profile', 403);
+      for (const [, locales] of assigned)
+        for (const [locale, assignment] of Object.entries(locales))
+          if (assignment.profileId === profile.id) delete locales[locale];
+      // Keep immutable revisions and a tombstone in the synchronized settings document.
+      profile.deletedAt = new Date();
+      profile.deletedBy = String(actor);
     });
   }
 }
