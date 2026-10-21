@@ -64,6 +64,7 @@ function branchInfo(branch) {
     currency,
     currencyDigits,
     timezone: branch.time_zone,
+    restaurantEnabled: [true, 'true', 'enable', 1, '1'].includes(branch.table_options),
   };
 }
 
@@ -110,7 +111,15 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
               _id: { $in: ids.map((id) => new ObjectId(id)) },
               license: user.license,
             },
-            { projection: { branch_name: 1, currency: 1, currency_value: 1, time_zone: 1 } }
+            {
+              projection: {
+                branch_name: 1,
+                currency: 1,
+                currency_value: 1,
+                time_zone: 1,
+                table_options: 1,
+              },
+            }
           )
           .sort({ branch_name: 1, _id: 1 })
           .limit(100)
