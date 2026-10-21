@@ -1,5 +1,6 @@
 #receipt-designer { --rd-border: #dce3ee; --rd-soft: #f5f7fb; --rd-ink: #203047; color: var(--rd-ink); }
 #receipt-designer * { box-sizing: border-box; }
+.card:has(#core-tab-wording.active) > .card-footer,
 .card:has(#core-tab-print.active) > .card-footer { display: none; }
 .card:has(#core-tab-inventory.active #inv-sub-packaging.active) > .card-footer,
 .card:has(#core-tab-inventory.active #inv-sub-stock.active) > .card-footer,
