@@ -5311,5 +5311,6 @@
   "lang_sms_reports_text_summary": "SMSsendet eine Textzusammenfassung, keinen PDF-Link. Bei längeren Zusammenfassungen kann mehr als eine SMS verwendet werden. Ihr SMS Anbieter muss diese Nachricht zulassen oder über eine genehmigte Vorlage verfügen.",
   "lang_ssl_tls_usually_465": "SSL/TLS (normalerweise 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (normalerweise 587 oder 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Verwenden Sie Posnic Cloud-E-Mail oder verbinden Sie Ihr eigenes Konto für Rechnungen und Berichte."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Verwenden Sie Posnic Cloud-E-Mail oder verbinden Sie Ihr eigenes Konto für Rechnungen und Berichte.",
+  "lang_send_this_report_automatically": "Diesen Bericht automatisch senden"
 }

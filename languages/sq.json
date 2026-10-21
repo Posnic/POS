@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSdërgon një përmbledhje teksti, jo një lidhje PDF. Përmbledhjet më të gjata mund të përdorin më shumë se njëSMS. Ofru SMS esi juaj duhet të lejojë këtë mesazh ose të ketë një model të aprovuar.",
   "lang_ssl_tls_usually_465": "SSL/TLS (zakonisht 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (zakonisht 587 ose 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Përdor Posnic ni email cloud ose lidhni llogarinë tuaj për faturat dhe raportet."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Përdor Posnic ni email cloud ose lidhni llogarinë tuaj për faturat dhe raportet.",
+  "lang_send_this_report_automatically": "Dërgo këtë raport automatikisht"
 }

@@ -5233,5 +5233,6 @@
   "lang_sms_reports_text_summary": "SMSPDF リンクではなく、テキストサマリーを送信します。要約が長くなると、SMS複数の要約が使用されることがあります。SMSプロバイダーがこのメッセージを許可するか、承認済みのテンプレートを用意している必要があります。",
   "lang_ssl_tls_usually_465": "SSL/TLS (通常は 465)",
   "lang_starttls_usually_587_or_2525": "StartTLS (通常は 587 または 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "請求書やレポートには、Posnicクラウドメールを使用するか、独自のアカウントを接続してください。"
+  "lang_use_posnic_cloud_email_or_connect_your_own": "請求書やレポートには、Posnicクラウドメールを使用するか、独自のアカウントを接続してください。",
+  "lang_send_this_report_automatically": "このレポートを自動的に送信する"
 }
