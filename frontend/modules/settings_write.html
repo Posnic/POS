@@ -22,7 +22,6 @@
                             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist"
                                 aria-orientation="vertical">
                                 <div class="settings-nav-group"><lang class="lang_navgroup_store">Store</lang></div>
-                                <a class="nav-link mb-2" id="v-pills-wording-tab" data-toggle="pill" href="#v-pills-wording" role="tab" aria-controls="v-pills-wording" aria-selected="false" onclick="PosnicPro.wordingEditor.open()"><i class="feather icon-type mr-2"></i><lang class="lang_wording_profiles">Language &amp; labels</lang></a>
                                 <!-- Branch / Outlet Info merged into Branch List > Edit
                                      (user call): one place edits a branch, any branch. -->
                                 <a data-module="branch" data-access="write" class="nav-link mb-2 active"
@@ -215,9 +214,7 @@
                 <!-- Start col -->
                 <div class="col-lg-7 col-xl-9">
                     <div class="tab-content loader-view-mystore" id="v-pills-tabContent">
-                        <div class="tab-pane fade" id="v-pills-wording" role="tabpanel" aria-labelledby="v-pills-wording-tab">
-                            <div class="card"><div class="card-body"><h4><lang class="lang_wording_profiles">Language &amp; labels</lang></h4><div id="wording-editor" aria-live="polite"></div></div></div>
-                        </div>
+
                         <div class="tab-pane fade" id="v-pills-hardware" role="tabpanel" aria-labelledby="v-pills-hardware-tab"><div class="card"><div class="card-body" data-desktop-page="hardware"></div></div></div>
                         <div class="tab-pane fade" id="v-pills-app" role="tabpanel" aria-labelledby="v-pills-app-tab"><div class="card"><div class="card-body" data-desktop-page="app"></div></div></div>
                         <div class="tab-pane fade" id="v-pills-updates" role="tabpanel" aria-labelledby="v-pills-updates-tab"><div class="card"><div class="card-body" data-desktop-page="updates"></div></div></div>
@@ -4641,6 +4638,7 @@
                                                     href="#core-tab-print" role="tab"><i class="feather icon-printer mr-2"></i><lang class="lang_coretab_print">Print</lang></a></li>
                                             <li class="nav-item"><a class="nav-link" data-toggle="tab"
                                                     href="#core-tab-payments" role="tab"><i class="feather icon-credit-card mr-2"></i><lang class="lang_coretab_payments">Payments</lang></a></li>
+                                            <li class="nav-item"><a class="nav-link" id="core-wording-tab" data-toggle="tab" href="#core-tab-wording" role="tab" aria-controls="core-tab-wording" aria-selected="false"><i class="feather icon-type mr-2"></i><lang class="lang_wording_profiles">Language &amp; labels</lang></a></li>
                                             <li class="nav-item dropdown core-tabs-more d-none">
                                                 <a class="nav-link dropdown-toggle" data-toggle="dropdown"
                                                     href="javascript:void(0)" role="button"><lang class="lang_tab_more">More</lang></a>
@@ -5595,6 +5593,11 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
+
+                                            <div class="tab-pane fade" id="core-tab-wording" role="tabpanel" aria-labelledby="core-wording-tab">
+                                                <h4><lang class="lang_wording_profiles">Language &amp; labels</lang></h4>
+                                                <div id="wording-editor" aria-live="polite"></div>
                                             </div>
 
                                             <!-- ============ RECEIPT PRINT ============ -->
