@@ -1,0 +1,49 @@
+// Scoped wording workspace: shared controls elsewhere keep their existing styling.
+#wording-editor {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 8px 0 16px;
+  .wording-profile-bar { margin: 24px 0 !important; padding: 22px 10px 12px; border: 1px solid #dce3ed; border-radius: 12px; background: #f7f9fc; }
+  .wording-profile-bar > div, .wording-profile-bar > label { margin-bottom: 10px; }
+  #wording-profile-title { font-size: 17px; font-weight: 600; min-height: 44px; }
+  .form-control { min-height: 44px; border-radius: 7px; }
+  .btn { border-radius: 7px; }
+  .wording-editor-card { border: 1px solid #dce3ed; border-radius: 12px; overflow: hidden; background: #fff; }
+  .nav-tabs { padding: 8px 22px 0; margin: 0 !important; background: #fafbfd; }
+  .nav-tabs .nav-link { padding: 16px 20px; }
+  .wording-panel { padding: 28px; }
+  .wording-panel h5 { margin-bottom: 8px; }
+  .wording-rule-row { margin-top: 22px; }
+  .wording-rule-row label { font-size: 13px; font-weight: 500; }
+  .wording-rule-row input { margin-top: 8px; font-size: 15px; }
+  .wording-savebar { padding: 18px 28px; border-top: 1px solid #e4e9f0; background: #fafbfd; }
+  .wording-savebar .btn { min-width: 144px; }
+  .wording-profile-symbol { display: inline-flex; align-items: center; justify-content: center; gap: 2px; color: #1760ca; background: #eaf1ff; border-radius: 10px; width: 46px; height: 46px; font-size: 24px; font-weight: 600; }
+  .wording-profile-symbol span { font-size: 16px; align-self: flex-end; margin-bottom: 9px; }
+  .wording-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); border: 1px solid #dce3ed; border-radius: 16px; padding: 0; color: inherit; box-shadow: 0 24px 80px #172d4d33; }
+  .wording-dialog::backdrop { background: #14233866; backdrop-filter: blur(2px); }
+  .wording-dialog-body { padding: 28px; }
+  .wording-dialog h5 { font-size: 21px; font-weight: 600; }
+  .wording-dialog-footer { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e4e9f0; display: flex; justify-content: flex-end; }
+  .wording-profile-list { max-height: 280px; overflow: auto; display: grid; gap: 10px; }
+  .wording-profile-option { display: flex; align-items: center; gap: 14px; text-align: left; border: 1px solid #e1e7ef; background: #fff; border-radius: 10px; width: 100%; padding: 16px; color: inherit; }
+  .wording-profile-option.is-selected { border-color: #3574df; background: #f3f7ff; }
+  .wording-profile-option strong { display: block; font-size: 16px; }
+  .wording-profile-option small { display: block; margin-top: 4px; color: #65738b; }
+  .wording-profile-check { margin-left: auto; color: #1760ca; font-size: 20px; }
+  .wording-manager-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+  .wording-manager-actions .btn { flex: 1; white-space: nowrap; }
+  @media (max-width: 600px) { .wording-panel, .wording-dialog-body { padding: 18px; } .nav-tabs { padding: 0 8px; } .wording-profile-bar { padding: 16px 4px 4px; } }
+}
+#wording-editor .wording-profile-bar > label > lang { display: block; min-height: 34px; }
+#wording-editor {
+  .wording-suggestions { padding: 20px; margin: 24px 0; background: #f7f9fc; border: 1px solid #e0e7f0; border-radius: 10px; }
+  .wording-suggestion-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+  .wording-suggestion { text-align: left; padding: 16px; border: 1px solid #d7dfeb; border-radius: 8px; background: white; color: #203354; }
+  .wording-suggestion strong, .wording-suggestion small, .wording-suggestion span { display:block; }
+  .wording-suggestion small { color: #5d6e87; margin: 6px 0 16px; }
+  .wording-suggestion span { color: #1760ca; font-weight: 600; font-size: 13px; }
+  .wording-suggestion:hover, .wording-suggestion:focus-visible { border-color: #1760ca; }
+  .wording-suggestion.is-added { background: #eef6ff; border-color: #86afe9; }
+  @media(max-width:700px){ .wording-suggestion-grid { grid-template-columns:1fr; } }
+}
