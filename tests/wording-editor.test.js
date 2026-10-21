@@ -17,6 +17,8 @@ test('searchable editor saves a draft then publishes selected branches without a
   const doc = dom.window.document;
   function input(el, value) { el.value = value; el.dispatchEvent(new dom.window.Event('input', { bubbles: true })); }
   input(doc.getElementById('wording-name'), 'English — Shop');
+  assert.equal(doc.getElementById('wording-search'), null);
+  doc.getElementById('wording-tab-advanced').click();
   input(doc.getElementById('wording-search'), 'takeaway');
   assert.equal(doc.querySelectorAll('[data-word]').length, 1);
   input(doc.querySelector('[data-word]'), 'Parcel');
@@ -37,6 +39,7 @@ test('pagination reaches every label and preserves draft edits across search, si
   dom.window.PosnicPro.wordingEditor.open();
   const q = s => dom.window.document.querySelector(s);
   const event = (el, type) => el.dispatchEvent(new dom.window.Event(type, { bubbles: true }));
+  q('#wording-tab-advanced').click();
   assert.equal(dom.window.document.querySelectorAll('[data-word]').length, 25);
   q('[data-word]').value = 'My label'; event(q('[data-word]'), 'input');
   for (let i = 0; i < 5; i++) q('#wording-next').click();
