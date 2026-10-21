@@ -16,7 +16,7 @@
 <li>Live WhatsApp settings show Connected. The previously retried campaign is listed as sent. This does not establish every provider or physical till scenario.</li>
 <li>Email test to the approved forwarded address was accepted, but inbox search found no message. Brevo delivery events returned: “Email not sent: Your account has insufficient credits.” Credits or an alternative configured sender are required for real email receipt/report delivery verification.</li>
 </ul>
-<p>Still incomplete: email inbox delivery, SMS report live delivery/report PDF links, live API-provider verification where credentials/onboarding are unavailable, and physical cloud/till reconnection tests. These are not claimed as passed.</p>
+<p>Still unverified: email inbox delivery, handset opening of the newest SMS report PDF, live API-provider delivery where credentials/onboarding are unavailable, and physical cloud/till reconnection. SMS summary delivery was confirmed by the user; the new report PDF link was independently fetched successfully before sending.</p>
 </section>
 
 <section><h2>Recipient confirmation</h2>
@@ -30,7 +30,7 @@
 <li>Corrected PDF resent through scanned WhatsApp: <code>true_240307782332661@lid_3EB03F0B993F4AB5BBF91A_out</code>. Earlier test attachment is obsolete. Corrected PDF (local evidence retained in the test workspace) · Rendered inspection (local evidence retained in the test workspace).</li>
 <li>SMS bill resent to the approved number ending 1161. The link is a printable HTML receipt, not a PDF. Fresh requests without authentication returned HTTP 200 and all three items, total ₹420.</li>
 <li>Daily email report sent through the real report-test endpoint to info@posnic.com. Brevo accepted reference <code>&lt;202610201751.55560870770@smtp-relay.mailin.fr&gt;</code>, but its delivery-event lookup is empty and Gmail's all-folder search found no matching report. NOT a delivery pass.</li>
-<li>SMS scheduled reports are not implemented: live API validation returns “Choose Email or WhatsApp.” Report PDF links are also not implemented. These are functional gaps, not passed tests.</li>
+<li>Historical result, superseded on 21 October: SMS reports and PDF links were missing in this earlier build. They are now implemented; current validation and remaining handset confirmation are recorded above.</li>
 <li>All recurring test schedules remain disabled. The PDF fix changes rendering only; it does not alter sale data or sync authority. Physical offline-till rendering has not been tested.</li>
 </ul></section>
 <section><h2>Latest verification — 20 October 2026</h2>

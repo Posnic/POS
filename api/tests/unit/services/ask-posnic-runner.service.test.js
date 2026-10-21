@@ -4,7 +4,11 @@ const mockSendMail = jest.fn();
 const mockSendWhatsapp = jest.fn();
 const mockSendSms = jest.fn();
 jest.mock('../../../src/services/report-document.service', () => ({
-  prepare: jest.fn().mockResolvedValue({ buffer: Buffer.from('pdf'), filename: 'summary.pdf', url: 'https://example.invalid/report.pdf' }),
+  prepare: jest.fn().mockResolvedValue({
+    buffer: Buffer.from('pdf'),
+    filename: 'summary.pdf',
+    url: 'https://example.invalid/report.pdf',
+  }),
   periodLabel: () => '20 Oct 2026 (Asia/Kolkata)',
 }));
 jest.mock('../../../src/utils/email', () => ({
@@ -113,7 +117,10 @@ test('distinguishes queued WhatsApp from a sent message and passes the execution
     { status: 'queued', provider: 'whatsapp_connector' }
   );
   expect(mockSendWhatsapp.mock.calls.at(-1)[3]).toEqual({
-    document: expect.objectContaining({ filename: 'summary.pdf', url: 'https://example.invalid/report.pdf' }),
+    document: expect.objectContaining({
+      filename: 'summary.pdf',
+      url: 'https://example.invalid/report.pdf',
+    }),
     purpose: 'Scheduled report',
     scheduled: {
       id: schedule._id,

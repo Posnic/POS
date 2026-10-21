@@ -184,7 +184,9 @@ async function deliverScoped(schedule, report) {
     subject: `Posnic ${schedule.report.replace('_', ' ')} summary`,
     text,
     scheduledReport: true,
-    attachments: [{ filename: document.filename, content: document.buffer, contentType: 'application/pdf' }],
+    attachments: [
+      { filename: document.filename, content: document.buffer, contentType: 'application/pdf' },
+    ],
   });
   if (
     info.rejected?.length ||
