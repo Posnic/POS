@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "標準言語は、文言の変更を保存するまで変更されません。",
   "lang_wording_enter_profile_name": "プロファイル名を入力します。",
   "lang_wording_profile_actions": "プロファイルアクション",
-  "lang_wording_rename_profile": "プロファイル名の変更"
+  "lang_wording_rename_profile": "プロファイル名の変更",
+  "lang_wording_common_suggestions": "一般的な表現の提案",
+  "lang_wording_suggestion_add": "+ 提案を追加",
+  "lang_wording_suggestion_added": "追加·見る",
+  "lang_wording_suggestion_conflict": "この提案の文言はすでにあります。以下の既存の言葉を見直してください。何も置き換えられていません。",
+  "lang_wording_suggestion_review": "既存の文言を見直してください。",
+  "lang_wording_suggestions_help": "提案を選択して、関連する単語をまとめてください。以下で確認または編集し、保存してください。"
 }

@@ -5285,5 +5285,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "ನೀವು ಮಾತುಗಳ ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸುವವರೆಗೂ ನಿಮ್ಮ ಪ್ರಮಾಣಿತ ಭಾಷೆ ಬದಲಾಗದೆ ಉಳಿಯುತ್ತದೆ.",
   "lang_wording_enter_profile_name": "ಪ್ರೊಫೈಲ್ ಹೆಸರನ್ನು ನಮೂದಿಸಿ.",
   "lang_wording_profile_actions": "ಪ್ರೊಫೈಲ್ ಕ್ರಿಯೆಗಳು",
-  "lang_wording_rename_profile": "ಪ್ರೊಫೈಲ್ ಅನ್ನು ಮರುಹೆಸರಿಸಿ"
+  "lang_wording_rename_profile": "ಪ್ರೊಫೈಲ್ ಅನ್ನು ಮರುಹೆಸರಿಸಿ",
+  "lang_wording_common_suggestions": "ಸಾಮಾನ್ಯ ಮಾತುಗಳ ಸಲಹೆಗಳು",
+  "lang_wording_suggestion_add": "+ ಸಲಹೆ ಸೇರಿಸಿ",
+  "lang_wording_suggestion_added": "ಸೇರಿಸಲಾಗಿದೆ · ವೀಕ್ಷಿಸಿ",
+  "lang_wording_suggestion_conflict": "ಈ ಸಲಹೆಗಾಗಿ ನೀವು ಈಗಾಗಲೇ ಮಾತುಗಳನ್ನಾಡಿದ್ದೀರಿ. ಕೆಳಗೆ ನಿಮ್ಮ ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಪದಗಳನ್ನು ಪರಿಶೀಲಿಸಿ; ಏನನ್ನೂ ಬದಲಾಯಿಸಲಾಗಿಲ್ಲ.",
+  "lang_wording_suggestion_review": "ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಮಾತುಗಳನ್ನು ಪರಿಶೀಲಿಸಿ",
+  "lang_wording_suggestions_help": "ಅದರ ಸಂಬಂಧಿತ ಪದಗಳನ್ನು ಒಟ್ಟಿಗೆ ಸೇರಿಸಲು ಸಲಹೆಯನ್ನು ಆರಿಸಿ. ಅವುಗಳನ್ನು ಕೆಳಗೆ ಪರಿಶೀಲಿಸಿ ಅಥವಾ ಸಂಪಾದಿಸಿ, ನಂತರ ಉಳಿಸಿ."
 }

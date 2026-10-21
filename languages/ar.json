@@ -5285,5 +5285,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "تظل لغتك القياسية دون تغيير حتى تقوم بحفظ تغييرات الصياغة.",
   "lang_wording_enter_profile_name": "أدخل اسم ملف تعريف.",
   "lang_wording_profile_actions": "إجراءات الملف الشخصي",
-  "lang_wording_rename_profile": "إعادة تسمية ملف التعريف"
+  "lang_wording_rename_profile": "إعادة تسمية ملف التعريف",
+  "lang_wording_common_suggestions": "اقتراحات الصياغة الشائعة",
+  "lang_wording_suggestion_add": "+ إضافة اقتراح",
+  "lang_wording_suggestion_added": "تمت الإضافة · عرض",
+  "lang_wording_suggestion_conflict": "لديك بالفعل صياغة لهذا الاقتراح. راجع كلماتك الموجودة أدناه؛ لم يتم استبدال أي شيء.",
+  "lang_wording_suggestion_review": "راجع الصياغة الحالية",
+  "lang_wording_suggestions_help": "اختر اقتراحًا لإضافة الكلمات المرتبطة به معًا. قم بمراجعتها أو تحريرها أدناه، ثم احفظها."
 }

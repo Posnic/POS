@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "İfade değişikliklerini kaydedene kadar standart diliniz değişmeden kalır.",
   "lang_wording_enter_profile_name": "Bir profil adı girin.",
   "lang_wording_profile_actions": "Profil eylemleri",
-  "lang_wording_rename_profile": "Profili yeniden adlandırma"
+  "lang_wording_rename_profile": "Profili yeniden adlandırma",
+  "lang_wording_common_suggestions": "Ortak ifade önerileri",
+  "lang_wording_suggestion_add": "+ Öneri ekle",
+  "lang_wording_suggestion_added": "Eklendi · Görüntüle",
+  "lang_wording_suggestion_conflict": "Bu öneri için zaten ifadeleriniz var. Aşağıdaki mevcut kelimelerinizi gözden geçirin; hiçbir şey değiştirilmedi.",
+  "lang_wording_suggestion_review": "Mevcut ifadeleri gözden geçirin",
+  "lang_wording_suggestions_help": "İlgili kelimeleri bir araya getirmek için bir öneri seçin. Bunları aşağıda inceleyin veya düzenleyin, sonra kaydedin."
 }

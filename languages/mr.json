@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "तुम्ही शब्द बदल जतन करता तोपर्यंत तुमची मानक",
   "lang_wording_enter_profile_name": "प्रोफाइल नाव प्रविष्ट करा",
   "lang_wording_profile_actions": "प्रोफाइल क्र",
-  "lang_wording_rename_profile": "प्रोफाइलचे नाव"
+  "lang_wording_rename_profile": "प्रोफाइलचे नाव",
+  "lang_wording_common_suggestions": "सामान्य शब्दांचे",
+  "lang_wording_suggestion_add": "+ सूचना जोडा",
+  "lang_wording_suggestion_added": "जोडलेले · पहा",
+  "lang_wording_suggestion_conflict": "आपल्याकडे या सूचनेसाठी आधीच शब्द आहेत खालील आपल्या विद्यमान शब्दांचे पुनरावलोकन करा",
+  "lang_wording_suggestion_review": "विद्यमान शब्दाचे",
+  "lang_wording_suggestions_help": "त्याचे संबंधित शब्द एकत्र जोडण्यासाठी सूचना खाली त्यांचे पुनरावलोकन करा किंवा संपादित करा, नंतर"
 }

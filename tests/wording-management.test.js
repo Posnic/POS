@@ -78,3 +78,21 @@ test('profile dialogs preserve unsaved wording when cancelled',()=>{
  q('#wording-profile-cancel').click();assert.equal(q('#wording-name'),null);assert.equal(q('[data-rule][data-field="to"]').value,'Goods');
  assert.equal(requests.filter(x=>typeof x==='object').length,0);dom.window.close();
 });
+
+test('suggestions add related forms once without publishing and preserve existing custom wording',()=>{
+ const {dom,q,event,requests}=setup();q('[data-suggestion="0"]').click();
+ assert.equal(dom.window.document.querySelectorAll('[data-rule][data-field="from"]').length,2);
+ assert.match(q('[data-suggestion="0"]').textContent,/Added/);q('[data-suggestion="0"]').click();
+ assert.equal(dom.window.document.querySelectorAll('[data-rule][data-field="from"]').length,2);
+ q('[data-suggestion="1"]').click();assert.equal(dom.window.document.querySelectorAll('[data-rule][data-field="from"]').length,2);
+ q('[data-rule="0"][data-field="to"]').value='Goods';event('[data-rule="0"][data-field="to"]','input');q('[data-suggestion="0"]').click();
+ assert.equal(q('[data-rule="0"][data-field="to"]').value,'Goods');assert.match(q('#wording-notice').textContent,/nothing was replaced/);
+ q('[data-suggestion="2"]').click();assert.equal(dom.window.document.querySelectorAll('[data-rule][data-field="from"]').length,5);
+ assert.equal(requests.filter(x=>typeof x==='object').length,0);assert.equal(q('[data-rule][data-field="from"]').getAttribute('list'),'wording-known-words');
+ dom.window.close();
+});
+
+test('English suggestions are not inserted into a different base language',()=>{
+ const {dom,q}=setup();q('#wording-new').click();q('#wording-name').value='Tamil';q('#wording-create-locale').value='ta';q('#wording-profile-save').click();
+ assert.equal(q('#wording-suggestions').hidden,true);assert.equal(q('[data-suggestion]'),null);dom.window.close();
+});

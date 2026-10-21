@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Стандартният ви език остава непроменен, докато не запазите промените във формулировката.",
   "lang_wording_enter_profile_name": "Въведете име на профил.",
   "lang_wording_profile_actions": "Действия в профила",
-  "lang_wording_rename_profile": "Преименуване на профила"
+  "lang_wording_rename_profile": "Преименуване на профила",
+  "lang_wording_common_suggestions": "Общи предложения за формулиране",
+  "lang_wording_suggestion_add": "+ Добавяне на предложение",
+  "lang_wording_suggestion_added": "Добавено · Преглед",
+  "lang_wording_suggestion_conflict": "Вече имате формулировка за това предложение. Прегледайте съществуващите си думи по-долу; нищо не беше заменено.",
+  "lang_wording_suggestion_review": "Преразглеждане на съществуващата форму",
+  "lang_wording_suggestions_help": "Изберете предложение, за да добавите свързаните с него думи заедно. Прегледайте или редактирайте ги по-долу, след което запазете."
 }

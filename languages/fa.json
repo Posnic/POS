@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "زبان استاندارد شما بدون تغییر باقی می ماند تا زمانی که تغییرات عبارت را ذخیره کنید.",
   "lang_wording_enter_profile_name": "نام نمایه را وارد کنید.",
   "lang_wording_profile_actions": "اقدامات پروفایل",
-  "lang_wording_rename_profile": "تغییر نام نمایه"
+  "lang_wording_rename_profile": "تغییر نام نمایه",
+  "lang_wording_common_suggestions": "پیشنهادات اصطلاحی مشترک",
+  "lang_wording_suggestion_add": "+ اضافه کردن پیشنهاد",
+  "lang_wording_suggestion_added": "اضافه شده · مشاهده",
+  "lang_wording_suggestion_conflict": "شما قبلاً برای این پیشنهاد اصطلاحاتی دارید. کلمات موجود خود را در زیر بررسی کنید؛ هیچ چیز جایگزین نشده است.",
+  "lang_wording_suggestion_review": "اصطلاحات موجود را بررسی کنید",
+  "lang_wording_suggestions_help": "یک پیشنهاد را انتخاب کنید تا کلمات مرتبط آن را با هم اضافه کنید. آنها را در زیر بررسی یا ویرایش کنید، سپس ذخیره کنید."
 }

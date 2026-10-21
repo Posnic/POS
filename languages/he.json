@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "השפה הרגילה שלך נשארת ללא שינוי עד שתשמור את שינויי הניסוח.",
   "lang_wording_enter_profile_name": "הזן שם פרופיל.",
   "lang_wording_profile_actions": "פעולות פרופיל",
-  "lang_wording_rename_profile": "שינוי שם פרופיל"
+  "lang_wording_rename_profile": "שינוי שם פרופיל",
+  "lang_wording_common_suggestions": "הצעות ניסוח נפוצות",
+  "lang_wording_suggestion_add": "+ הוסף הצעה",
+  "lang_wording_suggestion_added": "נוסף · תצוגה",
+  "lang_wording_suggestion_conflict": "יש לך כבר ניסוח להצעה זו. סקור את המילים הקיימות שלך למטה; שום דבר לא הוחלף.",
+  "lang_wording_suggestion_review": "סקור את הניסוח הקיים",
+  "lang_wording_suggestions_help": "בחר הצעה כדי להוסיף את המילים הקשורות אליה יחד. עיין או ערוך אותם למטה ואז שמור."
 }

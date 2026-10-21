@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Gjuha juaj standarde mbetet e pandryshuar derisa të ruani ndryshimet e formulimit",
   "lang_wording_enter_profile_name": "Shkruani një emër profili.",
   "lang_wording_profile_actions": "Veprimet e profilit",
-  "lang_wording_rename_profile": "Riemëroni profilin"
+  "lang_wording_rename_profile": "Riemëroni profilin",
+  "lang_wording_common_suggestions": "Sugjerime të përbashkëta të",
+  "lang_wording_suggestion_add": "+ Shto sugjerime",
+  "lang_wording_suggestion_added": "Shtuar · Shiko",
+  "lang_wording_suggestion_conflict": "Ju tashmë keni formulime për këtë sugjerim. Shikoni fjalët tuaja ekzistuese më poshtë; asgjë nuk është zëvendësuar",
+  "lang_wording_suggestion_review": "Rishikoni formulimin ekzistues",
+  "lang_wording_suggestions_help": "Zgjidhni një sugjerim për të shtuar fjalët e tij të lidhura së bashku. Rishikoni ose redaktoni ato më poshtë, pastaj ruani."
 }

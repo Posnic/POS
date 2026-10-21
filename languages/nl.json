@@ -5297,5 +5297,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Uw standaardtaal blijft ongewijzigd totdat u tekstwijzigingen opslaat.",
   "lang_wording_enter_profile_name": "Voer een profielnaam in.",
   "lang_wording_profile_actions": "Acties in het profiel",
-  "lang_wording_rename_profile": "Profiel hernoemen"
+  "lang_wording_rename_profile": "Profiel hernoemen",
+  "lang_wording_common_suggestions": "Veelvoorkomende formuleringssuggesties",
+  "lang_wording_suggestion_add": "+ Suggestie toevoegen",
+  "lang_wording_suggestion_added": "Toegevoegd · Bekijk",
+  "lang_wording_suggestion_conflict": "Je hebt al een formulering voor deze suggestie. Bekijk hieronder je bestaande woorden; er is niets vervangen.",
+  "lang_wording_suggestion_review": "Bestaande formulering herzien",
+  "lang_wording_suggestions_help": "Kies een suggestie om de bijbehorende woorden bij elkaar op te tellen. Bekijk of bewerk ze hieronder en sla ze op."
 }

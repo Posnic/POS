@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Η τυπική γλώσσα σας παραμένει αμετάβλητη μέχρι να αποθηκεύσετε τις αλλαγές διατύπωσης.",
   "lang_wording_enter_profile_name": "Εισαγάγετε ένα όνομα προφίλ.",
   "lang_wording_profile_actions": "Ενέργειες προφίλ",
-  "lang_wording_rename_profile": "Μετονομασία προφίλ"
+  "lang_wording_rename_profile": "Μετονομασία προφίλ",
+  "lang_wording_common_suggestions": "Κοινές προτάσεις διατύπωσης",
+  "lang_wording_suggestion_add": "+ Προσθήκη πρότασης",
+  "lang_wording_suggestion_added": "Προστέθηκε · Προβολή",
+  "lang_wording_suggestion_conflict": "Έχετε ήδη διατύπωση για αυτήν την πρόταση. Ελέγξτε τις υπάρχουσες λέξεις σας παρακάτω; τίποτα δεν αντικαταστάθηκε.",
+  "lang_wording_suggestion_review": "Επανεξέταση της υπάρχουσας διατύπωσης",
+  "lang_wording_suggestions_help": "Επιλέξτε μια πρόταση για να προσθέσετε τις σχετικές λέξεις μαζί. Ελέγξτε ή επεξεργαστείτε τα παρακάτω και, στη συνέχεια, αποθηκεύστε."
 }

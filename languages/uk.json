@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Ваша стандартна мова залишається незмінною, доки ви не збережете зміни у формулюванні.",
   "lang_wording_enter_profile_name": "Введіть ім'я профілю.",
   "lang_wording_profile_actions": "Дії профілю",
-  "lang_wording_rename_profile": "Перейменувати профіль"
+  "lang_wording_rename_profile": "Перейменувати профіль",
+  "lang_wording_common_suggestions": "Загальні пропозиції щодо формулювання",
+  "lang_wording_suggestion_add": "+ Додати пропозицію",
+  "lang_wording_suggestion_added": "Додано · Перегляд",
+  "lang_wording_suggestion_conflict": "У вас вже є формулювання цієї пропозиції. Перегляньте свої існуючі слова нижче; нічого не замінено.",
+  "lang_wording_suggestion_review": "Переглянути існуючі формулювання",
+  "lang_wording_suggestions_help": "Виберіть пропозицію, щоб додати пов'язані слова разом. Перегляньте або відредагуйте їх нижче, а потім збережіть."
 }
