@@ -5233,5 +5233,6 @@
   "lang_sms_reports_text_summary": "SMSgửi một bản tóm tắt văn bản, không phải một liên kết PDF. Tóm tắt dài hơn có thể sử dụng nhiều hơn mộtSMS. Nhà SMS cung cấp của bạn phải cho phép thông báo này hoặc có mẫu đã được phê duyệt.",
   "lang_ssl_tls_usually_465": "SSL/TLS (thường là 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (thường là 587 hoặc 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Sử dụng email Posnic đám mây hoặc kết nối tài khoản của riêng bạn cho các hóa đơn và báo cáo."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Sử dụng email Posnic đám mây hoặc kết nối tài khoản của riêng bạn cho các hóa đơn và báo cáo.",
+  "lang_send_this_report_automatically": "Gửi báo cáo này tự động"
 }

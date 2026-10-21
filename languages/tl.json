@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSnagpapadala ng isang buod ng teksto, hindi isang link sa PDF. Ang mas mahabang buod ay maaaring gumamit ng higit sa isaSMS. Dapat pay SMS agan ng iyong provider ang mensaheng ito o magkaroon ng isang naaprubahan na template.",
   "lang_ssl_tls_usually_465": "SSL/TLS (karaniwan 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (karaniwang 587 o 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Gumamit Posnic ng cloud email o ikonekta ang iyong sariling account para sa mga bayarin at ulat."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Gumamit Posnic ng cloud email o ikonekta ang iyong sariling account para sa mga bayarin at ulat.",
+  "lang_send_this_report_automatically": "Awtomatikong ipadala ang ulat na ito"
 }

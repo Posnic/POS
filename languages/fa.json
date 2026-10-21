@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSیک خلاصه متن ارسال می کند، نه یک لینک PDF. خلاصه های طولانی تر ممکن است بیش از یک SMS مورد استفاده کنند. ارائه دهنده SMS شما باید این پیام را مجاز کند یا یک الگوی تأیید شده داشته باشد.",
   "lang_ssl_tls_usually_465": "SSL/TLS (معمولا ۴۶۵)",
   "lang_starttls_usually_587_or_2525": "استارت‌لز (معمولاً ۵۸۷ یا ۲۵۲۵)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "از ایمیل Posnic ابری استفاده کنید یا حساب خود را برای صورتحساب و گزارش ها وصل کنید."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "از ایمیل Posnic ابری استفاده کنید یا حساب خود را برای صورتحساب و گزارش ها وصل کنید.",
+  "lang_send_this_report_automatically": "ارسال این گزارش به صورت خودکار"
 }

@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSστέλνει μια περίληψη κειμένου, όχι έναν σύνδεσμο PDF. Οι μεγαλύτερες περιλήψεις μπορούν να χρησιμοποιούν περισσότερες από μίαSMS. Ο SMS πάροχός σας πρέπει να επιτρέψει αυτό το μήνυμα ή να έχει εγκεκριμένο πρότυπο.",
   "lang_ssl_tls_usually_465": "SSL/TLS (συνήθως 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (συνήθως 587 ή 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Χρησιμοποιήστε Posnic το cloud email ή συνδέστε τον δικό σας λογαριασμό για λογαριασμούς και αναφορές."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Χρησιμοποιήστε Posnic το cloud email ή συνδέστε τον δικό σας λογαριασμό για λογαριασμούς και αναφορές.",
+  "lang_send_this_report_automatically": "Αποστολή αυτόματης αναφοράς"
 }

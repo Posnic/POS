@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSsendir texta samantekt, ekki PDF tengil. Lengri samantektir geta notað fleiri en eittSMS. Veit SMS andinn þinn verður að leyfa þessi skilaboð eða hafa samþykkt sniðmát.",
   "lang_ssl_tls_usually_465": "SSL/TLS (venjulega 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (venjulega 587 eða 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Notaðu Posnic skýjapóst eða tengdu eigin reikning fyrir reikninga og skýrslur."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Notaðu Posnic skýjapóst eða tengdu eigin reikning fyrir reikninga og skýrslur.",
+  "lang_send_this_report_automatically": "Senda þessa skýrslu sjálfkrafa"
 }

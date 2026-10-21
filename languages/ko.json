@@ -5233,5 +5233,6 @@
   "lang_sms_reports_text_summary": "SMSPDF 링크가 아닌 텍스트 요약을 보냅니다.요약이 길면 둘 SMS 이상을 사용할 수 있습니다.SMS제공자가 이 메시지를 허용하거나 승인된 템플릿을 가지고 있어야 합니다.",
   "lang_ssl_tls_usually_465": "SSL/TLS (보통 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (보통 587개 또는 252개)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnic클라우드 이메일을 사용하거나 청구서 및 보고서를 위해 자신의 계정을 연결하세요."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnic클라우드 이메일을 사용하거나 청구서 및 보고서를 위해 자신의 계정을 연결하세요.",
+  "lang_send_this_report_automatically": "이 보고서를 자동으로 전송"
 }

@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSsender et tekstsammendrag, ikke en PDF-kobling. Lengre oppsummeringer kan bruke mer enn ettSMS. Lever SMS andøren din må tillate denne meldingen eller ha en godkjent mal.",
   "lang_ssl_tls_usually_465": "SSL/TLS (vanligvis 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (vanligvis 587 eller 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Bruk Posnic skye-post eller koble til din egen konto for regninger og rapporter."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Bruk Posnic skye-post eller koble til din egen konto for regninger og rapporter.",
+  "lang_send_this_report_automatically": "Send denne rapporten automatisk"
 }

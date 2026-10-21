@@ -2882,7 +2882,7 @@ const getDailySalesReportAggregates = async ({ match, cancellationMatch }, { Sal
     salesRepository.aggregate(paymentPipeline, { SaleModel: Model }),
     salesRepository.find(
       match,
-      'dine_type table_id table_number person_count extra_discount sale_extra_discount extra_discount_type items total sales_total',
+      'dine_type table_id table_number person_count extra_discount sale_extra_discount extra_discount_type items total sales_total multi_payment payment_mode payments',
       { SaleModel: Model }
     ),
     salesRepository.aggregate(taxPipeline, { SaleModel: Model }),

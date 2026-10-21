@@ -1,4 +1,4 @@
-const { reportableSales, reportSaleTotal } = require('../helpers/reportable-sales');
+const { reportableSales, reportSaleTotal, reportSaleTax } = require('../helpers/reportable-sales');
 const BaseModel = require('./base.model');
 const { ObjectId } = require('mongodb');
 const path = require('path');
@@ -499,7 +499,9 @@ class DashboardModel extends BaseModel {
               $sum:
                 collectionName === 'sales' && field === 'items_total'
                   ? reportSaleTotal()
-                  : `$${field}`,
+                  : collectionName === 'sales' && field === 'tax_amount'
+                    ? reportSaleTax()
+                    : `$${field}`,
             },
           },
         },
@@ -831,6 +833,7 @@ class DashboardModel extends BaseModel {
       const tax = await this.sumCollectionField('sales', salesMatch, 'tax_amount');
       let cash = 0;
       let upi = 0;
+      let card = 0;
       // Mode names live in pay_mode_series, amounts in paymode_data, aligned by
       // index - the same pairing the payment mix above uses.
       (payment.pay_mode_series || []).forEach((mode, i) => {
@@ -838,6 +841,7 @@ class DashboardModel extends BaseModel {
         const amt = Number(((payment.paymode_data || [])[i] || {}).amount) || 0;
         if (/cash/.test(m)) cash += amt;
         else if (/upi|gpay|phonepe|paytm/.test(m)) upi += amt;
+        else if (/^(?:(?:credit|debit)[ _-]*)?cards?$/.test(m.trim())) card += amt;
       });
       kpis = {
         total_sales: round(salesAmounts.reduce((a, b) => a + b, 0)),
@@ -846,6 +850,7 @@ class DashboardModel extends BaseModel {
         total_tax: round(tax),
         total_cash: round(cash),
         total_upi: round(upi),
+        total_card: round(card),
       };
     }
 

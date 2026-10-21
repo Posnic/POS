@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSšalje sažetak teksta, a ne PDF vezu. Duži sažeci mogu koristiti više od jednogSMS. Vaš pro SMS vajder mora dozvoliti ovu poruku ili imati odobren predložak.",
   "lang_ssl_tls_usually_465": "SSL/TLS (obično 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (obično 587 ili 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Koristite e-poš Posnic tu u oblaku ili povežite vlastiti račun za račune i izvještaje."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Koristite e-poš Posnic tu u oblaku ili povežite vlastiti račun za račune i izvještaje.",
+  "lang_send_this_report_automatically": "Automatski pošaljite ovaj izvještaj"
 }

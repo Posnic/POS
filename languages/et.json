@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSsaadab tekstikokkuvõtte, mitte PDF-lingi. Pikemates kokkuvõttes võib kasutada rohkem kui üh SMS te. Teie teen SMS usepakkuja peab selle sõnumi lubama või omama heakskiidetud mall.",
   "lang_ssl_tls_usually_465": "SSL/TLS (tavaliselt 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (tavaliselt 587 või 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Kasutage Posnic pilvemeili või ühendage arvete ja aruannete jaoks oma konto."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Kasutage Posnic pilvemeili või ühendage arvete ja aruannete jaoks oma konto.",
+  "lang_send_this_report_automatically": "Saatke see aruanne automaatselt"
 }

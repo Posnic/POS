@@ -5311,5 +5311,6 @@
   "lang_sms_reports_text_summary": "SMSटेक्स्ट सारांश भेजता है, PDF लिंक नहीं। लंबे सारांश एक SMS से अधिक का उपयोग कर सकते हैं। आपके SMS प्रदाता को इस संदेश की अनुमति देनी चाहिए या उसके पास स्वीकृत टेम्पलेट होना चाहिए।",
   "lang_ssl_tls_usually_465": "SSL/TLS (आमतौर पर 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (आमतौर पर 587 या 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicक्लाउड ईमेल का उपयोग करें या बिल और रिपोर्ट के लिए अपना खुद का अकाउंट कनेक्ट करें।"
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicक्लाउड ईमेल का उपयोग करें या बिल और रिपोर्ट के लिए अपना खुद का अकाउंट कनेक्ट करें।",
+  "lang_send_this_report_automatically": "इस रिपोर्ट को अपने आप भेजें"
 }
