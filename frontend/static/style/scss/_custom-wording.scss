@@ -3,8 +3,14 @@
   max-width: 1120px;
   margin: 0 auto;
   padding: 8px 0 16px;
-  .wording-profile-bar { margin: 24px 0 !important; padding: 22px 10px 12px; border: 1px solid #dce3ed; border-radius: 12px; background: #f7f9fc; }
-  .wording-profile-bar > div, .wording-profile-bar > label { margin-bottom: 10px; }
+  .wording-profile-bar { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; margin: 16px 0 !important; padding: 14px 16px; border: 1px solid #dce3ed; border-radius: 12px; background: #f7f9fc; }
+  .wording-profile-bar > div, .wording-profile-bar > label { margin-bottom: 0; min-width: 0; }
+  .wording-profile-field { flex: 0 1 260px; }
+  .wording-language-field { flex: 0 1 200px; }
+  .wording-branch-field { flex: 0 1 240px; }
+  .wording-profile-actions { margin-left: auto; padding-top: 29px; }
+  .wording-profile-actions .btn { min-height: 44px; white-space: nowrap; }
+  #wording-profile-title { margin-top: 8px; overflow-wrap: anywhere; }
   #wording-profile-title { font-size: 17px; font-weight: 600; min-height: 44px; }
   .form-control { min-height: 44px; border-radius: 7px; }
   .btn { border-radius: 7px; }
@@ -33,9 +39,8 @@
   .wording-profile-check { margin-left: auto; color: #1760ca; font-size: 20px; }
   .wording-manager-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
   .wording-manager-actions .btn { flex: 1; white-space: nowrap; }
-  @media (max-width: 600px) { .wording-panel, .wording-dialog-body { padding: 18px; } .nav-tabs { padding: 0 8px; } .wording-profile-bar { padding: 16px 4px 4px; } }
+  @media (max-width: 600px) { .wording-panel, .wording-dialog-body { padding: 18px; } .nav-tabs { padding: 0 8px; } .wording-profile-bar { padding: 14px; gap: 12px; } .wording-profile-field, .wording-language-field, .wording-branch-field { flex: 1 1 180px; } .wording-profile-actions { padding-top: 0; } }
 }
-#wording-editor .wording-profile-bar > label > lang { display: block; min-height: 34px; }
 #wording-editor {
   .wording-suggestions { margin: 16px 0 20px; }
   .wording-suggestion-heading { margin-bottom: 8px; font-size: 13px; }
@@ -48,5 +53,4 @@
   .wording-panel { padding: 20px 24px; }
   .wording-rule-row { margin-top: 12px; margin-bottom: 12px !important; }
   .wording-rule-row input { margin-top: 4px; }
-  .wording-profile-bar { margin: 16px 0 !important; padding-top: 14px; padding-bottom: 4px; }
 }
