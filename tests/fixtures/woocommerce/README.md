@@ -126,4 +126,4 @@ From the repository root:
 node --test tests/woocommerce-product-image-fixture.test.js
 ```
 
-The tests validate the fixture structure, image roles, missing references, duplicate
+The tests validate the fixture structure, image roles, missing references, duplicate images, oversized images, and documentation.
