@@ -324,3 +324,13 @@ test('report submission keeps its result visible and blocks duplicate clicks', (
   assert.equal($('[data-report-test]').prop('disabled'),false);
   dom.window.close();
 });
+
+test('report history distinguishes provider acceptance from recipient delivery', () => {
+  const {dom,w,$,requests}=setup();
+  w.PosnicPro.messageCentre.mount();
+  w.PosnicPro.messageCentre.reports();
+  requests.at(-1).cb({type:'success',data:[{_id:'report-one',report:'sales',frequency:'daily',hour:8,timezone:'Asia/Kolkata',channel:'email',destination:'owner@example.com',enabled:false,last_status:'sent'}]});
+  assert.match($('#message_report_list').text(),/Last result: Accepted by sender; delivery not confirmed/);
+  assert.doesNotMatch($('#message_report_list').text(),/Last result: Sent/);
+  dom.window.close();
+});
