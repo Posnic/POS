@@ -1473,8 +1473,8 @@ class ReceivingsController extends BaseController {
       const pdfBuffer = Buffer.concat(chunks);
 
       // Owner rule: the shop's own SMTP first, the platform chain otherwise.
-      const { resolveShopTransport } = require('../utils/email');
-      const resolved = resolveShopTransport(branch);
+      const { resolveConfiguredShopTransport } = require('../utils/email');
+      const resolved = await resolveConfiguredShopTransport(branch);
       const transporter = resolved.transporter;
       const shopName = branch.branch_name || 'Posnic POS';
       const orderId = receiving.receiving_id || String(receiving._id);

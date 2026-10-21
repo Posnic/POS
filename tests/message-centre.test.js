@@ -31,6 +31,14 @@ test('one centre, accessible receipt switch, API/scan buttons and existing campa
   $('[data-wa-mode=cloud]').trigger('click');
   assert.equal($('#messaging_wa_mode').val(),'cloud');
   assert.equal($('[data-wa-mode=cloud]').attr('aria-pressed'),'true');
+  assert.equal($('[data-wa-mode=web]').attr('aria-pressed'),'false');
+  assert.notEqual($('#messaging_wa_cloud').css('display'),'none');
+  assert.equal($('#messaging_wa_web').css('display'),'none');
+  $('[data-wa-mode=web]').trigger('click');
+  assert.equal($('[data-wa-mode=web]').attr('aria-pressed'),'true');
+  assert.equal($('[data-wa-mode=cloud]').attr('aria-pressed'),'false');
+  assert.equal($('#messaging_wa_cloud').css('display'),'none');
+  assert.notEqual($('#messaging_wa_web').css('display'),'none');
   dom.window.close();
 });
 test('customer selections survive searches, can be removed, and serialize as IDs', () => {
@@ -124,6 +132,12 @@ test('review checks audience without sending and invalidates when content change
   writes[0].cb({type:'success',data:{reachable:2,total:3,sample:[]}});
   assert.equal($('#campaign_review').prop('hidden'),false);
   assert.equal($('#campaign_send_btn').prop('disabled'),false);
+  assert.equal($('.campaign-compose-grid').prop('hidden'),true);
+  assert.equal($('.campaign-footer').prop('hidden'),true);
+  $('#campaign_edit_again').trigger('click');
+  assert.equal($('.campaign-compose-grid').prop('hidden'),false);
+  assert.equal($('#campaign_message').val(),'Hello {name}');
+  assert.equal(w.document.activeElement.id,'campaign_message');
   $('#campaign_message').val('Updated').trigger('input');
   assert.equal($('#campaign_review').prop('hidden'),true);
   c.preview();
@@ -229,4 +243,113 @@ test('WhatsApp providers show only their fields, setup guide and isolated creden
  $('#messaging_wa_provider').val('meta').trigger('change');
  assert.notEqual($('#messaging_wa_meta_fields').css('display'),'none');
  dom.window.close();
+});
+
+test('review is the send confirmation, double clicks send once and network failure requires review again',()=>{
+ const {dom,w,$,writes}=setup(); const c=w.PosnicPro.campaigns;
+ w.confirm=()=>{throw Error('Native dialog must not open');};
+ c.fill({name:'Test',message:'Hello',segment:{type:'all'}});
+ c.sendNow(false); assert.equal(writes.length,0);
+ c.preview(); writes[0].cb({type:'success',data:{reachable:1,total:1,sample:[]}});
+ c.sendNow(false); c.sendNow(false); assert.equal(writes.length,2);
+ writes[1].cb({type:'success',data:{_id:'campaign-id'}});
+ assert.equal(writes.length,3); assert.equal(writes[2].payload.url,'campaigns/campaign-id/send');
+ assert.equal(JSON.parse(writes[2].payload.data).dryRun,false);
+ writes[2].failure({status:503}); assert.equal(c._sending,false);
+ assert.equal($('#campaign_review').prop('hidden'),true);
+ c.sendNow(false); assert.equal(writes.length,3);
+ dom.window.close();
+});
+
+test('send failures stay visible with the provider reason instead of success',()=>{
+ const {dom,w,$,writes}=setup(); const c=w.PosnicPro.campaigns;
+ c.fill({name:'Test',message:'Hello',segment:{type:'all'}});
+ c.preview(); writes[0].cb({type:'success',data:{reachable:1,total:1,sample:[]}});
+ c.sendNow(false); assert.match($('#campaign_send_result').text(),/Sending/);
+ writes[1].cb({type:'success',data:{_id:'campaign-id'}});
+ writes[2].cb({type:'success',data:{sent:0,failed:1,skipped:0,errors:['Phone is reconnecting. No message was sent.']}});
+ assert.equal($('#campaign_send_result').prop('hidden'),false);
+ assert.equal($('#campaign_send_result').attr('role'),'alert');
+ assert.match($('#campaign_send_result').text(),/0 sent, 1 failed/);
+ assert.match($('#campaign_send_result').text(),/Phone is reconnecting/);
+ dom.window.close();
+});
+
+
+test('message starter cancellation preserves the draft and confirmation replaces it without a native popup', () => {
+  const {dom,w,$}=setup();
+  w.PosnicPro.campaigns.mountAudience();
+  let accept, cancel;
+  w.confirm = () => { throw new Error('Native dialog is forbidden'); };
+  w.swal = () => ({then(ok,no) { accept=ok; cancel=no; }});
+  $('#campaign_message').val('My existing draft');
+  $('[data-message-preset="christmas"]').trigger('click'); cancel();
+  assert.equal($('#campaign_message').val(),'My existing draft');
+  $('[data-message-preset="christmas"]').trigger('click'); accept();
+  assert.match($('#campaign_message').val(),/Merry Christmas/);
+  dom.window.close();
+});
+
+test('campaign deletion waits for the in-app confirmation and cancellation does nothing', () => {
+  const {dom,w,$}=setup();
+  let accept, cancel, removed;
+  w.confirm = () => { throw new Error('Native dialog is forbidden'); };
+  w.swal = () => ({then(ok,no) { accept=ok; cancel=no; }});
+  w.PosnicPro.campaigns.remove = id => { removed=id; };
+  $('body').append('<button class="campaign-del" data-id="draft123">Delete</button>');
+  $('.campaign-del').trigger('click'); cancel();
+  assert.equal(removed,undefined);
+  $('.campaign-del').trigger('click'); accept();
+  assert.equal(removed,'draft123');
+  dom.window.close();
+});
+
+
+test('report editor offers SMS and keeps new schedules off', () => {
+  const {dom,w,$}=setup(); w.PosnicPro.messageCentre.mount(); w.PosnicPro.messageCentre.editReport({});
+  assert.equal($('#message_report_form [name="channel"] option[value="sms"]').length,1);
+  assert.equal($('#message_report_form [name="enabled"]').prop('checked'),false);
+  assert.match($('#message_report_form').text(),/SMS sends a summary with a PDF report link/);
+  dom.window.close();
+});
+
+
+test('report submission keeps its result visible and blocks duplicate clicks', () => {
+  const {dom,w,$,writes}=setup();
+  $('body').append('<div><div><button data-report-test="one">Send test</button></div></div>');
+  $('[data-report-test]').trigger('click').trigger('click');
+  assert.equal(writes.length,1);
+  writes[0].cb({type:'error',message:'SMS is not configured for this branch'});
+  assert.equal($('.report-test-result').text(),'SMS is not configured for this branch');
+  assert.equal($('[data-report-test]').prop('disabled'),false);
+  dom.window.close();
+});
+
+test('report history distinguishes provider acceptance from recipient delivery', () => {
+  const {dom,w,$,requests}=setup();
+  w.PosnicPro.messageCentre.mount();
+  w.PosnicPro.messageCentre.reports();
+  requests.at(-1).cb({type:'success',data:[{_id:'report-one',report:'sales',frequency:'daily',hour:8,timezone:'Asia/Kolkata',channel:'email',destination:'owner@example.com',enabled:false,last_status:'sent'}]});
+  assert.match($('#message_report_list').text(),/Last result: Accepted by sender; delivery not confirmed/);
+  assert.doesNotMatch($('#message_report_list').text(),/Last result: Sent/);
+  dom.window.close();
+});
+
+test('report loading failures stop the spinner and retry without sending', () => {
+  const {dom,w,$,requests,writes}=setup();
+  w.PosnicPro.messageCentre.mount(); w.PosnicPro.messageCentre.reports();
+  requests.at(-1).failure({status:503,responseJSON:{message:'<img src=x onerror=alert(1)> Service unavailable'}});
+  assert.equal($('#message_report_list img').length,0);
+  assert.match($('#message_report_list [role=alert]').text(),/Service unavailable/);
+  assert.doesNotMatch($('#message_report_list').text(),/Loading reports/);
+  $('[data-message-reports-retry]').trigger('click');
+  assert.equal(requests.at(-1).url,'messaging/reports');
+  requests.at(-1).cb({type:'error'});
+  assert.equal($('#message_report_list [role=alert]').text(),'Could not load reports.');
+  $('[data-message-reports-retry]').trigger('click');
+  requests.at(-1).cb({type:'success',data:[]});
+  assert.equal($('[data-message-reports-retry]').length,0);
+  assert.match($('#message_report_list').text(),/No reports scheduled/);
+  assert.equal(writes.length,0);
+  dom.window.close();
 });

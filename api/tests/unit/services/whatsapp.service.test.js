@@ -773,3 +773,35 @@ test.each([undefined, new Error('LID chat has not synced')])(
     }
   }
 );
+
+test('stalled initialization expires, preserves authentication and permits retry', async () => {
+  jest.useFakeTimers();
+  try {
+    mockClient.initialize.mockImplementationOnce(() => new Promise(() => {}));
+    const pending = service.initializeClient('stalled', 'branch');
+    await jest.advanceTimersByTimeAsync(120001);
+    expect((await pending).status).toBe(false);
+    expect(service.getConnectionStatus('stalled', 'branch')).toBe('auth_failed');
+    expect(service.initializations.has('branch_stalled')).toBe(false);
+    expect(service.clients.has('branch_stalled')).toBe(false);
+    expect((await service.initializeClient('stalled', 'branch')).status).toBe(true);
+    service._safeCleanupClient('branch_stalled');
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test('authenticated session hides its QR and expires if ready never arrives', async () => {
+  jest.useFakeTimers();
+  try {
+    await service.initializeClient('authstall', 'branch');
+    const handlers = Object.fromEntries(mockClient.on.mock.calls);
+    service.qrCodes.set('branch_authstall', 'old-code');
+    handlers.authenticated();
+    expect(service.getQRCode('authstall', 'branch')).toBeNull();
+    await jest.advanceTimersByTimeAsync(120001);
+    expect(service.getConnectionStatus('authstall', 'branch')).toBe('auth_failed');
+  } finally {
+    jest.useRealTimers();
+  }
+});

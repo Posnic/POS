@@ -7,6 +7,7 @@ class WhatsAppService extends EventEmitter {
     super();
     this.clients = new Map();
     this.initializations = new Map();
+    this.connectionTimers = new Map();
     this.qrCodes = new Map();
     this.connectionStatus = new Map();
     this.sessionPath = path.join(__dirname, '../../.wwebjs_auth');
@@ -117,8 +118,31 @@ class WhatsAppService extends EventEmitter {
         },
       });
 
+      let rejectDeadline;
+      const deadline = new Promise((_, reject) => {
+        rejectDeadline = reject;
+      });
+      const clearDeadline = () => {
+        clearTimeout(this.connectionTimers.get(clientKey));
+        this.connectionTimers.delete(clientKey);
+      };
+      const armDeadline = () => {
+        clearDeadline();
+        const timer = setTimeout(() => {
+          if (this.clients.get(clientKey) !== client) return;
+          this._safeCleanupClient(clientKey);
+          this.connectionStatus.set(clientKey, 'auth_failed');
+          rejectDeadline(new Error('WhatsApp connection timed out. Please try again.'));
+          // Preserve the saved login; a retry may resume it without another scan.
+          void client.destroy().catch(() => {});
+        }, 120000);
+        timer.unref?.();
+        this.connectionTimers.set(clientKey, timer);
+      };
+
       client.on('qr', async (qr) => {
         if (this.clients.get(clientKey) !== client) return;
+        clearDeadline();
         console.log(`QR Code received for device: ${deviceId}`);
         this.connectionStatus.set(clientKey, 'qr_ready');
         this.qrCodes.set(clientKey, qr);
@@ -127,6 +151,7 @@ class WhatsAppService extends EventEmitter {
 
       client.on('ready', () => {
         if (this.clients.get(clientKey) !== client) return;
+        clearDeadline();
         console.log(`WhatsApp ready for device: ${deviceId}`);
         this.connectionStatus.set(clientKey, 'connected');
         this.qrCodes.delete(clientKey);
@@ -135,6 +160,8 @@ class WhatsAppService extends EventEmitter {
 
       client.on('authenticated', () => {
         if (this.clients.get(clientKey) !== client) return;
+        this.qrCodes.delete(clientKey);
+        armDeadline();
         this.connectionStatus.set(clientKey, 'authenticated');
         this.emit('authenticated', { deviceId, clientKey });
       });
@@ -159,7 +186,8 @@ class WhatsAppService extends EventEmitter {
       this.clients.set(clientKey, client);
       this.connectionStatus.set(clientKey, 'initializing');
 
-      await client.initialize();
+      armDeadline();
+      await Promise.race([client.initialize(), deadline]);
       return {
         status: true,
         message: 'Client initialized',
@@ -234,6 +262,8 @@ class WhatsAppService extends EventEmitter {
   _safeCleanupClient(clientKey, unlink = false) {
     // Always clean up our in-memory maps regardless of errors so that
     // the system sees this device as disconnected.
+    clearTimeout(this.connectionTimers.get(clientKey));
+    this.connectionTimers.delete(clientKey);
     this.clients.delete(clientKey);
     this.qrCodes.delete(clientKey);
     this.connectionStatus.delete(clientKey);
