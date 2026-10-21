@@ -3,7 +3,7 @@
  *
  * Reach a segment of customers with a message over SMS or WhatsApp. Sending is
  * deliberately deliberate: you preview the reach, can send a dry run that
- * dispatches nothing, and a real send asks for confirmation. Opt-outs and
+ * dispatches nothing, and the review screen is the final confirmation. Opt-outs and
  * customers with no phone are skipped on the server; a customer is never
  * messaged twice for the same campaign.
  */
@@ -33,6 +33,7 @@ PosnicPro.campaigns = {
   layoutComposer: function () {
     var form = $('#campaigns_form_wrap'), body = form.children('.card-body');
     form.addClass('campaign-composer');
+    if (!$('#campaign_send_result').length) form.before('<div id="campaign_send_result" hidden tabindex="-1"></div>');
     form.parent().children('p').first().text(PosnicPro.i18n.t('lang_send_offers_greetings_and_updates_to_your', 'Send offers, greetings and updates to your customers.'));
     var meta = $('#campaign_name').closest('.form-row').addClass('campaign-meta');
     var audience = $('#campaign_seg_type').closest('.form-row');
@@ -63,6 +64,8 @@ PosnicPro.campaigns = {
   invalidateReview: function () {
     ++PosnicPro.campaigns._reviewVersion;
     $('#campaign_review').prop('hidden', true);
+    $('#campaigns_form_wrap').removeClass('is-reviewing');
+    $('.campaign-compose-grid, .campaign-footer').prop('hidden', false);
     $('#campaign_preview_btn').prop('disabled', false).text('Review message →');
   },
 
@@ -275,7 +278,7 @@ PosnicPro.campaigns = {
     };
   },
 
-  save: function (after) {
+  save: function (after, failed) {
     var data = PosnicPro.campaigns.collect();
     if ((data.segment.type === 'category' && !data.segment.category_ids.length) ||
         (data.segment.type === 'customers' && !data.segment.customer_ids.length)) {
@@ -294,15 +297,17 @@ PosnicPro.campaigns = {
     var done = function (res) {
       if (res && res.type === 'success') {
         if (res.data && res.data._id) $('#campaign_form_id').val(res.data._id);
-        PosnicPro.campaigns.load();
+        if (typeof after !== 'function') PosnicPro.campaigns.load();
         if (typeof after === 'function') after(res.data);
         else PosnicPro.alert('success', res.message || 'Saved');
       } else {
+        if (typeof failed === 'function') failed();
         PosnicPro.alert((res && res.type) || 'error', (res && res.message) || 'Could not save');
       }
     };
-    if (id) PosnicPro.put({ url: 'campaigns/' + id, data: JSON.stringify(data) }, done);
-    else PosnicPro.post({ url: 'campaigns', data: JSON.stringify(data) }, done);
+    if (id) PosnicPro.put({ url: 'campaigns/' + id, data: JSON.stringify(data) }, done, failed);
+    else PosnicPro.post({ url: 'campaigns', data: JSON.stringify(data) }, done, failed);
+    return true;
   },
 
   remove: function (id) {
@@ -342,31 +347,56 @@ PosnicPro.campaigns = {
       );
       $('#campaign_review_message').text(data.message);
       $('#campaign_send_btn, #campaign_schedule_btn').prop('disabled', !d.reachable);
-      $('#campaign_review').prop('hidden', false).trigger('focus');
+      $('#campaigns_form_wrap').addClass('is-reviewing');
+      $('.campaign-compose-grid, .campaign-footer').prop('hidden', true);
+      var review = $('#campaign_review').prop('hidden', false);
+      review.trigger('focus');
+      if (review[0] && review[0].scrollIntoView) review[0].scrollIntoView({block:'start', behavior:'instant'});
     });
   },
 
-  // dryRun true = test (dispatch nothing); false = real send (asks first).
+  showSendResult: function (text, error) {
+    var result = $('#campaign_send_result');
+    result.prop('hidden', false).attr('role', error ? 'alert' : 'status')
+      .attr('class', 'alert ' + (error ? 'alert-danger' : 'alert-info')).text(text);
+    result.trigger('focus');
+    if (result[0] && result[0].scrollIntoView) result[0].scrollIntoView({block:'nearest'});
+  },
+
+  // The reviewed Send now action is the confirmation; no browser dialog.
   sendNow: function (dryRun) {
-    PosnicPro.campaigns.save(function (data) {
+    var self = PosnicPro.campaigns;
+    if (self._sending || $('#campaign_review').prop('hidden') || $('#campaign_send_btn').prop('disabled')) return;
+    self._sending = true;
+    self.showSendResult('Sending…', false);
+    var controls = $('#campaign_send_btn, #campaign_test_btn, #campaign_schedule_btn, #campaign_edit_again');
+    controls.prop('disabled', true);
+    var release = function () { self._sending = false; controls.prop('disabled', false); };
+    var failed = function (xhr) {
+      release(); self.invalidateReview();
+      self.showSendResult((xhr && xhr.responseJSON && xhr.responseJSON.message) || 'Could not confirm sending. Check Message history before trying again.', true);
+    };
+    var started = self.save(function (data) {
       var id = data && data._id;
-      if (!id) return;
-      if (!dryRun) {
-        if (!window.confirm('Send this campaign for real now? Reachable customers will be messaged.')) return;
-      }
+      if (!id) { failed(); return; }
       PosnicPro.post({ url: 'campaigns/' + id + '/send', data: JSON.stringify({ dryRun: !!dryRun }) }, function (res) {
+        release();
+        self.invalidateReview();
         if (!res || res.type !== 'success') {
-          PosnicPro.alert((res && res.type) || 'error', (res && res.message) || 'Send failed');
+          self.showSendResult((res && res.message) || 'Send failed', true);
           return;
         }
         var d = res.data || {};
-        PosnicPro.alert(
-          'success',
-          (dryRun ? PosnicPro.i18n.t('lang_dry_run', 'Dry run: ') : PosnicPro.i18n.t('lang_sent', 'Sent: ')) + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped'
-        );
-        PosnicPro.campaigns.load();
-      });
-    });
+        PosnicPro.alert(d.failed ? 'error' : 'success',
+          (dryRun ? PosnicPro.i18n.t('lang_dry_run', 'Dry run: ') : PosnicPro.i18n.t('lang_sent', 'Sent: ')) + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped');
+        var summary = (dryRun ? 'Check complete: ' : '') + (d.sent || 0) + ' sent, ' + (d.failed || 0) + ' failed, ' + (d.skipped || 0) + ' skipped';
+        if (d.errors && d.errors.length) summary += '. ' + d.errors.join('; ');
+        self.showSendResult(summary, !!d.failed);
+        self.load();
+        if (!dryRun) self.hideForm();
+      }, failed);
+    }, failed);
+    if (!started) release();
   },
 
   schedule: function () {
@@ -424,9 +454,13 @@ $(document).on('click', '.campaign-edit', function () {
   PosnicPro.campaigns.editForm($(this).data('id'));
 });
 $(document).on('click', '.campaign-del', function () {
-  if (window.confirm('Delete this campaign? Its send history is kept.')) {
-    PosnicPro.campaigns.remove($(this).data('id'));
-  }
+  var id = $(this).data('id');
+  swal({
+    title: PosnicPro.i18n.t('lang_delete_this_campaign', 'Delete this campaign?'), text: 'Its send history is kept.',
+    showCancelButton: true, confirmButtonText: 'Delete campaign',
+    cancelButtonText: 'Keep campaign', confirmButtonClass: 'btn btn-danger',
+    cancelButtonClass: 'btn btn-light'
+  }).then(function () { PosnicPro.campaigns.remove(id); }, function () {});
 });
 $(document).on('click', '.campaign-merge', function () {
   PosnicPro.campaigns.insertMerge($(this).data('field'));
@@ -456,18 +490,30 @@ $(document).on('click', '[data-remove-recipient]', function () {
 $(document).on('input', '#campaign_message', function () { PosnicPro.campaigns.previewText(); });
 $(document).on('click', '[data-message-preset]', function () {
   var kind = $(this).data('message-preset');
-  if ($('#campaign_message').val().trim() && !window.confirm('Replace the current message with this starter?')) return;
-  var templates = {
-    offer: 'Hi {name}, we have a special offer for you. [Add your offer, valid code and expiry date.]',
-    christmas: 'Merry Christmas, {name}! Wishing you and your family a joyful festive season.',
-    newyear: 'Happy New Year, {name}! Thank you for shopping with us. We look forward to welcoming you again.',
-    custom: 'Hi {name}, '
-  };
-  $('#campaign_message').val(templates[kind] || '');
-  $('[data-message-preset]').attr('aria-pressed', 'false');
-  $(this).attr('aria-pressed', 'true');
-  PosnicPro.campaigns.previewText();
+  var button = this;
+  function applyStarter() {
+    var templates = {
+      offer: 'Hi {name}, we have a special offer for you. [Add your offer, valid code and expiry date.]',
+      christmas: 'Merry Christmas, {name}! Wishing you and your family a joyful festive season.',
+      newyear: 'Happy New Year, {name}! Thank you for shopping with us. We look forward to welcoming you again.',
+      custom: 'Hi {name}, '
+    };
+    $('#campaign_message').val(templates[kind] || '');
+    $('[data-message-preset]').attr('aria-pressed', 'false');
+    $(button).attr('aria-pressed', 'true');
+    $('#campaign_message').trigger('input');
+    PosnicPro.campaigns.previewText();
+  }
+  if (!$('#campaign_message').val().trim()) { applyStarter(); return; }
+  swal({
+    title: PosnicPro.i18n.t('lang_replace_your_message', 'Replace your message?'), text: 'Use this starter instead of your current message.',
+    showCancelButton: true, confirmButtonText: 'Use starter',
+    cancelButtonText: 'Keep my message', confirmButtonClass: 'btn btn-primary',
+    cancelButtonClass: 'btn btn-light'
+  }).then(applyStarter, function () {});
 });
 
 $(document).on('input change', '#campaign_name, #campaign_channel, #campaign_seg_type, .campaign-seg-field input, .campaign-seg-field select, #campaign_message, [data-recipient]', function () { PosnicPro.campaigns.invalidateReview(); });
 $(document).on('click', '[data-remove-recipient], [data-message-preset], .campaign-merge, #campaign_edit_again', function () { PosnicPro.campaigns.invalidateReview(); });
+
+$(document).on('click', '#campaign_edit_again', function () { $('#campaign_message').trigger('focus'); });

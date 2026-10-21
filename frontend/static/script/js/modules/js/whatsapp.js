@@ -56,9 +56,8 @@ PosnicPro.whatsapp = {
 
         PosnicPro.post(params, (response) => {
             if (response.type === 'success') {
-                // Show QR container
-                $('#whatsapp_qr_container').show();
-                $('#whatsapp_connect_btn').hide();
+                // Status owns the display; initialization may finish after ready.
+                // Never restore a QR spinner over an already connected session.
                 
                 // Start polling for QR code
                 this.checkStatus(true);
@@ -163,6 +162,10 @@ PosnicPro.whatsapp = {
                 
                 if (connected) {
                     this.onConnected();
+                } else if (status === 'authenticated') {
+                    this.lastQRCode = null;
+                    $('#whatsapp_qr_container').hide();
+                    $('#whatsapp_connect_btn').hide();
                 } else if (status === 'qr_ready') {
                     // QR code is ready, fetch and display it
                     this.fetchAndDisplayQR();
@@ -187,6 +190,8 @@ PosnicPro.whatsapp = {
         };
 
         PosnicPro.get(params, (response) => {
+            // Ignore a QR response that arrived after authentication/ready.
+            if (this.connected || this.currentStatus === 'authenticated') return;
             if (response.type === 'success' && response.data && response.data.qr_code) {
                 // Show QR container and hide buttons
                 $('#whatsapp_qr_container').show();
@@ -230,6 +235,7 @@ PosnicPro.whatsapp = {
      * Update status badge
      */
     updateStatusBadge: function(status, connected) {
+        this.currentStatus = status;
         const badge = $('#whatsapp_status_badge');
         
         const statusMap = {

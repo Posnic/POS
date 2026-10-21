@@ -119,10 +119,29 @@ async function deliver(schedule, report) {
 }
 
 async function deliverScoped(schedule, report) {
+  const documents = require('./report-document.service');
+  const document = await documents.prepare(schedule, report, {
+    share: schedule.channel === 'sms' || schedule.channel === 'whatsapp',
+  });
   const metrics = (report.metrics || [])
     .map((metric) => `${metric.label}: ${metric.value}`)
     .join('\n');
-  const text = `${report.answer}\n\n${metrics}\n\nOutlet: ${report.branch.branch_name || schedule.branch_id}\nSource: ${report.source}\nPeriod: ${report.range.starting_date.toISOString()} to ${report.range.ending_date.toISOString()}`;
+  const text = `${report.answer}\n\n${metrics}\n\nOutlet: ${report.branch.branch_name || schedule.branch_id}\nPeriod: ${documents.periodLabel(schedule, report)}${document.url ? `\nView PDF report: ${document.url}` : ''}`;
+  if (schedule.channel === 'sms') {
+    const MessagingService = require('./messaging.service');
+    const sent = await new MessagingService().sendSms(
+      schedule.branch_id,
+      schedule.destination,
+      text,
+      { purpose: schedule.test ? 'Report test' : 'Scheduled report' }
+    );
+    if (!sent.ok) throw new Error(sent.error || 'SMS submission was not acknowledged.');
+    return {
+      status: 'sent',
+      provider: 'sms',
+      reference: String(sent.messageId || require('node:crypto').randomUUID()),
+    };
+  }
   if (schedule.channel === 'whatsapp') {
     const MessagingService = require('./messaging.service');
     const sent = await new MessagingService().sendWhatsapp(
@@ -131,6 +150,7 @@ async function deliverScoped(schedule, report) {
       text,
       {
         purpose: schedule.test ? 'Report test' : 'Scheduled report',
+        document,
         ...(schedule.test
           ? {}
           : {
@@ -152,8 +172,10 @@ async function deliverScoped(schedule, report) {
       reference: sent.messageId,
     };
   }
-  const { resolveShopTransport } = require('../utils/email');
-  const { transporter, from } = resolveShopTransport(report.branch, { scheduledReport: true });
+  const { resolveConfiguredShopTransport } = require('../utils/email');
+  const { transporter, from } = await resolveConfiguredShopTransport(report.branch, {
+    scheduledReport: true,
+  });
   if (transporter.options?.jsonTransport)
     throw new Error('Configure email delivery before enabling scheduled summaries.');
   const info = await transporter.sendMail({
@@ -162,6 +184,9 @@ async function deliverScoped(schedule, report) {
     subject: `Posnic ${schedule.report.replace('_', ' ')} summary`,
     text,
     scheduledReport: true,
+    attachments: [
+      { filename: document.filename, content: document.buffer, contentType: 'application/pdf' },
+    ],
   });
   if (
     info.rejected?.length ||
@@ -175,7 +200,7 @@ async function deliverScoped(schedule, report) {
     throw new Error('The email provider did not acknowledge the destination.');
   return {
     status: 'sent',
-    provider: transporter.options?.brevo ? 'brevo' : 'smtp',
+    provider: transporter.options?.emailApi || (transporter.options?.brevo ? 'brevo' : 'smtp'),
     reference: String(info.messageId),
   };
 }

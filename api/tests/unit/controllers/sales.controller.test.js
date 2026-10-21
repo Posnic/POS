@@ -159,6 +159,13 @@ jest.mock('nodemailer', () => ({
   createTransport: jest.fn(() => ({ sendMail: jest.fn().mockResolvedValue({ messageId: 'ok' }) })),
 }));
 
+jest.mock('../../../src/utils/email', () => ({
+  resolveConfiguredShopTransport: jest.fn(async () => ({
+    transporter: require('nodemailer').createTransport(),
+    from: 'test@example.com',
+  })),
+}));
+
 jest.mock('../../../src/utils/pdfGenerator', () => ({ generateInvoicePDF: jest.fn() }));
 
 // ─── Load after mocks ─────────────────────────────────────────────────────────

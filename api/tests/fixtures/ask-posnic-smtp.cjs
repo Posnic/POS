@@ -7,6 +7,7 @@ require.cache[require.resolve('../../src/models/base.model')] = { exports: class
   async getCollection() { throw new Error('The SMTP check must not access an application database.'); }
   static async getDb() { throw new Error('The SMTP check must not access an application database.'); }
 } };
+require('../../src/services/shop-email').read = async branch => branch;
 const runner = require('../../src/services/ask-posnic-runner.service');
 
 // A loopback SMTP peer, never an external recipient or provider account.
@@ -42,7 +43,7 @@ async function withSmtp(rejectRecipient, run, { withholdAcknowledgement = false 
   const report = {
     answer: 'Synthetic sales were 42.50.', metrics: [{ label: 'Sales', value: '42.50' }], source: 'Sales report',
     range: { starting_date: new Date('2026-10-01T00:00:00Z'), ending_date: new Date('2026-10-01T23:59:59Z') },
-    branch: { branch_name: 'Synthetic outlet', email_smtp_host: '127.0.0.1', email_smtp_port: server.address().port, email_smtp_username: 'sender@example.invalid', email_smtp_password: 'synthetic-only' },
+    branch: { _id: '507f1f77bcf86cd799439011', branch_name: 'Synthetic outlet', email_smtp_host: '127.0.0.1', email_smtp_port: server.address().port, email_smtp_username: 'sender@example.invalid', email_smtp_password: 'synthetic-only' },
   };
   try { await run(report, messages); }
   finally { for (const socket of sockets) socket.destroy(); await new Promise(resolve => server.close(resolve)); }

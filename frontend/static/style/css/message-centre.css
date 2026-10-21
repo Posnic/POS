@@ -17,9 +17,9 @@
 
 /* Quiet navigation and one primary action at each stage. */
 .message-navigation { display:flex; gap:24px; border-bottom:1px solid var(--theme-border-color,#dce4ee); overflow-x:auto; }
-.message-nav-item { flex:none; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--theme-text-color,#617087); padding:14px 2px; font:inherit; cursor:pointer; }
-.message-nav-item[aria-pressed="true"] { color:#1265bc; border-bottom-color:#1265bc; font-weight:600; }
-.message-nav-item:focus-visible { outline:2px solid #1265bc; outline-offset:-2px; }
+.message-nav-item { flex:none; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--theme-text-color,#617087)!important; padding:14px 2px; font:inherit; cursor:pointer; }
+.message-nav-item[aria-pressed="true"] { color:var(--theme-primary-color,#506fe4)!important; border-bottom-color:var(--theme-primary-color,#506fe4); font-weight:600; }
+.message-nav-item:focus-visible { outline:2px solid var(--theme-primary-color,#506fe4); outline-offset:-2px; }
 #message_campaigns > .card { border:0; box-shadow:none; background:transparent; }
 #message_campaigns > .card > .card-body { padding:16px 0; }
 #message_campaigns > .card > .card-header { padding:12px 0; background:transparent; border:0; }
@@ -106,9 +106,9 @@
 #message_centre button:disabled { cursor:not-allowed; }
 
 /* Service setup and report delivery use the same quiet workspace. */
-#message_centre .message-channel-nav { display:flex; gap:4px; padding:4px; background:#eef2f7; border-radius:8px; width:max-content; max-width:100%; margin:20px 0 24px; }
-#message_centre .message-channel-nav button { border:0; border-radius:6px; background:transparent; color:#52627b; padding:10px 24px; }
-#message_centre .message-channel-nav button[aria-pressed="true"] { background:white; color:#1255a1; box-shadow:0 1px 4px #182d4920; font-weight:600; }
+#message_centre .message-channel-nav { display:flex; gap:4px; padding:4px; background:var(--theme-table-header-bg,#eef2f7); border:1px solid var(--theme-border-color,#dce4ee); border-radius:8px; width:max-content; max-width:100%; margin:20px 0 24px; }
+#message_centre .message-channel-nav button { border:0; border-radius:6px; background:transparent; color:var(--theme-text-color,#52627b)!important; padding:10px 24px; min-height:44px; font:inherit; cursor:pointer; }
+#message_centre .message-channel-nav button[aria-pressed="true"] { background:var(--theme-card-bg,#fff); color:var(--theme-primary-color,#506fe4)!important; box-shadow:0 1px 4px #182d4920; font-weight:600; }
 #message_centre .message-status-row, #message_centre .message-section-heading, #message_centre .message-report-row { display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; }
 #message_centre .message-status-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 #message_centre .message-status-actions .btn { margin:0!important; }
@@ -127,3 +127,86 @@
 #message_centre #message_automatic .card-body > .d-flex { display:grid!important; grid-template-columns:minmax(180px,1fr) auto auto; gap:16px; }
 #message_centre #message_automatic .card-body > .d-flex p { margin:0; }
 @media(max-width:1000px) { #message_centre #message_automatic .card-body > .d-flex { grid-template-columns:minmax(0,1fr); } }
+
+.email-setup-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin-bottom:20px; }
+.email-setup-grid label { display:block; min-width:0; }
+.email-setup-grid .form-control { margin-top:8px; width:100%; }
+.email-provider-help { background:#f5f8fc; border:1px solid #dce4ee; border-radius:8px; padding:20px; margin-bottom:24px; line-height:1.6; overflow-wrap:anywhere; }
+#email_api_fields,#email_oauth_fields { margin-top:20px; }
+#email_api_key { max-width:640px; }
+@media(max-width:640px) { .email-setup-grid {grid-template-columns:1fr;} }
+
+.email-test-panel { border-top:1px solid #dce4ee; margin-top:24px; padding-top:24px; }
+.email-test-panel .email-setup-grid { align-items:end; }
+
+.email-provider-help { color:#34465c; }
+.email-setup-grid label { color:#34465c; }
+
+/* Keep connection setup readable on large tills without squeezing small screens. */
+#message_centre #message_connection { width:100%; max-width:960px; min-width:0; }
+#message_centre #message_connection .card,
+#message_centre #message_connection .card-body,
+#message_centre #message_connection .card-header { min-width:0; max-width:100%; }
+#message_centre #message_connection .card-header { justify-content:flex-start!important; gap:12px 32px; }
+#message_centre #message_connection .card-header h5,
+#message_centre #message_connection .card-header h6 { margin-bottom:0; }
+#message_centre .message-status-row { justify-content:flex-start; align-items:flex-start; gap:20px 32px; }
+#message_centre .message-status-row > div { min-width:0; }
+#message_centre .message-status-actions { align-self:center; }
+#message_centre .message-phone-status { margin-bottom:0; }
+#message_centre #message_connection p,
+#message_centre #message_connection .alert,
+#message_centre #message_connection .badge { overflow-wrap:anywhere; white-space:normal; }
+#message_centre #whatsapp_qr_code img,
+#message_centre #whatsapp_qr_code canvas { max-width:100%; height:auto!important; }
+#message_centre .message-channel-nav { flex-wrap:wrap; }
+@media(max-width:600px) {
+ #message_centre .message-status-row { flex-direction:column; gap:16px; }
+ #message_centre .message-status-actions { align-self:flex-start; }
+ #message_centre .message-status-actions .btn { min-height:44px; white-space:normal; }
+ #message_centre .message-connection-actions { flex-wrap:wrap; }
+}
+
+/* Provider setup: restrained controls, readable fields, help on demand. */
+#message_centre #messaging_wa_cloud { max-width:800px; }
+#message_centre #messaging_wa_provider { max-width:400px; min-height:46px; border-radius:8px; font-weight:500; }
+#message_centre .wa-provider-names { max-width:680px; margin:10px 0 24px; color:var(--theme-text-muted,#617087); font-size:13px; line-height:1.8; }
+#message_centre .wa-provider-title { padding-top:20px; margin:0 0 16px; border-top:1px solid var(--theme-border-color,#dce4ee); font-weight:600; }
+#message_centre .wa-api-setup .form-row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin:0 0 20px; }
+#message_centre .wa-api-setup .form-row > div { padding:0; width:100%; max-width:100%; margin:0!important; }
+#message_centre .wa-api-setup .form-control { min-height:44px; border-radius:7px; }
+#message_centre .wa-api-setup label { font-size:13px; margin-bottom:8px; }
+#message_centre .wa-api-setup details { background:var(--theme-table-header-bg,#f5f8fc); border-color:var(--theme-border-color,#dce4ee)!important; line-height:1.7; margin-top:8px; }
+#message_centre .wa-api-setup summary { cursor:pointer; color:var(--theme-text-color,#35465e); }
+#message_centre .wa-api-setup > div > p.small { line-height:1.7; max-width:680px; }
+/* Connection methods are choices, not competing primary actions. */
+#message_centre .message-choices:has([data-wa-mode]) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; max-width:560px; gap:12px; padding:0; background:transparent; }
+#message_centre [data-wa-mode] { display:flex; align-items:center; justify-content:flex-start; gap:8px; min-height:56px; padding:14px 16px; border:1px solid var(--theme-border-color,#dce4ee)!important; border-radius:8px; background:var(--theme-card-bg,#fff)!important; color:var(--theme-text-color,#35465e)!important; box-shadow:none!important; }
+#message_centre [data-wa-mode]::after { content:''; flex:none; margin-left:auto; width:18px; height:18px; border-radius:50%; border:1px solid var(--theme-border-color,#9ca8b8); background:var(--theme-card-bg,#fff); }
+#message_centre .message-choices [data-wa-mode][aria-pressed="true"] { background:color-mix(in srgb,var(--theme-primary-color,#506fe4) 8%,var(--theme-card-bg,#fff))!important; color:var(--theme-primary-color,#506fe4)!important; border-color:var(--theme-primary-color,#506fe4)!important; font-weight:600; }
+#message_centre [data-wa-mode][aria-pressed="true"]::after { background:var(--theme-primary-color,#506fe4); border:4px solid var(--theme-card-bg,#fff); outline:1px solid var(--theme-primary-color,#506fe4); }
+#message_centre [data-wa-mode]:focus-visible, #message_centre .message-channel-nav button:focus-visible { outline:2px solid var(--theme-primary-color,#506fe4); outline-offset:3px; }
+#message_centre .custom-switch { padding-left:2.75rem; }
+#message_centre .custom-switch .custom-control-label { line-height:1.5; cursor:pointer; }
+#message_centre .custom-switch .custom-control-label::before { top:calc(50% - 10px); left:-2.75rem; width:36px; height:20px; border-radius:12px; }
+#message_centre .custom-switch .custom-control-label::after { top:calc(50% - 7px); left:calc(-2.75rem + 3px); width:14px; height:14px; border-radius:50%; }
+#message_centre .custom-switch .custom-control-input:checked ~ .custom-control-label::before { background:var(--theme-primary-color,#506fe4)!important; border-color:var(--theme-primary-color,#506fe4)!important; }
+#message_centre .custom-switch .custom-control-input:checked ~ .custom-control-label::after { transform:translateX(16px); }
+@media(max-width:480px) { #message_centre .message-choices:has([data-wa-mode]) { grid-template-columns:1fr; } #message_centre .message-channel-nav { width:100%; } #message_centre .message-channel-nav button { flex:1; padding:10px 12px; } }
+@media(max-width:600px) {
+ #message_centre .wa-api-setup .form-row { grid-template-columns:minmax(0,1fr); gap:16px; }
+ #message_centre #messaging_wa_provider { max-width:100%; }
+}
+
+/* Review is a separate step; retain draft inputs without displaying the editor. */
+.campaign-composer { max-width:1100px; }
+.campaign-compose-grid[hidden], .campaign-footer[hidden] { display:none!important; }
+.campaign-composer.is-reviewing { max-width:800px; }
+.campaign-composer.is-reviewing > .card-header { display:none; }
+.campaign-composer.is-reviewing .campaign-review { margin:0; padding:0; border:0; scroll-margin-top:100px; }
+.campaign-review h3 { margin-bottom:20px; font-size:20px; }
+.campaign-review .message-preview { min-height:100px; line-height:1.7; padding:24px; }
+.campaign-review-actions { justify-content:flex-end; padding-top:20px; border-top:1px solid var(--theme-border-color,#e5eaf0); }
+.campaign-review-actions #campaign_edit_again { order:-1; margin-right:auto; }
+.campaign-review-actions .btn { min-height:44px; }
+.campaign-delivery-options { margin-top:24px; }

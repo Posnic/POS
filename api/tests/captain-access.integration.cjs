@@ -608,9 +608,9 @@ test('paired Captain verifies a new email through scoped routes', async () => {
   const {grant} = await paired();
   const headers = {Authorization:'Bearer '+grant.token,'Content-Type':'application/json'};
   const mail = require('../src/utils/email');
-  const original = mail.resolveShopTransport;
+  const original = mail.resolveConfiguredShopTransport;
   let code;
-  mail.resolveShopTransport = () => ({from:'shop@example.test',transporter:{sendMail:async message=>{code=message.text.match(/\b\d{6}\b/)[0];}}});
+  mail.resolveConfiguredShopTransport = () => ({from:'shop@example.test',transporter:{sendMail:async message=>{code=message.text.match(/\b\d{6}\b/)[0];}}});
   try {
     const sent = await fetch(base+'/captain/v1/profile/email/start',{method:'POST',headers,body:JSON.stringify({email:'NEW@EXAMPLE.TEST',currentPassword:'staff-password'})});
     assert.equal(sent.status,200);
@@ -621,7 +621,7 @@ test('paired Captain verifies a new email through scoped routes', async () => {
     assert.deepEqual(await verified.json(),{saved:true,email:'new@example.test'});
     const profile = await fetch(base+'/captain/v1/profile',{headers});
     assert.equal((await profile.json()).email,'new@example.test');
-  } finally { mail.resolveShopTransport = original; }
+  } finally { mail.resolveConfiguredShopTransport = original; }
 });
 
 
