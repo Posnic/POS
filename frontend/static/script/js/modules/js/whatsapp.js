@@ -174,10 +174,9 @@ PosnicPro.whatsapp = {
                     this.showConnectButton();
                 }
             } else {
-                // If status check fails, show connect button
-                this.showConnectButton();
+                this.showStatusUnavailable();
             }
-        });
+        }, () => this.showStatusUnavailable());
     },
 
     /**
@@ -234,7 +233,24 @@ PosnicPro.whatsapp = {
     /**
      * Update status badge
      */
+    // An unreachable status endpoint does not prove that the phone was unlinked.
+    showStatusUnavailable: function() {
+        this.connected = false;
+        if (PosnicPro.messaging) {
+            PosnicPro.messaging.waConnected = false;
+            PosnicPro.messaging.updateReadiness();
+        }
+        $('#whatsapp_status_badge').hide();
+        if (!$('#whatsapp_status_error').length) {
+            $('<p id="whatsapp_status_error" class="text-muted mt-2 mb-0" role="status"></p>').insertAfter('#whatsapp_status_badge');
+        }
+        $('#whatsapp_status_error').text(PosnicPro.i18n.t('lang_could_not_confirm_the_connection_refresh_t', 'Could not confirm the connection. Refresh the status before trying again.')).show();
+        $('#whatsapp_connected_info, #whatsapp_qr_container, #whatsapp_connect_btn, #whatsapp_disconnect_btn').hide();
+        $('#whatsapp_refresh_status').prop('disabled', false);
+    },
     updateStatusBadge: function(status, connected) {
+        $('#whatsapp_status_error').remove();
+        $('#whatsapp_status_badge').show();
         this.currentStatus = status;
         const badge = $('#whatsapp_status_badge');
         
