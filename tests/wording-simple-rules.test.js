@@ -17,10 +17,10 @@ test('published rules cover new labels and extensions, while explicit exceptions
  assert.deepEqual({...resolveBundle(state,'other','en',labels).values},{});
  assert.throws(()=>validateDraft({name:'x',locale:'en',overrides:{},rules:[{from:'item',to:'<b>x'}]},labels,['en']));
 });
-test('simple screen saves rules and publishes with no profile-name or apply step',()=>{
+test('created profile saves word rules without a separate apply step',()=>{
  const {JSDOM}=require('jsdom'), fs=require('node:fs');
  const d=new JSDOM('<div id="wording-editor"></div>',{runScripts:'outside-only'}); const calls=[];
- const state={revision:0,profiles:[],assignments:{}};
+ const state={revision:0,profiles:[{id:'p',draft:{name:'Shop',locale:'en',rules:[],overrides:{}}}],assignments:{}};
  d.window.PosnicPro={local:{get:()=> 'super_admin'},i18n:{t:(_,v)=>v},get:(_,cb)=>cb({type:'success',data:{state,writable:true,locales:['en'],branches:[{id:'b',name:'Shop'}],labels:[]}}),put:(req,cb)=>{calls.push(JSON.parse(req.data));state.profiles=[{id:'p',draft:calls[0]}];state.revision++;cb({type:'success',data:state});},post:(req,cb)=>{calls.push(JSON.parse(req.data));cb({type:'success',data:state});}};
  d.window.eval(fs.readFileSync('frontend/static/script/js/modules/js/wording-editor.js','utf8'));
  d.window.PosnicPro.wordingEditor.open();const doc=d.window.document;
@@ -28,5 +28,5 @@ test('simple screen saves rules and publishes with no profile-name or apply step
  assert.equal(doc.querySelector('#wording-advanced').hidden,true);
  assert.equal(doc.querySelector('#wording-group'),null);
  doc.querySelector('#wording-publish').click();
- assert.deepEqual(calls[0].rules,[{from:'Item',to:'Product'}]);assert.equal(calls[0].name,'Shop wording - en');assert.deepEqual(calls[1].branches,['b']);d.window.close();
+ assert.deepEqual(calls[0].rules,[{from:'Item',to:'Product'}]);assert.equal(calls[0].name,'Shop');assert.deepEqual(calls[1].branches,['b']);d.window.close();
 });

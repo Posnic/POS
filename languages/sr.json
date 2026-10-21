@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Objavljeno. Tills primenjuje ovu reviziju nakon sinhronizacije.",
   "lang_saved_without_branch_assignments_previousl": "Sačuvano bez zadataka grana. Prethodno dodeljene grane koriste standardnu formulaciju.",
   "lang_search_phrases": "Pretraživanje fraza",
-  "lang_use_word_rules": "Koristite pravila reči"
+  "lang_use_word_rules": "Koristite pravila reči",
+  "lang_create_profile": "Kreiraj profil",
+  "lang_duplicate": "Duplikat",
+  "lang_duplicate_profile": "Duplikat profila",
+  "lang_new_profile": "Novi profil",
+  "lang_no_custom_profiles_yet": "Još nema prilagođenih profila",
+  "lang_rename": "Preimenuj",
+  "lang_save_name": "Sačuvaj ime",
+  "lang_standard_language_is_in_use_create_a_profi": "Standardni jezik je u upotrebi. Napravite profil da biste prilagodili formulaciju.",
+  "lang_the_copy_starts_without_branch_assignments": "Kopija počinje bez zadataka grana.",
+  "lang_your_standard_language_stays_unchanged_unt": "Vaš standardni jezik ostaje nepromenjen dok ne sačuvate promene teksta.",
+  "lang_wording_enter_profile_name": "Unesite ime profila.",
+  "lang_wording_profile_actions": "Akcije profila",
+  "lang_wording_rename_profile": "Preimenuj profil"
 }

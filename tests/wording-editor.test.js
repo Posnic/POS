@@ -16,7 +16,11 @@ test('searchable editor saves a draft then publishes selected branches without a
   dom.window.PosnicPro.wordingEditor.open();
   const doc = dom.window.document;
   function input(el, value) { el.value = value; el.dispatchEvent(new dom.window.Event('input', { bubbles: true })); }
+  assert.equal(doc.getElementById('wording-tab-words'), null);
+  doc.getElementById('wording-create').click();
   input(doc.getElementById('wording-name'), 'English — Shop');
+  doc.getElementById('wording-profile-save').click();
+  calls.length = 0;
   assert.equal(doc.getElementById('wording-search'), null);
   doc.getElementById('wording-tab-advanced').click();
   input(doc.getElementById('wording-search'), 'takeaway');
@@ -26,13 +30,13 @@ test('searchable editor saves a draft then publishes selected branches without a
   doc.getElementById('wording-publish').click();
   assert.equal(JSON.parse(calls[0].data).overrides['posnic.lang_takeaway'], 'Parcel');
   assert.deepEqual(JSON.parse(calls[1].data).branches, ['b']);
-  assert.equal(JSON.parse(calls[1].data).expectedRevision, 1);
+  assert.equal(JSON.parse(calls[1].data).expectedRevision, 2);
   assert.match(doc.getElementById('wording-notice').textContent, /Published/);
   dom.window.close();
 });
 test('pagination reaches every label and preserves draft edits across search, sizing and filters', () => {
   const dom = new JSDOM('<div id="wording-editor"></div>', { runScripts: 'outside-only' });
-  const data = { state: { revision: 0, profiles: [], assignments: {} }, writable: true, locales: ['en'], branches: [],
+  const data = { state: { revision: 0, profiles: [{ id: 'p', draft: { name: 'Shop', locale: 'en', rules: [], overrides: {} } }], assignments: {} }, writable: true, locales: ['en'], branches: [],
     labels: Array.from({ length: 131 }, (_, i) => ({ id: 'posnic.label' + i, english: 'Label ' + i, module: 'Core' })) };
   dom.window.PosnicPro = { local: { get: () => 'super_admin' }, i18n: { t: (_, v) => v }, get: (_, cb) => cb({ type: 'success', data }) };
   dom.window.eval(fs.readFileSync('frontend/static/script/js/modules/js/wording-editor.js', 'utf8'));

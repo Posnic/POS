@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Publicat. Până când se aplică această revizuire după sincronizare.",
   "lang_saved_without_branch_assignments_previousl": "Salvat fără atribuirea sucursalelor. Sucursalele atribuite anterior utilizează formularea standard.",
   "lang_search_phrases": "Expresii de căutare",
-  "lang_use_word_rules": "Folosiți reguli de cuvinte"
+  "lang_use_word_rules": "Folosiți reguli de cuvinte",
+  "lang_create_profile": "Creați un profil",
+  "lang_duplicate": "Duplicare",
+  "lang_duplicate_profile": "Profil duplicat",
+  "lang_new_profile": "Profil nou",
+  "lang_no_custom_profiles_yet": "Nu există încă profiluri personalizate",
+  "lang_rename": "Redenumiți",
+  "lang_save_name": "Salvați numele",
+  "lang_standard_language_is_in_use_create_a_profi": "Limbajul standard este în uz. Creați un profil pentru a vă personaliza formularea.",
+  "lang_the_copy_starts_without_branch_assignments": "Copia începe fără atribuiri de ramuri.",
+  "lang_your_standard_language_stays_unchanged_unt": "Limba dvs. standard rămâne neschimbată până când salvați modificările de formulare.",
+  "lang_wording_enter_profile_name": "Introduceți un nume de profil.",
+  "lang_wording_profile_actions": "Acțiuni de profil",
+  "lang_wording_rename_profile": "Redenumiți profilul"
 }

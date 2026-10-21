@@ -5194,5 +5194,18 @@
   "lang_published_tills_apply_this_revision_after": "Опубликовано. До сих пор применяет эту редакцию после синхронизации.",
   "lang_saved_without_branch_assignments_previousl": "Сохранено без назначения филиалов. В ранее назначенных филиалах используется стандартная формулировка.",
   "lang_search_phrases": "Поисковые фразы",
-  "lang_use_word_rules": "Используйте правила слов"
+  "lang_use_word_rules": "Используйте правила слов",
+  "lang_create_profile": "Создать профиль",
+  "lang_duplicate": "Дублировать",
+  "lang_duplicate_profile": "Дубликат профиля",
+  "lang_new_profile": "Новый профиль",
+  "lang_no_custom_profiles_yet": "Настраиваемых профилей пока нет",
+  "lang_rename": "Переименовать",
+  "lang_save_name": "Сохранить имя",
+  "lang_standard_language_is_in_use_create_a_profi": "Используется стандартный язык. Создайте профиль, чтобы настроить текст.",
+  "lang_the_copy_starts_without_branch_assignments": "Копия начинается без указания филиалов.",
+  "lang_your_standard_language_stays_unchanged_unt": "Ваш стандартный язык остается неизменным до тех пор, пока вы не сохраните изменения в формулировках.",
+  "lang_wording_enter_profile_name": "Введите имя профиля.",
+  "lang_wording_profile_actions": "Действия в профиле",
+  "lang_wording_rename_profile": "Переименовать профиль"
 }

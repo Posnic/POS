@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Nai-publish. Inilapat ni Tills ang pagbabagong ito pagkatapos ng pag-sync.",
   "lang_saved_without_branch_assignments_previousl": "Naka-save nang walang mga takdang sangay. Ang dati nang itinalagang mga sanga ay gumagamit ng karaniwang",
   "lang_search_phrases": "Mga parirala sa paghah",
-  "lang_use_word_rules": "Gumamit ng mga patakaran sa salita"
+  "lang_use_word_rules": "Gumamit ng mga patakaran sa salita",
+  "lang_create_profile": "Lumikha ng profile",
+  "lang_duplicate": "Duplicate",
+  "lang_duplicate_profile": "Duplicate profile",
+  "lang_new_profile": "Bagong profile",
+  "lang_no_custom_profiles_yet": "Wala pang mga pasadyang profile",
+  "lang_rename": "Palitan ang pangalan",
+  "lang_save_name": "I-save ang pangalan",
+  "lang_standard_language_is_in_use_create_a_profi": "Ang karaniwang wika ay ginagamit. Lumikha ng isang profile upang ipasadya ang iyong mga salita.",
+  "lang_the_copy_starts_without_branch_assignments": "Nagsisimula ang kopya nang walang mga takdang sangay.",
+  "lang_your_standard_language_stays_unchanged_unt": "Ang iyong karaniwang wika ay mananatiling hindi magbago hanggang sa i-save mo ang mga pagbabago",
+  "lang_wording_enter_profile_name": "Magpasok ng isang pangalan ng profile.",
+  "lang_wording_profile_actions": "Mga aksyon sa profile",
+  "lang_wording_rename_profile": "Palitan ang pangalan ng profile"
 }

@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "Publicado. Até aplicar essa revisão após a sincronização.",
   "lang_saved_without_branch_assignments_previousl": "Salvo sem atribuições de filiais. As filiais atribuídas anteriormente usam um texto padrão.",
   "lang_search_phrases": "Frases de pesquisa",
-  "lang_use_word_rules": "Use regras de palavras"
+  "lang_use_word_rules": "Use regras de palavras",
+  "lang_create_profile": "Criar perfil",
+  "lang_duplicate": "Duplicado",
+  "lang_duplicate_profile": "Perfil duplicado",
+  "lang_new_profile": "Novo perfil",
+  "lang_no_custom_profiles_yet": "Ainda não há perfis personalizados",
+  "lang_rename": "Renomear",
+  "lang_save_name": "Salvar nome",
+  "lang_standard_language_is_in_use_create_a_profi": "A linguagem padrão está em uso. Crie um perfil para personalizar seu texto.",
+  "lang_the_copy_starts_without_branch_assignments": "A cópia começa sem atribuições de ramificação.",
+  "lang_your_standard_language_stays_unchanged_unt": "Seu idioma padrão permanece inalterado até que você salve as alterações de redação.",
+  "lang_wording_enter_profile_name": "Insira um nome de perfil.",
+  "lang_wording_profile_actions": "Ações de perfil",
+  "lang_wording_rename_profile": "Renomear perfil"
 }

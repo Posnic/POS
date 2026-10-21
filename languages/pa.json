@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "ਪ੍ਰਕਾਸ਼ਿਤ. ਸਮਕਾਲੀਕਰਨ ਤੋਂ ਬਾਅਦ ਇਸ ਸੰਸ਼ੋਧਨ ਨੂੰ ਲਾਗੂ ਕਰਦੇ ਹਨ।",
   "lang_saved_without_branch_assignments_previousl": "ਬ੍ਰਾਂਚ ਅਸਾਈਨਮੈਂਟਾਂ ਤੋਂ ਬਿਨਾਂ ਸੁਰੱਖ ਪਹਿਲਾਂ ਨਿਰਧਾਰਤ ਸ਼ਾਖਾਵਾਂ ਮਿਆਰੀ ਸ਼ਬਦਾਂ ਦੀ ਵਰਤੋਂ ਕਰਦੀਆਂ",
   "lang_search_phrases": "ਵਾਕਾਂਸ਼ ਖੋਜੋ",
-  "lang_use_word_rules": "ਸ਼ਬਦ ਨਿਯਮਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ"
+  "lang_use_word_rules": "ਸ਼ਬਦ ਨਿਯਮਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ",
+  "lang_create_profile": "ਪ੍ਰੋਫਾਈਲ ਬਣਾਓ",
+  "lang_duplicate": "ਡੁਪਲਾਈਟ",
+  "lang_duplicate_profile": "ਡੁਪਲੀਕੇਟ ਪ੍ਰੋ",
+  "lang_new_profile": "ਨਵਾਂ ਪ੍ਰੋਫਾਈਲ",
+  "lang_no_custom_profiles_yet": "ਅਜੇ ਕੋਈ ਕਸਟਮ ਪ੍ਰੋਫਾਈਲ ਨਹੀਂ",
+  "lang_rename": "ਨਾਮ ਬਦਲੋ",
+  "lang_save_name": "ਨਾਮ ਸੁਰੱਖਿਅਤ ਕਰੋ",
+  "lang_standard_language_is_in_use_create_a_profi": "ਮਿਆਰੀ ਭਾਸ਼ਾ ਵਰਤੋਂ ਵਿੱਚ ਹੈ। ਆਪਣੇ ਸ਼ਬਦਾਂ ਨੂੰ ਅਨੁਕੂਲਿਤ ਕਰਨ ਲਈ ਇੱਕ ਪ੍ਰੋਫਾਈਲ ਬਣਾਓ।",
+  "lang_the_copy_starts_without_branch_assignments": "ਕਾਪੀ ਬ੍ਰਾਂਚ ਅਸਾਈਨਮੈਂਟ ਤੋਂ ਬਿਨਾਂ ਸ਼ੁਰੂ ਹੁੰਦੀ ਹੈ.",
+  "lang_your_standard_language_stays_unchanged_unt": "ਤੁਹਾਡੀ ਮਿਆਰੀ ਭਾਸ਼ਾ ਉਦੋਂ ਤੱਕ ਤਬਦੀਲੀ ਨਹੀਂ ਰਹਿੰਦੀ ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਸ਼ਬਦਾਵਲੀ",
+  "lang_wording_enter_profile_name": "ਇੱਕ ਪ੍ਰੋਫਾਈਲ ਨਾਮ ਦਰਜ ਕਰੋ।",
+  "lang_wording_profile_actions": "ਪ੍ਰੋਫਾਈਲ ਕਾਰਵਾਈਆਂ",
+  "lang_wording_rename_profile": "ਪ੍ਰੋਫਾਈਲ ਦਾ ਨਾਮ ਬਦਲੋ"
 }

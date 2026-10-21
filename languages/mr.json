@@ -5194,5 +5194,18 @@
   "lang_published_tills_apply_this_revision_after": "प्रकाशित. सिंक्रोनाइझेशननंतर टिल्स हे सं",
   "lang_saved_without_branch_assignments_previousl": "शाखा साइनमेंटशिवाय यापूर्वी नियुक्त केलेल्या शाखा मा",
   "lang_search_phrases": "शोधा वाक्ये",
-  "lang_use_word_rules": "शब्द नियम वापरा"
+  "lang_use_word_rules": "शब्द नियम वापरा",
+  "lang_create_profile": "प्रोफाइल त",
+  "lang_duplicate": "डुप्लिके",
+  "lang_duplicate_profile": "डुप्लिकेट प्र",
+  "lang_new_profile": "नवीन प्रोफा",
+  "lang_no_custom_profiles_yet": "अद्याप काही सानुकूल",
+  "lang_rename": "नाव बदलणे",
+  "lang_save_name": "नाव जतन करा",
+  "lang_standard_language_is_in_use_create_a_profi": "मानक भाषा वापरात आहे. आपले शब्द सानुकूलित करण्यासाठी प्रोफाइल",
+  "lang_the_copy_starts_without_branch_assignments": "प्रत शाखा असाइनमेंटशिवाय सु",
+  "lang_your_standard_language_stays_unchanged_unt": "तुम्ही शब्द बदल जतन करता तोपर्यंत तुमची मानक",
+  "lang_wording_enter_profile_name": "प्रोफाइल नाव प्रविष्ट करा",
+  "lang_wording_profile_actions": "प्रोफाइल क्र",
+  "lang_wording_rename_profile": "प्रोफाइलचे नाव"
 }

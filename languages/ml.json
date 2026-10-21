@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "പ്രസിദ്ധീകരിച്ചു. സമന്വയത്തിന് ശേഷം ടിൽസ് ഈ പുനരവലോകനം പ്രയോഗിക്കുന്നു.",
   "lang_saved_without_branch_assignments_previousl": "ബ്രാഞ്ച് അസൈൻമെന്റുകൾ ഇല്ലാതെ സംരക്ഷിച്ചു. മുമ്പ് നിയുക്ത ശാഖകൾ സ്റ്റാൻഡേർഡ് പദങ്ങൾ ഉപയോഗിക്കുന്നു.",
   "lang_search_phrases": "വാക്യങ്ങൾ തിരയുക",
-  "lang_use_word_rules": "വാക്ക് നിയമങ്ങൾ ഉപയോഗിക്കുക"
+  "lang_use_word_rules": "വാക്ക് നിയമങ്ങൾ ഉപയോഗിക്കുക",
+  "lang_create_profile": "പ്രൊഫൈൽ സൃഷ്ടിക്കുക",
+  "lang_duplicate": "തനിപ്പകർപ്പ്",
+  "lang_duplicate_profile": "ഡ്യൂപ്ലിക്കേറ്റ് പ്രൊഫൈൽ",
+  "lang_new_profile": "പുതിയ പ്രൊഫൈൽ",
+  "lang_no_custom_profiles_yet": "ഇതുവരെ ഇഷ്ടാനുസൃത പ്രൊഫൈലുകളൊന്നുമില്ല",
+  "lang_rename": "പേരുമാറ്റുക",
+  "lang_save_name": "പേര് സംരക്ഷിക്കുക",
+  "lang_standard_language_is_in_use_create_a_profi": "സാധാരണ ഭാഷ ഉപയോഗത്തിലുണ്ട്. നിങ്ങളുടെ വാക്കുകൾ ഇഷ്ടാനുസൃതമാക്കാൻ ഒരു പ്രൊഫൈൽ സൃഷ്ടിക്കുക.",
+  "lang_the_copy_starts_without_branch_assignments": "ബ്രാഞ്ച് അസൈൻമെന്റുകൾ ഇല്ലാതെ പകർപ്പ് ആരംഭിക്കുന്നു.",
+  "lang_your_standard_language_stays_unchanged_unt": "നിങ്ങൾ വാക്കുകളുടെ മാറ്റങ്ങൾ സംരക്ഷിക്കുന്നതുവരെ നിങ്ങളുടെ സ്റ്റാൻഡേർഡ് ഭാഷ മാറ്റമില്ലാതെ തുടരുന്നു.",
+  "lang_wording_enter_profile_name": "ഒരു പ്രൊഫൈൽ പേര് നൽകുക.",
+  "lang_wording_profile_actions": "പ്രൊഫൈൽ പ്രവർത്തനങ്ങൾ",
+  "lang_wording_rename_profile": "പ്രൊഫൈൽ പുനർനാമകരണം ചെയ്യുക"
 }

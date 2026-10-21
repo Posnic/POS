@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "منتشر شده. تا این نسخه را پس از هماهنگ سازی اعمال کنید.",
   "lang_saved_without_branch_assignments_previousl": "بدون تخصیص شعبه ذخیره می شود. شاخه های قبلا تعیین شده از عبارات استاندارد استفاده می کنند.",
   "lang_search_phrases": "عبارات جستجو",
-  "lang_use_word_rules": "از قوانین کلمه استفاده کنید"
+  "lang_use_word_rules": "از قوانین کلمه استفاده کنید",
+  "lang_create_profile": "ایجاد نمایه",
+  "lang_duplicate": "تکراری",
+  "lang_duplicate_profile": "پروفایل تکراری",
+  "lang_new_profile": "نمایه جدید",
+  "lang_no_custom_profiles_yet": "هنوز پروفایل سفارشی وجود ندارد",
+  "lang_rename": "تغییر نام",
+  "lang_save_name": "ذخیره نام",
+  "lang_standard_language_is_in_use_create_a_profi": "زبان استاندارد در حال استفاده است. یک نمایه برای سفارشی کردن عبارت خود ایجاد کنید.",
+  "lang_the_copy_starts_without_branch_assignments": "کپی بدون تخصیص شاخه شروع می شود.",
+  "lang_your_standard_language_stays_unchanged_unt": "زبان استاندارد شما بدون تغییر باقی می ماند تا زمانی که تغییرات عبارت را ذخیره کنید.",
+  "lang_wording_enter_profile_name": "نام نمایه را وارد کنید.",
+  "lang_wording_profile_actions": "اقدامات پروفایل",
+  "lang_wording_rename_profile": "تغییر نام نمایه"
 }

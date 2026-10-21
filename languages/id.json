@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "Diterbitkan. Tills menerapkan revisi ini setelah sinkronisasi.",
   "lang_saved_without_branch_assignments_previousl": "Disimpan tanpa penugasan cabang. Cabang yang ditugaskan sebelumnya menggunakan kata-kata standar.",
   "lang_search_phrases": "Cari frasa",
-  "lang_use_word_rules": "Gunakan aturan kata"
+  "lang_use_word_rules": "Gunakan aturan kata",
+  "lang_create_profile": "Buat profil",
+  "lang_duplicate": "Duplikat",
+  "lang_duplicate_profile": "Profil duplikat",
+  "lang_new_profile": "Profil baru",
+  "lang_no_custom_profiles_yet": "Belum ada profil khusus",
+  "lang_rename": "Ganti nama",
+  "lang_save_name": "Simpan nama",
+  "lang_standard_language_is_in_use_create_a_profi": "Bahasa standar sedang digunakan. Buat profil untuk menyesuaikan kata-kata Anda.",
+  "lang_the_copy_starts_without_branch_assignments": "Salinan dimulai tanpa penugasan cabang.",
+  "lang_your_standard_language_stays_unchanged_unt": "Bahasa standar Anda tetap tidak berubah sampai Anda menyimpan perubahan kata-kata.",
+  "lang_wording_enter_profile_name": "Masukkan nama profil.",
+  "lang_wording_profile_actions": "Tindakan profil",
+  "lang_wording_rename_profile": "Ganti nama profil"
 }

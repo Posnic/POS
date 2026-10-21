@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Ippubblikat. Tills japplikaw din ir-reviżjoni wara s-sinkronizzazzjoni.",
   "lang_saved_without_branch_assignments_previousl": "Salvat mingħajr assenjazzjonijiet tal-fergħa. Il-fergħat assenjati qabel jużaw kliem standard.",
   "lang_search_phrases": "Frażijiet tat-tiftix",
-  "lang_use_word_rules": "Uża regoli tal-kelma"
+  "lang_use_word_rules": "Uża regoli tal-kelma",
+  "lang_create_profile": "Oħloq profil",
+  "lang_duplicate": "Duplikat",
+  "lang_duplicate_profile": "Profil duplikat",
+  "lang_new_profile": "Profil ġdid",
+  "lang_no_custom_profiles_yet": "Għadu l-ebda profili apposta",
+  "lang_rename": "Semmi mill-ġdid",
+  "lang_save_name": "Issejvja l-isem",
+  "lang_standard_language_is_in_use_create_a_profi": "Il-lingwa standard qed tintuża. Oħloq profil biex tippersonalizza l-kliem tiegħek.",
+  "lang_the_copy_starts_without_branch_assignments": "Il-kopja tibda mingħajr assenjazzjonijiet tal-fergħa.",
+  "lang_your_standard_language_stays_unchanged_unt": "Il-lingwa standard tiegħek tibqa' l-istess sakemm tiffranka l-bidliet fil-kliem.",
+  "lang_wording_enter_profile_name": "Daħħal isem tal-profil.",
+  "lang_wording_profile_actions": "Azzjonijiet tal-profil",
+  "lang_wording_rename_profile": "Semmi mill-ġdid il-profil"
 }

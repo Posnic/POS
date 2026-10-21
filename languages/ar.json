@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "تم نشره. حتى يتم تطبيق هذه المراجعة بعد المزامنة.",
   "lang_saved_without_branch_assignments_previousl": "تم الحفظ بدون تعيينات الفرع. تستخدم الفروع المعينة مسبقًا صياغة قياسية.",
   "lang_search_phrases": "عبارات البحث",
-  "lang_use_word_rules": "استخدم قواعد الكلمات"
+  "lang_use_word_rules": "استخدم قواعد الكلمات",
+  "lang_create_profile": "إنشاء ملف تعريف",
+  "lang_duplicate": "مكرر",
+  "lang_duplicate_profile": "ملف تعريف مكرر",
+  "lang_new_profile": "ملف تعريف جديد",
+  "lang_no_custom_profiles_yet": "لا توجد ملفات تعريف مخصصة حتى الآن",
+  "lang_rename": "إعادة تسمية",
+  "lang_save_name": "احفظ الاسم",
+  "lang_standard_language_is_in_use_create_a_profi": "اللغة القياسية قيد الاستخدام. قم بإنشاء ملف تعريف لتخصيص صياغتك.",
+  "lang_the_copy_starts_without_branch_assignments": "تبدأ النسخة بدون تعيينات الفرع.",
+  "lang_your_standard_language_stays_unchanged_unt": "تظل لغتك القياسية دون تغيير حتى تقوم بحفظ تغييرات الصياغة.",
+  "lang_wording_enter_profile_name": "أدخل اسم ملف تعريف.",
+  "lang_wording_profile_actions": "إجراءات الملف الشخصي",
+  "lang_wording_rename_profile": "إعادة تسمية ملف التعريف"
 }

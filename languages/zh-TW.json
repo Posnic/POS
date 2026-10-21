@@ -5194,5 +5194,18 @@
   "lang_published_tills_apply_this_revision_after": "已發佈。直到同步後套用此修訂版本。",
   "lang_saved_without_branch_assignments_previousl": "儲存不分支指派。先前指定的分支使用標準詞彙。",
   "lang_search_phrases": "搜索短語",
-  "lang_use_word_rules": "使用單詞規則"
+  "lang_use_word_rules": "使用單詞規則",
+  "lang_create_profile": "建立個人資料",
+  "lang_duplicate": "重複",
+  "lang_duplicate_profile": "重複設定檔",
+  "lang_new_profile": "新設定檔",
+  "lang_no_custom_profiles_yet": "尚未自訂設定檔",
+  "lang_rename": "重新命名",
+  "lang_save_name": "儲存名稱",
+  "lang_standard_language_is_in_use_create_a_profi": "正在使用標準語言。建立個人資料以自訂您的文字。",
+  "lang_the_copy_starts_without_branch_assignments": "複製開始沒有分支指派。",
+  "lang_your_standard_language_stays_unchanged_unt": "您的標準語言保持不變，直到保存語言變更為止。",
+  "lang_wording_enter_profile_name": "輸入設定檔名稱。",
+  "lang_wording_profile_actions": "設定檔動作",
+  "lang_wording_rename_profile": "重新命名設定檔"
 }
