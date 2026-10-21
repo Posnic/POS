@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Elutasítja a nem mentett módosításokat, és hozzon létre egy új profilt?",
   "lang_wording_ui_deleting_profile": "Profil törlése...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil törölve. A hozzárendelt ágak mostantól szabványos szöveget használnak.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Írja be mind a meglévő szót, mind annak helyettesítését."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Írja be mind a meglévő szót, mind annak helyettesítését.",
+  "lang_added_replacement": "Hozzáadott csere",
+  "lang_published_tills_apply_this_revision_after": "Megjelent. Tills a szinkronizálás után alkalmazza ezt a felülvizsgálatot.",
+  "lang_saved_without_branch_assignments_previousl": "Elmentett fiókhozzárendelések nélkül. A korábban hozzárendelt ágak szabványos szöveget használnak.",
+  "lang_search_phrases": "Keresés kifejezései",
+  "lang_use_word_rules": "Használja a szószabályokat"
 }

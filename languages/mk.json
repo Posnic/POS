@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Отфрлете незачувани промени и креирајте нов профил?",
   "lang_wording_ui_deleting_profile": "Бришење на профилот...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Профилот избришан. Доделените гранки сега користат стандардна формулација.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Внесете го и постоечкиот збор и неговата замена."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Внесете го и постоечкиот збор и неговата замена.",
+  "lang_added_replacement": "Додадена замена",
+  "lang_published_tills_apply_this_revision_after": "Објавено. Tills ја применуваат оваа ревизија по синхронизацијата.",
+  "lang_saved_without_branch_assignments_previousl": "Зачувано без задачи за гранки. Претходно доделените гранки користат стандардна формулација.",
+  "lang_search_phrases": "Пребарај фрази",
+  "lang_use_word_rules": "Користете правила за зборови"
 }

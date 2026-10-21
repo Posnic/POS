@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Kas visata salvestamata muudatused ja luua uus profiil?",
   "lang_wording_ui_deleting_profile": "Profiili kustutamine...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profiil kustutatud. Määratud filiaalid kasutavad nüüd standardset sõnastust.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Sisestage nii olemasolev sõna kui ka selle asendamine."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Sisestage nii olemasolev sõna kui ka selle asendamine.",
+  "lang_added_replacement": "Lisatud asendamine",
+  "lang_published_tills_apply_this_revision_after": "Avaldatud. Tills rakendab seda muudatust pärast sünkroonimist.",
+  "lang_saved_without_branch_assignments_previousl": "Salvestatud ilma harude ülesanneteta. Varem määratud filiaalid kasutavad standardset sõnastust.",
+  "lang_search_phrases": "Otsi fraase",
+  "lang_use_word_rules": "Kasutage sõnareegleid"
 }

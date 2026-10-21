@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "અસાચવેલા ફેરફારો કાઢી નાખો અને નવી પ્રોફાઇલ બનાવો?",
   "lang_wording_ui_deleting_profile": "પ્રોફાઇલ કાઢી નાખવી...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "પ્રોફાઇલ કાઢી નાખવામાં આવી. સોંપેલ શાખાઓ હવે પ્રમાણભૂત શબ્દનો ઉપયોગ કરે છે.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "હાલના શબ્દ અને તેના રિપ્લેસમેન્ટ બંને દાખલ કરો."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "હાલના શબ્દ અને તેના રિપ્લેસમેન્ટ બંને દાખલ કરો.",
+  "lang_added_replacement": "ઉમેરાયેલ રિપ્લેસમેન્ટ",
+  "lang_published_tills_apply_this_revision_after": "પ્રકાશિત. ટિલ્સ સિંક્રનાઇઝેશન પછી આ પુનરાવર્તન લાગુ કરે છે.",
+  "lang_saved_without_branch_assignments_previousl": "શાખા સોંપણીઓ વિના સાચવવામાં આવ્યું. અગાઉ સોંપેલ શાખાઓ પ્રમાણભૂત શબ્દનો ઉપયોગ કરે છે",
+  "lang_search_phrases": "શોધ શબ્દસમૂહો",
+  "lang_use_word_rules": "શબ્દ નિયમોનો ઉપયોગ કરો"
 }

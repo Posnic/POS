@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Zrušit neuložené změny a vytvořit nový profil?",
   "lang_wording_ui_deleting_profile": "Odstranění profilu...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil smazán. Přiřazené pobočky nyní používají standardní znění.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Zadejte jak existující slovo, tak jeho nahrazení."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Zadejte jak existující slovo, tak jeho nahrazení.",
+  "lang_added_replacement": "Přidána náhrada",
+  "lang_published_tills_apply_this_revision_after": "Zveřejněno. Po synchronizaci se použije tato revize.",
+  "lang_saved_without_branch_assignments_previousl": "Uloženo bez přiřazení poboček. Dříve přiřazené pobočky používají standardní znění.",
+  "lang_search_phrases": "Vyhledávací fráze",
+  "lang_use_word_rules": "Používejte slovní pravidla"
 }

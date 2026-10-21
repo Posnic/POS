@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "تغییرات ذخیره نشده را کنار بگذارید و یک نمایه جدید ایجاد کنید؟",
   "lang_wording_ui_deleting_profile": "حذف نمایه...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "پروفایل حذف شد شاخه های اختصاص داده شده اکنون از عبارات استاندارد استفاده می کنند.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "هر دو کلمه موجود و جایگزینی آن را وارد کنید."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "هر دو کلمه موجود و جایگزینی آن را وارد کنید.",
+  "lang_added_replacement": "جایگزینی اضافه شده",
+  "lang_published_tills_apply_this_revision_after": "منتشر شده. تا این نسخه را پس از هماهنگ سازی اعمال کنید.",
+  "lang_saved_without_branch_assignments_previousl": "بدون تخصیص شعبه ذخیره می شود. شاخه های قبلا تعیین شده از عبارات استاندارد استفاده می کنند.",
+  "lang_search_phrases": "عبارات جستجو",
+  "lang_use_word_rules": "از قوانین کلمه استفاده کنید"
 }

@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Zrušiť neuložené zmeny a vytvoriť nový profil?",
   "lang_wording_ui_deleting_profile": "Odstránenie profilu...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil vymazaný. Priradené pobočky teraz používajú štandardné znenie.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Zadajte existujúce slovo aj jeho náhradu."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Zadajte existujúce slovo aj jeho náhradu.",
+  "lang_added_replacement": "Pridaná náhrada",
+  "lang_published_tills_apply_this_revision_after": "Publikované. Tills aplikuje túto revíziu po synchronizácii.",
+  "lang_saved_without_branch_assignments_previousl": "Uložené bez pridelenia pobočiek. Predtým priradené pobočky používajú štandardné znenie.",
+  "lang_search_phrases": "Hľadať frázy",
+  "lang_use_word_rules": "Používajte slovné pravidlá"
 }

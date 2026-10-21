@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "保存していない変更を破棄して新しいプロファイルを作成しますか?",
   "lang_wording_ui_deleting_profile": "プロフィールを削除中...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "プロファイルは削除されました。割り当てられたブランチでは標準表現が使用されるようになりました。",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "既存の単語とそれに代わる単語の両方を入力します。"
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "既存の単語とそれに代わる単語の両方を入力します。",
+  "lang_added_replacement": "代替品を追加",
+  "lang_published_tills_apply_this_revision_after": "公開されました。同期後にこのリビジョンが適用されます。",
+  "lang_saved_without_branch_assignments_previousl": "ブランチ割り当てなしで保存されました。以前に割り当てられたブランチは標準的な表現を使います。",
+  "lang_search_phrases": "検索フレーズ",
+  "lang_use_word_rules": "単語のルールを使う"
 }

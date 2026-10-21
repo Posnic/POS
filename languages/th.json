@@ -5267,5 +5267,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "ละทิ้งการเปลี่ยนแปลงที่ยังไม่ได้บันทึกและสร้างโปรไฟล์ใหม่?",
   "lang_wording_ui_deleting_profile": "การลบโปรไฟล์...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "โปรไฟล์ลบตอนนี้สาขาที่ได้รับมอบหมายใช้คำมาตรฐาน",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "ป้อนทั้งคำที่มีอยู่และการแทนที่"
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "ป้อนทั้งคำที่มีอยู่และการแทนที่",
+  "lang_added_replacement": "เพิ่มการทดแทน",
+  "lang_published_tills_apply_this_revision_after": "เผยแพร่Tills ใช้การแก้ไขนี้หลังจากการซิงโครไนซ์",
+  "lang_saved_without_branch_assignments_previousl": "บันทึกโดยไม่ต้องมอบหมายสาขาสาขาที่ได้รับมอบหมายก่อนหน้านี้ใช้คำมาตรฐาน",
+  "lang_search_phrases": "ค้นหาวลีค้นหา",
+  "lang_use_word_rules": "ใช้กฎคำ"
 }

@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Atmesti neišsaugotus pakeitimus ir sukurti naują profilį?",
   "lang_wording_ui_deleting_profile": "Profilio ištrynimas...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profilis ištrintas. Priskirtose filialuose dabar naudojamos standartinės formuluotės.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Įveskite esamą žodį ir jo pakeitimą."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Įveskite esamą žodį ir jo pakeitimą.",
+  "lang_added_replacement": "Pridėtas pakeitimas",
+  "lang_published_tills_apply_this_revision_after": "Paskelbta. Tills taiko šią pataisą po sinchronizavimo.",
+  "lang_saved_without_branch_assignments_previousl": "Išsaugota be filialų užduočių. Anksčiau priskirtos šakos naudoja standartinę formuluotę.",
+  "lang_search_phrases": "Ieškoti frazių",
+  "lang_use_word_rules": "Naudokite žodžių taisykles"
 }

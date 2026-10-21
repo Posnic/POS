@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Buang perubahan yang tidak disimpan dan buat profil baru?",
   "lang_wording_ui_deleting_profile": "Memadam profil...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil dipadamkan. Cawangan yang ditetapkan kini menggunakan perkataan standard.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Masukkan kedua-dua perkataan sedia ada dan penggantinya."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Masukkan kedua-dua perkataan sedia ada dan penggantinya.",
+  "lang_added_replacement": "Ditambah penggantian",
+  "lang_published_tills_apply_this_revision_after": "Diterbitkan. Tills menggunakan semakan ini selepas penyegerakan.",
+  "lang_saved_without_branch_assignments_previousl": "Disimpan tanpa tugasan cawangan. Cawangan yang diberikan sebelum ini menggunakan perkataan standard.",
+  "lang_search_phrases": "Cari frasa",
+  "lang_use_word_rules": "Gunakan peraturan perkataan"
 }

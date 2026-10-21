@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Renunțați la modificările nesalvate și creați un profil nou?",
   "lang_wording_ui_deleting_profile": "Ștergerea profilului...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profilul șters. Sucursalele atribuite folosesc acum formularea standard.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Introduceți atât cuvântul existent, cât și înlocuirea acestuia."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Introduceți atât cuvântul existent, cât și înlocuirea acestuia.",
+  "lang_added_replacement": "Înlocuire adăugată",
+  "lang_published_tills_apply_this_revision_after": "Publicat. Până când se aplică această revizuire după sincronizare.",
+  "lang_saved_without_branch_assignments_previousl": "Salvat fără atribuirea sucursalelor. Sucursalele atribuite anterior utilizează formularea standard.",
+  "lang_search_phrases": "Expresii de căutare",
+  "lang_use_word_rules": "Folosiți reguli de cuvinte"
 }

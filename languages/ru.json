@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Отменить несохраненные изменения и создать новый профиль?",
   "lang_wording_ui_deleting_profile": "Удаление профиля...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Профиль удален. В назначенных филиалах теперь используются стандартные формулировки.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Введите как существующее слово, так и его замену."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Введите как существующее слово, так и его замену.",
+  "lang_added_replacement": "Добавлена замена",
+  "lang_published_tills_apply_this_revision_after": "Опубликовано. До сих пор применяет эту редакцию после синхронизации.",
+  "lang_saved_without_branch_assignments_previousl": "Сохранено без назначения филиалов. В ранее назначенных филиалах используется стандартная формулировка.",
+  "lang_search_phrases": "Поисковые фразы",
+  "lang_use_word_rules": "Используйте правила слов"
 }

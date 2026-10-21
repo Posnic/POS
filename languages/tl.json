@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Itapon ang mga hindi naka-save na pagbabago at lumikha ng isang bagong profile?",
   "lang_wording_ui_deleting_profile": "Pagtanggal ng profile...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Tinanggal ang profile. Ang mga itinalagang sanga ay gumagamit ngayon ng karaniwang",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Ipasok ang parehong umiiral na salita at kapalit nito."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Ipasok ang parehong umiiral na salita at kapalit nito.",
+  "lang_added_replacement": "Nagdagdag ng kapalit",
+  "lang_published_tills_apply_this_revision_after": "Nai-publish. Inilapat ni Tills ang pagbabagong ito pagkatapos ng pag-sync.",
+  "lang_saved_without_branch_assignments_previousl": "Naka-save nang walang mga takdang sangay. Ang dati nang itinalagang mga sanga ay gumagamit ng karaniwang",
+  "lang_search_phrases": "Mga parirala sa paghah",
+  "lang_use_word_rules": "Gumamit ng mga patakaran sa salita"
 }

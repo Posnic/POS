@@ -5267,5 +5267,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "සුරකින නොකළ වෙනස්කම් ඉවත දමා නව පැතිකඩක් නිර්මාණය කරනවාද?",
   "lang_wording_ui_deleting_profile": "පැතිකඩ මකා දැමීම...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "පැතිකඩ මකා දැමුවා. පවරා ඇති ශාඛා දැන් සම්මත වචන භාවිතා කරයි.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "පවතින වචනය සහ එහි ප්රතිස්ථාපනය යන දෙකම ඇතුළත් කරන්න."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "පවතින වචනය සහ එහි ප්රතිස්ථාපනය යන දෙකම ඇතුළත් කරන්න.",
+  "lang_added_replacement": "එකතු කරන ලද ප්රතිස්ථාපනය",
+  "lang_published_tills_apply_this_revision_after": "ප්රකාශයට පත් කරන ලදී. සමමුහුර්තකරණයෙන් පසුව ටිල්ස් මෙම සංශෝධනය යොදයි.",
+  "lang_saved_without_branch_assignments_previousl": "ශාඛා පැවරුම් නොමැතිව සුරකින. කලින් පවරා ඇති ශාඛා සම්මත වචන භාවිතා කරයි.",
+  "lang_search_phrases": "වාක්ය ඛණ්ඩ සොයන්න",
+  "lang_use_word_rules": "වචන නීති භාවිතා කරන්න"
 }

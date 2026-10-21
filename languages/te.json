@@ -5267,5 +5267,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "సేవ్ చేయని మార్పులను విస్మరించి క్రొత్త ప్రొఫైల్ను సృష్టించాలా?",
   "lang_wording_ui_deleting_profile": "ప్రొఫైల్ను తొలగించడం...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "ప్రొఫైల్ తొలగించబడింది. కేటాయించిన శాఖలు ఇప్పుడు ప్రామాణిక పదాలను ఉపయోగిస్తాయి.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "ఇప్పటికే ఉన్న పదం మరియు దాని భర్తీ రెండింటినీ నమోదు చేయండి."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "ఇప్పటికే ఉన్న పదం మరియు దాని భర్తీ రెండింటినీ నమోదు చేయండి.",
+  "lang_added_replacement": "చేర్చబడింది భర్తీ",
+  "lang_published_tills_apply_this_revision_after": "ప్రచురించబడింది. సమకాలీకరణ తర్వాత టిల్స్ ఈ పునర్విమర్శను వర్తిస్తాయి.",
+  "lang_saved_without_branch_assignments_previousl": "బ్రాంచ్ అసైన్మెంట్లు లేకుండా సేవ్ చేయబడింది. గతంలో కేటాయించిన శాఖలు ప్రామాణిక పదాలను ఉపయోగిస్తాయి.",
+  "lang_search_phrases": "పదబంధాలను శోధించండి",
+  "lang_use_word_rules": "పద నియమాలను ఉపయోగించండి"
 }

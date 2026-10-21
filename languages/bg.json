@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Да изхвърлите незапазените промени и да създадете нов профил?",
   "lang_wording_ui_deleting_profile": "Изтриване на профил...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Профилът е изтрит. Присвоените клонове вече използват стандартна формулировка.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Въведете както съществуващата дума, така и нейната замяна."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Въведете както съществуващата дума, така и нейната замяна.",
+  "lang_added_replacement": "Добавена замяна",
+  "lang_published_tills_apply_this_revision_after": "Публикувана. Tills прилага тази ревизия след синхронизиране.",
+  "lang_saved_without_branch_assignments_previousl": "Запазено без разклонения. Предварително зададените клонове използват стандартна формулировка.",
+  "lang_search_phrases": "Търсене на фрази",
+  "lang_use_word_rules": "Използвайте правила за думи"
 }

@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "ਅਸੁਰੱਖਿਅਤ ਤਬਦੀਲੀਆਂ ਨੂੰ ਰੱਦ ਕਰੋ ਅਤੇ ਇੱਕ ਨਵਾਂ ਪ੍ਰੋਫਾਈਲ ਬਣਾਓ?",
   "lang_wording_ui_deleting_profile": "ਪ੍ਰੋਫਾਈਲ ਮਿਟਾਉਣਾ...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "ਪ੍ਰੋਫਾਈਲ ਮਿਟਾਇਆ ਗਿਆ। ਨਿਰਧਾਰਤ ਸ਼ਾਖਾਵਾਂ ਹੁਣ ਮਿਆਰੀ ਸ਼ਬਦਾਂ ਦੀ ਵਰਤੋਂ ਕਰਦੀਆਂ",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "ਮੌਜੂਦਾ ਸ਼ਬਦ ਅਤੇ ਇਸਦੀ ਤਬਦੀਲੀ ਦੋਵੇਂ ਦਾਖਲ ਕਰੋ."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "ਮੌਜੂਦਾ ਸ਼ਬਦ ਅਤੇ ਇਸਦੀ ਤਬਦੀਲੀ ਦੋਵੇਂ ਦਾਖਲ ਕਰੋ.",
+  "lang_added_replacement": "ਬਦਲੀ ਸ਼ਾਮਲ ਕੀਤੀ ਗਈ",
+  "lang_published_tills_apply_this_revision_after": "ਪ੍ਰਕਾਸ਼ਿਤ. ਸਮਕਾਲੀਕਰਨ ਤੋਂ ਬਾਅਦ ਇਸ ਸੰਸ਼ੋਧਨ ਨੂੰ ਲਾਗੂ ਕਰਦੇ ਹਨ।",
+  "lang_saved_without_branch_assignments_previousl": "ਬ੍ਰਾਂਚ ਅਸਾਈਨਮੈਂਟਾਂ ਤੋਂ ਬਿਨਾਂ ਸੁਰੱਖ ਪਹਿਲਾਂ ਨਿਰਧਾਰਤ ਸ਼ਾਖਾਵਾਂ ਮਿਆਰੀ ਸ਼ਬਦਾਂ ਦੀ ਵਰਤੋਂ ਕਰਦੀਆਂ",
+  "lang_search_phrases": "ਵਾਕਾਂਸ਼ ਖੋਜੋ",
+  "lang_use_word_rules": "ਸ਼ਬਦ ਨਿਯਮਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ"
 }

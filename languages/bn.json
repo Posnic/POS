@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "অসংরক্ষিত পরিবর্তনগুলি বাতিল করুন এবং একটি নতুন প্রোফাইল তৈরি করবেন?",
   "lang_wording_ui_deleting_profile": "প্রোফাইল মুছে ফেলা...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "প্রোফাইল মুছে ফেলা হয়েছে। নির্ধারিত শাখা এখন স্ট্যান্ডার্ড শব্দ ব্যবহার",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "বিদ্যমান শব্দ এবং এর প্রতিস্থাপন উভয়ই লিখুন।"
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "বিদ্যমান শব্দ এবং এর প্রতিস্থাপন উভয়ই লিখুন।",
+  "lang_added_replacement": "প্রতিস্থাপন যোগ করা হয়েছে",
+  "lang_published_tills_apply_this_revision_after": "প্রকাশিত। সিঙ্ক্রোনাইজেশনের পরে টিলস এই রিভিশন প্রয়োগ",
+  "lang_saved_without_branch_assignments_previousl": "শাখা অ্যাসাইনমেন্ট ছাড়াই সংর আগে নির্ধারিত শাখাগুলি স্ট্যান্ডার্ড শব্দ ব্যবহার করে",
+  "lang_search_phrases": "অনুসন্ধান বাক্যাংশ",
+  "lang_use_word_rules": "শব্দ নিয়ম ব্যবহার করুন"
 }

@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Hylkää tallentamattomat muutokset ja luo uusi profiili?",
   "lang_wording_ui_deleting_profile": "Profiilin poistaminen...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profiili poistettu. Määritetyt haarat käyttävät nyt vakiosanamuotoa.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Kirjoita sekä olemassa oleva sana että sen korvaaminen."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Kirjoita sekä olemassa oleva sana että sen korvaaminen.",
+  "lang_added_replacement": "Lisätty korvaus",
+  "lang_published_tills_apply_this_revision_after": "Julkaistu. Käytä tätä versiota synkronoinnin jälkeen.",
+  "lang_saved_without_branch_assignments_previousl": "Tallennettu ilman haaratoimituksia. Aiemmin osoitetut sivukonttorit käyttävät vakiosanamuotoa.",
+  "lang_search_phrases": "Hakulauseet",
+  "lang_use_word_rules": "Käytä sanasääntöjä"
 }

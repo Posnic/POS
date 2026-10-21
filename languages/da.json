@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Kassér ikke-gemte ændringer og opret en ny profil?",
   "lang_wording_ui_deleting_profile": "Sletning af profil...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil slettet. Tildelte filialer bruger nu standardformulering.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Indtast både det eksisterende ord og dets erstatning."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Indtast både det eksisterende ord og dets erstatning.",
+  "lang_added_replacement": "Tilføjet udskiftning",
+  "lang_published_tills_apply_this_revision_after": "Udgivet. Tills anvender denne revision efter synkronisering.",
+  "lang_saved_without_branch_assignments_previousl": "Gemt uden filialtildelinger. Tidligere tildelte filialer bruger standardformulering.",
+  "lang_search_phrases": "Søgesætninger",
+  "lang_use_word_rules": "Brug ordregler"
 }

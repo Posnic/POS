@@ -5267,5 +5267,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "സംരക്ഷിക്കാത്ത മാറ്റങ്ങൾ നിരസിച്ച് ഒരു പുതിയ പ്രൊഫൈൽ സൃഷ്ടിക്കുകയാണോ?",
   "lang_wording_ui_deleting_profile": "പ്രൊഫൈൽ ഇല്ലാതാക്കുന്നു...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "പ്രൊഫൈൽ ഇല്ലാതാക്കി. നിയുക്ത ശാഖകൾ ഇപ്പോൾ സ്റ്റാൻഡേർഡ് പദങ്ങൾ ഉപയോഗിക്കുന്നു.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "നിലവിലുള്ള വാക്കും അതിന്റെ പകരവും നൽകുക."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "നിലവിലുള്ള വാക്കും അതിന്റെ പകരവും നൽകുക.",
+  "lang_added_replacement": "മാറ്റിസ്ഥാപിക്കൽ ചേർത്തു",
+  "lang_published_tills_apply_this_revision_after": "പ്രസിദ്ധീകരിച്ചു. സമന്വയത്തിന് ശേഷം ടിൽസ് ഈ പുനരവലോകനം പ്രയോഗിക്കുന്നു.",
+  "lang_saved_without_branch_assignments_previousl": "ബ്രാഞ്ച് അസൈൻമെന്റുകൾ ഇല്ലാതെ സംരക്ഷിച്ചു. മുമ്പ് നിയുക്ത ശാഖകൾ സ്റ്റാൻഡേർഡ് പദങ്ങൾ ഉപയോഗിക്കുന്നു.",
+  "lang_search_phrases": "വാക്യങ്ങൾ തിരയുക",
+  "lang_use_word_rules": "വാക്ക് നിയമങ്ങൾ ഉപയോഗിക്കുക"
 }

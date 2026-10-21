@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Odrzucić niezapisane zmiany i utworzyć nowy profil?",
   "lang_wording_ui_deleting_profile": "Usuwanie profilu...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil usunięty. Przypisane oddziały używają teraz standardowego sformułowania.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Wprowadź zarówno istniejące słowo, jak i jego zastępstwo."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Wprowadź zarówno istniejące słowo, jak i jego zastępstwo.",
+  "lang_added_replacement": "Dodano wymianę",
+  "lang_published_tills_apply_this_revision_after": "Opublikowano. Tills stosuje tę wersję po synchronizacji.",
+  "lang_saved_without_branch_assignments_previousl": "Zapisane bez przypisania oddziałów. Wcześniej przypisane gałęzie używają standardowego sformułowania.",
+  "lang_search_phrases": "Wyszukiwanie fraz",
+  "lang_use_word_rules": "Używaj reguł słów"
 }

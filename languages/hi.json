@@ -5267,5 +5267,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "सहेजे नहीं गए परिवर्तनों को हटाएँ और एक नई प्रोफ़ाइल बनाएँ?",
   "lang_wording_ui_deleting_profile": "प्रोफ़ाइल मिटाई जा रही है...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "प्रोफ़ाइल मिटाई गई। असाइन की गई शाखाएं अब मानक शब्दों का उपयोग करती हैं।",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "मौजूदा शब्द और उसके प्रतिस्थापन दोनों को दर्ज करें।"
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "मौजूदा शब्द और उसके प्रतिस्थापन दोनों को दर्ज करें।",
+  "lang_added_replacement": "प्रतिस्थापन जोड़ा गया",
+  "lang_published_tills_apply_this_revision_after": "प्रकाशित किया गया। टिल्स सिंक्रोनाइज़ेशन के बाद इस संशोधन को लागू करते हैं।",
+  "lang_saved_without_branch_assignments_previousl": "शाखा असाइनमेंट के बिना सहेजा गया। पहले से असाइन की गई शाखाएं मानक शब्दों का उपयोग करती हैं।",
+  "lang_search_phrases": "वाक्यांश खोजें",
+  "lang_use_word_rules": "शब्द नियम इस्तेमाल करें"
 }

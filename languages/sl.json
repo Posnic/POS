@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Zavrzite neshranjene spremembe in ustvarite nov profil?",
   "lang_wording_ui_deleting_profile": "Brisanje profila...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil izbrisan. Dodeljene podružnice zdaj uporabljajo standardno besedilo.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Vnesite obstoječo besedo in njeno zamenjavo."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Vnesite obstoječo besedo in njeno zamenjavo.",
+  "lang_added_replacement": "Dodana zamenjava",
+  "lang_published_tills_apply_this_revision_after": "Objavljeno. Tills uporabi to revizijo po sinhronizaciji.",
+  "lang_saved_without_branch_assignments_previousl": "Shranjeno brez dodelitev podružnic. Predhodno dodeljene podružnice uporabljajo standardno besedilo.",
+  "lang_search_phrases": "Iskanje fraz",
+  "lang_use_word_rules": "Uporabite besedilna pravila"
 }

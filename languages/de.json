@@ -5267,5 +5267,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Ungespeicherte Änderungen verwerfen und ein neues Profil erstellen?",
   "lang_wording_ui_deleting_profile": "Profil wird gelöscht...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil gelöscht. Zugewiesene Filialen verwenden jetzt Standardformulierungen.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Geben Sie sowohl das vorhandene Wort als auch dessen Ersetzung ein."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Geben Sie sowohl das vorhandene Wort als auch dessen Ersetzung ein.",
+  "lang_added_replacement": "Ersatz hinzugefügt",
+  "lang_published_tills_apply_this_revision_after": "Veröffentlicht. Tills wendet diese Revision nach der Synchronisation an.",
+  "lang_saved_without_branch_assignments_previousl": "Ohne Filialzuweisungen gespeichert. Zuvor zugewiesene Filialen verwenden Standardformulierungen.",
+  "lang_search_phrases": "Suchbegriffe",
+  "lang_use_word_rules": "Verwenden Sie Wortregeln"
 }

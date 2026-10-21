@@ -5267,5 +5267,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Descartar as alterações não salvas e criar um novo perfil?",
   "lang_wording_ui_deleting_profile": "Excluindo perfil...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Perfil excluído. As filiais atribuídas agora usam o texto padrão.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Insira a palavra existente e sua substituição."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Insira a palavra existente e sua substituição.",
+  "lang_added_replacement": "Substituição adicionada",
+  "lang_published_tills_apply_this_revision_after": "Publicado. Até aplicar essa revisão após a sincronização.",
+  "lang_saved_without_branch_assignments_previousl": "Salvo sem atribuições de filiais. As filiais atribuídas anteriormente usam um texto padrão.",
+  "lang_search_phrases": "Frases de pesquisa",
+  "lang_use_word_rules": "Use regras de palavras"
 }

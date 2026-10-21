@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Forkaste ikke-lagrede endringer og opprette en ny profil?",
   "lang_wording_ui_deleting_profile": "Sletter profilen...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil slettet. Tildelte grener bruker nå standard ordlyd.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Skriv inn både det eksisterende ordet og dets erstatning."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Skriv inn både det eksisterende ordet og dets erstatning.",
+  "lang_added_replacement": "Lagt erstatning",
+  "lang_published_tills_apply_this_revision_after": "Publisert. Tills bruker denne revisjonen etter synkronisering.",
+  "lang_saved_without_branch_assignments_previousl": "Lagret uten grentildelinger. Tidligere tildelte grener bruker standard ordlyd.",
+  "lang_search_phrases": "Søkefraser",
+  "lang_use_word_rules": "Bruk ordregler"
 }
