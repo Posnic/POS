@@ -5152,5 +5152,7 @@
   "lang_sending_test_email": "Pārbaudes e-pasta sūtīšana...",
   "lang_ssl_tls_usually_465": "SSL/TLS (parasti 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (parasti 587 vai 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Izmantojiet Posnic mākoņa e-pastu vai pievienojiet savu kontu rēķiniem un pārskatiem."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Izmantojiet Posnic mākoņa e-pastu vai pievienojiet savu kontu rēķiniem un pārskatiem.",
+  "lang_delete_this_campaign": "Dzēst šo kampaņu?",
+  "lang_replace_your_message": "Aizstāt savu ziņojumu?"
 }

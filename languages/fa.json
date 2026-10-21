@@ -5152,5 +5152,7 @@
   "lang_sending_test_email": "ارسال ایمیل آزمایشی...",
   "lang_ssl_tls_usually_465": "SSL/TLS (معمولا ۴۶۵)",
   "lang_starttls_usually_587_or_2525": "استارت‌لز (معمولاً ۵۸۷ یا ۲۵۲۵)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "از ایمیل Posnic ابری استفاده کنید یا حساب خود را برای صورتحساب و گزارش ها وصل کنید."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "از ایمیل Posnic ابری استفاده کنید یا حساب خود را برای صورتحساب و گزارش ها وصل کنید.",
+  "lang_delete_this_campaign": "حذف این کمپین؟",
+  "lang_replace_your_message": "پیام خود را جایگزین کنید؟"
 }

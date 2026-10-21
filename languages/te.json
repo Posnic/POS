@@ -5233,5 +5233,7 @@
   "lang_sending_test_email": "పరీక్ష ఇమెయిల్ పంపడం...",
   "lang_ssl_tls_usually_465": "ఎస్ఎస్ఎల్/టిఎల్ఎస్ (సాధారణంగా 465)",
   "lang_starttls_usually_587_or_2525": "స్టార్ట్టిల్స్ (సాధారణంగా 587 లేదా 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicక్లౌడ్ ఇమెయిల్ను ఉపయోగించండి లేదా బిల్లులు మరియు నివేదికల కోసం మీ స్వంత ఖాతాను కనెక్ట్ చేయండి."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicక్లౌడ్ ఇమెయిల్ను ఉపయోగించండి లేదా బిల్లులు మరియు నివేదికల కోసం మీ స్వంత ఖాతాను కనెక్ట్ చేయండి.",
+  "lang_delete_this_campaign": "ఈ ప్రచారాన్ని తొలగించాలా?",
+  "lang_replace_your_message": "మీ సందేశాన్ని భర్తీ చేయాలా?"
 }

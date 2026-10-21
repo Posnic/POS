@@ -179,9 +179,16 @@ async function runDue(context, buildReport, deliver, at = new Date()) {
       if (
         !receipt ||
         !['sent', 'queued'].includes(receipt.status) ||
-        !['smtp', 'brevo', 'whatsapp_cloud', 'whatsapp_web', 'whatsapp_connector'].includes(
-          receipt.provider
-        ) ||
+        ![
+          'smtp',
+          'brevo',
+          'sendgrid',
+          'postmark',
+          'resend',
+          'whatsapp_cloud',
+          'whatsapp_web',
+          'whatsapp_connector',
+        ].includes(receipt.provider) ||
         typeof receipt.reference !== 'string' ||
         !receipt.reference.trim() ||
         receipt.reference.length > 500 ||

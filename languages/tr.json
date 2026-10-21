@@ -5155,5 +5155,7 @@
   "lang_sending_test_email": "Test e-postası gönderiliyor...",
   "lang_ssl_tls_usually_465": "SSL/TLS (genellikle 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (genellikle 587 veya 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "PosnicBulut e-postasını kullanın veya faturalar ve raporlar için kendi hesabınızı bağlayın."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "PosnicBulut e-postasını kullanın veya faturalar ve raporlar için kendi hesabınızı bağlayın.",
+  "lang_delete_this_campaign": "Bu kampanyayı silmek mi?",
+  "lang_replace_your_message": "Mesajınızı değiştirin mi?"
 }

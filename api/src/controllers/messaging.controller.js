@@ -51,7 +51,7 @@ class MessagingController extends BaseController {
       const db = await BaseModel.getDb();
       const branch = await db.collection('branches').findOne({
         _id: new ObjectId(String(this._ctx(req).branchId)),
-        license: BaseModel.license,
+        license: { $eq: BaseModel.license },
       });
       if (!branch) return this.error(res, 'Branch not found.', 404);
       const { transporter, from } =
@@ -90,7 +90,7 @@ class MessagingController extends BaseController {
       const db = await BaseModel.getDb();
       const branch = await db.collection('branches').findOne({
         _id: new ObjectId(String(this._ctx(req).branchId)),
-        license: BaseModel.license,
+        license: { $eq: BaseModel.license },
       });
       if (!branch) return this.error(res, 'Branch not found.', 404);
       const service = require('../services/shop-email');

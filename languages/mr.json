@@ -5155,5 +5155,7 @@
   "lang_sending_test_email": "चाचणी ईमेल पाठवणे",
   "lang_ssl_tls_usually_465": "एसएसएल/टीएलएस (सामान्यत: 465)",
   "lang_starttls_usually_587_or_2525": "स्टार्टटल्स (सामान्यत: 587 किंवा 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "क्लाउ Posnic ड ईमेल वापरा किंवा बिल आणि अहवालांसाठी आपले स्वतःचे खाते ज"
+  "lang_use_posnic_cloud_email_or_connect_your_own": "क्लाउ Posnic ड ईमेल वापरा किंवा बिल आणि अहवालांसाठी आपले स्वतःचे खाते ज",
+  "lang_delete_this_campaign": "ही मोहीम हटवता?",
+  "lang_replace_your_message": "आपला संदेश बदलू?"
 }

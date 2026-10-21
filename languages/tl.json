@@ -5152,5 +5152,7 @@
   "lang_sending_test_email": "Pagpapadala ng pagsubok na email...",
   "lang_ssl_tls_usually_465": "SSL/TLS (karaniwan 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (karaniwang 587 o 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Gumamit Posnic ng cloud email o ikonekta ang iyong sariling account para sa mga bayarin at ulat."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Gumamit Posnic ng cloud email o ikonekta ang iyong sariling account para sa mga bayarin at ulat.",
+  "lang_delete_this_campaign": "Tanggalin ang kampanyang ito?",
+  "lang_replace_your_message": "Palitan ang iyong mensahe?"
 }

@@ -233,7 +233,7 @@ async function raw(branchId) {
   if (!branchId || !BaseModel.license)
     throw new Error('Branch context is required for email settings.');
   const db = await BaseModel.getDb();
-  const filter = { license: BaseModel.license, branch_id: new ObjectId(String(branchId)) };
+  const filter = { license: { $eq: BaseModel.license }, branch_id: new ObjectId(String(branchId)) };
   const row = await db.collection('messaging_settings').findOne(filter);
   return { db, filter, config: row && row.email_config };
 }

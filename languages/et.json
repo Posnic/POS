@@ -5152,5 +5152,7 @@
   "lang_sending_test_email": "Teste-posti saatmine...",
   "lang_ssl_tls_usually_465": "SSL/TLS (tavaliselt 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (tavaliselt 587 või 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Kasutage Posnic pilvemeili või ühendage arvete ja aruannete jaoks oma konto."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Kasutage Posnic pilvemeili või ühendage arvete ja aruannete jaoks oma konto.",
+  "lang_delete_this_campaign": "Kustuta see kampaania?",
+  "lang_replace_your_message": "Asendage oma sõnum?"
 }

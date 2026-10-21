@@ -5233,5 +5233,7 @@
   "lang_sending_test_email": "Envoi d'un e-mail de test...",
   "lang_ssl_tls_usually_465": "SSL/TLS (généralement 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (généralement 587 ou 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Utilisez la messagerie Posnic dans le cloud ou connectez votre propre compte pour les factures et les rapports."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Utilisez la messagerie Posnic dans le cloud ou connectez votre propre compte pour les factures et les rapports.",
+  "lang_delete_this_campaign": "Supprimer cette campagne ?",
+  "lang_replace_your_message": "Remplacer votre message ?"
 }

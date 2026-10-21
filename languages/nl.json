@@ -5246,5 +5246,7 @@
   "lang_sending_test_email": "Test-e-mail verzenden...",
   "lang_ssl_tls_usually_465": "SSL/TLS (meestal 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (meestal 587 of 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Gebruik e-mail in de Posnic cloud of koppel je eigen account voor facturen en rapporten."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Gebruik e-mail in de Posnic cloud of koppel je eigen account voor facturen en rapporten.",
+  "lang_delete_this_campaign": "Deze campagne verwijderen?",
+  "lang_replace_your_message": "Je bericht vervangen?"
 }

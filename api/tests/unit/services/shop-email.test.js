@@ -137,7 +137,7 @@ test('email settings use existing local-only messaging authority and retain othe
     await save(branch, { ...smtp, email_smtp_password: '' });
     expect(db.collection).toHaveBeenCalledWith('messaging_settings');
     const [filter, update] = updateOne.mock.calls[0];
-    expect(filter.license).toBe('tenant');
+    expect(filter.license).toEqual({ $eq: 'tenant' });
     expect(String(filter.branch_id)).toBe(String(branch._id));
     expect(update.$set.email_config.email_smtp_password).toBe('secret');
     expect(update.$set.sms_config).toBeUndefined();

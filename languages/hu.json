@@ -5152,5 +5152,7 @@
   "lang_sending_test_email": "Teszt e-mail küldése...",
   "lang_ssl_tls_usually_465": "SSL/TLS (általában 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (általában 587 vagy 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Használjon Posnic felhőalapú e-mailt, vagy csatlakoztassa saját fiókját számlákhoz és jelentésekhez."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Használjon Posnic felhőalapú e-mailt, vagy csatlakoztassa saját fiókját számlákhoz és jelentésekhez.",
+  "lang_delete_this_campaign": "Törölje ezt a kampányt?",
+  "lang_replace_your_message": "Cserélje ki az üzenetét?"
 }

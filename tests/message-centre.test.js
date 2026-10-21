@@ -266,3 +266,32 @@ test('send failures stay visible with the provider reason instead of success',()
  assert.match($('#campaign_send_result').text(),/Phone is reconnecting/);
  dom.window.close();
 });
+
+
+test('message starter cancellation preserves the draft and confirmation replaces it without a native popup', () => {
+  const {dom,w,$}=setup();
+  w.PosnicPro.campaigns.mountAudience();
+  let accept, cancel;
+  w.confirm = () => { throw new Error('Native dialog is forbidden'); };
+  w.swal = () => ({then(ok,no) { accept=ok; cancel=no; }});
+  $('#campaign_message').val('My existing draft');
+  $('[data-message-preset="christmas"]').trigger('click'); cancel();
+  assert.equal($('#campaign_message').val(),'My existing draft');
+  $('[data-message-preset="christmas"]').trigger('click'); accept();
+  assert.match($('#campaign_message').val(),/Merry Christmas/);
+  dom.window.close();
+});
+
+test('campaign deletion waits for the in-app confirmation and cancellation does nothing', () => {
+  const {dom,w,$}=setup();
+  let accept, cancel, removed;
+  w.confirm = () => { throw new Error('Native dialog is forbidden'); };
+  w.swal = () => ({then(ok,no) { accept=ok; cancel=no; }});
+  w.PosnicPro.campaigns.remove = id => { removed=id; };
+  $('body').append('<button class="campaign-del" data-id="draft123">Delete</button>');
+  $('.campaign-del').trigger('click'); cancel();
+  assert.equal(removed,undefined);
+  $('.campaign-del').trigger('click'); accept();
+  assert.equal(removed,'draft123');
+  dom.window.close();
+});

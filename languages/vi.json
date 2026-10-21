@@ -5155,5 +5155,7 @@
   "lang_sending_test_email": "Đang gửi email kiểm tra...",
   "lang_ssl_tls_usually_465": "SSL/TLS (thường là 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (thường là 587 hoặc 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Sử dụng email Posnic đám mây hoặc kết nối tài khoản của riêng bạn cho các hóa đơn và báo cáo."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Sử dụng email Posnic đám mây hoặc kết nối tài khoản của riêng bạn cho các hóa đơn và báo cáo.",
+  "lang_delete_this_campaign": "Xóa chiến dịch này?",
+  "lang_replace_your_message": "Thay thế tin nhắn của bạn?"
 }

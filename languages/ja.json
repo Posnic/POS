@@ -5155,5 +5155,7 @@
   "lang_sending_test_email": "テスト E メールを送信中...",
   "lang_ssl_tls_usually_465": "SSL/TLS (通常は 465)",
   "lang_starttls_usually_587_or_2525": "StartTLS (通常は 587 または 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "請求書やレポートには、Posnicクラウドメールを使用するか、独自のアカウントを接続してください。"
+  "lang_use_posnic_cloud_email_or_connect_your_own": "請求書やレポートには、Posnicクラウドメールを使用するか、独自のアカウントを接続してください。",
+  "lang_delete_this_campaign": "このキャンペーンを削除しますか?",
+  "lang_replace_your_message": "メッセージを置換しますか?"
 }

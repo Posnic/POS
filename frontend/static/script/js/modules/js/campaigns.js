@@ -454,9 +454,13 @@ $(document).on('click', '.campaign-edit', function () {
   PosnicPro.campaigns.editForm($(this).data('id'));
 });
 $(document).on('click', '.campaign-del', function () {
-  if (window.confirm('Delete this campaign? Its send history is kept.')) {
-    PosnicPro.campaigns.remove($(this).data('id'));
-  }
+  var id = $(this).data('id');
+  swal({
+    title: PosnicPro.i18n.t('lang_delete_this_campaign', 'Delete this campaign?'), text: 'Its send history is kept.',
+    showCancelButton: true, confirmButtonText: 'Delete campaign',
+    cancelButtonText: 'Keep campaign', confirmButtonClass: 'btn btn-danger',
+    cancelButtonClass: 'btn btn-light'
+  }).then(function () { PosnicPro.campaigns.remove(id); }, function () {});
 });
 $(document).on('click', '.campaign-merge', function () {
   PosnicPro.campaigns.insertMerge($(this).data('field'));
@@ -486,17 +490,27 @@ $(document).on('click', '[data-remove-recipient]', function () {
 $(document).on('input', '#campaign_message', function () { PosnicPro.campaigns.previewText(); });
 $(document).on('click', '[data-message-preset]', function () {
   var kind = $(this).data('message-preset');
-  if ($('#campaign_message').val().trim() && !window.confirm('Replace the current message with this starter?')) return;
-  var templates = {
-    offer: 'Hi {name}, we have a special offer for you. [Add your offer, valid code and expiry date.]',
-    christmas: 'Merry Christmas, {name}! Wishing you and your family a joyful festive season.',
-    newyear: 'Happy New Year, {name}! Thank you for shopping with us. We look forward to welcoming you again.',
-    custom: 'Hi {name}, '
-  };
-  $('#campaign_message').val(templates[kind] || '');
-  $('[data-message-preset]').attr('aria-pressed', 'false');
-  $(this).attr('aria-pressed', 'true');
-  PosnicPro.campaigns.previewText();
+  var button = this;
+  function applyStarter() {
+    var templates = {
+      offer: 'Hi {name}, we have a special offer for you. [Add your offer, valid code and expiry date.]',
+      christmas: 'Merry Christmas, {name}! Wishing you and your family a joyful festive season.',
+      newyear: 'Happy New Year, {name}! Thank you for shopping with us. We look forward to welcoming you again.',
+      custom: 'Hi {name}, '
+    };
+    $('#campaign_message').val(templates[kind] || '');
+    $('[data-message-preset]').attr('aria-pressed', 'false');
+    $(button).attr('aria-pressed', 'true');
+    $('#campaign_message').trigger('input');
+    PosnicPro.campaigns.previewText();
+  }
+  if (!$('#campaign_message').val().trim()) { applyStarter(); return; }
+  swal({
+    title: PosnicPro.i18n.t('lang_replace_your_message', 'Replace your message?'), text: 'Use this starter instead of your current message.',
+    showCancelButton: true, confirmButtonText: 'Use starter',
+    cancelButtonText: 'Keep my message', confirmButtonClass: 'btn btn-primary',
+    cancelButtonClass: 'btn btn-light'
+  }).then(applyStarter, function () {});
 });
 
 $(document).on('input change', '#campaign_name, #campaign_channel, #campaign_seg_type, .campaign-seg-field input, .campaign-seg-field select, #campaign_message, [data-recipient]', function () { PosnicPro.campaigns.invalidateReview(); });

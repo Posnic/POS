@@ -5233,5 +5233,7 @@
   "lang_sending_test_email": "Kutuma barua pepe ya mtihani...",
   "lang_ssl_tls_usually_465": "SSL/TLS (kawaida 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (kawaida 587 au 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Tumia bar Posnic ua pepe ya wingu au unganisha akaunti yako mwenyewe kwa bili na ripoti."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Tumia bar Posnic ua pepe ya wingu au unganisha akaunti yako mwenyewe kwa bili na ripoti.",
+  "lang_delete_this_campaign": "Kufuta kampeni hii?",
+  "lang_replace_your_message": "Badilisha ujumbe wako?"
 }

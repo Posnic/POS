@@ -5233,5 +5233,7 @@
   "lang_sending_test_email": "පරීක්ෂණ විද්යුත් තැපෑල යැවීම...",
   "lang_ssl_tls_usually_465": "එස්එල්/ටීඑල්එස් (සාමාන්යයෙන් 465)",
   "lang_starttls_usually_587_or_2525": "ස්ටාර්ට්ල්ස් (සාමාන්යයෙන් 587 හෝ 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "ව Posnic ලාකුළු විද්යුත් තැපෑල භාවිතා කරන්න හෝ බිල්පත් සහ වාර්තා සඳහා ඔබේම ගිණුමක් සම්බන්ධ කරන්න."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "ව Posnic ලාකුළු විද්යුත් තැපෑල භාවිතා කරන්න හෝ බිල්පත් සහ වාර්තා සඳහා ඔබේම ගිණුමක් සම්බන්ධ කරන්න.",
+  "lang_delete_this_campaign": "මෙම ව්යාපාරය මකා දමනවාද?",
+  "lang_replace_your_message": "ඔබේ පණිවිඩය වෙනුවට?"
 }

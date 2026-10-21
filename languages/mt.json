@@ -5152,5 +5152,7 @@
   "lang_sending_test_email": "Tibgħat email tat-test...",
   "lang_ssl_tls_usually_465": "SSL/TLS (ġeneralment 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (ġeneralment 587 jew 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Uża email Posnic cloud jew qabbad il-kont tiegħek stess għall-kontijiet u r-rapporti."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Uża email Posnic cloud jew qabbad il-kont tiegħek stess għall-kontijiet u r-rapporti.",
+  "lang_delete_this_campaign": "Ħassar din il-kampanja?",
+  "lang_replace_your_message": "Issostitwixxi l-messaġġ tiegħek?"
 }

@@ -5152,5 +5152,7 @@
   "lang_sending_test_email": "Odesíláme testovací e-mail...",
   "lang_ssl_tls_usually_465": "SSL/TLS (obvykle 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (obvykle 587 nebo 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Použijte Posnic cloudový e-mail nebo připojte svůj vlastní účet pro účty a zprávy."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Použijte Posnic cloudový e-mail nebo připojte svůj vlastní účet pro účty a zprávy.",
+  "lang_delete_this_campaign": "Odstranit tuto kampaň?",
+  "lang_replace_your_message": "Nahradit svou zprávu?"
 }

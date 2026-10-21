@@ -5155,5 +5155,7 @@
   "lang_sending_test_email": "테스트 이메일 전송 중...",
   "lang_ssl_tls_usually_465": "SSL/TLS (보통 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (보통 587개 또는 252개)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnic클라우드 이메일을 사용하거나 청구서 및 보고서를 위해 자신의 계정을 연결하세요."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnic클라우드 이메일을 사용하거나 청구서 및 보고서를 위해 자신의 계정을 연결하세요.",
+  "lang_delete_this_campaign": "이 캠페인을 삭제하시겠습니까?",
+  "lang_replace_your_message": "메시지를 바꾸시겠습니까?"
 }

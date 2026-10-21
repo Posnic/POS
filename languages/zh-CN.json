@@ -5155,5 +5155,7 @@
   "lang_sending_test_email": "正在发送测试电子邮件...",
   "lang_ssl_tls_usually_465": "SSL/TLS（通常为 465）",
   "lang_starttls_usually_587_or_2525": "STARTTLS（通常为 587 或 2525）",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "使用Posnic云端电子邮件或关联自己的账号来获取账单和报告。"
+  "lang_use_posnic_cloud_email_or_connect_your_own": "使用Posnic云端电子邮件或关联自己的账号来获取账单和报告。",
+  "lang_delete_this_campaign": "删除此活动？",
+  "lang_replace_your_message": "替换你的消息？"
 }

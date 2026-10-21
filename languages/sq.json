@@ -5152,5 +5152,7 @@
   "lang_sending_test_email": "Dërgimi i emailit të provës...",
   "lang_ssl_tls_usually_465": "SSL/TLS (zakonisht 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (zakonisht 587 ose 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Përdor Posnic ni email cloud ose lidhni llogarinë tuaj për faturat dhe raportet."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Përdor Posnic ni email cloud ose lidhni llogarinë tuaj për faturat dhe raportet.",
+  "lang_delete_this_campaign": "E fshini këtë fushatë?",
+  "lang_replace_your_message": "Zëvendësoni mesazhin tuaj?"
 }
