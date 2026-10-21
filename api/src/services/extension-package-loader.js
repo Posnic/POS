@@ -95,9 +95,12 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
     version: metadata.version,
     initialState,
     commands: metadata.commands,
+    connectorOperations: require('./extension-connector').connectorOperations(
+      metadata.connectorOperations
+    ),
     contextNeeds: metadata.contextNeeds || {},
     permissionModule: 'extensions',
-    menu: metadata.contributes?.menu === 'sales' ? 'sales' : null,
+    ...require('./extension-ui-contributions').uiContributions(metadata.contributes, Boolean(view)),
     salesWorkspace: require('./extension-sales-workspace').salesWorkspace(
       metadata.contributes?.salesWorkspace,
       metadata.commands

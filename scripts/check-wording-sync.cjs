@@ -71,6 +71,18 @@ const { WordingProfiles, createRegistry, resolveBundle } = require(path.join(pos
       assert.deepEqual({ ...resolveBundle(await local.read(), branch, 'en', labels).values }, {});
       assert.equal((await local.read()).profiles[0].revisions.length, 3);
     }
+    const current = await svc.read();
+    const deleted = await svc.remove({id: current.profiles[0].id, expectedRevision: current.revision}, 'owner', [branch]);
+    const deletion = await request('pull', {collection:'settings', since:removed.checkpoint});
+    assert.equal(deletion.docs.length, 1);
+    for (const till of ['till1','till2']) {
+      await client.db(till).collection('settings').replaceOne({_id:deletion.docs[0]._id},deletion.docs[0]);
+      const local = new WordingProfiles(client.db(till).collection('settings'), 'aaaaaaaaaaaaaaaaaaaaaaaa', labels);
+      assert.ok((await local.read()).profiles[0].deletedAt);
+      assert.deepEqual({...resolveBundle(await local.read(),branch,'en',labels).values},{});
+    }
+    await request('push', {collection:'settings', docs:[removed.docs[0]]});
+    assert.equal((await svc.read()).revision, deleted.revision, 'stale retry cannot resurrect deleted profile');
     const snapshot = await require(path.join(pos, 'api/src/services/document-wording-snapshot')).capture(
       client.db('till1').collection('settings'), 'aaaaaaaaaaaaaaaaaaaaaaaa', branch
     );

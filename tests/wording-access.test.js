@@ -25,14 +25,14 @@ function fixture(env = {}) {
 }
 test('staff and API keys cannot manage wording profiles', async () => {
   const call = fixture();
-  for (const method of ['GET /', 'PUT /draft', 'POST /publish']) {
+  for (const method of ['GET /', 'GET /labels', 'PUT /draft', 'POST /publish', 'POST /remove']) {
     assert.equal((await call(method, { user: { usertype: 'staff' } })).statusCode, 403);
     assert.equal((await call(method, { isApiKey: true, user: { usertype: 'super_admin' } })).statusCode, 403);
   }
 });
 test('paired desktop refuses profile writes before touching storage', async () => {
   const call = fixture({ POSNIC_DESKTOP: '1', POSNIC_SYNC_PAIRED: '1' });
-  for (const method of ['PUT /draft', 'POST /publish']) {
+  for (const method of ['PUT /draft', 'POST /publish', 'POST /remove']) {
     assert.equal((await call(method, { user: { usertype: 'super_admin' } })).statusCode, 409);
   }
 });

@@ -242,6 +242,10 @@
             plu_code: val('plu'), gtin: val('gtin'), barcodes: list(val('alt-barcodes')), purchase_unit: val('purchase-unit'), conversion_factor: number('pack-size'), brand: val('brand'), tags: list(val('tags')), position: Number(val('position')),
             items_mfg_date: val('mfg'), items_expiry_date: val('expiry'), icon: val('icon'), tile_color: auto ? auto.color : val('tile-color'), tile_shape: auto ? auto.shape : val('tile-shape'),
             image: photos.map(function (p) { return { name:p.uploaded||p.name, size:p.size, cover:p.cover }; }), cover_image: (function(){var p=photos.find(function(p){return p.cover==='yes';});return p?(p.uploaded||p.name):'item.svg';}()), channel_off: selected('channel-off') };
+        // An older cached form must not erase saved parcel measurements.
+        if (['weightKg','lengthCm','widthCm','heightCm'].every(function(k){return el('parcel-'+k);})) {
+            out.parcel_details = Object.fromEntries(['weightKg','lengthCm','widthCm','heightCm'].map(function(k){return [k,val('parcel-'+k)||null];}));
+        }
         Object.assign(out, P.itemTranslationsV2.data());
         if (caps.hsn && val('hsn')) Object.assign(out, { tax_method: 'hsn', hsn_code: val('hsn'), hsn_description: val('hsn-description'), tax: Number(val('hsn-rate')), tax_id: '', tax_name: '' });
         if (caps.restaurant && document.querySelector('#items_v2 [name="iv2-kind"]:checked').value !== 'service') {
@@ -283,7 +287,7 @@
         preview.textContent=val('icon')||'▦';
         preview.style.background=checked('auto-tile')&&P.autoTile?P.autoTile(val('name')).color:val('tile-color');preview.style.color='white';
     }
-    function reset() {if(el('selling-unit-rows'))el('selling-unit-rows').replaceChildren();generation++;reading=0;photos=[];variants=[];signature='';el('variant-rows').replaceChildren();el('auto-tile').checked=true;photoPicker();P.itemTranslationsV2.reset();}
+    function reset() {if(el('selling-unit-rows'))el('selling-unit-rows').replaceChildren();['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){if(el('parcel-'+k))el('parcel-'+k).value='';});generation++;reading=0;photos=[];variants=[];signature='';el('variant-rows').replaceChildren();el('auto-tile').checked=true;photoPicker();P.itemTranslationsV2.reset();}
     function init() {
         if (!document.getElementById('iv2-hsn-search-button')) {
             var searchButton = button('Find HSN / SAC code', openHsnSearch);
@@ -329,6 +333,7 @@
     }
     function load(item) {
         reset();
+        ['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){if(el('parcel-'+k))el('parcel-'+k).value=item.parcel_details && item.parcel_details[k]!=null?item.parcel_details[k]:'';});
         (item.selling_units || []).forEach(addSellingUnit);
         var mapping = {mrp:'mrp_price',reorder:'reorder_point',plu:'plu_code',gtin:'gtin','purchase-unit':'purchase_unit','pack-size':'conversion_factor',brand:'brand',position:'sort_order',icon:'icon','tile-color':'tile_color','tile-shape':'tile_shape','service-unit':'service_unit','hsn':'hsncode','hsn-description':'hsndescription','hsn-rate':'tax','prep-note':'prep_note','prep-minutes':'prep_minutes'};
         Object.keys(mapping).forEach(function(id){if(item[mapping[id]] != null) el(id).value=item[mapping[id]];});

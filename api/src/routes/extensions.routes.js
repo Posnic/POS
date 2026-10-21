@@ -127,7 +127,7 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
           id: item.id,
           displayName: item.displayName || item.id,
           version: item.version,
-          ...(item.menu === 'sales' ? { menu: 'sales' } : {}),
+          ...(['sales', 'inventory', 'manage'].includes(item.menu) ? { menu: item.menu } : {}),
           salesWorkspace: item.salesWorkspace || null,
           enabled: !disabled.has(item.id),
           installed: !removed.has(item.id),
@@ -225,8 +225,6 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
   });
   router.use('/:extensionId', async (req, res, next) => {
     try {
-      // Existing generic API keys do not carry an installed extension grant.
-      if (req.isApiKey) access.fail('Extension staff session required.', 403);
       const descriptor = registry.get(req.params.extensionId);
       if (!descriptor) access.fail('Extension is not installed on this host.', 404);
       const scope = await access.context(req);
@@ -238,20 +236,25 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
         enabled: true,
       });
       if (!approved) access.fail('Extension is not enabled for this shop.', 403);
+      if (
+        req.isApiKey &&
+        !require('../services/extension-connector-context').readerAllowed(req, approved)
+      )
+        access.fail('Scoped connector reader approval required.', 403);
       const state = await req.db.collection('extension_namespaces').findOne({
         license: scope.license,
         branch_id: scope.branchId,
         extensionId: descriptor.id,
       });
-      if (state?.lifecycle?.enabled === false)
+      if (state?.lifecycle?.enabled === false || state?.lifecycle?.installed === false)
         access.fail('Extension is disabled for this shop.', 403);
       const module = descriptor.permissionModule || 'extensions';
-      const permissions = ['read', 'write', 'manage'].filter((action) =>
+      const permissions = (req.isApiKey ? ['read'] : ['read', 'write', 'manage']).filter((action) =>
         access.allowed(req.user, module, action)
       );
       if (!permissions.includes('read')) access.fail('Extension read permission required.', 403);
       const actor = { userId: String(req.user._id || req.user.id), permissions };
-      req.extension = { descriptor, scope, actor };
+      req.extension = { descriptor, scope, actor, orderStorage: state?.data?.orderStorage };
       res.set('Cache-Control', 'no-store');
       next();
     } catch (error) {
@@ -268,6 +271,20 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
       actor: req.extension.actor,
     })
   );
+  router.get('/:extensionId/connector-context', async (req, res) => {
+    try {
+      if (!req.isApiKey) access.fail('Connector reader identity required.', 403);
+      res.json(
+        await require('../services/extension-connector-context').readContext({
+          db: req.db,
+          ...req.extension,
+          query: req.query,
+        })
+      );
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
   router.get('/:extensionId/view', (req, res) => {
     const descriptor = req.extension.descriptor;
     if (!descriptor.view)
@@ -275,6 +292,7 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
     res.json({
       extensionId: descriptor.id,
       displayName: descriptor.displayName,
+      page: descriptor.page || { header: 'host' },
       view: descriptor.view,
     });
   });
@@ -296,6 +314,18 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
           scope: req.extension.scope,
           query: req.query.q,
           after: req.query.after,
+        })
+      );
+    } catch (error) {
+      respondError(res, error);
+    }
+  });
+  router.post('/:extensionId/connector', async (req, res) => {
+    try {
+      res.json(
+        await require('../services/extension-connector').requestConnector({
+          ...req.extension,
+          input: req.body,
         })
       );
     } catch (error) {

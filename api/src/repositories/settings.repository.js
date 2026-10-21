@@ -334,7 +334,13 @@ class SettingsRepository extends BaseModel {
            Stored verbatim they read as ENABLED through every `!== false`
            gate - the all-toggles-on incident. The boolean is stored, so no
            reader ever meets the string. null still means inherit. */
-        if (key === 'restaurant_playful_feedback') {
+        if (key === 'parcel_cartons' && value !== null) {
+          try {
+            accepted[key] = require('../utils/parcel-details').cartons(value);
+          } catch (error) {
+            return { status: false, data: null, message: error.message };
+          }
+        } else if (key === 'restaurant_playful_feedback') {
           if (value !== null && typeof value !== 'boolean')
             return { status: false, data: null, message: 'Order feedback must be on or off.' };
           accepted[key] = value;
@@ -455,7 +461,9 @@ class SettingsRepository extends BaseModel {
         $set: {
           license: ids.license,
           branch_id: isAccount ? null : ids.branch,
-          ...(Object.prototype.hasOwnProperty.call(toSet, 'menu_dayparts')
+          ...(Object.prototype.hasOwnProperty.call(toSet, 'menu_dayparts') ||
+          Object.prototype.hasOwnProperty.call(toSet, 'parcel_cartons') ||
+          toClear.includes('parcel_cartons')
             ? { updated_date: new Date() }
             : {}),
         },
@@ -485,7 +493,9 @@ class SettingsRepository extends BaseModel {
           {
             $set: {
               ...toSet,
-              ...(Object.prototype.hasOwnProperty.call(toSet, 'menu_dayparts')
+              ...(Object.prototype.hasOwnProperty.call(toSet, 'menu_dayparts') ||
+              Object.prototype.hasOwnProperty.call(toSet, 'parcel_cartons') ||
+              toClear.includes('parcel_cartons')
                 ? { updated_date: new Date() }
                 : {}),
             },

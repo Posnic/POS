@@ -64,6 +64,8 @@
     $(".page_loader,#osk-container").hide();
     $("#extensions,.page-title-box").show();
     $(".dashboard_img_menu").hide();
+    document.querySelector("#extensions .crumbbar_padding").style.display = "";
+    document.querySelector("#extensions .contentbar").style.padding = "0 10px 10px";
     document.getElementById("extensions_title").textContent = title;
     document.getElementById("extensions_status").textContent = "Loading…";
     document.getElementById("extensions_content").replaceChildren();
@@ -82,6 +84,8 @@
     }
     var section = document.createElement("section");
     section.className = "card mt-3";
+    section.style.maxWidth = "640px";
+    section.style.width = "100%";
     var body = document.createElement("div");
     body.className = "card-body";
     section.append(body);
@@ -127,17 +131,45 @@
       return;
     }
     note.textContent =
-      "Choose the signed extension ZIP supplied by Posnic. Installation preserves basket data and takes effect after restart. To roll back, choose the previously supplied compatible package.";
+      "Choose a signed ZIP package. We’ll verify its signature and compatibility before you apply it.";
+    var upload = document.createElement("div");
+    upload.style.cssText = "padding:16px;border:1px dashed #c5ceda;border-radius:8px;background:#f7f9fc;margin:16px 0;";
+    var label = document.createElement("label");
+    label.textContent = "Extension package";
+    label.htmlFor = "extension-package-upload";
+    label.style.cssText = "display:block;font-weight:600;margin-bottom:8px";
+    upload.append(label);
     var file = document.createElement("input");
+    file.id = "extension-package-upload";
     file.type = "file";
     file.accept = ".zip";
-    file.className = "form-control mb-2";
+    file.style.cssText = "display:block;width:auto;max-width:100%;font:inherit;";
     file.setAttribute("aria-label", "Signed extension package");
-    body.append(file);
+    upload.append(file);
+    var hint = document.createElement("small");
+    hint.textContent = "ZIP only · Maximum 24 MB";
+    hint.style.cssText = "display:block;color:#66758a;margin-top:10px";
+    hint.id = "extension-package-hint";
+    file.setAttribute("aria-describedby", hint.id);
+    upload.append(hint);
+    body.append(upload);
     var review = document.createElement("button");
     review.className = "btn btn-primary";
     review.textContent = "Verify package";
+    review.disabled = true;
     body.append(review);
+    var help = document.createElement("small");
+    help.textContent = "Verification does not enable the extension. You’ll review the package before applying it.";
+    help.style.cssText = "display:block;color:#66758a;margin-top:12px;line-height:1.5";
+    body.append(help);
+    function validSelection() {
+      var selected = file.files[0];
+      return Boolean(selected && /\.zip$/i.test(selected.name) && selected.size > 0 && selected.size <= 24 * 1024 * 1024);
+    }
+    file.onchange = function () {
+      review.disabled = !validSelection();
+      note.textContent = !file.files.length ? "Choose a signed ZIP package to continue." : validSelection() ? "Package selected. Ready to verify." : "Choose a non-empty ZIP file no larger than 24 MB.";
+    };
     var pinnedBranch = String(PosnicPro.local.get("branch_id_set") || "");
     function current() {
       if (
@@ -152,11 +184,12 @@
       try {
         current();
         var selected = file.files[0];
-        if (!selected || selected.size > 24 * 1024 * 1024)
+        if (!validSelection())
           throw new Error(
             "Choose a signed extension ZIP no larger than 24 MB.",
           );
         review.disabled = true;
+        review.textContent = "Verifying…";
         file.disabled = true;
         note.textContent = "Verifying package…";
         var staged = await new Promise(function (resolve, reject) {
@@ -204,7 +237,8 @@
         };
       } catch (error) {
         note.textContent = error.message;
-        review.disabled = false;
+        review.textContent = "Verify package";
+        review.disabled = !validSelection();
         file.disabled = false;
       }
     };
@@ -221,9 +255,13 @@
         if (menuRun !== menuGeneration || branch !== String(PosnicPro.local.get('branch_id_set') || '')) return;
         document.querySelectorAll('[data-extension-menu]').forEach(function (node) { node.remove(); });
         if (PosnicPro.saleExtensions) PosnicPro.saleExtensions.configure(data.extensions);
-        var anchor = document.getElementById('view_touchsales_page');
-        if (!anchor) return;
-        data.extensions.filter(function (item) { return item.enabled !== false && item.menu === 'sales'; }).forEach(function (item) {
+        var anchors = {
+          sales: document.getElementById('view_sales_page') || document.getElementById('view_touchsales_page'),
+          inventory: document.getElementById('view_items_page'),
+          manage: document.getElementById('view_extensions_page')
+        };
+        data.extensions.filter(function (item) { return item.enabled !== false && Object.prototype.hasOwnProperty.call(anchors, item.menu) && anchors[item.menu]; }).forEach(function (item) {
+          var anchor = anchors[item.menu];
           var row = document.createElement('li'), link = document.createElement('a'), icon = document.createElement('img');
           row.dataset.extensionMenu = item.id;
           link.href = '#/extensions/' + encodeURIComponent(item.id);
@@ -496,6 +534,10 @@
         document.getElementById("extensions_title").textContent =
           data.displayName;
         status("");
+        if (!embedded && data.page?.header === "extension") {
+          document.querySelector("#extensions .crumbbar_padding").style.display = "none";
+          document.querySelector("#extensions .contentbar").style.setProperty("padding", "60px 0 0", "important");
+        }
         mounted = PosnicExtensionFrame.mount({
           container: embedded ? embedded.container : document.getElementById("extensions_content"),
           extensionId: id,
@@ -528,6 +570,13 @@
                 return { capabilities: values[0], namespace: values[1], salesWorkspace: embedded ? embedded.workspace : null, salesWorkspaceBridge: Boolean(PosnicPro.saleExtensions) };
               });
             if (method === "state") return request(base + "/state");
+            if (method === "connector") return request(base + "/connector", input).then(function(value) {
+              if (run !== generation || branch !== String(PosnicPro.local.get("branch_id_set") || ""))
+                throw Error('Workspace changed. Reopen the extension.');
+              return value;
+            });
+            if (method === "document") return PosnicExtensionFrame.showDocument(input);
+            if (method === "download") return PosnicExtensionFrame.downloadDocument(input);
             if (method === "sales")
               return request(
                 base + "/sales?after=" + encodeURIComponent(input.after || ""),
