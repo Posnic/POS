@@ -5194,5 +5194,18 @@
   "lang_published_tills_apply_this_revision_after": "Yayınlandı. Senkronizasyondan sonra bu revizyonu uygulayana kadar.",
   "lang_saved_without_branch_assignments_previousl": "Şube atamaları olmadan kaydedildi. Önceden atanmış şubeler standart ifadeler kullanır.",
   "lang_search_phrases": "Arama cümleleri",
-  "lang_use_word_rules": "Kelime kurallarını kullan"
+  "lang_use_word_rules": "Kelime kurallarını kullan",
+  "lang_create_profile": "Profil oluştur",
+  "lang_duplicate": "Yinelenen",
+  "lang_duplicate_profile": "Yinelenen profil",
+  "lang_new_profile": "Yeni profil",
+  "lang_no_custom_profiles_yet": "Henüz özel profil yok",
+  "lang_rename": "Yeniden Adlandır",
+  "lang_save_name": "Adı kaydet",
+  "lang_standard_language_is_in_use_create_a_profi": "Standart dil kullanılıyor. İfadelerinizi özelleştirmek için bir profil oluşturun.",
+  "lang_the_copy_starts_without_branch_assignments": "Kopyalama, dal atamaları olmadan başlar.",
+  "lang_your_standard_language_stays_unchanged_unt": "İfade değişikliklerini kaydedene kadar standart diliniz değişmeden kalır.",
+  "lang_wording_enter_profile_name": "Bir profil adı girin.",
+  "lang_wording_profile_actions": "Profil eylemleri",
+  "lang_wording_rename_profile": "Profili yeniden adlandırma"
 }

@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "ప్రచురించబడింది. సమకాలీకరణ తర్వాత టిల్స్ ఈ పునర్విమర్శను వర్తిస్తాయి.",
   "lang_saved_without_branch_assignments_previousl": "బ్రాంచ్ అసైన్మెంట్లు లేకుండా సేవ్ చేయబడింది. గతంలో కేటాయించిన శాఖలు ప్రామాణిక పదాలను ఉపయోగిస్తాయి.",
   "lang_search_phrases": "పదబంధాలను శోధించండి",
-  "lang_use_word_rules": "పద నియమాలను ఉపయోగించండి"
+  "lang_use_word_rules": "పద నియమాలను ఉపయోగించండి",
+  "lang_create_profile": "ప్రొఫైల్ సృష్టించండి",
+  "lang_duplicate": "నకిలీ",
+  "lang_duplicate_profile": "నకిలీ ప్రొఫైల్",
+  "lang_new_profile": "క్రొత్త ప్రొఫైల్",
+  "lang_no_custom_profiles_yet": "ఇంకా కస్టమ్ ప్రొఫైల్స్ లేవు",
+  "lang_rename": "పేరు మార్చండి",
+  "lang_save_name": "పేరును సేవ్ చేయండి",
+  "lang_standard_language_is_in_use_create_a_profi": "ప్రామాణిక భాష ఉపయోగంలో ఉంది. మీ పదాలను అనుకూలీకరించడానికి ప్రొఫైల్ను సృష్టించండి.",
+  "lang_the_copy_starts_without_branch_assignments": "కాపీ బ్రాంచ్ అసైన్మెంట్లు లేకుండా ప్రారంభమవుతుంది.",
+  "lang_your_standard_language_stays_unchanged_unt": "మీరు పదం మార్పులను సేవ్ చేసే వరకు మీ ప్రామాణిక భాష మారకుండా ఉంటుంది.",
+  "lang_wording_enter_profile_name": "ప్రొఫైల్ పేరును నమోదు చేయండి.",
+  "lang_wording_profile_actions": "ప్రొఫైల్ చర్యలు",
+  "lang_wording_rename_profile": "ప్రొఫైల్ పేరు మార్చండి"
 }

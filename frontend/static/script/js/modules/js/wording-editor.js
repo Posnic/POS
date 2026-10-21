@@ -39,16 +39,47 @@
         el('wording-all-branches').checked = targets.length > 0 && targets.length === data.branches.length;
         el('wording-all-branches').indeterminate = targets.length > 0 && targets.length < data.branches.length;
     }
+    function profileForm(mode) {
+        var previousTargets = targets.slice(), previousDirty = dirty;
+        var previous = selected, copy = mode === 'duplicate', rename = mode === 'rename';
+        var pending = rename || copy ? JSON.parse(JSON.stringify(draft)) : {name:'',locale:draft.locale || 'en',overrides:{},rules:[]};
+        pending.rules = (pending.rules || []).filter(function(r){return r.from.trim() || r.to.trim();});
+        if (copy) pending.name += ' copy';
+        host().innerHTML = '<div class="border rounded p-4 mx-auto my-4" style="max-width:540px"><h5>' + esc(rename ? PosnicPro.i18n.t('lang_wording_rename_profile', 'Rename profile') : copy ? PosnicPro.i18n.t('lang_duplicate_profile', 'Duplicate profile') : PosnicPro.i18n.t('lang_create_profile', 'Create profile')) + '</h5><label class="d-block mt-3"><lang class="lang_wording_profile_name">Profile name</lang><input class="form-control mt-2" id="wording-name" maxlength="100" value="' + esc(pending.name) + '"></label>' +
+            '<label class="d-block mt-3"><lang class="lang_int_voice_language">Language</lang><select class="form-control mt-2" id="wording-create-locale"' + (rename || copy ? ' disabled' : '') + '>' + data.locales.map(function (l) { var name=l; try {name=new Intl.DisplayNames(['en'],{type:'language'}).of(l);}catch(e){} return '<option value="' + esc(l) + '" ' + (l===pending.locale?'selected':'') + '>' + esc(name) + '</option>'; }).join('') + '</select></label><p class="small text-muted">' + esc(copy ? PosnicPro.i18n.t('lang_the_copy_starts_without_branch_assignments', 'The copy starts without branch assignments.') : PosnicPro.i18n.t('lang_your_standard_language_stays_unchanged_unt', 'Your standard language stays unchanged until you save wording changes.')) + '</p><p id="wording-notice" role="status"></p><div class="d-flex justify-content-end" style="gap:8px"><button type="button" class="btn btn-outline-secondary" id="wording-profile-cancel"><lang class="lang_cancel_title">Cancel</lang></button><button type="button" class="btn btn-primary" id="wording-profile-save">' + esc(rename ? PosnicPro.i18n.t('lang_save_name', 'Save name') : PosnicPro.i18n.t('lang_create_profile', 'Create profile')) + '</button></div></div>';
+        host().oninput = null; host().onchange = null;
+        host().onclick = function(e) {
+            var b=e.target.closest('button'); if(!b || busy || !data.writable)return;
+            if(b.id==='wording-profile-cancel'){render();return;}
+            if(b.id!=='wording-profile-save')return;
+            pending.name=el('wording-name').value.trim();pending.locale=el('wording-create-locale').value;
+            if(!pending.name){tell(PosnicPro.i18n.t('lang_wording_enter_profile_name', 'Enter a profile name.'));el('wording-name').focus();return;}
+            var before=profiles().map(function(p){return p.id;});setBusy(true);
+            PosnicPro.put({url:'settings/wording/draft',data:JSON.stringify(Object.assign({},pending,{id:rename?previous:undefined,expectedRevision:data.state.revision}))},function(r){
+                if(r.type!=='success')return failed(r);
+                busy=false;data.state=r.data;
+                choose(rename?previous:profiles().find(function(p){return !before.includes(p.id);}).id);
+                if(rename){targets=previousTargets;dirty=previousDirty;render();}
+            },failed);
+        };
+        el('wording-name').focus();
+    }
+    function emptyState() {
+        host().innerHTML='<div class="text-center border rounded p-5 my-4"><i class="feather icon-type text-primary" style="font-size:32px" aria-hidden="true"></i><h5 class="mt-3"><lang class="lang_no_custom_profiles_yet">No custom profiles yet</lang></h5><p class="text-muted"><lang class="lang_standard_language_is_in_use_create_a_profi">Standard language is in use. Create a profile to customize your wording.</lang></p>' + (data.writable ? '<button type="button" id="wording-create" class="btn btn-primary"><lang class="lang_create_profile">Create profile</lang></button>' : '') + '<p id="wording-notice" role="status" class="mt-3 mb-0"></p></div>';
+        host().oninput=null;host().onchange=null;host().onclick=function(e){if(e.target.closest('#wording-create'))profileForm('create');};
+    }
     function render() {
         var h = host(); if (!h) return;
+        if (!selected) { emptyState(); return; }
         var disabled = data.writable ? '' : ' disabled';
+        var profileColumn = data.branches.length > 1 ? 'col-md-4' : 'col-md-6';
         h.innerHTML = '<p class="text-muted"><lang class="lang_wording_ui_choose_the_wording_your_business_uses_custom_wording_is_preserved_through_updates">Choose the wording your business uses. Custom wording is preserved through updates.</lang></p>' +
             (!data.writable ? '<div class="alert alert-info"><lang class="lang_manage_profiles_on_your_cloud_server_this">Manage profiles on your cloud server. This till uses synchronized wording.</lang></div>' : '') +
-            '<div class="row my-3"><div class="col-md-4"><div class="d-flex justify-content-between"><span><lang class="lang_wording_profile">Profile</lang></span><button type="button" class="btn btn-link p-0" id="wording-manage-toggle" aria-expanded="false"><lang class="lang_wording_ui_manage_profiles">Manage profiles</lang></button></div>' +
+            '<div class="row my-3"><div class="' + profileColumn + '"><div class="d-flex justify-content-between"><span><lang class="lang_wording_profile">Profile</lang></span><details class="position-relative"><summary class="text-primary" style="cursor:pointer"><lang class="lang_wording_profile_actions">Profile actions</lang></summary><div class="position-absolute bg-white border rounded shadow-sm p-2" style="right:0;min-width:180px;z-index:5"><button type="button" class="btn btn-link d-block" id="wording-rename"><lang class="lang_rename">Rename</lang></button><button type="button" class="btn btn-link d-block" id="wording-duplicate"><lang class="lang_duplicate">Duplicate</lang></button><button type="button" class="btn btn-link d-block" id="wording-new"><lang class="lang_new_profile">New profile</lang></button><div class="border-top my-1"></div><button type="button" class="btn btn-link text-danger d-block" id="wording-delete"><lang class="lang_wording_ui_delete_profile">Delete profile</lang></button></div></details></div>' +
             (profiles().length > 1 ? '<select id="wording-profile" class="form-control mt-2">' + profiles().map(function (p) { return '<option value="' + esc(p.id) + '" ' + (selected === p.id ? 'selected' : '') + '>' + esc(p.draft.name) + '</option>'; }).join('') + '</select>' : '<div class="py-2" id="wording-profile-title">' + esc(draft.name || 'Shop wording') + '</div>') +
-            '</div><label class="col-md-4"><lang class="lang_int_voice_language">Language</lang><select id="wording-locale" class="form-control mt-2"' + disabled + '>' + data.locales.map(function (l) { var name = l; try { name = new Intl.DisplayNames(['en'], { type: 'language' }).of(l); } catch (e) {} return '<option value="' + esc(l) + '" ' + (l === draft.locale ? 'selected' : '') + '>' + esc(name) + '</option>'; }).join('') + '</select></label>' +
-            '<div class="col-md-4"><lang class="lang_wording_ui_apply_to">Apply to</lang><details class="mt-2 border rounded p-2"><summary id="wording-branch-summary"></summary><label class="d-block mt-2"><input type="checkbox" id="wording-all-branches"' + disabled + '><lang class="lang_wording_ui_select_all_branches"> Select all branches</lang></label>' + data.branches.map(function (b) { return '<label class="d-block"><input type="checkbox" data-branch="' + esc(b.id) + '" ' + (targets.includes(b.id) ? 'checked' : '') + disabled + '> ' + esc(b.name) + '</label>'; }).join('') + '</details></div></div>' +
-            '<section id="wording-manage" class="border rounded p-3 mb-3" hidden><h5><lang class="lang_wording_ui_manage_profiles">Manage profiles</lang></h5><p class="text-muted"><lang class="lang_wording_ui_one_profile_is_enough_unless_branches_need_different_wording">One profile is enough unless branches need different wording.</lang></p><label class="d-block"><lang class="lang_wording_profile_name">Profile name</lang><input id="wording-name" class="form-control" maxlength="100" value="' + esc(draft.name) + '"' + disabled + '></label><p class="small text-muted"><lang class="lang_wording_ui_edit_the_name_above_and_save_changes_to_rename_this_profile">Edit the name above and save changes to rename this profile.</lang></p><div class="d-flex flex-wrap" style="gap:8px"><button type="button" class="btn btn-outline-primary" id="wording-new"' + disabled + '><lang class="lang_wording_ui_new_profile">New profile</lang></button><button type="button" class="btn btn-outline-primary" id="wording-duplicate"' + disabled + '><lang class="lang_wording_ui_duplicate">Duplicate</lang></button><button type="button" class="btn btn-outline-danger" id="wording-delete"' + (!selected || !data.writable ? ' disabled' : '') + '><lang class="lang_wording_ui_delete_profile">Delete profile</lang></button></div><div id="wording-delete-confirm" class="mt-3" hidden><p id="wording-delete-impact"></p><button type="button" id="wording-delete-yes" class="btn btn-danger"><lang class="lang_wording_ui_delete_profile">Delete profile</lang></button> <button type="button" id="wording-delete-no" class="btn btn-outline-secondary"><lang class="lang_wording_ui_keep_profile">Keep profile</lang></button></div></section>' +
+            '</div><label class="' + profileColumn + '"><lang class="lang_int_voice_language">Language</lang><select id="wording-locale" class="form-control mt-2"' + disabled + '>' + data.locales.map(function (l) { var name = l; try { name = new Intl.DisplayNames(['en'], { type: 'language' }).of(l); } catch (e) {} return '<option value="' + esc(l) + '" ' + (l === draft.locale ? 'selected' : '') + '>' + esc(name) + '</option>'; }).join('') + '</select></label>' +
+            '<div class="col-md-4" id="wording-branch-picker"' + (data.branches.length > 1 ? '' : ' hidden') + '><lang class="lang_wording_ui_apply_to">Apply to</lang><details class="mt-2 border rounded p-2"><summary id="wording-branch-summary"></summary><label class="d-block mt-2"><input type="checkbox" id="wording-all-branches"' + disabled + '><lang class="lang_wording_ui_select_all_branches"> Select all branches</lang></label>' + data.branches.map(function (b) { return '<label class="d-block"><input type="checkbox" data-branch="' + esc(b.id) + '" ' + (targets.includes(b.id) ? 'checked' : '') + disabled + '> ' + esc(b.name) + '</label>'; }).join('') + '</details></div></div>' +
+            '<div id="wording-delete-confirm" class="alert alert-warning my-3" hidden><p id="wording-delete-impact"></p><button type="button" id="wording-delete-yes" class="btn btn-danger"><lang class="lang_wording_ui_delete_profile">Delete profile</lang></button> <button type="button" id="wording-delete-no" class="btn btn-outline-secondary"><lang class="lang_wording_ui_keep_profile">Keep profile</lang></button></div>' +
             '<div class="nav nav-tabs mb-3" role="tablist"><button type="button" class="nav-link active" id="wording-tab-words" role="tab" aria-selected="true" aria-controls="wording-words"><lang class="lang_wording_ui_replace_words">Replace words</lang></button><button type="button" class="nav-link" id="wording-tab-advanced" role="tab" aria-selected="false" aria-controls="wording-advanced"><lang class="lang_wording_ui_advanced">Advanced</lang></button></div>' +
             '<section id="wording-words" role="tabpanel" aria-labelledby="wording-tab-words"><h5><lang class="lang_wording_ui_replace_a_word_across_the_application">Replace a word across the application</lang></h5><p class="text-muted"><lang class="lang_wording_ui_add_singular_and_plural_forms_as_separate_rows">Add singular and plural forms as separate rows.</lang></p><div id="wording-rule-list"></div><button type="button" class="btn btn-outline-primary mb-3" id="wording-add-rule"' + disabled + '><lang class="lang_wording_ui_add_word">+ Add word</lang></button><p class="small text-muted"><lang class="lang_wording_ui_changes_labels_not_product_names_or_previously_issued_documents">Changes labels, not product names or previously issued documents.</lang></p></section>' +
             '<section id="wording-advanced" role="tabpanel" aria-labelledby="wording-tab-advanced" hidden></section>' +
@@ -116,19 +147,18 @@
         host().onclick = function (e) {
             var b = e.target.closest('button'); if (!b || busy) return;
             if (b.id === 'wording-tab-words' || b.id === 'wording-tab-advanced' || b.id === 'wording-retry') { switchTab(b.id === 'wording-tab-words' ? 'words' : 'advanced'); return; }
-            if (b.id === 'wording-manage-toggle') { el('wording-manage').hidden = !el('wording-manage').hidden; b.setAttribute('aria-expanded', String(!el('wording-manage').hidden)); return; }
             if (b.id === 'wording-prev' || b.id === 'wording-next') { page += b.id === 'wording-next' ? 1 : -1; rows(); return; }
             if (!data.writable) return;
             if (b.id === 'wording-add-rule') { draft.rules.push({from:'',to:''}); ruleRows(); changed(); }
             if (b.dataset.removeRule != null) { draft.rules.splice(+b.dataset.removeRule,1); ruleRows(); addedRows(); changed(); }
             if (b.dataset.editRule != null) { switchTab('words'); host().querySelector('[data-rule="' + b.dataset.editRule + '"][data-field="to"]').focus(); }
             if (b.dataset.reset) { delete draft.overrides[b.dataset.reset]; rows(); addedRows(); changed(); }
-            if (b.id === 'wording-new' || b.id === 'wording-duplicate') {
+            if (b.id === 'wording-new' || b.id === 'wording-duplicate' || b.id === 'wording-rename') {
                 if (dirty && b.id === 'wording-new' && !window.confirm(PosnicPro.i18n.t("lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile","Discard unsaved changes and create a new profile?"))) return;
-                if (b.id === 'wording-new') draft = {name:'',locale:draft.locale,overrides:{},rules:[{from:'',to:''}]}; else draft = JSON.parse(JSON.stringify(draft)), draft.name = (draft.name || 'Shop wording') + ' copy';
-                selected = ''; targets = []; dirty = true; tab = 'words'; render(); el('wording-manage').hidden = false; el('wording-manage-toggle').setAttribute('aria-expanded','true'); el('wording-name').focus();
+                profileForm(b.id === 'wording-rename' ? 'rename' : b.id === 'wording-duplicate' ? 'duplicate' : 'create'); return;
             }
             if (b.id === 'wording-delete') {
+                host().querySelectorAll('details').forEach(function(d){d.open=false;});
                 var affected = Object.keys(data.state.assignments).filter(function (id) { return Object.values(data.state.assignments[id]).some(function (a) { return a.profileId === selected; }); }).map(function (id) { return data.branches.find(function (b) { return b.id === id; })?.name || 'Another assigned branch'; });
                 el('wording-delete-impact').textContent = 'Delete “' + draft.name + '”? ' + (affected.length ? affected.join(', ') + ' will return to standard wording.' : 'No branches are assigned.') + ' Previously issued documents remain unchanged.'; el('wording-delete-confirm').hidden = false;
             }
@@ -147,6 +177,7 @@
         },failed);
     }
     function save() {
+        if (data.branches.length === 1) targets = [data.branches[0].id];
         var rules = draft.rules.filter(function (r) { return r.from.trim() || r.to.trim(); });
         if (rules.some(function (r) { return !r.from.trim() || !r.to.trim(); })) return tell(PosnicPro.i18n.t("lang_wording_ui_enter_both_the_existing_word_and_its_replacement","Enter both the existing word and its replacement."));
         if (!draft.name.trim()) draft.name = 'Shop wording - ' + draft.locale;

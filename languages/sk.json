@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Publikované. Tills aplikuje túto revíziu po synchronizácii.",
   "lang_saved_without_branch_assignments_previousl": "Uložené bez pridelenia pobočiek. Predtým priradené pobočky používajú štandardné znenie.",
   "lang_search_phrases": "Hľadať frázy",
-  "lang_use_word_rules": "Používajte slovné pravidlá"
+  "lang_use_word_rules": "Používajte slovné pravidlá",
+  "lang_create_profile": "Vytvoriť profil",
+  "lang_duplicate": "Duplikát",
+  "lang_duplicate_profile": "Duplicitný profil",
+  "lang_new_profile": "Nový profil",
+  "lang_no_custom_profiles_yet": "Zatiaľ žiadne vlastné profily",
+  "lang_rename": "Premenovať",
+  "lang_save_name": "Uložiť meno",
+  "lang_standard_language_is_in_use_create_a_profi": "Používa sa štandardný jazyk. Vytvorte profil na prispôsobenie svojho znenia.",
+  "lang_the_copy_starts_without_branch_assignments": "Kópia začína bez pridelenia pobočiek.",
+  "lang_your_standard_language_stays_unchanged_unt": "Váš štandardný jazyk zostane nezmenený, kým neuložíte zmeny znenia.",
+  "lang_wording_enter_profile_name": "Zadajte názov profilu.",
+  "lang_wording_profile_actions": "Akcie profilu",
+  "lang_wording_rename_profile": "Premenovať profil"
 }

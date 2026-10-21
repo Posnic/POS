@@ -5268,5 +5268,18 @@
   "lang_published_tills_apply_this_revision_after": "Publicado. Hasta que se aplique esta revisión después de la sincronización.",
   "lang_saved_without_branch_assignments_previousl": "Se guarda sin asignaciones de sucursales. Las sucursales previamente asignadas utilizan una redacción estándar.",
   "lang_search_phrases": "Frases de búsqueda",
-  "lang_use_word_rules": "Usa reglas verbales"
+  "lang_use_word_rules": "Usa reglas verbales",
+  "lang_create_profile": "Crear perfil",
+  "lang_duplicate": "Duplicado",
+  "lang_duplicate_profile": "Perfil duplicado",
+  "lang_new_profile": "Nuevo perfil",
+  "lang_no_custom_profiles_yet": "Aún no hay perfiles personalizados",
+  "lang_rename": "Cambiar el nombre",
+  "lang_save_name": "Guardar nombre",
+  "lang_standard_language_is_in_use_create_a_profi": "El idioma estándar está en uso. Crea un perfil para personalizar tu redacción.",
+  "lang_the_copy_starts_without_branch_assignments": "La copia comienza sin asignaciones de sucursales.",
+  "lang_your_standard_language_stays_unchanged_unt": "Su idioma estándar permanecerá inalterado hasta que guarde los cambios de redacción.",
+  "lang_wording_enter_profile_name": "Introduzca un nombre de perfil.",
+  "lang_wording_profile_actions": "Acciones de perfil",
+  "lang_wording_rename_profile": "Cambiar el nombre del perfil"
 }

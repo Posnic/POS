@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Publicēts. Tills piemēro šo pārskatīšanu pēc sinhronizācijas.",
   "lang_saved_without_branch_assignments_previousl": "Saglabāts bez filiāļu uzdevumiem. Iepriekš piešķirtās filiāles izmanto standarta formulējumu.",
   "lang_search_phrases": "Meklēt frāzes",
-  "lang_use_word_rules": "Izmantojiet vārdu noteikumus"
+  "lang_use_word_rules": "Izmantojiet vārdu noteikumus",
+  "lang_create_profile": "Izveidot profilu",
+  "lang_duplicate": "Dublikāts",
+  "lang_duplicate_profile": "Profils dublikāts",
+  "lang_new_profile": "Jauns profils",
+  "lang_no_custom_profiles_yet": "Pagaidām nav pielāgotu profilu",
+  "lang_rename": "Pārdēvēt",
+  "lang_save_name": "Saglabāt vārdu",
+  "lang_standard_language_is_in_use_create_a_profi": "Tiek izmantota standarta valoda. Izveidojiet profilu, lai pielāgotu formulējumu.",
+  "lang_the_copy_starts_without_branch_assignments": "Kopija sākas bez filiāļu uzdevumiem.",
+  "lang_your_standard_language_stays_unchanged_unt": "Jūsu standarta valoda paliek nemainīga, līdz saglabājat formulējuma izmaiņas.",
+  "lang_wording_enter_profile_name": "Ievadiet profila nosaukumu.",
+  "lang_wording_profile_actions": "Profila darbības",
+  "lang_wording_rename_profile": "Pārdēvēt profilu"
 }

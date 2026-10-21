@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Објавено. Tills ја применуваат оваа ревизија по синхронизацијата.",
   "lang_saved_without_branch_assignments_previousl": "Зачувано без задачи за гранки. Претходно доделените гранки користат стандардна формулација.",
   "lang_search_phrases": "Пребарај фрази",
-  "lang_use_word_rules": "Користете правила за зборови"
+  "lang_use_word_rules": "Користете правила за зборови",
+  "lang_create_profile": "Креирај профил",
+  "lang_duplicate": "Дупликат",
+  "lang_duplicate_profile": "Дупликат профил",
+  "lang_new_profile": "Нов профил",
+  "lang_no_custom_profiles_yet": "Сè уште нема сопствени профили",
+  "lang_rename": "Преименувај",
+  "lang_save_name": "Зачувај име",
+  "lang_standard_language_is_in_use_create_a_profi": "Стандардниот јазик е во употреба. Направете профил за да ја прилагодите вашата формулација.",
+  "lang_the_copy_starts_without_branch_assignments": "Копијата започнува без задачи за гранки.",
+  "lang_your_standard_language_stays_unchanged_unt": "Вашиот стандарден јазик останува непроменет додека не ги зачувате промените во формулацијата.",
+  "lang_wording_enter_profile_name": "Внесете име на профилот.",
+  "lang_wording_profile_actions": "Акции на профилот",
+  "lang_wording_rename_profile": "Преименувајте го профилот"
 }

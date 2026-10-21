@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "Imechapishwa. Tills hutumia marekebisho haya baada ya maingiliano.",
   "lang_saved_without_branch_assignments_previousl": "Imehifadhiwa bila kazi za tawi. Matawi iliyopewa awali hutumia maneno ya kawaida.",
   "lang_search_phrases": "Tafuta maneno",
-  "lang_use_word_rules": "Tumia sheria za maneno"
+  "lang_use_word_rules": "Tumia sheria za maneno",
+  "lang_create_profile": "Unda wasifu",
+  "lang_duplicate": "Nakala",
+  "lang_duplicate_profile": "Wasifu mara nyingi",
+  "lang_new_profile": "Profaili mpya",
+  "lang_no_custom_profiles_yet": "Hakuna wasifu maalum bado",
+  "lang_rename": "Badilisha jina",
+  "lang_save_name": "Hifadhi jina",
+  "lang_standard_language_is_in_use_create_a_profi": "Lugha ya kawaida inatumika. Unda wasifu ili kubadilisha maneno yako.",
+  "lang_the_copy_starts_without_branch_assignments": "Nakala huanza bila kazi za tawi.",
+  "lang_your_standard_language_stays_unchanged_unt": "Lugha yako ya kawaida inabadilika hadi utakapohifadhi mabadiliko ya maneno.",
+  "lang_wording_enter_profile_name": "Ingiza jina la wasifu.",
+  "lang_wording_profile_actions": "Vitendo vya wasifu",
+  "lang_wording_rename_profile": "Badilisha jina la wasifu"
 }

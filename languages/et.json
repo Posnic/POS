@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Avaldatud. Tills rakendab seda muudatust pärast sünkroonimist.",
   "lang_saved_without_branch_assignments_previousl": "Salvestatud ilma harude ülesanneteta. Varem määratud filiaalid kasutavad standardset sõnastust.",
   "lang_search_phrases": "Otsi fraase",
-  "lang_use_word_rules": "Kasutage sõnareegleid"
+  "lang_use_word_rules": "Kasutage sõnareegleid",
+  "lang_create_profile": "Loo profiil",
+  "lang_duplicate": "Duplikaat",
+  "lang_duplicate_profile": "Duplikaat profiili",
+  "lang_new_profile": "Uus profiil",
+  "lang_no_custom_profiles_yet": "Kohandatud profiile pole veel",
+  "lang_rename": "Nimetage ümber",
+  "lang_save_name": "Salvesta nimi",
+  "lang_standard_language_is_in_use_create_a_profi": "Kasutusel on standardkeel. Sõnastuse kohandamiseks looge profiil.",
+  "lang_the_copy_starts_without_branch_assignments": "Koopia algab ilma harude ülesanneteta.",
+  "lang_your_standard_language_stays_unchanged_unt": "Teie tavakeel jääb muutumatuks, kuni salvestate sõnastuse muudatused.",
+  "lang_wording_enter_profile_name": "Sisestage profiili nimi.",
+  "lang_wording_profile_actions": "Profiili toimingud",
+  "lang_wording_rename_profile": "Nimetage profiil ümber"
 }

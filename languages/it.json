@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "Pubblicato Tills applica questa revisione dopo la sincronizzazione.",
   "lang_saved_without_branch_assignments_previousl": "Salvato senza assegnazioni di filiali. Le filiali assegnate in precedenza utilizzano una formulazione standard.",
   "lang_search_phrases": "Frasi di ricerca",
-  "lang_use_word_rules": "Usa le regole delle parole"
+  "lang_use_word_rules": "Usa le regole delle parole",
+  "lang_create_profile": "Crea profilo",
+  "lang_duplicate": "Duplicato",
+  "lang_duplicate_profile": "Profilo duplicato",
+  "lang_new_profile": "Nuovo profilo",
+  "lang_no_custom_profiles_yet": "Non ci sono ancora profili personalizzati",
+  "lang_rename": "Rinomina",
+  "lang_save_name": "Salva nome",
+  "lang_standard_language_is_in_use_create_a_profi": "È in uso la lingua standard. Crea un profilo per personalizzare la tua formulazione.",
+  "lang_the_copy_starts_without_branch_assignments": "La copia inizia senza assegnazioni alle filiali.",
+  "lang_your_standard_language_stays_unchanged_unt": "La lingua standard rimane invariata finché non salvi le modifiche al testo.",
+  "lang_wording_enter_profile_name": "Inserisci un nome per il profilo.",
+  "lang_wording_profile_actions": "Azioni del profilo",
+  "lang_wording_rename_profile": "Rinomina il profilo"
 }

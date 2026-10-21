@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Birt. Tills beitir þessari endurskoðun eftir samstillingu.",
   "lang_saved_without_branch_assignments_previousl": "Vistað án úthlutunar á útibúum. Áður úthlutað útibú nota staðlað orðalag.",
   "lang_search_phrases": "Leita orðasambönd",
-  "lang_use_word_rules": "Notaðu orðareglur"
+  "lang_use_word_rules": "Notaðu orðareglur",
+  "lang_create_profile": "Búa til prófíl",
+  "lang_duplicate": "Afrit",
+  "lang_duplicate_profile": "Afrit prófíl",
+  "lang_new_profile": "Nýr prófíll",
+  "lang_no_custom_profiles_yet": "Engin sérsniðin snið ennþá",
+  "lang_rename": "Endurnefna",
+  "lang_save_name": "Vista nafn",
+  "lang_standard_language_is_in_use_create_a_profi": "Venjulegt tungumál er í notkun. Búðu til prófíl til að sérsníða orðalag þitt.",
+  "lang_the_copy_starts_without_branch_assignments": "Afritið byrjar án úthlutunar á útibúum.",
+  "lang_your_standard_language_stays_unchanged_unt": "Venjulegt tungumál þitt helst óbreytt þar til þú vistar orðalagsbreytingar.",
+  "lang_wording_enter_profile_name": "Sláðu inn nafn prófíls.",
+  "lang_wording_profile_actions": "Aðgerðir á prófíl",
+  "lang_wording_rename_profile": "Endurnefna prófíl"
 }

@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Publisert. Tills bruker denne revisjonen etter synkronisering.",
   "lang_saved_without_branch_assignments_previousl": "Lagret uten grentildelinger. Tidligere tildelte grener bruker standard ordlyd.",
   "lang_search_phrases": "Søkefraser",
-  "lang_use_word_rules": "Bruk ordregler"
+  "lang_use_word_rules": "Bruk ordregler",
+  "lang_create_profile": "Opprett profil",
+  "lang_duplicate": "Dupliser",
+  "lang_duplicate_profile": "Dupliser profil",
+  "lang_new_profile": "Ny profil",
+  "lang_no_custom_profiles_yet": "Ingen egendefinerte profiler ennå",
+  "lang_rename": "Gi nytt navn",
+  "lang_save_name": "Lagre navn",
+  "lang_standard_language_is_in_use_create_a_profi": "Standardspråket er i bruk. Opprett en profil for å tilpasse ordlyden din.",
+  "lang_the_copy_starts_without_branch_assignments": "Kopien starter uten grentildelinger.",
+  "lang_your_standard_language_stays_unchanged_unt": "Standardspråket ditt forblir uendret til du lagrer ordlydendringer.",
+  "lang_wording_enter_profile_name": "Skriv inn et profilnavn.",
+  "lang_wording_profile_actions": "Profilhandlinger",
+  "lang_wording_rename_profile": "Gi nytt navn til profil"
 }

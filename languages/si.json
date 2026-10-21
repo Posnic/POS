@@ -5272,5 +5272,18 @@
   "lang_published_tills_apply_this_revision_after": "ප්රකාශයට පත් කරන ලදී. සමමුහුර්තකරණයෙන් පසුව ටිල්ස් මෙම සංශෝධනය යොදයි.",
   "lang_saved_without_branch_assignments_previousl": "ශාඛා පැවරුම් නොමැතිව සුරකින. කලින් පවරා ඇති ශාඛා සම්මත වචන භාවිතා කරයි.",
   "lang_search_phrases": "වාක්ය ඛණ්ඩ සොයන්න",
-  "lang_use_word_rules": "වචන නීති භාවිතා කරන්න"
+  "lang_use_word_rules": "වචන නීති භාවිතා කරන්න",
+  "lang_create_profile": "පැතිකඩ සාදන්න",
+  "lang_duplicate": "අනුපිටපත්",
+  "lang_duplicate_profile": "අනුපිටපත් පැතිකඩ",
+  "lang_new_profile": "නව පැතිකඩ",
+  "lang_no_custom_profiles_yet": "තවමත් අභිරුචි පැතිකඩ නොමැත",
+  "lang_rename": "නැවත නම් කරන්න",
+  "lang_save_name": "නම සුරකින්න",
+  "lang_standard_language_is_in_use_create_a_profi": "සම්මත භාෂාව භාවිතයේ පවතී. ඔබේ වචන රිසිකරණය කිරීම සඳහා පැතිකඩක් සාදන්න.",
+  "lang_the_copy_starts_without_branch_assignments": "පිටපත ශාඛා පැවරුම් නොමැතිව ආරම්භ වේ.",
+  "lang_your_standard_language_stays_unchanged_unt": "ඔබ වචන වෙනස් කිරීම් සුරැකෙන තුරු ඔබේ සම්මත භාෂාව නොවෙනස්ව පවතී.",
+  "lang_wording_enter_profile_name": "පැතිකඩ නමක් ඇතුළත් කරන්න.",
+  "lang_wording_profile_actions": "පැතිකඩ ක්රියාවන්",
+  "lang_wording_rename_profile": "පැතිකඩ නැවත නම් කරන්න"
 }

@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Опубліковано. Після синхронізації слід застосувати цю версію до.",
   "lang_saved_without_branch_assignments_previousl": "Збережено без призначення гілок. Раніше призначені філії використовують стандартне формулювання.",
   "lang_search_phrases": "Пошукові фрази",
-  "lang_use_word_rules": "Правила використання слів"
+  "lang_use_word_rules": "Правила використання слів",
+  "lang_create_profile": "Створити профіль",
+  "lang_duplicate": "Дублікат",
+  "lang_duplicate_profile": "Дублікат профілю",
+  "lang_new_profile": "Новий профіль",
+  "lang_no_custom_profiles_yet": "Немає користувацьких профілів",
+  "lang_rename": "Перейменувати",
+  "lang_save_name": "Зберегти ім'я",
+  "lang_standard_language_is_in_use_create_a_profi": "Використовується стандартна мова. Створіть профіль, щоб налаштувати своє формулювання.",
+  "lang_the_copy_starts_without_branch_assignments": "Копіювання починається без присвоєння гілок.",
+  "lang_your_standard_language_stays_unchanged_unt": "Ваша стандартна мова залишається незмінною, доки ви не збережете зміни у формулюванні.",
+  "lang_wording_enter_profile_name": "Введіть ім'я профілю.",
+  "lang_wording_profile_actions": "Дії профілю",
+  "lang_wording_rename_profile": "Перейменувати профіль"
 }

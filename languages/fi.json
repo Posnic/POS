@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Julkaistu. Käytä tätä versiota synkronoinnin jälkeen.",
   "lang_saved_without_branch_assignments_previousl": "Tallennettu ilman haaratoimituksia. Aiemmin osoitetut sivukonttorit käyttävät vakiosanamuotoa.",
   "lang_search_phrases": "Hakulauseet",
-  "lang_use_word_rules": "Käytä sanasääntöjä"
+  "lang_use_word_rules": "Käytä sanasääntöjä",
+  "lang_create_profile": "Luo profiili",
+  "lang_duplicate": "Kaksoiskappale",
+  "lang_duplicate_profile": "Kaksinkertainen profiili",
+  "lang_new_profile": "Uusi profiili",
+  "lang_no_custom_profiles_yet": "Ei vielä mukautettuja profiileja",
+  "lang_rename": "Nimeä uudelleen",
+  "lang_save_name": "Tallenna nimi",
+  "lang_standard_language_is_in_use_create_a_profi": "Normaali kieli on käytössä. Luo profiili muokataksesi sanamuotoasi.",
+  "lang_the_copy_starts_without_branch_assignments": "Kopiointi alkaa ilman haarojen määrityksiä.",
+  "lang_your_standard_language_stays_unchanged_unt": "Vakiokielesi pysyy muuttumattomana, kunnes tallennat sanamuutokset.",
+  "lang_wording_enter_profile_name": "Anna profiilin nimi.",
+  "lang_wording_profile_actions": "Profiilitoiminnot",
+  "lang_wording_rename_profile": "Nimeä profiili uudelleen"
 }

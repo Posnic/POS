@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Публикувана. Tills прилага тази ревизия след синхронизиране.",
   "lang_saved_without_branch_assignments_previousl": "Запазено без разклонения. Предварително зададените клонове използват стандартна формулировка.",
   "lang_search_phrases": "Търсене на фрази",
-  "lang_use_word_rules": "Използвайте правила за думи"
+  "lang_use_word_rules": "Използвайте правила за думи",
+  "lang_create_profile": "Създаване на профил",
+  "lang_duplicate": "Дублиране",
+  "lang_duplicate_profile": "Дублиращ се профил",
+  "lang_new_profile": "Нов профил",
+  "lang_no_custom_profiles_yet": "Все още няма персонализирани профили",
+  "lang_rename": "Преименуване",
+  "lang_save_name": "Запазване на името",
+  "lang_standard_language_is_in_use_create_a_profi": "Използва се стандартен език. Създайте профил, за да персонализирате формулировката си.",
+  "lang_the_copy_starts_without_branch_assignments": "Копирането започва без разклонения.",
+  "lang_your_standard_language_stays_unchanged_unt": "Стандартният ви език остава непроменен, докато не запазите промените във формулировката.",
+  "lang_wording_enter_profile_name": "Въведете име на профил.",
+  "lang_wording_profile_actions": "Действия в профила",
+  "lang_wording_rename_profile": "Преименуване на профила"
 }

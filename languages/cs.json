@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Zveřejněno. Po synchronizaci se použije tato revize.",
   "lang_saved_without_branch_assignments_previousl": "Uloženo bez přiřazení poboček. Dříve přiřazené pobočky používají standardní znění.",
   "lang_search_phrases": "Vyhledávací fráze",
-  "lang_use_word_rules": "Používejte slovní pravidla"
+  "lang_use_word_rules": "Používejte slovní pravidla",
+  "lang_create_profile": "Vytvořit profil",
+  "lang_duplicate": "Duplikovat",
+  "lang_duplicate_profile": "Duplicitní profil",
+  "lang_new_profile": "Nový profil",
+  "lang_no_custom_profiles_yet": "Zatím žádné vlastní profily",
+  "lang_rename": "Přejmenovat",
+  "lang_save_name": "Uložit jméno",
+  "lang_standard_language_is_in_use_create_a_profi": "Používá se standardní jazyk. Vytvořte profil a přizpůsobte své znění.",
+  "lang_the_copy_starts_without_branch_assignments": "Kopie začíná bez přiřazení větví.",
+  "lang_your_standard_language_stays_unchanged_unt": "Váš standardní jazyk zůstane nezměněn, dokud neukládáte změny znění.",
+  "lang_wording_enter_profile_name": "Zadejte název profilu.",
+  "lang_wording_profile_actions": "Akce profilu",
+  "lang_wording_rename_profile": "Přejmenovat profil"
 }

@@ -5191,5 +5191,18 @@
   "lang_published_tills_apply_this_revision_after": "Publicerad. Tills tillämpar den här versionen efter synkronisering.",
   "lang_saved_without_branch_assignments_previousl": "Sparas utan filialtilldelningar. Tidigare tilldelade grenar använder standardformulering.",
   "lang_search_phrases": "Sökfraser",
-  "lang_use_word_rules": "Använd ordregler"
+  "lang_use_word_rules": "Använd ordregler",
+  "lang_create_profile": "Skapa profil",
+  "lang_duplicate": "Duplicera",
+  "lang_duplicate_profile": "Duplicera profil",
+  "lang_new_profile": "Ny profil",
+  "lang_no_custom_profiles_yet": "Inga anpassade profiler ännu",
+  "lang_rename": "Byt namn",
+  "lang_save_name": "Spara namn",
+  "lang_standard_language_is_in_use_create_a_profi": "Standardspråket används. Skapa en profil för att anpassa din formulering.",
+  "lang_the_copy_starts_without_branch_assignments": "Kopieringen börjar utan filialtilldelningar.",
+  "lang_your_standard_language_stays_unchanged_unt": "Ditt standardspråk förblir oförändrat tills du sparar formuleringsändringar.",
+  "lang_wording_enter_profile_name": "Ange ett profilnamn.",
+  "lang_wording_profile_actions": "Profilåtgärder",
+  "lang_wording_rename_profile": "Byt namn på profil"
 }

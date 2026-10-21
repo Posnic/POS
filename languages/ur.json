@@ -5194,5 +5194,18 @@
   "lang_published_tills_apply_this_revision_after": "شائع ہوا۔ اس نظرثانی کو ہم آہنگی کے بعد لاگو کرتے ہیں۔",
   "lang_saved_without_branch_assignments_previousl": "شاخ اسائنمنٹس کے بغیر محفوظ پہلے تفویض شدہ شاخیں معیاری الفاظ استعمال کرتی",
   "lang_search_phrases": "جملے تلاش کریں",
-  "lang_use_word_rules": "لفظ کے اصول استعمال کریں"
+  "lang_use_word_rules": "لفظ کے اصول استعمال کریں",
+  "lang_create_profile": "پروفائل بنائیں",
+  "lang_duplicate": "ڈپلیکیٹ",
+  "lang_duplicate_profile": "نقل پروفائل",
+  "lang_new_profile": "نیا پروفائل",
+  "lang_no_custom_profiles_yet": "ابھی تک کوئی کسٹم پروفائل",
+  "lang_rename": "نام تبدیل کریں",
+  "lang_save_name": "نام محفوظ کریں",
+  "lang_standard_language_is_in_use_create_a_profi": "معیاری زبان استعمال میں ہے۔ اپنی الفاظ کو اپنی مرضی کے مطابق بنانے کے لئے ایک پروفائل بن",
+  "lang_the_copy_starts_without_branch_assignments": "کاپی برانچ اسائنمنٹس کے بغیر شروع ہوتی ہے۔",
+  "lang_your_standard_language_stays_unchanged_unt": "جب تک آپ الفاظ کی تبدیلیاں محفوظ نہ کریں آپ کی معیاری زبان میں کوئی تبدیلی تبدیل",
+  "lang_wording_enter_profile_name": "پروفائل کا نام درج کریں۔",
+  "lang_wording_profile_actions": "پروفائل کے اقدامات",
+  "lang_wording_rename_profile": "پروفائل کا نام تبدیل کریں"
 }
