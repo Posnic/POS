@@ -2,14 +2,14 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const {JSDOM} = require('jsdom');
-function setup() {
+function setup(branches = [{id:'a',name:'Main'},{id:'b',name:'City'}]) {
   const dom = new JSDOM('<div id="wording-editor"></div>', {runScripts:'outside-only'});
   const state = {revision:1,profiles:[{id:'p',draft:{name:'Shop',locale:'en',rules:[{from:'Item',to:'Product'}],overrides:{'posnic.a':'Special'}},revisions:[]}],assignments:{a:{en:{profileId:'p'}},b:{en:{profileId:'p'}}}};
   const requests=[];
   dom.window.confirm=()=>true;
   dom.window.PosnicPro={local:{get:()=> 'super_admin'},i18n:{t:(_,v)=>v},get:(url,cb)=>{
     requests.push(url);
-    cb({type:'success',data:url.endsWith('/labels')?[{id:'posnic.a',english:'A',module:'Core'}]:{state,writable:true,locales:['en','ta'],branches:[{id:'a',name:'Main'},{id:'b',name:'City'}]}});
+    cb({type:'success',data:url.endsWith('/labels')?[{id:'posnic.a',english:'A',module:'Core'}]:{state,writable:true,locales:['en','ta'],branches}});
   },put:(req,cb)=>{
     const body=JSON.parse(req.data);requests.push(body);
     let p=state.profiles.find(p=>p.id===body.id);if(!p){p={id:'copy',revisions:[]};state.profiles.push(p);}p.draft=body;state.revision++;cb({type:'success',data:state});
@@ -36,4 +36,15 @@ test('duplicate starts unassigned, rename saves and delete explains persisted as
   q('#wording-profile').value='p';event('#wording-profile','change');q('#wording-delete').click();assert.match(q('#wording-delete-impact').textContent,/Main, City/);
   q('#wording-delete-no').click();assert.equal(requests.some(x=>x.url?.endsWith('/remove')),false);
   q('#wording-delete').click();q('#wording-delete-yes').click();assert.equal(requests.at(-1).url,'settings/wording/remove');assert.match(q('#wording-notice').textContent,/deleted/);dom.window.close();
+});
+
+
+test('single accessible branch is implicit when saving, while multiple branches show the selector',()=>{
+  const single=setup([{id:'a',name:'Main'}]);
+  assert.equal(single.q('#wording-branch-picker').hidden,true);
+  single.q('#wording-new').click();
+  single.q('#wording-publish').click();
+  assert.deepEqual(single.requests.at(-1).branches,['a']);
+  single.dom.window.close();
+  const multiple=setup();assert.equal(multiple.q('#wording-branch-picker').hidden,false);multiple.dom.window.close();
 });
