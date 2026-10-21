@@ -30,7 +30,7 @@
     function notify() { el('form').dispatchEvent(new Event('input', { bubbles: true })); }
     var hsnRows = null, hsnLoading = false;
     function hsnSuggestions() {
-        if (!caps.tax) return;
+        if (!caps.hsn) return;
         if (hsnRows === null) {
             if (hsnLoading) return;
             hsnLoading = true;
@@ -59,6 +59,7 @@
         // never silently replace the rate the shopkeeper selected.
     }
     function openHsnSearch() {
+        if (!caps.hsn) return;
         var origin = 'https://www.posnic.com', requestId = crypto.randomUUID();
         var dialog = document.createElement('dialog'), frame = document.createElement('iframe');
         dialog.id = 'iv2-hsn-search-dialog';
@@ -80,7 +81,7 @@
         dialog.append(button('Close search', close), frame);
         dialog.addEventListener('cancel', function(event) { event.preventDefault(); close(); });
         window.addEventListener('message', receive);
-        document.body.append(dialog); dialog.showModal();
+        document.getElementById('items_v2').append(dialog); dialog.showModal();
     }
     function button(text, action) {
         var b = document.createElement('button'); b.type = 'button'; b.className = 'iv2-secondary'; b.textContent = text; b.onclick = action; return b;
@@ -185,7 +186,7 @@
         value = value || {};
         var row = document.createElement('div'); row.className = 'iv2-selling-unit-row';
         row.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:8px;align-items:end;margin:8px 0';
-        row.innerHTML = '<label>Unit<input data-unit maxlength="20" placeholder="ft"></label><label>Base units per unit<input data-factor type="number" step="any" min="0.000000001" placeholder="0.3048"></label><label>Selling price<input data-price type="number" step="0.01" min="0.01" placeholder="Automatic" data-t-placeholder="lang_automatic"></label><button type="button" aria-label="Remove selling unit" data-t-aria-label="lang_remove_selling_unit">×</button>';
+        row.innerHTML = '<label>Unit<input data-unit maxlength="20" placeholder="ft"></label><label>Base units per unit<input data-factor type="number" step="any" min="0.000000001" placeholder="0.3048"></label><label>Selling price<input data-price type="number" step="0.01" min="0.01" placeholder="Automatic" data-t-placeholder="lang_automatic"></label><button type="button" class="iv2-secondary" aria-label="Remove selling unit" data-t-aria-label="lang_remove_selling_unit">×</button>';
         row.querySelector('[data-unit]').value = value.unit || '';
         row.querySelector('[data-factor]').value = value.factor || '';
         row.querySelector('[data-price]').value = value.price == null ? '' : value.price;
@@ -199,8 +200,8 @@
             seenUnits.add(sellingUnit.unit);
         }
 
-        if (caps.tax && val('hsn') && !/^\d{4,8}$/.test(val('hsn'))) return error(P.i18n.t('lang_iv2_hsn_code_invalid', 'Choose an HSN / SAC code from the suggestions, or enter a 4 to 8 digit code.'), 'hsn');
-        if (caps.tax && val('hsn') && val('hsn-rate') === '') return error(P.i18n.t('lang_iv2_hsn_rate_required', 'Enter the applicable tax rate for this code. Enter 0 for a zero-rated item.'), 'hsn-rate');
+        if (caps.hsn && val('hsn') && !/^\d{4,8}$/.test(val('hsn'))) return error(P.i18n.t('lang_iv2_hsn_code_invalid', 'Choose an HSN / SAC code from the suggestions, or enter a 4 to 8 digit code.'), 'hsn');
+        if (caps.hsn && val('hsn') && val('hsn-rate') === '') return error(P.i18n.t('lang_iv2_hsn_rate_required', 'Enter the applicable tax rate for this code. Enter 0 for a zero-rated item.'), 'hsn-rate');
         var invalid = document.querySelector('#iv2-fields input:invalid, #iv2-fields select:invalid, #iv2-fields textarea:invalid');
         if (invalid) return { error: invalid.validationMessage, field: invalid.id };
         if (reading) return error('Wait for the selected photos to finish loading.', 'photos');
@@ -246,7 +247,7 @@
             out.parcel_details = Object.fromEntries(['weightKg','lengthCm','widthCm','heightCm'].map(function(k){return [k,val('parcel-'+k)||null];}));
         }
         Object.assign(out, P.itemTranslationsV2.data());
-        if (caps.tax && val('hsn')) Object.assign(out, { tax_method: 'hsn', hsn_code: val('hsn'), hsn_description: val('hsn-description'), tax: Number(val('hsn-rate')), tax_id: '', tax_name: '' });
+        if (caps.hsn && val('hsn')) Object.assign(out, { tax_method: 'hsn', hsn_code: val('hsn'), hsn_description: val('hsn-description'), tax: Number(val('hsn-rate')), tax_id: '', tax_name: '' });
         if (caps.restaurant && document.querySelector('#items_v2 [name="iv2-kind"]:checked').value !== 'service') {
             out.prep_minutes = Number(val('prep-minutes')); out.prep_note = val('prep-note'); out.goes_with = selected('goes-with'); out.nutrition = {};
             nutrients.forEach(function (n) { if (val('n-'+n)) out.nutrition[n]=Number(val('n-'+n)); });
@@ -266,11 +267,11 @@
         }) };
     }
     function status() {
-        captureVariants(); return { family: isFamily(), openPrice: checked('open-price'), prices: variants.map(function(r){return Number(r.selling_price);}), quantities: variants.map(function(r){return Number(r.available_quantity);}), hsn: caps.tax && !!val('hsn'), tax: Number(val('hsn-rate')), discount: Number(val('discount')), discountType: val('discount-type') };
+        captureVariants(); return { family: isFamily(), openPrice: checked('open-price'), prices: variants.map(function(r){return Number(r.selling_price);}), quantities: variants.map(function(r){return Number(r.available_quantity);}), hsn: caps.hsn && !!val('hsn'), tax: Number(val('hsn-rate')), discount: Number(val('discount')), discountType: val('discount-type') };
     }
     function update(capabilities, kind) {
         caps=capabilities;
-        el('food-extra').hidden=!caps.restaurant || kind==='service'; el('tax-extra').hidden=!caps.tax;
+        el('food-extra').hidden=!caps.restaurant || kind==='service'; el('tax-extra').hidden=!caps.hsn;
         el('service-unit').parentElement.hidden=kind!=='service'; el('variants').hidden=kind==='service'; el('variant-editor').hidden=!isFamily();
         ['food-extra','tax-extra','variants'].forEach(function(id){el(id).querySelectorAll('input,select,textarea,button').forEach(function(input){input.disabled=el(id).hidden;});});
         ['reorder','purchase-unit','pack-size','weight'].forEach(function(id){el(id).closest(id==='weight'?'label':'div').hidden=kind==='service';});
@@ -296,7 +297,7 @@
         if (!el('selling-unit-rows')) {
             var unitsPanel = document.createElement('section');
             unitsPanel.style.gridColumn = '1 / -1';
-            unitsPanel.innerHTML = '<h4><lang class="lang_alternate_selling_units">Alternate selling units</lang></h4><p>Stock stays in the item unit above. Example: when stock is in metres, 1 ft = 0.3048 metres. Leave price blank to calculate it from the base price.</p><div id="iv2-selling-unit-rows"></div><button type="button" id="iv2-add-selling-unit"><lang class="lang_add_selling_unit">Add selling unit</lang></button>';
+            unitsPanel.innerHTML = '<h4><lang class="lang_alternate_selling_units">Alternate selling units</lang></h4><p>Stock stays in the item unit above. Example: when stock is in metres, 1 ft = 0.3048 metres. Leave price blank to calculate it from the base price.</p><div id="iv2-selling-unit-rows"></div><button type="button" id="iv2-add-selling-unit" class="iv2-secondary"><lang class="lang_add_selling_unit">Add selling unit</lang></button>';
             el('unit').parentElement.insertAdjacentElement('afterend', unitsPanel);
             el('add-selling-unit').onclick = function () { addSellingUnit(); };
         }

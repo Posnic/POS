@@ -158,7 +158,7 @@ Support escalation: owner authorized delivery investigations. MSG91 request emai
 
 ## Updated evidence — 20 October 2026, evening
 
-The readable [test report](messaging-test-results.html) supersedes earlier delivery observations above. Owner screenshots show the connection, campaign and text receipt messages. The owner subsequently confirmed WhatsApp arrived but SMS did not. This does not confirm opening the new PDF or receipt of every individual report.
+The release verification section below records the latest delivery confirmations. The detailed HTML test report and screenshots are retained locally and are not part of this repository. Earlier owner screenshots showed the connection, campaign and text receipt messages; at that stage, WhatsApp had arrived but SMS had not, and PDF opening was still unconfirmed.
 
 Linked-phone receipts now attach a freshly generated PDF; API/connector senders include the generated bill URL. Documents are generated from tenant sales with an explicit branch check. The email receipt path also attaches the PDF. New S3 objects are immutable random-key snapshots; no database collection or replicated business field is introduced. File contents are uploaded to the configured object store, while sending credentials/session and message execution remain installation-local. Live offline-till and cross-installation behavior remains unverified.
 

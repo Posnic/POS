@@ -5262,5 +5262,22 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Niet opgeslagen wijzigingen negeren en een nieuw profiel aanmaken?",
   "lang_wording_ui_deleting_profile": "Profiel verwijderen...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profiel verwijderd. Toegewezen filialen gebruiken nu standaardformuleringen.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Voer zowel het bestaande woord als de vervanging ervan in."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Voer zowel het bestaande woord als de vervanging ervan in.",
+  "lang_sl_appearance": "Algemene vormgeving",
+  "lang_sl_appearance_help": "Lettertype, uitlijning en kleuren gelden voor het hele etiket. Gebruik zwart op wit voor thermische printers.",
+  "lang_sl_barcode_design": "Barcode en nummer",
+  "lang_sl_barcode_design_help": "De balkbreedte bepaalt de dikte van elke balk. Houd de volledige barcode en de witte rand zichtbaar en test daarna met uw scanner.",
+  "lang_sl_barcode_space": "Witruimte rond de barcode",
+  "lang_sl_barcode_space_help": "Deze marges omringen de barcode, niet het papier. Waarden zijn in pixels. Papierdoorvoer en snijmarges worden door de printer geregeld.",
+  "lang_sl_cut_batch": "Snijden na de reeks",
+  "lang_sl_cut_each": "Snijden na elk etiket",
+  "lang_sl_cut_mode": "Automatisch snijden",
+  "lang_sl_cut_none": "Niet snijden",
+  "lang_sl_cut_requires": "Vereist een automatische snijder die compatibel is met ESC/POS.",
+  "lang_sl_driver_cut": "Stel voor afdrukken op een rol via een stuurprogramma het juiste papierformaat en snijden tussen pagina’s in de printervoorkeuren in. De app kan de snijder van het stuurprogramma niet bedienen.",
+  "lang_sl_extras": "Aanvullende informatie",
+  "lang_sl_extras_help": "Datums verschijnen alleen als ze bij het product beschikbaar zijn. Aanvullende details gebruiken de bovenstaande tekstgrootte.",
+  "lang_sl_text_sizes": "Tekstgroottes",
+  "lang_sl_text_sizes_help": "Pas elke regel afzonderlijk aan. Groottes zijn in pixels; het voorbeeld gebruikt hetzelfde ontwerp als de afdruk.",
+  "lang_sl_type_foot": "Aanvullende details"
 }
