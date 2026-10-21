@@ -48,13 +48,27 @@ test('restaurant insights follow the current authorized branch module setting', 
     branch_access: [{ branch_id: id }, { branch_id: foreign }],
   };
   const access = createBusinessAccess(db);
-  const enabled = await access.contextFor(user);
+  const login = await access.contextFor(user);
+  assert.deepEqual(Object.keys(login.branches[0]).sort(), [
+    'currency',
+    'currencyDigits',
+    'id',
+    'name',
+    'timezone',
+  ]);
+  const enabled = await access.contextFor(user, { reporting: true });
   assert.equal(enabled.branches.length, 1);
   assert.equal(enabled.branches[0].restaurantEnabled, true);
   await db.collection('branches').updateOne({ _id: id }, { $set: { table_options: false } });
-  assert.equal((await access.contextFor(user)).branches[0].restaurantEnabled, false);
+  assert.equal(
+    (await access.contextFor(user, { reporting: true })).branches[0].restaurantEnabled,
+    false
+  );
   await db.collection('branches').updateOne({ _id: id }, { $unset: { table_options: '' } });
-  assert.equal((await access.contextFor(user)).branches[0].restaurantEnabled, false);
+  assert.equal(
+    (await access.contextFor(user, { reporting: true })).branches[0].restaurantEnabled,
+    false
+  );
 });
 test('cloud projection retains Captain and desktop ownership without crediting a later cashier', async () => {
   const businessId = String(new ObjectId()),
