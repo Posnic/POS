@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Birt. Tills beitir þessari endurskoðun eftir samstillingu.",
   "lang_saved_without_branch_assignments_previousl": "Vistað án úthlutunar á útibúum. Áður úthlutað útibú nota staðlað orðalag.",
   "lang_search_phrases": "Leita orðasambönd",
-  "lang_use_word_rules": "Notaðu orðareglur"
+  "lang_use_word_rules": "Notaðu orðareglur",
+  "lang_sms_reports_text_summary": "SMSsendir texta samantekt, ekki PDF tengil. Lengri samantektir geta notað fleiri en eittSMS. Veit SMS andinn þinn verður að leyfa þessi skilaboð eða hafa samþykkt sniðmát.",
+  "lang_receive_reports_email_whatsapp_sms": "Fáðu samantekt um sölu, hagnað eða hlutabréf með tölvupósti, WhatsApp eðaSMS.",
+  "lang_reports_pdf_delivery": "SMSsendir samantekt með PDF skýrslutengli. WhatsAppinniheldur PDF tengilinn; tölvupóstur inniheldur PDF viðhengi. Lengri SMS skilaboð geta kostað meira. Veitandinn þinn verður að leyfa skilaboðin eða hafa samþykkt sniðmát."
 }

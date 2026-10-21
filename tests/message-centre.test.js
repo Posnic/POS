@@ -295,3 +295,24 @@ test('campaign deletion waits for the in-app confirmation and cancellation does 
   assert.equal(removed,'draft123');
   dom.window.close();
 });
+
+
+test('report editor offers SMS and keeps new schedules off', () => {
+  const {dom,w,$}=setup(); w.PosnicPro.messageCentre.mount(); w.PosnicPro.messageCentre.editReport({});
+  assert.equal($('#message_report_form [name="channel"] option[value="sms"]').length,1);
+  assert.equal($('#message_report_form [name="enabled"]').prop('checked'),false);
+  assert.match($('#message_report_form').text(),/SMS sends a summary with a PDF report link/);
+  dom.window.close();
+});
+
+
+test('report submission keeps its result visible and blocks duplicate clicks', () => {
+  const {dom,w,$,writes}=setup();
+  $('body').append('<div><div><button data-report-test="one">Send test</button></div></div>');
+  $('[data-report-test]').trigger('click').trigger('click');
+  assert.equal(writes.length,1);
+  writes[0].cb({type:'error',message:'SMS is not configured for this branch'});
+  assert.equal($('.report-test-result').text(),'SMS is not configured for this branch');
+  assert.equal($('[data-report-test]').prop('disabled'),false);
+  dom.window.close();
+});

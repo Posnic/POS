@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Ippubblikat. Tills japplikaw din ir-reviżjoni wara s-sinkronizzazzjoni.",
   "lang_saved_without_branch_assignments_previousl": "Salvat mingħajr assenjazzjonijiet tal-fergħa. Il-fergħat assenjati qabel jużaw kliem standard.",
   "lang_search_phrases": "Frażijiet tat-tiftix",
-  "lang_use_word_rules": "Uża regoli tal-kelma"
+  "lang_use_word_rules": "Uża regoli tal-kelma",
+  "lang_sms_reports_text_summary": "SMSjibgħat sommarju tat-test, mhux link PDF. Sommarji itwal jistgħu jużaw aktar minn wieħedSMS. Il-for SMS nitur tiegħek għandu jippermetti dan il-messaġġ jew ikollu mudell approvat.",
+  "lang_receive_reports_email_whatsapp_sms": "Irċievi sommarji tal-bejgħ, tal-profitt jew tal-istokk permezz tal-email, WhatsApp jewSMS.",
+  "lang_reports_pdf_delivery": "SMSjibgħat sommarju b'rabta tar-rapport PDF. WhatsApptinkludi l-link PDF; l-email tinkludi t-sekwestru PDF. Messaġġi SMS itwal jistgħu jiswew aktar. Il-fornitur tiegħek għandu jippermetti l-messaġġ jew ikollu mudell approvat."
 }

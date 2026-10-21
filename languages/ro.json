@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Publicat. Până când se aplică această revizuire după sincronizare.",
   "lang_saved_without_branch_assignments_previousl": "Salvat fără atribuirea sucursalelor. Sucursalele atribuite anterior utilizează formularea standard.",
   "lang_search_phrases": "Expresii de căutare",
-  "lang_use_word_rules": "Folosiți reguli de cuvinte"
+  "lang_use_word_rules": "Folosiți reguli de cuvinte",
+  "lang_sms_reports_text_summary": "SMStrimite un rezumat text, nu un link PDF. Rezumatele mai lungi pot folosi mai mult de unulSMS. Furniz SMS orul dvs. trebuie să permită acest mesaj sau să aibă un șablon aprobat.",
+  "lang_receive_reports_email_whatsapp_sms": "Primiți rezumate de vânzări, profit sau stoc prin e-mail WhatsApp sauSMS.",
+  "lang_reports_pdf_delivery": "SMStrimite un rezumat cu un link de raport PDF. WhatsAppinclude linkul PDF; e-mailul include atașamentul PDF. SMSMesajele mai lungi pot costa mai mult. Furnizorul dvs. trebuie să permită mesajul sau să aibă un șablon aprobat."
 }

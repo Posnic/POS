@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Avaldatud. Tills rakendab seda muudatust pärast sünkroonimist.",
   "lang_saved_without_branch_assignments_previousl": "Salvestatud ilma harude ülesanneteta. Varem määratud filiaalid kasutavad standardset sõnastust.",
   "lang_search_phrases": "Otsi fraase",
-  "lang_use_word_rules": "Kasutage sõnareegleid"
+  "lang_use_word_rules": "Kasutage sõnareegleid",
+  "lang_sms_reports_text_summary": "SMSsaadab tekstikokkuvõtte, mitte PDF-lingi. Pikemates kokkuvõttes võib kasutada rohkem kui üh SMS te. Teie teen SMS usepakkuja peab selle sõnumi lubama või omama heakskiidetud mall.",
+  "lang_receive_reports_email_whatsapp_sms": "Saate müügi-, kasumi- või aktsiate kokkuvõtteid e-posti teel WhatsApp võiSMS.",
+  "lang_reports_pdf_delivery": "SMSsaadab kokkuvõtte koos PDF-aruande lingiga. WhatsAppsisaldab PDF-linki; e-post sisaldab PDF-manust. Pikem SMS ad sõnumid võivad maksta rohkem. Teie teenusepakkuja peab sõnumi lubama või omama heakskiidetud mall."
 }

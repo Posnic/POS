@@ -5301,5 +5301,8 @@
   "lang_published_tills_apply_this_revision_after": "Gepubliceerd. Tills past deze revisie toe na synchronisatie.",
   "lang_saved_without_branch_assignments_previousl": "Opgeslagen zonder branchetoewijzingen. Eerder toegewezen filialen gebruiken standaardformuleringen.",
   "lang_search_phrases": "Zoektermen",
-  "lang_use_word_rules": "Gebruik woordregels"
+  "lang_use_word_rules": "Gebruik woordregels",
+  "lang_sms_reports_text_summary": "SMSstuurt een samenvatting van de tekst, geen link naar een PDF. Voor langere samenvattingen kunnen er meer dan één SMS worden gebruikt. Je SMS provider moet dit bericht toestaan of een goedgekeurd sjabloon hebben.",
+  "lang_receive_reports_email_whatsapp_sms": "Ontvang omzet-, winst- of aandelenoverzichten per e-mail, WhatsApp ofSMS.",
+  "lang_reports_pdf_delivery": "SMSstuurt een samenvatting met een link naar een PDF-rapport. WhatsAppbevat de link naar de PDF; de e-mail bevat de PDF-bijlage. Langere SMS berichten kunnen meer kosten. Je provider moet het bericht toestaan of een goedgekeurd sjabloon hebben."
 }

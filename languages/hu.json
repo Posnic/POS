@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Megjelent. Tills a szinkronizálás után alkalmazza ezt a felülvizsgálatot.",
   "lang_saved_without_branch_assignments_previousl": "Elmentett fiókhozzárendelések nélkül. A korábban hozzárendelt ágak szabványos szöveget használnak.",
   "lang_search_phrases": "Keresés kifejezései",
-  "lang_use_word_rules": "Használja a szószabályokat"
+  "lang_use_word_rules": "Használja a szószabályokat",
+  "lang_sms_reports_text_summary": "SMSszöveges összefoglalót küld, nem PDF-linket. A hosszabb összefoglalók egynél többet használhatnak. SMS A SMS szolgáltatónak engedélyeznie kell ezt az üzenetet, vagy rendelkeznie kell jóváhagyott sablonnal.",
+  "lang_receive_reports_email_whatsapp_sms": "Értékesítési, nyereség- vagy részvényösszefoglalókat kaphat e-mailben, WhatsApp vagySMS.",
+  "lang_reports_pdf_delivery": "SMSösszefoglalót küld egy PDF-jelentési linkkel. WhatsApptartalmazza a PDF linket; az e-mail tartalmazza a PDF mellékletet. A hosszabb SMS üzenetek többe kerülhetnek. A szolgáltatónak engedélyeznie kell az üzenetet, vagy rendelkeznie kell jóváhagyott sablonnal."
 }

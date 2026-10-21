@@ -5289,5 +5289,8 @@
   "lang_published_tills_apply_this_revision_after": "تم نشره. حتى يتم تطبيق هذه المراجعة بعد المزامنة.",
   "lang_saved_without_branch_assignments_previousl": "تم الحفظ بدون تعيينات الفرع. تستخدم الفروع المعينة مسبقًا صياغة قياسية.",
   "lang_search_phrases": "عبارات البحث",
-  "lang_use_word_rules": "استخدم قواعد الكلمات"
+  "lang_use_word_rules": "استخدم قواعد الكلمات",
+  "lang_sms_reports_text_summary": "SMSيرسل ملخصًا نصيًا وليس رابط PDF. قد تستخدم الملخصات الأطول أكثر من واحدةSMS. يجب أن يسمح SMS مزود الخدمة الخاص بك بهذه الرسالة أو أن يكون لديه نموذج معتمد.",
+  "lang_receive_reports_email_whatsapp_sms": "تلقي ملخصات المبيعات أو الأرباح أو الأسهم عن طريق البريد الإلكتروني، WhatsApp أوSMS.",
+  "lang_reports_pdf_delivery": "SMSيرسل ملخصًا مع رابط تقرير PDF. WhatsAppيتضمن رابط PDF؛ يتضمن البريد الإلكتروني مرفق PDF. قد تكلف SMS الرسائل الطويلة أكثر. يجب أن يسمح مزود الخدمة الخاص بك بالرسالة أو أن يكون لديه نموذج معتمد."
 }

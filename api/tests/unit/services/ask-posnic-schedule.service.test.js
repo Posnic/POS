@@ -59,7 +59,7 @@ describe('Ask Posnic summary schedules', () => {
     expect(next.toISOString()).toBe('2026-10-02T02:30:00.000Z');
   });
 
-  test.each(['smtp', 'brevo', 'sendgrid', 'postmark', 'resend'])(
+  test.each(['smtp', 'brevo', 'sendgrid', 'postmark', 'resend', 'sms'])(
     'claims, delivers, and advances a due schedule once through %s',
     async (provider) => {
       mockRows = [
@@ -124,4 +124,20 @@ test('monthly delivery rolls into January and retains the local send hour', () =
       )
       .toISOString()
   ).toBe('2027-01-01T02:30:00.000Z');
+});
+
+test('SMS schedule validates and normalizes the destination without enabling delivery', async () => {
+  const context = { licenseId: 'l', branchId: 'b', userId: 'u' };
+  const input = {
+    channel: 'sms',
+    report: 'sales',
+    frequency: 'daily',
+    destination: '+91 (9494) 111161',
+    enabled: false,
+  };
+  const row = await service.save(context, input);
+  expect(row).toMatchObject({ channel: 'sms', destination: '+919494111161', enabled: false });
+  await expect(service.save(context, { ...input, destination: 'not a number' })).rejects.toThrow(
+    /phone number/
+  );
 });

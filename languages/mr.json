@@ -5211,5 +5211,8 @@
   "lang_published_tills_apply_this_revision_after": "प्रकाशित. सिंक्रोनाइझेशननंतर टिल्स हे सं",
   "lang_saved_without_branch_assignments_previousl": "शाखा साइनमेंटशिवाय यापूर्वी नियुक्त केलेल्या शाखा मा",
   "lang_search_phrases": "शोधा वाक्ये",
-  "lang_use_word_rules": "शब्द नियम वापरा"
+  "lang_use_word_rules": "शब्द नियम वापरा",
+  "lang_sms_reports_text_summary": "SMSपीडीएफ दुवा नाही तर मजकूर सारांश पाठवतो लांब सारांश एकापेक्षा जास्त वापरू शकतातSMS. आपल्या प्र SMS दात्याने या संदेशाची परवानगी दिली पाहिजे किंवा मान्य",
+  "lang_receive_reports_email_whatsapp_sms": "ईमेलद्वारे विक्री, नफा किंवा स्टॉक सारांश प्राप्त करा WhatsApp किंवाSMS.",
+  "lang_reports_pdf_delivery": "SMSPDF अहवाल दुव्यासह सारांश पाठवतो. WhatsAppपीडीएफ दुवा समाविष्ट आहे; ईमेलमध्ये पीडीएफ सं दीर्घ SMS संदेशांची किंमत जास्त आपल्या प्रदात्याने संदेशाची परवानगी दिली पाहिजे किंवा मान्यित"
 }

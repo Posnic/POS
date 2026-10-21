@@ -5211,5 +5211,8 @@
   "lang_published_tills_apply_this_revision_after": "게시됨.이 수정 버전은 동기화 이후에도 적용됩니다.",
   "lang_saved_without_branch_assignments_previousl": "브랜치 지정 없이 저장되었습니다.이전에 지정된 지점은 표준 문구를 사용합니다.",
   "lang_search_phrases": "검색 구문",
-  "lang_use_word_rules": "단어 규칙 사용"
+  "lang_use_word_rules": "단어 규칙 사용",
+  "lang_sms_reports_text_summary": "SMSPDF 링크가 아닌 텍스트 요약을 보냅니다.요약이 길면 둘 SMS 이상을 사용할 수 있습니다.SMS제공자가 이 메시지를 허용하거나 승인된 템플릿을 가지고 있어야 합니다.",
+  "lang_receive_reports_email_whatsapp_sms": "판매, 수익 또는 주식 요약을 이메일로 WhatsApp 받거나SMS.",
+  "lang_reports_pdf_delivery": "SMSPDF 보고서 링크가 포함된 요약을 보냅니다.WhatsAppPDF 링크가 포함되고 이메일에는 PDF 첨부 파일이 포함됩니다.SMS메시지가 길면 비용이 더 많이 들 수 있습니다.제공자가 메시지를 허용하거나 승인된 템플릿을 가지고 있어야 합니다."
 }

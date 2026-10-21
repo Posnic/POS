@@ -5211,5 +5211,8 @@
   "lang_published_tills_apply_this_revision_after": "已出版。Tills 将在同步后应用此修订版。",
   "lang_saved_without_branch_assignments_previousl": "保存时没有分支分配。先前分配的分支使用标准措辞。",
   "lang_search_phrases": "搜索短语",
-  "lang_use_word_rules": "使用单词规则"
+  "lang_use_word_rules": "使用单词规则",
+  "lang_sms_reports_text_summary": "SMS发送的是文本摘要，而不是 PDF 链接。较长的摘要可能使用多个SMS。您的SMS提供商必须允许此消息或拥有批准的模板。",
+  "lang_receive_reports_email_whatsapp_sms": "通过电子邮件接收销售、利润或股票摘要，WhatsApp或SMS。",
+  "lang_reports_pdf_delivery": "SMS发送带有 PDF 报告链接的摘要。WhatsApp包含 PDF 链接；电子邮件包含 PDF 附件。较长的SMS消息可能会花费更多。您的提供商必须允许该消息或拥有批准的模板。"
 }

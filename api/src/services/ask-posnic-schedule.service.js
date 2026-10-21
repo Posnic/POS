@@ -41,12 +41,12 @@ async function save(context, input) {
   if (typeof input.destination !== 'string' || input.destination.length > 254)
     throw new Error('Enter a valid delivery destination (maximum 254 characters).');
   let destination = input.destination.trim().toLowerCase();
-  const channel = input.channel === 'whatsapp' ? 'whatsapp' : 'email';
+  const channel = ['whatsapp', 'sms'].includes(input.channel) ? input.channel : 'email';
   if (channel === 'email' && !isEmail(destination))
     throw new Error('Enter a valid delivery email.');
-  if (channel === 'whatsapp' && !/^\+?[0-9]{8,15}$/.test(destination.replace(/[\s()-]/g, '')))
-    throw new Error('Enter a valid WhatsApp phone number.');
-  if (channel === 'whatsapp') destination = destination.replace(/[\s()-]/g, '');
+  if (channel !== 'email' && !/^\+?[0-9]{8,15}$/.test(destination.replace(/[\s()-]/g, '')))
+    throw new Error('Enter a valid phone number with country code.');
+  if (channel !== 'email') destination = destination.replace(/[\s()-]/g, '');
   const doc = {
     license: String(context.licenseId || ''),
     branch_id: String(context.branchId || ''),
@@ -180,6 +180,7 @@ async function runDue(context, buildReport, deliver, at = new Date()) {
         !receipt ||
         !['sent', 'queued'].includes(receipt.status) ||
         ![
+          'sms',
           'smtp',
           'brevo',
           'sendgrid',

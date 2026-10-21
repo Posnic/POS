@@ -5211,5 +5211,8 @@
   "lang_published_tills_apply_this_revision_after": "已發佈。直到同步後套用此修訂版本。",
   "lang_saved_without_branch_assignments_previousl": "儲存不分支指派。先前指定的分支使用標準詞彙。",
   "lang_search_phrases": "搜索短語",
-  "lang_use_word_rules": "使用單詞規則"
+  "lang_use_word_rules": "使用單詞規則",
+  "lang_sms_reports_text_summary": "SMS傳送文字摘要，而不是 PDF 連結。較長的摘要可能會使用多個。SMS您的SMS提供者必須允許此訊息或擁有核准的範本。",
+  "lang_receive_reports_email_whatsapp_sms": "通過電子郵件接收銷售，利潤或股票摘要，WhatsApp或。SMS",
+  "lang_reports_pdf_delivery": "SMS傳送帶有 PDF 報告鏈接的摘要。WhatsApp包括 PDF 連結；電子郵件包含 PDF 附件。更長的SMS消息可能會更高的費用。您的提供者必須允許郵件或擁有核准的範本。"
 }

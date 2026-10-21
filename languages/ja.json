@@ -5211,5 +5211,8 @@
   "lang_published_tills_apply_this_revision_after": "公開されました。同期後にこのリビジョンが適用されます。",
   "lang_saved_without_branch_assignments_previousl": "ブランチ割り当てなしで保存されました。以前に割り当てられたブランチは標準的な表現を使います。",
   "lang_search_phrases": "検索フレーズ",
-  "lang_use_word_rules": "単語のルールを使う"
+  "lang_use_word_rules": "単語のルールを使う",
+  "lang_sms_reports_text_summary": "SMSPDF リンクではなく、テキストサマリーを送信します。要約が長くなると、SMS複数の要約が使用されることがあります。SMSプロバイダーがこのメッセージを許可するか、承認済みのテンプレートを用意している必要があります。",
+  "lang_receive_reports_email_whatsapp_sms": "売上、利益、または株式の概要をメールで受け取る、WhatsAppまたはSMS。",
+  "lang_reports_pdf_delivery": "SMSPDF レポートリンクを含む概要を送信します。WhatsAppPDF リンクが含まれ、電子メールには PDF 添付ファイルが含まれます。SMSメッセージが長くなると、コストが高くなる可能性があります。プロバイダーがメッセージを許可するか、承認済みのテンプレートを用意する必要があります。"
 }

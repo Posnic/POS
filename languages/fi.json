@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Julkaistu. Käytä tätä versiota synkronoinnin jälkeen.",
   "lang_saved_without_branch_assignments_previousl": "Tallennettu ilman haaratoimituksia. Aiemmin osoitetut sivukonttorit käyttävät vakiosanamuotoa.",
   "lang_search_phrases": "Hakulauseet",
-  "lang_use_word_rules": "Käytä sanasääntöjä"
+  "lang_use_word_rules": "Käytä sanasääntöjä",
+  "lang_sms_reports_text_summary": "SMSlähettää tekstiyhteenvedon, ei PDF-linkkiä. Pidemmissä yhteenvedoissa voi olla useampaa kuin yhtäSMS. Palvel SMS untarjoajan on sallittava tämä viesti tai sillä on oltava hyväksytty malli.",
+  "lang_receive_reports_email_whatsapp_sms": "Vastaanota myynti-, voitto- tai osakeyhteenvedot sähköpostitse, WhatsApp taiSMS.",
+  "lang_reports_pdf_delivery": "SMSlähettää yhteenvedon PDF-raporttilinkillä. WhatsAppsisältää PDF-linkin; sähköposti sisältää PDF-liitteen. Pidem SMS mät viestit voivat maksaa enemmän. Palveluntarjoajan on sallittava viesti tai sillä on oltava hyväksytty malli."
 }

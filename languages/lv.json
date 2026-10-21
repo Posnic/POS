@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Publicēts. Tills piemēro šo pārskatīšanu pēc sinhronizācijas.",
   "lang_saved_without_branch_assignments_previousl": "Saglabāts bez filiāļu uzdevumiem. Iepriekš piešķirtās filiāles izmanto standarta formulējumu.",
   "lang_search_phrases": "Meklēt frāzes",
-  "lang_use_word_rules": "Izmantojiet vārdu noteikumus"
+  "lang_use_word_rules": "Izmantojiet vārdu noteikumus",
+  "lang_sms_reports_text_summary": "SMSnosūta teksta kopsavilkumu, nevis PDF saiti. Garākos kopsavilkumos var izmantot vairāk nekā vienuSMS. Jūsu pakalpojumu SMS sniedzējam ir jāpieļauj šis ziņojums vai jābūt apstiprinātai veidnei.",
+  "lang_receive_reports_email_whatsapp_sms": "Saņemiet pārdošanas, peļņas vai akciju kopsavilkumus pa e-pastu WhatsApp vaiSMS.",
+  "lang_reports_pdf_delivery": "SMSnosūta kopsavilkumu ar PDF ziņojuma saiti. WhatsAppietver PDF saiti; e-pastā ir iekļauts PDF pielikums. Garā SMS ki ziņojumi var maksāt vairāk. Jūsu pakalpojumu sniedzējam ir jāatļauj ziņojums vai jābūt apstiprinātai veidnei."
 }

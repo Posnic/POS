@@ -5285,5 +5285,8 @@
   "lang_published_tills_apply_this_revision_after": "Publicado. Hasta que se aplique esta revisión después de la sincronización.",
   "lang_saved_without_branch_assignments_previousl": "Se guarda sin asignaciones de sucursales. Las sucursales previamente asignadas utilizan una redacción estándar.",
   "lang_search_phrases": "Frases de búsqueda",
-  "lang_use_word_rules": "Usa reglas verbales"
+  "lang_use_word_rules": "Usa reglas verbales",
+  "lang_sms_reports_text_summary": "SMSenvía un resumen de texto, no un enlace a PDF. Los resúmenes más extensos pueden usar más de unoSMS. Su SMS proveedor debe permitir este mensaje o tener una plantilla aprobada.",
+  "lang_receive_reports_email_whatsapp_sms": "Reciba resúmenes de ventas, ganancias o acciones por correo electrónico, WhatsApp oSMS.",
+  "lang_reports_pdf_delivery": "SMSenvía un resumen con un enlace al informe en PDF. WhatsAppincluye el enlace en PDF; el correo electrónico incluye el PDF adjunto. SMSLos mensajes más largos pueden costar más. Su proveedor debe permitir el mensaje o tener una plantilla aprobada."
 }

@@ -2,6 +2,11 @@
 jest.mock('../../../src/models/base.model', () => function MockBaseModel() {});
 const mockSendMail = jest.fn();
 const mockSendWhatsapp = jest.fn();
+const mockSendSms = jest.fn();
+jest.mock('../../../src/services/report-document.service', () => ({
+  prepare: jest.fn().mockResolvedValue({ buffer: Buffer.from('pdf'), filename: 'summary.pdf', url: 'https://example.invalid/report.pdf' }),
+  periodLabel: () => '20 Oct 2026 (Asia/Kolkata)',
+}));
 jest.mock('../../../src/utils/email', () => ({
   resolveConfiguredShopTransport: () => ({
     transporter: { options: {}, sendMail: mockSendMail },
@@ -12,6 +17,9 @@ jest.mock(
   '../../../src/services/messaging.service',
   () =>
     class {
+      sendSms(...args) {
+        return mockSendSms(...args);
+      }
       sendWhatsapp(...args) {
         return mockSendWhatsapp(...args);
       }
@@ -105,6 +113,7 @@ test('distinguishes queued WhatsApp from a sent message and passes the execution
     { status: 'queued', provider: 'whatsapp_connector' }
   );
   expect(mockSendWhatsapp.mock.calls.at(-1)[3]).toEqual({
+    document: expect.objectContaining({ filename: 'summary.pdf', url: 'https://example.invalid/report.pdf' }),
     purpose: 'Scheduled report',
     scheduled: {
       id: schedule._id,
@@ -180,4 +189,27 @@ test('messaging reports still require an active owner with outlet access', async
   expect(lookup.mock.calls[0][0]).toHaveProperty('status', {
     $nin: ['inactive', 'suspended', 'pending'],
   });
+});
+
+test('SMS reports use the scoped branch and preserve provider acknowledgement', async () => {
+  mockSendSms.mockResolvedValueOnce({ ok: true, messageId: 'sms-provider-id' });
+  await expect(
+    runner.deliver(
+      { ...schedule, channel: 'sms', destination: '+919494111161', test: true },
+      report
+    )
+  ).resolves.toEqual({ status: 'sent', provider: 'sms', reference: 'sms-provider-id' });
+  expect(mockSendSms.mock.calls.at(-1)).toEqual([
+    'outlet',
+    '+919494111161',
+    expect.stringContaining('Sales are 10.'),
+    { purpose: 'Report test' },
+  ]);
+});
+
+test('SMS report failure does not claim successful delivery', async () => {
+  mockSendSms.mockResolvedValueOnce({ ok: false, error: 'SMS is not configured for this branch' });
+  await expect(runner.deliver({ ...schedule, channel: 'sms' }, report)).rejects.toThrow(
+    'SMS is not configured'
+  );
 });

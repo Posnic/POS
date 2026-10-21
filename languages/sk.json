@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Publikované. Tills aplikuje túto revíziu po synchronizácii.",
   "lang_saved_without_branch_assignments_previousl": "Uložené bez pridelenia pobočiek. Predtým priradené pobočky používajú štandardné znenie.",
   "lang_search_phrases": "Hľadať frázy",
-  "lang_use_word_rules": "Používajte slovné pravidlá"
+  "lang_use_word_rules": "Používajte slovné pravidlá",
+  "lang_sms_reports_text_summary": "SMSodošle textové zhrnutie, nie odkaz PDF. Dlhšie súhrny môžu používať viac ako jedenSMS. Váš SMS poskytovateľ musí túto správu povoliť alebo mať schválenú šablónu.",
+  "lang_receive_reports_email_whatsapp_sms": "Dostávajte súhrny predaja, zisku alebo akcií e-mailom WhatsApp aleboSMS.",
+  "lang_reports_pdf_delivery": "SMSodošle súhrn s odkazom na správu PDF. WhatsAppobsahuje odkaz PDF; e-mail obsahuje prílohu PDF. Dlhšie SMS správy môžu stáť viac. Váš poskytovateľ musí správu povoliť alebo mať schválenú šablónu."
 }

@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Opublikowano. Tills stosuje tę wersję po synchronizacji.",
   "lang_saved_without_branch_assignments_previousl": "Zapisane bez przypisania oddziałów. Wcześniej przypisane gałęzie używają standardowego sformułowania.",
   "lang_search_phrases": "Wyszukiwanie fraz",
-  "lang_use_word_rules": "Używaj reguł słów"
+  "lang_use_word_rules": "Używaj reguł słów",
+  "lang_sms_reports_text_summary": "SMSwysyła podsumowanie tekstowe, a nie link PDF. Dłuższe podsumowania mogą używać więcej niż jednegoSMS. Twój SMS dostawca musi zezwolić na tę wiadomość lub mieć zatwierdzony szablon.",
+  "lang_receive_reports_email_whatsapp_sms": "Otrzymuj podsumowania sprzedaży, zysków lub akcji e-mailem, WhatsApp lubSMS.",
+  "lang_reports_pdf_delivery": "SMSwysyła podsumowanie z linkiem do raportu PDF. WhatsAppzawiera link PDF; e-mail zawiera załącznik PDF. Dłuż SMS sze wiadomości mogą kosztować więcej. Twój dostawca musi zezwolić na wiadomość lub mieć zatwierdzony szablon."
 }

@@ -5289,5 +5289,8 @@
   "lang_published_tills_apply_this_revision_after": "เผยแพร่Tills ใช้การแก้ไขนี้หลังจากการซิงโครไนซ์",
   "lang_saved_without_branch_assignments_previousl": "บันทึกโดยไม่ต้องมอบหมายสาขาสาขาที่ได้รับมอบหมายก่อนหน้านี้ใช้คำมาตรฐาน",
   "lang_search_phrases": "ค้นหาวลีค้นหา",
-  "lang_use_word_rules": "ใช้กฎคำ"
+  "lang_use_word_rules": "ใช้กฎคำ",
+  "lang_sms_reports_text_summary": "SMSส่งบทสรุปข้อความ ไม่ใช่ลิงก์ PDFสรุปที่ยาวนานอาจใช้มากกว่าหนึ่ง SMSผู้ SMS ให้บริการของคุณจะต้องอนุญาตข้อความนี้หรือมีเทมเพลตที่ได้รับอนุมัติ",
+  "lang_receive_reports_email_whatsapp_sms": "รับยอดขาย กำไร หรือสรุปหุ้นทางอีเมล WhatsApp หรือ SMS",
+  "lang_reports_pdf_delivery": "SMSส่งสรุปพร้อมลิงก์รายงาน PDFWhatsAppรวมถึงลิงก์ PDF อีเมลรวมถึงไฟล์แนบ PDFSMSข้อความที่ยาวนานอาจมีค่าใช้จ่ายมากขึ้นผู้ให้บริการของคุณจะต้องอนุญาตข้อความหรือมีเทมเพลตที่ได้รับอนุมัติ"
 }

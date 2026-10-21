@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Publicerad. Tills tillämpar den här versionen efter synkronisering.",
   "lang_saved_without_branch_assignments_previousl": "Sparas utan filialtilldelningar. Tidigare tilldelade grenar använder standardformulering.",
   "lang_search_phrases": "Sökfraser",
-  "lang_use_word_rules": "Använd ordregler"
+  "lang_use_word_rules": "Använd ordregler",
+  "lang_sms_reports_text_summary": "SMSskickar en textsammanfattning, inte en PDF-länk. Längre sammanfattningar kan använda mer än enSMS. Din SMS leverantör måste tillåta detta meddelande eller ha en godkänd mall.",
+  "lang_receive_reports_email_whatsapp_sms": "Få försäljning, vinst eller lagersammanfattningar via e-post, WhatsApp ellerSMS.",
+  "lang_reports_pdf_delivery": "SMSskickar en sammanfattning med en PDF-rapportlänk. WhatsAppinkluderar PDF-länken; e-post innehåller PDF-bilagan. Län SMS gre meddelanden kan kosta mer. Din leverantör måste tillåta meddelandet eller ha en godkänd mall."
 }

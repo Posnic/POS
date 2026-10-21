@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Objavljeno. Tills primenjuje ovu reviziju nakon sinhronizacije.",
   "lang_saved_without_branch_assignments_previousl": "Sačuvano bez zadataka grana. Prethodno dodeljene grane koriste standardnu formulaciju.",
   "lang_search_phrases": "Pretraživanje fraza",
-  "lang_use_word_rules": "Koristite pravila reči"
+  "lang_use_word_rules": "Koristite pravila reči",
+  "lang_sms_reports_text_summary": "SMSšalje sažetak teksta, a ne PDF vezu. Duži sažetci mogu koristiti više od jednogSMS. Vaš pro SMS vajder mora da dozvoli ovu poruku ili da ima odobren obrazac.",
+  "lang_receive_reports_email_whatsapp_sms": "Primajte sažetke prodaje, dobiti ili akcija putem e-pošte WhatsApp iliSMS.",
+  "lang_reports_pdf_delivery": "SMSšalje rezime sa vezom za PDF izveštaj. WhatsAppuključuje PDF vezu; e-pošta uključuje PDF prilog. Dulje SMS poruke mogu koštati više. Vaš provajder mora dozvoliti poruku ili imati odobren obrazac."
 }

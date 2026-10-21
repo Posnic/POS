@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Objavljeno. Tills uporabi to revizijo po sinhronizaciji.",
   "lang_saved_without_branch_assignments_previousl": "Shranjeno brez dodelitev podružnic. Predhodno dodeljene podružnice uporabljajo standardno besedilo.",
   "lang_search_phrases": "Iskanje fraz",
-  "lang_use_word_rules": "Uporabite besedilna pravila"
+  "lang_use_word_rules": "Uporabite besedilna pravila",
+  "lang_sms_reports_text_summary": "SMSpošlje povzetek besedila, ne povezavo PDF. Daljši povzetki lahko uporabljajo več kot enegaSMS. Vaš SMS ponudnik mora dovoliti to sporočilo ali imeti odobreno predlogo.",
+  "lang_receive_reports_email_whatsapp_sms": "Prejemajte povzetke prodaje, dobička ali delnic po e-pošti WhatsApp aliSMS.",
+  "lang_reports_pdf_delivery": "SMSpošlje povzetek s povezavo do poročila PDF. WhatsAppvključuje povezavo PDF; e-pošta vključuje prilogo PDF. Dalj SMS ša sporočila lahko stanejo več. Vaš ponudnik mora dovoliti sporočilo ali imeti odobreno predlogo."
 }

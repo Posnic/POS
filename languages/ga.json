@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Foilsithe. Cuireann Tills an t-athbhreithniú seo i bhfeidhm tar éis",
   "lang_saved_without_branch_assignments_previousl": "Sábháilte gan tascanna brainse. Úsáideann brainsí a sannadh roimhe seo foclaíocht",
   "lang_search_phrases": "Frásaí cuardaigh",
-  "lang_use_word_rules": "Úsáid rialacha focal"
+  "lang_use_word_rules": "Úsáid rialacha focal",
+  "lang_sms_reports_text_summary": "SMSseolann sé achoimre téacs, ní nasc PDF. Féadfaidh achoimrí níos faide níos mó ná ceann amháin SMS a úsáid. Caithfidh SMS do sholáthraí an teachtaireacht seo a cheadú nó teimpléad ceadaithe a bheith",
+  "lang_receive_reports_email_whatsapp_sms": "Faigh achoimrí díolacháin, brabúis nó stoic trí ríomhphost, WhatsApp nóSMS.",
+  "lang_reports_pdf_delivery": "SMSseolann achoimre le nasc tuarascála PDF. WhatsAppcuimsíonn an nasc PDF; cuimsíonn ríomhphost an ceangaltán PDF. D'fhéadfadh go gcostódh SMS teachtaireachtaí níos faide Ní mór do sholáthraí an teachtaireacht a cheadú nó teimpléad ceadaithe a bheith agat."
 }

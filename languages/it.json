@@ -5289,5 +5289,8 @@
   "lang_published_tills_apply_this_revision_after": "Pubblicato Tills applica questa revisione dopo la sincronizzazione.",
   "lang_saved_without_branch_assignments_previousl": "Salvato senza assegnazioni di filiali. Le filiali assegnate in precedenza utilizzano una formulazione standard.",
   "lang_search_phrases": "Frasi di ricerca",
-  "lang_use_word_rules": "Usa le regole delle parole"
+  "lang_use_word_rules": "Usa le regole delle parole",
+  "lang_sms_reports_text_summary": "SMSinvia un riepilogo testuale, non un link PDF. I riepiloghi più lunghi possono utilizzarne più di unoSMS. Il SMS provider deve consentire questo messaggio o disporre di un modello approvato.",
+  "lang_receive_reports_email_whatsapp_sms": "Ricevi i riepiloghi delle vendite, degli utili o delle scorte via e-mail, WhatsApp oppureSMS.",
+  "lang_reports_pdf_delivery": "SMSinvia un riepilogo con un link al rapporto PDF. WhatsAppinclude il collegamento PDF; l'e-mail include l'allegato PDF. SMSI messaggi più lunghi possono costare di più. Il provider deve consentire il messaggio o disporre di un modello approvato."
 }

@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "פורסם. עד להחיל גרסה זו לאחר הסנכרון.",
   "lang_saved_without_branch_assignments_previousl": "נשמר ללא הקצאות סניף. סניפים שהוקצו בעבר משתמשים בניסוח סטנדרטי.",
   "lang_search_phrases": "ביטויי חיפוש",
-  "lang_use_word_rules": "השתמש בכללי מילים"
+  "lang_use_word_rules": "השתמש בכללי מילים",
+  "lang_sms_reports_text_summary": "SMSשולח סיכום טקסט, לא קישור PDF. סיכומים ארוכים יותר עשויים להשתמש ביותר מאחדSMS. ה SMS ספק שלך חייב לאפשר הודעה זו או לקבל תבנית מאושרת.",
+  "lang_receive_reports_email_whatsapp_sms": "קבל סיכומי מכירות, רווחים או מניות בדוא\"ל, WhatsApp אוSMS.",
+  "lang_reports_pdf_delivery": "SMSשולח סיכום עם קישור לדוח PDF. WhatsAppכולל את קישור ה- PDF; הדוא\"ל כולל את הקובץ המצורף ל- PDF. SMSהודעות ארוכות יותר עשויות לעלות יותר. הספק שלך חייב לאפשר את ההודעה או להחזיק תבנית מאושרת."
 }

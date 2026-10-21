@@ -132,8 +132,8 @@ class MessagingController extends BaseController {
         );
         if (!row) return this.error(res, 'Report delivery not found.', 404);
       }
-      if (!['email', 'whatsapp'].includes(input.channel))
-        return this.error(res, 'Choose Email or WhatsApp.', 400);
+      if (!['email', 'whatsapp', 'sms'].includes(input.channel))
+        return this.error(res, 'Choose Email, WhatsApp or SMS.', 400);
       const moment = require('moment-timezone');
       if (!moment.tz.zone(input.timezone)) return this.error(res, 'Choose a valid time zone.', 400);
       const result = await schedules.save(context, { ...input, enabled: input.enabled === true });

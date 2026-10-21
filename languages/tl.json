@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Nai-publish. Inilapat ni Tills ang pagbabagong ito pagkatapos ng pag-sync.",
   "lang_saved_without_branch_assignments_previousl": "Naka-save nang walang mga takdang sangay. Ang dati nang itinalagang mga sanga ay gumagamit ng karaniwang",
   "lang_search_phrases": "Mga parirala sa paghah",
-  "lang_use_word_rules": "Gumamit ng mga patakaran sa salita"
+  "lang_use_word_rules": "Gumamit ng mga patakaran sa salita",
+  "lang_sms_reports_text_summary": "SMSnagpapadala ng isang buod ng teksto, hindi isang link sa PDF. Ang mas mahabang buod ay maaaring gumamit ng higit sa isaSMS. Dapat pay SMS agan ng iyong provider ang mensaheng ito o magkaroon ng isang naaprubahan na template.",
+  "lang_receive_reports_email_whatsapp_sms": "Tumanggap ng mga buod ng benta, kita o stock sa pamamagitan ng email, WhatsApp oSMS.",
+  "lang_reports_pdf_delivery": "SMSnagpapadala ng isang buod na may isang link sa ulat sa PDF. WhatsAppmay kasamang link sa PDF; kasama sa email ang attachment ng PDF. Maaaring SMS mas magastos ang mas mahabang mensahe. Dapat payagan ng iyong provider ang mensahe o magkaroon ng isang naaprubahan na template."
 }

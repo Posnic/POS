@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Zveřejněno. Po synchronizaci se použije tato revize.",
   "lang_saved_without_branch_assignments_previousl": "Uloženo bez přiřazení poboček. Dříve přiřazené pobočky používají standardní znění.",
   "lang_search_phrases": "Vyhledávací fráze",
-  "lang_use_word_rules": "Používejte slovní pravidla"
+  "lang_use_word_rules": "Používejte slovní pravidla",
+  "lang_sms_reports_text_summary": "SMSodešle textový souhrn, nikoli odkaz PDF. Delší souhrny mohou používat více než jedenSMS. Váš SMS poskytovatel musí tuto zprávu povolit nebo mít schválenou šablonu.",
+  "lang_receive_reports_email_whatsapp_sms": "Dostávejte souhrny tržeb, zisku nebo akcií e-mailem, WhatsApp neboSMS.",
+  "lang_reports_pdf_delivery": "SMSodešle shrnutí s odkazem na zprávu ve formátu PDF. WhatsAppobsahuje odkaz PDF; e-mail obsahuje přílohu PDF. Del SMS ší zprávy mohou stát více. Váš poskytovatel musí zprávu povolit nebo mít schválenou šablonu."
 }

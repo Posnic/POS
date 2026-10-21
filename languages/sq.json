@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Publikuar. Tills zbaton këtë rishikim pas sinkronizimit.",
   "lang_saved_without_branch_assignments_previousl": "Ruhet pa detyrat e degës. Degët e caktuara më parë përdorin formulime standarde.",
   "lang_search_phrases": "Frazat e kërkimit",
-  "lang_use_word_rules": "Përdorni rregullat e fjalëve"
+  "lang_use_word_rules": "Përdorni rregullat e fjalëve",
+  "lang_sms_reports_text_summary": "SMSdërgon një përmbledhje teksti, jo një lidhje PDF. Përmbledhjet më të gjata mund të përdorin më shumë se njëSMS. Ofru SMS esi juaj duhet të lejojë këtë mesazh ose të ketë një model të aprovuar.",
+  "lang_receive_reports_email_whatsapp_sms": "Merrni përmbledhje të shitjeve, fitimit ose aksioneve me email, WhatsApp oseSMS.",
+  "lang_reports_pdf_delivery": "SMSdërgon një përmbledhje me një lidhje raporti PDF. WhatsApppërfshin lidhjen PDF; email përfshin bashkëngjitjen PDF. SMSMesazhet më të gjata mund të kushtojnë më shumë. Ofruesi juaj duhet të lejojë mesazhin ose të ketë një model të aprovuar."
 }

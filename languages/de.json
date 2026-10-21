@@ -5289,5 +5289,8 @@
   "lang_published_tills_apply_this_revision_after": "Veröffentlicht. Tills wendet diese Revision nach der Synchronisation an.",
   "lang_saved_without_branch_assignments_previousl": "Ohne Filialzuweisungen gespeichert. Zuvor zugewiesene Filialen verwenden Standardformulierungen.",
   "lang_search_phrases": "Suchbegriffe",
-  "lang_use_word_rules": "Verwenden Sie Wortregeln"
+  "lang_use_word_rules": "Verwenden Sie Wortregeln",
+  "lang_sms_reports_text_summary": "SMSsendet eine Textzusammenfassung, keinen PDF-Link. Bei längeren Zusammenfassungen kann mehr als eine SMS verwendet werden. Ihr SMS Anbieter muss diese Nachricht zulassen oder über eine genehmigte Vorlage verfügen.",
+  "lang_receive_reports_email_whatsapp_sms": "Erhalten Sie Umsatz-, Gewinn- oder Aktienzusammenfassungen per E-Mail WhatsApp oderSMS.",
+  "lang_reports_pdf_delivery": "SMSsendet eine Zusammenfassung mit einem Link zum PDF-Bericht. WhatsAppenthält den PDF-Link; die E-Mail enthält den PDF-Anhang. Längere SMS Nachrichten können mehr kosten. Ihr Anbieter muss die Nachricht zulassen oder über eine genehmigte Vorlage verfügen."
 }

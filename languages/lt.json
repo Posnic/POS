@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Paskelbta. Tills taiko šią pataisą po sinchronizavimo.",
   "lang_saved_without_branch_assignments_previousl": "Išsaugota be filialų užduočių. Anksčiau priskirtos šakos naudoja standartinę formuluotę.",
   "lang_search_phrases": "Ieškoti frazių",
-  "lang_use_word_rules": "Naudokite žodžių taisykles"
+  "lang_use_word_rules": "Naudokite žodžių taisykles",
+  "lang_sms_reports_text_summary": "SMSsiunčia teksto santrauką, o ne PDF nuorodą. Ilgesnėse santraukose gali būti naudojama daugiau nei vienaSMS. Jūsų SMS paslaugų teikėjas turi leisti šį pranešimą arba turėti patvirtintą šabloną.",
+  "lang_receive_reports_email_whatsapp_sms": "Gaukite pardavimų, pelno ar akcijų suvestines el. paštu, WhatsApp arbaSMS.",
+  "lang_reports_pdf_delivery": "SMSsiunčia santrauką su PDF ataskaitos nuoroda. WhatsAppapima PDF nuorodą; el. Paštas apima PDF priedą. Ilges SMS ni pranešimai gali kainuoti brangiau. Jūsų paslaugų teikėjas turi leisti pranešimą arba turėti patvirtintą šabloną."
 }

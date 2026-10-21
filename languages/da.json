@@ -5208,5 +5208,8 @@
   "lang_published_tills_apply_this_revision_after": "Udgivet. Tills anvender denne revision efter synkronisering.",
   "lang_saved_without_branch_assignments_previousl": "Gemt uden filialtildelinger. Tidligere tildelte filialer bruger standardformulering.",
   "lang_search_phrases": "Søgesætninger",
-  "lang_use_word_rules": "Brug ordregler"
+  "lang_use_word_rules": "Brug ordregler",
+  "lang_sms_reports_text_summary": "SMSsender en tekstoversigt, ikke et PDF-link. Længere resuméer kan bruge mere end énSMS. Din SMS udbyder skal tillade denne meddelelse eller have en godkendt skabelon.",
+  "lang_receive_reports_email_whatsapp_sms": "Modtag salg, fortjeneste eller lageroversigter via e-mail, WhatsApp ellerSMS.",
+  "lang_reports_pdf_delivery": "SMSsender et resumé med et PDF-rapportlink. WhatsAppinkluderer PDF-linket; e-mail inkluderer PDF-vedhæftet fil. Læng SMS ere beskeder kan koste mere. Din udbyder skal tillade meddelelsen eller have en godkendt skabelon."
 }

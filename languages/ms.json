@@ -5211,5 +5211,8 @@
   "lang_published_tills_apply_this_revision_after": "Diterbitkan. Tills menggunakan semakan ini selepas penyegerakan.",
   "lang_saved_without_branch_assignments_previousl": "Disimpan tanpa tugasan cawangan. Cawangan yang diberikan sebelum ini menggunakan perkataan standard.",
   "lang_search_phrases": "Cari frasa",
-  "lang_use_word_rules": "Gunakan peraturan perkataan"
+  "lang_use_word_rules": "Gunakan peraturan perkataan",
+  "lang_sms_reports_text_summary": "SMSmenghantar ringkasan teks, bukan pautan PDF. Ringkasan yang lebih lama boleh menggunakan lebih daripada satuSMS. Pembek SMS al anda mesti membenarkan mesej ini atau mempunyai templat yang diluluskan.",
+  "lang_receive_reports_email_whatsapp_sms": "Terima penjualan, keuntungan atau ringkasan saham melalui e-mel, WhatsApp atauSMS.",
+  "lang_reports_pdf_delivery": "SMSmenghantar ringkasan dengan pautan laporan PDF. WhatsApptermasuk pautan PDF; e-mel termasuk lampiran PDF. Mes SMS ej yang lebih lama mungkin lebih mahal. Pembekal anda mesti membenarkan mesej atau mempunyai templat yang diluluskan."
 }

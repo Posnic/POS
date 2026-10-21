@@ -5211,5 +5211,8 @@
   "lang_published_tills_apply_this_revision_after": "Đã xuất bản. Cho đến khi áp dụng sửa đổi này sau khi đồng bộ hóa.",
   "lang_saved_without_branch_assignments_previousl": "Đã lưu mà không cần gán chi nhánh. Các chi nhánh được chỉ định trước đây sử dụng từ ngữ tiêu chuẩn.",
   "lang_search_phrases": "Cụm từ tìm kiếm",
-  "lang_use_word_rules": "Sử dụng quy tắc từ"
+  "lang_use_word_rules": "Sử dụng quy tắc từ",
+  "lang_sms_reports_text_summary": "SMSgửi một bản tóm tắt văn bản, không phải một liên kết PDF. Tóm tắt dài hơn có thể sử dụng nhiều hơn mộtSMS. Nhà SMS cung cấp của bạn phải cho phép thông báo này hoặc có mẫu đã được phê duyệt.",
+  "lang_receive_reports_email_whatsapp_sms": "Nhận doanh số bán hàng, lợi nhuận hoặc tóm tắt cổ phiếu qua email, WhatsApp hoặcSMS.",
+  "lang_reports_pdf_delivery": "SMSgửi một bản tóm tắt với một liên kết báo cáo PDF. WhatsAppbao gồm liên kết PDF; email bao gồm tệp đính kèm PDF. Tin SMS nhắn dài hơn có thể có giá cao hơn. Nhà cung cấp của bạn phải cho phép tin nhắn hoặc có mẫu đã được phê duyệt."
 }

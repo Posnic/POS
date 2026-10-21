@@ -5289,5 +5289,8 @@
   "lang_published_tills_apply_this_revision_after": "Imechapishwa. Tills hutumia marekebisho haya baada ya maingiliano.",
   "lang_saved_without_branch_assignments_previousl": "Imehifadhiwa bila kazi za tawi. Matawi iliyopewa awali hutumia maneno ya kawaida.",
   "lang_search_phrases": "Tafuta maneno",
-  "lang_use_word_rules": "Tumia sheria za maneno"
+  "lang_use_word_rules": "Tumia sheria za maneno",
+  "lang_sms_reports_text_summary": "SMShutuma muhtasari wa maandishi, sio kiungo cha PDF. Muhtasari mrefu unaweza kutumia zaidi ya mojaSMS. Mtoa SMS huduma wako lazima aruhusu ujumbe huu au awe na template iliyoidhinishwa",
+  "lang_receive_reports_email_whatsapp_sms": "Pokea mauzo, faida au muhtasari wa hisa kwa barua pepe, WhatsApp auSMS.",
+  "lang_reports_pdf_delivery": "SMShutuma muhtasari na kiungo cha ripoti ya PDF. WhatsAppinajumuisha kiunga cha PDF; barua pepe ni pamoja na kiambatisho cha PDF. Ujumbe SMS mrefu unaweza kugharimu zaidi. Mtoa huduma wako lazima kuruhusu ujumbe au awe na template iliyoidhinishwa."
 }

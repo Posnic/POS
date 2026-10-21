@@ -5211,5 +5211,8 @@
   "lang_published_tills_apply_this_revision_after": "Yayınlandı. Senkronizasyondan sonra bu revizyonu uygulayana kadar.",
   "lang_saved_without_branch_assignments_previousl": "Şube atamaları olmadan kaydedildi. Önceden atanmış şubeler standart ifadeler kullanır.",
   "lang_search_phrases": "Arama cümleleri",
-  "lang_use_word_rules": "Kelime kurallarını kullan"
+  "lang_use_word_rules": "Kelime kurallarını kullan",
+  "lang_sms_reports_text_summary": "SMSPDF bağlantısı değil, metin özeti gönderir. Daha uzun özetler birden SMS fazla kullanabilir. Sağlay SMS ıcınız bu iletiye izin vermeli veya onaylanmış bir şablona sahip olmalıdır.",
+  "lang_receive_reports_email_whatsapp_sms": "Satış, kar veya stok özetlerini e-posta ile alın WhatsApp veyaSMS.",
+  "lang_reports_pdf_delivery": "SMSPDF rapor bağlantısı içeren bir özet gönderir. WhatsAppPDF bağlantısını içerir; e-posta PDF ekini içerir. Daha uzun SMS mesajlar daha pahalıya mal olabilir. Sağlayıcınız iletiye izin vermeli veya onaylanmış bir şablona sahip olmalıdır."
 }
