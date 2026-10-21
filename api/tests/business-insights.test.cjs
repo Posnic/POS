@@ -39,6 +39,59 @@ const sale = (extra = {}) => ({
   ],
   ...extra,
 });
+test('restaurant tables rank complete bills, preserve returns, and exclude rooms and drafts', () => {
+  const restaurant = { ...branch, restaurantEnabled: true };
+  const docs = [
+    sale({ table_id: '8', table_number: 'Table 8' }),
+    sale({ table_id: '8', table_number: 'Table 8' }),
+    sale({ table_id: '9', table_number: 'Table 9', sales_total: 2000 }),
+    sale({ table_number: 'Room 5', venue: { id: 'hotel' } }),
+    sale(),
+    sale({ table_id: '8', table_number: 'Table 8', sale_process: 'Draft' }),
+    sale({
+      table_id: '8',
+      table_number: 'Table 8',
+      date: new Date('2026-09-01'),
+      items_return_total: 50,
+      items_return: [
+        {
+          returnArray: {
+            returnObjId: new ObjectId(),
+            returnDate: new Date('2026-10-06'),
+            itemsTotalAmount: 50,
+          },
+        },
+      ],
+    }),
+  ];
+  const r = summarizeInsights(docs, context, restaurant, range, checked);
+  assert.equal(r.restaurant.bySales[0].name, 'Table 9');
+  assert.equal(r.restaurant.byBills[0].name, 'Table 8');
+  assert.equal(r.restaurant.byBills[0].bills, 2);
+  assert.equal(r.restaurant.byBills[0].salesAfterReturnsMinor, 95000);
+  assert.equal(r.restaurant.withoutTable.bills, 2);
+  assert.equal(r.restaurant.tableCount, 2);
+  assert.equal(summarizeInsights(docs, context, branch, range, checked).restaurant, null);
+  assert.equal(
+    summarizeInsights(docs, context, { ...branch, restaurantEnabled: false }, range, checked)
+      .restaurant,
+    null
+  );
+});
+test('cash, card and UPI aliases reconcile split payments without changing unknown methods', () => {
+  const r = summarizeInsights(
+    [sale({ multi_payment: { cash: 200, UPI: 100, card: 200 } }), sale({ payment_mode: ' Cash ' })],
+    context,
+    branch,
+    range,
+    checked
+  );
+  assert.deepEqual(r.payments.methods, [
+    { name: 'Cash', amountMinor: 70000 },
+    { name: 'UPI', amountMinor: 10000 },
+    { name: 'Card', amountMinor: 20000 },
+  ]);
+});
 test('range sales reconcile invoices, returns, staff and hours; drafts are excluded', () => {
   const r = summarizeInsights(
     [
