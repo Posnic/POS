@@ -1,20 +1,19 @@
+"use strict";
 
-'use strict';
-
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const fixturePath = path.join(
   __dirname,
-  'fixtures',
-  'shopify',
-  'order-amounts.json',
+  "fixtures",
+  "shopify",
+  "order-amounts.json",
 );
 
 function readFixture() {
-  return JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+  return JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 }
 
 // Convert decimal strings into integer cents to avoid
@@ -22,7 +21,7 @@ function readFixture() {
 function toCents(amount) {
   assert.match(amount, /^\d+\.\d{2}$/);
 
-  const [whole, fraction] = amount.split('.');
+  const [whole, fraction] = amount.split(".");
   return Number(whole) * 100 + Number(fraction);
 }
 
@@ -35,10 +34,10 @@ function calculatedTotal(amounts, currencySide) {
   );
 }
 
-test('Shopify fixture contains synthetic orders', () => {
+test("Shopify fixture contains synthetic orders", () => {
   const fixture = readFixture();
 
-  assert.equal(fixture.provider, 'shopify');
+  assert.equal(fixture.provider, "shopify");
   assert.equal(fixture.fixture_version, 1);
   assert.equal(fixture.orders.length, 4);
 
@@ -47,24 +46,22 @@ test('Shopify fixture contains synthetic orders', () => {
   }
 });
 
-test('Shopify fixture covers required currency scenarios', () => {
-  const scenarios = readFixture().orders.map(
-    (order) => order.scenario,
-  );
+test("Shopify fixture covers required currency scenarios", () => {
+  const scenarios = readFixture().orders.map((order) => order.scenario);
 
   assert.deepEqual(scenarios, [
-    'same_currency',
-    'different_currencies',
-    'rounding',
-    'currency_mismatch',
+    "same_currency",
+    "different_currencies",
+    "rounding",
+    "currency_mismatch",
   ]);
 });
 
-test('Shopify amounts balance in each available currency', () => {
+test("Shopify amounts balance in each available currency", () => {
   const { orders } = readFixture();
 
   for (const order of orders) {
-    for (const side of ['shop', 'presentment']) {
+    for (const side of ["shop", "presentment"]) {
       const total = order.amounts.total[side];
 
       if (total === null) {
@@ -81,7 +78,7 @@ test('Shopify amounts balance in each available currency', () => {
   }
 });
 
-test('Posnic sale totals use shop currency amounts', () => {
+test("Posnic sale totals use shop currency amounts", () => {
   const { orders } = readFixture();
 
   for (const order of orders) {
@@ -91,55 +88,43 @@ test('Posnic sale totals use shop currency amounts', () => {
       continue;
     }
 
-    assert.equal(
-      order.expected.sale_total,
-      order.amounts.total.shop,
-    );
-    assert.equal(
-      order.expected.reporting_currency,
-      order.shop_currency,
-    );
+    assert.equal(order.expected.sale_total, order.amounts.total.shop);
+    assert.equal(order.expected.reporting_currency, order.shop_currency);
   }
 });
 
-test('Different currencies remain separate', () => {
+test("Different currencies remain separate", () => {
   const order = readFixture().orders.find(
-    (item) => item.scenario === 'different_currencies',
+    (item) => item.scenario === "different_currencies",
   );
 
-  assert.equal(order.shop_currency, 'EUR');
-  assert.equal(order.presentment_currency, 'USD');
-  assert.equal(order.amounts.total.shop, '116.00');
-  assert.equal(order.amounts.total.presentment, '127.60');
+  assert.equal(order.shop_currency, "EUR");
+  assert.equal(order.presentment_currency, "USD");
+  assert.equal(order.amounts.total.shop, "116.00");
+  assert.equal(order.amounts.total.presentment, "127.60");
 });
 
-test('Rounding uses exact decimal cents', () => {
+test("Rounding uses exact decimal cents", () => {
   const order = readFixture().orders.find(
-    (item) => item.scenario === 'rounding',
+    (item) => item.scenario === "rounding",
   );
 
-  assert.equal(calculatedTotal(order.amounts, 'shop'), 2669);
-  assert.equal(
-    calculatedTotal(order.amounts, 'presentment'),
-    2920,
-  );
+  assert.equal(calculatedTotal(order.amounts, "shop"), 2669);
+  assert.equal(calculatedTotal(order.amounts, "presentment"), 2920);
 });
 
-test('Missing presentment total requires manual review', () => {
+test("Missing presentment total requires manual review", () => {
   const order = readFixture().orders.find(
-    (item) => item.scenario === 'currency_mismatch',
+    (item) => item.scenario === "currency_mismatch",
   );
 
   assert.equal(order.amounts.total.presentment, null);
   assert.equal(order.expected.review, true);
-  assert.equal(
-    order.expected.reason,
-    'missing_presentment_total',
-  );
+  assert.equal(order.expected.reason, "missing_presentment_total");
   assert.equal(order.expected.sale_total, null);
 });
 
-test('All currency codes use ISO-style three-letter format', () => {
+test("All currency codes use ISO-style three-letter format", () => {
   for (const order of readFixture().orders) {
     assert.match(order.shop_currency, /^[A-Z]{3}$/);
     assert.match(order.presentment_currency, /^[A-Z]{3}$/);

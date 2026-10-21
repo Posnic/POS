@@ -1,4 +1,3 @@
-
 # Shopify multi-currency order amount fixture
 
 This directory contains synthetic Shopify order amount fixtures for issue #413.
@@ -41,12 +40,12 @@ intended to cover every Shopify tax, refund, duty, or discount model.
 
 ## Scenarios
 
-| Scenario | Description | Expected behavior |
-| --- | --- | --- |
-| `same_currency` | EUR shop and EUR presentment | Import shop total |
-| `different_currencies` | EUR shop and USD presentment | Use EUR for sale and reports; preserve USD |
-| `rounding` | Decimal amounts in both currencies | Validate totals in integer cents |
-| `currency_mismatch` | Missing presentment total | Require manual review |
+| Scenario               | Description                        | Expected behavior                          |
+| ---------------------- | ---------------------------------- | ------------------------------------------ |
+| `same_currency`        | EUR shop and EUR presentment       | Import shop total                          |
+| `different_currencies` | EUR shop and USD presentment       | Use EUR for sale and reports; preserve USD |
+| `rounding`             | Decimal amounts in both currencies | Validate totals in integer cents           |
+| `currency_mismatch`    | Missing presentment total          | Require manual review                      |
 
 ## Manual review
 
