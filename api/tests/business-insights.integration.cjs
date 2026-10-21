@@ -48,6 +48,30 @@ test('restaurant insights follow the current authorized branch module setting', 
     branch_access: [{ branch_id: id }, { branch_id: foreign }],
   };
   const access = createBusinessAccess(db);
+  const { opaque, proof } = require('../src/services/business-access');
+  const password = 'Synthetic-Business-test-passphrase';
+  user.username = opaque();
+  user.password = await require('bcryptjs').hash(password, 4);
+  user.authVersion = 1;
+  await db.collection('users').insertOne(user);
+  const verifier = opaque();
+  const request = await access.request({
+    codeChallenge: proof(verifier),
+    deviceName: 'Regression test phone',
+  });
+  await access.decide(request.request, 'allow', user.username, password);
+  const session = await access.exchange(request.request, verifier);
+  const resumed = await access.context(session.token);
+  const rotated = await access.rotate(session.token);
+  for (const value of [session.context, resumed, rotated.context]) {
+    assert.deepEqual(Object.keys(value.branches[0]).sort(), [
+      'currency',
+      'currencyDigits',
+      'id',
+      'name',
+      'timezone',
+    ]);
+  }
   const login = await access.contextFor(user);
   assert.deepEqual(Object.keys(login.branches[0]).sort(), [
     'currency',
