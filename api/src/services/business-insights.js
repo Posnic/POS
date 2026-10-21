@@ -3,6 +3,7 @@ const { ObjectId } = require('mongodb');
 const moment = require('moment-timezone');
 const { businessDate, saleContribution, minorUnits } = require('./business-metrics');
 const { itemSaleContribution } = require('./business-item-metrics');
+const businessSalesOwner = require('../helpers/business-sales-owner');
 const fail = (code, status = 400) => {
   throw Object.assign(new Error(code), { code, status });
 };
@@ -83,6 +84,13 @@ async function readBusinessInsights(db, context, query, { now = Date.now } = {})
           return_refund_transactions: 1,
           created_by: 1,
           created_by_id: 1,
+          channel: 1,
+          'client.staff_id': 1,
+          'client.staff_name': 1,
+          user_id: 1,
+          user_name: 1,
+          'origin.actor_id': 1,
+          'origin.actor_name': 1,
           sales_id: 1,
           discount: 1,
           sale_extra_discount: 1,
@@ -169,13 +177,9 @@ function summarizeInsights(sales, context, branch, range, checkedAt, deadline = 
     result.refundsMinor = sum(result.refundsMinor, returned);
     const sold = entries.some((e) => e.completedSales > 0);
     if (sold) result.bills++;
-    // Use the recorded invoice author, explicitly labelled as such. Never claim payment collectors are salespeople.
+    // Use recorded ownership, never the device approver or latest payment/handover actor.
     if (context.capabilities.includes('reporting.manage')) {
-      const author =
-        typeof sale.created_by === 'string' && sale.created_by.trim()
-          ? sale.created_by.trim().slice(0, 254)
-          : 'Unassigned';
-      const key = String(sale.created_by_id || author);
+      const { id: key, name: author } = businessSalesOwner(sale);
       if (!staff.has(key))
         staff.set(key, {
           id: key,
