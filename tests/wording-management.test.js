@@ -63,3 +63,10 @@ test('renaming preserves pending branch selection',()=>{
  q('#wording-rename').click();q('#wording-name').value='Renamed';q('#wording-profile-save').click();
  assert.equal(q('[data-branch="b"]').checked,false);assert.match(q('#wording-notice').textContent,/Unsaved/);dom.window.close();
 });
+
+test('renaming and duplicating an empty profile omit the blank editor row',()=>{
+ const {dom,q,event,requests}=setup();q('[data-remove-rule]').click();
+ q('#wording-rename').click();q('#wording-name').value='Empty';q('#wording-profile-save').click();
+ assert.deepEqual(requests.at(-1).rules,[]);
+ q('#wording-duplicate').click();q('#wording-profile-save').click();assert.deepEqual(requests.at(-1).rules,[]);dom.window.close();
+});
