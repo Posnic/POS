@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Ang iyong karaniwang wika ay mananatiling hindi magbago hanggang sa i-save mo ang mga pagbabago",
   "lang_wording_enter_profile_name": "Magpasok ng isang pangalan ng profile.",
   "lang_wording_profile_actions": "Mga aksyon sa profile",
-  "lang_wording_rename_profile": "Palitan ang pangalan ng profile"
+  "lang_wording_rename_profile": "Palitan ang pangalan ng profile",
+  "lang_wording_common_suggestions": "Mga karaniwang mungkahi ng",
+  "lang_wording_suggestion_add": "+ Magdagdag ng mungkahi",
+  "lang_wording_suggestion_added": "Idinagdag · Tingnan",
+  "lang_wording_suggestion_conflict": "Mayroon ka nang salita para sa mungkahi na ito. Suriin ang iyong umiiral na mga salita sa ibaba; walang pinalitan.",
+  "lang_wording_suggestion_review": "Suriin ang mayroon nang salita",
+  "lang_wording_suggestions_help": "Pumili ng mungkahi upang magdagdag nang magkasama ang mga kaugnay na salita Suriin o i-edit ang mga ito sa ibaba, pagkatapos ay i-save."
 }

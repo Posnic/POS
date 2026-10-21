@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Ваш стандартный язык остается неизменным до тех пор, пока вы не сохраните изменения в формулировках.",
   "lang_wording_enter_profile_name": "Введите имя профиля.",
   "lang_wording_profile_actions": "Действия в профиле",
-  "lang_wording_rename_profile": "Переименовать профиль"
+  "lang_wording_rename_profile": "Переименовать профиль",
+  "lang_wording_common_suggestions": "Общие предложения по формулировкам",
+  "lang_wording_suggestion_add": "+ Добавить предложение",
+  "lang_wording_suggestion_added": "Добавлено · Посмотреть",
+  "lang_wording_suggestion_conflict": "У вас уже есть формулировка этого предложения. Просмотрите существующие слова ниже; ничего не было заменено.",
+  "lang_wording_suggestion_review": "Просмотрите существующую формулировку",
+  "lang_wording_suggestions_help": "Выберите предложение, чтобы сложить родственные слова. Просмотрите или отредактируйте их ниже, а затем сохраните."
 }

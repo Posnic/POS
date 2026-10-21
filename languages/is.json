@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Venjulegt tungumál þitt helst óbreytt þar til þú vistar orðalagsbreytingar.",
   "lang_wording_enter_profile_name": "Sláðu inn nafn prófíls.",
   "lang_wording_profile_actions": "Aðgerðir á prófíl",
-  "lang_wording_rename_profile": "Endurnefna prófíl"
+  "lang_wording_rename_profile": "Endurnefna prófíl",
+  "lang_wording_common_suggestions": "Algengar tillögur um orðalag",
+  "lang_wording_suggestion_add": "+ Bæta við tillögu",
+  "lang_wording_suggestion_added": "Bætt við · Skoða",
+  "lang_wording_suggestion_conflict": "Þú hefur nú þegar orðalag fyrir þessa tillögu. Skoðaðu fyrirliggjandi orð hér að neðan; ekkert var skipt út.",
+  "lang_wording_suggestion_review": "Farið yfir núverandi orðalag",
+  "lang_wording_suggestions_help": "Veldu tillögu til að bæta tengdum orðum saman. Skoðaðu eða breyttu þeim hér að neðan og vistaðu síðan."
 }

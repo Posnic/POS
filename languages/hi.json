@@ -5285,5 +5285,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "आपकी मानक भाषा तब तक अपरिवर्तित रहती है जब तक आप शब्दों में किए गए परिवर्तनों को सहेज नहीं लेते हैं।",
   "lang_wording_enter_profile_name": "एक प्रोफ़ाइल नाम दर्ज करें।",
   "lang_wording_profile_actions": "प्रोफ़ाइल क्रियाएँ",
-  "lang_wording_rename_profile": "प्रोफ़ाइल का नाम बदलें"
+  "lang_wording_rename_profile": "प्रोफ़ाइल का नाम बदलें",
+  "lang_wording_common_suggestions": "सामान्य शब्दों के सुझाव",
+  "lang_wording_suggestion_add": "+ सुझाव जोड़ें",
+  "lang_wording_suggestion_added": "जोड़ा गया · देखें",
+  "lang_wording_suggestion_conflict": "इस सुझाव के लिए आपके पास पहले से ही शब्द हैं। नीचे दिए गए अपने मौजूदा शब्दों की समीक्षा करें; कुछ भी नहीं बदला गया।",
+  "lang_wording_suggestion_review": "मौजूदा शब्दों की समीक्षा करें",
+  "lang_wording_suggestions_help": "इससे संबंधित शब्दों को एक साथ जोड़ने के लिए कोई सुझाव चुनें। नीचे उनकी समीक्षा करें या उन्हें संपादित करें, फिर सहेजें।"
 }

@@ -5285,5 +5285,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "మీరు పదం మార్పులను సేవ్ చేసే వరకు మీ ప్రామాణిక భాష మారకుండా ఉంటుంది.",
   "lang_wording_enter_profile_name": "ప్రొఫైల్ పేరును నమోదు చేయండి.",
   "lang_wording_profile_actions": "ప్రొఫైల్ చర్యలు",
-  "lang_wording_rename_profile": "ప్రొఫైల్ పేరు మార్చండి"
+  "lang_wording_rename_profile": "ప్రొఫైల్ పేరు మార్చండి",
+  "lang_wording_common_suggestions": "సాధారణ పదాలు సూచనలు",
+  "lang_wording_suggestion_add": "+ సూచనను జోడించండి",
+  "lang_wording_suggestion_added": "చేర్చబడింది · వీక్షించండి",
+  "lang_wording_suggestion_conflict": "ఈ సూచన కోసం మీకు ఇప్పటికే పదాలు ఉన్నాయి. మీ ఇప్పటికే ఉన్న పదాలను క్రింద సమీక్షించండి; ఏదీ భర్తీ చేయబడలేదు.",
+  "lang_wording_suggestion_review": "ఇప్పటికే ఉన్న పదాలను సమీక్షించండి",
+  "lang_wording_suggestions_help": "దాని సంబంధిత పదాలను కలిపి జోడించడానికి సూచనను ఎంచుకోండి. క్రింద వాటిని సమీక్షించండి లేదా సవరించండి, ఆపై సేవ్ చేయండి."
 }

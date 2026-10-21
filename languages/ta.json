@@ -5289,5 +5289,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "சொல் மாற்றங்களை நீங்கள் சேமிக்கும் வரை உங்கள் நிலையான மொழி மாறாமல் இருக்கும்.",
   "lang_wording_enter_profile_name": "சுயவிவரப் பெயரை உள்ளிடவும்.",
   "lang_wording_profile_actions": "சுயவிவர செயல்கள்",
-  "lang_wording_rename_profile": "சுயவிவரத்தை மறுபெயரிட"
+  "lang_wording_rename_profile": "சுயவிவரத்தை மறுபெயரிட",
+  "lang_wording_common_suggestions": "பொதுவான சொல் பரிந்துரைகள்",
+  "lang_wording_suggestion_add": "+ பரிந்துரையைச் சேர்க்கவும்",
+  "lang_wording_suggestion_added": "சேர்க்கப்பட்டது · பார்க்கவும்",
+  "lang_wording_suggestion_conflict": "இந்த பரிந்துரைக்கான சொற்கள் உங்களிடம் ஏற்கனவே உள்ளன. கீழே இருக்கும் உங்கள் சொற்களை மதிப்பாய்வு செய்யவும்; எதுவும் மாற்றப்படவில்லை.",
+  "lang_wording_suggestion_review": "இருக்கும் சொற்களை மதிப்பாய்வு செய்ய",
+  "lang_wording_suggestions_help": "அதன் தொடர்புடைய வார்த்தைகளை ஒன்றாக சேர்க்க ஒரு பரிந்துரையைத் தேர்வுசெய்க அவற்றை கீழே மதிப்பாய்வு செய்யவும் அல்லது திருத்தவும், பின்னர் சேமிக்கவும்"
 }

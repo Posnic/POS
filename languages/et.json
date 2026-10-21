@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Teie tavakeel jääb muutumatuks, kuni salvestate sõnastuse muudatused.",
   "lang_wording_enter_profile_name": "Sisestage profiili nimi.",
   "lang_wording_profile_actions": "Profiili toimingud",
-  "lang_wording_rename_profile": "Nimetage profiil ümber"
+  "lang_wording_rename_profile": "Nimetage profiil ümber",
+  "lang_wording_common_suggestions": "Üldised sõnastusettepanekud",
+  "lang_wording_suggestion_add": "+ Lisage soovitus",
+  "lang_wording_suggestion_added": "Lisatud · Vaata",
+  "lang_wording_suggestion_conflict": "Teil on selle ettepaneku sõnastus juba olemas. Vaadake oma olemasolevaid sõnu allpool üle; midagi ei asendatud.",
+  "lang_wording_suggestion_review": "Vaata üle olemasolev sõnastus",
+  "lang_wording_suggestions_help": "Valige soovitus sellega seotud sõnade lisamiseks. Vaadake need üle või redigeerige neid allpool, seejärel salvestage."
 }

@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Vakiokielesi pysyy muuttumattomana, kunnes tallennat sanamuutokset.",
   "lang_wording_enter_profile_name": "Anna profiilin nimi.",
   "lang_wording_profile_actions": "Profiilitoiminnot",
-  "lang_wording_rename_profile": "Nimeä profiili uudelleen"
+  "lang_wording_rename_profile": "Nimeä profiili uudelleen",
+  "lang_wording_common_suggestions": "Yleisiä sanamuodotuksia",
+  "lang_wording_suggestion_add": "+ Lisää ehdotus",
+  "lang_wording_suggestion_added": "Lisätty · Näytä",
+  "lang_wording_suggestion_conflict": "Sinulla on jo sanamuoto tälle ehdotukselle. Tarkista alla olevat sanasi; mitään ei korvattu.",
+  "lang_wording_suggestion_review": "Tarkista olemassa oleva sanamuoto",
+  "lang_wording_suggestions_help": "Valitse ehdotus lisätäksesi siihen liittyvät sanat yhteen. Tarkista tai muokkaa niitä alla ja tallenna sitten."
 }

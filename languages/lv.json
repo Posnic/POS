@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Jūsu standarta valoda paliek nemainīga, līdz saglabājat formulējuma izmaiņas.",
   "lang_wording_enter_profile_name": "Ievadiet profila nosaukumu.",
   "lang_wording_profile_actions": "Profila darbības",
-  "lang_wording_rename_profile": "Pārdēvēt profilu"
+  "lang_wording_rename_profile": "Pārdēvēt profilu",
+  "lang_wording_common_suggestions": "Bieži formulējumu ieteikumi",
+  "lang_wording_suggestion_add": "+ Pievienot ieteikumu",
+  "lang_wording_suggestion_added": "Pievienots · Skatīt",
+  "lang_wording_suggestion_conflict": "Jums jau ir šī ieteikuma formulējums. Pārskatiet savus esošos vārdus zemāk; nekas netika aizstāts.",
+  "lang_wording_suggestion_review": "Pārskatīt esošo formulējumu",
+  "lang_wording_suggestions_help": "Izvēlieties ieteikumu, lai pievienotu saistītos vārdus kopā. Pārskatiet vai rediģējiet tos zemāk, pēc tam saglabājiet."
 }

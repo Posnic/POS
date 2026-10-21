@@ -91,7 +91,7 @@
             '<div class="col-md-4" id="wording-branch-picker"' + (data.branches.length > 1 ? '' : ' hidden') + '><lang class="lang_wording_ui_apply_to">Apply to</lang><details class="mt-2 border rounded p-2"><summary id="wording-branch-summary"></summary><label class="d-block mt-2"><input type="checkbox" id="wording-all-branches"' + disabled + '><lang class="lang_wording_ui_select_all_branches"> Select all branches</lang></label>' + data.branches.map(function (b) { return '<label class="d-block"><input type="checkbox" data-branch="' + esc(b.id) + '" ' + (targets.includes(b.id) ? 'checked' : '') + disabled + '> ' + esc(b.name) + '</label>'; }).join('') + '</details></div></div>' +
             '<div id="wording-delete-confirm" class="alert alert-warning my-3" hidden><p id="wording-delete-impact"></p><button type="button" id="wording-delete-yes" class="btn btn-danger"><lang class="lang_wording_ui_delete_profile">Delete profile</lang></button> <button type="button" id="wording-delete-no" class="btn btn-outline-secondary"><lang class="lang_wording_ui_keep_profile">Keep profile</lang></button></div>' +
             '<div class="wording-editor-card"><div class="nav nav-tabs mb-3" role="tablist"><button type="button" class="nav-link active" id="wording-tab-words" role="tab" aria-selected="true" aria-controls="wording-words"><lang class="lang_wording_ui_replace_words">Replace words</lang></button><button type="button" class="nav-link" id="wording-tab-advanced" role="tab" aria-selected="false" aria-controls="wording-advanced"><lang class="lang_wording_ui_advanced">Advanced</lang></button></div>' +
-            '<section class="wording-panel" id="wording-words" role="tabpanel" aria-labelledby="wording-tab-words"><h5><lang class="lang_wording_ui_replace_a_word_across_the_application">Replace a word across the application</lang></h5><p class="text-muted"><lang class="lang_wording_ui_add_singular_and_plural_forms_as_separate_rows">Add singular and plural forms as separate rows.</lang></p><div id="wording-rule-list"></div><button type="button" class="btn btn-outline-primary mb-3" id="wording-add-rule"' + disabled + '><lang class="lang_wording_ui_add_word">+ Add word</lang></button><p class="small text-muted"><lang class="lang_wording_ui_changes_labels_not_product_names_or_previously_issued_documents">Changes labels, not product names or previously issued documents.</lang></p></section>' +
+            '<section class="wording-panel" id="wording-words" role="tabpanel" aria-labelledby="wording-tab-words"><h5><lang class="lang_wording_ui_replace_a_word_across_the_application">Replace a word across the application</lang></h5><p class="text-muted"><lang class="lang_wording_ui_add_singular_and_plural_forms_as_separate_rows">Add singular and plural forms as separate rows.</lang></p><div id="wording-suggestions" class="wording-suggestions"></div><div id="wording-rule-list"></div><button type="button" class="btn btn-outline-primary mb-3" id="wording-add-rule"' + disabled + '><lang class="lang_wording_ui_add_word">+ Add word</lang></button><p class="small text-muted"><lang class="lang_wording_ui_changes_labels_not_product_names_or_previously_issued_documents">Changes labels, not product names or previously issued documents.</lang></p></section>' +
             '<section class="wording-panel" id="wording-advanced" role="tabpanel" aria-labelledby="wording-tab-advanced" hidden></section>' +
             '<div class="wording-savebar d-flex flex-wrap justify-content-between align-items-center" style="gap:12px"><p id="wording-notice" role="status" class="mb-0"></p><button type="button" class="btn btn-primary" id="wording-publish"' + disabled + '><lang class="lang_iv2_save_changes">Save changes</lang></button></div></div><p class="small text-muted mt-3"><lang class="lang_wording_offline_tills_apply_changes_after_synchronization_publi">Offline tills apply changes after synchronization. Publishing does not confirm every device has applied them.</lang></p>';
         managerMarkup(); branchSummary(); ruleRows(); bind(); switchTab(tab); if (dirty) tell(PosnicPro.i18n.t("lang_rd_unsaved_changes","Unsaved changes"));
@@ -101,8 +101,39 @@
         dialog.innerHTML='<div class="wording-dialog-body"><div class="d-flex justify-content-between align-items-center mb-3"><h5 id="wording-manager-title" class="mb-0"><lang class="lang_wording_profile_actions">Profile actions</lang></h5><button type="button" class="btn btn-light" id="wording-manager-close" aria-label="Close" data-t-aria-label="lang_close_title">×</button></div><div class="wording-profile-list">'+profiles().map(function(p){return '<button type="button" class="wording-profile-option '+(p.id===selected?'is-selected':'')+'" data-select-profile="'+esc(p.id)+'"><span class="wording-profile-symbol" aria-hidden="true">A<span>文</span></span><span><strong>'+esc(p.draft.name)+'</strong><small>'+esc(p.draft.locale.toUpperCase())+'</small></span><span class="wording-profile-check" aria-hidden="true">'+(p.id===selected?'✓':'')+'</span></button>';}).join('')+'</div><div class="wording-manager-actions"><button type="button" class="btn btn-outline-secondary" id="wording-rename"><i class="feather icon-edit-2" aria-hidden="true"></i> <lang class="lang_rename">Rename</lang></button><button type="button" class="btn btn-outline-secondary" id="wording-duplicate"><i class="feather icon-copy" aria-hidden="true"></i> <lang class="lang_duplicate">Duplicate</lang></button><button type="button" class="btn btn-outline-danger" id="wording-delete"><i class="feather icon-trash-2" aria-hidden="true"></i> <lang class="lang_wording_ui_delete_profile">Delete profile</lang></button></div><div class="wording-dialog-footer"><button type="button" class="btn btn-primary" id="wording-new">+ <lang class="lang_new_profile">New profile</lang></button></div></div>';
         host().appendChild(dialog);
     }
+    var commonWording = [
+        {title:'Item → Product',rules:[{from:'Item',to:'Product'},{from:'Items',to:'Products'}]},
+        {title:'Product → Item',rules:[{from:'Product',to:'Item'},{from:'Products',to:'Items'}]},
+        {title:'Takeaway → Parcel',rules:[{from:'Takeaway',to:'Parcel'},{from:'Take away',to:'Parcel'},{from:'Take-away',to:'Parcel'}]}
+    ];
+    function suggestionState(preset) {
+        var matched=preset.rules.map(function(rule){return draft.rules.find(function(r){return r.from.trim().toLowerCase()===rule.from.toLowerCase();});});
+        var reverse=draft.rules.some(function(r){return preset.rules.some(function(p){return r.from.trim().toLowerCase()===p.to.toLowerCase() && r.to.trim().toLowerCase()===p.from.toLowerCase();});});
+        return {complete:matched.every(function(r,i){return r && r.to.trim()===preset.rules[i].to;}),conflict:reverse || matched.some(function(r,i){return r && r.to.trim()!==preset.rules[i].to;}),matched:matched};
+    }
+    function suggestions() {
+        var area=el('wording-suggestions');if(!area)return;
+        area.hidden=draft.locale!=='en';
+        if(area.hidden){area.innerHTML='';return;}
+        area.innerHTML='<div class="wording-suggestion-heading"><strong><lang class="lang_wording_common_suggestions">Common wording suggestions</lang></strong><p class="small text-muted"><lang class="lang_wording_suggestions_help">Choose a suggestion to add its related words together. Review or edit them below, then save.</lang></p></div><div class="wording-suggestion-grid">'+commonWording.map(function(p,i){var state=suggestionState(p);return '<button type="button" class="wording-suggestion '+(state.complete?'is-added':'')+'" data-suggestion="'+i+'" '+(!data.writable?'disabled':'')+'><strong>'+esc(p.title)+'</strong><small>'+esc(p.rules.map(function(r){return r.from;}).join(' · '))+'</small><span>'+esc(state.complete?PosnicPro.i18n.t('lang_wording_suggestion_added','Added · View'):state.conflict?PosnicPro.i18n.t('lang_wording_suggestion_review','Review existing wording'):PosnicPro.i18n.t('lang_wording_suggestion_add','+ Add suggestion'))+'</span></button>';}).join('')+'</div>';
+    }
+    function addSuggestion(index) {
+        var preset=commonWording[index];if(!preset || draft.locale!=='en')return;
+        var state=suggestionState(preset);
+        if(!state.conflict && !state.complete){
+            draft.rules=draft.rules.filter(function(r){return r.from.trim() || r.to.trim();});
+            preset.rules.forEach(function(r,i){if(!state.matched[i])draft.rules.push({from:r.from,to:r.to});});
+            ruleRows();addedRows();changed();
+        }
+        var first=draft.rules.findIndex(function(r){return preset.rules.some(function(p){return p.from.toLowerCase()===r.from.trim().toLowerCase() || (state.conflict && p.to.toLowerCase()===r.from.trim().toLowerCase());});});
+        var input=host().querySelector('[data-rule="'+first+'"][data-field="to"]');if(input)input.focus();
+        if(state.conflict)tell(PosnicPro.i18n.t('lang_wording_suggestion_conflict','You already have wording for this suggestion. Review your existing words below; nothing was replaced.'));
+    }
     function ruleRows() {
-        el('wording-rule-list').innerHTML = draft.rules.map(function (r, i) { return '<div class="row align-items-end mb-3 wording-rule-row"><label class="col-md-5"><lang class="lang_wording_ui_existing_word">Existing word</lang><input class="form-control" aria-label="Existing word ' + (i + 1) + '" data-rule="' + i + '" data-field="from" maxlength="100" value="' + esc(r.from) + '" ' + (!data.writable ? 'disabled' : '') + '></label><label class="col-md-5"><lang class="lang_wording_ui_use_instead">Use instead</lang><input class="form-control" aria-label="Use instead ' + (i + 1) + '" data-rule="' + i + '" data-field="to" maxlength="100" value="' + esc(r.to) + '" ' + (!data.writable ? 'disabled' : '') + '></label><div class="col-md-2 mb-2"><button type="button" class="btn btn-link" data-remove-rule="' + i + '" ' + (!data.writable ? 'disabled' : '') + '><lang class="lang_ai_key_remove">Remove</lang></button></div></div>'; }).join('');
+        suggestions();
+        var words=draft.locale==='en'?['Item','Items','Product','Products','Takeaway','Take away','Take-away','Parcel','Customer','Customers','Guest','Guests']:[];
+        words=Array.from(new Set(words.concat(draft.rules.map(function(r){return r.from;}).filter(Boolean))));
+        el('wording-rule-list').innerHTML = '<datalist id="wording-known-words">'+words.map(function(w){return '<option value="'+esc(w)+'"></option>';}).join('')+'</datalist>'+draft.rules.map(function (r, i) { return '<div class="row align-items-end mb-3 wording-rule-row"><label class="col-md-5"><lang class="lang_wording_ui_existing_word">Existing word</lang><input class="form-control" aria-label="Existing word ' + (i + 1) + '" data-rule="' + i + '" data-field="from" list="wording-known-words" autocomplete="off" maxlength="100" value="' + esc(r.from) + '" ' + (!data.writable ? 'disabled' : '') + '></label><label class="col-md-5"><lang class="lang_wording_ui_use_instead">Use instead</lang><input class="form-control" aria-label="Use instead ' + (i + 1) + '" data-rule="' + i + '" data-field="to" maxlength="100" value="' + esc(r.to) + '" ' + (!data.writable ? 'disabled' : '') + '></label><div class="col-md-2 mb-2"><button type="button" class="btn btn-link" data-remove-rule="' + i + '" ' + (!data.writable ? 'disabled' : '') + '><lang class="lang_ai_key_remove">Remove</lang></button></div></div>'; }).join('');
     }
     function switchTab(next) {
         tab = next;
@@ -143,7 +174,7 @@
             else if (t.dataset.word || t.dataset.addedWord) { var id = t.dataset.word || t.dataset.addedWord; if (t.value.trim()) draft.overrides[id] = t.value; else delete draft.overrides[id]; }
             else if (t.id === 'wording-name') draft.name = t.value;
             else return;
-            changed();
+            suggestions();changed();
         };
         host().onchange = function (e) {
             var t = e.target;
@@ -167,7 +198,8 @@
             if(b.id==='wording-manager-close'){closeManager();return;}
             if(b.dataset.selectProfile){if(dirty && !window.confirm(PosnicPro.i18n.t('lang_wording_ui_discard_unsaved_changes_and_switch_profile','Discard unsaved changes and switch profile?')))return;choose(b.dataset.selectProfile);showDialog(el('wording-manager'));return;}
             if (!data.writable) return;
-            if (b.id === 'wording-add-rule') { draft.rules.push({from:'',to:''}); ruleRows(); changed(); }
+            if(b.dataset.suggestion!=null){addSuggestion(+b.dataset.suggestion);return;}
+            if (b.id === 'wording-add-rule') { draft.rules.push({from:'',to:''}); ruleRows(); changed(); host().querySelector('[data-rule="'+(draft.rules.length-1)+'"][data-field="from"]').focus(); }
             if (b.dataset.removeRule != null) { draft.rules.splice(+b.dataset.removeRule,1); ruleRows(); addedRows(); changed(); }
             if (b.dataset.editRule != null) { switchTab('words'); host().querySelector('[data-rule="' + b.dataset.editRule + '"][data-field="to"]').focus(); }
             if (b.dataset.reset) { delete draft.overrides[b.dataset.reset]; rows(); addedRows(); changed(); }

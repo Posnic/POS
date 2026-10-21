@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Jūsų standartinė kalba išlieka nepakitusi tol, kol įrašysite formuluotės pakeitimus.",
   "lang_wording_enter_profile_name": "Įveskite profilio pavadinimą.",
   "lang_wording_profile_actions": "Profilio veiksmai",
-  "lang_wording_rename_profile": "Pervardyti profilį"
+  "lang_wording_rename_profile": "Pervardyti profilį",
+  "lang_wording_common_suggestions": "Įprasti formuluočių pasiūlymai",
+  "lang_wording_suggestion_add": "+ Pridėti pasiūlymą",
+  "lang_wording_suggestion_added": "Pridėta · Žiūrėti",
+  "lang_wording_suggestion_conflict": "Jūs jau turite šio pasiūlymo formuluotę. Peržiūrėkite toliau esančius žodžius; niekas nebuvo pakeistas.",
+  "lang_wording_suggestion_review": "Peržiūrėkite esamą formuluotę",
+  "lang_wording_suggestions_help": "Pasirinkite pasiūlymą, kaip pridėti su juo susijusius žodžius. Peržiūrėkite arba redaguokite juos žemiau, tada išsaugokite."
 }

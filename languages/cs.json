@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Váš standardní jazyk zůstane nezměněn, dokud neukládáte změny znění.",
   "lang_wording_enter_profile_name": "Zadejte název profilu.",
   "lang_wording_profile_actions": "Akce profilu",
-  "lang_wording_rename_profile": "Přejmenovat profil"
+  "lang_wording_rename_profile": "Přejmenovat profil",
+  "lang_wording_common_suggestions": "Společné návrhy formulací",
+  "lang_wording_suggestion_add": "+ Přidat návrh",
+  "lang_wording_suggestion_added": "Přidáno · Zobrazit",
+  "lang_wording_suggestion_conflict": "Pro tento návrh již máte formulaci. Zkontrolujte svá stávající slova níže; nic nebylo nahrazeno.",
+  "lang_wording_suggestion_review": "Přezkoumejte stávající znění",
+  "lang_wording_suggestions_help": "Vyberte návrh a přidejte související slova dohromady. Zkontrolujte je nebo upravte níže a poté uložte."
 }

@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Limba dvs. standard rămâne neschimbată până când salvați modificările de formulare.",
   "lang_wording_enter_profile_name": "Introduceți un nume de profil.",
   "lang_wording_profile_actions": "Acțiuni de profil",
-  "lang_wording_rename_profile": "Redenumiți profilul"
+  "lang_wording_rename_profile": "Redenumiți profilul",
+  "lang_wording_common_suggestions": "Sugestii comune de formulare",
+  "lang_wording_suggestion_add": "+ Adaugă sugestie",
+  "lang_wording_suggestion_added": "Adăugat · Vizualizare",
+  "lang_wording_suggestion_conflict": "Aveți deja formulări pentru această sugestie. Examinați cuvintele existente de mai jos; nimic nu a fost înlocuit.",
+  "lang_wording_suggestion_review": "Examinați formularea existentă",
+  "lang_wording_suggestions_help": "Alegeți o sugestie pentru a adăuga cuvintele sale înrudite împreună. Examinați-le sau editați-le mai jos, apoi salvați-le."
 }

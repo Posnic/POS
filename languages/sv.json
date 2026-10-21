@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Ditt standardspråk förblir oförändrat tills du sparar formuleringsändringar.",
   "lang_wording_enter_profile_name": "Ange ett profilnamn.",
   "lang_wording_profile_actions": "Profilåtgärder",
-  "lang_wording_rename_profile": "Byt namn på profil"
+  "lang_wording_rename_profile": "Byt namn på profil",
+  "lang_wording_common_suggestions": "Vanliga formuleringsförslag",
+  "lang_wording_suggestion_add": "+ Lägg till förslag",
+  "lang_wording_suggestion_added": "Tillagd · Visa",
+  "lang_wording_suggestion_conflict": "Du har redan formuleringar för detta förslag. Granska dina befintliga ord nedan; ingenting ersattes.",
+  "lang_wording_suggestion_review": "Granska befintlig formulering",
+  "lang_wording_suggestions_help": "Välj ett förslag för att lägga till dess relaterade ord tillsammans. Granska eller redigera dem nedan och spara sedan."
 }

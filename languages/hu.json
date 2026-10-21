@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "A szokásos nyelv változatlan marad, amíg el nem menti a szövegmódosításokat.",
   "lang_wording_enter_profile_name": "Adjon meg egy profilnevet.",
   "lang_wording_profile_actions": "Profilműveletek",
-  "lang_wording_rename_profile": "Profil átnevezése"
+  "lang_wording_rename_profile": "Profil átnevezése",
+  "lang_wording_common_suggestions": "Általános szövegjavaslatok",
+  "lang_wording_suggestion_add": "+ Javaslat hozzáadása",
+  "lang_wording_suggestion_added": "Hozzáadott · Megtekintés",
+  "lang_wording_suggestion_conflict": "Erre a javaslatra már van megfogalmazása. Tekintse át az alábbiakban meglévő szavakat; semmit sem cseréltek.",
+  "lang_wording_suggestion_review": "A meglévő megfogalmazás",
+  "lang_wording_suggestions_help": "Válasszon egy javaslatot a kapcsolódó szavak összeadásához. Tekintse át vagy szerkesztse őket alább, majd mentse el."
 }

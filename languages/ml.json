@@ -5285,5 +5285,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "നിങ്ങൾ വാക്കുകളുടെ മാറ്റങ്ങൾ സംരക്ഷിക്കുന്നതുവരെ നിങ്ങളുടെ സ്റ്റാൻഡേർഡ് ഭാഷ മാറ്റമില്ലാതെ തുടരുന്നു.",
   "lang_wording_enter_profile_name": "ഒരു പ്രൊഫൈൽ പേര് നൽകുക.",
   "lang_wording_profile_actions": "പ്രൊഫൈൽ പ്രവർത്തനങ്ങൾ",
-  "lang_wording_rename_profile": "പ്രൊഫൈൽ പുനർനാമകരണം ചെയ്യുക"
+  "lang_wording_rename_profile": "പ്രൊഫൈൽ പുനർനാമകരണം ചെയ്യുക",
+  "lang_wording_common_suggestions": "സാധാരണ വാക്ക് നിർദ്ദേശങ്ങൾ",
+  "lang_wording_suggestion_add": "+ നിർദ്ദേശം ചേർക്കുക",
+  "lang_wording_suggestion_added": "ചേർത്തു · കാണുക",
+  "lang_wording_suggestion_conflict": "ഈ നിർദ്ദേശത്തിന് നിങ്ങൾക്ക് ഇതിനകം വാക്കുകളുണ്ട്. നിങ്ങളുടെ നിലവിലുള്ള വാക്കുകൾ ചുവടെ അവലോകനം ചെയ്യുക; ഒന്നും മാറ്റിസ്ഥാപിച്ചില്ല.",
+  "lang_wording_suggestion_review": "നിലവിലുള്ള പദങ്ങൾ അവലോകനം ചെയ്യുക",
+  "lang_wording_suggestions_help": "അതിന്റെ അനുബന്ധ വാക്കുകൾ ഒരുമിച്ച് ചേർക്കാൻ ഒരു നിർദ്ദേശം തിരഞ്ഞെടുക്കുക. അവയെ ചുവടെ അവലോകനം ചെയ്യുകയോ എഡിറ്റുചെയ്യുകയോ ചെയ്യുക, തുടർന്ന് സംരക്ഷിക്കുക."
 }
