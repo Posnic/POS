@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Vai atmest nesaglabātās izmaiņas un izveidot jaunu profilu?",
   "lang_wording_ui_deleting_profile": "Profila dzēšana...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profils izdzēsts. Piešķirtās filiāles tagad izmanto standarta formulējumu.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Ievadiet gan esošo vārdu, gan tā aizstāšanu."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Ievadiet gan esošo vārdu, gan tā aizstāšanu.",
+  "lang_added_replacement": "Pievienota nomaiņa",
+  "lang_published_tills_apply_this_revision_after": "Publicēts. Tills piemēro šo pārskatīšanu pēc sinhronizācijas.",
+  "lang_saved_without_branch_assignments_previousl": "Saglabāts bez filiāļu uzdevumiem. Iepriekš piešķirtās filiāles izmanto standarta formulējumu.",
+  "lang_search_phrases": "Meklēt frāzes",
+  "lang_use_word_rules": "Izmantojiet vārdu noteikumus"
 }

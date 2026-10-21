@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Hidhni ndryshimet e pa ruajtura dhe krijoni një profil të ri?",
   "lang_wording_ui_deleting_profile": "Fshirja e profilit...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profili fshihet. Degët e caktuara tani përdorin formulime standarde.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Futni fjalën ekzistuese dhe zëvendësimin e saj."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Futni fjalën ekzistuese dhe zëvendësimin e saj.",
+  "lang_added_replacement": "Shtuar zëvendësim",
+  "lang_published_tills_apply_this_revision_after": "Publikuar. Tills zbaton këtë rishikim pas sinkronizimit.",
+  "lang_saved_without_branch_assignments_previousl": "Ruhet pa detyrat e degës. Degët e caktuara më parë përdorin formulime standarde.",
+  "lang_search_phrases": "Frazat e kërkimit",
+  "lang_use_word_rules": "Përdorni rregullat e fjalëve"
 }

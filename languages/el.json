@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Απορρίψτε τις μη αποθηκευμένες αλλαγές και δημιουργήστε ένα νέο προφίλ;",
   "lang_wording_ui_deleting_profile": "Διαγραφή προφίλ...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Το προφίλ διαγράφηκε. Τα εκχωρημένα υποκαταστήματα χρησιμοποιούν τώρα τυπική διατύπωση.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Εισαγάγετε τόσο την υπάρχουσα λέξη όσο και την αντικατάστασή της."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Εισαγάγετε τόσο την υπάρχουσα λέξη όσο και την αντικατάστασή της.",
+  "lang_added_replacement": "Προστέθηκε αντικατάσταση",
+  "lang_published_tills_apply_this_revision_after": "Δημοσιεύθηκε. Μέχρι να εφαρμόσετε αυτήν την αναθεώρηση μετά το συγχρονισμό.",
+  "lang_saved_without_branch_assignments_previousl": "Αποθηκεύτηκε χωρίς αναθέσεις υποκαταστημάτων. Τα προηγουμένως εκχωρημένα υποκαταστήματα χρησιμοποιούν τυποποιημένη διατύπωση.",
+  "lang_search_phrases": "Φράσεις αναζήτησης",
+  "lang_use_word_rules": "Χρησιμοποιήστε κανόνες λέξεων"
 }

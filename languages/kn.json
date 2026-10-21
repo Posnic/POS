@@ -5267,5 +5267,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "ಉಳಿಸದ ಬದಲಾವಣೆಗಳನ್ನು ತಿರಸ್ಕರಿಸಿ ಮತ್ತು ಹೊಸ ಪ್ರೊಫೈಲ್ ರಚಿಸಬಹುದೇ?",
   "lang_wording_ui_deleting_profile": "ಪ್ರೊಫೈಲ್ ಅಳಿಸಲಾಗುತ್ತಿದೆ...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "ಪ್ರೊಫೈಲ್ ಅಳಿಸಲಾಗಿದೆ. ನಿಯೋಜಿಸಲಾದ ಶಾಖೆಗಳು ಈಗ ಪ್ರಮಾಣಿತ ಪದಗಳನ್ನು ಬಳಸುತ್ತವೆ.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಪದ ಮತ್ತು ಅದರ ಬದಲಿ ಎರಡನ್ನೂ ನಮೂದಿಸಿ."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಪದ ಮತ್ತು ಅದರ ಬದಲಿ ಎರಡನ್ನೂ ನಮೂದಿಸಿ.",
+  "lang_added_replacement": "ಬದಲಿ ಸೇರಿಸಲಾಗಿದೆ",
+  "lang_published_tills_apply_this_revision_after": "ಪ್ರಕಟಿಸಲಾಗಿದೆ. ಸಿಂಕ್ರೊನೈಸೇಶನ್ ನಂತರ ಟಿಲ್ಲುಗಳು ಈ ಪರಿಷ್ಕರಣೆಯನ್ನು ಅನ್ವಯಿಸುತ್ತದೆ.",
+  "lang_saved_without_branch_assignments_previousl": "ಶಾಖೆ ಕಾರ್ಯಯೋಜನೆಗಳಿಲ್ಲದೆ ಉಳಿಸಲಾಗಿದೆ. ಹಿಂದೆ ನಿಯೋಜಿಸಲಾದ ಶಾಖೆಗಳು ಪ್ರಮಾಣಿತ ಪದಗಳನ್ನು ಬಳಸುತ್ತವೆ.",
+  "lang_search_phrases": "ನುಡಿಗಟ್ಟುಗಳನ್ನು ಹುಡುಕಿ",
+  "lang_use_word_rules": "ಪದ ನಿಯಮಗಳನ್ನು ಬಳಸಿ"
 }

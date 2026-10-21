@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "刪除未保存的更改並創建一個新的配置文件？",
   "lang_wording_ui_deleting_profile": "正在刪除設定檔...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "已刪除設定檔。指定的分支現在使用標準詞彙。",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "同時輸入現有字詞及其替代。"
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "同時輸入現有字詞及其替代。",
+  "lang_added_replacement": "新增替代",
+  "lang_published_tills_apply_this_revision_after": "已發佈。直到同步後套用此修訂版本。",
+  "lang_saved_without_branch_assignments_previousl": "儲存不分支指派。先前指定的分支使用標準詞彙。",
+  "lang_search_phrases": "搜索短語",
+  "lang_use_word_rules": "使用單詞規則"
 }

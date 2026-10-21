@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Armi bidliet mhux salvati u toħloq profil ġdid?",
   "lang_wording_ui_deleting_profile": "It-tħassir tal-profil...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil imħassar. Il-fergħat assenjati issa jużaw kliem standard.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Daħħal kemm il-kelma eżistenti kif ukoll is-sostituzzjoni tagħha."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Daħħal kemm il-kelma eżistenti kif ukoll is-sostituzzjoni tagħha.",
+  "lang_added_replacement": "Sostituzzjoni miżjuda",
+  "lang_published_tills_apply_this_revision_after": "Ippubblikat. Tills japplikaw din ir-reviżjoni wara s-sinkronizzazzjoni.",
+  "lang_saved_without_branch_assignments_previousl": "Salvat mingħajr assenjazzjonijiet tal-fergħa. Il-fergħat assenjati qabel jużaw kliem standard.",
+  "lang_search_phrases": "Frażijiet tat-tiftix",
+  "lang_use_word_rules": "Uża regoli tal-kelma"
 }

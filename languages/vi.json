@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Hủy bỏ các thay đổi chưa được lưu và tạo hồ sơ mới?",
   "lang_wording_ui_deleting_profile": "Xóa hồ sơ...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Hồ sơ bị xóa. Các chi nhánh được chỉ định bây giờ sử dụng từ ngữ tiêu chuẩn.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Nhập cả từ hiện có và sự thay thế của nó."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Nhập cả từ hiện có và sự thay thế của nó.",
+  "lang_added_replacement": "Thêm thay thế",
+  "lang_published_tills_apply_this_revision_after": "Đã xuất bản. Cho đến khi áp dụng sửa đổi này sau khi đồng bộ hóa.",
+  "lang_saved_without_branch_assignments_previousl": "Đã lưu mà không cần gán chi nhánh. Các chi nhánh được chỉ định trước đây sử dụng từ ngữ tiêu chuẩn.",
+  "lang_search_phrases": "Cụm từ tìm kiếm",
+  "lang_use_word_rules": "Sử dụng quy tắc từ"
 }

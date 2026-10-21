@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "למחוק שינויים שלא נשמרו וליצור פרופיל חדש?",
   "lang_wording_ui_deleting_profile": "מחיקת פרופיל...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "הפרופיל נמחק. סניפים שהוקצו משתמשים כעת בניסוח סטנדרטי.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "הזן הן את המילה הקיימת והן את החלפתה."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "הזן הן את המילה הקיימת והן את החלפתה.",
+  "lang_added_replacement": "החלפה נוספת",
+  "lang_published_tills_apply_this_revision_after": "פורסם. עד להחיל גרסה זו לאחר הסנכרון.",
+  "lang_saved_without_branch_assignments_previousl": "נשמר ללא הקצאות סניף. סניפים שהוקצו בעבר משתמשים בניסוח סטנדרטי.",
+  "lang_search_phrases": "ביטויי חיפוש",
+  "lang_use_word_rules": "השתמש בכללי מילים"
 }

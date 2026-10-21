@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "저장하지 않은 변경 내용을 삭제하고 새 프로필을 만드시겠습니까?",
   "lang_wording_ui_deleting_profile": "프로필 삭제 중...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "프로필이 삭제되었습니다.지정된 지점은 이제 표준 문구를 사용합니다.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "기존 단어와 대체 단어를 모두 입력합니다."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "기존 단어와 대체 단어를 모두 입력합니다.",
+  "lang_added_replacement": "교체품 추가",
+  "lang_published_tills_apply_this_revision_after": "게시됨.이 수정 버전은 동기화 이후에도 적용됩니다.",
+  "lang_saved_without_branch_assignments_previousl": "브랜치 지정 없이 저장되었습니다.이전에 지정된 지점은 표준 문구를 사용합니다.",
+  "lang_search_phrases": "검색 구문",
+  "lang_use_word_rules": "단어 규칙 사용"
 }

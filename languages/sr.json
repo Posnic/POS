@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Odbacite nesačuvane promene i kreirate novi profil?",
   "lang_wording_ui_deleting_profile": "Brisanje profila...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil izbrisan. Dodeljene grane sada koriste standardnu formulaciju.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Unesite i postojeću reč i njenu zamenu."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Unesite i postojeću reč i njenu zamenu.",
+  "lang_added_replacement": "Dodata zamena",
+  "lang_published_tills_apply_this_revision_after": "Objavljeno. Tills primenjuje ovu reviziju nakon sinhronizacije.",
+  "lang_saved_without_branch_assignments_previousl": "Sačuvano bez zadataka grana. Prethodno dodeljene grane koriste standardnu formulaciju.",
+  "lang_search_phrases": "Pretraživanje fraza",
+  "lang_use_word_rules": "Koristite pravila reči"
 }

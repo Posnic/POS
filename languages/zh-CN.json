@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "丢弃未保存的更改并创建新的个人资料？",
   "lang_wording_ui_deleting_profile": "正在删除个人资料...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "个人资料已删除。分配的分支现在使用标准措辞。",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "输入现有单词及其替换词。"
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "输入现有单词及其替换词。",
+  "lang_added_replacement": "增加了替代品",
+  "lang_published_tills_apply_this_revision_after": "已出版。Tills 将在同步后应用此修订版。",
+  "lang_saved_without_branch_assignments_previousl": "保存时没有分支分配。先前分配的分支使用标准措辞。",
+  "lang_search_phrases": "搜索短语",
+  "lang_use_word_rules": "使用单词规则"
 }

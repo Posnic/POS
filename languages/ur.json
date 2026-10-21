@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "غیر محفوظ شدہ تبدیلیاں ضائع کریں اور نیا پروفائل بنائیں؟",
   "lang_wording_ui_deleting_profile": "پروفائل کو حذف کرنا...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "پروفائل حذف کیا گیا۔ تفویض شدہ شاخیں اب معیاری الفاظ استعمال کرتی",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "موجودہ لفظ اور اس کی متبادل دونوں درج کریں۔"
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "موجودہ لفظ اور اس کی متبادل دونوں درج کریں۔",
+  "lang_added_replacement": "متبادل شامل کیا گیا",
+  "lang_published_tills_apply_this_revision_after": "شائع ہوا۔ اس نظرثانی کو ہم آہنگی کے بعد لاگو کرتے ہیں۔",
+  "lang_saved_without_branch_assignments_previousl": "شاخ اسائنمنٹس کے بغیر محفوظ پہلے تفویض شدہ شاخیں معیاری الفاظ استعمال کرتی",
+  "lang_search_phrases": "جملے تلاش کریں",
+  "lang_use_word_rules": "لفظ کے اصول استعمال کریں"
 }

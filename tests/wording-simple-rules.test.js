@@ -28,5 +28,5 @@ test('simple screen saves rules and publishes with no profile-name or apply step
  assert.equal(doc.querySelector('#wording-advanced').hidden,true);
  assert.equal(doc.querySelector('#wording-group'),null);
  doc.querySelector('#wording-publish').click();
- assert.deepEqual(calls[0].rules,[{from:'Item',to:'Product'}]);assert.equal(calls[0].name,'Shop wording — en');assert.deepEqual(calls[1].branches,['b']);d.window.close();
+ assert.deepEqual(calls[0].rules,[{from:'Item',to:'Product'}]);assert.equal(calls[0].name,'Shop wording - en');assert.deepEqual(calls[1].branches,['b']);d.window.close();
 });

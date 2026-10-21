@@ -5279,5 +5279,10 @@
   "lang_sl_extras_help": "Datums verschijnen alleen als ze bij het product beschikbaar zijn. Aanvullende details gebruiken de bovenstaande tekstgrootte.",
   "lang_sl_text_sizes": "Tekstgroottes",
   "lang_sl_text_sizes_help": "Pas elke regel afzonderlijk aan. Groottes zijn in pixels; het voorbeeld gebruikt hetzelfde ontwerp als de afdruk.",
-  "lang_sl_type_foot": "Aanvullende details"
+  "lang_sl_type_foot": "Aanvullende details",
+  "lang_added_replacement": "Vervanging toegevoegd",
+  "lang_published_tills_apply_this_revision_after": "Gepubliceerd. Tills past deze revisie toe na synchronisatie.",
+  "lang_saved_without_branch_assignments_previousl": "Opgeslagen zonder branchetoewijzingen. Eerder toegewezen filialen gebruiken standaardformuleringen.",
+  "lang_search_phrases": "Zoektermen",
+  "lang_use_word_rules": "Gebruik woordregels"
 }

@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "जतन न केलेले बदल टाकून नवीन प्रोफाइल",
   "lang_wording_ui_deleting_profile": "प्रोफाइल हटवि",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "प्रोफाइल हटवि नियुक्त केलेल्या शाखा आता मानक",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "विद्यमान शब्द आणि त्याचे बदलण्याचे दोन्ही"
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "विद्यमान शब्द आणि त्याचे बदलण्याचे दोन्ही",
+  "lang_added_replacement": "बदलणे जोड",
+  "lang_published_tills_apply_this_revision_after": "प्रकाशित. सिंक्रोनाइझेशननंतर टिल्स हे सं",
+  "lang_saved_without_branch_assignments_previousl": "शाखा साइनमेंटशिवाय यापूर्वी नियुक्त केलेल्या शाखा मा",
+  "lang_search_phrases": "शोधा वाक्ये",
+  "lang_use_word_rules": "शब्द नियम वापरा"
 }

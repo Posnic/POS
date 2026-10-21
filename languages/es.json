@@ -5263,5 +5263,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "¿Descartar los cambios no guardados y crear un perfil nuevo?",
   "lang_wording_ui_deleting_profile": "Eliminando perfil...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Perfil eliminado. Las sucursales asignadas ahora usan una redacción estándar.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Introduzca tanto la palabra existente como la que la reemplaza."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Introduzca tanto la palabra existente como la que la reemplaza.",
+  "lang_added_replacement": "Reemplazo agregado",
+  "lang_published_tills_apply_this_revision_after": "Publicado. Hasta que se aplique esta revisión después de la sincronización.",
+  "lang_saved_without_branch_assignments_previousl": "Se guarda sin asignaciones de sucursales. Las sucursales previamente asignadas utilizan una redacción estándar.",
+  "lang_search_phrases": "Frases de búsqueda",
+  "lang_use_word_rules": "Usa reglas verbales"
 }

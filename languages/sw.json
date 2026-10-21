@@ -5267,5 +5267,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Kutupa mabadiliko yasiyohifadhiwa na uunda wasifu mpya?",
   "lang_wording_ui_deleting_profile": "Kufuta wasifu...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Wasifu uliofutwa. Matawi yaliyopewa sasa hutumia maneno ya kawaida.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Ingiza neno lililopo na ubadilishaji wake."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Ingiza neno lililopo na ubadilishaji wake.",
+  "lang_added_replacement": "Aliongeza mabadiliko",
+  "lang_published_tills_apply_this_revision_after": "Imechapishwa. Tills hutumia marekebisho haya baada ya maingiliano.",
+  "lang_saved_without_branch_assignments_previousl": "Imehifadhiwa bila kazi za tawi. Matawi iliyopewa awali hutumia maneno ya kawaida.",
+  "lang_search_phrases": "Tafuta maneno",
+  "lang_use_word_rules": "Tumia sheria za maneno"
 }

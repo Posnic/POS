@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Kassera osparade ändringar och skapa en ny profil?",
   "lang_wording_ui_deleting_profile": "Raderar profil...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil borttagen. Tilldelade grenar använder nu standardformulering.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Ange både det befintliga ordet och dess ersättning."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Ange både det befintliga ordet och dess ersättning.",
+  "lang_added_replacement": "Tillagd ersättning",
+  "lang_published_tills_apply_this_revision_after": "Publicerad. Tills tillämpar den här versionen efter synkronisering.",
+  "lang_saved_without_branch_assignments_previousl": "Sparas utan filialtilldelningar. Tidigare tilldelade grenar använder standardformulering.",
+  "lang_search_phrases": "Sökfraser",
+  "lang_use_word_rules": "Använd ordregler"
 }

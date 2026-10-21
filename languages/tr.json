@@ -5189,5 +5189,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Kaydedilmemiş değişiklikleri iptal edin ve yeni bir profil oluşturun?",
   "lang_wording_ui_deleting_profile": "Profil siliniyor...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil silindi. Atanan şubeler artık standart ifadeler kullanıyor.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Hem mevcut kelimeyi hem de yerini girin."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Hem mevcut kelimeyi hem de yerini girin.",
+  "lang_added_replacement": "Değiştirme eklendi",
+  "lang_published_tills_apply_this_revision_after": "Yayınlandı. Senkronizasyondan sonra bu revizyonu uygulayana kadar.",
+  "lang_saved_without_branch_assignments_previousl": "Şube atamaları olmadan kaydedildi. Önceden atanmış şubeler standart ifadeler kullanır.",
+  "lang_search_phrases": "Arama cümleleri",
+  "lang_use_word_rules": "Kelime kurallarını kullan"
 }

@@ -5186,5 +5186,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Farga óvistuðum breytingum og búa til nýjan prófíl?",
   "lang_wording_ui_deleting_profile": "Eyða prófíl...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Prófíl eytt. Úthlutað útibú nota nú venjulegt orðalag.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Sláðu inn bæði núverandi orð og skipti þess."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Sláðu inn bæði núverandi orð og skipti þess.",
+  "lang_added_replacement": "Bætt við endurnýjun",
+  "lang_published_tills_apply_this_revision_after": "Birt. Tills beitir þessari endurskoðun eftir samstillingu.",
+  "lang_saved_without_branch_assignments_previousl": "Vistað án úthlutunar á útibúum. Áður úthlutað útibú nota staðlað orðalag.",
+  "lang_search_phrases": "Leita orðasambönd",
+  "lang_use_word_rules": "Notaðu orðareglur"
 }

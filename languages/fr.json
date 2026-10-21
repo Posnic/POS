@@ -5267,5 +5267,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "Ignorer les modifications non enregistrées et créer un nouveau profil ?",
   "lang_wording_ui_deleting_profile": "Supprimer le profil...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "Profil supprimé. Les succursales attribuées utilisent désormais un libellé standard.",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Entrez à la fois le mot existant et son remplacement."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "Entrez à la fois le mot existant et son remplacement.",
+  "lang_added_replacement": "Remplacement ajouté",
+  "lang_published_tills_apply_this_revision_after": "Publié. Les Tills appliquent cette révision après la synchronisation.",
+  "lang_saved_without_branch_assignments_previousl": "Enregistré sans attribution de branche. Les succursales précédemment attribuées utilisent un libellé standard.",
+  "lang_search_phrases": "Expressions de recherche",
+  "lang_use_word_rules": "Utilisez des règles relatives aux mots"
 }

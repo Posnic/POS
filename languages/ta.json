@@ -5271,5 +5271,10 @@
   "lang_wording_ui_discard_unsaved_changes_and_create_a_new_profile": "சேமிக்கப்படாத மாற்றங்களை நிராகரித்து புதிய சுயவிவரத்தை உருவாக்குமா?",
   "lang_wording_ui_deleting_profile": "சுயவிவரத்தை நீக்குதல்...",
   "lang_wording_ui_profile_deleted_assigned_branches_now_use_standard_wording": "சுயவிவரம் நீக்கப்பட்டது. ஒதுக்கப்பட்ட கிளைகள் இப்போது நிலையான சொற்களைப் பயன்படுத்த",
-  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "தற்போதுள்ள சொல் மற்றும் அதன் மாற்று இரண்டையும் உள்ளிடவும்."
+  "lang_wording_ui_enter_both_the_existing_word_and_its_replacement": "தற்போதுள்ள சொல் மற்றும் அதன் மாற்று இரண்டையும் உள்ளிடவும்.",
+  "lang_added_replacement": "மாற்று சேர்க்கப்பட்டது",
+  "lang_published_tills_apply_this_revision_after": "வெளியிடப்பட்டது. ஒத்திசைவுக்குப் பிறகு இந்த திருத்தத்தை டில்ல்கள் பயன்படுத்துகின்றன.",
+  "lang_saved_without_branch_assignments_previousl": "கிளை பணிகள் இல்லாமல் சேமிக்கப்பட்டது. முன்னர் ஒதுக்கப்பட்ட கிளைகள் நிலையான சொற்களைப் பயன்படுத்துகின்றன",
+  "lang_search_phrases": "சொற்றொடர்களைத் தே",
+  "lang_use_word_rules": "சொல் விதிகளைப் பயன்படுத்தவும்"
 }
