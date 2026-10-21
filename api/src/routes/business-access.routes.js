@@ -433,7 +433,7 @@ router.get(
     res.json(
       await require('../services/business-insights').readBusinessInsights(
         req.db,
-        await req.businessAccess.contextFor(req.businessIdentity.user),
+        await req.businessAccess.contextFor(req.businessIdentity.user, { reporting: true }),
         req.query
       )
     )
