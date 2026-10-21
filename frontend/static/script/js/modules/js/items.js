@@ -984,6 +984,7 @@ PosnicPro.items = {
             spice_choice: PosnicPro.itemPlate.payload().spice_choice,
             negative_stock: $('#item_negative_stock').is(':checked'),
             item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
+            parcel_details: Object.fromEntries(['weightKg','lengthCm','widthCm','heightCm'].map(function(k){return [k,$('#parcel_'+k).val()||null];})),
             open_price: $('#item_open_price').is(':checked'),
             icon: $('#item_icon').val() || PosnicPro.items._iconSuggested || '',
             tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
@@ -1275,6 +1276,7 @@ PosnicPro.items = {
                     spice_choice: PosnicPro.itemPlate.payload().spice_choice,
                     negative_stock: $('#item_negative_stock').is(':checked'),
                     item_weight_machine_based: $('#item_weight_machine_based').is(':checked'),
+            parcel_details: Object.fromEntries(['weightKg','lengthCm','widthCm','heightCm'].map(function(k){return [k,$('#parcel_'+k).val()||null];})),
                     open_price: $('#item_open_price').is(':checked'),
                     icon: $('#item_icon').val() || PosnicPro.items._iconSuggested || '',
                     tile_color: $('#item_tile_color').val() || PosnicPro.autoTile($('#items_name').val()).color,
@@ -1833,6 +1835,7 @@ PosnicPro.items = {
                 $('#item_prep_minutes').val(data.prep_minutes || '');
                 PosnicPro.itemPlate.set(data);
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
+                ['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){$('#parcel_'+k).val(data.parcel_details && data.parcel_details[k] != null ? data.parcel_details[k] : '');});
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
                 $('#item_is_service').prop('checked', data.item_kind === 'service');
@@ -2738,6 +2741,7 @@ PosnicPro.items = {
                 $('#item_prep_minutes').val(data.prep_minutes || '');
                 PosnicPro.itemPlate.set(data);
                 (data.negative_stock === true) ? $('#item_negative_stock').prop('checked', true) : $('#item_negative_stock').prop("checked", false);
+                ['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){$('#parcel_'+k).val(data.parcel_details && data.parcel_details[k] != null ? data.parcel_details[k] : '');});
                 (data.item_weight_machine_based === true) ? $('#item_weight_machine_based').prop('checked', true) : $('#item_weight_machine_based').prop("checked", false);
                 (data.open_price === true) ? $('#item_open_price').prop('checked', true) : $('#item_open_price').prop("checked", false);
                 $('#item_is_service').prop('checked', data.item_kind === 'service');
@@ -3929,6 +3933,7 @@ PosnicPro.items = {
     },
 
     itemClearForm: function () {
+        ['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){$('#parcel_'+k).val('');});
         PosnicPro.itemTranslations.reset();
         $('.error_item').css('display', 'none');
         $('#item-display-preview').html('');

@@ -15,6 +15,9 @@
     "sales",
     "salesReport",
     "exportReport",
+    "connector",
+    "document",
+    "download",
   ]);
   function mount(options) {
     var container = options.container,
@@ -63,7 +66,7 @@
         if (
           !methods.has(message.method) ||
           pending.size >= 8 ||
-          new TextEncoder().encode(JSON.stringify(message)).length > 65536
+          new TextEncoder().encode(JSON.stringify(message)).length > (["connector", "document", "download"].includes(message.method) ? 4 * 1024 * 1024 : 65536)
         )
           throw new Error("Unsupported extension request");
         pending.add(message.id);
@@ -139,5 +142,41 @@
       },
     };
   }
-  host.PosnicExtensionFrame = { mount: mount };
+  function sanitizeDocument(html) {
+    if (typeof html !== 'string' || html.length > 2 * 1024 * 1024) throw Error('Document is too large.');
+    var template=document.createElement('template');template.innerHTML=html;
+    var tags=new Set(['STYLE','DIV','SPAN','P','BR','B','STRONG','I','EM','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','COLGROUP','COL','IMG','H1','H2','H3','HR']);
+    var attrs=new Set(['class','style','width','height','colspan','rowspan','align','valign','border','cellpadding','cellspacing','alt']);
+    template.content.querySelectorAll('*').forEach(function(node){
+      if(!tags.has(node.tagName)){node.remove();return;}
+      Array.from(node.attributes).forEach(function(attr){
+        if(attr.name==='src'&&node.tagName==='IMG'&&/^data:image\/(?:png|jpeg|gif|webp);base64,[a-zA-Z0-9+/=\s]+$/.test(attr.value))return;
+        if(!attrs.has(attr.name))node.removeAttribute(attr.name);
+      });
+    });
+    return template.innerHTML;
+  }
+  function showDocument(value) {
+    var safe=sanitizeDocument(value.html),nonce=crypto.randomUUID().replace(/-/g,''),overlay=document.createElement('div'),bar=document.createElement('div'),frame=document.createElement('iframe');
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-label',value.title||'Document preview');overlay.setAttribute('aria-modal','true');
+    overlay.style.cssText='position:fixed;inset:16px;z-index:100000;background:white;box-shadow:0 0 0 40px #0008;display:flex;flex-direction:column;padding:16px;gap:12px';
+    var title=document.createElement('strong');title.textContent=String(value.title||'Document preview')+' · '+String(value.orderId||'');bar.appendChild(title);
+    var print=document.createElement('button');print.textContent='Print';print.style.margin='0 12px';print.onclick=function(){frame.contentWindow.postMessage({type:'posnic-print-document'},'*');};bar.appendChild(print);
+    var close=document.createElement('button');close.textContent='Close preview';close.onclick=function(){overlay.remove();};bar.appendChild(close);
+    frame.title=value.title||'Document preview';frame.setAttribute('sandbox','allow-scripts allow-modals');frame.setAttribute('referrerpolicy','no-referrer');frame.style.cssText='width:100%;flex:1;border:1px solid #ddd';
+    var policy="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'nonce-"+nonce+"'; connect-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
+    frame.srcdoc='<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+policy+'"></head><body>'+safe+'<script nonce="'+nonce+'">window.addEventListener("message",function(e){if(e.source===parent&&e.data&&e.data.type==="posnic-print-document")window.print();});</script></body></html>';
+    overlay.appendChild(bar);overlay.appendChild(frame);document.body.appendChild(overlay);close.focus();
+    return {opened:true};
+  }
+  function downloadDocument(value) {
+    if (value.format !== 'xlsx' || typeof value.filename !== 'string' || !/^[a-zA-Z0-9_-]{1,100}\.xlsx$/.test(value.filename) || typeof value.base64 !== 'string' || value.base64.length > 4 * 1024 * 1024 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value.base64)) throw Error('Invalid document download.');
+    var binary = atob(value.base64), bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    var url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })), link = document.createElement('a');
+    link.href = url; link.download = value.filename; document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+    return { downloaded: true };
+  }
+  host.PosnicExtensionFrame = { mount: mount, sanitizeDocument: sanitizeDocument, showDocument: showDocument, downloadDocument: downloadDocument };
 })(window);
