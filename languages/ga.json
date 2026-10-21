@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Fanann do theanga chaighdeánach gan athrú go dtí go sábhálann tú athruithe",
   "lang_wording_enter_profile_name": "Cuir isteach ainm próifíle.",
   "lang_wording_profile_actions": "Gníomhartha prói",
-  "lang_wording_rename_profile": "Athainmnigh próifíl"
+  "lang_wording_rename_profile": "Athainmnigh próifíl",
+  "lang_wording_common_suggestions": "Moltaí foclaíochta coitianta",
+  "lang_wording_suggestion_add": "+ Cuir moladh leis",
+  "lang_wording_suggestion_added": "Cuireadh leis · Féach",
+  "lang_wording_suggestion_conflict": "Tá foclaíocht agat cheana féin don mholadh seo. Déan athbhreithniú ar na focail atá ann cheana thíos; níor ath",
+  "lang_wording_suggestion_review": "Athbhreithniú a dhéanamh ar",
+  "lang_wording_suggestions_help": "Roghnaigh moladh chun a chuid focal gaolmhara a chur le chéile. Déan athbhreithniú nó cuir in eagar thíos iad, ansin"
 }

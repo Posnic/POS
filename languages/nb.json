@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Standardspråket ditt forblir uendret til du lagrer ordlydendringer.",
   "lang_wording_enter_profile_name": "Skriv inn et profilnavn.",
   "lang_wording_profile_actions": "Profilhandlinger",
-  "lang_wording_rename_profile": "Gi nytt navn til profil"
+  "lang_wording_rename_profile": "Gi nytt navn til profil",
+  "lang_wording_common_suggestions": "Vanlige formuleringsforslag",
+  "lang_wording_suggestion_add": "+ Legg til forslag",
+  "lang_wording_suggestion_added": "Lagt til · Vis",
+  "lang_wording_suggestion_conflict": "Du har allerede ordlyd for dette forslaget. Gjennomgå dine eksisterende ord nedenfor; ingenting ble erstattet.",
+  "lang_wording_suggestion_review": "Gjennomgå eksisterende ordlyd",
+  "lang_wording_suggestions_help": "Velg et forslag for å legge til relaterte ord sammen. Gjennomgå eller rediger dem nedenfor, og lagre deretter."
 }

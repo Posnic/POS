@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "在您保存措辞更改之前，您的标准语言将保持不变。",
   "lang_wording_enter_profile_name": "输入配置文件名称。",
   "lang_wording_profile_actions": "配置文件操作",
-  "lang_wording_rename_profile": "重命名个人资料"
+  "lang_wording_rename_profile": "重命名个人资料",
+  "lang_wording_common_suggestions": "常用措辞建议",
+  "lang_wording_suggestion_add": "+ 添加建议",
+  "lang_wording_suggestion_added": "已添加·查看",
+  "lang_wording_suggestion_conflict": "你已经有了这个建议的措辞。在下面查看您的现有词语；没有替换任何内容。",
+  "lang_wording_suggestion_review": "查看现有措辞",
+  "lang_wording_suggestions_help": "选择建议将其相关词汇在一起。在下面查看或编辑它们，然后保存。"
 }

@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "જ્યાં સુધી તમે શબ્દોમાં ફેરફારો સાચવો ત્યાં સુધી તમારી માનક ભાષા યથાવત રહે છે",
   "lang_wording_enter_profile_name": "પ્રોફાઇલ નામ દાખલ કરો.",
   "lang_wording_profile_actions": "પ્રોફાઇલ ક્રિયાઓ",
-  "lang_wording_rename_profile": "પ્રોફાઇલનું નામ બદલો"
+  "lang_wording_rename_profile": "પ્રોફાઇલનું નામ બદલો",
+  "lang_wording_common_suggestions": "સામાન્ય શબ્દસમૂહ સૂચનો",
+  "lang_wording_suggestion_add": "+ સૂચન ઉમેરો",
+  "lang_wording_suggestion_added": "ઉમેરાયેલ · જુઓ",
+  "lang_wording_suggestion_conflict": "તમારી પાસે આ સૂચન માટે પહેલેથી જ શબ્દો છે. નીચે તમારા હાલના શબ્દોની સમીક્ષા કરો; કંઈ બદલવામાં આવ્યું નથી.",
+  "lang_wording_suggestion_review": "હાલના શબ્દની સમીક્ષા કરો",
+  "lang_wording_suggestions_help": "તેના સંબંધિત શબ્દોને એકસાથે ઉમેરવા માટે સૂચન પસંદ કરો. નીચે તેમની સમીક્ષા કરો અથવા સંપાદિત કરો, પછી સાચવો."
 }

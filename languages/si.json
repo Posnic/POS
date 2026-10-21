@@ -5285,5 +5285,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "ඔබ වචන වෙනස් කිරීම් සුරැකෙන තුරු ඔබේ සම්මත භාෂාව නොවෙනස්ව පවතී.",
   "lang_wording_enter_profile_name": "පැතිකඩ නමක් ඇතුළත් කරන්න.",
   "lang_wording_profile_actions": "පැතිකඩ ක්රියාවන්",
-  "lang_wording_rename_profile": "පැතිකඩ නැවත නම් කරන්න"
+  "lang_wording_rename_profile": "පැතිකඩ නැවත නම් කරන්න",
+  "lang_wording_common_suggestions": "පොදු වචන යෝජනා",
+  "lang_wording_suggestion_add": "+ යෝජනාවක් එක් කරන්න",
+  "lang_wording_suggestion_added": "එකතු කරන ලදි · බලන්න",
+  "lang_wording_suggestion_conflict": "ඔබ දැනටමත් මෙම යෝජනාව සඳහා වචන තිබේ. ඔබගේ පවතින වචන පහත සමාලෝචනය කරන්න; කිසිවක් ප්රතිස්ථාපනය නොකෙරිණි.",
+  "lang_wording_suggestion_review": "පවතින වචන සමාලෝචනය කරන්න",
+  "lang_wording_suggestions_help": "එහි අදාළ වචන එකට එකතු කිරීමට යෝජනාවක් තෝරන්න. ඒවා පහත සමාලෝචනය කරන්න හෝ සංස්කරණය කරන්න, ඉන්පසු සුරකින්න."
 }

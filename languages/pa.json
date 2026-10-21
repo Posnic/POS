@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "ਤੁਹਾਡੀ ਮਿਆਰੀ ਭਾਸ਼ਾ ਉਦੋਂ ਤੱਕ ਤਬਦੀਲੀ ਨਹੀਂ ਰਹਿੰਦੀ ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਸ਼ਬਦਾਵਲੀ",
   "lang_wording_enter_profile_name": "ਇੱਕ ਪ੍ਰੋਫਾਈਲ ਨਾਮ ਦਰਜ ਕਰੋ।",
   "lang_wording_profile_actions": "ਪ੍ਰੋਫਾਈਲ ਕਾਰਵਾਈਆਂ",
-  "lang_wording_rename_profile": "ਪ੍ਰੋਫਾਈਲ ਦਾ ਨਾਮ ਬਦਲੋ"
+  "lang_wording_rename_profile": "ਪ੍ਰੋਫਾਈਲ ਦਾ ਨਾਮ ਬਦਲੋ",
+  "lang_wording_common_suggestions": "ਆਮ ਸ਼ਬਦਾਂ ਦੇ ਸੁਝਾਅ",
+  "lang_wording_suggestion_add": "+ ਸੁਝਾਅ ਸ਼ਾਮਲ ਕਰੋ",
+  "lang_wording_suggestion_added": "ਜੋੜਿਆ ਗਿਆ · ਵੇਖੋ",
+  "lang_wording_suggestion_conflict": "ਤੁਹਾਡੇ ਕੋਲ ਪਹਿਲਾਂ ਹੀ ਇਸ ਸੁਝਾਅ ਲਈ ਸ਼ਬਦ ਹਨ. ਹੇਠਾਂ ਆਪਣੇ ਮੌਜੂਦਾ ਸ਼ਬਦਾਂ ਦੀ ਸਮੀਖਿਆ ਕਰੋ; ਕੁਝ ਵੀ ਬਦਲਿਆ ਨਹੀਂ ਗਿਆ.",
+  "lang_wording_suggestion_review": "ਮੌਜੂਦਾ ਸ਼ਬਦਾਂ ਦੀ ਸਮੀਖਿਆ",
+  "lang_wording_suggestions_help": "ਇਸਦੇ ਸੰਬੰਧਿਤ ਸ਼ਬਦਾਂ ਨੂੰ ਇਕੱਠੇ ਜੋੜਨ ਲਈ ਇੱਕ ਸੁਝਾਅ ਚੁਣੋ। ਹੇਠਾਂ ਉਹਨਾਂ ਦੀ ਸਮੀਖਿਆ ਕਰੋ ਜਾਂ ਸੰਪਾਦਿਤ ਕਰੋ, ਫਿਰ ਸੁਰੱਖਿਅਤ ਕਰੋ।"
 }

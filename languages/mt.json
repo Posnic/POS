@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Il-lingwa standard tiegħek tibqa' l-istess sakemm tiffranka l-bidliet fil-kliem.",
   "lang_wording_enter_profile_name": "Daħħal isem tal-profil.",
   "lang_wording_profile_actions": "Azzjonijiet tal-profil",
-  "lang_wording_rename_profile": "Semmi mill-ġdid il-profil"
+  "lang_wording_rename_profile": "Semmi mill-ġdid il-profil",
+  "lang_wording_common_suggestions": "Suġġerimenti ta' kliem komuni",
+  "lang_wording_suggestion_add": "+ Żid suġġeriment",
+  "lang_wording_suggestion_added": "Miżjud · Ara",
+  "lang_wording_suggestion_conflict": "Diġà għandek kliem għal dan is-suġġeriment. Irrevedi l-kliem eżistenti tiegħek hawn taħt; xejn ma ġie sostitwit.",
+  "lang_wording_suggestion_review": "Reviżjoni tal-kliem eżistenti",
+  "lang_wording_suggestions_help": "Agħżel suġġeriment biex iżżid il-kliem relatat tiegħu flimkien. Irrevedi jew editjahom hawn taħt, imbagħad issalva."
 }

@@ -5281,5 +5281,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Su idioma estándar permanecerá inalterado hasta que guarde los cambios de redacción.",
   "lang_wording_enter_profile_name": "Introduzca un nombre de perfil.",
   "lang_wording_profile_actions": "Acciones de perfil",
-  "lang_wording_rename_profile": "Cambiar el nombre del perfil"
+  "lang_wording_rename_profile": "Cambiar el nombre del perfil",
+  "lang_wording_common_suggestions": "Sugerencias de redacción comunes",
+  "lang_wording_suggestion_add": "+ Añadir sugerencia",
+  "lang_wording_suggestion_added": "Añadido · Ver",
+  "lang_wording_suggestion_conflict": "Ya tienes la redacción de esta sugerencia. Revisa las palabras existentes a continuación; no se reemplazó nada.",
+  "lang_wording_suggestion_review": "Revisa la redacción actual",
+  "lang_wording_suggestions_help": "Elige una sugerencia para sumar sus palabras relacionadas. Revísalas o edítalas a continuación y, a continuación, guárdalas."
 }

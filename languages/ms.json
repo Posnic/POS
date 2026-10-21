@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Bahasa standard anda kekal tidak berubah sehingga anda menyimpan perubahan perkataan.",
   "lang_wording_enter_profile_name": "Masukkan nama profil.",
   "lang_wording_profile_actions": "Tindakan profil",
-  "lang_wording_rename_profile": "Namakan semula profil"
+  "lang_wording_rename_profile": "Namakan semula profil",
+  "lang_wording_common_suggestions": "Cadangan perkataan biasa",
+  "lang_wording_suggestion_add": "+ Tambah cadangan",
+  "lang_wording_suggestion_added": "Ditambah · Lihat",
+  "lang_wording_suggestion_conflict": "Anda sudah mempunyai kata-kata untuk cadangan ini. Semak kata-kata sedia ada anda di bawah; tiada apa yang diganti.",
+  "lang_wording_suggestion_review": "Semak kata-kata sedia ada",
+  "lang_wording_suggestions_help": "Pilih cadangan untuk menambah kata-kata yang berkaitan bersama-sama. Semak atau edit di bawah, kemudian simpan."
 }

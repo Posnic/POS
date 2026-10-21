@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Вашиот стандарден јазик останува непроменет додека не ги зачувате промените во формулацијата.",
   "lang_wording_enter_profile_name": "Внесете име на профилот.",
   "lang_wording_profile_actions": "Акции на профилот",
-  "lang_wording_rename_profile": "Преименувајте го профилот"
+  "lang_wording_rename_profile": "Преименувајте го профилот",
+  "lang_wording_common_suggestions": "Вообичаени предлози за формулација",
+  "lang_wording_suggestion_add": "+ Додај предлог",
+  "lang_wording_suggestion_added": "Додадено · Погледнете",
+  "lang_wording_suggestion_conflict": "Веќе имате формулација за овој предлог. Прегледајте ги вашите постоечки зборови подолу; ништо не беше заменето.",
+  "lang_wording_suggestion_review": "Прегледајте ги постоечките текстови",
+  "lang_wording_suggestions_help": "Изберете предлог за да ги додадете неговите поврзани зборови заедно. Прегледајте ги или уредете ги подолу, а потоа зачувајте."
 }

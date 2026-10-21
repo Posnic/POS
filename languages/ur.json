@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "جب تک آپ الفاظ کی تبدیلیاں محفوظ نہ کریں آپ کی معیاری زبان میں کوئی تبدیلی تبدیل",
   "lang_wording_enter_profile_name": "پروفائل کا نام درج کریں۔",
   "lang_wording_profile_actions": "پروفائل کے اقدامات",
-  "lang_wording_rename_profile": "پروفائل کا نام تبدیل کریں"
+  "lang_wording_rename_profile": "پروفائل کا نام تبدیل کریں",
+  "lang_wording_common_suggestions": "عام الفاظ کی تجاویز",
+  "lang_wording_suggestion_add": "+ تجویز شامل کریں",
+  "lang_wording_suggestion_added": "شامل کیا گیا · دیکھیں",
+  "lang_wording_suggestion_conflict": "آپ کے پاس پہلے ہی اس تجویز کے لئے الفاظ موجود ہیں۔ ذیل میں اپنے موجودہ الفاظ کا جائزہ لیں۔ کچھ بھی تبدیل نہیں کیا گیا",
+  "lang_wording_suggestion_review": "موجودہ الفاظ کا نظر",
+  "lang_wording_suggestions_help": "اس کے متعلقہ الفاظ کو ایک ساتھ شامل کرنے کے لئے ایک تجویز کا انتخاب کریں۔ ذیل میں ان کا جائزہ یا ترمیم کریں، پھر محفوظ کریں۔"
 }

@@ -5285,5 +5285,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Ihre Standardsprache bleibt unverändert, bis Sie die Änderungen am Wortlaut speichern.",
   "lang_wording_enter_profile_name": "Geben Sie einen Profilnamen ein.",
   "lang_wording_profile_actions": "Aktionen im Profil",
-  "lang_wording_rename_profile": "Profil umbenennen"
+  "lang_wording_rename_profile": "Profil umbenennen",
+  "lang_wording_common_suggestions": "Allgemeine Formulierungsvorschläge",
+  "lang_wording_suggestion_add": "+ Vorschlag hinzufügen",
+  "lang_wording_suggestion_added": "Hinzugefügt · Ansehen",
+  "lang_wording_suggestion_conflict": "Sie haben bereits einen Wortlaut für diesen Vorschlag. Überprüfen Sie Ihre vorhandenen Wörter unten. Nichts wurde ersetzt.",
+  "lang_wording_suggestion_review": "Überprüfen Sie den vorhandenen Wortlaut",
+  "lang_wording_suggestions_help": "Wählen Sie einen Vorschlag aus, um die zugehörigen Wörter zusammenzufügen. Überprüfe oder bearbeite sie unten und speichere sie dann."
 }

@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Ngôn ngữ tiêu chuẩn của bạn không thay đổi cho đến khi bạn lưu các thay đổi từ ngữ.",
   "lang_wording_enter_profile_name": "Nhập tên hồ sơ.",
   "lang_wording_profile_actions": "Hành động hồ sơ",
-  "lang_wording_rename_profile": "Đổi tên hồ sơ"
+  "lang_wording_rename_profile": "Đổi tên hồ sơ",
+  "lang_wording_common_suggestions": "Gợi ý từ ngữ phổ biến",
+  "lang_wording_suggestion_add": "+ Thêm gợi ý",
+  "lang_wording_suggestion_added": "Đã thêm · Xem",
+  "lang_wording_suggestion_conflict": "Bạn đã có từ ngữ cho đề xuất này. Xem lại các từ hiện có của bạn bên dưới; không có gì được thay thế.",
+  "lang_wording_suggestion_review": "Xem lại từ ngữ hiện có",
+  "lang_wording_suggestions_help": "Chọn một gợi ý để thêm các từ liên quan của nó lại với nhau. Xem lại hoặc chỉnh sửa chúng bên dưới, sau đó lưu lại."
 }

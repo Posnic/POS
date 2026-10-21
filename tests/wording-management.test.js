@@ -54,7 +54,7 @@ test('single accessible branch is implicit when saving, while multiple branches 
 test('deleting the last profile returns to create-only state and cancel does not recreate it',()=>{
  const {dom,q,requests}=setup();q('#wording-delete').click();q('#wording-delete-yes').click();
  assert.ok(q('#wording-create'));assert.equal(q('#wording-publish'),null);assert.equal(q('#wording-tab-advanced'),null);assert.equal(q('#wording-profile-title'),null);
- const count=requests.length;q('#wording-create').click();q('#wording-profile-save').click();assert.equal(requests.length,count);assert.match(q('#wording-notice').textContent,/name/);
+ const count=requests.length;q('#wording-create').click();q('#wording-profile-save').click();assert.equal(requests.length,count);assert.match(q('#wording-form-notice').textContent,/name/);
  q('#wording-profile-cancel').click();assert.ok(q('#wording-create'));assert.equal(requests.length,count);dom.window.close();
 });
 
@@ -69,4 +69,30 @@ test('renaming and duplicating an empty profile omit the blank editor row',()=>{
  q('#wording-rename').click();q('#wording-name').value='Empty';q('#wording-profile-save').click();
  assert.deepEqual(requests.at(-1).rules,[]);
  q('#wording-duplicate').click();q('#wording-profile-save').click();assert.deepEqual(requests.at(-1).rules,[]);dom.window.close();
+});
+
+test('profile dialogs preserve unsaved wording when cancelled',()=>{
+ const {dom,q,event,requests}=setup();q('[data-rule][data-field="to"]').value='Goods';event('[data-rule][data-field="to"]','input');
+ q('#wording-manage').click();assert.ok(q('#wording-manager').hasAttribute('open'));
+ q('#wording-rename').click();assert.equal(q('[data-rule][data-field="to"]').value,'Goods');
+ q('#wording-profile-cancel').click();assert.equal(q('#wording-name'),null);assert.equal(q('[data-rule][data-field="to"]').value,'Goods');
+ assert.equal(requests.filter(x=>typeof x==='object').length,0);dom.window.close();
+});
+
+test('suggestions add related forms once without publishing and preserve existing custom wording',()=>{
+ const {dom,q,event,requests}=setup();q('[data-suggestion="0"]').click();
+ assert.equal(dom.window.document.querySelectorAll('[data-rule][data-field="from"]').length,2);
+ assert.match(q('[data-suggestion="0"]').textContent,/Added/);q('[data-suggestion="0"]').click();
+ assert.equal(dom.window.document.querySelectorAll('[data-rule][data-field="from"]').length,2);
+ q('[data-suggestion="1"]').click();assert.equal(dom.window.document.querySelectorAll('[data-rule][data-field="from"]').length,2);
+ q('[data-rule="0"][data-field="to"]').value='Goods';event('[data-rule="0"][data-field="to"]','input');q('[data-suggestion="0"]').click();
+ assert.equal(q('[data-rule="0"][data-field="to"]').value,'Goods');assert.match(q('#wording-notice').textContent,/nothing was replaced/);
+ q('[data-suggestion="2"]').click();assert.equal(dom.window.document.querySelectorAll('[data-rule][data-field="from"]').length,5);
+ assert.equal(requests.filter(x=>typeof x==='object').length,0);assert.equal(q('[data-rule][data-field="from"]').getAttribute('list'),'wording-known-words');
+ dom.window.close();
+});
+
+test('English suggestions are not inserted into a different base language',()=>{
+ const {dom,q}=setup();q('#wording-new').click();q('#wording-name').value='Tamil';q('#wording-create-locale').value='ta';q('#wording-profile-save').click();
+ assert.equal(q('#wording-suggestions').hidden,true);assert.equal(q('[data-suggestion]'),null);dom.window.close();
 });

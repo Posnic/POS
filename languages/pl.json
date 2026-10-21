@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Standardowy język pozostaje niezmieniony do momentu zapisania zmian w sformułowaniu.",
   "lang_wording_enter_profile_name": "Wprowadź nazwę profilu.",
   "lang_wording_profile_actions": "Działania profilowe",
-  "lang_wording_rename_profile": "Zmień nazwę profilu"
+  "lang_wording_rename_profile": "Zmień nazwę profilu",
+  "lang_wording_common_suggestions": "Wspólne sugestie sformułowania",
+  "lang_wording_suggestion_add": "+ Dodaj sugestię",
+  "lang_wording_suggestion_added": "Dodano · Wyświetl",
+  "lang_wording_suggestion_conflict": "Masz już sformułowanie tej sugestii. Przejrzyj swoje istniejące słowa poniżej; nic nie zostało zastąpione.",
+  "lang_wording_suggestion_review": "Przejrzyj istniejące sformułowanie",
+  "lang_wording_suggestions_help": "Wybierz sugestię, aby dodać powiązane słowa razem. Przejrzyj lub edytuj je poniżej, a następnie zapisz."
 }

@@ -5285,5 +5285,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Lugha yako ya kawaida inabadilika hadi utakapohifadhi mabadiliko ya maneno.",
   "lang_wording_enter_profile_name": "Ingiza jina la wasifu.",
   "lang_wording_profile_actions": "Vitendo vya wasifu",
-  "lang_wording_rename_profile": "Badilisha jina la wasifu"
+  "lang_wording_rename_profile": "Badilisha jina la wasifu",
+  "lang_wording_common_suggestions": "Maoni ya kawaida ya maneno",
+  "lang_wording_suggestion_add": "+ Ongeza mapendekezo",
+  "lang_wording_suggestion_added": "Aliongezwa · Tazama",
+  "lang_wording_suggestion_conflict": "Tayari una maneno ya mapendekezo hili. Pitia maneno yako yaliyopo chini; hakuna kitu kilichobadilishwa.",
+  "lang_wording_suggestion_review": "Tathmini maneno yaliyopo",
+  "lang_wording_suggestions_help": "Chagua pendekezo la kuongeza maneno yake yanayohusiana pamoja. Pigia au uhariri hapa chini, kisha hifadhi."
 }

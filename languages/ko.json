@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "문구 변경 내용을 저장할 때까지 표준 언어는 변경되지 않습니다.",
   "lang_wording_enter_profile_name": "프로필 이름을 입력합니다.",
   "lang_wording_profile_actions": "프로필 작업",
-  "lang_wording_rename_profile": "프로필 이름 변경"
+  "lang_wording_rename_profile": "프로필 이름 변경",
+  "lang_wording_common_suggestions": "일반적인 표현 제안",
+  "lang_wording_suggestion_add": "+ 제안 추가",
+  "lang_wording_suggestion_added": "추가됨 · 보기",
+  "lang_wording_suggestion_conflict": "이 제안에 대한 문구가 이미 있습니다.아래에서 기존 단어를 검토하세요. 대체된 단어는 없습니다.",
+  "lang_wording_suggestion_review": "기존 문구를 검토하세요.",
+  "lang_wording_suggestions_help": "제안을 선택하여 관련 단어를 함께 추가하세요.아래에서 검토하거나 수정한 다음 저장하세요."
 }

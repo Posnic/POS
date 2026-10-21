@@ -5285,5 +5285,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "ภาษามาตรฐานของคุณจะไม่เปลี่ยนแปลงจนกว่าคุณจะบันทึกการเปลี่ยนแปลงคำ",
   "lang_wording_enter_profile_name": "ป้อนชื่อโปรไฟล์",
   "lang_wording_profile_actions": "การกระทำโปรไฟล์",
-  "lang_wording_rename_profile": "เปลี่ยนชื่อโปรไฟล์"
+  "lang_wording_rename_profile": "เปลี่ยนชื่อโปรไฟล์",
+  "lang_wording_common_suggestions": "คำแนะนำถ้อยคำทั่วไป",
+  "lang_wording_suggestion_add": "+ เพิ่มคำแนะนำ",
+  "lang_wording_suggestion_added": "เพิ่มเข้ามา · ดู",
+  "lang_wording_suggestion_conflict": "คุณมีถ้อยคำสำหรับข้อเสนอแนะนี้แล้วตรวจสอบคำที่มีอยู่ด้านล่าง ไม่มีอะไรถูกแทนที่",
+  "lang_wording_suggestion_review": "ทบทวนคำที่มีอยู่",
+  "lang_wording_suggestions_help": "เลือกข้อเสนอแนะเพื่อเพิ่มคำที่เกี่ยวข้องเข้าด้วยกันตรวจสอบหรือแก้ไขด้านล่างจากนั้นบันทึก"
 }

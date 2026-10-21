@@ -5207,5 +5207,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "আপনি শব্দ পরিবর্তনগুলি সংরক্ষণ না করা পর্যন্ত আপনার স্ট্যান্ডার্ড ভাষা অপরি",
   "lang_wording_enter_profile_name": "একটি প্রোফাইল নাম লিখুন।",
   "lang_wording_profile_actions": "প্রোফাইল কর্ম",
-  "lang_wording_rename_profile": "প্রোফাইলের নাম পরিবর্তন করুন"
+  "lang_wording_rename_profile": "প্রোফাইলের নাম পরিবর্তন করুন",
+  "lang_wording_common_suggestions": "সাধারণ শব্দ পরামর্শ",
+  "lang_wording_suggestion_add": "+ পরামর্শ যোগ করুন",
+  "lang_wording_suggestion_added": "যোগ করা হয়েছে · দেখুন",
+  "lang_wording_suggestion_conflict": "আপনার কাছে ইতিমধ্যে এই পরামর্শের শব্দ রয়েছে। নীচে আপনার বিদ্যমান শব্দগুলি পর্যালোচনা করুন; কিছুই প্রতিস্থা",
+  "lang_wording_suggestion_review": "বিদ্যমান শব্দগুলি পর্যা",
+  "lang_wording_suggestions_help": "এর সম্পর্কিত শব্দগুলি একসাথে যুক্ত করার জন্য একটি পরামর্শ চয়ন করুন। নীচে তাদের পর্যালোচনা বা সম্পাদনা করুন, তারপরে সংরক্ষণ"
 }

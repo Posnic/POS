@@ -5204,5 +5204,11 @@
   "lang_your_standard_language_stays_unchanged_unt": "Vaš standardni jezik ostaje nepromijenjen dok ne spremite promjene teksta.",
   "lang_wording_enter_profile_name": "Unesite ime profila.",
   "lang_wording_profile_actions": "Akcije profila",
-  "lang_wording_rename_profile": "Preimenuj profil"
+  "lang_wording_rename_profile": "Preimenuj profil",
+  "lang_wording_common_suggestions": "Uobičajeni prijedlozi formulacija",
+  "lang_wording_suggestion_add": "+ Dodaj prijedlog",
+  "lang_wording_suggestion_added": "Dodano · Pogledaj",
+  "lang_wording_suggestion_conflict": "Već imate formulaciju za ovaj prijedlog. Pregledajte svoje postojeće riječi u nastavku; ništa nije zamijenjeno.",
+  "lang_wording_suggestion_review": "Pregledajte postojeće formulacije",
+  "lang_wording_suggestions_help": "Odaberite prijedlog za dodavanje srodnih riječi zajedno. Pregledajte ih ili uredite u nastavku, a zatim spremite."
 }
