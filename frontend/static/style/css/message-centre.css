@@ -179,9 +179,12 @@
 #message_centre .wa-api-setup details { background:var(--theme-table-header-bg,#f5f8fc); border-color:var(--theme-border-color,#dce4ee)!important; line-height:1.7; margin-top:8px; }
 #message_centre .wa-api-setup summary { cursor:pointer; color:var(--theme-text-color,#35465e); }
 #message_centre .wa-api-setup > div > p.small { line-height:1.7; max-width:680px; }
-#message_centre [data-wa-mode] { border-color:transparent; border-radius:6px; }
+#message_centre [data-wa-mode] { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; border:1px solid transparent; border-radius:6px; background:transparent!important; color:var(--theme-text-color,#35465e)!important; box-shadow:none!important; }
+#message_centre [data-wa-mode]::after { content:'\2713'; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; visibility:hidden; }
+#message_centre [data-wa-mode]:focus-visible { outline:3px solid #82b8f4; outline-offset:3px; }
 #message_centre .message-choices:has([data-wa-mode]) { background:var(--theme-table-header-bg,#eef2f7); padding:4px; border-radius:9px; width:fit-content; max-width:100%; gap:4px; }
-#message_centre .message-choices [data-wa-mode][aria-pressed="true"] { background:var(--theme-card-bg,#fff)!important; color:#1255a1!important; border-color:transparent!important; box-shadow:0 1px 4px #182d4920; }
+#message_centre .message-choices [data-wa-mode][aria-pressed="true"] { background:#075fc7!important; color:#fff!important; border-color:#075fc7!important; font-weight:600; }
+#message_centre [data-wa-mode][aria-pressed="true"]::after { visibility:visible; background:#fff; color:#075fc7; }
 @media(max-width:600px) {
  #message_centre .wa-api-setup .form-row { grid-template-columns:minmax(0,1fr); gap:16px; }
  #message_centre #messaging_wa_provider { max-width:100%; }

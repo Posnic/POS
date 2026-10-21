@@ -31,6 +31,14 @@ test('one centre, accessible receipt switch, API/scan buttons and existing campa
   $('[data-wa-mode=cloud]').trigger('click');
   assert.equal($('#messaging_wa_mode').val(),'cloud');
   assert.equal($('[data-wa-mode=cloud]').attr('aria-pressed'),'true');
+  assert.equal($('[data-wa-mode=web]').attr('aria-pressed'),'false');
+  assert.notEqual($('#messaging_wa_cloud').css('display'),'none');
+  assert.equal($('#messaging_wa_web').css('display'),'none');
+  $('[data-wa-mode=web]').trigger('click');
+  assert.equal($('[data-wa-mode=web]').attr('aria-pressed'),'true');
+  assert.equal($('[data-wa-mode=cloud]').attr('aria-pressed'),'false');
+  assert.equal($('#messaging_wa_cloud').css('display'),'none');
+  assert.notEqual($('#messaging_wa_web').css('display'),'none');
   dom.window.close();
 });
 test('customer selections survive searches, can be removed, and serialize as IDs', () => {
