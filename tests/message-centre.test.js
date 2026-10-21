@@ -334,3 +334,22 @@ test('report history distinguishes provider acceptance from recipient delivery',
   assert.doesNotMatch($('#message_report_list').text(),/Last result: Sent/);
   dom.window.close();
 });
+
+test('report loading failures stop the spinner and retry without sending', () => {
+  const {dom,w,$,requests,writes}=setup();
+  w.PosnicPro.messageCentre.mount(); w.PosnicPro.messageCentre.reports();
+  requests.at(-1).failure({status:503,responseJSON:{message:'<img src=x onerror=alert(1)> Service unavailable'}});
+  assert.equal($('#message_report_list img').length,0);
+  assert.match($('#message_report_list [role=alert]').text(),/Service unavailable/);
+  assert.doesNotMatch($('#message_report_list').text(),/Loading reports/);
+  $('[data-message-reports-retry]').trigger('click');
+  assert.equal(requests.at(-1).url,'messaging/reports');
+  requests.at(-1).cb({type:'error'});
+  assert.equal($('#message_report_list [role=alert]').text(),'Could not load reports.');
+  $('[data-message-reports-retry]').trigger('click');
+  requests.at(-1).cb({type:'success',data:[]});
+  assert.equal($('[data-message-reports-retry]').length,0);
+  assert.match($('#message_report_list').text(),/No reports scheduled/);
+  assert.equal(writes.length,0);
+  dom.window.close();
+});
