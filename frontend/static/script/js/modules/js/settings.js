@@ -60,6 +60,8 @@ PosnicPro.settings = {
         PosnicPro.settings.viewRecycleBinDetails(id);
     },
     openSection: function (key) {
+        var openWording = key === 'wording';
+        if (openWording) key = 'general';
         var openReceiptDesign = key === 'print';
         if (openReceiptDesign) key = 'general';
         if (!$('#settings').is(':visible')) {
@@ -121,6 +123,9 @@ PosnicPro.settings = {
         $('.manage-settings-entry').removeClass('active');
         $('#manage_sec_' + key).addClass('active');
         if (key === 'general') { PosnicPro.settings.restoreCoreTab(); }
+        if (openWording) {
+            $('#core-wording-tab').tab('show');
+        }
         if (openReceiptDesign) {
             $('#core_settings_tabs a[href="#core-tab-print"]').tab('show');
             $('#print-design-tab').tab('show');
@@ -5419,6 +5424,7 @@ $(function () {
     });
     $('#core_settings_tabs').on('shown.bs.tab', 'a[data-toggle="tab"]', function () {
         PosnicPro.local.set('posnic_core_tab', $(this).attr('href'));
+        if ($(this).attr('href') === '#core-tab-wording' && PosnicPro.wordingEditor) PosnicPro.wordingEditor.open();
     });
 });
 
