@@ -220,3 +220,21 @@ test('SMS report failure does not claim successful delivery', async () => {
     'SMS is not configured'
   );
 });
+
+test.each(['sms', 'whatsapp', 'email'])(
+  '%s does not submit a report when document preparation fails',
+  async (channel) => {
+    mockSendSms.mockClear();
+    mockSendWhatsapp.mockClear();
+    mockSendMail.mockClear();
+    require('../../../src/services/report-document.service').prepare.mockRejectedValueOnce(
+      new Error('Report document storage unavailable')
+    );
+    await expect(runner.deliver({ ...schedule, channel }, report)).rejects.toThrow(
+      'Report document storage unavailable'
+    );
+    expect(mockSendSms).not.toHaveBeenCalled();
+    expect(mockSendWhatsapp).not.toHaveBeenCalled();
+    expect(mockSendMail).not.toHaveBeenCalled();
+  }
+);
