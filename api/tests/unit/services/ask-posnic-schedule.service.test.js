@@ -59,6 +59,18 @@ describe('Ask Posnic summary schedules', () => {
     expect(next.toISOString()).toBe('2026-10-02T02:30:00.000Z');
   });
 
+  test.each([
+    ['2026-10-21T07:29:59Z', '2026-10-21T07:30:00.000Z'],
+    ['2026-10-21T07:30:00Z', '2026-10-22T07:30:00.000Z'],
+    ['2026-10-21T07:31:00Z', '2026-10-22T07:30:00.000Z'],
+  ])('daily 13:00 India schedule from %s advances to %s', (from, expected) => {
+    expect(
+      service
+        .nextRun({ frequency: 'daily', hour: 13, timezone: 'Asia/Calcutta' }, new Date(from))
+        .toISOString()
+    ).toBe(expected);
+  });
+
   test.each(['smtp', 'brevo', 'sendgrid', 'postmark', 'resend', 'sms'])(
     'claims, delivers, and advances a due schedule once through %s',
     async (provider) => {

@@ -32,6 +32,41 @@ jest.mock(
 const runner = require('../../../src/services/ask-posnic-runner.service');
 const assistant = require('../../../src/services/ask-posnic.service');
 
+test('sales report includes card and all other tenders without mixing them into cash', () => {
+  const metrics = runner.paymentMetrics({
+    paymentMix: [
+      { mode: 'Cash', amount: 15980 },
+      { mode: 'Upi', amount: 16477 },
+      { mode: 'Card', amount: 7000 },
+      { mode: ' card ', amount: 467 },
+      { mode: 'Voucher', amount: 0 },
+      { mode: 'Unknown' },
+    ],
+  });
+  expect(metrics).toEqual([
+    { label: 'Cash', value: '15980.00' },
+    { label: 'Upi', value: '16477.00' },
+    { label: 'Card', value: '7467.00' },
+    { label: 'Voucher', value: '0.00' },
+  ]);
+  expect(metrics.reduce((total, item) => total + Number(item.value), 0)).toBe(39924);
+});
+
+test('payment summary preserves decimal and refund amounts', () => {
+  expect(
+    runner.paymentMetrics({
+      paymentMix: [
+        { mode: 'Card', amount: 0.1 },
+        { mode: 'Card', amount: 0.2 },
+        { mode: 'Cash', amount: -20.25 },
+      ],
+    })
+  ).toEqual([
+    { label: 'Card', value: '0.30' },
+    { label: 'Cash', value: '-20.25' },
+  ]);
+});
+
 test('daily and weekly reports use complete days in the selected timezone', () => {
   const at = new Date('2026-10-01T03:00:00Z');
   const daily = runner.reportRange({ timezone: 'Asia/Kolkata', frequency: 'daily' }, at);
