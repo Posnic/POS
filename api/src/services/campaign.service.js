@@ -323,6 +323,7 @@ class CampaignService {
 
     let sent = 0;
     let failed = 0;
+    const errors = new Set();
     let skipped = 0;
     for (const cust of recipients) {
       // De-dupe: a prior non-failed send for this campaign+customer means done.
@@ -352,6 +353,7 @@ class CampaignService {
           else {
             status = SEND_STATUS.FAILED;
             error = (res && res.error) || 'send failed';
+            if (errors.size < 5) errors.add(error);
           }
         }
       }
@@ -385,7 +387,7 @@ class CampaignService {
     }
     return {
       status: true,
-      data: { dryRun: !!dryRun, ...summary },
+      data: { dryRun: !!dryRun, ...summary, errors: [...errors] },
       message: dryRun ? 'Dry run complete' : MESSAGES.SENT,
     };
   }

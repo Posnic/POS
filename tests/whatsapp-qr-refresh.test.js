@@ -2,6 +2,28 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const {JSDOM} = require('jsdom');
+test('status failures clear stale readiness and recover without unlinking or sending', () => {
+ const dom=new JSDOM('<input id="whatsapp_device_id" value="posnic"><span id="whatsapp_status_badge">Loading</span><button id="whatsapp_refresh_status"></button><button id="whatsapp_connect_btn"></button><button id="whatsapp_disconnect_btn"></button><div id="whatsapp_connected_info"></div>',{runScripts:'outside-only'});
+ const w=dom.window; w.eval(fs.readFileSync('frontend/static/script/js/jquery.min.js','utf8'));
+ const requests=[]; let posts=0;
+ w.setInterval=()=>1; w.clearInterval=()=>{};
+ w.PosnicPro={i18n:{t:(k,v)=>v},alert(){},post(){posts++;},get:(p,ok,fail)=>requests.push({ok,fail}),messaging:{waConnected:true,updateReadiness(){}}};
+ w.eval(fs.readFileSync('frontend/static/script/js/modules/js/whatsapp.js','utf8'));
+ const wa=w.PosnicPro.whatsapp; wa.connected=true;
+ wa.checkStatus(true); requests.shift().fail();
+ assert.equal(wa.connected,false); assert.equal(w.PosnicPro.messaging.waConnected,false);
+ assert.match(w.$('#whatsapp_status_error').text(),/Could not confirm/);
+ assert.equal(w.$('#whatsapp_status_badge').css('display'),'none');
+ assert.equal(w.$('#whatsapp_disconnect_btn').css('display'),'none');
+ assert.equal(w.$('#whatsapp_refresh_status').prop('disabled'),false);
+ wa.checkStatus(true); requests.shift().ok({type:'error'});
+ assert.equal(w.$('#whatsapp_status_error').length,1);
+ wa.checkStatus(); requests.shift().ok({type:'success',data:{status:'connected',connected:true}});
+ assert.equal(w.$('#whatsapp_status_error').length,0);
+ assert.equal(w.$('#whatsapp_status_badge').text(),'Connected');
+ assert.equal(w.PosnicPro.messaging.waConnected,true); assert.equal(posts,0);
+ dom.window.close();
+});
 test('QR polling starts before initialization returns, rotates codes and recovers after disconnect', () => {
  const dom = new JSDOM('<input id="whatsapp_device_id" value="posnic"><button id="whatsapp_connect_btn"></button><div id="whatsapp_qr_code"></div><span id="whatsapp_status_badge"></span>', {runScripts:'outside-only'});
  const w=dom.window; w.eval(fs.readFileSync('frontend/static/script/js/jquery.min.js','utf8'));
@@ -22,5 +44,23 @@ test('QR polling starts before initialization returns, rotates codes and recover
  assert.equal(wa.connected,false);
  wa.startStatusPolling(); assert.equal(ticks.size,1);
  wa.showConnectButton(); assert.equal(w.$('#whatsapp_connect_btn').prop('disabled'),false);
+ dom.window.close();
+});
+
+test('late initialization and QR callbacks cannot restore the spinner after authentication', () => {
+ const dom=new JSDOM('<input id="whatsapp_device_id" value="posnic"><button id="whatsapp_connect_btn"></button><div id="whatsapp_qr_container"><div id="whatsapp_qr_code"></div></div><span id="whatsapp_status_badge"></span>',{runScripts:'outside-only'});
+ const w=dom.window; w.eval(fs.readFileSync('frontend/static/script/js/jquery.min.js','utf8'));
+ const gets=[]; let initialized;
+ w.setInterval=()=>1; w.clearInterval=()=>{};
+ w.PosnicPro={local:{get:()=> 'branch'},i18n:{t:(k,v)=>v},alert(){},post:(p,cb)=>{initialized=cb;},get:(p,cb)=>gets.push(cb)};
+ w.eval(fs.readFileSync('frontend/static/script/js/modules/js/whatsapp.js','utf8'));
+ const wa=w.PosnicPro.whatsapp;
+ wa.connect(); wa.fetchAndDisplayQR(); const lateQR=gets.shift();
+ wa.checkStatus(true); gets.shift()({type:'success',data:{status:'authenticated',connected:false}});
+ lateQR({type:'success',data:{qr_code:'stale'}});
+ assert.equal(w.$('#whatsapp_qr_container').css('display'),'none');
+ assert.equal(w.$('#whatsapp_qr_code img').length,0);
+ wa.onConnected(); initialized({type:'success'});
+ assert.equal(w.$('#whatsapp_qr_container').css('display'),'none');
  dom.window.close();
 });

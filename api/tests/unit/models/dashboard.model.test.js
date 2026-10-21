@@ -862,6 +862,7 @@ describe('DashboardModel — getOverviewModel()', () => {
       total_tax: 50,
       total_cash: 700,
       total_upi: 0,
+      total_card: 300,
     });
   });
 

@@ -2,8 +2,17 @@
 jest.mock('../../../src/models/base.model', () => function MockBaseModel() {});
 const mockSendMail = jest.fn();
 const mockSendWhatsapp = jest.fn();
+const mockSendSms = jest.fn();
+jest.mock('../../../src/services/report-document.service', () => ({
+  prepare: jest.fn().mockResolvedValue({
+    buffer: Buffer.from('pdf'),
+    filename: 'summary.pdf',
+    url: 'https://example.invalid/report.pdf',
+  }),
+  periodLabel: () => '20 Oct 2026 (Asia/Kolkata)',
+}));
 jest.mock('../../../src/utils/email', () => ({
-  resolveShopTransport: () => ({
+  resolveConfiguredShopTransport: () => ({
     transporter: { options: {}, sendMail: mockSendMail },
     from: 'sender@example.invalid',
   }),
@@ -12,6 +21,9 @@ jest.mock(
   '../../../src/services/messaging.service',
   () =>
     class {
+      sendSms(...args) {
+        return mockSendSms(...args);
+      }
       sendWhatsapp(...args) {
         return mockSendWhatsapp(...args);
       }
@@ -19,6 +31,41 @@ jest.mock(
 );
 const runner = require('../../../src/services/ask-posnic-runner.service');
 const assistant = require('../../../src/services/ask-posnic.service');
+
+test('sales report includes card and all other tenders without mixing them into cash', () => {
+  const metrics = runner.paymentMetrics({
+    paymentMix: [
+      { mode: 'Cash', amount: 15980 },
+      { mode: 'Upi', amount: 16477 },
+      { mode: 'Card', amount: 7000 },
+      { mode: ' card ', amount: 467 },
+      { mode: 'Voucher', amount: 0 },
+      { mode: 'Unknown' },
+    ],
+  });
+  expect(metrics).toEqual([
+    { label: 'Cash', value: '15980.00' },
+    { label: 'Upi', value: '16477.00' },
+    { label: 'Card', value: '7467.00' },
+    { label: 'Voucher', value: '0.00' },
+  ]);
+  expect(metrics.reduce((total, item) => total + Number(item.value), 0)).toBe(39924);
+});
+
+test('payment summary preserves decimal and refund amounts', () => {
+  expect(
+    runner.paymentMetrics({
+      paymentMix: [
+        { mode: 'Card', amount: 0.1 },
+        { mode: 'Card', amount: 0.2 },
+        { mode: 'Cash', amount: -20.25 },
+      ],
+    })
+  ).toEqual([
+    { label: 'Card', value: '0.30' },
+    { label: 'Cash', value: '-20.25' },
+  ]);
+});
 
 test('daily and weekly reports use complete days in the selected timezone', () => {
   const at = new Date('2026-10-01T03:00:00Z');
@@ -105,6 +152,10 @@ test('distinguishes queued WhatsApp from a sent message and passes the execution
     { status: 'queued', provider: 'whatsapp_connector' }
   );
   expect(mockSendWhatsapp.mock.calls.at(-1)[3]).toEqual({
+    document: expect.objectContaining({
+      filename: 'summary.pdf',
+      url: 'https://example.invalid/report.pdf',
+    }),
     purpose: 'Scheduled report',
     scheduled: {
       id: schedule._id,
@@ -181,3 +232,44 @@ test('messaging reports still require an active owner with outlet access', async
     $nin: ['inactive', 'suspended', 'pending'],
   });
 });
+
+test('SMS reports use the scoped branch and preserve provider acknowledgement', async () => {
+  mockSendSms.mockResolvedValueOnce({ ok: true, messageId: 'sms-provider-id' });
+  await expect(
+    runner.deliver(
+      { ...schedule, channel: 'sms', destination: '+919494111161', test: true },
+      report
+    )
+  ).resolves.toEqual({ status: 'sent', provider: 'sms', reference: 'sms-provider-id' });
+  expect(mockSendSms.mock.calls.at(-1)).toEqual([
+    'outlet',
+    '+919494111161',
+    expect.stringContaining('Sales are 10.'),
+    { purpose: 'Report test' },
+  ]);
+});
+
+test('SMS report failure does not claim successful delivery', async () => {
+  mockSendSms.mockResolvedValueOnce({ ok: false, error: 'SMS is not configured for this branch' });
+  await expect(runner.deliver({ ...schedule, channel: 'sms' }, report)).rejects.toThrow(
+    'SMS is not configured'
+  );
+});
+
+test.each(['sms', 'whatsapp', 'email'])(
+  '%s does not submit a report when document preparation fails',
+  async (channel) => {
+    mockSendSms.mockClear();
+    mockSendWhatsapp.mockClear();
+    mockSendMail.mockClear();
+    require('../../../src/services/report-document.service').prepare.mockRejectedValueOnce(
+      new Error('Report document storage unavailable')
+    );
+    await expect(runner.deliver({ ...schedule, channel }, report)).rejects.toThrow(
+      'Report document storage unavailable'
+    );
+    expect(mockSendSms).not.toHaveBeenCalled();
+    expect(mockSendWhatsapp).not.toHaveBeenCalled();
+    expect(mockSendMail).not.toHaveBeenCalled();
+  }
+);

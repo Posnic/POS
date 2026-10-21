@@ -56,9 +56,8 @@ PosnicPro.whatsapp = {
 
         PosnicPro.post(params, (response) => {
             if (response.type === 'success') {
-                // Show QR container
-                $('#whatsapp_qr_container').show();
-                $('#whatsapp_connect_btn').hide();
+                // Status owns the display; initialization may finish after ready.
+                // Never restore a QR spinner over an already connected session.
                 
                 // Start polling for QR code
                 this.checkStatus(true);
@@ -163,6 +162,10 @@ PosnicPro.whatsapp = {
                 
                 if (connected) {
                     this.onConnected();
+                } else if (status === 'authenticated') {
+                    this.lastQRCode = null;
+                    $('#whatsapp_qr_container').hide();
+                    $('#whatsapp_connect_btn').hide();
                 } else if (status === 'qr_ready') {
                     // QR code is ready, fetch and display it
                     this.fetchAndDisplayQR();
@@ -171,10 +174,9 @@ PosnicPro.whatsapp = {
                     this.showConnectButton();
                 }
             } else {
-                // If status check fails, show connect button
-                this.showConnectButton();
+                this.showStatusUnavailable();
             }
-        });
+        }, () => this.showStatusUnavailable());
     },
 
     /**
@@ -187,6 +189,8 @@ PosnicPro.whatsapp = {
         };
 
         PosnicPro.get(params, (response) => {
+            // Ignore a QR response that arrived after authentication/ready.
+            if (this.connected || this.currentStatus === 'authenticated') return;
             if (response.type === 'success' && response.data && response.data.qr_code) {
                 // Show QR container and hide buttons
                 $('#whatsapp_qr_container').show();
@@ -229,7 +233,25 @@ PosnicPro.whatsapp = {
     /**
      * Update status badge
      */
+    // An unreachable status endpoint does not prove that the phone was unlinked.
+    showStatusUnavailable: function() {
+        this.connected = false;
+        if (PosnicPro.messaging) {
+            PosnicPro.messaging.waConnected = false;
+            PosnicPro.messaging.updateReadiness();
+        }
+        $('#whatsapp_status_badge').hide();
+        if (!$('#whatsapp_status_error').length) {
+            $('<p id="whatsapp_status_error" class="text-muted mt-2 mb-0" role="status"></p>').insertAfter('#whatsapp_status_badge');
+        }
+        $('#whatsapp_status_error').text(PosnicPro.i18n.t('lang_could_not_confirm_the_connection_refresh_t', 'Could not confirm the connection. Refresh the status before trying again.')).show();
+        $('#whatsapp_connected_info, #whatsapp_qr_container, #whatsapp_connect_btn, #whatsapp_disconnect_btn').hide();
+        $('#whatsapp_refresh_status').prop('disabled', false);
+    },
     updateStatusBadge: function(status, connected) {
+        $('#whatsapp_status_error').remove();
+        $('#whatsapp_status_badge').show();
+        this.currentStatus = status;
         const badge = $('#whatsapp_status_badge');
         
         const statusMap = {

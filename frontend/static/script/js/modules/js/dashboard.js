@@ -689,6 +689,7 @@ PosnicPro.dashboard = {
                 $('#kpi_tax').html(m(k.total_tax));
                 $('#kpi_upi').html(m(k.total_upi));
                 $('#kpi_cash').html(m(k.total_cash));
+                $('#kpi_card').html(m(k.total_card));
             } else {
                 // No financial layer for this user - the tiles are ACL-removed
                 // anyway; leave nothing behind if the block is somehow present.

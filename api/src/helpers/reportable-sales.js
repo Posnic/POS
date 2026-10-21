@@ -33,4 +33,39 @@ function reportSaleTotal() {
   };
 }
 
-module.exports = { reportableSales, reportSaleTotal };
+// Item allocations are used by the day-end tax report. Older sales may have
+// no item tax fields, in which case retain their bill-level total.
+function reportSaleTax() {
+  return {
+    $let: {
+      vars: {
+        taxedItems: {
+          $filter: {
+            input: { $cond: [{ $isArray: '$items' }, '$items', []] },
+            as: 'item',
+            cond: { $ne: [{ $ifNull: ['$$item.tax_amount', null] }, null] },
+          },
+        },
+      },
+      in: {
+        $cond: [
+          { $gt: [{ $size: '$$taxedItems' }, 0] },
+          {
+            $sum: {
+              $map: {
+                input: '$$taxedItems',
+                as: 'item',
+                in: {
+                  $convert: { input: '$$item.tax_amount', to: 'double', onError: 0, onNull: 0 },
+                },
+              },
+            },
+          },
+          { $convert: { input: '$tax_amount', to: 'double', onError: 0, onNull: 0 } },
+        ],
+      },
+    },
+  };
+}
+
+module.exports = { reportableSales, reportSaleTotal, reportSaleTax };

@@ -203,3 +203,9 @@ The owner confirmed delivery of daily, weekly, monthly, profit and low-stock sum
 Email provider acceptance is not inbox delivery: the latest daily summary was accepted by Brevo but had neither a delivery event nor a matching inbox message. Live SMTP delivery has not been verified; loopback SMTP tests cover acceptance and rejection. SMS scheduled reports and report PDF links are not implemented. Reports currently send text summaries; SMS bills use a printable web receipt when PDF object storage is unavailable.
 
 Merge scope is messaging only. Azure's missing-card-summary investigation is deferred and introduces no payment changes. Credentials, temporary test fixtures, browser screenshots, deployment archives and client-data audit files are excluded from the release commit. No physical offline-till verification is claimed.
+
+### Connection startup recovery
+
+Scan startup and the authenticated-to-ready transition each have a two-minute deadline. On expiry the service releases the browser and permits retry, preserving its on-disk authentication. QR waiting is not treated as failed authentication. The page hides QR content after authentication and ignores late QR results; initialization completion cannot re-open the QR spinner over a connected session.
+
+This changes only installation-local session lifecycle and UI state. No business fields, credentials, schedules or sync lanes change; other installations must still query their authoritative sender. Verification covers stalled startup, authenticated-but-never-ready, QR rotation, late callbacks and retry. It does not establish cross-installation session sharing.

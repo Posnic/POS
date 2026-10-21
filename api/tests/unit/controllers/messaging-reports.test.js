@@ -54,7 +54,7 @@ test('other outlet or non-messaging schedule cannot be edited', async () => {
 });
 test('invalid channel and time zone are rejected before writing', async () => {
   const request = req();
-  request.body.channel = 'sms';
+  request.body.channel = 'unknown';
   expect((await controller.saveReportSchedule(request, {})).status).toBe(400);
   request.body.channel = 'email';
   request.body.timezone = 'not-a-zone';
@@ -77,4 +77,16 @@ test('report test checks scope and does not enable or save a schedule', async ()
   expect(schedules.save).not.toHaveBeenCalled();
   schedules.list.mockResolvedValue([]);
   expect((await controller.testReport(request, {})).status).toBe(404);
+});
+
+test('SMS report configuration remains off until explicitly enabled', async () => {
+  const request = req();
+  request.body.channel = 'sms';
+  request.body.destination = '+919494111161';
+  schedules.save.mockResolvedValue({});
+  await controller.saveReportSchedule(request, {});
+  expect(schedules.save).toHaveBeenCalledWith(
+    expect.objectContaining({ branchId: 'branch', licenseId: 'shop' }),
+    expect.objectContaining({ channel: 'sms', enabled: false })
+  );
 });

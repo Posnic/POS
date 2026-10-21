@@ -59,41 +59,56 @@ describe('Ask Posnic summary schedules', () => {
     expect(next.toISOString()).toBe('2026-10-02T02:30:00.000Z');
   });
 
-  test('claims, delivers, and advances a due schedule once', async () => {
-    mockRows = [
-      {
-        _id: dueId,
-        report: 'sales',
-        frequency: 'daily',
-        hour: 8,
-        timezone: 'UTC',
-        destination: 'owner@example.com',
-        next_run_at: new Date('2026-10-01T08:00:00Z'),
-      },
-    ];
-    const build = jest.fn(async () => ({ answer: 'Sales are 10' }));
-    const deliver = jest.fn(async () => ({
-      status: 'sent',
-      provider: 'smtp',
-      reference: 'synthetic-message-id',
-    }));
-    const result = await service.runDue(
-      { licenseId: 'l', branchId: 'b' },
-      build,
-      deliver,
-      new Date('2026-10-01T09:00:00Z')
-    );
-    expect(result).toEqual([{ id: dueId, status: 'sent' }]);
-    expect(build).toHaveBeenCalledTimes(1);
-    expect(deliver).toHaveBeenCalledTimes(1);
-    expect(mockCollection.updateOne.mock.calls[0][0]).toMatchObject({
-      enabled: true,
-      running_claim: expect.any(String),
-    });
+  test.each([
+    ['2026-10-21T07:29:59Z', '2026-10-21T07:30:00.000Z'],
+    ['2026-10-21T07:30:00Z', '2026-10-22T07:30:00.000Z'],
+    ['2026-10-21T07:31:00Z', '2026-10-22T07:30:00.000Z'],
+  ])('daily 13:00 India schedule from %s advances to %s', (from, expected) => {
     expect(
-      mockCollection.updateOne.mock.calls.find((call) => call[1].$set.last_status === 'sent')[0]
-    ).toMatchObject({ running_claim: expect.any(String) });
+      service
+        .nextRun({ frequency: 'daily', hour: 13, timezone: 'Asia/Calcutta' }, new Date(from))
+        .toISOString()
+    ).toBe(expected);
   });
+
+  test.each(['smtp', 'brevo', 'sendgrid', 'postmark', 'resend', 'sms'])(
+    'claims, delivers, and advances a due schedule once through %s',
+    async (provider) => {
+      mockRows = [
+        {
+          _id: dueId,
+          report: 'sales',
+          frequency: 'daily',
+          hour: 8,
+          timezone: 'UTC',
+          destination: 'owner@example.com',
+          next_run_at: new Date('2026-10-01T08:00:00Z'),
+        },
+      ];
+      const build = jest.fn(async () => ({ answer: 'Sales are 10' }));
+      const deliver = jest.fn(async () => ({
+        status: 'sent',
+        provider,
+        reference: 'synthetic-message-id',
+      }));
+      const result = await service.runDue(
+        { licenseId: 'l', branchId: 'b' },
+        build,
+        deliver,
+        new Date('2026-10-01T09:00:00Z')
+      );
+      expect(result).toEqual([{ id: dueId, status: 'sent' }]);
+      expect(build).toHaveBeenCalledTimes(1);
+      expect(deliver).toHaveBeenCalledTimes(1);
+      expect(mockCollection.updateOne.mock.calls[0][0]).toMatchObject({
+        enabled: true,
+        running_claim: expect.any(String),
+      });
+      expect(
+        mockCollection.updateOne.mock.calls.find((call) => call[1].$set.last_status === 'sent')[0]
+      ).toMatchObject({ running_claim: expect.any(String) });
+    }
+  );
 
   test('accepts a WhatsApp destination and records the channel', async () => {
     const row = await service.save(
@@ -121,4 +136,20 @@ test('monthly delivery rolls into January and retains the local send hour', () =
       )
       .toISOString()
   ).toBe('2027-01-01T02:30:00.000Z');
+});
+
+test('SMS schedule validates and normalizes the destination without enabling delivery', async () => {
+  const context = { licenseId: 'l', branchId: 'b', userId: 'u' };
+  const input = {
+    channel: 'sms',
+    report: 'sales',
+    frequency: 'daily',
+    destination: '+91 (9494) 111161',
+    enabled: false,
+  };
+  const row = await service.save(context, input);
+  expect(row).toMatchObject({ channel: 'sms', destination: '+919494111161', enabled: false });
+  await expect(service.save(context, { ...input, destination: 'not a number' })).rejects.toThrow(
+    /phone number/
+  );
 });

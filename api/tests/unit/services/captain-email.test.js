@@ -1,6 +1,6 @@
 'use strict';
 jest.mock('../../../src/utils/email', () => ({
-  resolveShopTransport: jest.fn(),
+  resolveConfiguredShopTransport: jest.fn(),
   sendMail: jest.fn(),
 }));
 const { MongoMemoryServer } = require('mongodb-memory-server');
@@ -32,7 +32,7 @@ beforeEach(async () => {
     password: await require('bcryptjs').hash('staff-password', 4),
   });
   sender.sendMail.mockReset().mockResolvedValue({ messageId: 'test' });
-  sender.resolveShopTransport.mockReturnValue({
+  sender.resolveConfiguredShopTransport.mockReturnValue({
     from: 'shop@example.test',
     transporter: { sendMail: sender.sendMail },
   });
@@ -174,7 +174,7 @@ test('email claimed after a code was sent cannot replace another account address
 });
 
 test('console transport cannot pretend a verification email was delivered', async () => {
-  sender.resolveShopTransport.mockReturnValue({
+  sender.resolveConfiguredShopTransport.mockReturnValue({
     from: 'shop@example.test',
     transporter: { options: { jsonTransport: true }, sendMail: sender.sendMail },
   });
