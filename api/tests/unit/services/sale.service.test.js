@@ -50,6 +50,7 @@ jest.mock('../../../src/repositories/sale.repository', () => ({
   getById: jest.fn(),
   save: jest.fn(),
   aggregate: jest.fn(),
+  find: jest.fn(),
   paginate: jest.fn(),
   getLegacyDetails: jest.fn(),
   deleteSales: jest.fn(),
@@ -73,6 +74,30 @@ const salesRepository = require('../../../src/repositories/sale.repository');
 const branchesRepository = require('../../../src/repositories/branch.repository');
 const BaseModel = require('../../../src/models/base.model');
 const salesService = require('../../../src/services/sale.service');
+
+test('day-end table breakdown retains card and split payment source fields', async () => {
+  salesRepository.aggregate.mockResolvedValue([]);
+  salesRepository.find.mockImplementation(async (_match, projection) => {
+    const row = {
+      table_number: 'T1',
+      sales_total: 100,
+      multi_payment: { Cash: 25, Card: 75 },
+      payment_mode: 'Cash,Card',
+      payments: [],
+    };
+    return [
+      Object.fromEntries(
+        Object.entries(row).filter(([key]) => projection.split(' ').includes(key))
+      ),
+    ];
+  });
+  const result = await salesService.getDailySalesReportAggregates({
+    match: {},
+    cancellationMatch: {},
+  });
+  expect(result.salesPayments[0].multi_payment).toEqual({ Cash: 25, Card: 75 });
+  expect(result.salesPayments[0].payment_mode).toBe('Cash,Card');
+});
 const { ERROR_MESSAGES } = require('../../../src/constants/sales.constants');
 const { NotFoundError, BadRequestError } = require('../../../src/utils/appError');
 const { PAYMENT_STATUS, SALE_STATUS } = require('../../../src/constants');

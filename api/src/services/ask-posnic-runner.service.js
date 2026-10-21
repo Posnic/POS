@@ -73,6 +73,23 @@ function reportRange(schedule, at = new Date()) {
   };
 }
 
+function paymentMetrics(overview) {
+  const groups = new Map();
+  for (const payment of overview.paymentMix || []) {
+    const label = String(payment.mode || 'Other').trim() || 'Other';
+    const amount = Number(payment.amount);
+    if (!Number.isFinite(amount)) continue;
+    const key = label.toLowerCase();
+    const group = groups.get(key) || { label, amount: 0 };
+    group.amount += amount;
+    groups.set(key, group);
+  }
+  return [...groups.values()].map(({ label, amount }) => ({
+    label,
+    value: amount.toFixed(2),
+  }));
+}
+
 async function buildReport(schedule, at, db) {
   const { req, branch } = await authorize(db, schedule);
   return runWithRequestContext(
@@ -86,16 +103,21 @@ async function buildReport(schedule, at, db) {
       const range = reportRange(schedule, at);
       const overview = await model.getOverviewModel(range, { financials: true });
       if (!overview.status) throw new Error('The report could not be loaded.');
+      const summary = assistant.answerOverview(
+        schedule.report,
+        overview.data,
+        schedule.frequency === 'monthly'
+          ? 'the previous complete month'
+          : schedule.frequency === 'weekly'
+            ? 'the previous seven complete days'
+            : 'yesterday'
+      );
       return {
-        ...assistant.answerOverview(
-          schedule.report,
-          overview.data,
-          schedule.frequency === 'monthly'
-            ? 'the previous complete month'
-            : schedule.frequency === 'weekly'
-              ? 'the previous seven complete days'
-              : 'yesterday'
-        ),
+        ...summary,
+        metrics: [
+          ...(summary.metrics || []),
+          ...(schedule.report === 'sales' ? paymentMetrics(overview.data) : []),
+        ],
         branch,
         range,
       };
@@ -278,4 +300,4 @@ function start({ tenants, everyMs = 60000 } = {}) {
   };
 }
 
-module.exports = { start, sweep, authorize, reportRange, buildReport, deliver };
+module.exports = { start, sweep, authorize, reportRange, buildReport, deliver, paymentMetrics };
