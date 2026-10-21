@@ -5311,5 +5311,6 @@
   "lang_sms_reports_text_summary": "SMSيرسل ملخصًا نصيًا وليس رابط PDF. قد تستخدم الملخصات الأطول أكثر من واحدةSMS. يجب أن يسمح SMS مزود الخدمة الخاص بك بهذه الرسالة أو أن يكون لديه نموذج معتمد.",
   "lang_ssl_tls_usually_465": "SSL/TLS (عادة 465)",
   "lang_starttls_usually_587_or_2525": "ستارتتلس (عادة 587 أو 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "استخدم البريد الإلكتروني Posnic السحابي أو قم بتوصيل حسابك الخاص للفواتير والتقارير."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "استخدم البريد الإلكتروني Posnic السحابي أو قم بتوصيل حسابك الخاص للفواتير والتقارير.",
+  "lang_send_this_report_automatically": "أرسل هذا التقرير تلقائيًا"
 }

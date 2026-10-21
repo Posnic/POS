@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSизпраща текстово резюме, а не PDF връзка. По-дългите резюмета могат да използват повече от едноSMS. Ваши SMS ят доставчик трябва да разреши това съобщение или да има одобрен шаблон.",
   "lang_ssl_tls_usually_465": "SSL/TLS (обикновено 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (обикновено 587 или 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Използвайте имейл в Posnic облак или свържете собствения си акаунт за сметки и отчети."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Използвайте имейл в Posnic облак или свържете собствения си акаунт за сметки и отчети.",
+  "lang_send_this_report_automatically": "Изпратете този отчет автоматично"
 }

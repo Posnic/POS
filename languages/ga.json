@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSseolann sé achoimre téacs, ní nasc PDF. Féadfaidh achoimrí níos faide níos mó ná ceann amháin SMS a úsáid. Caithfidh SMS do sholáthraí an teachtaireacht seo a cheadú nó teimpléad ceadaithe a bheith",
   "lang_ssl_tls_usually_465": "SSL/TLS (de ghnáth 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (587 nó 2525 de ghnáth)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Úsáid Posnic ríomhphost scamall nó ceangail do chuntas féin le haghaidh billí agus tuarascálacha."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Úsáid Posnic ríomhphost scamall nó ceangail do chuntas féin le haghaidh billí agus tuarascálacha.",
+  "lang_send_this_report_automatically": "Seol an tuarascáil seo go huath"
 }

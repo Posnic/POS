@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSਇੱਕ ਟੈਕਸਟ ਸੰਖੇਪ ਭੇਜਦਾ ਹੈ, ਪੀਡੀਐਫ ਲਿੰਕ ਨਹੀਂ. ਲੰਬੇ ਸੰਖੇਪ ਇੱਕ ਤੋਂ ਵੱਧ ਵਰਤ ਸਕਦੇ ਹਨ। SMS ਤੁਹਾਡੇ ਪ੍ਰ SMS ਦਾਤਾ ਨੂੰ ਇਸ ਸੁਨੇਹੇ ਦੀ ਆਗਿਆ ਦੇਣੀ ਚਾਹੀਦੀ ਹੈ ਜਾਂ ਇੱਕ ਪ੍ਰਵਾਨਿਤ ਟੈਂਪਲੇਟ",
   "lang_ssl_tls_usually_465": "ਐਸਐਸਐਲ/ਟੀਐਲਐਸ (ਆਮ ਤੌਰ 'ਤੇ 465)",
   "lang_starttls_usually_587_or_2525": "ਸਟਾਰਟਲਸ (ਆਮ ਤੌਰ 'ਤੇ 587 ਜਾਂ 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicਕਲਾਉਡ ਈਮੇਲ ਦੀ ਵਰਤੋਂ ਕਰੋ ਜਾਂ ਬਿੱਲਾਂ ਅਤੇ ਰਿਪੋਰਟਾਂ ਲਈ ਆਪਣੇ ਖੁਦ ਦੇ ਖਾਤੇ ਨੂੰ ਜੋੜੋ."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicਕਲਾਉਡ ਈਮੇਲ ਦੀ ਵਰਤੋਂ ਕਰੋ ਜਾਂ ਬਿੱਲਾਂ ਅਤੇ ਰਿਪੋਰਟਾਂ ਲਈ ਆਪਣੇ ਖੁਦ ਦੇ ਖਾਤੇ ਨੂੰ ਜੋੜੋ.",
+  "lang_send_this_report_automatically": "ਇਸ ਰਿਪੋਰਟ ਨੂੰ ਆਪਣੇ ਆਪ ਭੇਜੋ"
 }

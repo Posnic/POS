@@ -5230,5 +5230,6 @@
   "lang_sms_reports_text_summary": "SMSjibgħat sommarju tat-test, mhux link PDF. Sommarji itwal jistgħu jużaw aktar minn wieħedSMS. Il-for SMS nitur tiegħek għandu jippermetti dan il-messaġġ jew ikollu mudell approvat.",
   "lang_ssl_tls_usually_465": "SSL/TLS (ġeneralment 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (ġeneralment 587 jew 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "Uża email Posnic cloud jew qabbad il-kont tiegħek stess għall-kontijiet u r-rapporti."
+  "lang_use_posnic_cloud_email_or_connect_your_own": "Uża email Posnic cloud jew qabbad il-kont tiegħek stess għall-kontijiet u r-rapporti.",
+  "lang_send_this_report_automatically": "Ibgħat dan ir-rapport awtomatikament"
 }

@@ -5233,5 +5233,6 @@
   "lang_sms_reports_text_summary": "SMSایک متن کا خلاصہ بھیجتا ہے، پی ڈی ایف لنک نہیں۔ لمبی خلاصے ایک سے زیادہ استعمال کرسکتے ہیں۔ SMS آپ کے SMS فراہم کنندہ کو اس پیغام کی اجازت دینا چاہئے یا منظور شدہ ٹیم",
   "lang_ssl_tls_usually_465": "ایس ایس ایل/ٹی ایل ایس (عام طور پر 465)",
   "lang_starttls_usually_587_or_2525": "اسٹارٹلز (عام طور پر 587 یا 2525)",
-  "lang_use_posnic_cloud_email_or_connect_your_own": "کلاؤ Posnic ڈ ای میل استعمال کریں یا بلوں اور رپورٹس کے ل your اپنے اکاؤنٹ کو مربوط کریں۔"
+  "lang_use_posnic_cloud_email_or_connect_your_own": "کلاؤ Posnic ڈ ای میل استعمال کریں یا بلوں اور رپورٹس کے ل your اپنے اکاؤنٹ کو مربوط کریں۔",
+  "lang_send_this_report_automatically": "یہ رپورٹ خود بخود بھیجیں"
 }
