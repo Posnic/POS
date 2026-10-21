@@ -37,13 +37,16 @@
 }
 #wording-editor .wording-profile-bar > label > lang { display: block; min-height: 34px; }
 #wording-editor {
-  .wording-suggestions { padding: 20px; margin: 24px 0; background: #f7f9fc; border: 1px solid #e0e7f0; border-radius: 10px; }
-  .wording-suggestion-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
-  .wording-suggestion { text-align: left; padding: 16px; border: 1px solid #d7dfeb; border-radius: 8px; background: white; color: #203354; }
-  .wording-suggestion strong, .wording-suggestion small, .wording-suggestion span { display:block; }
-  .wording-suggestion small { color: #5d6e87; margin: 6px 0 16px; }
-  .wording-suggestion span { color: #1760ca; font-weight: 600; font-size: 13px; }
-  .wording-suggestion:hover, .wording-suggestion:focus-visible { border-color: #1760ca; }
+  .wording-suggestions { margin: 16px 0 20px; }
+  .wording-suggestion-heading { margin-bottom: 8px; font-size: 13px; }
+  .wording-suggestion-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .wording-suggestion { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; min-height: 34px; border: 1px solid #d7dfeb; border-radius: 6px; background: #fff; color: #203354; font-size: 13px; }
+  .wording-suggestion strong { font-weight: 500; }
+  .wording-suggestion > span:not(.sr-only) { color: #1760ca; font-weight: 600; }
+  .wording-suggestion:hover, .wording-suggestion:focus-visible { border-color: #1760ca; background: #f3f7ff; }
   .wording-suggestion.is-added { background: #eef6ff; border-color: #86afe9; }
-  @media(max-width:700px){ .wording-suggestion-grid { grid-template-columns:1fr; } }
+  .wording-panel { padding: 20px 24px; }
+  .wording-rule-row { margin-top: 12px; margin-bottom: 12px !important; }
+  .wording-rule-row input { margin-top: 4px; }
+  .wording-profile-bar { margin: 16px 0 !important; padding-top: 14px; padding-bottom: 4px; }
 }

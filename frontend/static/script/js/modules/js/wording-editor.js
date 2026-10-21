@@ -104,7 +104,12 @@
     var commonWording = [
         {title:'Item → Product',rules:[{from:'Item',to:'Product'},{from:'Items',to:'Products'}]},
         {title:'Product → Item',rules:[{from:'Product',to:'Item'},{from:'Products',to:'Items'}]},
-        {title:'Takeaway → Parcel',rules:[{from:'Takeaway',to:'Parcel'},{from:'Take away',to:'Parcel'},{from:'Take-away',to:'Parcel'}]}
+        {title:'Takeaway → Parcel',rules:[{from:'Takeaway',to:'Parcel'},{from:'Take away',to:'Parcel'},{from:'Take-away',to:'Parcel'}]},
+        {title:'Customer → Guest',rules:[{from:'Customer',to:'Guest'},{from:'Customers',to:'Guests'}]},
+        {title:'Customer → Client',rules:[{from:'Customer',to:'Client'},{from:'Customers',to:'Clients'}]},
+        {title:'Supplier → Vendor',rules:[{from:'Supplier',to:'Vendor'},{from:'Suppliers',to:'Vendors'}]},
+        {title:'Employee → Staff member',rules:[{from:'Employee',to:'Staff member'},{from:'Employees',to:'Staff members'}]},
+        {title:'Quantity → Qty',rules:[{from:'Quantity',to:'Qty'}]}
     ];
     function suggestionState(preset) {
         var matched=preset.rules.map(function(rule){return draft.rules.find(function(r){return r.from.trim().toLowerCase()===rule.from.toLowerCase();});});
@@ -115,7 +120,7 @@
         var area=el('wording-suggestions');if(!area)return;
         area.hidden=draft.locale!=='en';
         if(area.hidden){area.innerHTML='';return;}
-        area.innerHTML='<div class="wording-suggestion-heading"><strong><lang class="lang_wording_common_suggestions">Common wording suggestions</lang></strong><p class="small text-muted"><lang class="lang_wording_suggestions_help">Choose a suggestion to add its related words together. Review or edit them below, then save.</lang></p></div><div class="wording-suggestion-grid">'+commonWording.map(function(p,i){var state=suggestionState(p);return '<button type="button" class="wording-suggestion '+(state.complete?'is-added':'')+'" data-suggestion="'+i+'" '+(!data.writable?'disabled':'')+'><strong>'+esc(p.title)+'</strong><small>'+esc(p.rules.map(function(r){return r.from;}).join(' · '))+'</small><span>'+esc(state.complete?PosnicPro.i18n.t('lang_wording_suggestion_added','Added · View'):state.conflict?PosnicPro.i18n.t('lang_wording_suggestion_review','Review existing wording'):PosnicPro.i18n.t('lang_wording_suggestion_add','+ Add suggestion'))+'</span></button>';}).join('')+'</div>';
+        area.innerHTML='<div class="wording-suggestion-heading"><strong><lang class="lang_wording_common_suggestions">Common wording suggestions</lang></strong><p class="sr-only"><lang class="lang_wording_suggestions_help">Choose a suggestion to add its related words together. Review or edit them below, then save.</lang></p></div><div class="wording-suggestion-grid">'+commonWording.map(function(p,i){var state=suggestionState(p);return '<button type="button" class="wording-suggestion '+(state.complete?'is-added':'')+'" data-suggestion="'+i+'" '+(!data.writable?'disabled':'')+' title="'+esc(p.rules.map(function(r){return r.from+' → '+r.to;}).join('; '))+'"><span aria-hidden="true">'+(state.complete?'✓':state.conflict?'!':'+')+'</span><strong>'+esc(p.title)+'</strong><span class="sr-only">'+esc(state.complete?PosnicPro.i18n.t('lang_wording_suggestion_added','Added · View'):state.conflict?PosnicPro.i18n.t('lang_wording_suggestion_review','Review existing wording'):PosnicPro.i18n.t('lang_wording_suggestion_add','+ Add suggestion'))+'</span></button>';}).join('')+'</div>';
     }
     function addSuggestion(index) {
         var preset=commonWording[index];if(!preset || draft.locale!=='en')return;
@@ -131,7 +136,7 @@
     }
     function ruleRows() {
         suggestions();
-        var words=draft.locale==='en'?['Item','Items','Product','Products','Takeaway','Take away','Take-away','Parcel','Customer','Customers','Guest','Guests']:[];
+        var words=draft.locale==='en'?Array.from(new Set(commonWording.flatMap(function(p){return p.rules.map(function(r){return r.from;});}))):[];
         words=Array.from(new Set(words.concat(draft.rules.map(function(r){return r.from;}).filter(Boolean))));
         el('wording-rule-list').innerHTML = '<datalist id="wording-known-words">'+words.map(function(w){return '<option value="'+esc(w)+'"></option>';}).join('')+'</datalist>'+draft.rules.map(function (r, i) { return '<div class="row align-items-end mb-3 wording-rule-row"><label class="col-md-5"><lang class="lang_wording_ui_existing_word">Existing word</lang><input class="form-control" aria-label="Existing word ' + (i + 1) + '" data-rule="' + i + '" data-field="from" list="wording-known-words" autocomplete="off" maxlength="100" value="' + esc(r.from) + '" ' + (!data.writable ? 'disabled' : '') + '></label><label class="col-md-5"><lang class="lang_wording_ui_use_instead">Use instead</lang><input class="form-control" aria-label="Use instead ' + (i + 1) + '" data-rule="' + i + '" data-field="to" maxlength="100" value="' + esc(r.to) + '" ' + (!data.writable ? 'disabled' : '') + '></label><div class="col-md-2 mb-2"><button type="button" class="btn btn-link" data-remove-rule="' + i + '" ' + (!data.writable ? 'disabled' : '') + '><lang class="lang_ai_key_remove">Remove</lang></button></div></div>'; }).join('');
     }

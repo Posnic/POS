@@ -96,3 +96,13 @@ test('English suggestions are not inserted into a different base language',()=>{
  const {dom,q}=setup();q('#wording-new').click();q('#wording-name').value='Tamil';q('#wording-create-locale').value='ta';q('#wording-profile-save').click();
  assert.equal(q('#wording-suggestions').hidden,true);assert.equal(q('[data-suggestion]'),null);dom.window.close();
 });
+
+test('additional suggestions include plurals and do not overwrite a competing customer preference',()=>{
+ const {dom,q,requests}=setup();q('[data-suggestion="3"]').click();q('[data-suggestion="4"]').click();
+ const values=Array.from(dom.window.document.querySelectorAll('[data-rule][data-field="to"]')).map(e=>e.value);
+ assert.ok(values.includes('Guest'));assert.ok(values.includes('Guests'));assert.equal(values.includes('Client'),false);
+ q('[data-suggestion="5"]').click();q('[data-suggestion="6"]').click();q('[data-suggestion="7"]').click();
+ const replacements=Array.from(dom.window.document.querySelectorAll('[data-rule][data-field="to"]')).map(e=>e.value);
+ for(const word of ['Vendor','Vendors','Staff member','Staff members','Qty'])assert.ok(replacements.includes(word));
+ assert.equal(requests.filter(x=>typeof x==='object').length,0);dom.window.close();
+});
