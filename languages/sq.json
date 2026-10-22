@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (zakonisht 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (zakonisht 587 ose 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Përdor Posnic ni email cloud ose lidhni llogarinë tuaj për faturat dhe raportet.",
-  "lang_send_this_report_automatically": "Dërgo këtë raport automatikisht"
+  "lang_send_this_report_automatically": "Dërgo këtë raport automatikisht",
+  "lang_messaging_acl_manage_automation": "Menaxhoni mesazhet automatike",
+  "lang_messaging_acl_manage_reports": "Menaxho raportet e planifikuara",
+  "lang_messaging_acl_manage_settings": "Menaxhimi i cilësimeve të",
+  "lang_messaging_acl_send_bulk": "Dërgoni mesazhe me shumicë",
+  "lang_messaging_acl_send_email": "Dërgoni email",
+  "lang_messaging_acl_send_sms": "Dërgo SMS mesazhe",
+  "lang_messaging_acl_send_whatsapp": "Dërgo WhatsApp mesazhe",
+  "lang_messaging_acl_view_history": "Shiko historinë e mesazheve"
 }

@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (venjulega 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (venjulega 587 eða 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Notaðu Posnic skýjapóst eða tengdu eigin reikning fyrir reikninga og skýrslur.",
-  "lang_send_this_report_automatically": "Senda þessa skýrslu sjálfkrafa"
+  "lang_send_this_report_automatically": "Senda þessa skýrslu sjálfkrafa",
+  "lang_messaging_acl_manage_automation": "Stjórna sjálfvirkum skilaboðum",
+  "lang_messaging_acl_manage_reports": "Stjórna áætluðum skýrslum",
+  "lang_messaging_acl_manage_settings": "Stjórna skilaboðastillingum",
+  "lang_messaging_acl_send_bulk": "Senda lausaskilaboð viðskiptavina",
+  "lang_messaging_acl_send_email": "Senda tölvupóst",
+  "lang_messaging_acl_send_sms": "Senda SMS skilaboð",
+  "lang_messaging_acl_send_whatsapp": "Senda WhatsApp skilaboð",
+  "lang_messaging_acl_view_history": "Skoða skilaboðasögu"
 }

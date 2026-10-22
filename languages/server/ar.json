@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "استخدم وحدة بيع واحدة لكل منتج في عملية البيع.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppلم تقم بإرجاع مرجع الرسالة. التسليم غير مؤكد؛ تحقق من الدردشة قبل إعادة المحاولة.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppلم تقم بمزامنة دردشة هذا المستلم حتى الآن. لم يتم إرسال أي رسالة. اسمح للجهاز المرتبط بإنهاء المزامنة.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppلا يزال يعيد الاتصال أو يحتاج إلى رابط هاتف جديد. لم يتم إرسال أي رسالة."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppلا يزال يعيد الاتصال أو يحتاج إلى رابط هاتف جديد. لم يتم إرسال أي رسالة.",
+  "Messaging permission required.": "إذن المراسلة مطلوب.",
+  "Schedule owner no longer has messaging access.": "لم يعد بإمكان مالك الجدول الوصول إلى المراسلة."
 }

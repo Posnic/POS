@@ -5234,5 +5234,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (通常は 465)",
   "lang_starttls_usually_587_or_2525": "StartTLS (通常は 587 または 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "請求書やレポートには、Posnicクラウドメールを使用するか、独自のアカウントを接続してください。",
-  "lang_send_this_report_automatically": "このレポートを自動的に送信する"
+  "lang_send_this_report_automatically": "このレポートを自動的に送信する",
+  "lang_messaging_acl_manage_automation": "自動メッセージを管理する",
+  "lang_messaging_acl_manage_reports": "定期レポートの管理",
+  "lang_messaging_acl_manage_settings": "メッセージ設定の管理",
+  "lang_messaging_acl_send_bulk": "顧客へのメッセージの一括送信",
+  "lang_messaging_acl_send_email": "E メールを送信",
+  "lang_messaging_acl_send_sms": "SMSメッセージを送信",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppメッセージを送信",
+  "lang_messaging_acl_view_history": "メッセージ履歴を表示する"
 }

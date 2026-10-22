@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (yleensä 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (yleensä 587 tai 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Käytä Posnic pilvisähköpostia tai liitä oma tili laskuja ja raportteja varten.",
-  "lang_send_this_report_automatically": "Lähetä tämä raportti automaattisesti"
+  "lang_send_this_report_automatically": "Lähetä tämä raportti automaattisesti",
+  "lang_messaging_acl_manage_automation": "Automaattisten viestien hallinta",
+  "lang_messaging_acl_manage_reports": "Hallitse ajoitettuja raportteja",
+  "lang_messaging_acl_manage_settings": "Viestiasetusten hallinta",
+  "lang_messaging_acl_send_bulk": "Lähetä joukkoasiakasviestejä",
+  "lang_messaging_acl_send_email": "Lähetä sähköposteja",
+  "lang_messaging_acl_send_sms": "Lähetä SMS viestejä",
+  "lang_messaging_acl_send_whatsapp": "Lähetä WhatsApp viestejä",
+  "lang_messaging_acl_view_history": "Näytä viestihistoria"
 }

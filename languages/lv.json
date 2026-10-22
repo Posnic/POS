@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (parasti 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (parasti 587 vai 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Izmantojiet Posnic mākoņa e-pastu vai pievienojiet savu kontu rēķiniem un pārskatiem.",
-  "lang_send_this_report_automatically": "Nosūtiet šo ziņojumu automātiski"
+  "lang_send_this_report_automatically": "Nosūtiet šo ziņojumu automātiski",
+  "lang_messaging_acl_manage_automation": "Automātisko ziņojumu pārvaldīšana",
+  "lang_messaging_acl_manage_reports": "Pārvaldiet plānotos pārskatus",
+  "lang_messaging_acl_manage_settings": "Pārvaldīt ziņojumapmaiņas iestatījumus",
+  "lang_messaging_acl_send_bulk": "Lielapjoma klientu ziņojumu sūtīšana",
+  "lang_messaging_acl_send_email": "Sūtīt e-pastus",
+  "lang_messaging_acl_send_sms": "Ziņu sū SMS tīšana",
+  "lang_messaging_acl_send_whatsapp": "Ziņu sū WhatsApp tīšana",
+  "lang_messaging_acl_view_history": "Skatīt ziņojumu vēsturi"
 }
