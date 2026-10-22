@@ -8,8 +8,7 @@ const bindController = (handler) => {
   return (req, res) => messagingController.error(res, 'Handler not implemented', 501);
 };
 
-// Authenticated; the controller further restricts every route to super admins,
-// since these settings hold the shop's SMS provider secrets.
+// Authentication plus explicit per-action messaging grants in the controller.
 router.use(protect);
 router.get('/permissions', (req, res) =>
   res.json({ type: 'success', data: require('../utils/messaging-access').matrix(req.user) })
