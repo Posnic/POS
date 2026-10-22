@@ -353,7 +353,7 @@ test("WhatsApp providers show only their fields, setup guide and isolated creden
   assert.equal(data.sms_config, undefined);
   assert.match(
     $("#messaging_wa_provider_fields a").attr("href"),
-    /^https:\/\/www.twilio.com/,
+    /^https:\/\/www\.twilio\.com\//,
   );
   $("#messaging_wa_provider").val("meta").trigger("change");
   assert.notEqual($("#messaging_wa_meta_fields").css("display"), "none");

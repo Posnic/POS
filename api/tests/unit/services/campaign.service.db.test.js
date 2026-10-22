@@ -113,7 +113,7 @@ const CID = '64d000000000000000000001';
 function cust(id, over = {}) {
   return {
     _id: new ObjectId(id),
-    license: 'lic-test',
+    license: '64d000000000000000000077',
     branch_id: new ObjectId('64d000000000000000000099'),
     name: 'C' + id.slice(-2),
     phone: '+9199' + id.slice(-4),
@@ -126,7 +126,7 @@ function cust(id, over = {}) {
 function makeCampaign(over = {}) {
   return {
     _id: new ObjectId(CID),
-    license: 'lic-test',
+    license: '64d000000000000000000077',
     name: 'Promo',
     channel: CHANNEL.WHATSAPP,
     message: 'Hi {name}',
@@ -153,7 +153,7 @@ function recordingAdapters(resultFor) {
 
 describe('Selected campaign audiences', () => {
   beforeEach(() => {
-    BaseModel.license = 'lic-test';
+    BaseModel.license = '64d000000000000000000077';
   });
   afterEach(() => {
     BaseModel.getDb = undefined;
@@ -203,7 +203,7 @@ describe('CampaignService.preview (DB)', () => {
   let svc;
   beforeEach(() => {
     svc = new CampaignService();
-    BaseModel.license = 'lic-test';
+    BaseModel.license = '64d000000000000000000077';
   });
   afterEach(() => {
     BaseModel.getDb = undefined;
@@ -227,7 +227,7 @@ describe('CampaignService.send (DB, injected adapters)', () => {
   let svc;
   beforeEach(() => {
     svc = new CampaignService();
-    BaseModel.license = 'lic-test';
+    BaseModel.license = '64d000000000000000000077';
   });
   afterEach(() => {
     BaseModel.getDb = undefined;
@@ -245,7 +245,7 @@ describe('CampaignService.send (DB, injected adapters)', () => {
         users: makeCollection([
           {
             _id: ctx.userId,
-            license: 'lic-test',
+            license: '64d000000000000000000077',
             access: { messaging: ctx.messagingAccess },
             branch_access: [{ branch_id: ctx.branchId }],
           },
@@ -277,7 +277,7 @@ describe('CampaignService.send (DB, injected adapters)', () => {
         users: makeCollection([
           {
             _id: ctx.userId,
-            license: 'lic-test',
+            license: '64d000000000000000000077',
             access: { messaging: ctx.messagingAccess },
             branch_access: [{ branch_id: ctx.branchId }],
           },
@@ -325,7 +325,7 @@ describe('CampaignService.send (DB, injected adapters)', () => {
         users: makeCollection([
           {
             _id: ctx.userId,
-            license: 'lic-test',
+            license: '64d000000000000000000077',
             access: { messaging: ctx.messagingAccess },
             branch_access: [{ branch_id: ctx.branchId }],
           },
@@ -353,7 +353,7 @@ describe('CampaignService.schedule + runDue (DB)', () => {
   let svc;
   beforeEach(() => {
     svc = new CampaignService();
-    BaseModel.license = 'lic-test';
+    BaseModel.license = '64d000000000000000000077';
   });
   afterEach(() => {
     BaseModel.getDb = undefined;
@@ -373,7 +373,7 @@ describe('CampaignService.schedule + runDue (DB)', () => {
         users: makeCollection([
           {
             _id: ctx.userId,
-            license: 'lic-test',
+            license: '64d000000000000000000077',
             access: { messaging: ctx.messagingAccess },
             branch_access: [{ branch_id: ctx.branchId }],
           },
@@ -416,7 +416,7 @@ describe('campaign service permission enforcement', () => {
     BaseModel.getDb = undefined;
   });
   test('missing grants cannot reach a sender adapter', async () => {
-    BaseModel.license = 'lic-test';
+    BaseModel.license = '64d000000000000000000077';
     BaseModel.getDb = jest
       .fn()
       .mockResolvedValue(
@@ -428,7 +428,7 @@ describe('campaign service permission enforcement', () => {
     expect(rec.called).toHaveLength(0);
   });
   test('revoked scheduling permission prevents queued dispatch', async () => {
-    BaseModel.license = 'lic-test';
+    BaseModel.license = '64d000000000000000000077';
     const campaigns = makeCollection([
       makeCampaign({ status: STATUS.SCHEDULED, schedule_at: new Date('2026-08-15T09:00:00Z') }),
     ]);
@@ -438,7 +438,7 @@ describe('campaign service permission enforcement', () => {
         users: makeCollection([
           {
             _id: ctx.userId,
-            license: 'lic-test',
+            license: '64d000000000000000000077',
             access: { messaging: { send_whatsapp: true, send_bulk: false } },
             branch_access: [{ branch_id: ctx.branchId }],
           },
@@ -454,5 +454,19 @@ describe('campaign service permission enforcement', () => {
     expect(result.data.results[0].status).toBe(false);
     expect(rec.called).toHaveLength(0);
     expect(campaigns._docs[0].status).toBe(STATUS.SCHEDULED);
+  });
+});
+
+describe('scheduled campaign ID validation', () => {
+  test.each([
+    [{ $ne: null }, ctx.branchId],
+    ['64d000000000000000000077', { $ne: null }],
+    ['invalid', ctx.branchId],
+  ])('rejects invalid tenant or branch before querying', async (license, branchId) => {
+    BaseModel.license = license;
+    BaseModel.getDb = jest.fn();
+    const result = await new CampaignService().runDue({ ctx: { ...ctx, branchId } });
+    expect(result.status).toBe(false);
+    expect(BaseModel.getDb).not.toHaveBeenCalled();
   });
 });

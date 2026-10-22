@@ -12,6 +12,10 @@ const {
 } = require('../constants/campaign.constants');
 
 const oid = (v) => (v && ObjectId.isValid(String(v)) ? new ObjectId(String(v)) : v);
+const strictId = (value) => {
+  const text = value instanceof ObjectId ? value.toHexString() : value;
+  return typeof text === 'string' && /^[a-f0-9]{24}$/i.test(text) ? new ObjectId(text) : null;
+};
 
 /*
  * The campaign engine.
@@ -428,15 +432,17 @@ class CampaignService {
    * campaign flips out of 'scheduled' as it runs, and sends stay de-duplicated.
    */
   async runDue({ ctx = {}, adapters = null, now = null } = {}) {
+    const licenseId = strictId(BaseModel.license);
+    const branchId = strictId(ctx.branchId);
+    if (!licenseId || !branchId || !ctx.messagingAccess?.send_bulk)
+      return { status: false, message: 'Messaging permission required.' };
     const db = await BaseModel.getDb();
     const col = db.collection('campaigns');
-    if (!ctx.branchId || !ctx.messagingAccess?.send_bulk)
-      return { status: false, message: 'Messaging permission required.' };
     const cutoff = now ? new Date(now) : new Date();
     const due = await col
       .find({
-        license: BaseModel.license,
-        ...(ctx.branchId ? { branch_id: oid(ctx.branchId) } : {}),
+        license: licenseId,
+        branch_id: branchId,
         status: STATUS.SCHEDULED,
         schedule_at: { $lte: cutoff },
       })
@@ -444,10 +450,11 @@ class CampaignService {
     const results = [];
     for (const c of due) {
       const acl = require('../utils/messaging-access');
-      const actor = c.scheduled_by
+      const actorId = strictId(c.scheduled_by);
+      const actor = actorId
         ? await db.collection('users').findOne({
-            _id: oid(c.scheduled_by),
-            license: BaseModel.license,
+            _id: actorId,
+            license: licenseId,
             isActive: { $ne: false },
             status: { $nin: ['inactive', 'suspended', 'pending'] },
           })
