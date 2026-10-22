@@ -24,7 +24,7 @@ function canonical(value) {
   return { cash: 'Cash', card: 'Card', creditcard: 'Card', debitcard: 'Card', upi: 'Upi' }[key];
 }
 function enabled(rows, branch) {
-  if (!branch.payment_methods_initialized && !rows.length) return ['Cash', 'Card', 'Upi'];
+  if (!branch.payment_methods_initialized && !rows.length) return defaults(branch);
   const methods = new Set(
     rows
       .filter((r) => r.enabled !== false)

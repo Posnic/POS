@@ -28,6 +28,7 @@ beforeEach(async () => {
   await db.collection('branches').insertOne({
     _id: branch,
     license,
+    country: 'India',
     currency: '₹',
     captain_payments: { enabled: true, methods: ['Cash', 'Card', 'Upi'], printReceipt: false },
   });

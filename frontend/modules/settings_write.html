@@ -5968,7 +5968,7 @@
                                                             </label>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-6 india-only" hidden>
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" id="bill_print_hsn" name="bill_print_hsn" />
@@ -6372,7 +6372,7 @@
                                                                 account. Nothing here confirms it - the counter sees
                                                                 the payment and marks the order paid, the same as cash.
                                                             -->
-                                                            <div class="col-md-12 mb-3">
+                                                            <div class="col-md-12 mb-3 india-only" hidden>
                                                                 <label class="font-weight-bold"><lang class="lang_upi_heading">Pay by UPI</lang></label>
                                                                 <small class="form-text text-muted mb-2">
                                                                     <lang class="lang_upi_help">Put your UPI id here and a customer looking at an unpaid order gets a button that opens their own app, with your name and the amount already filled in. The money goes straight to you. Nobody here checks it: your counter sees the payment and marks the order paid, exactly as it does with cash. Leave it empty and no button appears.</lang>
@@ -6970,7 +6970,7 @@
                                                         <fieldset id="captain_payment_methods"><legend class="h6"><lang class="lang_payment_methods">Payment methods</lang></legend>
                                                             <label class="mr-3"><input type="checkbox" value="Cash" checked> <lang class="lang_cash">Cash</lang></label>
                                                             <label class="mr-3"><input type="checkbox" value="Card" checked> <lang class="lang_card">Card</lang></label>
-                                                            <label><input type="checkbox" value="Upi" checked> <lang class="lang_upi">UPI</lang></label>
+                                                            <label class="india-only" hidden><input type="checkbox" value="Upi" checked> <lang class="lang_upi">UPI</lang></label>
                                                         </fieldset>
                                                         <label class="d-block my-3"><input type="checkbox" id="captain_payment_receipt" checked> <lang class="lang_captain_payment_receipt">Print a receipt after each payment</lang></label>
                                                         <button type="button" class="btn btn-primary" id="save_captain_payments" disabled><lang class="lang_save_title">Save</lang></button>

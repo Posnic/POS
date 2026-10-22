@@ -469,6 +469,13 @@ PosnicPro.items = {
         try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) {}
         var taxOff = settings.module_tax_enable === false;
         $("input[name='hsntax_radio_value']").closest('.card').toggle(!taxOff);
+        var hsn = !taxOff && itemHsnAvailable();
+        $('#item_tax_hsncode').closest('.custom-control').prop('hidden', !hsn).toggle(hsn);
+        if (!hsn) {
+            $('#item_tax_default').prop('checked', true);
+            $('#hsn_code_show,#hsn_tax').hide();
+            $('#default_tax').show();
+        }
     },
     /* The weight-scale flag only means anything when the weight-machine
        hardware module is on - the sales side gates on the same setting. */
@@ -5397,7 +5404,7 @@ $(document).ready(function () {
     });
     $("#load_price_fields").html('');
 });
-$('#item_tax_hsncode').closest('.custom-control').toggle(itemHsnAvailable());
+PosnicPro.items.applyTaxGate();
 $('#items_hsncode').prop('required', false);
 $('.click-tax-value').click(function () {
     var hsnValue = $("input[name='hsntax_radio_value']:checked").val();
