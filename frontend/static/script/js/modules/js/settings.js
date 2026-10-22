@@ -148,9 +148,15 @@ PosnicPro.settings = {
      * India keeps exactly its current look; the gst_action machinery is
      * untouched. Presentation only, and failure leaves things as they are.
      */
+    applyCountryFields: function (country, scope) {
+        var india = ['india', 'in', 'ind'].includes(String(country || '').trim().toLowerCase());
+        $(scope).find('.india-only').prop('hidden', !india).toggle(india);
+    },
     applyTaxProfile: function (country, selector) {
         var input = $(selector || '#branch_gstin_number');
-        country = country || $('#setting_country').val() || PosnicPro.local.get('country_setting');
+        if (country === undefined) country = $('#setting_country').val() || PosnicPro.local.get('country_setting');
+        country = String(country || '');
+        PosnicPro.settings.applyCountryFields(country, input.closest('.page_loader'));
         input.data('tax-country', country).removeData('tax-regex').removeAttr('minlength').attr('maxlength', 100);
         PosnicPro.get({ url: 'setting/taxProfile', data: { country: country } }, function (r) {
             var p = r && r.data;
@@ -627,6 +633,7 @@ PosnicPro.settings = {
                     $('.display-currency').text(currency);
                     $('#setting_status').val("Yes");
                     PosnicPro.local.set("country_setting", response.data.country);
+                    $(document).trigger('posnic:country-changed');
                     PosnicPro.local.set("state_setting", response.data.state || "");
                     PosnicPro.local.set("city_setting", response.data.city || "");
                     PosnicPro.local.set('countryid', response.data['country_id']);
@@ -847,6 +854,7 @@ PosnicPro.settings = {
                 $('#id').val(PosnicPro.record_id);
                 $('#razor_key').text(data.razorKey);
                 $('#razor_url').text(data.razorUrl);
+                PosnicPro.settings.applyCountryFields(data.country, '#settings');
                 $('#store_name').val(data.branch_name);
                 $('#branch_upi_id').val(data.branch_upi_id || '');
                 $('#branch_upi_name').val(data.branch_upi_name || '');
@@ -1335,7 +1343,7 @@ if ($wrapper.length) {
                     $('.hide_indian_gst').hide();
                     PosnicPro.local.set('gst_action', 'disable');
                 }
-                PosnicPro.settings.applyTaxProfile();
+                PosnicPro.settings.applyTaxProfile(data.country);
 
                 $('#setting_country,#customer_country,#supplier_country,#branch_country').val(data.country);
                 $('#client_dateformat').val(data.client_dateformat);
@@ -1503,6 +1511,9 @@ if ($wrapper.length) {
                 $("#receiving_tax option[value='" + data.tax_percentage + "']").prop("selected", true);
                 PosnicPro.local.set("country_value", data.country);
                 PosnicPro.local.set("country_setting", data.country);
+                $(document).trigger('posnic:country-changed');
+                PosnicPro.settings.applyCountryFields(data.country, '#settings');
+                if (PosnicPro.items && PosnicPro.items.applyTaxGate) PosnicPro.items.applyTaxGate();
                 PosnicPro.local.set("state_setting", data.state);
                 PosnicPro.local.set("city_setting", data.city || "");
                 $('#setting_country').val(data.country).trigger('change.select2');
@@ -10365,6 +10376,7 @@ $(document).on('shown.bs.tab', '#captainpayments-tab-line', function () {
     PosnicPro.get({url:'captain/v1/payment-settings'}, function (data) {
         $('#save_captain_payments').prop('disabled',false);
         $('#captain_payments_message').empty();
+        PosnicPro.settings.applyCountryFields(PosnicPro.local.get('country_setting'), '#settings');
         $('#captain_payments_enabled').prop('checked',data.enabled === true);
         $('#captain_payment_receipt').prop('checked',data.printReceipt !== false);
         $('#captain_payment_methods input').each(function () { $(this).prop('checked',(data.methods || []).indexOf(this.value) >= 0); });
