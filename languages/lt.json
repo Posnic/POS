@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (paprastai 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (paprastai 587 arba 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Naudokite Posnic debesies el. paštą arba prijunkite savo sąskaitą sąskaitoms ir ataskaitoms.",
-  "lang_send_this_report_automatically": "Atsiųskite šią ataskaitą automatiškai"
+  "lang_send_this_report_automatically": "Atsiųskite šią ataskaitą automatiškai",
+  "lang_messaging_acl_manage_automation": "Automatinių pranešimų tvarkymas",
+  "lang_messaging_acl_manage_reports": "Suplanuotų ataskaitų tvarkymas",
+  "lang_messaging_acl_manage_settings": "Tvarkykite pranešimų nustatymus",
+  "lang_messaging_acl_send_bulk": "Siųsti masinius klientų pranešimus",
+  "lang_messaging_acl_send_email": "Siųsti el. Laiškus",
+  "lang_messaging_acl_send_sms": "Siųsti SMS žinutes",
+  "lang_messaging_acl_send_whatsapp": "Siųsti WhatsApp žinutes",
+  "lang_messaging_acl_view_history": "Peržiūrėti pranešimų istoriją"
 }

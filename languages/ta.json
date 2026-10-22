@@ -5316,5 +5316,13 @@
   "lang_ssl_tls_usually_465": "எஸ்எஸ்எல்/டிஎல்எஸ் (பொதுவாக 465)",
   "lang_starttls_usually_587_or_2525": "ஸ்டார்ட்டில்ஸ் (பொதுவாக 587 அல்லது 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "கிளவ Posnic ுட் மின்னஞ்சலைப் பயன்படுத்தவும் அல்லது பில்கள் மற்றும் அறிக்கைகளுக்கு உங்கள் சொந்த கணக்கை இண",
-  "lang_send_this_report_automatically": "இந்த அறிக்கையை தானாக அனுப்பவும்"
+  "lang_send_this_report_automatically": "இந்த அறிக்கையை தானாக அனுப்பவும்",
+  "lang_messaging_acl_manage_automation": "தானியங்கி செய்திகளை நிர்வகிக்கவும்",
+  "lang_messaging_acl_manage_reports": "திட்டமிடப்பட்ட அறிக்கைகளை நிர்வகிக்கவும்",
+  "lang_messaging_acl_manage_settings": "செய்தி அமைப்புகளை நிர்வகிக்கவும்",
+  "lang_messaging_acl_send_bulk": "வாடிக்கையாளர்களுக்கு மொத்தமாகச் செய்திகளை அனுப்பவும்",
+  "lang_messaging_acl_send_email": "மின்னஞ்சல்களை அனுப்பவும்",
+  "lang_messaging_acl_send_sms": "SMS செய்திகளை அனுப்பவும்",
+  "lang_messaging_acl_send_whatsapp": "WhatsApp செய்திகளை அனுப்பவும்",
+  "lang_messaging_acl_view_history": "செய்தி வரலாற்றைக் காண்க"
 }

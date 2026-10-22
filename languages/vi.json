@@ -5234,5 +5234,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (thường là 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (thường là 587 hoặc 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Sử dụng email Posnic đám mây hoặc kết nối tài khoản của riêng bạn cho các hóa đơn và báo cáo.",
-  "lang_send_this_report_automatically": "Gửi báo cáo này tự động"
+  "lang_send_this_report_automatically": "Gửi báo cáo này tự động",
+  "lang_messaging_acl_manage_automation": "Quản lý tin nhắn tự động",
+  "lang_messaging_acl_manage_reports": "Quản lý báo cáo đã lên lịch",
+  "lang_messaging_acl_manage_settings": "Quản lý cài đặt nhắn tin",
+  "lang_messaging_acl_send_bulk": "Gửi tin nhắn hàng loạt cho khách hàng",
+  "lang_messaging_acl_send_email": "Gửi email",
+  "lang_messaging_acl_send_sms": "Gửi SMS tin nhắn",
+  "lang_messaging_acl_send_whatsapp": "Gửi WhatsApp tin nhắn",
+  "lang_messaging_acl_view_history": "Xem lịch sử tin nhắn"
 }

@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "Използвайте една продажна единица на продукт при продажба.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне върна препратка към съобщението. Доставката не е потвърдена; проверете чата, преди да опитате отново.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppвсе още не е синхронизирал чата на този получател. Не е изпратено съобщение. Позволете на свързаното устройство да завърши синхронизирането.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppвсе още се свързва отново или се нуждае от нова телефонна връзка. Не е изпратено съобщение."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppвсе още се свързва отново или се нуждае от нова телефонна връзка. Не е изпратено съобщение.",
+  "Messaging permission required.": "Изисква се разрешение за съобщения.",
+  "Schedule owner no longer has messaging access.": "Собственикът на графика вече няма достъп до съобщения."
 }

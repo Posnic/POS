@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "銷售中每個產品使用一個銷售單位。",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApp沒有返回郵件引用。交貨尚未確認，請先檢查聊天，然後再重試。",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApp尚未同步此收件人的聊天。沒有發送任何訊息。允許連結的裝置完成同步。",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApp仍在重新連接或需要新的電話鏈接。沒有發送任何訊息。"
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApp仍在重新連接或需要新的電話鏈接。沒有發送任何訊息。",
+  "Messaging permission required.": "需要消息傳遞權限。",
+  "Schedule owner no longer has messaging access.": "排程擁有者不再具有郵件存取權限。"
 }

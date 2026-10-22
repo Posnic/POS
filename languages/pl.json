@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (zwykle 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (zwykle 587 lub 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Użyj poczty e-mail Posnic w chmurze lub połącz własne konto do rachunków i raportów.",
-  "lang_send_this_report_automatically": "Wyślij ten raport automatycznie"
+  "lang_send_this_report_automatically": "Wyślij ten raport automatycznie",
+  "lang_messaging_acl_manage_automation": "Zarządzanie wiadomościami automatycznymi",
+  "lang_messaging_acl_manage_reports": "Zarządzanie zaplanowanymi raportami",
+  "lang_messaging_acl_manage_settings": "Zarządzanie ustawieniami wiadomości",
+  "lang_messaging_acl_send_bulk": "Wysyłanie masowych wiadomości klientów",
+  "lang_messaging_acl_send_email": "Wysyłaj e-maile",
+  "lang_messaging_acl_send_sms": "Wysył SMS anie wiadomości",
+  "lang_messaging_acl_send_whatsapp": "Wysył WhatsApp anie wiadomości",
+  "lang_messaging_acl_view_history": "Wyświetl historię wiadomości"
 }

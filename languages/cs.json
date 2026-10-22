@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (obvykle 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (obvykle 587 nebo 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Použijte Posnic cloudový e-mail nebo připojte svůj vlastní účet pro účty a zprávy.",
-  "lang_send_this_report_automatically": "Odeslat tuto zprávu automaticky"
+  "lang_send_this_report_automatically": "Odeslat tuto zprávu automaticky",
+  "lang_messaging_acl_manage_automation": "Správa automatických zpráv",
+  "lang_messaging_acl_manage_reports": "Správa naplánovaných sestav",
+  "lang_messaging_acl_manage_settings": "Správa nastavení zasílání zpráv",
+  "lang_messaging_acl_send_bulk": "Posílejte hromadné zákaznické zprávy",
+  "lang_messaging_acl_send_email": "Posílat e-maily",
+  "lang_messaging_acl_send_sms": "Posílat SMS zprávy",
+  "lang_messaging_acl_send_whatsapp": "Posílat WhatsApp zprávy",
+  "lang_messaging_acl_view_history": "Zobrazit historii zpráv"
 }
