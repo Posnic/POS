@@ -52,7 +52,11 @@ function mockRes() {
 
 function mockReq(over = {}) {
   return {
-    user: { usertype: 'admin', name: 'Mgr', access: {} },
+    user: {
+      usertype: 'admin',
+      name: 'Mgr',
+      access: { messaging: { manage_automation: true, send_sms: true, send_bulk: true } },
+    },
     tenantContext: { branchId: 'b1', branchName: 'Shop', currency: '₹' },
     params: {},
     query: {},
@@ -62,7 +66,10 @@ function mockReq(over = {}) {
 }
 
 describe('CreditController', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockService.getSettings.mockResolvedValue({ reminder_channel: 'sms' });
+  });
 
   test('getSettings returns settings', async () => {
     mockService.getSettings.mockResolvedValue({ default_credit_limit: 5000 });
@@ -159,4 +166,33 @@ describe('CreditController', () => {
     );
     expect(res.statusCode).toBe(403);
   });
+});
+
+test('branch write cannot send a reminder without the stored channel grant', async () => {
+  mockService.sendReminder.mockClear();
+  mockService.getSettings.mockResolvedValue({ reminder_channel: 'whatsapp' });
+  const res = mockRes();
+  await creditController.sendReminder(
+    mockReq({
+      user: { usertype: 'admin', access: { messaging: { send_sms: true } } },
+      params: { customerId: 'c1' },
+    }),
+    res
+  );
+  expect(res.statusCode).toBe(403);
+  expect(mockService.sendReminder).not.toHaveBeenCalled();
+});
+
+test('automation management alone cannot enable WhatsApp reminders', async () => {
+  mockService.saveSettings.mockClear();
+  const res = mockRes();
+  await creditController.saveSettings(
+    mockReq({
+      user: { usertype: 'admin', access: { messaging: { manage_automation: true } } },
+      body: { reminder_enabled: true, reminder_channel: 'whatsapp' },
+    }),
+    res
+  );
+  expect(res.statusCode).toBe(403);
+  expect(mockService.saveSettings).not.toHaveBeenCalled();
 });

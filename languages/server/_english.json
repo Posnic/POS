@@ -1280,6 +1280,10 @@
   "Message sent successfully": [
     "src/services/whatsapp.service.js"
   ],
+  "Messaging permission required.": [
+    "src/services/campaign.service.js",
+    "src/utils/messaging-access.js"
+  ],
   "Modifier group created": [
     "src/models/setting.model.js"
   ],
@@ -2023,6 +2027,9 @@
   ],
   "Schedule entry removed": [
     "src/repositories/shift.repository.js"
+  ],
+  "Schedule owner no longer has messaging access.": [
+    "src/services/campaign.service.js"
   ],
   "Scheduled": [
     "src/repositories/shift.repository.js"

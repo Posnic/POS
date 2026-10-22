@@ -211,7 +211,13 @@ test('scheduled delivery uses the BSON license type used by messaging settings',
   );
 });
 test('messaging reports still require an active owner with outlet access', async () => {
-  const schedule = { source: 'messaging', license: 'shop', branch_id: 'outlet', user_id: 'owner' };
+  const schedule = {
+    source: 'messaging',
+    channel: 'email',
+    license: 'shop',
+    branch_id: 'outlet',
+    user_id: 'owner',
+  };
   const lookup = jest.fn(async () => ({
     _id: 'owner',
     role: 'cashier',

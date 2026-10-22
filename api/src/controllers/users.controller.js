@@ -957,6 +957,7 @@ class UsersController extends BaseController {
       }
 
       const access = { ...(user.access || {}) };
+      access.messaging = require('../utils/messaging-access').matrix(user);
       // Match extension route authorization, including existing owner/manager
       // accounts whose stored ACL predates the extension module. Otherwise
       // the sidebar removes a page the server correctly permits them to use.

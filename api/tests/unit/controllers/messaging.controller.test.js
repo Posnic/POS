@@ -127,7 +127,7 @@ describe('providers', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'error',
-        message: 'Only a super admin can manage messaging settings',
+        message: 'Messaging permission required.',
       })
     );
     expect(svc.providers).not.toHaveBeenCalled();
@@ -159,7 +159,7 @@ describe('getSettings', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'error',
-        message: 'Only a super admin can manage messaging settings',
+        message: 'Messaging permission required.',
       })
     );
     expect(svc.getSettings).not.toHaveBeenCalled();
@@ -195,7 +195,7 @@ describe('saveSettings', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'error',
-        message: 'Only a super admin can manage messaging settings',
+        message: 'Messaging permission required.',
       })
     );
     expect(svc.saveSettings).not.toHaveBeenCalled();
@@ -252,7 +252,7 @@ describe('test', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'error',
-        message: 'Only a super admin can manage messaging settings',
+        message: 'Messaging permission required.',
       })
     );
     expect(svc.test).not.toHaveBeenCalled();

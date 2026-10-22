@@ -576,6 +576,13 @@ class SettingController extends BaseController {
 
   async updateCommonSettings(req, res) {
     try {
+      const messageFields = ['whatsapp_receipt', 'sales_sms', 'sales_mail'];
+      if (
+        messageFields.some((key) => Object.prototype.hasOwnProperty.call(req.body || {}, key)) &&
+        !require('../utils/messaging-access').allowed(req.user, 'manage_automation')
+      ) {
+        return this.error(res, 'Messaging permission required.', 403);
+      }
       const settingModel = this.createModelWithContext(req);
       settingsService.setModel(settingModel);
 

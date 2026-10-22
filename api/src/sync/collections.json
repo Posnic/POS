@@ -141,7 +141,8 @@
     "credit_settings": "Credit reminder execution settings belong to this API authority. The UI edits that server settings only; independent offline tills do not inherit reminder schedules. Cross-installation credit policy remains pending explicit coordination.",
     "cashback_settings": "Coupon issuance and messaging settings belong to the issuing API. Independent offline tills must not execute cloned issuance rules; the UI shows only the connected authority configuration.",
     "cashback_issues": "Coupon issuance and delivery journal belongs to the issuing API; generic last-writer-wins copying cannot arbitrate issuance or redemption.",
-    "reminder_sends": "Reminder duplicate-prevention journal belongs to the API that sent it; independent APIs are not coordinated by copying journal rows."
+    "reminder_sends": "Reminder duplicate-prevention journal belongs to the API that sent it; independent APIs are not coordinated by copying journal rows.",
+    "roles": "Role templates are managed on the installation where they were created. Effective grants are materialized into tenant-scoped users.access and replicate through the existing users lane; receiving tills enforce that snapshot without looking up a local role. Edit a shared user and its role on the same authority. Offline devices retain the last synchronized grants until reconnect."
   },
   "undecided": {
     "_note": "Shop data that today stays where it was written. Each needs a decision and, if synced, a check that rows carry branch_id and license and that deletes leave a tombstone. Until decided, a till and the cloud can disagree on these exactly as they did on tables.",
@@ -152,7 +153,6 @@
     "loyalty_config": "loyalty rules set in one place do not reach the other",
     "customer_category": "customer groups created in one place do not reach the other",
     "denomination": "cash denominations set in one place do not reach the other",
-    "roles": "staff roles set in one place do not reach the other",
     "branch_preferences": "per-branch preferences set in one place do not reach the other",
     "transaction": "customer credit transactions on the till are unknown to the cloud",
     "payment": "payment records on the till are unknown to the cloud",

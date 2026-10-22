@@ -68,7 +68,10 @@ class RoleRepository {
         is_system: false,
         description: String(data.description || '').trim(),
         branch_scope: data.branch_scope || 'all',
-        access: data.access && typeof data.access === 'object' ? data.access : {},
+        access: {
+          ...(data.access || {}),
+          messaging: require('../utils/messaging-access').sanitize(data.access?.messaging),
+        },
         pos: data.pos && typeof data.pos === 'object' ? data.pos : {},
         requires_manager_approval: Array.isArray(data.requires_manager_approval)
           ? data.requires_manager_approval
@@ -90,7 +93,11 @@ class RoleRepository {
       if (data.name !== undefined) set.name = String(data.name).trim();
       if (data.description !== undefined) set.description = String(data.description).trim();
       if (data.branch_scope !== undefined) set.branch_scope = data.branch_scope;
-      if (data.access !== undefined) set.access = data.access;
+      if (data.access !== undefined)
+        set.access = {
+          ...data.access,
+          messaging: require('../utils/messaging-access').sanitize(data.access?.messaging),
+        };
       if (data.pos !== undefined) set.pos = data.pos;
       if (data.requires_manager_approval !== undefined) {
         set.requires_manager_approval = data.requires_manager_approval;
@@ -118,8 +125,8 @@ class RoleRepository {
    * edit takes effect immediately - not only the next time each user is saved.
    * The role-derived parts are recomputed (module matrix merged with the user's
    * own overrides, POS matrix, manager-approval list); the user's `plan` access
-   * is preserved as-is, since it is an entitlement, not a role grant. Failures
-   * are reported but never fail the role update itself.
+   * is preserved as-is, since it is an entitlement, not a role grant. Propagation
+   * failures fail the update response so an administrator can retry revocation.
    */
   async recomputeUsersForRole(roleId) {
     try {
@@ -138,6 +145,7 @@ class RoleRepository {
         .toArray();
       for (const u of assigned) {
         const access = mergeAccess(role.access || {}, u.access_overrides || {});
+        access.messaging = require('../utils/messaging-access').sanitize(access.messaging);
         access.plan = (u.access && u.access.plan) || { read: false };
         access.pos = role.pos && typeof role.pos === 'object' ? role.pos : {};
         access.pos_manager_approval = Array.isArray(role.requires_manager_approval)
@@ -147,6 +155,7 @@ class RoleRepository {
       }
     } catch (error) {
       console.error('recomputeUsersForRole failed:', error.message);
+      throw error;
     }
   }
 
