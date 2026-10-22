@@ -43,6 +43,11 @@ class CreditController extends BaseController {
     try {
       if (!acl.allowed(req.user, 'manage_automation'))
         return this.error(res, 'Messaging permission required.', 403);
+      if (
+        [true, 'true'].includes(req.body?.reminder_enabled) &&
+        !acl.allowed(req.user, acl.channelAction(req.body?.reminder_channel || 'sms'))
+      )
+        return this.error(res, 'Messaging permission required.', 403);
       if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
       const data = await this.service.saveSettings(ctx.branchId, req.body || {}, ctx);
