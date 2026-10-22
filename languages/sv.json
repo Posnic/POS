@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (vanligtvis 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (vanligtvis 587 eller 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Använd Posnic molnpost eller anslut ditt eget konto för räkningar och rapporter.",
-  "lang_send_this_report_automatically": "Skicka denna rapport automatiskt"
+  "lang_send_this_report_automatically": "Skicka denna rapport automatiskt",
+  "lang_messaging_acl_manage_automation": "Hantera automatiska meddelanden",
+  "lang_messaging_acl_manage_reports": "Hantera schemalagda rapporter",
+  "lang_messaging_acl_manage_settings": "Hantera meddelandeinställningar",
+  "lang_messaging_acl_send_bulk": "Skicka bulkkundmeddelanden",
+  "lang_messaging_acl_send_email": "Skicka e-post",
+  "lang_messaging_acl_send_sms": "Skicka SMS meddelanden",
+  "lang_messaging_acl_send_whatsapp": "Skicka WhatsApp meddelanden",
+  "lang_messaging_acl_view_history": "Visa meddelandehistorik"
 }

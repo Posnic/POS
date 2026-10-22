@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "판매 시 제품당 하나의 판매 단위를 사용하세요.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApp메시지 참조를 반환하지 않았습니다.전송이 확인되지 않았습니다. 다시 시도하기 전에 채팅을 확인하세요.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApp이 수신자의 채팅을 아직 동기화하지 않았습니다.메시지가 전송되지 않았습니다.연결된 장치가 동기화를 완료할 수 있도록 허용하세요.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApp아직 재연결 중이거나 새 전화 연결이 필요합니다.메시지가 전송되지 않았습니다."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApp아직 재연결 중이거나 새 전화 연결이 필요합니다.메시지가 전송되지 않았습니다.",
+  "Messaging permission required.": "메시지 권한이 필요합니다.",
+  "Schedule owner no longer has messaging access.": "일정 소유자에게는 더 이상 메시징 액세스 권한이 없습니다."
 }

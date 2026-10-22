@@ -5234,5 +5234,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS（通常为 465）",
   "lang_starttls_usually_587_or_2525": "STARTTLS（通常为 587 或 2525）",
   "lang_use_posnic_cloud_email_or_connect_your_own": "使用Posnic云端电子邮件或关联自己的账号来获取账单和报告。",
-  "lang_send_this_report_automatically": "自动发送此报告"
+  "lang_send_this_report_automatically": "自动发送此报告",
+  "lang_messaging_acl_manage_automation": "管理自动消息",
+  "lang_messaging_acl_manage_reports": "管理预定报告",
+  "lang_messaging_acl_manage_settings": "管理消息设置",
+  "lang_messaging_acl_send_bulk": "发送批量客户消息",
+  "lang_messaging_acl_send_email": "发送电子邮件",
+  "lang_messaging_acl_send_sms": "发送SMS消息",
+  "lang_messaging_acl_send_whatsapp": "发送WhatsApp消息",
+  "lang_messaging_acl_view_history": "查看留言历史记录"
 }

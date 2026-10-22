@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (običajno 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (običajno 587 ali 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Uporabite e-pošto v Posnic oblaku ali povežite svoj račun za račune in poročila.",
-  "lang_send_this_report_automatically": "Pošljite to poročilo samodejno"
+  "lang_send_this_report_automatically": "Pošljite to poročilo samodejno",
+  "lang_messaging_acl_manage_automation": "Upravljanje samodejnih sporočil",
+  "lang_messaging_acl_manage_reports": "Upravljanje načrtovanih poročil",
+  "lang_messaging_acl_manage_settings": "Upravljanje nastavitev sporočil",
+  "lang_messaging_acl_send_bulk": "Pošiljanje množičnih sporočil strank",
+  "lang_messaging_acl_send_email": "Pošlji e-poštna sporočila",
+  "lang_messaging_acl_send_sms": "Pošiljanje spor SMS očil",
+  "lang_messaging_acl_send_whatsapp": "Pošiljanje spor WhatsApp očil",
+  "lang_messaging_acl_view_history": "Oglejte si zgodovino sporočil"
 }

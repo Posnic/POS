@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "Tumia kitengo kimoja cha kuuza kwa kila bidhaa katika uuzaji.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApphakurudi kumbukumbu ya ujumbe. Uwasilishaji haujathibitishwa; angalia mazungumzo kabla ya kujaribu tena.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApphaijasawazisha mazungumzo ya mpokeaji huyu bado. Hakuna ujumbe uliotumwa. Ruhusu kifaa kilichounganishwa kumaliza usawazishaji.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppbado inaunganisha tena au inahitaji kiungo kipya cha simu. Hakuna ujumbe uliotumwa."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppbado inaunganisha tena au inahitaji kiungo kipya cha simu. Hakuna ujumbe uliotumwa.",
+  "Messaging permission required.": "Ruhusa ya ujumbe unahitajika",
+  "Schedule owner no longer has messaging access.": "Mmiliki wa ratiba hana tena ufikiaji wa ujumbe."
 }

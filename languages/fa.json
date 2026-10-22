@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (معمولا ۴۶۵)",
   "lang_starttls_usually_587_or_2525": "استارت‌لز (معمولاً ۵۸۷ یا ۲۵۲۵)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "از ایمیل Posnic ابری استفاده کنید یا حساب خود را برای صورتحساب و گزارش ها وصل کنید.",
-  "lang_send_this_report_automatically": "ارسال این گزارش به صورت خودکار"
+  "lang_send_this_report_automatically": "ارسال این گزارش به صورت خودکار",
+  "lang_messaging_acl_manage_automation": "مدیریت پیام های خودکار",
+  "lang_messaging_acl_manage_reports": "مدیریت گزارش های برنامه ریزی شده",
+  "lang_messaging_acl_manage_settings": "تنظیمات پیام رسانی را مدیریت کنید",
+  "lang_messaging_acl_send_bulk": "ارسال پیام های انبوه مشتری",
+  "lang_messaging_acl_send_email": "ارسال ایمیل",
+  "lang_messaging_acl_send_sms": "ارسال SMS پیام",
+  "lang_messaging_acl_send_whatsapp": "ارسال WhatsApp پیام",
+  "lang_messaging_acl_view_history": "مشاهده تاریخچه پیام"
 }
