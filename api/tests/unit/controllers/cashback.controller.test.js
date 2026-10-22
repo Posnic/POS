@@ -41,7 +41,11 @@ function mockRes() {
 }
 function mockReq(over = {}) {
   return {
-    user: { usertype: 'admin', name: 'Mgr', access: {} },
+    user: {
+      usertype: 'admin',
+      name: 'Mgr',
+      access: { messaging: { manage_automation: true, send_sms: true, send_bulk: true } },
+    },
     tenantContext: { branchId: 'b1', branchName: 'Shop', currency: '₹' },
     params: {},
     query: {},
@@ -51,7 +55,10 @@ function mockReq(over = {}) {
 }
 
 describe('CashbackController', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockService.getSettings.mockResolvedValue({ reminder_channel: 'sms' });
+  });
 
   test('getSettings returns settings', async () => {
     mockService.getSettings.mockResolvedValue({ enabled: true, percent: 10 });

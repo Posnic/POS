@@ -2483,7 +2483,6 @@
   "lang_message_templates": "Message Templates:",
   "lang_message_use_name_due_currency_shop": "Message - use {name} {due} {currency} {shop}",
   "lang_messages_after_a_sale": "Messages after a sale",
-  "lang_messaging": "Messaging",
   "lang_messaging_acl_manage_automation": "Manage automatic messages",
   "lang_messaging_acl_manage_reports": "Manage scheduled reports",
   "lang_messaging_acl_manage_settings": "Manage messaging settings",
