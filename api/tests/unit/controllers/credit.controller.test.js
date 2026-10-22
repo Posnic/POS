@@ -182,3 +182,17 @@ test('branch write cannot send a reminder without the stored channel grant', asy
   expect(res.statusCode).toBe(403);
   expect(mockService.sendReminder).not.toHaveBeenCalled();
 });
+
+test('automation management alone cannot enable WhatsApp reminders', async () => {
+  mockService.saveSettings.mockClear();
+  const res = mockRes();
+  await creditController.saveSettings(
+    mockReq({
+      user: { usertype: 'admin', access: { messaging: { manage_automation: true } } },
+      body: { reminder_enabled: true, reminder_channel: 'whatsapp' },
+    }),
+    res
+  );
+  expect(res.statusCode).toBe(403);
+  expect(mockService.saveSettings).not.toHaveBeenCalled();
+});
