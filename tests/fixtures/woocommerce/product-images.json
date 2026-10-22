@@ -1,0 +1,80 @@
+
+{
+  "provider": "woocommerce",
+  "fixture_version": 1,
+  "max_image_bytes": 5242880,
+  "products": [
+    {
+      "id": "SYNTH-WOO-PROD-001",
+      "name": "Sample T-Shirt",
+      "images": [
+        {
+          "id": "SYNTH-WOO-IMG-001",
+          "src": "https://example.com/images/front.jpg",
+          "position": 0,
+          "size_bytes": 120000,
+          "expected_role": "primary",
+          "expected_action": "import_reference"
+        },
+        {
+          "id": "SYNTH-WOO-IMG-002",
+          "src": "https://example.com/images/back.jpg",
+          "position": 1,
+          "size_bytes": 150000,
+          "expected_role": "gallery",
+          "expected_action": "import_reference"
+        }
+      ]
+    },
+    {
+      "id": "SYNTH-WOO-PROD-002",
+      "name": "Missing Image Example",
+      "images": [
+        {
+          "id": "SYNTH-WOO-IMG-003",
+          "src": null,
+          "position": 0,
+          "size_bytes": null,
+          "expected_role": "primary",
+          "expected_action": "skip"
+        }
+      ]
+    },
+    {
+      "id": "SYNTH-WOO-PROD-003",
+      "name": "Duplicate Image Example",
+      "images": [
+        {
+          "id": "SYNTH-WOO-IMG-004",
+          "src": "https://example.com/images/duplicate.jpg",
+          "position": 0,
+          "size_bytes": 100000,
+          "expected_role": "primary",
+          "expected_action": "import_reference"
+        },
+        {
+          "id": "SYNTH-WOO-IMG-004",
+          "src": "https://example.com/images/duplicate.jpg",
+          "position": 1,
+          "size_bytes": 100000,
+          "expected_role": "gallery",
+          "expected_action": "skip_duplicate"
+        }
+      ]
+    },
+    {
+      "id": "SYNTH-WOO-PROD-004",
+      "name": "Oversized Image Example",
+      "images": [
+        {
+          "id": "SYNTH-WOO-IMG-005",
+          "src": "https://example.com/images/large.jpg",
+          "position": 0,
+          "size_bytes": 10485760,
+          "expected_role": "primary",
+          "expected_action": "review_oversized"
+        }
+      ]
+    }
+  ]
+}
