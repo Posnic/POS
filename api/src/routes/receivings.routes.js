@@ -1,3 +1,4 @@
+const { requireActions: messagingPermission } = require('../utils/messaging-access');
 const express = require('express');
 const router = express.Router();
 const receivingsController = require('../controllers/receivings.controller');
@@ -84,7 +85,11 @@ router.get('/getDataChanges', bindController(receivingsController.getDataChanges
 router.get('/receivingsPdf', bindController(receivingsController.receivingsPdf));
 
 // Email the same PDF to the supplier (outward-facing: receiving write).
-router.post('/emailToSupplier', bindController(receivingsController.emailToSupplier));
+router.post(
+  '/emailToSupplier',
+  messagingPermission('send_email'),
+  bindController(receivingsController.emailToSupplier)
+);
 
 // Purchase attachments: the supplier's PO, invoice scans, delivery notes.
 const { documentUpload } = require('../middleware/upload');

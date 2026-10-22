@@ -1199,7 +1199,8 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
     // role's access merged with any per-user overrides. Users created without a
     // role_id keep the flat-form matrix above (fully backward-compatible).
     // plan.read stays an entitlement (from the creating user); editing your own
-    // record still keeps self-management. Fails open to the flat-form matrix.
+    // record still keeps self-management. Missing roles fail closed: a synced
+    // user must be edited on its role's authoritative installation.
     if (data.role_id) {
       try {
         const roleDb = currentConnection(mongoose.connection).db;
@@ -1209,6 +1210,10 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
               license: context.license,
             })
           : null;
+        if (!roleDoc || !roleDoc.access)
+          throw new Error(
+            'Assigned role is unavailable on this installation. Edit permissions where the role was created.'
+          );
         if (roleDoc && roleDoc.access) {
           access = mergeAccess(roleDoc.access, data.access_overrides || {});
           access.plan = { read: context.user.access?.plan?.read || false };
@@ -1226,7 +1231,7 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
           }
         }
       } catch (roleErr) {
-        console.error('[userInsertUpdate] role resolve failed:', roleErr && roleErr.message);
+        throw roleErr;
       }
     }
 
@@ -1238,6 +1243,10 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
       access.pos = sanitizePosInput(data.pos);
       access.pos_manager_approval = [];
     }
+
+    access.messaging = require('../utils/messaging-access').sanitize(
+      access.messaging || data.messaging
+    );
 
     // PHP lines 238-266: Get branch printing design details
     // PHP lines 239-242: Convert branch_id strings to ObjectID for query

@@ -11,6 +11,9 @@ const bindController = (handler) => {
 // Authenticated; the controller further restricts every route to super admins,
 // since these settings hold the shop's SMS provider secrets.
 router.use(protect);
+router.get('/permissions', (req, res) =>
+  res.json({ type: 'success', data: require('../utils/messaging-access').matrix(req.user) })
+);
 
 router.post('/email/test', bindController(messagingController.testEmail));
 router.get('/email', bindController(messagingController.emailSettings));

@@ -1,145 +1,364 @@
-<div class="vertical-layout page_loader" id="roles_admin_detail" style="display: none">
-    <!-- Start Containerbar -->
-    <div id="containerbar">
-        <div class="breadcrumbbar crumbbar_padding">
-            <div class="row align-items-center row_filter">
-                <div class="col-auto mr-auto d-flex align-items-center">
-                    <h4 class="page-title break_title mb-0 mr-3"><lang class="lang_user_title">Employees</lang></h4>
-                    <ul class="nav nav-tabs users-roles-tabs">
-                        <li class="nav-item"><a class="nav-link" href="#/users"><i class="feather icon-users mr-2"></i><lang class="lang_user_title">Employees</lang></a></li>
-                        <li class="nav-item"><a class="nav-link active" href="#/roles"><i class="feather icon-shield mr-2"></i><lang class="lang_roles_title">Roles</lang></a></li>
-                    </ul>
-                </div>
-                <div class="col-auto text-right">
-                    <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.roles.openEditor('');">
-                        <i class="feather icon-plus mr-1"></i><lang class="lang_newrole_title">New Role</lang>
-                    </button>
-                </div>
-            </div>
+<div
+  class="vertical-layout page_loader"
+  id="roles_admin_detail"
+  style="display: none"
+>
+  <!-- Start Containerbar -->
+  <div id="containerbar">
+    <div class="breadcrumbbar crumbbar_padding">
+      <div class="row align-items-center row_filter">
+        <div class="col-auto mr-auto d-flex align-items-center">
+          <h4 class="page-title break_title mb-0 mr-3">
+            <lang class="lang_user_title">Employees</lang>
+          </h4>
+          <ul class="nav nav-tabs users-roles-tabs">
+            <li class="nav-item">
+              <a class="nav-link" href="#/users"
+                ><i class="feather icon-users mr-2"></i
+                ><lang class="lang_user_title">Employees</lang></a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="#/roles"
+                ><i class="feather icon-shield mr-2"></i
+                ><lang class="lang_roles_title">Roles</lang></a
+              >
+            </li>
+          </ul>
         </div>
-        <div class="contentbar">
-            <div id="roles_split">
-            <div class="card m-b-30 md-rail" id="roles_list_card">
-                <div class="card-body">
-                    <p class="text-muted" style="font-size:.85rem;">
-                        <lang class="lang_a_role_is_a_reusable_permission_set_the_mo">A role is a reusable permission set: the module access matrix plus the
-                        till actions its holders may do without a manager. Assign roles on the
-                        user form. Editing a role updates every user holding it immediately.</lang>
-                    </p>
-                    <div class="table-responsive md-rail-rows" id="roles_list_rows">
-                        <table class="table table-borderless">
-                            <thead>
-                                <tr>
-                                    <th><lang class="lang_role">Role</lang></th>
-                                    <th class="rl-col-type"><lang class="lang_type_title">Type</lang></th>
-                                    <th class="rl-col-desc"><lang class="lang_description_title">Description</lang></th>
-                                    <th class="rl-col-auth"><lang class="lang_till_authority">Till authority</lang></th>
-                                </tr>
-                            </thead>
-                            <tbody id="roles_admin_body">
-                                <tr><td colspan="4" class="text-center text-muted"><lang class="lang_loading">Loading&hellip;</lang></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="card m-b-30 md-detail" id="roles_detail_card" style="display:none;">
-                <div id="roles_doc"></div>
-            </div>
-            </div>
+        <div class="col-auto text-right">
+          <button
+            type="button"
+            class="btn btn-primary-rgba"
+            onclick="PosnicPro.roles.openEditor('')"
+          >
+            <i class="feather icon-plus mr-1"></i
+            ><lang class="lang_newrole_title">New Role</lang>
+          </button>
         </div>
+      </div>
     </div>
+    <div class="contentbar">
+      <div id="roles_split">
+        <div class="card m-b-30 md-rail" id="roles_list_card">
+          <div class="card-body">
+            <p class="text-muted" style="font-size: 0.85rem">
+              <lang class="lang_a_role_is_a_reusable_permission_set_the_mo"
+                >A role is a reusable permission set: the module access matrix
+                plus the till actions its holders may do without a manager.
+                Assign roles on the user form. Editing a role updates every user
+                holding it immediately.</lang
+              >
+            </p>
+            <div class="table-responsive md-rail-rows" id="roles_list_rows">
+              <table class="table table-borderless">
+                <thead>
+                  <tr>
+                    <th><lang class="lang_role">Role</lang></th>
+                    <th class="rl-col-type">
+                      <lang class="lang_type_title">Type</lang>
+                    </th>
+                    <th class="rl-col-desc">
+                      <lang class="lang_description_title">Description</lang>
+                    </th>
+                    <th class="rl-col-auth">
+                      <lang class="lang_till_authority">Till authority</lang>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="roles_admin_body">
+                  <tr>
+                    <td colspan="4" class="text-center text-muted">
+                      <lang class="lang_loading">Loading&hellip;</lang>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div
+          class="card m-b-30 md-detail"
+          id="roles_detail_card"
+          style="display: none"
+        >
+          <div id="roles_doc"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Role editor modal -->
-<div class="modal fade close_on_esc" id="role_editor_modal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="role_editor_title"><lang class="lang_role">Role</lang></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">
-                    <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="role_editor_id">
-                <div class="form-row">
-                    <div class="form-group col-md-5">
-                        <label for="role_editor_name" style="font-weight:600;"><lang class="lang_name_title">Name</lang></label>
-                        <input type="text" class="form-control border-control" id="role_editor_name"
-                               maxlength="60" placeholder="e.g. Weekend Supervisor">
-                    </div>
-                    <div class="form-group col-md-7">
-                        <label for="role_editor_description" style="font-weight:600;"><lang class="lang_description_title">Description</lang></label>
-                        <input type="text" class="form-control border-control" id="role_editor_description"
-                               maxlength="200" placeholder="What this role is for" data-t-placeholder="lang_what_this_role_is_for">
-                    </div>
-                </div>
-
-                <label style="font-weight:600;"><lang class="lang_module_access">Module access</lang></label>
-                <div class="table-responsive" style="border:1px solid #eae8e8; border-radius:4px; margin-bottom:14px;">
-                    <table class="table table-sm" style="margin-bottom:0;">
-                        <thead>
-                            <tr>
-                                <th><lang class="lang_module">Module</lang></th>
-                                <th class="text-center"><lang class="lang_read">Read</lang></th>
-                                <th class="text-center"><lang class="lang_write">Write</lang></th>
-                                <th class="text-center"><lang class="lang_delete">Delete</lang></th>
-                            </tr>
-                        </thead>
-                        <tbody id="role_editor_acl_body"></tbody>
-                    </table>
-                </div>
-                <div class="form-group">
-                    <label style="font-weight:400;">
-                        <input type="checkbox" id="role_acl_dashboard_financials">
-                        <lang class="lang_dashboard_financials">Dashboard financials</lang> <span class="text-muted"><lang class="lang_profit_margins_expenses">(profit, margins, expenses)</lang></span>
-                    </label>
-                </div>
-
-                <fieldset class="form-group">
-                    <legend style="font-size:1rem;font-weight:600;"><lang class="lang_extensions">Extensions</lang></legend>
-                    <label class="d-block"><input type="checkbox" id="role_acl_extensions_read"> <lang class="lang_view_installed_extensions_and_their_record">View installed extensions and their records</lang></label>
-                    <label class="d-block"><input type="checkbox" id="role_acl_extensions_write"> <lang class="lang_use_extension_workflows">Use extension workflows</lang></label>
-                    <label class="d-block"><input type="checkbox" id="role_acl_extensions_manage"> <lang class="lang_manage_extensions_and_approve_protected_ac">Manage extensions and approve protected actions</lang></label>
-                    <p class="text-muted mb-0"><lang class="lang_management_includes_package_installation_b">Management includes package installation, basket deletion, stock returns and resolving another staff member's pending payment. Grant only to authorised supervisors.</lang></p>
-                </fieldset>
-
-                <label style="font-weight:600;"><lang class="lang_till_pos_actions_2">Till / POS actions</lang></label>
-                <div class="table-responsive" style="border:1px solid #eae8e8; border-radius:4px; margin-bottom:14px;">
-                    <table class="table table-sm" style="margin-bottom:0;">
-                        <thead>
-                            <tr>
-                                <th><lang class="lang_action">Action</lang></th>
-                                <th class="text-center"><lang class="lang_allowed">Allowed</lang></th>
-                                <th class="text-center"><lang class="lang_needs_manager_approval">Needs manager approval</lang></th>
-                            </tr>
-                        </thead>
-                        <tbody id="role_editor_pos_body"></tbody>
-                    </table>
-                </div>
-                <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <label style="font-weight:400; font-size:.85rem;"><lang class="lang_max_discount">Max discount %</lang></label>
-                        <input type="number" min="0" max="100" step="1" class="form-control border-control"
-                               id="role_editor_discount_cap" value="0" aria-label="Role editor discount cap" data-t-aria-label="lang_role_editor_discount_cap">
-                    </div>
-                    <div class="form-group col-md-6">
-                        <label style="font-weight:400; font-size:.85rem;"><lang class="lang_max_refund_amount">Max refund amount</lang> <span class="text-muted"><lang class="lang_0_no_limit">(0 = no limit)</lang></span></label>
-                        <input type="number" min="0" step="0.01" class="form-control border-control"
-                               id="role_editor_refund_cap" value="0" aria-label="Role editor refund cap" data-t-aria-label="lang_role_editor_refund_cap">
-                    </div>
-                </div>
-                <small class="text-muted" id="role_editor_system_note" style="display:none;">
-                    <lang class="lang_this_is_a_built_in_role_its_permissions_ca">This is a built-in role: its permissions can be tuned, but it cannot be renamed
-                    in a way that changes what it is, and it cannot be deleted.</lang>
-                </small>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_cancel_title">Cancel</lang></button>
-                <button type="button" class="btn btn-outline-primary" id="role_editor_save"
-                        onclick="PosnicPro.roles.save();"><lang class="lang_save_role">Save Role</lang></button>
-            </div>
+<div
+  class="modal fade close_on_esc"
+  id="role_editor_modal"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="role_editor_title">
+          <lang class="lang_role">Role</lang>
+        </h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+          data-t-aria-label="lang_close_title"
+        >
+          <span aria-hidden="true"><lang class="lang_text">&times;</lang></span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="role_editor_id" />
+        <div class="form-row">
+          <div class="form-group col-md-5">
+            <label for="role_editor_name" style="font-weight: 600"
+              ><lang class="lang_name_title">Name</lang></label
+            >
+            <input
+              type="text"
+              class="form-control border-control"
+              id="role_editor_name"
+              maxlength="60"
+              placeholder="e.g. Weekend Supervisor"
+            />
+          </div>
+          <div class="form-group col-md-7">
+            <label for="role_editor_description" style="font-weight: 600"
+              ><lang class="lang_description_title">Description</lang></label
+            >
+            <input
+              type="text"
+              class="form-control border-control"
+              id="role_editor_description"
+              maxlength="200"
+              placeholder="What this role is for"
+              data-t-placeholder="lang_what_this_role_is_for"
+            />
+          </div>
         </div>
+
+        <label style="font-weight: 600"
+          ><lang class="lang_module_access">Module access</lang></label
+        >
+        <div
+          class="table-responsive"
+          style="
+            border: 1px solid #eae8e8;
+            border-radius: 4px;
+            margin-bottom: 14px;
+          "
+        >
+          <table class="table table-sm" style="margin-bottom: 0">
+            <thead>
+              <tr>
+                <th><lang class="lang_module">Module</lang></th>
+                <th class="text-center"><lang class="lang_read">Read</lang></th>
+                <th class="text-center">
+                  <lang class="lang_write">Write</lang>
+                </th>
+                <th class="text-center">
+                  <lang class="lang_delete">Delete</lang>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="role_editor_acl_body"></tbody>
+          </table>
+        </div>
+        <div class="form-group">
+          <label style="font-weight: 400">
+            <input type="checkbox" id="role_acl_dashboard_financials" />
+            <lang class="lang_dashboard_financials">Dashboard financials</lang>
+            <span class="text-muted"
+              ><lang class="lang_profit_margins_expenses"
+                >(profit, margins, expenses)</lang
+              ></span
+            >
+          </label>
+        </div>
+
+        <fieldset class="form-group">
+          <legend><lang class="lang_messaging">Messaging</lang></legend>
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_messaging_send_whatsapp" />
+            <lang class="lang_messaging_acl_send_whatsapp"
+              >Send WhatsApp messages</lang
+            ></label
+          >
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_messaging_send_sms" />
+            <lang class="lang_messaging_acl_send_sms"
+              >Send SMS messages</lang
+            ></label
+          >
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_messaging_send_email" />
+            <lang class="lang_messaging_acl_send_email"
+              >Send emails</lang
+            ></label
+          >
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_messaging_send_bulk" />
+            <lang class="lang_messaging_acl_send_bulk"
+              >Send bulk customer messages</lang
+            ></label
+          >
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_messaging_view_history" />
+            <lang class="lang_messaging_acl_view_history"
+              >View message history</lang
+            ></label
+          >
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_messaging_manage_settings" />
+            <lang class="lang_messaging_acl_manage_settings"
+              >Manage messaging settings</lang
+            ></label
+          >
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_messaging_manage_reports" />
+            <lang class="lang_messaging_acl_manage_reports"
+              >Manage scheduled reports</lang
+            ></label
+          >
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_messaging_manage_automation" />
+            <lang class="lang_messaging_acl_manage_automation"
+              >Manage automatic messages</lang
+            ></label
+          >
+        </fieldset>
+        <fieldset class="form-group">
+          <legend style="font-size: 1rem; font-weight: 600">
+            <lang class="lang_extensions">Extensions</lang>
+          </legend>
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_extensions_read" />
+            <lang class="lang_view_installed_extensions_and_their_record"
+              >View installed extensions and their records</lang
+            ></label
+          >
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_extensions_write" />
+            <lang class="lang_use_extension_workflows"
+              >Use extension workflows</lang
+            ></label
+          >
+          <label class="d-block"
+            ><input type="checkbox" id="role_acl_extensions_manage" />
+            <lang class="lang_manage_extensions_and_approve_protected_ac"
+              >Manage extensions and approve protected actions</lang
+            ></label
+          >
+          <p class="text-muted mb-0">
+            <lang class="lang_management_includes_package_installation_b"
+              >Management includes package installation, basket deletion, stock
+              returns and resolving another staff member's pending payment.
+              Grant only to authorised supervisors.</lang
+            >
+          </p>
+        </fieldset>
+
+        <label style="font-weight: 600"
+          ><lang class="lang_till_pos_actions_2"
+            >Till / POS actions</lang
+          ></label
+        >
+        <div
+          class="table-responsive"
+          style="
+            border: 1px solid #eae8e8;
+            border-radius: 4px;
+            margin-bottom: 14px;
+          "
+        >
+          <table class="table table-sm" style="margin-bottom: 0">
+            <thead>
+              <tr>
+                <th><lang class="lang_action">Action</lang></th>
+                <th class="text-center">
+                  <lang class="lang_allowed">Allowed</lang>
+                </th>
+                <th class="text-center">
+                  <lang class="lang_needs_manager_approval"
+                    >Needs manager approval</lang
+                  >
+                </th>
+              </tr>
+            </thead>
+            <tbody id="role_editor_pos_body"></tbody>
+          </table>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label style="font-weight: 400; font-size: 0.85rem"
+              ><lang class="lang_max_discount">Max discount %</lang></label
+            >
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="1"
+              class="form-control border-control"
+              id="role_editor_discount_cap"
+              value="0"
+              aria-label="Role editor discount cap"
+              data-t-aria-label="lang_role_editor_discount_cap"
+            />
+          </div>
+          <div class="form-group col-md-6">
+            <label style="font-weight: 400; font-size: 0.85rem"
+              ><lang class="lang_max_refund_amount">Max refund amount</lang>
+              <span class="text-muted"
+                ><lang class="lang_0_no_limit">(0 = no limit)</lang></span
+              ></label
+            >
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              class="form-control border-control"
+              id="role_editor_refund_cap"
+              value="0"
+              aria-label="Role editor refund cap"
+              data-t-aria-label="lang_role_editor_refund_cap"
+            />
+          </div>
+        </div>
+        <small
+          class="text-muted"
+          id="role_editor_system_note"
+          style="display: none"
+        >
+          <lang class="lang_this_is_a_built_in_role_its_permissions_ca"
+            >This is a built-in role: its permissions can be tuned, but it
+            cannot be renamed in a way that changes what it is, and it cannot be
+            deleted.</lang
+          >
+        </small>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          data-dismiss="modal"
+        >
+          <lang class="lang_cancel_title">Cancel</lang>
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          id="role_editor_save"
+          onclick="PosnicPro.roles.save()"
+        >
+          <lang class="lang_save_role">Save Role</lang>
+        </button>
+      </div>
     </div>
+  </div>
 </div>

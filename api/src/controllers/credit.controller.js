@@ -3,6 +3,7 @@
 const BaseController = require('./base.controller');
 const CreditService = require('../services/credit.service');
 const BaseModel = require('../models/base.model');
+const acl = require('../utils/messaging-access');
 
 class CreditController extends BaseController {
   constructor() {
@@ -40,6 +41,8 @@ class CreditController extends BaseController {
   /** PUT /credit/settings - save the credit + reminder rules. */
   async saveSettings(req, res) {
     try {
+      if (!acl.allowed(req.user, 'manage_automation'))
+        return this.error(res, 'Messaging permission required.', 403);
       if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
       const data = await this.service.saveSettings(ctx.branchId, req.body || {}, ctx);
@@ -81,6 +84,9 @@ class CreditController extends BaseController {
     try {
       if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
+      const settings = await this.service.getSettings(ctx.branchId);
+      if (!acl.allowed(req.user, acl.channelAction(settings.reminder_channel || 'sms')))
+        return this.error(res, 'Messaging permission required.', 403);
       const dryRun = (req.body || {}).dryRun === true || (req.body || {}).dryRun === 'true';
       const r = await this.service.sendReminder(req.params.customerId, {
         branchId: ctx.branchId,
@@ -100,6 +106,12 @@ class CreditController extends BaseController {
     try {
       if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
+      const settings = await this.service.getSettings(ctx.branchId);
+      if (
+        !acl.allowed(req.user, acl.channelAction(settings.reminder_channel || 'sms')) ||
+        !acl.allowed(req.user, 'send_bulk')
+      )
+        return this.error(res, 'Messaging permission required.', 403);
       const dryRun = (req.body || {}).dryRun === true || (req.body || {}).dryRun === 'true';
       const r = await this.service.runReminders(ctx.branchId, { ctx, dryRun });
       return this.success(res, r.data, r.message);
