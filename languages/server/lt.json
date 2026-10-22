@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "Pardavime naudokite vieną pardavimo vienetą vienam produktui.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnegrąžino pranešimo nuorodos. Pristatymas nepatvirtintas; prieš bandydami pakartotinai patikrinkite pokalbį.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppdar nesinchronizavo šio gavėjo pokalbio. Jokia žinutė nebuvo išsiųsta. Leiskite susietam įrenginiui baigti sinchronizavimą.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppvis dar jungiasi iš naujo arba reikia naujos telefono nuorodos. Jokia žinutė nebuvo išsiųsta."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppvis dar jungiasi iš naujo arba reikia naujos telefono nuorodos. Jokia žinutė nebuvo išsiųsta.",
+  "Messaging permission required.": "Reikalingas leidimas žinučių siuntimui.",
+  "Schedule owner no longer has messaging access.": "Tvarkaraščio savininkas nebeturi prieigos prie pranešimų."
 }

@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "Brug en salgsenhed pr. produkt i et salg.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppreturnerede ikke en meddelelsesreference. Levering er ubekræftet; tjek chatten, før du prøver igen.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApphar ikke synkroniseret denne modtagers chat endnu. Der blev ikke sendt nogen besked. Tillad den tilknyttede enhed at afslutte synkroniseringen.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppopretter stadig forbindelse igen eller har brug for et nyt telefonlink. Der blev ikke sendt nogen besked."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppopretter stadig forbindelse igen eller har brug for et nyt telefonlink. Der blev ikke sendt nogen besked.",
+  "Messaging permission required.": "Meddelelsestilladelse kræves.",
+  "Schedule owner no longer has messaging access.": "Tidsplanejeren har ikke længere adgang til beskeder."
 }

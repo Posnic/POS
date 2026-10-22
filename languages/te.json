@@ -5312,5 +5312,13 @@
   "lang_ssl_tls_usually_465": "ఎస్ఎస్ఎల్/టిఎల్ఎస్ (సాధారణంగా 465)",
   "lang_starttls_usually_587_or_2525": "స్టార్ట్టిల్స్ (సాధారణంగా 587 లేదా 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicక్లౌడ్ ఇమెయిల్ను ఉపయోగించండి లేదా బిల్లులు మరియు నివేదికల కోసం మీ స్వంత ఖాతాను కనెక్ట్ చేయండి.",
-  "lang_send_this_report_automatically": "ఈ నివేదికను స్వయంచాలకంగా పంపండి"
+  "lang_send_this_report_automatically": "ఈ నివేదికను స్వయంచాలకంగా పంపండి",
+  "lang_messaging_acl_manage_automation": "ఆటోమేటిక్ సందేశాలను నిర్వహించండి",
+  "lang_messaging_acl_manage_reports": "షెడ్యూల్ చేసిన నివేదికలను నిర్వహించండి",
+  "lang_messaging_acl_manage_settings": "సందేశ సెట్టింగులను నిర్వహించండి",
+  "lang_messaging_acl_send_bulk": "బల్క్ కస్టమర్ సందేశాలను పంపండి",
+  "lang_messaging_acl_send_email": "ఇమెయిల్స్ పంపండి",
+  "lang_messaging_acl_send_sms": "SMSసందేశాలను పంపండి",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppసందేశాలను పంపండి",
+  "lang_messaging_acl_view_history": "సందేశ చరిత్రను వీక్షించండి"
 }

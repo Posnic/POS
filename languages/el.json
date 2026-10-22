@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (συνήθως 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (συνήθως 587 ή 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Χρησιμοποιήστε Posnic το cloud email ή συνδέστε τον δικό σας λογαριασμό για λογαριασμούς και αναφορές.",
-  "lang_send_this_report_automatically": "Αποστολή αυτόματης αναφοράς"
+  "lang_send_this_report_automatically": "Αποστολή αυτόματης αναφοράς",
+  "lang_messaging_acl_manage_automation": "Διαχείριση αυτόματων μηνυμάτων",
+  "lang_messaging_acl_manage_reports": "Διαχείριση προγραμματισμένων αναφορών",
+  "lang_messaging_acl_manage_settings": "Διαχείριση ρυθμίσεων ανταλλαγής μηνυμάτων",
+  "lang_messaging_acl_send_bulk": "Αποστολή μαζικών μηνυμάτων πελατών",
+  "lang_messaging_acl_send_email": "Αποστολή μηνυμάτων ηλεκτρονικού ταχυδρομείου",
+  "lang_messaging_acl_send_sms": "Αποστολή SMS μηνυμάτων",
+  "lang_messaging_acl_send_whatsapp": "Αποστολή WhatsApp μηνυμάτων",
+  "lang_messaging_acl_view_history": "Προβολή ιστορικού μηνυμάτων"
 }

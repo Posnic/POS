@@ -5312,5 +5312,13 @@
   "lang_ssl_tls_usually_465": "എസ്എസ്എൽ/ടിഎൽഎസ് (സാധാരണയായി 465)",
   "lang_starttls_usually_587_or_2525": "സ്റ്റാർട്ട്ൽസ് (സാധാരണയായി 587 അല്ലെങ്കിൽ 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicക്ലൗഡ് ഇമെയിൽ ഉപയോഗിക്കുക അല്ലെങ്കിൽ ബില്ലുകൾക്കും റിപ്പോർട്ടുകൾക്കുമായി നിങ്ങളുടെ സ്വന്തം അക്കൗണ്ട് ബന്ധിപ്പിക്കുക.",
-  "lang_send_this_report_automatically": "ഈ റിപ്പോർട്ട് യാന്ത്രികമായി അയയ്ക്കുക"
+  "lang_send_this_report_automatically": "ഈ റിപ്പോർട്ട് യാന്ത്രികമായി അയയ്ക്കുക",
+  "lang_messaging_acl_manage_automation": "യാന്ത്രിക സന്ദേശങ്ങൾ നിയന്ത്രിക്കുക",
+  "lang_messaging_acl_manage_reports": "ഷെഡ്യൂൾ ചെയ്ത റിപ്പോർട്ടുകൾ നിയന്ത്രിക്കുക",
+  "lang_messaging_acl_manage_settings": "സന്ദേശമയയ്ക്കൽ ക്രമീകരണങ്ങൾ നിയന്ത്രിക്കുക",
+  "lang_messaging_acl_send_bulk": "ബൾക്ക് ഉപഭോക്തൃ സന്ദേശങ്ങൾ അയയ്ക്കുക",
+  "lang_messaging_acl_send_email": "ഇമെയിലുകൾ അയയ്ക്കുക",
+  "lang_messaging_acl_send_sms": "SMSസന്ദേശങ്ങൾ അയയ്ക്കുക",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppസന്ദേശങ്ങൾ അയയ്ക്കുക",
+  "lang_messaging_acl_view_history": "സന്ദേശ ചരിത്രം കാണുക"
 }

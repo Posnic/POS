@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (de obicei 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (de obicei 587 sau 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Utilizați e-mail Posnic ul în cloud sau conectați-vă propriul cont pentru facturi și rapoarte.",
-  "lang_send_this_report_automatically": "Trimiteți automat acest raport"
+  "lang_send_this_report_automatically": "Trimiteți automat acest raport",
+  "lang_messaging_acl_manage_automation": "Gestionați mesajele automate",
+  "lang_messaging_acl_manage_reports": "Gestionarea rapoartelor programate",
+  "lang_messaging_acl_manage_settings": "Gestionarea setărilor de mesagerie",
+  "lang_messaging_acl_send_bulk": "Trimiteți mesaje în vrac ale clienților",
+  "lang_messaging_acl_send_email": "Trimiteți e-mailuri",
+  "lang_messaging_acl_send_sms": "Trimiteți SMS mesaje",
+  "lang_messaging_acl_send_whatsapp": "Trimiteți WhatsApp mesaje",
+  "lang_messaging_acl_view_history": "Vizualizați istoricul mesajelor"
 }

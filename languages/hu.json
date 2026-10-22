@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (általában 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (általában 587 vagy 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Használjon Posnic felhőalapú e-mailt, vagy csatlakoztassa saját fiókját számlákhoz és jelentésekhez.",
-  "lang_send_this_report_automatically": "A jelentés automatikus elküldése"
+  "lang_send_this_report_automatically": "A jelentés automatikus elküldése",
+  "lang_messaging_acl_manage_automation": "Automatikus üzenetek kezelése",
+  "lang_messaging_acl_manage_reports": "Ütemezett jelentések kezelése",
+  "lang_messaging_acl_manage_settings": "Üzenetbeállítások kezelése",
+  "lang_messaging_acl_send_bulk": "Tömeges ügyfélüzenetek küldése",
+  "lang_messaging_acl_send_email": "E-mailek küldése",
+  "lang_messaging_acl_send_sms": "Üzen SMS etek küldése",
+  "lang_messaging_acl_send_whatsapp": "Üzen WhatsApp etek küldése",
+  "lang_messaging_acl_view_history": "Üzenetelőzmények megtekintése"
 }

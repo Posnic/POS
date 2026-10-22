@@ -5231,5 +5231,13 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (tavaliselt 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (tavaliselt 587 või 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Kasutage Posnic pilvemeili või ühendage arvete ja aruannete jaoks oma konto.",
-  "lang_send_this_report_automatically": "Saatke see aruanne automaatselt"
+  "lang_send_this_report_automatically": "Saatke see aruanne automaatselt",
+  "lang_messaging_acl_manage_automation": "Automaatsõnumite haldamine",
+  "lang_messaging_acl_manage_reports": "Planeeritud aruannete haldamine",
+  "lang_messaging_acl_manage_settings": "Sõnumside seadete haldamine",
+  "lang_messaging_acl_send_bulk": "Hulgisõnumite saatmine",
+  "lang_messaging_acl_send_email": "Saada e-kirju",
+  "lang_messaging_acl_send_sms": "Sõ SMS numite saatmine",
+  "lang_messaging_acl_send_whatsapp": "Sõ WhatsApp numite saatmine",
+  "lang_messaging_acl_view_history": "Vaata sõnumite ajalugu"
 }
