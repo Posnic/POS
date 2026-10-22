@@ -1,21 +1,12 @@
 'use strict';
 const { ObjectId } = require('mongodb');
-const { countries } = require('../json/countries.json');
+const countryCode = require('../utils/branch-country');
 
 // Merchant acceptance markets, not the unrelated list of NRI phone-number countries.
 // NPCI / PIB: March 2026 global acceptance list, plus Cambodia launched June 2026.
 const UPI_COUNTRIES = new Set(['IN', 'AE', 'SG', 'BT', 'NP', 'LK', 'FR', 'MU', 'QA', 'KH']);
 function defaults(branch) {
-  const input = String(branch.country || '')
-    .trim()
-    .toLowerCase();
-  const country = countries.find(
-    (c) =>
-      String(c.id) === String(branch.country_id) ||
-      c.sortname.toLowerCase() === input ||
-      c.value.toLowerCase() === input
-  );
-  return ['Cash', 'Card', ...(UPI_COUNTRIES.has(country?.sortname) ? ['Upi'] : [])];
+  return ['Cash', 'Card', ...(UPI_COUNTRIES.has(countryCode(branch)) ? ['Upi'] : [])];
 }
 function canonical(value) {
   const key = String(value || '')
@@ -37,7 +28,7 @@ function enabled(rows, branch) {
     !rows.some((r) => canonical(r.payment_field || r.payment_value) === 'Cash')
   )
     methods.add('Cash');
-  return [...methods];
+  return [...methods].filter((method) => method !== 'Upi' || defaults(branch).includes('Upi'));
 }
 async function read(db, branch) {
   const rows = await db

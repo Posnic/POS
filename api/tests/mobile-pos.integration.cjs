@@ -36,6 +36,7 @@ before(
       _id: branchId,
       license,
       branch_name: 'Mobile test shop',
+      country: 'India',
       sales_prefix: 'M',
       currency_value: [{ currency_text: 'INR' }],
       mobile_pos: {
@@ -207,13 +208,24 @@ test('real password login registers phone and downloads live branch catalogue', 
 test('mobile wording resolves the signed-in branch and refuses caller-selected tenants', async () => {
   const { WordingProfiles } = require('../src/services/wording-profiles');
   const service = new WordingProfiles(db.collection('settings'), branch.license);
-  const state = await service.save({
-    name: 'Mobile shop wording', locale: 'en',
-    overrides: { 'posnic.lang_product': 'Item' }, expectedRevision: 0,
-  }, String(user._id));
-  await service.publish({
-    id: state.profiles[0].id, expectedRevision: 1, branches: [String(branch._id)],
-  }, String(user._id), [String(branch._id)]);
+  const state = await service.save(
+    {
+      name: 'Mobile shop wording',
+      locale: 'en',
+      overrides: { 'posnic.lang_product': 'Item' },
+      expectedRevision: 0,
+    },
+    String(user._id)
+  );
+  await service.publish(
+    {
+      id: state.profiles[0].id,
+      expectedRevision: 1,
+      branches: [String(branch._id)],
+    },
+    String(user._id),
+    [String(branch._id)]
+  );
   const result = await call('/mobile/v1/wording?locale=en');
   assert.equal(result.status, 200);
   assert.equal(result.data.branchId, String(branch._id));
@@ -1400,12 +1412,10 @@ test('new mobile product gets a signed sale catalogue; opening stock and sale ea
     11
   );
   assert.equal(
-    await db
-      .collection('stocklogs')
-      .countDocuments({
-        view_item_id: new ObjectId(created.data.item.id),
-        process: 'Mobile opening stock',
-      }),
+    await db.collection('stocklogs').countDocuments({
+      view_item_id: new ObjectId(created.data.item.id),
+      process: 'Mobile opening stock',
+    }),
     1
   );
   assert.deepEqual(after.shop.receiptProfile.data.receipt_designs, receiptDesign);
@@ -1419,4 +1429,33 @@ test('new mobile product gets a signed sale catalogue; opening stock and sale ea
   assert.equal(job.payload.receiptDocument.receipt_settled, true);
   assert.deepEqual(job.payload.receiptDocument.receipt_designs, receiptDesign);
   assert.equal(job.payload.receiptDocument.payment_mode, 'Cash');
+});
+
+test('a foreign branch cannot expose or save Indian UPI accounts', async () => {
+  const previous = await db.collection('branches').findOne({ _id: branch._id });
+  try {
+    await db
+      .collection('branches')
+      .updateOne({ _id: branch._id }, { $set: { country: 'Hong Kong', sortname: 'IN' } });
+    const view = await call('/branch-payments');
+    assert.equal(view.status, 200);
+    assert.equal(view.data.upiAvailable, false);
+    assert.deepEqual(view.data.upiAccounts, []);
+    assert.equal(
+      (await call('/branch-payments', { upiAccounts: [], defaultUpiAccountId: '' })).status,
+      422
+    );
+    const current = await db.collection('branches').findOne({ _id: branch._id });
+    assert.deepEqual(current.payment_settings, previous.payment_settings);
+    const mobileView = (await call('/mobile/v1/bootstrap')).data;
+    assert.deepEqual(mobileView.shop.upiAccounts, []);
+    assert.equal(mobileView.shop.permissions.manualUpi, false);
+  } finally {
+    await db
+      .collection('branches')
+      .updateOne(
+        { _id: branch._id },
+        { $set: { country: previous.country }, $unset: { sortname: '' } }
+      );
+  }
 });

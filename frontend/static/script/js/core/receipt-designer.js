@@ -29,7 +29,7 @@
                 var key = { order_type: 'dine_type' }[field] || field;
                 if (contract.fieldAvailable(field, branch) && on(branch['bill_print_' + key])) blocks.push(block('field', { field: field }));
             });
-            blocks.push(block('items', { hsn: on(branch.bill_print_hsn), itemLayout: sheet ? 'detailed' : 'columns', nameMaxChars: 20, lineStyle: 'dotted', fontSize: sheet ? undefined : format === '58' ? 9 : 11 }), block('totals'));
+            blocks.push(block('items', { hsn: contract.fieldAvailable('hsn', branch) && on(branch.bill_print_hsn), itemLayout: sheet ? 'detailed' : 'columns', nameMaxChars: 20, lineStyle: 'dotted', fontSize: sheet ? undefined : format === '58' ? 9 : 11 }), block('totals'));
             if (on(branch.bill_print_total_qty) || (!sheet && branch.bill_print_total_qty == null)) blocks.push(block('field', { field: 'total_quantity' }));
             if (on(branch.print_sale_notes)) blocks.push(block('field', { field: 'sale_note' }));
             if (branch.footer_print == null) blocks.push(block('text', { text: 'Thank you! Visit again.', align: 'center' }));
@@ -287,7 +287,8 @@
             } else if (b.type === 'items') {
                 var compact = !sheet && b.itemLayout === 'compact';
                 var columns = !sheet && b.itemLayout === 'columns';
-                var hsnColumn = columns && format === '112' && b.hsn;
+                var showHsn = b.hsn && contract.fieldAvailable('hsn', data);
+                var hsnColumn = columns && format === '112' && showHsn;
                 var serialWidth = b.showRowNumbers ? (sheet ? 6 : format === '58' ? 15 : format === '80' ? 12 : 9) : 0;
                 var unitWidth = b.showUnit ? 10 : 0;
                 var itemWidth = (hsnColumn ? 36 : sheet ? 46 : columns ? (format === '58' ? 40 : 46) : compact ? 68 : 60) - serialWidth - unitWidth;
@@ -304,7 +305,7 @@
                         var limit = b.nameMaxChars || 24;
                         name = chars.length > limit ? chars.slice(0, limit - 1).join('') + '…' : chars.join('');
                     }
-                    content += '<tr>' + (b.showRowNumbers ? '<td class="rd-row-number">' + (index + 1) + '</td>' : '') + '<td' + (columns ? ' class="rd-item-fixed"' : '') + '>' + esc(name) + (compact ? ' × ' + esc(qty) : '') + (b.hsn && !hsnColumn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
+                    content += '<tr>' + (b.showRowNumbers ? '<td class="rd-row-number">' + (index + 1) + '</td>' : '') + '<td' + (columns ? ' class="rd-item-fixed"' : '') + '>' + esc(name) + (compact ? ' × ' + esc(qty) : '') + (showHsn && !hsnColumn && hsn ? '<div class="rd-line-detail">HSN/SAC: ' + esc(hsn) + '</div>' : '');
                     if (!sheet && !compact && !columns) content += '<div class="rd-line-detail">' + esc(qty + ' ' + (item.item_unit || '') + ' × ') + money(item.item_price) + '</div>';
                     if (Number(item.item_discount) || Number(item.item_discount_percentage)) content += '<div class="rd-line-detail">' + esc(label('Discount')) + ': ' + (Number(item.item_discount_percentage) ? esc(item.item_discount_percentage) + '%' : money(item.item_discount)) + '</div>';
                     var unitCell = b.showUnit ? '<td class="rd-unit">' + esc(item.item_unit || '') + '</td>' : '';
@@ -321,7 +322,7 @@
                 var sgst = items.reduce(function (n, i) { return n + Number(i.sgst_tax == null ? i.cgst_tax || 0 : i.sgst_tax); }, 0);
                 var hasTaxAmount = function (amount) { return Number.isFinite(Number(amount)) && Number(Number(amount).toFixed(2)) !== 0; };
                 if (Array.isArray(data.receipt_tax_rows) && data.receipt_tax_rows.length) data.receipt_tax_rows.forEach(function (row) { if (hasTaxAmount(row.amount)) content += pair(row.label, money(row.amount)); });
-                else if (igst || cgst || sgst) {
+                else if ((!contract.countryCode(data, PosnicPro.local.get('country_setting')) || contract.countryCode(data, PosnicPro.local.get('country_setting')) === 'IN') && (igst || cgst || sgst)) {
                     if (hasTaxAmount(igst)) content += pair('IGST', money(igst));
                     if (hasTaxAmount(cgst)) content += pair('CGST', money(cgst));
                     if (hasTaxAmount(sgst)) content += pair('SGST', money(sgst));

@@ -102,6 +102,12 @@ async function load() {
   state = await call(paymentView ? '' : 'settings');
   $('accounts').replaceChildren();
   state.upiAccounts.forEach(account);
+  if (paymentView && state.upiAvailable === false) {
+    $('branch').textContent = state.branch;
+    $('settings').hidden = true;
+    message('UPI receiving accounts are available only for Indian branches.');
+    return;
+  }
   if (paymentView) {
     $('branch').textContent = state.branch;
     $('settings').hidden = false;

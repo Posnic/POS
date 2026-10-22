@@ -44,8 +44,7 @@ function settings(branch) {
     quickTaxBps: s.quickTaxBps || 0,
     quickTaxInclusive: s.quickTaxInclusive !== false,
     tillId: s.tillId || '',
-    upiAccounts: (branch.payment_settings || s).upiAccounts || [],
-    defaultUpiAccountId: (branch.payment_settings || s).defaultUpiAccountId || '',
+    ...require('./branch-payments').read(branch),
   };
 }
 function currency(branch) {

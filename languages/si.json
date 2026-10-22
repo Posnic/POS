@@ -5312,5 +5312,6 @@
   "lang_ssl_tls_usually_465": "එස්එල්/ටීඑල්එස් (සාමාන්යයෙන් 465)",
   "lang_starttls_usually_587_or_2525": "ස්ටාර්ට්ල්ස් (සාමාන්යයෙන් 587 හෝ 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "ව Posnic ලාකුළු විද්යුත් තැපෑල භාවිතා කරන්න හෝ බිල්පත් සහ වාර්තා සඳහා ඔබේම ගිණුමක් සම්බන්ධ කරන්න.",
-  "lang_send_this_report_automatically": "මෙම වාර්තාව ස්වයංක්රීයව යවන්න"
+  "lang_send_this_report_automatically": "මෙම වාර්තාව ස්වයංක්රීයව යවන්න",
+  "lang_split_payment_help": "එක් බිල්පතක්, ගෙවීම් ක්රම කිහිපයක්. උදාහරණයක් ලෙස, කාඩ්පතෙන් අඩක් සහ මුදල් වලින් භාගයක්."
 }

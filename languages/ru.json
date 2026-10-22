@@ -5234,5 +5234,6 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (обычно 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (обычно 587 или 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Используйте Posnic облачную электронную почту или подключите свою учетную запись для счетов и отчетов.",
-  "lang_send_this_report_automatically": "Отправить этот отчет автоматически"
+  "lang_send_this_report_automatically": "Отправить этот отчет автоматически",
+  "lang_split_payment_help": "Один счет, несколько способов оплаты. Например, наполовину картой, а наполовину наличными."
 }

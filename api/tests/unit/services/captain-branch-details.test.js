@@ -21,6 +21,7 @@ beforeEach(async () => {
     _id: branch,
     license,
     branch_name: 'Garden',
+    country: 'India',
     captain_payments: { enabled: true },
   });
 });
@@ -66,4 +67,30 @@ test('invalid receiving details are rejected, clearing is explicit, and another 
   const wrong = req();
   wrong.tenantContext.licenseId = new ObjectId();
   await expect(service.get(wrong)).rejects.toThrow('Branch not found');
+});
+
+test('foreign branch setup hides Indian UPI values and rejects updates without deleting preferences', async () => {
+  await db
+    .collection('branches')
+    .updateOne(
+      { _id: branch },
+      { $set: { country: 'Hong Kong', branch_upi_id: 'saved@bank', branch_upi_name: 'Saved' } }
+    );
+  const view = await service.get(req());
+  expect(view).toMatchObject({ upiAvailable: false, branch_upi_id: '', branch_upi_name: '' });
+  await expect(
+    service.update(req({ ...view, branch_upi_id: 'new@bank', branch_upi_name: 'New' }))
+  ).rejects.toThrow(/Indian branches/);
+  expect((await db.collection('branches').findOne({ _id: branch })).branch_upi_id).toBe(
+    'saved@bank'
+  );
+});
+test('changing country invalidates an older setup confirmation', async () => {
+  const view = await service.get(req());
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { country: 'United Kingdom' } });
+  await expect(
+    service.update(req({ ...view, branch_upi_id: 'new@bank', branch_upi_name: 'New' }))
+  ).rejects.toThrow(/Indian branches/);
 });

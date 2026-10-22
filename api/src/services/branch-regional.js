@@ -5,14 +5,14 @@ const taxProfiles = require('./tax-profiles');
 
 // Whitelist regional fields; derived labels and symbols always come from reference data.
 module.exports = function branchRegional(data) {
-  const country = countries.find(
-    (item) => item.value === data.country || item.sortname === data.country
-  );
+  const code = require('../utils/branch-country')({ country: data.country });
+  const country = countries.find((item) => item.sortname === code);
   const selected = data.currency_text
     ? currency.find((item) => item.value === data.currency_text)
     : currency.find((item) => item.text === currencyByCountry[country?.sortname]);
   if (data.currency_text && !selected) throw new Error('Choose a valid currency');
-  const unit = selected || currency.find((item) => item.text === 'INR');
+  const unit = selected || (code === 'IN' ? currency.find((item) => item.text === 'INR') : null);
+  if (!unit) throw new Error('Choose a valid currency');
   const timezone = data.time_zone || (country?.sortname === 'IN' ? 'Asia/Kolkata' : 'UTC');
   try {
     new Intl.DateTimeFormat('en', { timeZone: timezone });

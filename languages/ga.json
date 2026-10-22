@@ -5231,5 +5231,6 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (de ghnáth 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (587 nó 2525 de ghnáth)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Úsáid Posnic ríomhphost scamall nó ceangail do chuntas féin le haghaidh billí agus tuarascálacha.",
-  "lang_send_this_report_automatically": "Seol an tuarascáil seo go huath"
+  "lang_send_this_report_automatically": "Seol an tuarascáil seo go huath",
+  "lang_split_payment_help": "Bille amháin, roinnt modhanna íocaíochta. Mar shampla, leath ar chárta agus leath in airgead tirim."
 }

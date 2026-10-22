@@ -35,3 +35,9 @@ describe('branch regional creation', () => {
     expect(() => regional({ country: 'India', time_zone: 'not-a-zone' })).toThrow(/time zone/);
   });
 });
+
+test('country aliases choose their own currency and unknown countries never fall back to INR', () => {
+  expect(regional({ country: 'Hong Kong' }).currency_value[0].currency_text).toBe('HKD');
+  expect(regional({ country: 'gb' }).currency_value[0].currency_text).toBe('GBP');
+  expect(() => regional({ country: 'unknown' })).toThrow('Choose a valid currency');
+});

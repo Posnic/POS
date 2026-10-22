@@ -1268,7 +1268,7 @@ test('UK receipts label the saved registration number as VAT, including legacy G
   assert.doesNotMatch(output.text(),/GSTIN/);
  }
  assert.equal(contract.taxRegistrationLabel({country:'India'}),'GSTIN');
- assert.equal(contract.taxRegistrationLabel({country:'US'}),'Tax ID');
+ assert.equal(contract.taxRegistrationLabel({country:'US'}),"Seller's Permit");
  assert.equal(contract.taxRegistrationLabel({},'GB'),'VAT No.');
  dom.window.close();
 });
@@ -1680,4 +1680,28 @@ test('unit follows quantity and quantity totals retain their column while amount
         assert.equal(output.find('.rd-field-total_quantity').length,0);
     }
     dom.window.close();
+});
+
+test('foreign saved receipt layouts suppress HSN while retaining normal country tax labels',()=>{
+  const {dom,w,$,branch,sale,engine,design}=setup();
+  for(const layout of Object.values(design.layouts)) layout.blocks.find(b=>b.type==='items').hsn=true;
+  for(const [country,label] of [['United Kingdom','VAT'],['Hong Kong','Tax'],['Australia','GST'],['United Arab Emirates','VAT']]) {
+    const data={...sale,country,receipt_designs:design,items:[{...sale.items[0],hsncode:'0902',cgst_tax:1,sgst_tax:1}]};
+    for(const format of ['58','112','a4']) {
+      const output=$('<div>').html(engine.render(data,format,false));
+      assert.doesNotMatch(output.text(),/HSN|CGST|SGST/);
+      assert.match(output.text(),new RegExp(label));
+    }
+    w.PosnicPro.receiptDesignerEditor.load({...branch,country,receipt_designs:design});
+    $('[data-action="select"]').first().trigger('click');
+    const items=$('.rd-block-card').filter((_i,node)=>$(node).text().includes('Items')).first();
+    assert.equal(items.length,1,country);
+    items.find('[data-action="select"]').trigger('click');
+    assert.match($('.rd-block-card.is-selected .rd-select').text(),/^Items/);
+    assert.equal($('[data-prop="hsn"]').length,0,country);
+  }
+  w.PosnicPro.receiptDesignerEditor.load({...branch,country:'India',receipt_designs:design});
+  $('.rd-block-card').filter((_i,node)=>$(node).find('.rd-select').text().startsWith('Items')).find('.rd-select').trigger('click');
+  assert.equal($('[data-prop="hsn"]').length,1);
+  dom.window.close();
 });

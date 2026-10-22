@@ -5,7 +5,12 @@ test('branch UPI updates preserve absent fields and allow clearing', () => {
     branch_upi_id: '',
     branch_upi_name: '',
   });
-  expect(payee(update({ branch_upi_id: ' shop@invalid ', branch_upi_name: ' Shop ' }))).toEqual({
+  expect(
+    payee({
+      country: 'India',
+      ...update({ branch_upi_id: ' shop@invalid ', branch_upi_name: ' Shop ' }),
+    })
+  ).toEqual({
     id: 'shop@invalid',
     name: 'Shop',
   });
