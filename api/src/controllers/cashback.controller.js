@@ -40,6 +40,14 @@ class CashbackController extends BaseController {
   /** PUT /cashback/settings - save the cashback rule. */
   async saveSettings(req, res) {
     try {
+      if (!require('../utils/messaging-access').allowed(req.user, 'manage_automation'))
+        return this.error(res, 'Messaging permission required.', 403);
+      const acl = require('../utils/messaging-access');
+      if (
+        ['sms', 'whatsapp'].includes(req.body?.deliver_channel) &&
+        !acl.allowed(req.user, acl.channelAction(req.body.deliver_channel))
+      )
+        return this.error(res, 'Messaging permission required.', 403);
       if (!this._canWrite(req)) return this.error(res, 'Unauthorized', 403);
       const ctx = this._ctx(req);
       const data = await this.service.saveSettings(ctx.branchId, req.body || {}, ctx);

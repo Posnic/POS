@@ -64,7 +64,9 @@ test('invalid channel and time zone are rejected before writing', async () => {
 test('report test checks scope and does not enable or save a schedule', async () => {
   const request = req();
   request.params = { id: 'test' };
-  schedules.list.mockResolvedValue([{ _id: 'test', source: 'messaging', enabled: false }]);
+  schedules.list.mockResolvedValue([
+    { _id: 'test', source: 'messaging', channel: 'email', enabled: false },
+  ]);
   require('../../../src/models/base.model').getDb = jest.fn().mockResolvedValue({});
   const runner = require('../../../src/services/ask-posnic-runner.service');
   runner.buildReport.mockResolvedValue({ answer: 'Sales summary' });

@@ -79,7 +79,10 @@ describe('RoleRepository', () => {
     const doc = col.insertOne.mock.calls[0][0];
     expect(doc.name).toBe('My Role');
     expect(doc.is_system).toBe(false);
-    expect(doc.access).toEqual({ sales: { read: true } });
+    expect(doc.access).toEqual({
+      sales: { read: true },
+      messaging: require('../../../src/utils/messaging-access').sanitize(),
+    });
   });
 
   test('deleteRole refuses a system role but deletes a custom role', async () => {
@@ -156,7 +159,10 @@ describe('RoleRepository', () => {
     });
     const set = col.updateOne.mock.calls[0][1].$set;
     expect(set.name).toBe('New');
-    expect(set.access).toEqual({ x: {} });
+    expect(set.access).toEqual({
+      x: {},
+      messaging: require('../../../src/utils/messaging-access').sanitize(),
+    });
     expect('key' in set).toBe(false);
     expect('is_system' in set).toBe(false);
   });

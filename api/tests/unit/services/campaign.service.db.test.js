@@ -104,11 +104,16 @@ function makeDb(collections) {
   };
 }
 
+const ctx = {
+  branchId: '64d000000000000000000099',
+  userId: '64d000000000000000000088',
+  messagingAccess: { send_bulk: true, send_whatsapp: true, send_sms: true },
+};
 const CID = '64d000000000000000000001';
 function cust(id, over = {}) {
   return {
     _id: new ObjectId(id),
-    license: 'lic-test',
+    license: '64d000000000000000000077',
     branch_id: new ObjectId('64d000000000000000000099'),
     name: 'C' + id.slice(-2),
     phone: '+9199' + id.slice(-4),
@@ -121,13 +126,14 @@ function cust(id, over = {}) {
 function makeCampaign(over = {}) {
   return {
     _id: new ObjectId(CID),
-    license: 'lic-test',
+    license: '64d000000000000000000077',
     name: 'Promo',
     channel: CHANNEL.WHATSAPP,
     message: 'Hi {name}',
     segment: { type: SEGMENT_TYPE.ALL },
     status: STATUS.DRAFT,
     branch_id: new ObjectId('64d000000000000000000099'),
+    scheduled_by: ctx.userId,
     sent_count: 0,
     failed_count: 0,
     skipped_count: 0,
@@ -147,7 +153,7 @@ function recordingAdapters(resultFor) {
 
 describe('Selected campaign audiences', () => {
   beforeEach(() => {
-    BaseModel.license = 'lic-test';
+    BaseModel.license = '64d000000000000000000077';
   });
   afterEach(() => {
     BaseModel.getDb = undefined;
@@ -172,7 +178,7 @@ describe('Selected campaign audiences', () => {
     ]);
     BaseModel.getDb = jest.fn().mockResolvedValue(makeDb({ customers, campaigns }));
     const adapters = recordingAdapters(() => ({ ok: true }));
-    const result = await new CampaignService().send(CID, { adapters: adapters.adapters });
+    const result = await new CampaignService().send(CID, { ctx, adapters: adapters.adapters });
     expect(result.data.sent).toBe(1);
     expect(result.data.skipped).toBe(1);
     expect(adapters.called.map((r) => r.phone)).toEqual([cust(ids[0]).phone]);
@@ -184,11 +190,11 @@ describe('Selected campaign audiences', () => {
       .mockResolvedValue(makeDb({ customers, campaigns: makeCollection([makeCampaign()]) }));
     const svc = new CampaignService(),
       adapters = recordingAdapters(() => ({ ok: true }));
-    await svc.send(CID, { dryRun: true, adapters: adapters.adapters });
+    await svc.send(CID, { ctx, dryRun: true, adapters: adapters.adapters });
     expect(adapters.called).toHaveLength(0);
-    await svc.send(CID, { adapters: adapters.adapters });
+    await svc.send(CID, { ctx, adapters: adapters.adapters });
     expect(adapters.called).toHaveLength(1);
-    await svc.send(CID, { adapters: adapters.adapters });
+    await svc.send(CID, { ctx, adapters: adapters.adapters });
     expect(adapters.called).toHaveLength(1);
   });
 });
@@ -197,7 +203,7 @@ describe('CampaignService.preview (DB)', () => {
   let svc;
   beforeEach(() => {
     svc = new CampaignService();
-    BaseModel.license = 'lic-test';
+    BaseModel.license = '64d000000000000000000077';
   });
   afterEach(() => {
     BaseModel.getDb = undefined;
@@ -221,7 +227,7 @@ describe('CampaignService.send (DB, injected adapters)', () => {
   let svc;
   beforeEach(() => {
     svc = new CampaignService();
-    BaseModel.license = 'lic-test';
+    BaseModel.license = '64d000000000000000000077';
   });
   afterEach(() => {
     BaseModel.getDb = undefined;
@@ -231,12 +237,24 @@ describe('CampaignService.send (DB, injected adapters)', () => {
     const campaigns = makeCollection([makeCampaign()]);
     const sends = makeCollection([]);
     const customers = makeCollection([cust('64d000000000000000000011')]);
-    BaseModel.getDb = jest
-      .fn()
-      .mockResolvedValue(makeDb({ campaigns, campaign_sends: sends, customers }));
+    BaseModel.getDb = jest.fn().mockResolvedValue(
+      makeDb({
+        campaigns,
+        campaign_sends: sends,
+        customers,
+        users: makeCollection([
+          {
+            _id: ctx.userId,
+            license: '64d000000000000000000077',
+            access: { messaging: ctx.messagingAccess },
+            branch_access: [{ branch_id: ctx.branchId }],
+          },
+        ]),
+      })
+    );
     const rec = recordingAdapters(() => ({ ok: true }));
 
-    const r = await svc.send(CID, { dryRun: true, adapters: rec.adapters });
+    const r = await svc.send(CID, { ctx, dryRun: true, adapters: rec.adapters });
     expect(r.data.dryRun).toBe(true);
     expect(rec.called).toHaveLength(0); // nothing dispatched
     expect(sends._docs[0].status).toBe(SEND_STATUS.DRY_RUN);
@@ -251,12 +269,24 @@ describe('CampaignService.send (DB, injected adapters)', () => {
       cust('64d000000000000000000012', { phone: '' }), // no phone
       cust('64d000000000000000000013', { preferences: { whatsappNotifications: false } }), // opted out
     ]);
-    BaseModel.getDb = jest
-      .fn()
-      .mockResolvedValue(makeDb({ campaigns, campaign_sends: sends, customers }));
+    BaseModel.getDb = jest.fn().mockResolvedValue(
+      makeDb({
+        campaigns,
+        campaign_sends: sends,
+        customers,
+        users: makeCollection([
+          {
+            _id: ctx.userId,
+            license: '64d000000000000000000077',
+            access: { messaging: ctx.messagingAccess },
+            branch_access: [{ branch_id: ctx.branchId }],
+          },
+        ]),
+      })
+    );
     const rec = recordingAdapters(() => ({ ok: true }));
 
-    const r = await svc.send(CID, { adapters: rec.adapters });
+    const r = await svc.send(CID, { ctx, adapters: rec.adapters });
     expect(r.data.sent).toBe(1);
     expect(r.data.skipped).toBe(2);
     expect(rec.called).toHaveLength(1); // only the reachable one
@@ -274,7 +304,10 @@ describe('CampaignService.send (DB, injected adapters)', () => {
       .mockResolvedValue(
         makeDb({ campaigns, campaign_sends: makeCollection([]), customers: makeCollection([]) })
       );
-    const r = await svc.send(CID, { adapters: recordingAdapters(() => ({ ok: true })).adapters });
+    const r = await svc.send(CID, {
+      ctx,
+      adapters: recordingAdapters(() => ({ ok: true })).adapters,
+    });
     expect(r.status).toBe(false);
   });
 
@@ -284,20 +317,32 @@ describe('CampaignService.send (DB, injected adapters)', () => {
     const A = cust('64d0000000000000000000a1');
     const B = cust('64d0000000000000000000b2');
     const customers = makeCollection([A, B]);
-    BaseModel.getDb = jest
-      .fn()
-      .mockResolvedValue(makeDb({ campaigns, campaign_sends: sends, customers }));
+    BaseModel.getDb = jest.fn().mockResolvedValue(
+      makeDb({
+        campaigns,
+        campaign_sends: sends,
+        customers,
+        users: makeCollection([
+          {
+            _id: ctx.userId,
+            license: '64d000000000000000000077',
+            access: { messaging: ctx.messagingAccess },
+            branch_access: [{ branch_id: ctx.branchId }],
+          },
+        ]),
+      })
+    );
 
     // Run 1: A succeeds, B fails -> campaign PARTIAL.
     const run1 = recordingAdapters((phone) => ({ ok: phone === A.phone }));
-    const r1 = await svc.send(CID, { adapters: run1.adapters });
+    const r1 = await svc.send(CID, { ctx, adapters: run1.adapters });
     expect(r1.data.sent).toBe(1);
     expect(r1.data.failed).toBe(1);
     expect(campaigns._docs[0].status).toBe(STATUS.PARTIAL);
 
     // Run 2: everyone would succeed, but only the failed B should be retried.
     const run2 = recordingAdapters(() => ({ ok: true }));
-    const r2 = await svc.send(CID, { adapters: run2.adapters });
+    const r2 = await svc.send(CID, { ctx, adapters: run2.adapters });
     expect(run2.called).toHaveLength(1);
     expect(run2.called[0].phone).toBe(B.phone);
     expect(r2.data.sent).toBe(1);
@@ -308,7 +353,7 @@ describe('CampaignService.schedule + runDue (DB)', () => {
   let svc;
   beforeEach(() => {
     svc = new CampaignService();
-    BaseModel.license = 'lic-test';
+    BaseModel.license = '64d000000000000000000077';
   });
   afterEach(() => {
     BaseModel.getDb = undefined;
@@ -320,12 +365,28 @@ describe('CampaignService.schedule + runDue (DB)', () => {
     ]);
     const sends = makeCollection([]);
     const customers = makeCollection([cust('64d000000000000000000011')]);
-    BaseModel.getDb = jest
-      .fn()
-      .mockResolvedValue(makeDb({ campaigns, campaign_sends: sends, customers }));
+    BaseModel.getDb = jest.fn().mockResolvedValue(
+      makeDb({
+        campaigns,
+        campaign_sends: sends,
+        customers,
+        users: makeCollection([
+          {
+            _id: ctx.userId,
+            license: '64d000000000000000000077',
+            access: { messaging: ctx.messagingAccess },
+            branch_access: [{ branch_id: ctx.branchId }],
+          },
+        ]),
+      })
+    );
     const rec = recordingAdapters(() => ({ ok: true }));
 
-    const r = await svc.runDue({ adapters: rec.adapters, now: new Date('2026-08-15T10:00:00Z') });
+    const r = await svc.runDue({
+      ctx,
+      adapters: rec.adapters,
+      now: new Date('2026-08-15T10:00:00Z'),
+    });
     expect(r.data.ran).toBe(1);
     expect(rec.called).toHaveLength(1);
     expect(campaigns._docs[0].status).toBe(STATUS.SENT);
@@ -341,10 +402,71 @@ describe('CampaignService.schedule + runDue (DB)', () => {
         makeDb({ campaigns, campaign_sends: makeCollection([]), customers: makeCollection([]) })
       );
     const r = await svc.runDue({
+      ctx,
       adapters: recordingAdapters(() => ({ ok: true })).adapters,
       now: new Date('2026-08-15T10:00:00Z'),
     });
     expect(r.data.ran).toBe(0);
     expect(campaigns._docs[0].status).toBe(STATUS.SCHEDULED);
+  });
+});
+
+describe('campaign service permission enforcement', () => {
+  afterEach(() => {
+    BaseModel.getDb = undefined;
+  });
+  test('missing grants cannot reach a sender adapter', async () => {
+    BaseModel.license = '64d000000000000000000077';
+    BaseModel.getDb = jest
+      .fn()
+      .mockResolvedValue(
+        makeDb({ campaigns: makeCollection([makeCampaign()]), campaign_sends: makeCollection([]) })
+      );
+    const rec = recordingAdapters(() => ({ ok: true }));
+    const result = await new CampaignService().send(CID, { adapters: rec.adapters });
+    expect(result.status).toBe(false);
+    expect(rec.called).toHaveLength(0);
+  });
+  test('revoked scheduling permission prevents queued dispatch', async () => {
+    BaseModel.license = '64d000000000000000000077';
+    const campaigns = makeCollection([
+      makeCampaign({ status: STATUS.SCHEDULED, schedule_at: new Date('2026-08-15T09:00:00Z') }),
+    ]);
+    BaseModel.getDb = jest.fn().mockResolvedValue(
+      makeDb({
+        campaigns,
+        users: makeCollection([
+          {
+            _id: ctx.userId,
+            license: '64d000000000000000000077',
+            access: { messaging: { send_whatsapp: true, send_bulk: false } },
+            branch_access: [{ branch_id: ctx.branchId }],
+          },
+        ]),
+      })
+    );
+    const rec = recordingAdapters(() => ({ ok: true }));
+    const result = await new CampaignService().runDue({
+      ctx,
+      adapters: rec.adapters,
+      now: new Date('2026-08-15T10:00:00Z'),
+    });
+    expect(result.data.results[0].status).toBe(false);
+    expect(rec.called).toHaveLength(0);
+    expect(campaigns._docs[0].status).toBe(STATUS.SCHEDULED);
+  });
+});
+
+describe('scheduled campaign ID validation', () => {
+  test.each([
+    [{ $ne: null }, ctx.branchId],
+    ['64d000000000000000000077', { $ne: null }],
+    ['invalid', ctx.branchId],
+  ])('rejects invalid tenant or branch before querying', async (license, branchId) => {
+    BaseModel.license = license;
+    BaseModel.getDb = jest.fn();
+    const result = await new CampaignService().runDue({ ctx: { ...ctx, branchId } });
+    expect(result.status).toBe(false);
+    expect(BaseModel.getDb).not.toHaveBeenCalled();
   });
 });

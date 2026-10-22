@@ -1,3 +1,4 @@
+const { requireActions: messagingPermission } = require('../utils/messaging-access');
 const express = require('express');
 const router = express.Router();
 const branchesController = require('../controllers/branches.controller');
@@ -71,7 +72,7 @@ router.get('/resetPaymentGateway', bound.resetPaymentGateway);
 router.get('/resetPhonepePaymentGateway', bound.resetPhonepePaymentGateway);
 
 // PHP: resetEmailSetting()
-router.get('/resetEmailSetting', bound.resetEmailSetting);
+router.get('/resetEmailSetting', messagingPermission('manage_settings'), bound.resetEmailSetting);
 
 // GET /api/branches/stats - Get branch statistics
 router.get('/stats', bound.getStats);
