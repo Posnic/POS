@@ -35,7 +35,13 @@ async function authorize(db, schedule) {
     status: { $nin: ['inactive', 'suspended', 'pending'] },
   });
   if (
-    !isOwner(user) ||
+    (schedule.source === 'messaging'
+      ? !require('../utils/messaging-access').allowed(user, 'manage_reports') ||
+        !require('../utils/messaging-access').allowed(
+          user,
+          require('../utils/messaging-access').channelAction(schedule.channel)
+        )
+      : !isOwner(user)) ||
     !(user.branch_access || []).some((entry) => String(entry.branch_id) === schedule.branch_id)
   )
     throw new Error('Schedule owner no longer has access to this outlet.');

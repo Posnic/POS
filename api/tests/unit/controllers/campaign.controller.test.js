@@ -15,7 +15,10 @@
 jest.mock('../../../src/services/campaign.service', () =>
   jest.fn().mockImplementation(() => ({
     list: jest.fn(),
-    get: jest.fn(),
+    get: jest.fn().mockResolvedValue({
+      status: true,
+      data: { branch_id: '507f1f77bcf86cd799439011', channel: 'whatsapp' },
+    }),
     save: jest.fn(),
     remove: jest.fn(),
     preview: jest.fn(),
@@ -59,7 +62,12 @@ const writeUser = () => ({
   email: 'admin@shop.test',
   branch_id: VALID_ID,
   branch_name: 'Main Branch',
-  access: { branch: { write: true } },
+  access: {
+    branch: { write: true },
+    messaging: Object.fromEntries(
+      require('../../../src/utils/messaging-access').ACTIONS.map((a) => [a, true])
+    ),
+  },
 });
 
 const noWriteUser = () => ({
@@ -91,7 +99,10 @@ beforeEach(() => {
 
   svc = {
     list: jest.fn(),
-    get: jest.fn(),
+    get: jest.fn().mockResolvedValue({
+      status: true,
+      data: { branch_id: '507f1f77bcf86cd799439011', channel: 'whatsapp' },
+    }),
     save: jest.fn(),
     remove: jest.fn(),
     preview: jest.fn(),
@@ -141,7 +152,10 @@ describe('list', () => {
 
 describe('get', () => {
   test('returns 200 with the campaign when found', async () => {
-    svc.get.mockResolvedValue({ status: true, data: { _id: VALID_ID, name: 'Reminder' } });
+    svc.get.mockResolvedValue({
+      status: true,
+      data: { _id: VALID_ID, name: 'Reminder', branch_id: VALID_ID, channel: 'whatsapp' },
+    });
     const res = mockRes();
     await controller.get(mockReq({ params: { id: VALID_ID } }), res);
 
@@ -204,7 +218,7 @@ describe('create', () => {
 
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error', message: 'Unauthorized' })
+      expect.objectContaining({ type: 'error', message: 'Messaging permission required.' })
     );
     expect(svc.save).not.toHaveBeenCalled();
   });
@@ -336,7 +350,7 @@ describe('remove', () => {
 // ─── preview ─────────────────────────────────────────────────────────────────────
 
 describe('preview', () => {
-  test('returns 200 with the audience reach (no write gate)', async () => {
+  test('returns audience reach with bulk and channel access', async () => {
     svc.preview.mockResolvedValue({
       status: true,
       data: { total: 10, reachable: 7, sample: [] },
@@ -344,7 +358,7 @@ describe('preview', () => {
     });
     const res = mockRes();
     await controller.preview(
-      mockReq({ user: noWriteUser(), body: { segment: { type: 'all' }, channel: 'sms' } }),
+      mockReq({ user: writeUser(), body: { segment: { type: 'all' }, channel: 'sms' } }),
       res
     );
 
@@ -376,23 +390,14 @@ describe('preview', () => {
 // ─── send ─────────────────────────────────────────────────────────────────────
 
 describe('send', () => {
-  test('dry run succeeds without write access', async () => {
-    svc.send.mockResolvedValue({
-      status: true,
-      data: { dryRun: true, audience_size: 5 },
-      message: 'Dry run complete',
-    });
+  test('dry run also requires permission to inspect the audience', async () => {
     const res = mockRes();
     await controller.send(
       mockReq({ user: noWriteUser(), params: { id: VALID_ID }, body: { dryRun: true } }),
       res
     );
-
-    expect(svc.send).toHaveBeenCalledWith(VALID_ID, expect.objectContaining({ dryRun: true }));
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success', message: 'Dry run complete' })
-    );
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(svc.send).not.toHaveBeenCalled();
   });
 
   test('real send is rejected with 403 when the user lacks write access', async () => {
@@ -404,7 +409,7 @@ describe('send', () => {
 
     expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'error', message: 'Unauthorized' })
+      expect.objectContaining({ type: 'error', message: 'Messaging permission required.' })
     );
     expect(svc.send).not.toHaveBeenCalled();
   });
@@ -535,5 +540,44 @@ describe('runDue', () => {
     await controller.runDue(mockReq(), res);
 
     expect(res.status).toHaveBeenCalledWith(500);
+  });
+});
+
+describe('messaging ACL isolation', () => {
+  test('SMS-only sender cannot create a WhatsApp campaign', async () => {
+    const res = mockRes();
+    await controller.create(
+      mockReq({
+        user: { access: { messaging: { send_bulk: true, send_sms: true } } },
+        body: { channel: 'whatsapp' },
+      }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(svc.save).not.toHaveBeenCalled();
+  });
+  test('cannot send a campaign belonging to another branch', async () => {
+    svc.get.mockResolvedValue({
+      status: true,
+      data: { branch_id: 'another-outlet', channel: 'whatsapp' },
+    });
+    const res = mockRes();
+    await controller.send(mockReq({ params: { id: VALID_ID } }), res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(svc.send).not.toHaveBeenCalled();
+  });
+  test('stored channel is checked even when payload claims another channel', async () => {
+    svc.get.mockResolvedValue({ status: true, data: { branch_id: VALID_ID, channel: 'whatsapp' } });
+    const res = mockRes();
+    await controller.send(
+      mockReq({
+        params: { id: VALID_ID },
+        user: { access: { messaging: { send_bulk: true, send_sms: true } } },
+        body: { channel: 'sms' },
+      }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(svc.send).not.toHaveBeenCalled();
   });
 });

@@ -316,6 +316,14 @@ class CampaignService {
     }
 
     const channel = campaign.channel;
+    if (
+      !ctx.messagingAccess ||
+      !ctx.messagingAccess.send_bulk ||
+      ctx.messagingAccess['send_' + channel] !== true ||
+      String(campaign.branch_id) !== String(ctx.branchId)
+    ) {
+      return { status: false, message: 'Messaging permission required.' };
+    }
     const dispatch = adapters || (await this._defaultAdapters(campaign.branch_id));
     const recipients = await this._recipients(campaign.segment, campaign.branch_id);
 
@@ -402,7 +410,14 @@ class CampaignService {
     if (isNaN(at.getTime())) return { status: false, message: 'Invalid schedule time' };
     await col.updateOne(
       { _id: campaign._id },
-      { $set: { status: STATUS.SCHEDULED, schedule_at: at, updated_date: new Date() } }
+      {
+        $set: {
+          status: STATUS.SCHEDULED,
+          scheduled_by: ctx.userId,
+          schedule_at: at,
+          updated_date: new Date(),
+        },
+      }
     );
     return { status: true, data: { schedule_at: at }, message: MESSAGES.SCHEDULED };
   }
@@ -415,13 +430,47 @@ class CampaignService {
   async runDue({ ctx = {}, adapters = null, now = null } = {}) {
     const db = await BaseModel.getDb();
     const col = db.collection('campaigns');
+    if (!ctx.branchId || !ctx.messagingAccess?.send_bulk)
+      return { status: false, message: 'Messaging permission required.' };
     const cutoff = now ? new Date(now) : new Date();
     const due = await col
-      .find({ license: BaseModel.license, status: STATUS.SCHEDULED, schedule_at: { $lte: cutoff } })
+      .find({
+        license: BaseModel.license,
+        ...(ctx.branchId ? { branch_id: oid(ctx.branchId) } : {}),
+        status: STATUS.SCHEDULED,
+        schedule_at: { $lte: cutoff },
+      })
       .toArray();
     const results = [];
     for (const c of due) {
-      const r = await this.send(c._id, { ctx, adapters });
+      const acl = require('../utils/messaging-access');
+      const actor = c.scheduled_by
+        ? await db.collection('users').findOne({
+            _id: oid(c.scheduled_by),
+            license: BaseModel.license,
+            isActive: { $ne: false },
+            status: { $nin: ['inactive', 'suspended', 'pending'] },
+          })
+        : null;
+      if (
+        ctx.messagingAccess[acl.channelAction(c.channel)] !== true ||
+        !acl.allowed(actor, 'send_bulk') ||
+        !acl.allowed(actor, acl.channelAction(c.channel)) ||
+        !(actor.branch_access || []).some(
+          (entry) => String(entry.branch_id) === String(c.branch_id)
+        )
+      ) {
+        results.push({
+          id: c._id,
+          status: false,
+          message: 'Schedule owner no longer has messaging access.',
+        });
+        continue;
+      }
+      const r = await this.send(c._id, {
+        ctx: { ...ctx, messagingAccess: acl.matrix(actor) },
+        adapters,
+      });
       results.push({ id: c._id, ...(r.data || {}), status: r.status });
     }
     return {

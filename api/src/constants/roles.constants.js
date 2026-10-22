@@ -53,6 +53,7 @@ const access = ({
   report,
   user,
   plan: { read: plan },
+  messaging: require('../utils/messaging-access').sanitize(),
 });
 
 // POS-granular permissions (Phase 2). Layered on top of the CRUD access matrix,

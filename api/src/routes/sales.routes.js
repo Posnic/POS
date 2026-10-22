@@ -1,3 +1,4 @@
+const { requireActions: messagingPermission } = require('../utils/messaging-access');
 const express = require('express');
 const { rateLimit } = require('express-rate-limit');
 const router = express.Router();
@@ -709,7 +710,11 @@ router.get(
 );
 
 // PHP: salesReceipt() - Email sales receipt
-router.post('/salesReceipt', bindController(salesController.salesReceipt));
+router.post(
+  '/salesReceipt',
+  messagingPermission('send_email'),
+  bindController(salesController.salesReceipt)
+);
 
 // PHP: getCustomerPrint() - registered above router.use(protect) as a PUBLIC route
 // (customer receipt link needs no JWT). See "Public customer receipt link" section.
@@ -721,7 +726,11 @@ router.get('/salesPdf', bindController(salesController.salesPdf));
 router.post('/:id/invoiceLink', bindController(salesController.createInvoiceLink));
 
 // PHP: salesMailPdf() - Generate and email PDF invoice
-router.get('/salesMailPdf', bindController(salesController.salesMailPdf));
+router.get(
+  '/salesMailPdf',
+  messagingPermission('send_email'),
+  bindController(salesController.salesMailPdf)
+);
 
 // PHP: returnSales() - Process sales return
 router.post('/returnSales', bindController(salesController.returnSales));
@@ -807,7 +816,11 @@ router.get(
 );
 
 // PHP: dailySalesMail() - Send daily sales email
-router.post('/dailySalesMail', bindController(salesController.dailySalesMail));
+router.post(
+  '/dailySalesMail',
+  messagingPermission('manage_reports', 'send_email'),
+  bindController(salesController.dailySalesMail)
+);
 
 // PHP: salesPaymentClose() - Close sales payment
 router.post('/salesPaymentClose', bindController(salesController.salesPaymentClose));

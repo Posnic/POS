@@ -1,3 +1,4 @@
+const { requireActions: messagingPermission } = require('../utils/messaging-access');
 const { passwordResetLimiter } = require('../middleware/auth-rate-limit');
 const express = require('express');
 const { demoGuard } = require('../config/demo-mode');
@@ -252,12 +253,14 @@ router.delete('/deletePayment', bindController(settingController.deletePayment))
 // PHP: SMS Settings routes
 router.post(
   '/updateWay2SmsSetting',
+  messagingPermission('manage_settings'),
   validateWay2SmsSetting,
   handleValidationErrors,
   bindController(settingController.updateWay2SmsSetting)
 );
 router.post(
   '/updateTextLocalSmsSetting',
+  messagingPermission('manage_settings'),
   validateTextLocalSmsSetting,
   handleValidationErrors,
   bindController(settingController.updateTextLocalSmsSetting)
@@ -298,10 +301,18 @@ router.post(
 );
 
 // PHP: SMS Receipt route
-router.post('/salesSmsReceipt', bindController(settingController.salesSmsReceipt));
+router.post(
+  '/salesSmsReceipt',
+  messagingPermission('send_sms'),
+  bindController(settingController.salesSmsReceipt)
+);
 
 // WhatsApp Receipt routes
-router.post('/saveWhatsAppReceipt', bindController(settingController.saveWhatsAppReceipt));
+router.post(
+  '/saveWhatsAppReceipt',
+  messagingPermission('manage_automation'),
+  bindController(settingController.saveWhatsAppReceipt)
+);
 router.get('/getWhatsAppReceipt', bindController(settingController.getWhatsAppReceipt));
 
 // PHP: Payment Key routes
@@ -335,8 +346,16 @@ router.get(
 router.get('/getAllCollectionTotal', bindController(settingController.getAllCollectionTotal));
 
 // PHP: Email Setting route
-router.post('/emailSetting', bindController(settingController.emailSetting));
-router.put('/emailSetting', bindController(settingController.emailSetting));
+router.post(
+  '/emailSetting',
+  messagingPermission('manage_settings'),
+  bindController(settingController.emailSetting)
+);
+router.put(
+  '/emailSetting',
+  messagingPermission('manage_settings'),
+  bindController(settingController.emailSetting)
+);
 
 // PHP: Kiosk Settings routes
 router.post('/kioskAccountSettings', bindController(settingController.kioskAccountSettings));
