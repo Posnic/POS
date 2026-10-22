@@ -1136,6 +1136,13 @@ class ItemsController extends BaseController {
       if (!branchId || !licenseId) {
         return this.error(res, 'Branch context is required', 400);
       }
+      const db = req.db || (await require('../models/base.model').getDb());
+      const branch = await db.collection('branches').findOne({
+        _id: toObjectId(branchId),
+        license: toObjectId(licenseId),
+      });
+      if (require('../utils/branch-country')(branch || {}) !== 'IN')
+        return this.error(res, 'GST readiness is available only for Indian branches.', 403);
       const items = await this.service.listForGstReadiness({ branchId, licenseId });
       const result = scanItems(items || []);
       return this.success(res, result, 'GST readiness scan complete');

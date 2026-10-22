@@ -5332,5 +5332,8 @@
   "lang_your_standard_language_stays_unchanged_unt": "Uw standaardtaal blijft ongewijzigd totdat u tekstwijzigingen opslaat.",
   "lang_your_time_or_expertise": "Je tijd of expertise",
   "lang_your_wording": "Jouw formulering",
-  "lang_yourselecteddetails_title": "De geselecteerde gegevens worden verwijderd"
+  "lang_yourselecteddetails_title": "De geselecteerde gegevens worden verwijderd",
+  "lang_split_payment_help": "Eén factuur, meerdere betaalmethoden. Bijvoorbeeld de helft met een kaart en de andere helft contant.",
+  "lang_bank_account_routing_details": "Bankrekening en bankcodes",
+  "lang_postal_code": "Postcode"
 }

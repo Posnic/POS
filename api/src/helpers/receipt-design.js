@@ -5,50 +5,69 @@
   else root.PosnicReceiptDesign = factory();
 })(typeof window !== 'undefined' ? window : this, function () {
   'use strict';
-  function taxLabel(data, fallbackCountry) {
+  // Presentation labels mirror json/tax_profiles.json; regression tests keep them aligned.
+  const countryLabels = {
+    IN: ['GST', 'GSTIN'],
+    US: ['Sales Tax', "Seller's Permit"],
+    GB: ['VAT', 'VAT No.'],
+    CA: ['GST/HST', 'GST/HST No.'],
+    AU: ['GST', 'ABN'],
+    NZ: ['GST', 'GST No.'],
+    DE: ['USt.', 'USt-IdNr.'],
+    FR: ['TVA', 'No. TVA'],
+    JP: ['Consumption Tax', 'Registration No.'],
+    SG: ['GST', 'GST Reg. No.'],
+    AE: ['VAT', 'TRN'],
+    SA: ['VAT', 'VAT No.'],
+    ZA: ['VAT', 'VAT No.'],
+    MY: ['SST', 'SST No.'],
+    PH: ['VAT', 'TIN'],
+    ID: ['PPN', 'NPWP'],
+    TH: ['VAT', 'Tax ID'],
+  };
+  const countryAliases = {
+    australia: 'AU',
+    canada: 'CA',
+    france: 'FR',
+    germany: 'DE',
+    india: 'IN',
+    indonesia: 'ID',
+    japan: 'JP',
+    malaysia: 'MY',
+    'new zealand': 'NZ',
+    philippines: 'PH',
+    'saudi arabia': 'SA',
+    singapore: 'SG',
+    'south africa': 'ZA',
+    thailand: 'TH',
+    'united arab emirates': 'AE',
+    'united kingdom': 'GB',
+    'united states': 'US',
+    ind: 'IN',
+    usa: 'US',
+    'hong kong': 'HK',
+    gbr: 'GB',
+    uk: 'GB',
+    aus: 'AU',
+    zaf: 'ZA',
+    'united kingdom of great britain and northern ireland': 'GB',
+  };
+  function countryCode(data, fallbackCountry) {
     data = data || {};
     const country = String(
       data.branch_country || data.country || data.sortname || fallbackCountry || ''
-    )
-      .trim()
-      .toLowerCase();
-    if (['in', 'ind', 'india', 'au', 'aus', 'australia'].includes(country)) return 'GST';
-    if (
-      [
-        'gb',
-        'gbr',
-        'uk',
-        'united kingdom',
-        'united kingdom of great britain and northern ireland',
-        'za',
-        'zaf',
-        'south africa',
-      ].includes(country)
-    )
-      return 'VAT';
-    return 'Tax';
+    ).trim();
+    return countryAliases[country.toLowerCase()] || country.toUpperCase();
+  }
+  function taxLabel(data, fallbackCountry) {
+    const labels = countryLabels[countryCode(data, fallbackCountry)];
+    return labels ? labels[0] : 'Tax';
   }
   function taxRegistrationLabel(data, fallbackCountry) {
-    data = data || {};
-    const country = String(
-      data.branch_country || data.country || data.sortname || fallbackCountry || ''
-    )
-      .trim()
-      .toLowerCase();
-    if (
-      [
-        'gb',
-        'gbr',
-        'uk',
-        'united kingdom',
-        'united kingdom of great britain and northern ireland',
-      ].includes(country)
-    )
-      return 'VAT No.';
-    if (['in', 'ind', 'india'].includes(country)) return 'GSTIN';
-    if (country) return 'Tax ID';
-    // Preserve existing Indian documents which predate saved country details.
-    return 'GSTIN';
+    const code = countryCode(data, fallbackCountry);
+    const labels = countryLabels[code];
+    // Keep unlocated historical documents readable; an explicitly foreign country is never GSTIN.
+    return labels ? labels[1] : code ? 'Tax ID' : 'GSTIN';
   }
   const formats = {
     58: { name: '58 mm thermal', width: 58, content: 48, font: 10 },
@@ -78,6 +97,10 @@
   const restaurant = ['table', 'order_type', 'covers', 'steward', 'session', 'fssai', 'source'];
   function fieldAvailable(field, branch = {}) {
     const restaurantEnabled = [true, 'true', 'enable'].includes(branch.table_options);
+    if (field === 'hsn') {
+      const code = countryCode(branch);
+      return !code || code === 'IN'; // Preserve unlocated historical documents.
+    }
     if (field === 'fssai') {
       const country = String(branch.branch_country || branch.country || '')
         .trim()
@@ -334,6 +357,7 @@
     return out;
   }
   return {
+    countryCode: countryCode,
     taxLabel: taxLabel,
     taxRegistrationLabel: taxRegistrationLabel,
     formats: formats,

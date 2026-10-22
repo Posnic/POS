@@ -2842,7 +2842,7 @@ PosnicPro = {
             { hash: 'taxreport', label: 'Tax', t: 'lang_module_tax', icon: 'percent', module: 'module_tax_enable' },
             { hash: 'taxsummaryreport', label: 'Tax Summary', t: 'lang_taxsummary_title', icon: 'layers', module: 'module_tax_enable' },
             { hash: 'taxpayable', label: 'Tax Payable', t: 'lang_taxpayable_title', icon: 'trending-up', module: 'module_tax_enable' },
-            { hash: 'gstreadiness', label: 'GST 2.0 Readiness', t: 'lang_gstreadiness_title', icon: 'check-square', module: 'module_tax_enable' },
+            { hash: 'gstreadiness', label: 'GST 2.0 Readiness', t: 'lang_gstreadiness_title', icon: 'check-square', module: 'module_tax_enable', country: 'IN' },
             { hash: 'expensesreport', label: 'Cash Book', t: 'lang_expense_title', icon: 'file-text', module: 'module_cashbook_enable' },
         ] },
     ],
@@ -2862,6 +2862,7 @@ PosnicPro = {
         var html = '<div class="col-12 report-group-tabs"><ul class="nav nav-tabs users-roles-tabs">';
         group.items.forEach(function (i) {
             if (i.module && s[i.module] === false) { return; }
+            if (i.country === 'IN' && !['india', 'in', 'ind'].includes(String(PosnicPro.local.get('country_setting') || '').trim().toLowerCase())) { return; }
             if (i.kot && PosnicPro.local.get('table_options') !== 'enable') { return; }
             html += '<li class="nav-item"><a class="nav-link' + (i.hash === hash ? ' active' : '') +
                 '" href="#/' + i.hash + '">' +
@@ -6325,6 +6326,10 @@ PosnicPro.labourreport = {
 PosnicPro.gstreadiness = {
     _last: null,
     showDataTablePage: function () {
+        if (!['india', 'in', 'ind'].includes(String(PosnicPro.local.get('country_setting') || '').trim().toLowerCase())) {
+            hasher.setHash('taxsummaryreport');
+            return;
+        }
         PosnicPro.HideSideBarModal();
         $(".vertical-layout").removeClass("toggle-menu");
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');

@@ -5231,5 +5231,6 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (בדרך כלל 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (בדרך כלל 587 או 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "השתמש ב Posnic דוא\"ל ענן או חבר את החשבון שלך לחשבונות ודוחות.",
-  "lang_send_this_report_automatically": "שלח דוח זה באופן אוטומטי"
+  "lang_send_this_report_automatically": "שלח דוח זה באופן אוטומטי",
+  "lang_split_payment_help": "שטר אחד, כמה אמצעי תשלום. לדוגמה, חצי בכרטיס וחצי במזומן."
 }

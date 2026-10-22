@@ -10108,8 +10108,8 @@ PosnicPro.quotes = {
                        default order. Same rule the PDF builder runs. */
                     var sections = {
                         payment: '<div class="q-label"><lang class="lang_payment_details_2">Payment details</lang></div>'
-                            + '<div>' + ed('payment_method', q.payment_method, 'e.g. Bank transfer / UPI / Cash') + '</div>'
-                            + '<div class="q-muted">' + ed('bank_details', q.bank_details, 'Account name, number, IFSC') + '</div>',
+                            + '<div>' + ed('payment_method', q.payment_method, PosnicPro.i18n.t('lang_payment_method', 'Payment method')) + '</div>'
+                            + '<div class="q-muted">' + ed('bank_details', q.bank_details, PosnicPro.i18n.t('lang_bank_account_routing_details', 'Bank account and routing details')) + '</div>',
                         terms: '<div class="q-label"><lang class="lang_terms_conditions">Terms &amp; conditions</lang></div>' + ed('terms', q.terms || q.note, 'e.g. 50% advance confirms the order. Prices valid till the date above.'),
                         custom: (q.custom_blocks || []).map(function (b) {
                             return '<div class="q-label">' + esc(b.title || '') + '</div><div class="mb-2">' + esc(b.text || '') + '</div>';

@@ -692,8 +692,8 @@ PosnicPro.invoices = {
             + (function () {
                 var sections = {
                     payment: '<div class="q-label"><lang class="lang_payment_details_2">Payment details</lang></div>'
-                        + '<div>' + ed('payment_method', inv.payment_method, 'e.g. Bank transfer / UPI / Cash') + '</div>'
-                        + '<div class="q-muted">' + ed('bank_details', inv.bank_details, 'Account name, number, IFSC') + '</div>',
+                        + '<div>' + ed('payment_method', inv.payment_method, PosnicPro.i18n.t('lang_payment_method', 'Payment method')) + '</div>'
+                        + '<div class="q-muted">' + ed('bank_details', inv.bank_details, PosnicPro.i18n.t('lang_bank_account_routing_details', 'Bank account and routing details')) + '</div>',
                     terms: '<div class="q-label"><lang class="lang_terms_conditions">Terms &amp; conditions</lang></div>' + ed('terms', inv.terms, 'e.g. Payment within 30 days of the invoice date.'),
                     custom: (inv.custom_blocks || []).map(function (b) {
                         return '<div class="q-label">' + esc(b.title || '') + '</div><div class="mb-2">' + esc(b.text || '') + '</div>';

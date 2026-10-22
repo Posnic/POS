@@ -108,7 +108,7 @@
                                     <lang class="lang_module_delivery_partners">Delivery Partners</lang>
                                 </a>
                                 <a class="nav-link mb-2" id="v-pills-devices-tab" data-toggle="pill" href="#v-pills-devices" role="tab"><lang class="lang_devices">Devices</lang></a>
-                                <a class="nav-link mb-2" id="v-pills-branchpayments-tab" data-toggle="pill" href="#v-pills-branchpayments" role="tab"><lang class="lang_branch_payments">Branch payments</lang></a>
+                                <a class="nav-link mb-2 india-only" hidden id="v-pills-branchpayments-tab" data-toggle="pill" href="#v-pills-branchpayments" role="tab"><lang class="lang_branch_payments">Branch payments</lang></a>
                                 <a class="nav-link mb-2" data-toggle="pill" href="#v-pills-mobilepos" role="tab" id="v-pills-mobilepos-tab"><i class="feather icon-smartphone mr-2"></i><lang class="lang_module_mobile_pos">Mobile POS</lang></a>
                                 <a class="nav-link mb-2" data-module="plan" data-access="read" id="v-pills-captainapp-tab"
                                     data-toggle="pill" href="#v-pills-captainapp" role="tab" aria-controls="v-pills-captainapp"
@@ -4224,11 +4224,11 @@
                         <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_payment">Payment method on new quotes</lang></label>
                         <input type="text" name="quote_default_payment_method" id="quote_default_payment_method"
                             class="form-control form-control-sm mb-2" maxlength="60"
-                            placeholder="e.g. Bank transfer (NEFT/RTGS) or UPI" autocomplete="off">
+                            placeholder="Bank transfer" data-t-placeholder="lang_bank_transfer" autocomplete="off">
                         <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_bank">Bank details on new quotes</lang></label>
                         <textarea name="quote_default_bank_details" id="quote_default_bank_details"
                             class="form-control form-control-sm mb-2" rows="3" maxlength="500"
-                            placeholder="Account name, number, IFSC" data-t-placeholder="lang_account_name_number_ifsc"></textarea>
+                            placeholder="Bank account and routing details" data-t-placeholder="lang_bank_account_routing_details"></textarea>
                     </div>
                     <div class="col-md-6">
                         <label style="font-size:12.5px;" class="mb-1"><lang class="lang_quote_default_terms">Terms on new quotes</lang></label>
@@ -5280,8 +5280,7 @@
                                                                             id="enable_multi_payment" name="enable_multi_payment" />
                                                                         <label class="custom-control-label" for="enable_multi_payment"></label>
                                                                     </div>
-                                                                    <small class="form-text text-muted"><lang class="lang_one_bill_several_payment_modes_at_tender_a">One bill, several payment modes at tender -
-                                                                        a &#8377;200 bill paid as &#8377;100 UPI + &#8377;100 cash.</lang></small>
+                                                                    <small class="form-text text-muted"><lang class="lang_split_payment_help">One bill, several payment methods. For example, half by card and half in cash.</lang></small>
                                                                 </div>
                                                                 <div class="text-right">
 
@@ -5982,7 +5981,7 @@
                                                             </label>
                                                         </div>
                                                     </div>
-                                                    <div class="form-group col-md-6 restaurant-only" style="display:none;">
+                                                    <div class="form-group col-md-6 restaurant-only india-only" hidden style="display:none;">
                                                         <div class="wallet-box"
                                                             style="margin-top:0px;background: #fdfdfd;">
                                                             <input type="checkbox" id="bill_print_fssai" name="bill_print_fssai" />
@@ -6012,7 +6011,7 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="form-row restaurant-only" style="display:none;">
+                                                <div class="form-row restaurant-only india-only" hidden style="display:none;">
                                                     <div class="form-group col-md-6">
                                                         <label for="branch_fssai_number">
                                                             <lang class="lang_fssai_number">FSSAI licence number</lang>
@@ -6027,7 +6026,7 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="alert alert-info mb-0" style="font-size:13px;">
+                                                <div class="alert alert-info mb-0 india-only" hidden style="font-size:13px;">
                                                     <b><lang class="lang_customer_gstin_always_prints">A customer's own GSTIN always prints.</lang></b>
                                                     <lang class="lang_customer_gstin_always_prints_hint">Add it on the customer, under GST Fields. When provided, it appears on their bill automatically.</lang>
                                                 </div>
