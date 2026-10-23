@@ -14,12 +14,24 @@ function canonical(value) {
     .toLowerCase();
   return { cash: 'Cash', card: 'Card', creditcard: 'Card', debitcard: 'Card', upi: 'Upi' }[key];
 }
-function enabled(rows, branch) {
+function enabled(rows, branch, custom = false) {
   if (!branch.payment_methods_initialized && !rows.length) return defaults(branch);
   const methods = new Set(
     rows
       .filter((r) => r.enabled !== false)
-      .map((r) => canonical(r.payment_field || r.payment_value))
+      .map((r) => {
+        const value = String(r.payment_field || r.payment_value || '').trim();
+        const standard = canonical(value);
+        if (standard) return standard;
+        if (
+          !custom ||
+          !value ||
+          /[.$]/.test(value) ||
+          ['__proto__', 'constructor', 'prototype', 'Mixed'].includes(value)
+        )
+          return undefined;
+        return value;
+      })
       .filter(Boolean)
   );
   // Old tills had an implicit Cash method. Explicitly disabled rows take priority.
@@ -30,12 +42,12 @@ function enabled(rows, branch) {
     methods.add('Cash');
   return [...methods].filter((method) => method !== 'Upi' || defaults(branch).includes('Upi'));
 }
-async function read(db, branch) {
+async function read(db, branch, custom = false) {
   const rows = await db
     .collection('payment_method')
     .find({ branch_id: branch._id, license: branch.license })
     .toArray();
-  return enabled(rows, branch);
+  return enabled(rows, branch, custom);
 }
 async function seed(collection, branch) {
   const now = new Date();

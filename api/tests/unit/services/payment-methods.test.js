@@ -60,3 +60,24 @@ test('India fallback retains UPI and explicit choices are preserved', () => {
   expect(enabled([], { country: 'India' })).toEqual(['Cash', 'Card', 'Upi']);
   expect(enabled([{ payment_field: 'Card' }], { country: 'Hong Kong' })).toEqual(['Card', 'Cash']);
 });
+
+test('desktop loads enabled custom methods while phone methods retain their supported contract', async () => {
+  const branch = {
+    _id: new ObjectId(),
+    license: new ObjectId(),
+    country: 'India',
+    payment_methods_initialized: true,
+  };
+  const rows = [
+    { payment_field: 'CreditCard' },
+    { payment_value: 'Hotel account' },
+    { payment_field: 'Voucher', enabled: false },
+    { payment_field: '__proto__' },
+  ];
+  const find = jest.fn(() => ({ toArray: async () => rows }));
+  const db = { collection: () => ({ find }) };
+  expect(await read(db, branch, true)).toEqual(['Card', 'Hotel account']);
+  expect(await read(db, branch)).toEqual(['Card']);
+  expect(find).toHaveBeenCalledWith({ branch_id: branch._id, license: branch.license });
+  expect(enabled([], branch, true)).toEqual([]);
+});
