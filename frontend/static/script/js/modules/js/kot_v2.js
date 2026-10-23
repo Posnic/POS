@@ -85,7 +85,7 @@
             .join('') +
         '</div>';
     const button = (label, action, extra = '') =>
-        `<button type="button" data-action="${action}" ${extra}>${actionIcons[action] ? icon(actionIcons[action]) : ""}<span>${esc(label)}</span>${action === "actions" ? icon("chevron") : ""}</button>`;
+        `<button type="button" data-action="${action}" ${["editLine", "cancelLine"].includes(action) ? `title="${esc(label)}" aria-label="${esc(label)}"` : ""} ${extra}>${actionIcons[action] ? icon(actionIcons[action]) : ""}<span>${esc(label)}</span>${action === "actions" ? icon("chevron") : ""}</button>`;
     function scopeKey() {
         return 'posnic.kot-v2.draft:' + location.origin + ':' + branch() + ':' + P.local.get('username');
     }
@@ -348,8 +348,9 @@
         state.tab = 'order';
         render();
     }
-    const actionIcons = {discount:'discount',printBill:'print',printKOT:'print',pay:'pay',serveAll:'check',serve:'check',customer:'guests',details:'details',notes:'details',guests:'guests',handover:'handover',transfer:'transfer',split:'split',cancel:'cancel',discard:'cancel',draftNote:'details',removeDraft:'cancel'};
+    const actionIcons = {editLine:'edit',cancelLine:'cancel',discount:'discount',printBill:'print',printKOT:'print',pay:'pay',serveAll:'check',serve:'check',customer:'guests',details:'details',notes:'details',guests:'guests',handover:'handover',transfer:'transfer',split:'split',cancel:'cancel',discard:'cancel',draftNote:'details',removeDraft:'cancel'};
     const paths = {
+        edit: 'M4 16l12-12 4 4-12 12H4z M14 6l4 4',
         chevron: 'm8 10 4 4 4-4',
         discount: 'm5 19 14-14M7 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6M17 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6',
         print: 'M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6zM17 11h1',
@@ -1025,10 +1026,10 @@ default: return text; } };
         if (!original) throw new Error('Refresh the order before editing.');
         dialog(
             (cancelling ? PosnicPro.i18n.t('lang_cancel_item', 'Cancel item: ') : PosnicPro.i18n.t('lang_edit_title', 'Edit ')) + line.name,
-            `<label>Quantity for this round<input name="qty" type="number" min="${line.served}" step="1" required value="${cancelling ? line.served : line.quantity}"></label><label>Kitchen note<textarea name="note" maxlength="500">${esc(line.note)}</textarea></label>${templates(['No onion', 'Less spicy', 'Less oil'], 'note')}<label>Reason for reducing or removing<textarea name="reason" maxlength="200" ${cancelling ? 'required' : ''}></textarea></label>`,
+            `<label>Quantity for this round<input name="qty" type="number" min="${line.served}" step="1" required value="${cancelling ? line.served : line.quantity}"></label>${cancelling ? "" : `<label>Kitchen note<textarea name="note" maxlength="500">${esc(line.note)}</textarea></label>${templates(['No onion', 'Less spicy', 'Less oil'], 'note')}`}<label>Reason for reducing or removing<textarea name="reason" maxlength="200" ${cancelling ? 'required' : ''}></textarea></label>${templates(['Customer changed their mind', 'Item unavailable', 'Duplicate order'], 'reason')}`,
             async (f) => {
                 const qty = Number(f.get('qty')),
-                    note = String(f.get('note'));
+                    note = cancelling ? line.note : String(f.get('note'));
                 if (!Number.isInteger(qty) || qty < line.served || qty < 0) throw new Error('Check the quantity.');
                 if (cancelling && qty >= line.quantity) throw new Error('Reduce the quantity to cancel an item.');
                 if (qty > line.quantity) {
