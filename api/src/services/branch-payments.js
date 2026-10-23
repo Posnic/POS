@@ -1,6 +1,8 @@
 'use strict';
 const { fail } = require('../utils/branch-access');
-function validate(s) {
+function validate(s, branch) {
+  if (branch && require('../utils/branch-country')(branch) !== 'IN')
+    fail('UPI receiving accounts are available only for Indian branches.');
   if (!Array.isArray(s.upiAccounts) || s.upiAccounts.length > 20) fail('Invalid UPI accounts.');
   const seen = new Set();
   const upiAccounts = s.upiAccounts.map((a) => {
@@ -25,6 +27,11 @@ function validate(s) {
 }
 function read(branch) {
   const p = branch.payment_settings || branch.mobile_pos || {};
-  return { upiAccounts: p.upiAccounts || [], defaultUpiAccountId: p.defaultUpiAccountId || '' };
+  const upiAvailable = require('../utils/branch-country')(branch) === 'IN';
+  return {
+    upiAvailable,
+    upiAccounts: upiAvailable ? p.upiAccounts || [] : [],
+    defaultUpiAccountId: upiAvailable ? p.defaultUpiAccountId || '' : '',
+  };
 }
 module.exports = { read, validate };

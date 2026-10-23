@@ -5234,5 +5234,6 @@
   "lang_ssl_tls_usually_465": "এসএসএল/টিএলএস (সাধারণত 465)",
   "lang_starttls_usually_587_or_2525": "স্টার্টটলস (সাধারণত 587 বা 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicক্লাউড ইমেল ব্যবহার করুন বা বিল এবং প্রতিবেদনের জন্য আপনার নিজের অ্যাকাউন্ট সংযুক্ত করুন।",
-  "lang_send_this_report_automatically": "এই প্রতিবেদন স্বয়ংক্রিয়ভাবে"
+  "lang_send_this_report_automatically": "এই প্রতিবেদন স্বয়ংক্রিয়ভাবে",
+  "lang_split_payment_help": "একটি বিল, বেশ কয়েকটি পেমেন্ট পদ্ধতি। উদাহরণস্বরূপ, অর্ধেক কার্ড দ্বারা এবং অর্ধেক নগদ অর্"
 }

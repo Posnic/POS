@@ -1,6 +1,6 @@
 'use strict';
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{1,63}@[A-Za-z][A-Za-z0-9.-]{1,31}$/;
-function payee(branch) {
+function validPayee(branch) {
   const id = branch.branch_upi_id;
   const name = branch.branch_upi_name;
   return typeof id === 'string' &&
@@ -14,6 +14,9 @@ function payee(branch) {
     ? { id, name }
     : null;
 }
+function payee(branch) {
+  return require('./branch-country')(branch) === 'IN' ? validPayee(branch) : null;
+}
 function update(data) {
   if (data.branch_upi_id === undefined && data.branch_upi_name === undefined) return {};
   if (typeof data.branch_upi_id !== 'string' || typeof data.branch_upi_name !== 'string')
@@ -22,7 +25,7 @@ function update(data) {
     branch_upi_id: data.branch_upi_id.trim(),
     branch_upi_name: data.branch_upi_name.trim(),
   };
-  if (fields.branch_upi_id && !payee(fields))
+  if (fields.branch_upi_id && !validPayee(fields))
     throw new Error('Enter a valid UPI ID and receiving name.');
   if (!fields.branch_upi_id) fields.branch_upi_name = '';
   return fields;

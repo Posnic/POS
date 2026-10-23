@@ -5,6 +5,11 @@ var currentHash = '';
  * a module the chunk does not know either is a real error and says so.
  */
 function withModule(module, run) {
+    var indianReport = ['gstrone', 'gstrtwo', 'gstrtwob', 'gstrthree', 'gstrnine', 'gstreadiness'].includes(String(module).toLowerCase());
+    if (indianReport && !['india', 'in', 'ind'].includes(String(PosnicPro.local.get('country_setting') || '').trim().toLowerCase())) {
+        hasher.setHash('taxsummaryreport');
+        return;
+    }
     if (PosnicPro[module]) { run(); return; }
     if (PosnicPro.lazy && PosnicPro.lazy._sets && PosnicPro.lazy._sets.reports) {
         PosnicPro.lazy.load('reports').then(function () {

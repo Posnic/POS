@@ -5231,5 +5231,6 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (de obicei 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (de obicei 587 sau 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Utilizați e-mail Posnic ul în cloud sau conectați-vă propriul cont pentru facturi și rapoarte.",
-  "lang_send_this_report_automatically": "Trimiteți automat acest raport"
+  "lang_send_this_report_automatically": "Trimiteți automat acest raport",
+  "lang_split_payment_help": "O factură, mai multe metode de plată. De exemplu, jumătate cu card și jumătate în numerar."
 }

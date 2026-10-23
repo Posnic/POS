@@ -7,7 +7,8 @@
  * receipt content, report pack. It never computes tax and never stores
  * rates: rates live in each shop's grouptax collection, exactly as before.
  *
- * Resolution: the branch's ISO sortname picks the profile; an explicit
+ * Resolution: the selected country picks the profile (legacy ISO sortname
+ * and country ID are fallbacks when country is absent); an explicit
  * branch.tax_profile_override wins; anything unknown gets _default, which
  * is deliberately a complete, working profile - a shop in a country we
  * have not specialised is generic, never broken.
@@ -53,7 +54,8 @@ function allProfiles() {
 
 /**
  * The profile for a branch document (or anything shaped like one).
- * branch.tax_profile_override (ISO code) wins; then branch.sortname;
+ * branch.tax_profile_override (ISO code) wins; then the selected country;
+ * legacy sortname/country ID are fallbacks when country is absent;
  * then _default. Always returns a complete profile plus which code
  * resolved, so callers can show "GST (India)" honestly.
  */
@@ -63,8 +65,7 @@ function profileForBranch(branch) {
     branch && typeof branch.tax_profile_override === 'string'
       ? branch.tax_profile_override.trim().toUpperCase()
       : '';
-  const sortname =
-    branch && typeof branch.sortname === 'string' ? branch.sortname.trim().toUpperCase() : '';
+  const sortname = require('../utils/branch-country')(branch || {});
   const code =
     (override && reg[override] && override) ||
     (sortname && reg[sortname] && sortname) ||

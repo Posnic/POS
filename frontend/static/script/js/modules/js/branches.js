@@ -88,6 +88,7 @@ PosnicPro.branches = {
     },
     loadFullEdit: function (id) {
         var request = (this.editRequest || 0) + 1; this.editRequest = request;
+        $('#branchedit_new .india-only').prop('hidden', true).hide();
         var save = $('#setting_add button[type=submit]').prop('disabled', true);
         $('#setting_add').validate().resetForm();
         PosnicPro.settings.stateRequest = (PosnicPro.settings.stateRequest || 0) + 1;
@@ -119,7 +120,7 @@ PosnicPro.branches = {
                 // All reference lists are ready before selecting saved values.
                 $('#setting_country').val(d.country).trigger('change.select2');
                 PosnicPro.settings.loadSelectSettingState(d.country_id, d.state || '');
-                PosnicPro.settings.applyTaxProfile(d.country);
+                PosnicPro.settings.applyTaxProfile(d.country || '');
                 $('#currency_setting').val(d.currency_text).trigger('change.select2');
                 var cv = (d.currency_value && d.currency_value[0]) || { currency_text: 'INR', currency_sign: '₹' };
                 $('#currencyText').val(cv.currency_sign);

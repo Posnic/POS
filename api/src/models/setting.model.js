@@ -3918,11 +3918,7 @@ class SettingModel extends BaseModel {
     try {
       // Reference metadata only; this does not read another branch's settings.
       if (typeof country === 'string' && country.trim()) {
-        const countries = require('../json/countries.json');
-        const entry = countries.countries.find((item) => item.value === country.trim());
-        const { code, profile } = require('../services/tax-profiles').profileForBranch({
-          sortname: entry?.sortname || '',
-        });
+        const { code, profile } = require('../services/tax-profiles').profileForBranch({ country });
         return { status: true, data: { code, country, registration: profile.registration } };
       }
       const branchCollection = await this.getCollection();
@@ -4427,11 +4423,20 @@ class SettingModel extends BaseModel {
 
       console.log('DEBUG - getPaymentAllModel found:', paymentList.length, 'unique payments');
 
-      const payments = paymentList.map((doc) => ({
-        payment_id: doc._id?.payment_id?.toString?.() || doc._id?.payment_id || '',
-        payment_value: doc._id?.payment_value || '',
-        enabled: doc._id?.enabled !== false,
-      }));
+      const branches = await this.getCollection();
+      const branch = await branches.findOne({
+        _id: this.normalizeId(this.branchId),
+        license: this.normalizeId(this.licenseId),
+      });
+      const paymentMethods = require('../services/payment-methods');
+      const upiAvailable = paymentMethods.defaults(branch || {}).includes('Upi');
+      const payments = paymentList
+        .filter((doc) => upiAvailable || paymentMethods.canonical(doc._id?.payment_value) !== 'Upi')
+        .map((doc) => ({
+          payment_id: doc._id?.payment_id?.toString?.() || doc._id?.payment_id || '',
+          payment_value: doc._id?.payment_value || '',
+          enabled: doc._id?.enabled !== false,
+        }));
 
       return {
         status: true,

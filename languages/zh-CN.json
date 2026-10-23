@@ -5234,5 +5234,6 @@
   "lang_ssl_tls_usually_465": "SSL/TLS（通常为 465）",
   "lang_starttls_usually_587_or_2525": "STARTTLS（通常为 587 或 2525）",
   "lang_use_posnic_cloud_email_or_connect_your_own": "使用Posnic云端电子邮件或关联自己的账号来获取账单和报告。",
-  "lang_send_this_report_automatically": "自动发送此报告"
+  "lang_send_this_report_automatically": "自动发送此报告",
+  "lang_split_payment_help": "一张账单，几种付款方式。例如，一半是信用卡，一半是现金。"
 }

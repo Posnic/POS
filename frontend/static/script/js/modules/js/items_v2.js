@@ -334,6 +334,12 @@
             if (duplicate) prepareCopy();
         },function(){failed();});
     }
+    // Settings arrive asynchronously and also change when another branch is opened.
+    $(document).on('posnic:country-changed', function () {
+        if (!bound) return;
+        capabilities = readCapabilities();
+        render();
+    });
     P.items_v2 = { showEdit: showEdit, showClone: function(id){showEdit(id,true);}, showAdd: open, showDataTablePage: open, setBusinessContext: function (category) {
         businessContext = ['restaurant', 'retail', 'service'].includes(category) ? category : null;
         if (bound) { capabilities = readCapabilities(); reset(); if (capabilities.restaurant) loadRestaurantOptions(); }

@@ -148,9 +148,18 @@ PosnicPro.settings = {
      * India keeps exactly its current look; the gst_action machinery is
      * untouched. Presentation only, and failure leaves things as they are.
      */
+    indianGstEnabled: function (country, setting) {
+        return ['india', 'in', 'ind'].includes(String(country || '').trim().toLowerCase()) && setting === 'gst_on';
+    },
+    applyCountryFields: function (country, scope) {
+        var india = ['india', 'in', 'ind'].includes(String(country || '').trim().toLowerCase());
+        $(scope).find('.india-only').prop('hidden', !india).toggle(india);
+    },
     applyTaxProfile: function (country, selector) {
         var input = $(selector || '#branch_gstin_number');
-        country = country || $('#setting_country').val() || PosnicPro.local.get('country_setting');
+        if (country === undefined) country = $('#setting_country').val() || PosnicPro.local.get('country_setting');
+        country = String(country || '');
+        PosnicPro.settings.applyCountryFields(country, input.closest('.page_loader'));
         input.data('tax-country', country).removeData('tax-regex').removeAttr('minlength').attr('maxlength', 100);
         PosnicPro.get({ url: 'setting/taxProfile', data: { country: country } }, function (r) {
             var p = r && r.data;
@@ -177,7 +186,7 @@ PosnicPro.settings = {
                Indian GST select visible to a shop in Berlin - the old toggle
                only ran inside the settings-data callback. */
             PosnicPro.local.set('tax_profile_code', d.code || '');
-            var isIndia = d.code === 'IN';
+            var isIndia = ['india', 'in', 'ind'].includes(String(d.country || d.code || '').trim().toLowerCase());
             $('.hide_indian_gst,.indian-gstr').toggle(isIndia);
             $('#tax_system_india').toggle(isIndia);
             var dec = d.decisions || {};
@@ -197,9 +206,9 @@ PosnicPro.settings = {
             : regime === 'sales_tax' ? 'no input credit' : 'no consumption tax';
         var where = d.country || (d.code === '_default' ? 'generic' : d.code);
         $('#tax_system_summary').text((d.label || 'Tax') + ' — ' + where + ' — ' + family);
-        var india = d.code === 'IN' && regime === 'vat_credit';
+        var india = ['india', 'in', 'ind'].includes(String(d.country || d.code || '').trim().toLowerCase()) && regime === 'vat_credit';
         $('#tax_system_india').toggle(india);
-        $('#tax_system_us').toggle(regime === 'sales_tax');
+        $('#tax_system_us').toggle(['us', 'usa', 'united states'].includes(String(d.country || d.code || '').trim().toLowerCase()) && regime === 'sales_tax');
         if (india) {
             var type = $('#india_gst_type').val();
             $('#india_gst_type_note').text(
@@ -627,6 +636,7 @@ PosnicPro.settings = {
                     $('.display-currency').text(currency);
                     $('#setting_status').val("Yes");
                     PosnicPro.local.set("country_setting", response.data.country);
+                    $(document).trigger('posnic:country-changed');
                     PosnicPro.local.set("state_setting", response.data.state || "");
                     PosnicPro.local.set("city_setting", response.data.city || "");
                     PosnicPro.local.set('countryid', response.data['country_id']);
@@ -847,6 +857,7 @@ PosnicPro.settings = {
                 $('#id').val(PosnicPro.record_id);
                 $('#razor_key').text(data.razorKey);
                 $('#razor_url').text(data.razorUrl);
+                PosnicPro.settings.applyCountryFields(data.country, '#settings');
                 $('#store_name').val(data.branch_name);
                 $('#branch_upi_id').val(data.branch_upi_id || '');
                 $('#branch_upi_name').val(data.branch_upi_name || '');
@@ -1335,7 +1346,7 @@ if ($wrapper.length) {
                     $('.hide_indian_gst').hide();
                     PosnicPro.local.set('gst_action', 'disable');
                 }
-                PosnicPro.settings.applyTaxProfile();
+                PosnicPro.settings.applyTaxProfile(data.country);
 
                 $('#setting_country,#customer_country,#supplier_country,#branch_country').val(data.country);
                 $('#client_dateformat').val(data.client_dateformat);
@@ -1503,6 +1514,9 @@ if ($wrapper.length) {
                 $("#receiving_tax option[value='" + data.tax_percentage + "']").prop("selected", true);
                 PosnicPro.local.set("country_value", data.country);
                 PosnicPro.local.set("country_setting", data.country);
+                $(document).trigger('posnic:country-changed');
+                PosnicPro.settings.applyCountryFields(data.country, '#settings');
+                if (PosnicPro.items && PosnicPro.items.applyTaxGate) PosnicPro.items.applyTaxGate();
                 PosnicPro.local.set("state_setting", data.state);
                 PosnicPro.local.set("city_setting", data.city || "");
                 $('#setting_country').val(data.country).trigger('change.select2');
@@ -2385,7 +2399,7 @@ if ($wrapper.length) {
                 var discount_amount = $('#discount_amount').val();
                 PosnicPro.local.set('setting-discount-amount', discount_amount);
                 PosnicPro.local.set('setting-discount-percentage', discount_percentage);
-                var gstNow = $('#indian_gst').val() === 'gst_on' ? 'enable' : 'disable';
+                var gstNow = PosnicPro.settings.indianGstEnabled(PosnicPro.local.get('country_setting'), $('#indian_gst').val()) ? 'enable' : 'disable';
                 if (gstNow !== was.gst) {
                     PosnicPro.local.set('gst_action', gstNow);
                     $('.indian-gstr').toggle(gstNow === 'enable');
@@ -4827,7 +4841,7 @@ $('.custom_default_value_search').click(function () {
 });
 $(document).on('change', '#indian_gst', function () {
     var gst_status = $(this).val();
-    if (gst_status === 'gst_on') {
+    if (PosnicPro.settings.indianGstEnabled(PosnicPro.local.get('country_setting'), gst_status)) {
         $('.disable_indian_gst').show();
         PosnicPro.local.set('gst_action', 'enable');
     } else {
@@ -4841,12 +4855,7 @@ $(document).ready(function () {
             $('#discount_amount').val('0');
     });
     $("#setting_country").change(function () {
-        if (this.value === 'India') {
-            $(".branch-gstin-hide-show").show();
-        } else {
-            $('#branch_gstin_number').val('');
-            $(".branch-gstin-hide-show").hide();
-        }
+        PosnicPro.settings.applyTaxProfile(this.value);
     });
 });
 $("#decimal_Round").click(function () {
@@ -7525,7 +7534,7 @@ PosnicPro.settings.featureInfo = {
         tagline: 'Price an offer today, convert it to a sale when the customer says yes.',
         about: 'A quotation is a price promise with a validity date. Build it from your catalog or free lines, discount per line or per quote, add charges in any name, and share it as a professional A4 PDF.',
         benefits: [
-            'Professional A4 document with your logo, GSTIN and signature',
+            'Professional A4 document with your logo, tax registration and signature',
             'Share by PDF, print, email, WhatsApp or a copy-paste link',
             'Accepted quotes freeze their numbers - the promise is kept',
             'Convert loads the sale at the QUOTED prices, discounts visible'
@@ -7628,13 +7637,13 @@ PosnicPro.settings.featureInfo = {
         tagline: 'Tax Rates and Tax Groups. Off hides both sections; saved taxes keep.',
         about: 'Configure the taxes your items carry. Items bring their own tax to sales and quotations; documents show tax the moment any line carries it - even if you later switch this off.',
         benefits: [
-            'Per-item rates - GST style, every line its own tax',
+            'Per-item rates - every line its own tax',
             'Inclusive or added-on-top, per item',
             'Recorded tax always shows, whatever the toggle says'
         ],
         how: [
             'Turn it on; set Tax Rates under Core Settings',
-            'Assign a tax on each item (or via HSN suggestion)',
+            'Assign a tax rate or group to each item',
             'Sales and quotes carry it automatically'
         ]
     },
@@ -10365,6 +10374,7 @@ $(document).on('shown.bs.tab', '#captainpayments-tab-line', function () {
     PosnicPro.get({url:'captain/v1/payment-settings'}, function (data) {
         $('#save_captain_payments').prop('disabled',false);
         $('#captain_payments_message').empty();
+        PosnicPro.settings.applyCountryFields(PosnicPro.local.get('country_setting'), '#settings');
         $('#captain_payments_enabled').prop('checked',data.enabled === true);
         $('#captain_payment_receipt').prop('checked',data.printReceipt !== false);
         $('#captain_payment_methods input').each(function () { $(this).prop('checked',(data.methods || []).indexOf(this.value) >= 0); });

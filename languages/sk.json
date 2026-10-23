@@ -5231,5 +5231,6 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (zvyčajne 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (zvyčajne 587 alebo 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Použite Posnic cloudový e-mail alebo pripojte svoj vlastný účet pre účty a správy.",
-  "lang_send_this_report_automatically": "Odoslať túto správu automaticky"
+  "lang_send_this_report_automatically": "Odoslať túto správu automaticky",
+  "lang_split_payment_help": "Jeden účet, niekoľko spôsobov platby. Napríklad polovica kartou a polovica v hotovosti."
 }
