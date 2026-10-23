@@ -1026,7 +1026,7 @@ default: return text; } };
         if (!original) throw new Error('Refresh the order before editing.');
         dialog(
             (cancelling ? PosnicPro.i18n.t('lang_cancel_item', 'Cancel item: ') : PosnicPro.i18n.t('lang_edit_title', 'Edit ')) + line.name,
-            `<label>Quantity for this round<input name="qty" type="number" min="${line.served}" step="1" required value="${cancelling ? line.served : line.quantity}"></label>${cancelling ? "" : `<label>Kitchen note<textarea name="note" maxlength="500">${esc(line.note)}</textarea></label>${templates(['No onion', 'Less spicy', 'Less oil'], 'note')}`}<label>Reason for reducing or removing<textarea name="reason" maxlength="200" ${cancelling ? 'required' : ''}></textarea></label>`,
+            `<label>Quantity for this round<input name="qty" type="number" min="${line.served}" step="1" required value="${cancelling ? line.served : line.quantity}"></label>${cancelling ? "" : `<label>Kitchen note<textarea name="note" maxlength="500">${esc(line.note)}</textarea></label>${templates(['No onion', 'Less spicy', 'Less oil'], 'note')}`}<label>Reason for reducing or removing<textarea name="reason" maxlength="200" ${cancelling ? 'required' : ''}></textarea></label>${templates(['Customer changed their mind', 'Item unavailable', 'Duplicate order'], 'reason')}`,
             async (f) => {
                 const qty = Number(f.get('qty')),
                     note = cancelling ? line.note : String(f.get('note'));
