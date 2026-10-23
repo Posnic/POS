@@ -99,5 +99,8 @@ test('legacy desktop card and Captain card payments are combined under Card', as
   ]);
   const value = await summary(Model, {});
   expect(value.currencies[0].total).toBe(225);
-  expect(value.currencies[0].payments).toEqual([{ method: 'Card', amount: 200 }, { method: 'Cash', amount: 25 }]);
+  expect(value.currencies[0].payments).toEqual([
+    { method: 'Card', amount: 200 },
+    { method: 'Cash', amount: 25 },
+  ]);
 });
