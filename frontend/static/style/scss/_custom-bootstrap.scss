@@ -272,3 +272,5 @@ mark {
     background-color: $warning-rgba;
     color: $black;
 }
+// Country gates must survive a later business-type toggle calling jQuery.show().
+.india-only[hidden] { display: none !important; }

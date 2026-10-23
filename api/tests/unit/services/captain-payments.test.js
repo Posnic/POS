@@ -28,6 +28,7 @@ beforeEach(async () => {
   await db.collection('branches').insertOne({
     _id: branch,
     license,
+    country: 'India',
     currency: '₹',
     captain_payments: { enabled: true, methods: ['Cash', 'Card', 'Upi'], printReceipt: false },
   });
@@ -442,7 +443,7 @@ test('a mixed settlement retry creates one real receipt job with the configured 
 test('split guest payments retain the exact remainder and reject competing stale payments', async () => {
   const snapshot = require('../../../src/services/guest-bill.service').snapshotFrom(
     [sale],
-    { currency: '₹' },
+    await db.collection('branches').findOne({ _id: branch }),
     'T1'
   );
   const plan = await service.prepare(
@@ -556,7 +557,7 @@ test('releasing and recreating a bill invalidates stale confirmations', async ()
 test('desktop can finish a partial Captain bill after collection is disabled', async () => {
   const snapshot = require('../../../src/services/guest-bill.service').snapshotFrom(
     [sale],
-    { currency: '₹' },
+    await db.collection('branches').findOne({ _id: branch }),
     'T1'
   );
   const plan = await service.prepare(
@@ -805,7 +806,7 @@ test('split settlement renders only the paid share through the branch template',
   await db.collection('branches').updateOne({ _id: branch }, { $set: { printall: true } });
   const snapshot = require('../../../src/services/guest-bill.service').snapshotFrom(
     [sale],
-    { currency: '\u20b9' },
+    await db.collection('branches').findOne({ _id: branch }),
     'T1'
   );
   const plan = await service.prepare(
@@ -817,7 +818,7 @@ test('split settlement renders only the paid share through the branch template',
   const payload = queue.mock.calls[0][0].payload;
   const receipt = require('../../../src/helpers/bill-payload').buildBillPayload(
     { ...sale, date: paid.payments[0].at },
-    { currency: '\u20b9' }
+    await db.collection('branches').findOne({ _id: branch })
   );
   expect(payload.date).toEqual(receipt.date);
   expect(payload.total).toBe(35);

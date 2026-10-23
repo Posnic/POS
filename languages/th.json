@@ -5312,5 +5312,6 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (ปกติ 465)",
   "lang_starttls_usually_587_or_2525": "สตาร์ททอลส์ (ปกติ 587 หรือ 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "ใช้อีเมล Posnic คลาวด์หรือเชื่อมต่อบัญชีของคุณเองเพื่อรับการเรียกเก็บเงินและรายงาน",
-  "lang_send_this_report_automatically": "ส่งรายงานนี้โดยอัตโนมัติ"
+  "lang_send_this_report_automatically": "ส่งรายงานนี้โดยอัตโนมัติ",
+  "lang_split_payment_help": "หนึ่งบิลวิธีการชำระเงินหลายวิธีตัวอย่างเช่นครึ่งด้วยบัตรและครึ่งหนึ่งเป็นเงินสด"
 }

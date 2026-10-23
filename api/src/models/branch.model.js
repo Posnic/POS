@@ -1364,7 +1364,8 @@ class BranchModel {
           'utf8'
         );
         const taxValue = JSON.parse(countriesJson);
-        const countryData = taxValue.countries.find((c) => c.value === data.country);
+        const selectedCountry = require('../utils/branch-country')({ country: data.country });
+        const countryData = taxValue.countries.find((c) => c.sortname === selectedCountry);
 
         if (countryData) {
           sortname = countryData.sortname;

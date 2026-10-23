@@ -6,7 +6,7 @@ test.each(['India', 'IN', 'United Arab Emirates', 'Singapore', 'Cambodia'])(
     expect(defaults({ country })).toEqual(['Cash', 'Card', 'Upi']);
   }
 );
-test.each(['United Kingdom', 'GB', 'United States', '', 'unknown'])(
+test.each(['Hong Kong', 'HK', 'United Kingdom', 'GB', 'United States', '', 'unknown'])(
   'UPI is not seeded for %s',
   (country) => {
     expect(defaults({ country })).toEqual(['Cash', 'Card']);
@@ -47,4 +47,16 @@ test('sync readers use the branch and license rather than another shops methods'
   }));
   expect(await read({ collection: () => ({ find }) }, branch)).toEqual(['Card']);
   expect(find).toHaveBeenCalledWith({ branch_id: branch._id, license: branch.license });
+});
+
+// Older branches without seeded rows must use the same country defaults as new ones.
+test.each(['Hong Kong', 'HK', 'United Kingdom', 'GB', '', 'unknown'])(
+  'an uninitialized %s branch does not acquire UPI through the legacy fallback',
+  (country) => {
+    expect(enabled([], { country })).toEqual(['Cash', 'Card']);
+  }
+);
+test('India fallback retains UPI and explicit choices are preserved', () => {
+  expect(enabled([], { country: 'India' })).toEqual(['Cash', 'Card', 'Upi']);
+  expect(enabled([{ payment_field: 'Card' }], { country: 'Hong Kong' })).toEqual(['Card', 'Cash']);
 });

@@ -5234,5 +5234,6 @@
   "lang_ssl_tls_usually_465": "SSL/TLS (thường là 465)",
   "lang_starttls_usually_587_or_2525": "STARTTLS (thường là 587 hoặc 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Sử dụng email Posnic đám mây hoặc kết nối tài khoản của riêng bạn cho các hóa đơn và báo cáo.",
-  "lang_send_this_report_automatically": "Gửi báo cáo này tự động"
+  "lang_send_this_report_automatically": "Gửi báo cáo này tự động",
+  "lang_split_payment_help": "Một hóa đơn, một số phương thức thanh toán. Ví dụ, một nửa bằng thẻ và một nửa bằng tiền mặt."
 }

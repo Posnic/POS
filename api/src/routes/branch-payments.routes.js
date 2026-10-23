@@ -26,7 +26,7 @@ router.get('/', (req, res) =>
 router.post('/', async (req, res) => {
   try {
     const c = req.paymentContext;
-    const payment_settings = payments.validate(req.body || {});
+    const payment_settings = payments.validate(req.body || {}, c.branch);
     await req.db.collection('branches').updateOne(
       { _id: c.branchId, license: c.license },
       {

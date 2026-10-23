@@ -154,7 +154,10 @@ function itemLines(sale, branch, allocation = null, combine = true) {
        * entirely when no line carries one - so switching it on does not add a
        * blank stripe down a year of old bills.
        */
-      hsn: wants(branch, 'bill_print_hsn') ? String(it.hsncode || '').trim() : '',
+      hsn:
+        require('./receipt-design').fieldAvailable('hsn', branch) && wants(branch, 'bill_print_hsn')
+          ? String(it.hsncode || '').trim()
+          : '',
       rate: rate > 0 ? rate.toFixed(monetary.currencyDigits) : '',
       qty: qtyText(qty),
       amount: require('../utils/currency').fromMinor(
@@ -258,7 +261,8 @@ function taxRows(sale, branch, allocation = null) {
   const tax = num(sale && sale.tax);
   if (tax <= 0) return [];
   const indian = String((branch && branch.indian_gst) || '').toLowerCase();
-  if (['gst_on', 'enable', 'true', '1'].includes(indian)) {
+  const country = require('./receipt-design').countryCode(branch);
+  if ((!country || country === 'IN') && ['gst_on', 'enable', 'true', '1'].includes(indian)) {
     const money = require('../utils/currency');
     const policy = money.policy(branch || {});
     const taxMinor = money.toMinor(tax, policy);
@@ -303,7 +307,7 @@ function taxRows(sale, branch, allocation = null) {
       },
     ];
   }
-  return [{ label: 'Tax', amount: tax }];
+  return [{ label: require('./receipt-design').taxLabel(branch), amount: tax }];
 }
 
 /**
@@ -746,7 +750,9 @@ function receiptDocument(sale, branch, bill) {
   doc.printing_address = doc.printing_address || bill.storeAddress;
   doc.created_date = bill.date;
   doc.currency_type = bill.currency;
-  doc.gst = branch.indian_gst === 'gst_on' ? 'enable' : sale.gst;
+  const country = require('./receipt-design').countryCode(branch);
+  doc.gst =
+    country && country !== 'IN' ? 'disable' : branch.indian_gst === 'gst_on' ? 'enable' : sale.gst;
   doc.serving_session = sessionName(sale, branch);
   doc.order_source = orderSource(sale);
   doc.items_subtotal = bill.subTotal;
