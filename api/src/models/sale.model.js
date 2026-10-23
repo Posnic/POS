@@ -349,6 +349,9 @@ const saleSchema = new mongoose.Schema(
     submission_payload_hash: { type: String },
     extension_stock_operation: { type: String },
     extension_id: { type: String },
+    // Cloud-authoritative external posting receipt. Hydrated documents must
+    // retain it so ordinary edit/payment guards cannot lose its ownership.
+    external_sale: { type: mongoose.Schema.Types.Mixed, immutable: true },
     seating_primary_id: { type: String },
     seating_table_ids: { type: [String], default: undefined },
     floor_closed_at: { type: Date },
@@ -847,6 +850,10 @@ saleSchema.plugin(paginate);
 
 // Pre-save hook: Generate sales_id and sync fields
 saleSchema.pre('save', async function () {
+  if (this.external_sale)
+    throw Object.assign(new Error('Marketplace sales require an extension adjustment.'), {
+      status: 409,
+    });
   const isLegacyPhpSale = this.sale_method === 'Live-Order';
 
   // STEP 1: Generate sales_id for new sales (PHP-style)

@@ -5393,7 +5393,7 @@ function startServer() {
     process.env.POSNIC_ASSET_DIR = '';
   }
   console.log('Starting api Node.js Server...');
-  console.log('MongoDB URI: ' + (process.env.MONGODB_URI || '(not set)'));
+  console.log('Database connection: ' + (process.env.MONGODB_URI ? 'configured' : 'not configured'));
   console.log('Connecting to local database...\n');
 
   // Determine correct path to server.js (now in extraResources)

@@ -168,6 +168,11 @@ const userSchema = new mongoose.Schema(
     apikey: {
       type: String,
     },
+    // Operator-provisioned restriction: ordinary access flags cannot broaden it.
+    apiEndpointScope: {
+      type: mongoose.Schema.Types.Mixed,
+      immutable: true,
+    },
     // PHP: userkey (for password reset)
     userkey: {
       type: String,

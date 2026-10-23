@@ -269,10 +269,16 @@ describe('DashboardModel — getProfitSummaryModel()', () => {
     };
     jest
       .spyOn(dm, 'sumCollectionField')
-      .mockImplementation((coll, _m, field) => Promise.resolve(sums[`${coll}.${field}`] || 0));
-    // Two countDocuments calls: total sales, then sales with no recorded cost.
+      .mockImplementation((coll, m, field) =>
+        Promise.resolve(m['external_sale.settlementStatus'] ? 0 : sums[`${coll}.${field}`] || 0)
+      );
+    // Total sales, pending marketplace fees, then missing costs.
     jest.spyOn(dm, 'getCollection').mockResolvedValue({
-      countDocuments: jest.fn().mockResolvedValueOnce(12).mockResolvedValueOnce(0),
+      countDocuments: jest
+        .fn()
+        .mockResolvedValueOnce(12)
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(0),
     });
 
     const r = await dm.getProfitSummaryModel(range);
@@ -314,7 +320,11 @@ describe('DashboardModel — getProfitSummaryModel()', () => {
       .spyOn(dm, 'sumCollectionField')
       .mockImplementation((coll, _m, field) => Promise.resolve(sums[`${coll}.${field}`] || 0));
     jest.spyOn(dm, 'getCollection').mockResolvedValue({
-      countDocuments: jest.fn().mockResolvedValueOnce(10).mockResolvedValueOnce(4), // 4 of 10 have no cost
+      countDocuments: jest
+        .fn()
+        .mockResolvedValueOnce(10)
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(4), // 4 of 10 have no cost
     });
     const r = await dm.getProfitSummaryModel(range);
     expect(r.data.cost_missing_sales).toBe(4);
@@ -333,11 +343,43 @@ describe('DashboardModel — getProfitSummaryModel()', () => {
       .spyOn(dm, 'sumCollectionField')
       .mockImplementation((coll, _m, field) => Promise.resolve(sums[`${coll}.${field}`] || 0));
     jest.spyOn(dm, 'getCollection').mockResolvedValue({
-      countDocuments: jest.fn().mockResolvedValueOnce(8).mockResolvedValueOnce(0), // none missing, but cost > sales
+      countDocuments: jest
+        .fn()
+        .mockResolvedValueOnce(8)
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(0), // none missing, but cost > sales
     });
     const r = await dm.getProfitSummaryModel(range);
     expect(r.data.cost_missing_sales).toBe(0);
     expect(r.data.cost_reliable).toBe(false);
+  });
+
+  test('marketplace receivables count in revenue but not cash, and unknown fees make net profit provisional', async () => {
+    jest.spyOn(dm, 'sumCollectionField').mockImplementation((collection, match, field) => {
+      if (match['external_sale.settlementStatus']) return Promise.resolve(200);
+      return Promise.resolve(
+        {
+          'sales.items_total': 1000,
+          'sales.total_companyprice': 600,
+          'receivings.items_total': 100,
+          'expenses.amount': 50,
+        }[`${collection}.${field}`] || 0
+      );
+    });
+    jest.spyOn(dm, 'getCollection').mockResolvedValue({
+      countDocuments: jest
+        .fn()
+        .mockImplementation((match) =>
+          Promise.resolve(match['external_sale.feeStatus'] ? 2 : match.items_total ? 0 : 10)
+        ),
+    });
+    const result = await dm.getProfitSummaryModel(range);
+    expect(result.status).toBe(true);
+    expect(result.data.revenue).toBe(1000);
+    expect(result.data.cash_flow).toBe(650);
+    expect(result.data.marketplace_receivable).toBe(200);
+    expect(result.data.marketplace_fees_pending_sales).toBe(2);
+    expect(result.data.net_profit_provisional).toBe(true);
   });
 });
 

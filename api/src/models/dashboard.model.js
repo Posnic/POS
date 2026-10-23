@@ -657,6 +657,18 @@ class DashboardModel extends BaseModel {
         this.sumCollectionField('expenses', expenseMatch, 'amount'),
       ]);
       const salesCount = await salesCol.countDocuments(salesMatch);
+      const marketplaceFeePending = await salesCol.countDocuments({
+        ...salesMatch,
+        'external_sale.feeStatus': 'unknown',
+      });
+      const marketplaceReceivable = await this.sumCollectionField(
+        'sales',
+        {
+          ...salesMatch,
+          'external_sale.settlementStatus': 'unreconciled',
+        },
+        'items_total'
+      );
 
       const round = (v) => Math.round((Number(v) || 0) * 100) / 100;
       const grossProfit = revenue - cogs;
@@ -724,7 +736,10 @@ class DashboardModel extends BaseModel {
           expenses: round(expenses),
           net_profit: round(netProfit),
           purchases: round(purchases),
-          cash_flow: round(revenue - purchases - expenses),
+          cash_flow: round(revenue - marketplaceReceivable - purchases - expenses),
+          marketplace_receivable: round(marketplaceReceivable),
+          marketplace_fees_pending_sales: marketplaceFeePending,
+          net_profit_provisional: marketplaceFeePending > 0 || !costReliable,
           margin_percent: revenue ? round((netProfit / revenue) * 100) : 0,
           sales_count: salesCount || 0,
           pl_includes_cashbook: includeCashbook,

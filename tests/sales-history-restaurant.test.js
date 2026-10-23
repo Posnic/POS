@@ -25,6 +25,20 @@ function setup(enabled = true, rows = null) {
  w.eval(settings.slice(saveStart, settings.indexOf("$(document).on('click', '#v-pills-tableorder-tab, #manage_sec_tableorder'", saveStart)));
  return { w, $, requests, alerts, close: () => w.close() };
 }
+test('recorded marketplace source remains filterable with all optional modules disabled', () => {
+ const x = setup(false);
+ try {
+  x.w.PosnicPro.get = (p, cb) => cb({type:'success',data:p.data.field === 'source' ? [{value:'marketplace',label:'marketplace'}] : []});
+  x.w.PosnicPro.sales.mountProvenanceHistory();
+  assert.equal(x.$('#sales_history_source option[value=marketplace]').length, 1);
+  assert.notEqual(x.$('#sales_history_source_wrap').css('display'), 'none');
+  assert.equal(x.$('#sales_history_source option[value=tableside]').length, 0);
+  x.$('#sales_history_source').val('marketplace');
+  x.w.PosnicPro.sales.loadHistory(1);
+  assert.equal(x.requests[0].order_source, 'marketplace');
+ } finally { x.close(); }
+});
+
 test('first history request is today, while explicit All time survives refresh and pagination', () => {
  const x = setup(false, []);
  try {

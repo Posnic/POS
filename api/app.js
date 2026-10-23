@@ -799,6 +799,7 @@ app.use(async (req, res, next) => {
  * never taken an update.
  */
 const UPDATED_ASSETS = process.env.POSNIC_ASSET_DIR;
+app.use(require('./src/middleware/fresh-document'));
 
 /*
  * Cache policy for the built frontend.

@@ -745,11 +745,17 @@ PosnicPro.dashboard = {
         // say plainly what to fix, so a data gap never reads as a real loss.
         var reliable = profit.cost_reliable !== false;
         var netEl = $('#profit_net').removeClass('text-success text-danger text-muted');
-        if (reliable) {
+        var pendingFees = Number(profit.marketplace_fees_pending_sales) || 0;
+        if (reliable && pendingFees === 0) {
             var net = Number(profit.net_profit) || 0;
             netEl.attr('title', '').html(money(net)).addClass(net >= 0 ? 'text-success' : 'text-danger');
             $('#profit_gross').attr('title', '').html(money(profit.gross_profit));
             $('#profit_cashflow_note').text(' Stock bought this ' + (filter || 'period') + ': ' + money(profit.purchases) + '. Cash in minus out: ' + money(profit.cash_flow) + '.');
+        } else if (reliable && pendingFees > 0) {
+            var feeNote = 'Marketplace fees are awaiting reconciliation for ' + pendingFees + ' sale(s). Net profit is not final.';
+            netEl.attr('title', feeNote).html('N/A').addClass('text-muted');
+            $('#profit_gross').attr('title', '').html(money(profit.gross_profit));
+            $('#profit_cashflow_note').text(feeNote + ' Marketplace receivable: ' + money(profit.marketplace_receivable) + '.');
         } else {
             // Profit that cannot be worked out honestly is shown as N/A, never as
             // a number - a missing purchase price must never read as a real loss.

@@ -4,9 +4,11 @@
 const installed = new Map();
 const capabilities = Object.freeze([
   'namespace.commands.v1',
+  'namespace.clock.v1',
   'ui.contributions.v1',
   'connector.requests.v1',
   'connector.context.v1',
+  'sales.external-posting.v1',
   'documents.preview.v1',
   'sales.workspace-contributions.v1',
   'stock.durable-debit.v1',

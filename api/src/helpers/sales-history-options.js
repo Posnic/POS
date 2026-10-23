@@ -1,8 +1,9 @@
 'use strict';
 const { ObjectId } = require('mongodb');
 const { BadRequestError } = require('../utils/appError');
+const { CHANNEL_VALUES, LEGACY_SALE_METHOD } = require('../utils/sales-channels');
 module.exports = function historyOptions({ branchId, licenseId, field, query = '' }) {
-  if (!['staff', 'device'].includes(field) || typeof query !== 'string' || query.length > 120)
+  if (!['staff', 'device', 'source'].includes(field) || typeof query !== 'string' || query.length > 120)
     throw new BadRequestError('Invalid sales history filter.');
   if (!ObjectId.isValid(String(branchId)) || !ObjectId.isValid(String(licenseId)))
     throw new BadRequestError('Invalid branch context.');
@@ -13,7 +14,16 @@ module.exports = function historyOptions({ branchId, licenseId, field, query = '
       in: { $cond: [{ $eq: ['$$value', ''] }, '$$this', '$$value'] },
     },
   });
-  const value = first(
+  const value = field === 'source' ? {
+    $cond: [
+      { $in: ['$channel', CHANNEL_VALUES] }, '$channel',
+      { $switch: {
+        branches: Object.entries(LEGACY_SALE_METHOD).map(([legacy, channel]) => ({
+          case: { $eq: ['$sale_method', legacy] }, then: channel,
+        })), default: 'pos',
+      } },
+    ],
+  } : first(
     field === 'staff'
       ? ['kitchen_actor.name', 'client.staff_name', 'created_by', 'user_name']
       : ['client.device_id', 'client.device_model']
