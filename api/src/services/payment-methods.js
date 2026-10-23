@@ -21,16 +21,16 @@ function enabled(rows, branch, custom = false) {
       .filter((r) => r.enabled !== false)
       .map((r) => {
         const value = String(r.payment_field || r.payment_value || '').trim();
-        if (custom) {
-          if (
-            !value ||
-            /[.$]/.test(value) ||
-            ['__proto__', 'constructor', 'prototype', 'Mixed'].includes(value)
-          )
-            return undefined;
-          return value;
-        }
-        return canonical(value);
+        const standard = canonical(value);
+        if (standard) return standard;
+        if (
+          !custom ||
+          !value ||
+          /[.$]/.test(value) ||
+          ['__proto__', 'constructor', 'prototype', 'Mixed'].includes(value)
+        )
+          return undefined;
+        return value;
       })
       .filter(Boolean)
   );

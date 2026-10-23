@@ -60,6 +60,9 @@ test('sale sheet and designed receipts display the same split and escape method 
   dom.window.close();
 });
 
-test('independently configured Card and CreditCard payments retain separate totals', () => {
-  assert.deepEqual(rows({ multi_payment: { CreditCard: 100, Card: 50, Cash: 25 } }), [{ method: 'CreditCard', amount: 100 }, { method: 'Card', amount: 50 }, { method: 'Cash', amount: 25 }]);
+test('desktop legacy card names and Captain card tenders use one Card total', () => {
+  for (const method of ['CreditCard', 'Credit Card', 'DebitCard', 'Card']) {
+    assert.deepEqual(rows({ payment_mode: method, payment_status: 'Paid', sales_total: 500 }), [{ method: 'Card', amount: 500 }]);
+  }
+  assert.deepEqual(rows({ multi_payment: { CreditCard: 100, Card: 50, Cash: 25 } }), [{ method: 'Card', amount: 150 }, { method: 'Cash', amount: 25 }]);
 });

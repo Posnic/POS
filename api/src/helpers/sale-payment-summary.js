@@ -20,7 +20,8 @@
         method = String(method || '').trim();
         amount = Number(amount);
         if (!method || !Number.isFinite(amount) || amount <= 0) return;
-        const key = method.toLowerCase();
+        const rawKey = method.toLowerCase();
+        const key = /^(credit[ _-]?card|debit[ _-]?card)$/.test(rawKey) ? 'card' : rawKey;
         const label = { cash: 'Cash', card: 'Card', upi: 'UPI' }[key] || method;
         const entry = result.get(key) || { method: label, amount: 0 };
         entry.amount += amount;
