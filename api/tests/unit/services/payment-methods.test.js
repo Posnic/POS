@@ -76,7 +76,7 @@ test('desktop loads enabled custom methods while phone methods retain their supp
   ];
   const find = jest.fn(() => ({ toArray: async () => rows }));
   const db = { collection: () => ({ find }) };
-  expect(await read(db, branch, true)).toEqual(['Card', 'Hotel account']);
+  expect(await read(db, branch, true)).toEqual(['CreditCard', 'Hotel account']);
   expect(await read(db, branch)).toEqual(['Card']);
   expect(find).toHaveBeenCalledWith({ branch_id: branch._id, license: branch.license });
   expect(enabled([], branch, true)).toEqual([]);
