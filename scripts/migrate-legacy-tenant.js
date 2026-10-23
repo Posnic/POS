@@ -1,297 +1,315 @@
 #!/usr/bin/env node
 'use strict';
-/*
- * Bring a legacy tenant's data forward again, without undoing what has
- * happened since.
- *
- * The original migration moved shops out of the shared Main/PosnicPro database
- * into one database each on the Posnic cluster. It was written for a first
- * load into empty databases, and it is not safe to simply run again: the shops
- * have been live since, and the code has moved on. Three things in it would
- * now destroy work rather than complete it.
- *
- *   replaceOne substitutes the whole document, so any field the newer code
- *   added - till_lock_enable on a branch, item_weight_machine_based on an
- *   item, the sync agent's own bookkeeping - is deleted, because the legacy
- *   copy has never heard of it. This uses $set, so fields that exist only in
- *   the destination survive.
- *
- *   Nothing compared the two sides. A record edited in the new cluster since
- *   go-live would be overwritten by the older legacy version, silently. This
- *   compares updated_date and refuses to go backwards, reporting each such
- *   document instead.
- *
- *   Every secondary index was dropped before loading. That is reasonable
- *   against an empty database and wrong against a live one, where it makes
- *   every query slow until something recreates them. Indexes are now left
- *   alone unless the destination collection is empty.
- *
- * The source is still only ever read.
- *
- *   node scripts/migrate-legacy-tenant.js --dry
- *   node scripts/migrate-legacy-tenant.js --only=kiranastore --dry
- *   node scripts/migrate-legacy-tenant.js --only=kiranastore
- *
- * Env: SRC_MAIN, CONTROL_URI, [CONTROL_DB=Web], [TENANT_CLUSTER=atlas-1]
- */
-
+// Schema-preserving, explicitly scoped reconciliation. Source is read-only.
+// Defaults to a real dry comparison against DEST_URI, not an Atlas guess.
 const fs = require('fs');
 const path = require('path');
-const { ObjectId } = requireMongo();
-
+const crypto = require('crypto');
+const zlib = require('zlib');
+const { once } = require('events');
+const { finished } = require('stream/promises');
 function requireMongo() {
   try { return require('../api/node_modules/mongodb'); }
-  catch (e) { return require('mongodb'); }
+  catch (_) { return require('mongodb'); }
 }
-
-// Collections carrying a `license`. cloud_users is billing and user_sessions is
-// stale session state, so both stay behind.
+const { MongoClient, ObjectId, BSON } = requireMongo();
+const EJSON = BSON.EJSON;
 const COLLECTIONS = [
   'branches', 'cashregister', 'categories', 'customer_category', 'customers',
-  'data_change_log', 'denomination', 'expenses', 'grouptax', 'invoice', 'items',
-  'items_log', 'payment', 'payment_type', 'razorpay_mobile', 'receivings',
-  'recycle_bin', 'registers', 'sales', 'staff_activities', 'stocklogs',
-  'suppliers', 'tableorder', 'transaction', 'unit', 'users', 'variants',
+  'denomination', 'expenses', 'grouptax', 'invoice', 'items', 'items_log',
+  'payment', 'payment_type', 'receivings', 'recycle_bin', 'registers', 'sales',
+  'staff_activities', 'stocklogs', 'suppliers', 'tableorder', 'transaction',
+  'unit', 'users', 'variants',
 ];
-
+const EXCLUDED = new Set(['data_change_log', 'razorpay_mobile', 'razorpay_webhook',
+  'cloud_users', 'user_sessions', 'login_check', 'license']);
 const DATE_FIELDS = ['updated_date', 'update_date', 'created_date'];
-
-/* The most recent timestamp a document carries, or null if it carries none. */
+const OPTIONAL_EMAIL = new Set(['customers', 'suppliers', 'users']);
 function lastTouched(doc) {
-  if (!doc) return null;
-  let newest = null;
-  for (const field of DATE_FIELDS) {
-    const value = doc[field];
-    if (!value) continue;
-    const date = value instanceof Date ? value : new Date(value);
-    if (isNaN(date.getTime())) continue;
-    if (!newest || date > newest) newest = date;
+  const dates = DATE_FIELDS.map(k => doc && doc[k] ? new Date(doc[k]).getTime() : NaN).filter(Number.isFinite);
+  return dates.length ? new Date(Math.max(...dates)) : null;
+}
+function canonical(value) {
+  if (value === undefined) return 'undefined';
+  const sort = v => Array.isArray(v) ? v.map(sort) : v && typeof v === 'object'
+    ? Object.fromEntries(Object.keys(v).sort().map(k => [k, sort(v[k])])) : v;
+  return JSON.stringify(sort(EJSON.serialize(value, { relaxed: false })));
+}
+function same(a, b) { return canonical(a) === canonical(b); }
+function isObject(v) { return !!v && Object.getPrototypeOf(v) === Object.prototype; }
+function merge(source, destination) {
+  if (isObject(source)) {
+    const out = isObject(destination) ? { ...destination } : {};
+    for (const [key, value] of Object.entries(source)) {
+      if (key.startsWith('$') || key.includes('.') || ['__proto__', 'constructor', 'prototype'].includes(key)) throw Error('Unsafe document key');
+      out[key] = merge(value, out[key]);
+    }
+    return out;
   }
-  return newest;
+  if (Array.isArray(source)) {
+    const keyed = source.length && source.every(v => isObject(v) && v.branch_id != null)
+      && new Set(source.map(v => String(v.branch_id))).size === source.length;
+    if (keyed && Array.isArray(destination)) return source.map(v => merge(v,
+      destination.find(d => d && String(d.branch_id) === String(v.branch_id))));
+  }
+  return source;
 }
-
-/*
- * Whether the legacy copy should be written over what is there now.
- *
- * The rule that matters is the last one: if the destination has been touched
- * more recently than the source, somebody has worked on this record since the
- * migration and the legacy version is simply out of date. Writing it would
- * take a shop's work away, which is worse than leaving a record un-refreshed.
- *
- * An undated document is treated as safe to refresh only when the destination
- * is also undated: reference data like units and payment types carries no
- * timestamps and genuinely wants topping up, but a dated destination against
- * an undated source is a record the new system has written and the old one
- * has not.
- */
-function decide(source, destination) {
-  if (!destination) return { write: true, reason: 'new' };
-
-  const src = lastTouched(source);
-  const dst = lastTouched(destination);
-
-  if (dst && src && dst > src) return { write: false, reason: 'newer-in-destination' };
-  if (dst && !src) return { write: false, reason: 'newer-in-destination' };
-  return { write: true, reason: 'refresh' };
+function licenseMatches(value, license) { return value != null && String(value) === String(license); }
+function licenseFilter(license) { return { license: { $in: [new ObjectId(String(license)), String(license)] } }; }
+function normalized(doc, collection, options = {}) {
+  const result = { ...doc };
+  if (OPTIONAL_EMAIL.has(collection) && (result.email == null || (typeof result.email === 'string' && !result.email.trim()))) delete result.email;
+  // Legacy item editors can serialize unit references as hex strings while
+  // Core retains BSON ObjectIds. Preserve Core's representation and require
+  // the referenced unit to belong to this source license.
+  if (collection === 'items' && options.destination?.unit_id instanceof ObjectId
+    && typeof result.unit_id === 'string' && /^[a-f\d]{24}$/i.test(result.unit_id)
+    && options.unitIds?.has(result.unit_id.toLowerCase())) result.unit_id = new ObjectId(result.unit_id);
+  if (collection === 'items' && options.destination?.unit_id instanceof ObjectId
+    && (result.unit_id === '' || result.unit_id == null)) {
+    const label = value => typeof value === 'string' ? value.trim().toLowerCase() : '';
+    const unitName = options.unitNames?.get(String(options.destination.unit_id));
+    if (label(result.unit) && label(result.unit) === label(options.destination.unit)
+      && label(result.unit) === label(unitName)) result.unit_id = options.destination.unit_id;
+  }
+  return result;
 }
-
+function fingerprint(doc) { return crypto.createHash('sha256').update(canonical(doc)).digest('hex'); }
+function shapeChanges(source, destination, prefix = '') {
+  const changes = [];
+  const kind = value => value === null ? 'null' : Array.isArray(value) ? 'array'
+    : value instanceof Date ? 'date' : value && value._bsontype ? value._bsontype : typeof value;
+  for (const [key, value] of Object.entries(source)) {
+    if (!Object.hasOwn(destination, key) || destination[key] == null) continue;
+    const field = prefix + key;
+    if (kind(value) !== kind(destination[key])) changes.push(field);
+    else if (isObject(value) && isObject(destination[key])) changes.push(...shapeChanges(value, destination[key], field + '.'));
+    else if (Array.isArray(value) && Array.isArray(destination[key])) {
+      for (const branch of value) {
+        if (!isObject(branch) || branch.branch_id == null) continue;
+        const prior = destination[key].find(d => isObject(d) && String(d.branch_id) === String(branch.branch_id));
+        if (prior) changes.push(...shapeChanges(branch, prior, field + '[branch].'));
+      }
+    }
+  }
+  return changes;
+}
+function planDocument(source, destination, collection, options = {}) {
+  if (!source || !source._id) throw Error('Source document needs a stable _id');
+  if (options.license && !licenseMatches(source.license, options.license)) throw Error('Source license mismatch');
+  if (destination && !licenseMatches(destination.license, source.license)) return { action: 'conflict', reason: 'destination-license-mismatch' };
+  const clean = normalized(source, collection, { ...options, destination });
+  if (!destination) return { action: 'insert', reason: 'missing', document: merge(clean) };
+  // Deep merge preserves fields added by Core, including nested ACL flags and
+  // per-branch options. Arrays of branches retain fields, not revoked members.
+  const desired = merge(clean, destination);
+  // A legacy blank is not proof that a contact added in Core should be erased.
+  // Only remove an already-blank destination value; missing stays missing.
+  if (OPTIONAL_EMAIL.has(collection) && !Object.hasOwn(clean, 'email')
+    && (destination.email == null || (typeof destination.email === 'string' && !destination.email.trim()))) delete desired.email;
+  const set = {}, unset = {};
+  for (const k of Object.keys(desired)) if (k !== '_id' && !same(desired[k], destination[k])) set[k] = desired[k];
+  for (const k of Object.keys(destination)) if (!Object.hasOwn(desired, k)) unset[k] = '';
+  if (!Object.keys(set).length && !Object.keys(unset).length) return { action: 'equal', reason: 'equal' };
+  const src = lastTouched(source), dst = lastTouched(destination);
+  const resolution = options.resolutions && options.resolutions[collection + '/' + String(source._id)];
+  const reviewed = resolution && resolution.source === fingerprint(source) && resolution.destination === fingerprint(destination);
+  if (resolution && !reviewed) return { action: 'conflict', reason: 'resolution-stale' };
+  if (reviewed && resolution.keep === 'destination') return { action: 'resolved', reason: 'reviewed-core-version' };
+  if (!reviewed && shapeChanges(clean, destination).length) return { action: 'conflict', reason: 'schema-shape-change' };
+  if (!reviewed && dst && (!src || dst > src)) return { action: 'conflict', reason: 'newer-in-destination' };
+  if (!reviewed && (!src || !dst || +src === +dst)) return { action: 'conflict', reason: 'ambiguous-timestamp' };
+  if (reviewed && resolution.keep !== 'source') return { action: 'conflict', reason: 'invalid-resolution' };
+  const update = {};
+  if (Object.keys(set).length) update.$set = set;
+  if (Object.keys(unset).length) update.$unset = unset;
+  return { action: 'update', reason: reviewed ? 'reviewed-legacy-version' : 'source-newer', update, document: desired };
+}
+function casFilter(doc) { return { _id: doc._id, $expr: { $eq: ['$$ROOT', { $literal: doc }] } }; }
 function parseArgs(argv) {
-  const arg = (name, def = null) => {
-    const hit = argv.find((a) => a.startsWith('--' + name + '='));
-    return hit ? hit.split('=').slice(1).join('=') : def;
-  };
-  return {
-    dry: argv.includes('--dry'),
-    only: arg('only'),
-    since: arg('since') ? new Date(arg('since')) : null,
-    batch: Number(process.env.BATCH || 250),
-  };
+  const value = key => { const v = argv.find(a => a.startsWith('--' + key + '=')); return v ? v.slice(key.length + 3) : null; };
+  if (argv.some(a => !['--dry', '--apply', '--allow-new-database', '--apply-tombstones'].includes(a)
+    && !/^--(only|manifest|report|backup-dir|resolutions)=.+$/.test(a))) throw Error('Unknown argument; --since is unsafe for undated stock edits');
+  if (argv.includes('--apply') && argv.includes('--dry')) throw Error('Choose --apply or --dry');
+  const result = { dry: !argv.includes('--apply'), only: value('only'),
+    manifest: value('manifest') || process.env.MANIFEST || path.join(__dirname, 'manifest.json'),
+    report: value('report') || path.resolve('migration-report-' + Date.now() + '.json'),
+    backupDir: value('backup-dir'), resolutionsPath: value('resolutions'),
+    allowNewDatabase: argv.includes('--allow-new-database'), applyTombstones: argv.includes('--apply-tombstones'),
+    batch: Number(process.env.BATCH || 250) };
+  if (!Number.isInteger(result.batch) || result.batch < 1 || result.batch > 1000) throw Error('BATCH must be 1..1000');
+  if (!result.dry && (!result.only || !result.backupDir)) throw Error('--apply requires --only and --backup-dir');
+  return result;
 }
-
-/*
- * Copy one collection for one shop.
- *
- * Documents are examined in batches against what the destination already
- * holds, so the decision above is made per record rather than per collection.
- */
-async function copyCollection(srcDb, dstDb, name, license, args, tally) {
-  const src = srcDb.collection(name);
-  const filter = { license };
-  if (args.since) {
-    filter.$or = DATE_FIELDS.map((f) => ({ [f]: { $gte: args.since } }));
+function validateTargets(manifest, only) {
+  if (!Array.isArray(manifest)) throw Error('Manifest must be an array');
+  const targets = manifest.filter(t => !only || t.subdomain === only).map(t => ({ ...t }));
+  if (!targets.length || (only && targets.length !== 1)) throw Error('Select exactly one matching tenant');
+  const databases = new Set();
+  for (const t of targets) {
+    if (!/^[a-f\d]{24}$/i.test(t.license || '') || !/^[a-z0-9][a-z0-9-]{0,62}$/.test(t.subdomain || '')) throw Error('Invalid tenant identity');
+    t.tenantDb = t.tenantDb || 'posnic_t_' + t.subdomain.replace(/-/g, '');
+    if (!/^posnic_t_[a-z0-9_]+$/.test(t.tenantDb) || databases.has(t.tenantDb)) throw Error('Invalid or repeated tenant database');
+    databases.add(t.tenantDb);
   }
-
-  const total = await src.countDocuments(filter);
-  if (!total) return;
-  if (!dstDb) { tally.push({ name, total, dry: true }); return; }
-
-  const dst = dstDb.collection(name);
-
-  // Only worth clearing indexes when there is nothing to slow down. On a live
-  // collection dropping them costs every query until something rebuilds them.
-  const existingCount = await dst.estimatedDocumentCount().catch(() => 0);
-  if (existingCount === 0) {
-    try {
-      for (const i of await dst.indexes()) {
-        if (i.name !== '_id_') await dst.dropIndex(i.name).catch(() => {});
-      }
-    } catch (e) { /* collection does not exist yet */ }
+  return targets;
+}
+async function writeLine(stream, doc) {
+  if (!stream.write(EJSON.stringify(doc, { relaxed: false }) + '\n')) await once(stream, 'drain');
+}
+async function backupDatabase(db, directory) {
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 }); fs.chmodSync(directory, 0o700);
+  const metadata = [];
+  for (const c of await db.listCollections({}, { nameOnly: true }).toArray()) {
+    if (c.name.startsWith('system.')) continue;
+    if (!/^[a-zA-Z0-9_-]+$/.test(c.name)) throw Error('Unsafe backup collection name');
+    const output = fs.createWriteStream(path.join(directory, c.name + '.ejson.gz'), { flags: 'wx', mode: 0o600 });
+    const gzip = zlib.createGzip();
+    const completion = finished(output); completion.catch(() => {});
+    gzip.on('error', e => output.destroy(e)); output.on('error', e => gzip.destroy(e)); gzip.pipe(output);
+    let count = 0;
+    for await (const doc of db.collection(c.name).find({})) { await writeLine(gzip, doc); count++; }
+    gzip.end(); await completion;
+    metadata.push({ name: c.name, count, indexes: await db.collection(c.name).indexes() });
   }
-
-  let written = 0;
-  let kept = 0;
-  const conflicts = [];
+  fs.writeFileSync(path.join(directory, 'metadata.ejson'), EJSON.stringify(metadata, { relaxed: false }), { flag: 'wx', mode: 0o600 });
+  return metadata;
+}
+async function recordAndWrite({ dst, source, before, plan, journal, collection }) {
+  await writeLine(journal, { collection, id: source._id, before: before || null, after: plan.document });
+  // The pre-image must be on disk before the database write is issued.
+  await new Promise((resolve, reject) => journal.write('', e => e ? reject(e) : resolve()));
+  fs.fsyncSync(journal.fd);
+  if (plan.action === 'insert') await dst.insertOne(plan.document);
+  else if ((await dst.updateOne(casFilter(before), plan.update)).matchedCount !== 1) throw Error('Destination changed during reconciliation');
+}
+function canDelete(doc, tombstone, license) {
+  if (!tombstone || !licenseMatches(tombstone.license, license) || !licenseMatches(doc.license, license)) return false;
+  if (!same(doc._id, tombstone._id)) return false;
+  const deletedAt = tombstone.document_backup_date instanceof Date ? tombstone.document_backup_date : null;
+  const liveAt = lastTouched(doc);
+  return !!deletedAt && Number.isFinite(deletedAt.getTime()) && (!liveAt || liveAt <= deletedAt);
+}
+async function reconcileCollection(srcDb, dstDb, name, target, args, journal) {
+  const src = srcDb.collection(name), dst = dstDb.collection(name), filter = licenseFilter(target.license);
+  const row = { name, source: 0, equal: 0, resolved: 0, insert: 0, update: 0, conflict: 0, written: 0, destinationOnly: 0, tombstoneDelete: 0, conflicts: [], samples: [] };
+  const unitRows = name === 'items' ? await srcDb.collection('unit').find(filter, { projection: { _id: 1, name: 1 } }).toArray() : [];
+  const unitIds = new Set(unitRows.map(d => String(d._id)));
+  const unitNames = new Map(unitRows.map(d => [String(d._id), d.name]));
   let batch = [];
-
-  const flush = async () => {
-    if (!batch.length) return;
-
-    const ids = batch.map((d) => d._id);
-    const existing = await dst.find({ _id: { $in: ids } })
-      .project({ _id: 1, updated_date: 1, update_date: 1, created_date: 1 })
-      .toArray();
-    const byId = new Map(existing.map((d) => [String(d._id), d]));
-
-    const ops = [];
-    for (const doc of batch) {
-      const verdict = decide(doc, byId.get(String(doc._id)));
-      if (!verdict.write) {
-        kept++;
-        if (conflicts.length < 5) conflicts.push(String(doc._id));
-        continue;
+  async function flush() {
+    const existing = await dst.find({ _id: { $in: batch.map(s => s._id) } }).toArray();
+    const byId = new Map(existing.map(d => [String(d._id), d]));
+    const fresh = args.dry ? null : new Map((await src.find({ ...filter, _id: { $in: batch.map(s => s._id) } }).toArray()).map(d => [String(d._id), d]));
+    for (const source of batch) {
+      const before = byId.get(String(source._id));
+      const plan = planDocument(source, before, name, { resolutions: args.resolutions, license: target.license, unitIds, unitNames });
+      row.source++; row[plan.action]++;
+      if (plan.action === 'conflict') row.conflicts.push({ id: String(source._id), reason: plan.reason, source: fingerprint(source), destination: fingerprint(before), fields: Object.keys(source).filter(k => !same(source[k], before && before[k])) });
+      if (!['equal', 'resolved'].includes(plan.action) && row.samples.length < 5) row.samples.push({ id: String(source._id), action: plan.action, reason: plan.reason });
+      if (!args.dry && ['insert', 'update'].includes(plan.action)) {
+        if (!same(fresh.get(String(source._id)), source)) throw Error('Source changed during reconciliation');
+        await recordAndWrite({ dst, source, before, plan, journal, collection: name }); row.written++;
       }
-      /*
-       * $set rather than a replacement, so anything the newer code has added
-       * to this document stays. The legacy copy is the authority on the
-       * fields it knows about and silent about the rest.
-       */
-      const { _id, ...fields } = doc;
-      ops.push({ updateOne: { filter: { _id }, update: { $set: fields }, upsert: true } });
     }
     batch = [];
-    if (!ops.length) return;
-
-    // Shared-tier Atlas throttles under load, so transient failures are
-    // retried; a genuine write error is reported and the source stays true.
-    for (let attempt = 1; attempt <= 5; attempt++) {
-      try {
-        await dst.bulkWrite(ops, { ordered: false });
-        written += ops.length;
-        return;
-      } catch (e) {
-        const bad = e.writeErrors ? e.writeErrors.length : 0;
-        const transient = (e.errorLabelSet && (e.errorLabelSet.has('RetryableError')
-          || e.errorLabelSet.has('SystemOverloadedError')))
-          || /SSL|socket|timed out|connection/i.test(e.message || '');
-        if (bad && !transient) {
-          written += ops.length - bad;
-          console.log('\n      ' + name + ': ' + bad + ' rejected by an index; source remains the truth');
-          return;
-        }
-        if (attempt === 5) throw e;
-        const wait = attempt * 3000;
-        console.log('\n      ' + name + ': ' + e.constructor.name
-          + ' on attempt ' + attempt + ', retrying in ' + (wait / 1000) + 's');
-        await new Promise((r) => setTimeout(r, wait));
+  }
+  for await (const source of src.find(filter, { batchSize: args.batch })) { batch.push(source); if (batch.length >= args.batch) await flush(); }
+  if (batch.length) await flush();
+  let dbatch = [];
+  async function extra() {
+    const originals = await src.find({ ...filter, _id: { $in: dbatch.map(d => d._id) } }, { projection: { _id: 1 } }).toArray();
+    const ids = new Set(originals.map(d => String(d._id)));
+    for (const d of dbatch) {
+      if (ids.has(String(d._id))) continue;
+      row.destinationOnly++;
+      if (name === 'recycle_bin' || !licenseMatches(d.license, target.license)) continue;
+      const tombstone = await srcDb.collection('recycle_bin').findOne({ ...filter, _id: d._id, document_name: name });
+      if (!canDelete(d, tombstone, target.license)) continue;
+      row.tombstoneDelete++;
+      if (!args.dry && args.applyTombstones) {
+        if (await src.findOne({ _id: d._id })) throw Error('Deleted source record was restored');
+        await writeLine(journal, { collection: name, id: d._id, before: d, after: null, tombstone });
+        await new Promise((resolve, reject) => journal.write('', e => e ? reject(e) : resolve())); fs.fsyncSync(journal.fd);
+        if ((await dst.deleteOne(casFilter(d))).deletedCount !== 1) throw Error('Destination changed before tombstone application');
+        row.written++;
       }
     }
-  };
-
-  for await (const doc of src.find(filter, { batchSize: args.batch })) {
-    batch.push(doc);
-    if (batch.length >= args.batch) {
-      await flush();
-      process.stdout.write('\r    ' + name + ': ' + written + '/' + total + '   ');
-    }
+    dbatch = [];
   }
-  await flush();
-  process.stdout.write('\r    ' + name + ': ' + written + '/' + total
-    + (kept ? '   (' + kept + ' left alone, newer here)' : '') + '        \n');
-
-  tally.push({ name, total, written, kept, conflicts });
+  for await (const d of dst.find({}, { batchSize: args.batch })) { dbatch.push(d); if (dbatch.length >= args.batch) await extra(); }
+  if (dbatch.length) await extra();
+  return row;
 }
-
-module.exports = { decide, lastTouched, COLLECTIONS, parseArgs };
-
-/* ------------------------------------------------------------------ */
-
-async function main() {
-  const args = parseArgs(process.argv.slice(2));
-  const { MongoClient } = requireMongo();
-
-  const SRC_MAIN = process.env.SRC_MAIN;
-  const CONTROL_URI = process.env.CONTROL_URI;
-  const CONTROL_DB = process.env.CONTROL_DB || 'Web';
-  const TENANT_CLUSTER = process.env.TENANT_CLUSTER || 'atlas-1';
-
-  /*
-   * SRC_WEB is not needed any more.
-   *
-   * The original script also created the website account, the activation
-   * record and the tenant entry, which is why it read the old PosnicWeb
-   * database. Those exist already for a shop that is live - kiranastore is
-   * serving on its own subdomain - so touching them now would only risk
-   * changing a working login. This moves data and nothing else.
-   */
-  for (const [k, v] of Object.entries({ SRC_MAIN, CONTROL_URI })) {
-    if (!v) { console.error('missing env ' + k); process.exit(1); }
+async function inventory(db, license) {
+  const result = [];
+  for (const c of await db.listCollections({}, { nameOnly: true }).toArray()) {
+    if (c.name.startsWith('system.')) continue;
+    const count = await db.collection(c.name).countDocuments(licenseFilter(license));
+    if (count) result.push({ name: c.name, count, mode: COLLECTIONS.includes(c.name) ? 'business-copy' : EXCLUDED.has(c.name) ? 'installation-local-excluded' : 'unclassified' });
   }
-
-  const manifestPath = process.env.MANIFEST || path.join(__dirname, 'manifest.json');
-  if (!fs.existsSync(manifestPath)) {
-    console.error('no manifest at ' + manifestPath + ' (set MANIFEST=<path>)');
-    process.exit(1);
-  }
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
-    .filter((t) => !args.only || t.subdomain === args.only);
-  if (!manifest.length) { console.error('nothing to do'); process.exit(1); }
-
-  const srcMain = new MongoClient(SRC_MAIN, { maxPoolSize: 5 });
-  const ctl = new MongoClient(CONTROL_URI, { maxPoolSize: 5 });
-  await Promise.all([srcMain.connect(), ctl.connect()]);
-  const mainDb = srcMain.db('PosnicPro');
-  const control = ctl.db(CONTROL_DB);
-
-  const clusterRec = await control.collection('clusters').findOne({ name: TENANT_CLUSTER });
-  if (!clusterRec || !clusterRec.uri) {
-    console.error('cluster ' + TENANT_CLUSTER + ' not registered');
-    process.exit(1);
-  }
-  const tenantClient = new MongoClient(clusterRec.uri, { maxPoolSize: 5 });
-  await tenantClient.connect();
-
-  console.log(args.dry
-    ? '\n  DRY RUN - nothing will be written\n'
-    : '\n  Writing. Records newer in the destination are left alone.\n');
-
-  const results = [];
-  for (const t of manifest) {
-    const license = new ObjectId(t.license);
-    const tenantDb = 'posnic_t_' + t.subdomain.replace(/-/g, '');
-    console.log('\n=== ' + t.company + '  ->  ' + tenantDb);
-
-    const tally = [];
-    const dstDb = args.dry ? null : tenantClient.db(tenantDb);
-    for (const name of COLLECTIONS) {
-      await copyCollection(mainDb, dstDb, name, license, args, tally);
-    }
-
-    const kept = tally.reduce((a, b) => a + (b.kept || 0), 0);
-    if (kept) {
-      console.log('    ' + kept + ' document(s) left alone because the new cluster has '
-        + 'a more recent version. Nothing was lost; they simply were not refreshed.');
-    }
-    results.push({ company: t.company, subdomain: t.subdomain, tenantDb, tally });
-  }
-
-  const out = path.join(__dirname, '..', 'migration-report-'
-    + new Date().toISOString().slice(0, 10) + '.json');
-  fs.writeFileSync(out, JSON.stringify(results, null, 2));
-  console.log('\n  report: ' + out);
-
-  await Promise.all([srcMain.close(), ctl.close(), tenantClient.close()]);
+  return result;
 }
-
-if (require.main === module) {
-  main().catch((e) => { console.error('FAILED:', e); process.exit(1); });
+async function main(argv = process.argv.slice(2)) {
+  const args = parseArgs(argv);
+  if (!process.env.SRC_MAIN || !process.env.DEST_URI) throw Error('SRC_MAIN and explicit DEST_URI are required');
+  const targets = validateTargets(JSON.parse(fs.readFileSync(args.manifest, 'utf8')), args.only);
+  args.resolutions = args.resolutionsPath ? JSON.parse(fs.readFileSync(args.resolutionsPath, 'utf8')) : {};
+  const source = new MongoClient(process.env.SRC_MAIN, { maxPoolSize: 2, serverSelectionTimeoutMS: 20000 });
+  const destination = new MongoClient(process.env.DEST_URI, { maxPoolSize: 2, serverSelectionTimeoutMS: 20000 });
+  const report = { startedAt: new Date().toISOString(), dry: args.dry, targets: [], status: 'running' };
+  let journal, lock;
+  try {
+    await Promise.all([source.connect(), destination.connect()]);
+    const srcDb = source.db(process.env.SOURCE_DB || 'PosnicPro');
+    for (const target of targets) {
+      // This tool imports the shared legacy schema, never a same-named tenant
+      // database. Refuse even if URI aliases conceal an identical server.
+      if (srcDb.databaseName === target.tenantDb) throw Error('Source and destination database names must differ');
+      const dstDb = destination.db(target.tenantDb);
+      const exists = (await dstDb.listCollections({}, { nameOnly: true }).toArray()).length > 0;
+      if (!exists && !args.allowNewDatabase) throw Error('Destination absent; explicit --allow-new-database required');
+      for (const name of COLLECTIONS) {
+        if (await dstDb.collection(name).findOne({ license: { $exists: true, $nin: [new ObjectId(target.license), target.license] } }, { projection: { _id: 1 } })) throw Error('Destination contains another license');
+      }
+      const inv = await inventory(srcDb, target.license);
+      const entry = { subdomain: target.subdomain, license: target.license, tenantDb: target.tenantDb, inventory: inv, before: [], verification: [] };
+      report.targets.push(entry);
+      if (!inv.some(c => c.name === 'branches') || !inv.some(c => c.name === 'users')) throw Error('Source tenant needs branches and users');
+      if (inv.some(c => c.mode === 'unclassified')) throw Error('Unclassified source collections; review report inventory');
+      if (!args.dry) {
+        const root = path.resolve(args.backupDir); fs.mkdirSync(root, { recursive: true, mode: 0o700 }); fs.chmodSync(root, 0o700);
+        const lockPath = path.join(root, target.tenantDb + '.lock');
+        lock = { fd: fs.openSync(lockPath, 'wx', 0o600), path: lockPath };
+        const dir = path.join(root, target.tenantDb + '-' + Date.now() + '-' + crypto.randomBytes(3).toString('hex'));
+        entry.backupDirectory = dir; entry.backup = await backupDatabase(dstDb, dir);
+        journal = fs.createWriteStream(path.join(dir, 'writes.ejsonl'), { flags: 'wx', mode: 0o600 }); await once(journal, 'open');
+      }
+      for (const name of COLLECTIONS) {
+        console.log(target.subdomain + ': comparing ' + name);
+        entry.before.push(await reconcileCollection(srcDb, dstDb, name, target, args, journal));
+      }
+      if (!args.dry) {
+        journal.end(); await finished(journal); journal = null;
+        for (const name of COLLECTIONS) entry.verification.push(await reconcileCollection(srcDb, dstDb, name, target, { ...args, dry: true }, null));
+        entry.verified = entry.verification.every(r => !r.insert && !r.update && !r.conflict && (!args.applyTombstones || !r.tombstoneDelete));
+        fs.closeSync(lock.fd); fs.unlinkSync(lock.path); lock = null;
+      }
+    }
+    report.status = report.targets.some(t => t.verified === false || (args.dry && t.before.some(r => r.conflict))) ? 'needs-review' : args.dry ? 'planned' : 'verified';
+  } catch (error) {
+    report.status = 'failed';
+    report.error = error.code ? 'Database/file operation failed (' + String(error.code) + ')' : error.message.replace(/mongodb(?:\+srv)?:\/\/\S+/g, '[redacted]');
+  } finally {
+    if (journal) { journal.end(); await finished(journal).catch(() => {}); }
+    if (lock) { fs.closeSync(lock.fd); fs.unlinkSync(lock.path); }
+    await Promise.allSettled([source.close(), destination.close()]);
+    report.finishedAt = new Date().toISOString(); fs.writeFileSync(args.report, JSON.stringify(report, null, 2), { mode: 0o600 });
+  }
+  console.log('Status: ' + report.status + '; report: ' + args.report);
+  if (['failed', 'needs-review'].includes(report.status)) process.exitCode = 1;
+  return report;
 }
+module.exports = { COLLECTIONS, EXCLUDED, lastTouched, canonical, same, merge, normalized, fingerprint, shapeChanges,
+  planDocument, casFilter, parseArgs, validateTargets, canDelete, reconcileCollection, backupDatabase, main };
+if (require.main === module) main().catch(() => { console.error('Reconciliation failed before connecting; check arguments and configuration.'); process.exitCode = 1; });
