@@ -343,7 +343,7 @@ test('required guests cannot be omitted in the dine-in picker and takeaway stays
 
 test('cancel item requires a reason and cancelling the last dish uses audited order cancellation',async()=>{
  const h=setup();try{h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('cancelLine');
- const d=h.w.document.querySelector('dialog'),form=d.querySelector('form');assert.equal(d.querySelector('[name=qty]').value,'0');assert.equal(d.querySelector('[name=reason]').required,true);
+ const d=h.w.document.querySelector('dialog'),form=d.querySelector('form');assert.equal(d.querySelector('[name=qty]').value,'0');assert.equal(d.querySelector('[name=reason]').required,true);assert.equal(d.querySelector('[name=note]'),null);assert.equal(d.querySelector('.kv2-templates'),null);
  form.dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();assert.equal(h.calls.filter(c=>c.method==='post').length,0);
  d.querySelector('[name=reason]').value='Customer changed their mind';form.dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
  const sent=h.calls.find(c=>c.url==='sales/updateOrder');assert.equal(sent.body.status,'cancelled');assert.equal(sent.body.change_reason,'Customer changed their mind');assert.equal(sent.body.items[0].quantity,2);
@@ -378,4 +378,15 @@ test('desktop room pax can stay empty and the charge can be removed',async()=>{
  d.querySelector('[name=unit]').value='207';d.querySelector('[type=submit]').click();await flush();
  assert.equal(h.app.state.draft.guests,0);assert.equal(h.app.state.draft.roomChargeAccepted,false);
  }finally{setup.roomVenues=null;h.close();}
+});
+
+test('partial cancellation preserves the kitchen note without exposing cooking controls',async()=>{
+ const h=setup();try{
+ h.sale.restaurant_details.rounds[0].items[0].note='No onion';
+ h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('cancelLine');
+ const d=h.w.document.querySelector('dialog');assert.equal(d.querySelector('[name=note]'),null);
+ d.querySelector('[name=qty]').value='1';d.querySelector('[name=reason]').value='Guest reduced quantity';
+ d.querySelector('form').dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
+ const sent=h.calls.find(c=>c.url==='sales/updateOrder');assert.equal(sent.body.items[0].quantity,1);assert.equal(sent.body.items[0].item_description,'No onion');
+ }finally{h.close();}
 });

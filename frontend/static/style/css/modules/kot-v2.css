@@ -354,10 +354,14 @@
     #kot_v2 .kv2-category-chips,.kv2-templates{gap:10px}
     .kv2-actions-menu section{gap:6px}
 }
-/* Ordered-dish actions stay readable instead of squeezing into the old icon column. */
-#kot_v2 .kv2-line{grid-template-columns:minmax(36px,max-content) minmax(100px,1fr) max-content max-content max-content max-content max-content}
+/* Keep item actions within the existing order panel; cancellation must not widen it. */
+#kot_v2 .kv2-line{grid-template-columns:38px minmax(0,1fr) 85px 90px 95px 44px 44px}
+#kot_v2 .kv2-line>div{min-width:0;overflow-wrap:anywhere}
+#kot_v2 .kv2-line [data-action=editLine]>span,#kot_v2 .kv2-line [data-action=cancelLine]>span{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#kot_v2 .kv2-line [data-action=editLine]>svg,#kot_v2 .kv2-line [data-action=cancelLine]>svg{width:16px;height:16px;margin:0}
 #kot_v2 .kv2-line [data-action=cancelLine]{color:var(--danger,#c53030)}
-@media(max-width:1500px){#kot_v2 .kv2-line{grid-template-columns:38px minmax(0,1fr) max-content}#kot_v2 .kv2-line>span{grid-column:3;grid-row:1}#kot_v2 .kv2-line>button{grid-row:auto;min-height:36px}#kot_v2 .kv2-line>[data-action=again]{grid-column:2}#kot_v2 .kv2-line>[data-action=editLine]{grid-column:2}}
+@media(max-width:1150px){#kot_v2 .kv2-line{grid-template-columns:36px minmax(0,1fr) 72px 75px 78px 44px 44px;gap:6px}}
+@media(max-width:850px){#kot_v2 .kv2-line{grid-template-columns:36px minmax(0,1fr) 85px}#kot_v2 .kv2-line>span{grid-column:3;grid-row:1}#kot_v2 .kv2-line>button{grid-row:auto}#kot_v2 .kv2-line>[data-action=again]{grid-column:2}}
 
 #kot_v2 .kv2-table.kv2-room>strong { display:flex;gap:8px;color:var(--theme-primary-color,#2459de);border-block:3px double currentColor;padding-block:6px; }
 #kot_v2 .kv2-table.kv2-room>strong small { display:block;color:inherit; }
