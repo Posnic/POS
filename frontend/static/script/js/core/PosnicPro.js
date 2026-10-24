@@ -3204,7 +3204,22 @@ PosnicPro = {
      * sitting on the one that finished. Both desktop print paths need this, so
      * it lives here rather than being written twice and drifting.
      */
+    saleRedirectSeconds: function (settings) {
+        if (!settings) {
+            try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { settings = {}; }
+        }
+        var value = (settings || {}).sale_redirect_seconds;
+        if ((typeof value === 'number' || typeof value === 'string') && String(value).trim() !== '' && Number.isInteger(Number(value)) && Number(value) >= 0 && Number(value) <= 300) return Number(value);
+        var brand = window.POSNIC_BRAND_NAME || '';
+        try { brand = brand || JSON.parse(localStorage.getItem('posnic_brand') || '{}').name || ''; } catch (e) {}
+        return /^GSHCL$/i.test(brand) ? 0 : 6;
+    },
     afterPrint: function () {
+        // A late print callback must not close the next customer's cart.
+        if (currentHash === 'sales/new') {
+            if ($('#newsalespage').is(':visible') && PosnicPro.sales && PosnicPro.sales.saleDoneTimer) PosnicPro.sales.saleDoneTimer.start();
+            return;
+        }
         setTimeout(function () {
             var parts = currentHash.split('/');
             var page = parts[0] + '/' + parts[1];
@@ -3692,8 +3707,7 @@ PosnicPro = {
                     frameWindow.focus();
                     frameWindow.print();
                 } catch (e) {
-                    // If print() fails, we silently ignore here so that
-                    // navigation logic below still runs.
+                    PosnicPro.alert('error', PosnicPro.i18n.t('lang_print_failed', 'Print failed'));
                 }
             }).catch(function (error) {
                 console.warn('[print]', error.message);
@@ -3703,6 +3717,7 @@ PosnicPro = {
 
             // Best-effort cleanup after printing.
             frameWindow.onafterprint = function () {
+                PosnicPro.afterPrint();
                 try {
                     $(frame1).remove();
                 } catch (e) {
@@ -3710,25 +3725,6 @@ PosnicPro = {
                 }
             };
         }
-
-        setTimeout(function () {
-            var parts = currentHash.split('/');
-            if (parts[0] + '/' + parts[1] === 'sales/new' || parts[0] + '/' + parts[1] === 'receivings/new') {
-                hasher.setHash(parts[0] + '/' + parts[1]);
-                $("#infobar-settings-sidebar-tender-details").removeClass("sidebarview sidebarshow");
-                $(".infobar-settings-sidebar-overlay").css({ background: "transparent", position: "initial" });
-                if (parts[0] + '/' + parts[1] === 'sales/new' && PosnicPro.sales && PosnicPro.sales.saleDoneTimer) PosnicPro.sales.saleDoneTimer.stop();
-                return;
-            }
-            /* Same rule as afterPrint: a document address on a
-               master-detail page stays put - this inline twin of the old
-               epilogue was closing the open purchase after every browser
-               print. */
-            if (parts.length === 2 && /^[0-9a-f]{24}$/i.test(parts[1] || '')) {
-                return;
-            }
-            hasher.setHash(parts[0]);
-        }, 800);
 
     },
     printBarcode: function () {
