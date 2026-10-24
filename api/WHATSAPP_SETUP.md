@@ -4,8 +4,8 @@
 This WhatsApp integration allows you to connect WhatsApp Web to your Posnic application using QR code authentication. Sessions persist until logout, enabling automated WhatsApp messaging capabilities.
 
 ## Prerequisites
-- Node.js 16+ installed
-- Chrome/Chromium browser (for Puppeteer)
+- Node.js 18+ installed (the packaged Posnic runtime provides this)
+- Chrome or Microsoft Edge on the machine running the Posnic API/connector (for QR-linked WhatsApp). The customer's phone only scans the QR code.
 - Active WhatsApp account
 
 ## Installation Steps
@@ -113,8 +113,9 @@ Body: { device_id: "device_001" }
 
 ### QR Code Not Generating
 - Check if `whatsapp-web.js` and `qrcode` packages are installed
-- Check server logs for errors
-- Ensure Chrome/Chromium is installed on the server
+- Check server logs for browser launch errors.
+- Posnic first uses Puppeteer's installed Chrome when present, then looks for system Chrome or Edge. The desktop runtime does not include Puppeteer's downloaded browser in its dependency archive.
+- Install Chrome or Edge on the API/connector machine if neither is present. If it is installed in a custom location, set `CHROME_PATH` to the full path of the browser executable in the API/connector process environment, restart that process, and retry Connect. A stale explicit path now produces a clear error.
 
 ### Connection Timeout
 - QR codes expire after 60 seconds
