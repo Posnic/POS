@@ -343,7 +343,7 @@ test('required guests cannot be omitted in the dine-in picker and takeaway stays
 
 test('cancel item requires a reason and cancelling the last dish uses audited order cancellation',async()=>{
  const h=setup();try{h.app.showDataTablePage();await flush();h.app.state.selected=h.sale._id;await h.app.refresh();await h.click('cancelLine');
- const d=h.w.document.querySelector('dialog'),form=d.querySelector('form');assert.equal(d.querySelector('[name=qty]').value,'0');assert.equal(d.querySelector('[name=reason]').required,true);assert.equal(d.querySelector('[name=note]'),null);assert.equal(d.querySelector('[data-template="No onion"]'),null);assert.equal(d.querySelectorAll('[data-template]').length,3);
+ const d=h.w.document.querySelector('dialog'),form=d.querySelector('form');assert.equal(d.querySelector('[name=qty]').value,'0');assert.equal(d.querySelector('[name=reason]').required,true);assert.equal(d.querySelector('[name=note]'),null);assert.equal(d.querySelector('[data-template="No onion"]'),null);assert.equal(d.querySelectorAll('[data-template]').length,5);
  form.dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();assert.equal(h.calls.filter(c=>c.method==='post').length,0);
  d.querySelector('[name=reason]').value='Customer changed their mind';form.dispatchEvent(new h.w.Event('submit',{cancelable:true}));await flush();
  const sent=h.calls.find(c=>c.url==='sales/updateOrder');assert.equal(sent.body.status,'cancelled');assert.equal(sent.body.change_reason,'Customer changed their mind');assert.equal(sent.body.items[0].quantity,2);
