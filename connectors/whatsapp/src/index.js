@@ -44,12 +44,22 @@ const wa = {
     /* Lazy so the module loads without the dependency tree (tests, and a
        bundle whose install is still finishing). */
     const { Client, LocalAuth } = require('whatsapp-web.js');
+    let puppeteer;
+    try {
+      puppeteer = require(require.resolve('puppeteer', {
+        paths: [path.dirname(require.resolve('whatsapp-web.js'))],
+      }));
+    } catch (_) { /* a system browser still works when Puppeteer is nested elsewhere */ }
+    const executablePath = require('./chrome-executable').chromeExecutable({ puppeteer });
     const key = String(branchId).replace(/[^A-Za-z0-9_-]/g, '');
     const client = new Client({
       authStrategy: new LocalAuth({ clientId: key, dataPath: path.join(DATA_DIR, '.wwebjs_auth') }),
       puppeteer: {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        executablePath,
+        args: process.platform === 'linux'
+          ? ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+          : [],
       },
     });
     const wrapped = {
