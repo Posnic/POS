@@ -2311,7 +2311,7 @@ class SalesController extends BaseController {
       const tableTop = 214;
       const headerHeight = 24;
       const rowHeight = 24;
-      const colWidths = [25, 110, 48, 38, 58, 60, 48, 65, 73];
+      const colWidths = [25, 100, 48, 38, 58, 60, 48, 65, 73];
       const cellPad = 5;
       let xPos = tableLeft;
 
@@ -2416,7 +2416,7 @@ class SalesController extends BaseController {
         const maxNameChars = 30;
         const displayName =
           rawName.length > maxNameChars ? `${rawName.slice(0, maxNameChars - 1)}…` : rawName;
-        doc.text(cleanCellText(rawName, 26), xPos + cellPad, yPos + 8, {
+        doc.text(cleanCellText(rawName, 21), xPos + cellPad, yPos + 8, {
           width: colWidths[1] - cellPad * 2,
           lineBreak: false,
         });
