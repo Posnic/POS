@@ -182,11 +182,21 @@ describe('WhatsAppService (singleton, extends EventEmitter)', () => {
       expect(LocalAuth).toHaveBeenCalledWith(expect.objectContaining({ clientId: CLIENT_KEY }));
     });
 
-    test('passes headless:true and sandbox args to puppeteer config', async () => {
+    test('passes a browser path and keeps desktop Chromium sandboxed', async () => {
       await service.initializeClient(DEVICE_ID, BRANCH_ID);
       const [config] = Client.mock.calls[0];
       expect(config.puppeteer.headless).toBe(true);
-      expect(config.puppeteer.args).toContain('--no-sandbox');
+      expect(config.puppeteer.executablePath).toEqual(expect.any(String));
+      if (process.platform === 'linux') expect(config.puppeteer.args).toContain('--no-sandbox');
+      else expect(config.puppeteer.args).not.toContain('--no-sandbox');
+    });
+
+    test('reports a missing browser before starting a WhatsApp client', async () => {
+      fs.existsSync.mockReturnValue(false);
+      const result = await service.initializeClient(DEVICE_ID, BRANCH_ID);
+      expect(result).toMatchObject({ status: false, connected: false });
+      expect(result.message).toMatch(/Chrome or Microsoft Edge/);
+      expect(Client).not.toHaveBeenCalled();
     });
 
     test('calls client.initialize()', async () => {
