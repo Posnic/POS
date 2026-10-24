@@ -208,18 +208,57 @@ function trimRate(value) {
   return String(Math.round(value * 100) / 100);
 }
 
+// Indian GST on a service charge belongs in the GST totals on the receipt.
+// Keep the charge itself as a separate line, but do not print its GST twice.
+// Work in currency minor units so an odd paise (for example, 0.53) is not lost.
+function foldChargeTaxIntoGst(rows, branch) {
+  const gst = rows.map(([label]) => ({
+    label,
+    kind: /^(CGST|SGST|UTGST|IGST)(?:\b|$)/i.exec(label)?.[1]?.toUpperCase(),
+  }));
+  const cgst = gst.filter((row) => row.kind === 'CGST');
+  const local = gst.filter((row) => row.kind === 'SGST' || row.kind === 'UTGST');
+  const igst = gst.filter((row) => row.kind === 'IGST');
+  const paired = cgst.length === 1 && local.length === 1 && igst.length === 0;
+  const interstate = igst.length === 1 && cgst.length === 0 && local.length === 0;
+  if (!paired && !interstate) return rows;
+  const money = require('../utils/currency');
+  const policy = money.policy(branch || {});
+  let chargeMinor = 0;
+  const retained = rows.filter(([label, amount]) => {
+    if (!label.includes(' · ')) return true;
+    chargeMinor += money.toMinor(amount, policy);
+    return false;
+  });
+  if (!chargeMinor) return rows;
+  const add = (label, minor) => {
+    const row = retained.find(([name]) => name === label);
+    row[1] = money.fromMinor(money.toMinor(row[1], policy) + minor, policy);
+  };
+  if (interstate) add(igst[0].label, chargeMinor);
+  else {
+    const firstHalf = Math.ceil(chargeMinor / 2);
+    add(cgst[0].label, firstHalf);
+    add(local[0].label, chargeMinor - firstHalf);
+  }
+  return retained;
+}
+
 /* Receipt tax rows prefer the saved allocation/components, then legacy GST data. */
 function taxRows(sale, branch, allocation = null) {
   if (allocation)
-    return Object.entries(allocation.components)
-      .filter(([key]) => key.startsWith('tax:'))
-      .map(([key, minor]) => ({
-        label: key.slice(4),
-        amount: require('../utils/currency').fromMinor(
-          minor,
-          require('../utils/currency').policy(branch)
-        ),
-      }));
+    return foldChargeTaxIntoGst(
+      Object.entries(allocation.components)
+        .filter(([key]) => key.startsWith('tax:'))
+        .map(([key, minor]) => [
+          key.slice(4),
+          require('../utils/currency').fromMinor(
+            minor,
+            require('../utils/currency').policy(branch)
+          ),
+        ]),
+      branch
+    ).map(([label, amount]) => ({ label, amount }));
   // Reprints use recorded tax components, never the branch's current tax setting.
   const recorded = new Map();
   for (const line of (Array.isArray(sale?.items) ? sale.items : []).filter(billable)) {
@@ -250,13 +289,16 @@ function taxRows(sale, branch, allocation = null) {
     const policy = money.policy(branch || {});
     let cumulative = 0;
     let assignedMinor = 0;
-    return Array.from(recorded, ([label, amount]) => {
-      cumulative += amount;
-      const totalMinor = money.toMinor(cumulative, policy);
-      const row = { label, amount: money.fromMinor(totalMinor - assignedMinor, policy) };
-      assignedMinor = totalMinor;
-      return row;
-    });
+    return foldChargeTaxIntoGst(
+      Array.from(recorded, ([label, amount]) => {
+        cumulative += amount;
+        const totalMinor = money.toMinor(cumulative, policy);
+        const row = [label, money.fromMinor(totalMinor - assignedMinor, policy)];
+        assignedMinor = totalMinor;
+        return row;
+      }),
+      branch
+    ).map(([label, amount]) => ({ label, amount }));
   }
   const tax = num(sale && sale.tax);
   if (tax <= 0) return [];
