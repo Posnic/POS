@@ -271,7 +271,7 @@ async function save(req) {
   if (previous) {
     if (previous.fingerprint !== requestHash)
       fail('This request was already used. Reopen the correction.', 409);
-    return { saved: true };
+    return { saved: true, print: [true, 'true'].includes(c.branch.printall) };
   }
   if (![true, 'true'].includes(c.branch.allow_payment_correction))
     fail('Enable payment corrections in Sale settings first.', 403);
@@ -322,6 +322,6 @@ async function save(req) {
     );
   if (!claimed.matchedCount) fail('This sale changed. Reopen and review it.', 409);
   await recover(req.db, c, id);
-  return { saved: true };
+  return { saved: true, print: [true, 'true'].includes(c.branch.printall) };
 }
 module.exports = { read, save, recover, REASONS, normalize };

@@ -125,3 +125,11 @@ test('Captain mixed 357 payment can become UPI 357 but cannot become the edited 
   assert.deepEqual((await db.collection('cashregister').findOne({_id:registerId})).register_sales[0].multi_payment,{UPI:357});
   assert.equal(saved.payment_corrections.length,1);
 });
+
+test('auto print follows the branch setting on save and uncertain retry',async()=>{
+ let r=await request();assert.equal((await service.save(r)).print,false);
+ await db.collection('branches').updateOne({_id:branchId},{$set:{printall:true}});
+ r=await request([{method:'Card',amount:500}]);assert.equal((await service.save(r)).print,true);
+ assert.equal((await service.save(r)).print,true);
+ const sale=await db.collection('sales').findOne({_id:saleId});assert.deepEqual(summary.rows(sale),[{method:'Card',amount:500}]);assert.equal(sale.payment_corrections.length,2);
+});

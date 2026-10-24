@@ -64,7 +64,6 @@ function branchInfo(branch) {
     currency,
     currencyDigits,
     timezone: branch.time_zone,
-    restaurantEnabled: [true, 'true', 'enable', 1, '1'].includes(branch.table_options),
   };
 }
 
@@ -97,7 +96,7 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
       fail('session_revoked', 401);
     return user;
   }
-  async function contextFor(user) {
+  async function contextFor(user, { reporting = false } = {}) {
     if (!active(user, now()) || !ObjectId.isValid(user.license)) fail('access_denied', 403);
     // Explicit branch membership applies even to an owner. No role grants all branches.
     const ids = [...new Set((user.branch_access || []).map((b) => String(b.branch_id)))];
@@ -129,7 +128,14 @@ function createBusinessAccess(db, { now = Date.now } = {}) {
       accountId: String(user._id),
       businessId: String(user.license),
       businessName: String(user.business_name || 'Your business'),
-      branches: branches.map(branchInfo),
+      // Published login/session contexts are strict v1 contracts. Reporting-only
+      // configuration must never leak into token, refresh or /context responses.
+      branches: branches.map((branch) => ({
+        ...branchInfo(branch),
+        ...(reporting
+          ? { restaurantEnabled: [true, 'true', 'enable', 1, '1'].includes(branch.table_options) }
+          : {}),
+      })),
       capabilities: capabilities(user),
     };
   }

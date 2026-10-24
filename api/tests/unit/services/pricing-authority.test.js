@@ -123,3 +123,50 @@ test('inclusive quantity subtotal reconciles even when the rounded unit does not
   expect(line.total).toBe(2970);
   expect(line.item_subtotal + line.tax_amount).toBeCloseTo(line.total, 2);
 });
+
+test('running staff room additions use branch-resolved venues and house prices', async () => {
+  const Settings = require('../../../src/repositories/settings.repository');
+  const resolve = jest.spyOn(Settings.prototype, 'resolveGroup').mockResolvedValue({
+    status: true,
+    data: {
+      values: {
+        partner_venues: [
+          { code: 'sa', name: 'SA', staff_orders_enabled: true, price_adjust_percent: 20 },
+        ],
+      },
+    },
+  });
+  try {
+    const db = {
+      collection: () => {
+        throw new Error('Staff rooms must not read legacy global settings');
+      },
+    };
+    const context = await pricing.loadContext(db, {
+      license: 'license',
+      branch_id: 'branch',
+      dine_type: 'Room',
+      venue: { venue_code: 'sa' },
+    });
+    expect(resolve).toHaveBeenCalledWith('channels', { branchId: 'branch', licenseId: 'license' });
+    expect(context.venue.price_adjust_percent).toBe(0);
+    expect(
+      pricing.resolve({ product: { ...product, selling_price: 100 }, ...context }).selling_price
+    ).toBe(100);
+  } finally {
+    resolve.mockRestore();
+  }
+});
+test('room additions still reject an unavailable branch venue', async () => {
+  const Settings = require('../../../src/repositories/settings.repository');
+  const resolve = jest
+    .spyOn(Settings.prototype, 'resolveGroup')
+    .mockResolvedValue({ status: true, data: { values: { partner_venues: [] } } });
+  try {
+    await expect(
+      pricing.loadContext({}, { dine_type: 'Room', venue: { venue_code: 'missing' } })
+    ).rejects.toMatchObject({ code: 'pricing_rule_unavailable' });
+  } finally {
+    resolve.mockRestore();
+  }
+});
