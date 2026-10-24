@@ -245,10 +245,27 @@ async function loadContext(db, order) {
   const scope = { license: order.license, branch_id: order.branch_id };
   const result = {};
   if (order.venue?.venue_code) {
-    const settings = await db
-      .collection('settings')
-      .findOne({ license: order.license, partner_venues: { $exists: true } });
-    result.venue = venues.venueByCode(order.venue.venue_code, settings?.partner_venues || []);
+    let configured;
+    if (order.dine_type === 'Room') {
+      // Staff room creation uses branch-resolved channels, not the legacy global record.
+      const scoped = await new (require('../repositories/settings.repository'))().resolveGroup(
+        'channels',
+        {
+          branchId: order.branch_id,
+          licenseId: order.license,
+        }
+      );
+      if (scoped.status === true) configured = scoped.data?.values?.partner_venues;
+    } else {
+      const settings = await db
+        .collection('settings')
+        .findOne({ license: order.license, partner_venues: { $exists: true } });
+      configured = settings?.partner_venues;
+    }
+    result.venue = venues.venueByCode(order.venue.venue_code, configured || []);
+    // Staff room service uses house prices; its saved room charge is recalculated separately.
+    if (result.venue && order.dine_type === 'Room')
+      result.venue = { ...result.venue, price_adjust_percent: 0 };
     if (!result.venue)
       fail(
         'pricing_rule_unavailable',

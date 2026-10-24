@@ -90,3 +90,17 @@ test('cancelled status overrides Paid and unknown or partial statuses never infl
   expect(value.currencies[0].total).toBe(50);
   expect(value.currencies[0].payments).toEqual([{ method: 'Cash', amount: 50 }]);
 });
+
+test('legacy desktop card and Captain card payments are combined under Card', async () => {
+  await Model.insertMany([
+    { sales_total: 100, payment_status: 'Paid', payment_mode: 'CreditCard' },
+    { sales_total: 50, payment_status: 'Paid', captain_payments: [{ method: 'card', amount: 50 }] },
+    { sales_total: 75, payment_status: 'Paid', multi_payment: { CreditCard: 50, Cash: 25 } },
+  ]);
+  const value = await summary(Model, {});
+  expect(value.currencies[0].total).toBe(225);
+  expect(value.currencies[0].payments).toEqual([
+    { method: 'Card', amount: 200 },
+    { method: 'Cash', amount: 25 },
+  ]);
+});

@@ -59,3 +59,10 @@ test('sale sheet and designed receipts display the same split and escape method 
   assert.equal(w.$('<div>').html(w.PosnicPro.sales.buildSaleSheet(data)).find('img').length, 0);
   dom.window.close();
 });
+
+test('desktop legacy card names and Captain card tenders use one Card total', () => {
+  for (const method of ['CreditCard', 'Credit Card', 'DebitCard', 'Card']) {
+    assert.deepEqual(rows({ payment_mode: method, payment_status: 'Paid', sales_total: 500 }), [{ method: 'Card', amount: 500 }]);
+  }
+  assert.deepEqual(rows({ multi_payment: { CreditCard: 100, Card: 50, Cash: 25 } }), [{ method: 'Card', amount: 150 }, { method: 'Cash', amount: 25 }]);
+});

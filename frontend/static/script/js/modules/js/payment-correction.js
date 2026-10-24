@@ -128,8 +128,9 @@
         $modal.find('.pc-save').on('click', async () => {
             if (busy || !request) return;
             busy = true; $modal.find('button').prop('disabled', true);
+            let result;
             try {
-                await api(id, request);
+                result = await api(id, request);
                 busy = false; $modal.modal('hide');
                 PosnicPro.alert('success', t('Payment correction saved.'));
                 if (PosnicPro.sales._correctionSaleId === id) PosnicPro.sales.openDoc(id);
@@ -138,6 +139,7 @@
                 // Keep the same id and payload on an uncertain retry.
                 $modal.find('.pc-back').hide();
             } finally { busy = false; $modal.find('button').prop('disabled', false); }
+            if (result?.saved && result.print === true) PosnicPro.sales.view.printSale(id, 'sale');
         });
         $modal.on('hide.bs.modal', event => { if (busy) event.preventDefault(); });
         $modal.on('hidden.bs.modal', () => $modal.remove());

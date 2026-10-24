@@ -41,7 +41,11 @@ async function scope(req, requireEnabled = true) {
   if (input.branchId && String(input.branchId) !== String(c.branchId))
     fail('Choose the authorized branch.', 403);
   c.options = settings(c.branch);
-  const enabledMethods = await require('./payment-methods').read(req.db, c.branch);
+  const enabledMethods = await require('./payment-methods').read(
+    req.db,
+    c.branch,
+    req.captainPaymentDesktop === true
+  );
   c.options.methods = enabledMethods.filter(
     (method) => req.captainPaymentDesktop || c.options.methods.includes(method)
   );

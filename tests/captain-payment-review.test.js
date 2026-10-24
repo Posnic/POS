@@ -136,3 +136,14 @@ for (const mode of ['browser', 'desktop', 'off', 'print-error']) test('payment a
  if(mode==='print-error')assert.match(alerts[0][1],/Printer unavailable/);
  dom.window.close();
 });
+
+test('desktop renders only server supplied payment methods and escapes custom names', async () => {
+ const dom = new JSDOM('<!doctype html><body></body>', {url:'https://shop.invalid',runScripts:'outside-only'}),w=dom.window;
+ w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};
+ const custom='Hotel "account"';
+ w.PosnicPro={local:{get:()=> 'branch'},post:(_o,done)=>done({id:'plan',table:'1',currency:'INR',totalMinor:10000,paidMinor:0,dueMinor:10000,enabled:true,version:0,methods:[custom],guests:[{name:'Guest',totalMinor:10000,paid:false}]})};
+ for(const name of ['captain-money.js','captain-payments.js']) w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/core',name),'utf8'));
+ await w.CaptainPayments.open('1');
+ const buttons=[...w.document.querySelectorAll('[data-method]')];assert.equal(buttons.length,1);assert.equal(buttons[0].dataset.method,custom);
+ dom.window.close();
+});
