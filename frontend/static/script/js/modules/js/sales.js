@@ -13219,22 +13219,23 @@ PosnicPro.sales.readWeightFromMachine = async function () {
         return;
     }
 
+    const activeElement = document.activeElement;
+    const targetInput = $(activeElement).is('#sales_new_items_tbody input[name="addSalesLineItemQty"]')
+        ? activeElement
+        : $('#sales_new_items_tbody tr[id^="touch_row_"]').first().find('input[name="addSalesLineItemQty"]')[0];
+    if (!targetInput) {
+        PosnicPro.alert('warning', 'No items in cart. Please add an item first.');
+        return;
+    }
     try {
         // Prefer a settled reading from the scale. The live display shows every
         // frame including mid-swing values, so reading it directly can bill the
         // customer for a weight the load never actually rested at.
         let weight = null;
         try {
-            weight = await window.WeightBridge.getCurrentWeight();
+            weight = await window.WeightBridge.getCurrentWeight({ stableOnly: true });
         } catch (e) {
-            console.warn('[weight] live read failed, falling back to display:', e);
-        }
-
-        // Fallback: scales that transmit only once per settle may go quiet
-        // before we ask, so use whatever the display last showed.
-        if (weight === null || weight === undefined || isNaN(weight) || weight <= 0) {
-            const weightText = $('#live_weight_value').text().trim();
-            weight = parseFloat(weightText);
+            console.warn('[weight] live read failed:', e);
         }
 
         if (!weight || weight <= 0 || isNaN(weight)) {
@@ -13247,48 +13248,13 @@ PosnicPro.sales.readWeightFromMachine = async function () {
             return;
         }
 
-        // Only cart quantities may receive a scale reading, never customer,
-        // price, discount or payment fields that happen to have focus.
-        const activeElement = document.activeElement;
-        const focusedQuantity = $(activeElement).is('#sales_new_items_tbody input[name="addSalesLineItemQty"]');
-        if (focusedQuantity) {
-            const itemId = $(activeElement).closest('tr[id^="touch_row_"]').attr('id').replace('touch_row_', '');
-            $(activeElement).val(weight.toFixed(3));
-            PosnicPro.sales.quantity.textOnChange(itemId, $('#trackInventory_' + itemId).text(), $('#negativeStock_' + itemId).text());
-            PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg filled');
-        } else {
-            // Update quantity of last added item in cart
-            // Find first row (newest item since items are prepended)
-            const firstRow = $('#sales_new_items_tbody tr[id^="touch_row_"]').first();
-
-            if (firstRow.length) {
-                // Extract item ID from row ID (touch_row_{id})
-                const rowId = firstRow.attr('id');
-                const itemId = rowId.replace('touch_row_', '');
-
-                // Find quantity input with name addSalesLineItemQty
-                const qtyInput = firstRow.find('input[name="addSalesLineItemQty"]');
-                if (qtyInput.length) {
-                    qtyInput.val(weight.toFixed(3));
-
-                    // Get track_inventory and negative_stock from hidden fields
-                    const trackInventory = $('#trackInventory_' + itemId).text();
-                    const negativeStock = $('#negativeStock_' + itemId).text();
-
-                    // Small delay to ensure DOM is updated before triggering calculation
-                    setTimeout(function () {
-                        // Trigger price recalculation
-                        PosnicPro.sales.quantity.textOnChange(itemId, trackInventory, negativeStock);
-                    }, 100);
-
-                    PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg set for last item');
-                } else {
-                    PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_quantity_field_found_for_last_item', 'No quantity field found for last item'));
-                }
-            } else {
-                PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_items_in_cart_please_add_an_item_first', 'No items in cart. Please add an item first.'));
-            }
-        }
+        // A reading belongs to the row selected when the request started.
+        // Never apply a delayed reading to a replacement row or a new sale.
+        if (!targetInput.isConnected || !$(targetInput).closest('#sales_new_items_tbody').length) return;
+        const itemId = $(targetInput).closest('tr[id^="touch_row_"]').attr('id').replace('touch_row_', '');
+        $(targetInput).val(weight.toFixed(3));
+        PosnicPro.sales.quantity.textOnChange(itemId, $('#trackInventory_' + itemId).text(), $('#negativeStock_' + itemId).text());
+        PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg filled');
 
     } catch (error) {
         console.error('Weight reading error:', error);
@@ -13401,6 +13367,11 @@ PosnicPro.sales.initWeightMachine = function () {
             // Start live weight monitoring
             if (window.WeightBridge.startMonitoring) {
                 window.WeightBridge.startMonitoring(function (weight) {
+                    if (weight === null || weight === undefined || !Number.isFinite(weight)) {
+                        $('#live_weight_value').text('---');
+                        $('#live_weight_display').css({ background: '#f0f0f0', color: '#333' });
+                        return;
+                    }
                     if (weight !== null && weight !== undefined && !isNaN(weight)) {
                         $('#live_weight_value').text(weight.toFixed(3));
                         // Change color based on weight
