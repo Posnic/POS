@@ -103,6 +103,20 @@ class WhatsAppService extends EventEmitter {
       // needs no desktop session; leave the parent process environment intact.
       const browserEnv = { ...process.env };
       if (process.platform === 'linux') delete browserEnv.DBUS_SESSION_BUS_ADDRESS;
+      let puppeteer;
+      try {
+        puppeteer = require(
+          require.resolve('puppeteer', {
+            paths: [path.dirname(require.resolve('whatsapp-web.js'))],
+          })
+        );
+      } catch (_) {
+        // The connector can still use a system browser if Puppeteer is unavailable here.
+      }
+      const executablePath = require('../utils/chrome-executable').chromeExecutable({
+        env: browserEnv,
+        puppeteer,
+      });
       client = new Client({
         authTimeoutMs: 90000,
         webVersionCache: { type: 'none' },
@@ -113,8 +127,12 @@ class WhatsAppService extends EventEmitter {
         }),
         puppeteer: {
           headless: true,
+          executablePath,
           env: browserEnv,
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args:
+            process.platform === 'linux'
+              ? ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+              : [],
         },
       });
 
