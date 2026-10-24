@@ -124,6 +124,6 @@
     "qs": "^6.16.0",
     "js-yaml": "^4.3.2",
     "@puppeteer/browsers": "^3.2.2",
-    "ip-address": "10.7.2"
+    "ip-address": "10.7.4"
   }
 }
