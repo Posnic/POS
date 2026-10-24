@@ -221,6 +221,7 @@ PosnicPro.quickreport = {
           "productDiscount",
           "productTax",
           "productTotal",
+          "Closing stock",
         ];
         var productAllDataRow = [];
 
@@ -273,6 +274,7 @@ PosnicPro.quickreport = {
               '&nbsp;<span class="number">' +
               pTotal +
               "</span> </td>" +
+              '<td class="font-12 text-right">' + (p.closing_stock == null ? 'Unavailable' : Number(p.closing_stock).toFixed(3)) + '</td>' +
               " </tr>";
 
             $("#daily_report_product_details tbody").append(rowHTMLLine);
@@ -284,6 +286,7 @@ PosnicPro.quickreport = {
               pDiscount,
               pTax,
               pTotal,
+              p.closing_stock == null ? "Unavailable" : p.closing_stock,
             ]);
           }
         }
@@ -291,7 +294,7 @@ PosnicPro.quickreport = {
 
         // Qty is a count, so avoid showing .00 when it's a whole number
         var qtyValue = safeNum(qty);
-        var qtyDecimals = qtyValue % 1 === 0 ? 0 : 2;
+        var qtyDecimals = qtyValue % 1 === 0 ? 0 : 3;
         $(".daily_report_qty_price").number(qtyValue, qtyDecimals);
 
         $(".daily_report_product_price").number(safeNum(price), 2);

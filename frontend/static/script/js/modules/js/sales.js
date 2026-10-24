@@ -13247,20 +13247,14 @@ PosnicPro.sales.readWeightFromMachine = async function () {
             return;
         }
 
-        // Check if cursor is in an input field (but exclude item search box)
+        // Only cart quantities may receive a scale reading, never customer,
+        // price, discount or payment fields that happen to have focus.
         const activeElement = document.activeElement;
-        const isInputField = activeElement && (
-            activeElement.tagName === 'INPUT' ||
-            activeElement.tagName === 'TEXTAREA'
-        );
-
-        // Exclude the item search box from being filled with weight
-        const isSearchBox = activeElement && activeElement.id === 'sales_new_item_name';
-
-        if (isInputField && activeElement.type === 'text' && !isSearchBox) {
-            // Fill the focused input field
+        const focusedQuantity = $(activeElement).is('#sales_new_items_tbody input[name="addSalesLineItemQty"]');
+        if (focusedQuantity) {
+            const itemId = $(activeElement).closest('tr[id^="touch_row_"]').attr('id').replace('touch_row_', '');
             $(activeElement).val(weight.toFixed(3));
-            $(activeElement).trigger('change');
+            PosnicPro.sales.quantity.textOnChange(itemId, $('#trackInventory_' + itemId).text(), $('#negativeStock_' + itemId).text());
             PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg filled');
         } else {
             // Update quantity of last added item in cart
@@ -13273,7 +13267,7 @@ PosnicPro.sales.readWeightFromMachine = async function () {
                 const itemId = rowId.replace('touch_row_', '');
 
                 // Find quantity input with name addSalesLineItemQty
-                const qtyInput = firstRow.find('input[inputmode="decimal" name="addSalesLineItemQty"]');
+                const qtyInput = firstRow.find('input[name="addSalesLineItemQty"]');
                 if (qtyInput.length) {
                     qtyInput.val(weight.toFixed(3));
 

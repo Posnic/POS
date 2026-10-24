@@ -3210,7 +3210,8 @@ PosnicPro = {
             var page = parts[0] + '/' + parts[1];
             if (page === 'sales/new' || page === 'receivings/new') {
                 hasher.setHash(page);
-                $("#infobar-settings-sidebar-tender-details").addClass("sidebarview");
+                $("#infobar-settings-sidebar-tender-details").removeClass("sidebarview sidebarshow");
+                if (page === 'sales/new' && PosnicPro.sales && PosnicPro.sales.saleDoneTimer) PosnicPro.sales.saleDoneTimer.stop();
                 return;
             }
             /*
@@ -3713,7 +3714,8 @@ PosnicPro = {
             var parts = currentHash.split('/');
             if (parts[0] + '/' + parts[1] === 'sales/new' || parts[0] + '/' + parts[1] === 'receivings/new') {
                 hasher.setHash(parts[0] + '/' + parts[1]);
-                $("#infobar-settings-sidebar-tender-details").addClass("sidebarview");
+                $("#infobar-settings-sidebar-tender-details").removeClass("sidebarview sidebarshow");
+                if (parts[0] + '/' + parts[1] === 'sales/new' && PosnicPro.sales && PosnicPro.sales.saleDoneTimer) PosnicPro.sales.saleDoneTimer.stop();
                 return;
             }
             /* Same rule as afterPrint: a document address on a
