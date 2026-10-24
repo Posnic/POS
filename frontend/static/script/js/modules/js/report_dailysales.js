@@ -402,7 +402,7 @@ PosnicPro.quickreport = {
           }),
           tenderTotal: safeNum(tenderTotal),
           products: productAllDataRow.map(function (row) {
-            return { name: row[0], qty: safeNum(row[2]), total: safeNum(row[6]) };
+            return { name: row[0], qty: safeNum(row[2]), total: safeNum(row[6]), closingStock: row[7] };
           }),
         };
 
@@ -925,6 +925,9 @@ PosnicPro.quickreport = {
          * Printing a computed "expected" from incomplete information would be
          * worse than printing a line to write on.
          */
+        { type: 'pairs', name: 'CLOSING STOCK', rows: report.products.map(function (p) {
+          return { label: p.name, value: p.closingStock == null || p.closingStock === 'Unavailable' ? 'Unavailable' : Number(p.closingStock).toFixed(3) };
+        }) },
         { type: 'blanks', name: 'HANDOVER', rows: [
           { label: PosnicPro.i18n.t('lang_cash_sales', 'Cash sales'), value: money(cash) },
           'Opening float', 'Cash counted', 'Difference', 'Handed to', 'Signature'

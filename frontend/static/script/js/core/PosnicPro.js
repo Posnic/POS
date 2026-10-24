@@ -3211,6 +3211,7 @@ PosnicPro = {
             if (page === 'sales/new' || page === 'receivings/new') {
                 hasher.setHash(page);
                 $("#infobar-settings-sidebar-tender-details").removeClass("sidebarview sidebarshow");
+                $(".infobar-settings-sidebar-overlay").css({ background: "transparent", position: "initial" });
                 if (page === 'sales/new' && PosnicPro.sales && PosnicPro.sales.saleDoneTimer) PosnicPro.sales.saleDoneTimer.stop();
                 return;
             }
@@ -3715,6 +3716,7 @@ PosnicPro = {
             if (parts[0] + '/' + parts[1] === 'sales/new' || parts[0] + '/' + parts[1] === 'receivings/new') {
                 hasher.setHash(parts[0] + '/' + parts[1]);
                 $("#infobar-settings-sidebar-tender-details").removeClass("sidebarview sidebarshow");
+                $(".infobar-settings-sidebar-overlay").css({ background: "transparent", position: "initial" });
                 if (parts[0] + '/' + parts[1] === 'sales/new' && PosnicPro.sales && PosnicPro.sales.saleDoneTimer) PosnicPro.sales.saleDoneTimer.stop();
                 return;
             }
