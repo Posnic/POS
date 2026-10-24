@@ -19,7 +19,7 @@ test('two tills exchange unit snapshots, quotes and clear markers without replay
   let server;
   try {
     const cloud = client.db('cloud'), a = client.db('till_a'), b = client.db('till_b'), foreign = client.db('foreign_till');
-    const branch = new ObjectId(), otherBranch = new ObjectId(), license = String(new ObjectId()), itemId = new ObjectId(), saleId = new ObjectId();
+    const branch = new ObjectId(), otherBranch = new ObjectId(), license = new ObjectId(), itemId = new ObjectId(), saleId = new ObjectId();
     await cloud.collection('branches').insertMany([{ _id: branch }, { _id: otherBranch }]);
     const app = express(); app.use(express.json());
     app.use((req, res, next) => {
@@ -34,14 +34,16 @@ test('two tills exchange unit snapshots, quotes and clear markers without replay
     const sa = new SyncState(a), sb = new SyncState(b), sf = new SyncState(foreign);
     const now = new Date();
     // Branch presentation settings use the existing tenant-global branch lane.
-    await cloud.collection('branches').updateOne({ _id: branch }, { $set: { receipt_designs: { quoteFooter: { source: 'thirukkural', order: 'sequential', quotes: [], showQr: true, qrSizeMm: 18 } }, updated_date: now } });
+    await cloud.collection('branches').updateOne({ _id: branch }, { $set: { receipt_designs: { quoteFooter: { source: 'thirukkural', order: 'sequential', quotes: [], showQr: true, qrSizeMm: 18 }, layouts: { '80': { blocks: [{ id: 'totals', type: 'totals', taxDisplay: 'hidden' }] } } }, updated_date: now } });
     await pullCollection(a, sa, cfg('a'), 'branches');
     assert.equal((await a.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter.qrSizeMm, 18);
+    assert.equal((await a.collection('branches').findOne({ _id: branch })).receipt_designs.layouts['80'].blocks[0].taxDisplay, 'hidden');
     await a.collection('branches').updateOne({ _id: branch }, { $set: { 'receipt_designs.quoteFooter.qrSizeMm': 26, updated_date: new Date(Date.now() + 1000) } });
     await pushCollection(a, sa, cfg('a'), 'branches');
     await pullCollection(b, sb, cfg('b'), 'branches');
     assert.equal((await cloud.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter.qrSizeMm, 26);
     assert.equal((await b.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter.qrSizeMm, 26);
+    assert.equal((await b.collection('branches').findOne({ _id: branch })).receipt_designs.layouts['80'].blocks[0].taxDisplay, 'hidden');
     await sb.setPullSince('branches', null);
     await pullCollection(b, sb, cfg('b'), 'branches');
     assert.equal(await b.collection('branches').countDocuments({ _id: branch }), 1);
