@@ -163,6 +163,30 @@ test('arrival is AM/PM time only, unassigned table is blank, and lateness has no
  }finally{dom.window.close();}
 });
 
+test('detailed tickets keep table, parcel and room cues while placing time and staff on one row',()=>{
+ const {JSDOM}=require('jsdom'),fs=require('node:fs');
+ const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});
+ try{
+  dom.window.kitchenScreen.setConfig({_fit:{fontPx:40,columns:3,cards:3}});
+  const placedAt=new Date(Date.now()-60000).toISOString();
+  dom.window.kitchenScreen.setTickets([
+   {id:'table',table:'6',ownerName:'Arun',placedAt,items:[{qty:1,name:'Soup'}]},
+   {id:'parcel',table:'Parcel 14',takeaway:true,ownerName:'Priya',placedAt,items:[{qty:1,name:'Rice'}]},
+   {id:'room',roomReference:'201',ownerName:'Meena',placedAt,items:[{qty:1,name:'Tea'}]}
+  ]);
+  for(const [kind,line] of [['table','solid'],['parcel','dashed'],['room','double']]){
+   const card=dom.window.document.querySelector('.ticket.service-'+kind);
+   assert.ok(card,kind);
+   assert.equal(card.querySelector('.top .table .service-icon').tagName.toLowerCase(),'svg');
+   assert.ok(card.querySelector('.top .age'));
+   assert.deepEqual(Array.from(card.querySelector('.ticket-details').children).map(e=>e.className),['arrival','ordered-by']);
+   assert.equal(dom.window.getComputedStyle(card.querySelector('.service-rule')).borderTopStyle,line);
+   assert.equal(card.querySelector('.service-task'),null);
+  }
+  assert.ok(!dom.window.document.querySelector('.service-room').textContent.includes('Room / reference:'));
+ }finally{dom.window.close();}
+});
+
 test('portrait column and font choices survive resize while dishes remain visible', () => {
  const {JSDOM}=require('jsdom'),fs=require('node:fs');
  const dom=new JSDOM(fs.readFileSync(path.join(__dirname,'../src/kitchen-screen.html'),'utf8'),{runScripts:'dangerously'});

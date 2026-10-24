@@ -120,8 +120,8 @@
 
   .ticket.details-card { display:flex;flex-direction:column;gap:12px; }
   .ticket-meta { min-width:0;display:flex;flex-direction:column;gap:8px;flex-shrink:0; }
-  .ticket-meta .top { flex-direction:column;align-items:center;gap:5px;border-top:1px dashed var(--rule);border-bottom:1px dashed var(--rule);padding:.2em 0;text-align:center; }
-  .ticket-meta > .table { text-align:center;border-top:1px dashed var(--rule);border-bottom:1px dashed var(--rule);padding:.2em 0; }
+  .ticket-meta .top { align-items:center;justify-content:space-between;gap:.35em; }
+  .ticket-meta > .table { text-align:left; }
   .ticket-meta .note { margin:0;padding:0;font-size:.52em;overflow-wrap:anywhere; }
   .ticket-meta .item-progress,.ticket-meta .cancellation-label { font-size:.52em;overflow-wrap:anywhere; }
   .ticket-body { min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden; }
@@ -160,27 +160,28 @@
   /* The table number is the thing being matched, so it is the biggest thing
      on the card. A cook finds the ticket by table, not by dish. */
   .table { font-size: calc(var(--font) * 1.2); font-weight: 800; letter-spacing: -0.01em; }
-  /* Service identity stays separate from the waiting-time strip and timer. */
+  /* Keep service identity distinct from age: hue and rule style encode the
+     table, parcel, or room even when the text is read at a glance. */
   .ticket { --service-ink: var(--ink); }
   .ticket.service-parcel { --service-ink: #ffe066; }
   .ticket.service-room { --service-ink: #70bdff; }
   .service-venue { display:block;font-size:.65em;line-height:1.4; }
   .ticket-meta .top > .table {
-    display:flex;align-items:center;justify-content:center;gap:.35em;width:100%;text-align:center;
+    display:flex;align-items:center;justify-content:flex-start;gap:.28em;text-align:left;
     color:var(--service-ink);line-height:1.15;
   }
-  .service-icon { width:1.7em!important;height:1.7em!important;flex:0 0 1.7em; }
+  .service-icon { width:1.15em;height:1.15em;flex:0 0 1.15em; }
   .service-label { min-width:0; }
-  .service-task {
-    color:var(--service-ink);text-align:center;font-weight:800;font-size:.6em;
-    border-top:3px solid currentColor;border-bottom:3px solid currentColor;padding:.25em 0;
-  }
-  .service-parcel .service-task { border-top-style:dashed;border-bottom-style:dashed; }
-  .service-room .service-task { border-top-style:double;border-bottom-style:double;border-width:5px; }
+  .ticket-details { display:flex;align-items:baseline;justify-content:space-between;gap:.35em;min-width:0;flex-wrap:wrap; }
+  .ticket-details .arrival { font-size:.55em;color:var(--muted);white-space:nowrap; }
+  .ticket-details .ordered-by { margin:0;text-align:right;min-width:0; }
+  .service-rule { color:var(--service-ink);border-top:3px solid currentColor;height:0;margin:.1em 0; }
+  .service-parcel .service-rule { border-top-style:dashed; }
+  .service-room .service-rule { border-top-style:double;border-top-width:5px; }
   [data-theme="light"] .service-parcel { --service-ink:#805600; }
   [data-theme="light"] .service-room { --service-ink:#075a9e; }
 
-  .age { font-size: calc(var(--font) * 0.78); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .age { font-size: calc(var(--font) * 0.78); color: var(--muted); font-variant-numeric: tabular-nums;white-space:nowrap; }
   .ticket.warm .age { color: var(--warm); font-weight: 700; }
   .ticket.late .age { color: var(--late); font-weight: 800; }
 
@@ -463,17 +464,17 @@
       top.appendChild(el('span', 'age', mins < 60 ? mins + 'm' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'));
     }
     node.appendChild(top);
-    node.appendChild(el('div', 'service-task', t(serviceKind === 'parcel' ? 'PACK' : serviceKind === 'room' ? 'TRAY' : 'PLATE')));
-    if (ticket.ownerName) node.appendChild(el('div', 'ordered-by', t('Taken by {name}', {name:ticket.ownerName})));
-    if (ticket.preparationNote) node.appendChild(el('div', 'note', ticket.preparationNote));
-    if (complete) node.appendChild(el('div', 'item-progress', ticket.items.some(function (i) { return i.readyToCollect > 0; }) ? '✓ Ready to collect' : '↗ Picked up'));
-    if (ticket.outlet || ticket.roomReference) node.appendChild(el('div', 'note', [ticket.outlet, ticket.roomReference ? 'Room / reference: ' + ticket.roomReference : ''].filter(Boolean).join(' · ')));
+    var details = el('div', 'ticket-details');
     var arrived = new Date(ticket.placedAt);
     if (isFinite(arrived.getTime())) {
-      var arrival = el('div', 'arrival', arrived.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true}));
-      arrival.style.cssText = 'font-size:.55em;color:var(--muted)';
-      top.appendChild(arrival);
+      details.appendChild(el('span', 'arrival', arrived.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit', hour12:true})));
     }
+    if (ticket.ownerName) details.appendChild(el('span', 'ordered-by', t('Taken by {name}', {name:ticket.ownerName})));
+    if (details.childElementCount) node.appendChild(details);
+    node.appendChild(el('div', 'service-rule'));
+    if (ticket.preparationNote) node.appendChild(el('div', 'note', ticket.preparationNote));
+    if (complete) node.appendChild(el('div', 'item-progress', ticket.items.some(function (i) { return i.readyToCollect > 0; }) ? '✓ Ready to collect' : '↗ Picked up'));
+    if (ticket.outlet) node.appendChild(el('div', 'note', ticket.outlet));
     if (state === 'urgent' && cfg.pulseAlerts !== false) node.classList.add('pulse');
 
     if (compact) {
