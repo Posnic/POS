@@ -1,4 +1,8 @@
 {
+  "lang_after_payment": "भुक्तानीपछि",
+  "lang_sale_redirect_seconds": "नयाँ बिक्रीमा फर्कनुअघि पर्खने समय (सेकेन्ड)",
+  "lang_sale_redirect_help": "० = तुरुन्तै। सफल बिक्रीपछि लागू हुन्छ। रसिद छाप्ने काम जारी रहन्छ। समय गणना रोक्न बिक्री पूरा भएको प्यानलमा क्लिक गर्नुहोस्।",
+  "lang_closing_stock": "अन्तिम मौज्दात",
   "lang_mobile_inventory": "मोबाइल इन्भेन्टरी",
   "lang_background_colour": "पृष्ठभूमि रङ",
   "lang_barcode_format": "बारकोड",

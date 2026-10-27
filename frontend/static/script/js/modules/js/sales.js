@@ -13224,7 +13224,7 @@ PosnicPro.sales.readWeightFromMachine = async function () {
         ? activeElement
         : $('#sales_new_items_tbody tr[id^="touch_row_"]').first().find('input[name="addSalesLineItemQty"]')[0];
     if (!targetInput) {
-        PosnicPro.alert('warning', 'No items in cart. Please add an item first.');
+        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_items_in_cart_please_add_an_item_first', 'No items in cart. Please add an item first.'));
         return;
     }
     try {

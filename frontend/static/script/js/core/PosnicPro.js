@@ -3210,9 +3210,7 @@ PosnicPro = {
         }
         var value = (settings || {}).sale_redirect_seconds;
         if ((typeof value === 'number' || typeof value === 'string') && String(value).trim() !== '' && Number.isInteger(Number(value)) && Number(value) >= 0 && Number(value) <= 300) return Number(value);
-        var brand = window.POSNIC_BRAND_NAME || '';
-        try { brand = brand || JSON.parse(localStorage.getItem('posnic_brand') || '{}').name || ''; } catch (e) {}
-        return /^GSHCL$/i.test(brand) ? 0 : 6;
+        return 6;
     },
     afterPrint: function () {
         // A late print callback must not close the next customer's cart.
