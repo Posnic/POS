@@ -227,7 +227,9 @@ PosnicPro.quickreport = {
 
         for (var i = 0; i < productData.length; i++) {
           var p = productData[i];
-          var pQty = safeNum(p.product_qty);
+          // Aggregated decimal weights can contain floating-point tails.
+          // Keep the displayed and exported quantity at the supported precision.
+          var pQty = Number(safeNum(p.product_qty).toFixed(3));
           var pSubtotal = safeNum(p.product_subtotal);
           var pTotal = safeNum(p.product_total);
           var pProfit = safeNum(p.product_profit);
