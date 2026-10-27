@@ -19,7 +19,8 @@ const source = fs.readFileSync(SOURCE, 'utf8');
 test('navigation ignores dialogs and focused editors, but works on the page', () => {
   const vm = require('node:vm');
   const document = { activeElement: null, querySelector: () => null };
-  const context = { document, PosnicPro: { userACL: { branch: { write: true } } } };
+  const mousetrap = { stopCallback: (_event, element) => element.tagName === 'INPUT' };
+  const context = { document, Mousetrap: mousetrap, PosnicPro: { userACL: { branch: { write: true } } } };
   const start = source.indexOf('function aclCan(');
   const end = source.indexOf('Mousetrap.bind', start);
   vm.runInNewContext(source.slice(start, end), context);
@@ -27,6 +28,7 @@ test('navigation ignores dialogs and focused editors, but works on the page', ()
   for (const tagName of ['INPUT', 'TEXTAREA', 'SELECT']) {
     document.activeElement = { tagName };
     assert.equal(context.aclCan('branch', 'write'), false);
+    assert.equal(context.aclCan('branch', 'write', { ctrlKey: true }), true);
   }
   document.activeElement = { isContentEditable: true };
   assert.equal(context.aclCan('branch', 'write'), false);
@@ -36,6 +38,50 @@ test('navigation ignores dialogs and focused editors, but works on the page', ()
   document.querySelector = () => null;
   assert.equal(context.aclCan('branch', 'write'), true);
   assert.equal(context.aclCan('branch', 'read'), false);
+  const input = { tagName: 'INPUT' };
+  assert.equal(mousetrap.stopCallback({ ctrlKey: true }, input, 'ctrl+1'), false);
+  assert.equal(mousetrap.stopCallback({ ctrlKey: false }, input, 's'), true);
+  document.querySelector = () => ({});
+  assert.equal(context.aclCan('branch', 'write', { ctrlKey: true }), false);
+  assert.equal(mousetrap.stopCallback({ ctrlKey: true }, input, 'ctrl+1'), true);
+});
+
+test('documented Ctrl+1 navigates from a focused search field', async () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM('<input id="search"><div class="tool-container"></div>', {
+    url: 'https://shop.example/dashboard.html#/dashboard', runScripts: 'outside-only',
+  });
+  const w = dom.window;
+  w.$ = w.jQuery = require('jquery')(w);
+  let route;
+  w.hasher = { setHash: (value) => { route = value; } };
+  w.PosnicPro = { userACL: { sales: { write: true } } };
+  w.eval(fs.readFileSync(path.join(__dirname, '..', 'frontend/static/script/js/plugins/mousetrap.min.js'), 'utf8'));
+  w.eval(source);
+  w.document.dispatchEvent(new w.Event('DOMContentLoaded', { bubbles: true }));
+  await new Promise((resolve) => w.setTimeout(resolve, 0));
+  try {
+    w.Mousetrap.trigger('ctrl+1');
+    assert.equal(route, 'sales/new', 'navigation binding loaded');
+    route = undefined;
+    w.document.getElementById('search').focus();
+    const event = new w.KeyboardEvent('keydown', { key: '1', code: 'Digit1', ctrlKey: true, bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'which', { value: 49 });
+    Object.defineProperty(event, 'keyCode', { value: 49 });
+    w.document.getElementById('search').dispatchEvent(event);
+    assert.equal(route, 'sales/new');
+    route = undefined;
+    const letter = new w.KeyboardEvent('keypress', { key: 's', code: 'KeyS', bubbles: true, cancelable: true });
+    Object.defineProperty(letter, 'which', { value: 115 });
+    Object.defineProperty(letter, 'keyCode', { value: 115 });
+    w.document.getElementById('search').dispatchEvent(letter);
+    assert.equal(route, undefined, 'a bare letter must remain available for typing');
+    const modal = w.document.createElement('div');
+    modal.className = 'modal show';
+    w.document.body.appendChild(modal);
+    w.document.getElementById('search').dispatchEvent(event);
+    assert.equal(route, undefined, 'a dialog must suppress navigation');
+  } finally { dom.window.close(); }
 });
 
 test('the till actions are function keys, not letters', () => {

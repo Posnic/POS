@@ -1609,6 +1609,34 @@ test('payment method preference survives save and reload independently per forma
     dom.window.close();
 });
 
+test('tax line display is a per-format print choice and never changes the payable total', () => {
+    const { dom, w, $, branch, sale, engine } = setup();
+    sale.receipt_tax_rows = [{ label: 'CGST 2.5%', amount: 1 }, { label: 'SGST 2.5%', amount: 1 }];
+    let sent;
+    w.PosnicPro.put = (request, done) => { sent = JSON.parse(request.data); done({ type: 'success', data: { receipt_designs: sent.receipt_designs } }); };
+    w.PosnicPro.receiptDesignerEditor.load(branch);
+    assert.equal($('#rd-tax-display').val(), 'breakdown');
+    $('.rd-block-card').filter((i, e) => $(e).find('.rd-select').text().startsWith('Totals')).find('.rd-select').trigger('click');
+    $('#rd-tax-display').val('hidden').trigger('change');
+    assert.equal($('[data-prop="taxDisplay"]').val(), 'hidden');
+    $('[data-action="save"]').trigger('click');
+    const saved = contract.normalize(sent.receipt_designs);
+    assert.equal(saved.layouts['80'].blocks.find(b => b.type === 'totals').taxDisplay, 'hidden');
+    assert.equal(saved.layouts['112'].blocks.find(b => b.type === 'totals').taxDisplay, 'breakdown');
+    sale.receipt_designs = saved;
+    const hidden = $('<div>').html(engine.render(sale, '80', false)).find('.rd-totals').text();
+    assert.doesNotMatch(hidden, /CGST|SGST|Tax|Subtotal/);
+    assert.match(hidden, /26\.00/);
+    const shown = $('<div>').html(engine.render(sale, '112', false)).find('.rd-totals').text();
+    assert.match(shown, /CGST|SGST/);
+    saved.layouts['80'].blocks.find(b => b.type === 'totals').taxDisplay = 'total';
+    const single = $('<div>').html(engine.render(sale, '80', false)).find('.rd-totals').text();
+    assert.match(single, /Tax/);
+    assert.doesNotMatch(single, /CGST|SGST/);
+    assert.match(single, /26\.00/);
+    dom.window.close();
+});
+
 test('hiding payment method removes cash and card without hiding totals or balance due', () => {
     const { dom, engine, design, sale, $ } = setup();
     Object.assign(sale, { payment_mode: 'Card', partial_check: true, partial_balance: 10, payment_pending: 16 });

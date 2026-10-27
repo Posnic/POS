@@ -4,6 +4,34 @@ const { clearAll } = require('../../../src/services/parked-sales');
 const branchId = '64f8f2f4c2b9c0a1e4b12345';
 const scope = { branchId, licenseId: 'tenant-a', userId: 'cashier' };
 
+test('uses the BSON tenant id supplied by authenticated Core requests', async () => {
+  const licenseId = new ObjectId();
+  const saleId = new ObjectId();
+  let query;
+  let marker;
+  const db = {
+    collection: (name) =>
+      name === 'sales'
+        ? {
+            find: (filter) => {
+              query = filter;
+              return { project: () => ({ toArray: async () => [{ _id: saleId }] }) };
+            },
+          }
+        : {
+            bulkWrite: async (ops) => {
+              marker = ops[0].updateOne.update.$setOnInsert;
+              return { upsertedCount: 1 };
+            },
+          },
+  };
+  expect(await clearAll(db, { branchId, licenseId, userId: new ObjectId() })).toEqual({
+    cleared: 1,
+  });
+  expect(query.license).toEqual(licenseId);
+  expect(marker.license).toEqual(licenseId);
+});
+
 test('clears more than one page, isolates branch/tenant, preserves money and retries safely', async () => {
   const draft = () => ({
     branch_id: new ObjectId(branchId),

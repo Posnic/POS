@@ -122,6 +122,9 @@
     }
     function preview() {
         if (!box || !box.length || !design) return;
+        var totals = layout().blocks.find(function (block) { return block.type === 'totals'; });
+        box.find('#rd-tax-display').val(totals && totals.taxDisplay || 'breakdown');
+        box.find('#rd-sample-tax').toggle(!totals || !totals.taxDisplay || totals.taxDisplay === 'breakdown');
         var host = box.find('.rd-preview-page');
         var f = schema.formats[format];
         var width = f.width * 96 / 25.4;
@@ -203,7 +206,8 @@
         if (b.type === 'store' && schema.fieldAvailable('fssai', branch)) html += '<label><input type="checkbox" data-prop="fssaiInHeader" ' + (b.fssaiInHeader ? 'checked' : '') + '> ' + esc(t('Show FSSAI below GSTIN')) + '</label>';
         if (b.type === 'items' && b.itemLayout === 'columns') html += '<label>' + esc(t('Line style')) + '<select data-prop="lineStyle">' + ['dotted', 'dashed', 'solid'].map(function (v) { return '<option value="' + v + '"' + ((b.lineStyle || 'dotted') === v ? ' selected' : '') + '>' + esc(t(v.charAt(0).toUpperCase() + v.slice(1))) + '</option>'; }).join('') + '</select></label>';
         if (b.type === 'totals') html += '<label class="rd-inline"><input type="checkbox" data-prop="showPaymentMethod" ' + (b.showPaymentMethod !== false ? 'checked' : '') + '> ' + esc(t('Show payment method')) + '</label>';
-        if (b.type === 'totals') html += '<p class="rd-help">' + esc(t('Uses the actual sale amounts, including discounts, tax, charges and rounding.')) + '</p>';
+        if (b.type === 'totals') html += '<label>' + esc(t('Tax on printed receipt')) + '<select data-prop="taxDisplay"><option value="breakdown"' + (!b.taxDisplay || b.taxDisplay === 'breakdown' ? ' selected' : '') + '>' + esc(t('Show tax breakdown')) + '</option><option value="total"' + (b.taxDisplay === 'total' ? ' selected' : '') + '>' + esc(t('Show one tax total')) + '</option><option value="hidden"' + (b.taxDisplay === 'hidden' ? ' selected' : '') + '>' + esc(t('Hide tax lines')) + '</option></select></label>';
+        if (b.type === 'totals') html += '<p class="rd-help">' + esc(t('Changes the printed layout only. Recorded tax and the payable total stay unchanged.')) + '</p>';
         if (schema.textTypes.indexOf(b.type) !== -1) {
             html += '<label for="rd-block-size">' + esc(t('Block text size')) + '</label><select id="rd-block-size" data-prop="fontSize"><option value="">' + esc(t('Use default')) + '</option>' + [8,9,10,11,12,13,14,16,18,20,24,28,32].map(function (n) { return '<option value="' + n + '"' + (b.fontSize === n ? ' selected' : '') + '>' + n + ' px</option>'; }).join('') + '</select><label class="rd-inline"><input type="checkbox" data-prop="bold" ' + (b.bold ? 'checked' : '') + '> ' + esc(t('Bold text')) + '</label>';
         }
@@ -369,6 +373,12 @@
         updateQuoteControls();
         loadQuoteQr();
         box.find('#rd-quote-list').val(quotePolicy.quotes.join('\n\n'));
+        box.find('.rd-preview-footer').append('<label>' + esc(t('Tax on printed receipt')) + '<select id="rd-tax-display"><option value="breakdown">' + esc(t('Show tax breakdown')) + '</option><option value="total">' + esc(t('Show one tax total')) + '</option><option value="hidden">' + esc(t('Hide tax lines')) + '</option></select></label>');
+        box.find('#rd-tax-display').on('change', function () {
+            var totals = layout().blocks.find(function (block) { return block.type === 'totals'; });
+            if (!totals || totals.taxDisplay === this.value) return;
+            checkpoint(); totals.taxDisplay = this.value; renderList(); changed();
+        });
         if (sampleTaxEnabled()) {
             box.find('.rd-preview-footer').append('<label>' + esc(PosnicPro.i18n.t('lang_rd_sample_tax_help', 'Example tax: 5%. Actual receipts use saved sale taxes.')) + (sampleIndianGst() ? '<select id="rd-sample-tax"><option value="intra">CGST + SGST</option><option value="inter" data-t="lang_igst_tax_receiving">IGST</option></select>' : '') + '</label>');
             box.find('#rd-sample-tax').val(sampleInterstate ? 'inter' : 'intra').on('change', function () { sampleInterstate = this.value === 'inter'; schedulePreview(); });
