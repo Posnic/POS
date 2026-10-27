@@ -30,6 +30,21 @@ const path = require('path');
  * anything changed - an exception with no expiry becomes permanent by neglect.
  */
 const ACCEPTED = {
+  'GHSA-mrhx-c7xc-m3w5': {
+    package: 'zod',
+    via: 'chromium-bidi',
+    reason:
+      'This Zod 3 dependency belongs to chromium-bidi 14 inside the exact ' +
+      'puppeteer 24 version pinned by whatsapp-web.js. Its schemas validate ' +
+      'WebDriver BiDi command parameters. Posnic launches Chromium through ' +
+      'whatsapp-web.js with Puppeteer\'s default CDP protocol; it never starts ' +
+      'a WebDriver BiDi session or passes shop/customer arrays to that parser. ' +
+      'The patch exists only in Zod 4, incompatible with chromium-bidi 14\'s ' +
+      'Zod 3 dependency. Overriding Puppeteer to a new major would risk ' +
+      'WhatsApp receipt delivery. Recheck when whatsapp-web.js updates its ' +
+      'Puppeteer pin.',
+    expires: '2026-11-30',
+  },
   'GHSA-w5hq-g745-h8pq': {
     package: 'uuid',
     via: 'exceljs',
