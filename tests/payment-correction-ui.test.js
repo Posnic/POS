@@ -145,3 +145,16 @@ test('real request handler keeps background eligibility refusals quiet but expli
         dom.window.close();
     }
 });
+
+for (const autoPrint of [false, true]) test('successful correction prints the saved bill only when server enables auto print: '+autoPrint,async()=>{
+ const {dom,w,$,sent}=await setup();const prints=[];
+ w.PosnicPro.sales.view={printSale:(...args)=>prints.push(args)};
+ w.PosnicPro.post=(options,done)=>{sent.push(JSON.parse(options.data));done({saved:true,print:autoPrint});};
+ $('[data-method="1"]').trigger('click');$('[data-reason="0"]').trigger('click');$('.pc-next').trigger('click');$('.pc-save').trigger('click');await Promise.resolve();await Promise.resolve();
+ assert.deepEqual(prints,autoPrint?[['sale1','sale']]:[]);assert.equal(sent.length,1);dom.window.close();
+});
+test('an unconfirmed correction never prints',async()=>{
+ const {dom,w,$}=await setup();w.PosnicPro.sales.view={printSale:()=>assert.fail('failed correction printed')};
+ w.PosnicPro.post=(_o,_done,fail)=>fail({responseJSON:{message:'Offline'}});
+ $('[data-method="1"]').trigger('click');$('[data-reason="0"]').trigger('click');$('.pc-next').trigger('click');$('.pc-save').trigger('click');await Promise.resolve();await Promise.resolve();dom.window.close();
+});

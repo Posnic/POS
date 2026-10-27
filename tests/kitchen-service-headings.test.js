@@ -9,13 +9,13 @@ test('kitchen service headings distinguish room, parcel and table without changi
   try {
     const screen = dom.window.kitchenScreen;
     screen.setConfig({_fit:{fontPx:32,lineHeightPx:40,columns:2,cards:8},pulseAlerts:false});
-    for (const [fields, label, kind, instruction] of [
-      [{table:'10'}, 'Table 10', 'table', 'PLATE'],
-      [{table:'SA - 56',roomReference:'56'}, 'Room 56', 'room', 'TRAY'],
-      [{table:'ROOM 109'}, 'Room 109', 'room', 'TRAY'],
-      [{table:'',roomReference:'205'}, 'Room 205', 'room', 'TRAY'],
-      [{table:'Take Away 3',takeaway:true,orderNumber:'SID-123'}, 'Parcel 3', 'parcel', 'PACK'],
-      [{table:'',takeaway:true,orderNumber:'7'}, 'Parcel 7', 'parcel', 'PACK'],
+    for (const [fields, label, kind, lineStyle] of [
+      [{table:'10'}, 'Table 10', 'table', 'solid'],
+      [{table:'SA - 56',roomReference:'56'}, 'Room 56', 'room', 'double'],
+      [{table:'ROOM 109'}, 'Room 109', 'room', 'double'],
+      [{table:'',roomReference:'205'}, 'Room 205', 'room', 'double'],
+      [{table:'Take Away 3',takeaway:true,orderNumber:'SID-123'}, 'Parcel 3', 'parcel', 'dashed'],
+      [{table:'',takeaway:true,orderNumber:'7'}, 'Parcel 7', 'parcel', 'dashed'],
     ]) {
       const ticket = {id:'sample',...fields,placedAt:new Date(Date.now()-7*60000).toISOString(),items:[{qty:2,name:'Rice'}]};
       const before = JSON.stringify(ticket);
@@ -24,9 +24,10 @@ test('kitchen service headings distinguish room, parcel and table without changi
       assert.ok(card.classList.contains('service-'+kind));
       assert.ok(card.classList.contains('warm'), 'service type must preserve waiting-time status');
       assert.equal(card.querySelector('.service-label').textContent,label);
-      assert.equal(card.querySelector('.service-task').textContent,instruction);
+      assert.equal(dom.window.getComputedStyle(card.querySelector('.service-rule')).borderTopStyle,lineStyle);
       assert.equal(card.querySelectorAll('.service-icon').length,1);
-      assert.equal(dom.window.getComputedStyle(card.querySelector('.table')).justifyContent,'center');
+      assert.equal(dom.window.getComputedStyle(card.querySelector('.table')).justifyContent,'flex-start');
+      assert.ok(card.querySelector('.ticket-details .arrival'));
       assert.equal(card.querySelector('.qty').textContent,'2 - ');
       assert.equal(JSON.stringify(ticket),before);
     }
