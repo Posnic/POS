@@ -5235,5 +5235,7 @@
   "lang_starttls_usually_587_or_2525": "स्टार्टटल्स (सामान्यत: 587 किंवा 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "क्लाउ Posnic ड ईमेल वापरा किंवा बिल आणि अहवालांसाठी आपले स्वतःचे खाते ज",
   "lang_send_this_report_automatically": "हा अहवाल आपोआप पाठ",
-  "lang_split_payment_help": "एक बिल, अनेक पेमेंट पद्धती. उदाहरणार्थ, कार्डद्वारे अर्धा आणि आधा रोख"
+  "lang_split_payment_help": "एक बिल, अनेक पेमेंट पद्धती. उदाहरणार्थ, कार्डद्वारे अर्धा आणि आधा रोख",
+  "lang_payment_print_reference": "पावतीवर संदर्भ प्रिंट",
+  "lang_payment_print_reference_storage": "पावती प्राधान्य लक्षात ठेवले नाही पुन्हा प्रयत्न करा."
 }

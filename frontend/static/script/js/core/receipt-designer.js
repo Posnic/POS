@@ -336,7 +336,7 @@
                 if (Number(data.round_off)) content += pair('Round Off', money(data.round_off));
                 content += pair('Total', money(data.items_total), true);
                 if (!beforePayment && data.sales_id) {
-                    var paymentRows = PosnicSalePayments.rows(data);
+                    var paymentRows = PosnicSalePayments.receiptRows(data);
                     if (b.showPaymentMethod !== false && paymentRows.length) paymentRows.forEach(function (row) { content += pair(row.method, money(row.amount)); });
                     else if (b.showPaymentMethod !== false && data.payment_mode) content += pair('Payment', esc(data.payment_mode));
                     if (data.partial_check === true || data.partial_check === 'true') content += pair('Payments / credits', money(data.partial_balance)) + pair('Balance due', money(data.payment_pending));

@@ -299,6 +299,7 @@ test('mixed cash and card commits once and projects exact tender amounts', async
         receivedMinor: 500,
         verified: true,
         reference: 'terminal-1',
+        printReference: true,
       },
     ],
   });
@@ -309,6 +310,10 @@ test('mixed cash and card commits once and projects exact tender amounts', async
   expect(retry.payments[0].changeMinor).toBe(500);
   const stored = await db.collection('sales').findOne({ _id: sale._id });
   expect(stored.multi_payment).toEqual({ Cash: 100, Card: 5 });
+  expect(stored.captain_payments[0].tenders[1]).toMatchObject({
+    reference: 'terminal-1',
+    printReference: true,
+  });
   expect(stored.date).toEqual(new Date(first.payments[0].at));
   expect(stored.settled_at).toEqual(stored.date);
   expect(stored.payment_status).toBe('Paid');
@@ -908,12 +913,21 @@ test('web settlement returns the paid receipt without queuing a duplicate, inclu
   const queue = require('../../../src/repositories/print-job.repository').queuePrintJob;
   queue.mockClear();
   const plan = await service.prepare({ ...req(), captainPaymentDesktop: true });
-  const request = { ...pay(plan, { receiptDelivery: 'browser' }), captainPaymentDesktop: true };
+  const request = {
+    ...pay(plan, {
+      receiptDelivery: 'browser',
+      method: 'Card',
+      reference: '234',
+      printReference: true,
+    }),
+    captainPaymentDesktop: true,
+  };
   const result = await service.record(request);
   expect(result.browserReceipt).toMatchObject({
     items_total: 105,
     paid_amount: 105,
-    payment_mode: 'Cash',
+    payment_mode: 'Card',
+    captain_payments: [{ method: 'Card', amount: 105, reference: '234', printReference: true }],
     receipt_settled: true,
   });
   expect(result.browserReceipt.receipt_line_rows).toHaveLength(1);
@@ -944,4 +958,23 @@ test('phone-supplied browser delivery is ignored and still queues exactly one re
   const result = await service.record(pay(plan, { receiptDelivery: 'browser' }));
   expect(result.browserReceipt).toBeUndefined();
   expect(queue).toHaveBeenCalledTimes(1);
+});
+
+test('opted-in reference survives payment recovery and sale projection for reprints', async () => {
+  const plan = await service.prepare(req());
+  const request = pay(plan, { method: 'Card', reference: '234', printReference: true });
+  const result = await service.record(request);
+  expect(result.payments[0]).toMatchObject({ reference: '234', printReference: true });
+  const saved = await db.collection('sales').findOne({ _id: sale._id });
+  expect(saved.captain_payments[0]).toMatchObject({ reference: '234', printReference: true });
+  expect(require('../../../src/helpers/sale-payment-summary').receiptRows(saved)[0].method).toBe(
+    'Card · 234'
+  );
+  await service.record(request);
+  expect((await db.collection('sales').findOne({ _id: sale._id })).captain_payments).toHaveLength(
+    1
+  );
+  await expect(
+    service.record({ ...request, body: { ...request.body, printReference: false } })
+  ).rejects.toThrow('already used');
 });

@@ -58,7 +58,50 @@
       amount = sale.items_total == null ? sale.sales_total : sale.items_total;
     return collect([{ method: method, amount: amount }]);
   }
-  const api = { rows: rows };
+  // Only explicitly opted-in references belong on a guest receipt. Reports keep
+  // their original method grouping and money; the saved sale drives reprints.
+  function receiptRows(sale) {
+    const key = (method) =>
+      String(method || '')
+        .trim()
+        .toLowerCase()
+        .replace(/^(credit[ _-]?card|debit[ _-]?card)$/, 'card');
+    const references = new Map();
+    let payments = sale.captain_payments;
+    if (typeof payments === 'string') {
+      try {
+        payments = JSON.parse(payments);
+      } catch (_) {
+        payments = [];
+      }
+    }
+    for (const payment of Array.isArray(payments) ? payments : []) {
+      for (const tender of Array.isArray(payment?.tenders) && payment.tenders.length
+        ? payment.tenders
+        : [payment]) {
+        if (tender?.printReference !== true || typeof tender.reference !== 'string') continue;
+        const reference = Array.from(tender.reference, (character) =>
+          character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127 ? ' ' : character
+        )
+          .join('')
+          .trim()
+          .slice(0, 100);
+        if (!reference) continue;
+        const method = key(tender.method);
+        const values = references.get(method) || new Set();
+        values.add(reference);
+        references.set(method, values);
+      }
+    }
+    return rows(sale).map((row) => {
+      const values = references.get(key(row.method));
+      return {
+        ...row,
+        method: values?.size ? row.method + ' · ' + Array.from(values).join(', ') : row.method,
+      };
+    });
+  }
+  const api = { rows: rows, receiptRows: receiptRows };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.PosnicSalePayments = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -5235,5 +5235,7 @@
   "lang_starttls_usually_587_or_2525": "اسٹارٹلز (عام طور پر 587 یا 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "کلاؤ Posnic ڈ ای میل استعمال کریں یا بلوں اور رپورٹس کے ل your اپنے اکاؤنٹ کو مربوط کریں۔",
   "lang_send_this_report_automatically": "یہ رپورٹ خود بخود بھیجیں",
-  "lang_split_payment_help": "ایک بل، ادائیگی کے متعدد طریقے۔ مثال کے طور پر، آدھا کارڈ اور آدھا نقد میں۔"
+  "lang_split_payment_help": "ایک بل، ادائیگی کے متعدد طریقے۔ مثال کے طور پر، آدھا کارڈ اور آدھا نقد میں۔",
+  "lang_payment_print_reference": "رسید پر حوالہ پرنٹ کریں",
+  "lang_payment_print_reference_storage": "رسید کی ترجیح یاد نہیں سکتا۔ براہ کرم دوبارہ کوشش کریں۔"
 }

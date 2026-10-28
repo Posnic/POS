@@ -5313,5 +5313,7 @@
   "lang_starttls_usually_587_or_2525": "STARTTLS (biasanya 587 atau 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Gunakan email Posnic cloud atau hubungkan akun Anda sendiri untuk tagihan dan laporan.",
   "lang_send_this_report_automatically": "Kirim laporan ini secara otomatis",
-  "lang_split_payment_help": "Satu tagihan, beberapa metode pembayaran. Misalnya, setengah dengan kartu dan setengah tunai."
+  "lang_split_payment_help": "Satu tagihan, beberapa metode pembayaran. Misalnya, setengah dengan kartu dan setengah tunai.",
+  "lang_payment_print_reference": "Cetak referensi pada tanda terima",
+  "lang_payment_print_reference_storage": "Tidak dapat mengingat preferensi tanda terima. Silakan coba lagi."
 }

@@ -5232,5 +5232,7 @@
   "lang_starttls_usually_587_or_2525": "STARTTLS (normalt 587 eller 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Brug Posnic cloud-e-mail eller tilslut din egen konto til regninger og rapporter.",
   "lang_send_this_report_automatically": "Send denne rapport automatisk",
-  "lang_split_payment_help": "En regning, flere betalingsmetoder. For eksempel halvt med kort og halvt kontant."
+  "lang_split_payment_help": "En regning, flere betalingsmetoder. For eksempel halvt med kort og halvt kontant.",
+  "lang_payment_print_reference": "Udskriv reference på kvitteringen",
+  "lang_payment_print_reference_storage": "Kunne ikke huske kvitteringspræferencen. Prøv igen."
 }
