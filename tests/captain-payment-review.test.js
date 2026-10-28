@@ -147,3 +147,31 @@ test('desktop renders only server supplied payment methods and escapes custom na
  const buttons=[...w.document.querySelectorAll('[data-method]')];assert.equal(buttons.length,1);assert.equal(buttons[0].dataset.method,custom);
  dom.window.close();
 });
+
+test('room reference print choice survives reopening by branch and method without reusing the room', async () => {
+  const dom = new JSDOM('<body></body>', {url:'https://shop.invalid',runScripts:'outside-only'}), w=dom.window;
+  w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};
+  w.HTMLDialogElement.prototype.close=function(){this.open=false;};
+  const plan={id:'plan',currency:'₹',totalMinor:47300,paidMinor:0,dueMinor:47300,enabled:true,version:0,methods:['ROOM PENDING','Card'],guests:[{name:'Table 6A',totalMinor:47300,paid:false}]};
+  const records=[];
+  w.PosnicPro={local:{get:()=> 'branch'},post:(o,ok)=>{const b=JSON.parse(o.data); if(o.url.endsWith('/record')) {records.push(b);ok({...plan,confirmed:b.request_id,dueMinor:0,payments:[{...b,id:b.request_id}]});} else ok(plan);}};
+  for(const f of ['captain-money.js','captain-payments.js'])w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/core',f),'utf8'));
+  await w.CaptainPayments.open('6A','branch');
+  const checkbox=()=>w.document.querySelector('[data-print-reference]');
+  assert.equal(checkbox().checked,false);
+  checkbox().checked=true;checkbox().dispatchEvent(new w.Event('change',{bubbles:true}));
+  const ref=w.document.querySelector('#cp-reference'); ref.value='234';ref.dispatchEvent(new w.Event('input',{bubbles:true}));
+  const verified=w.document.querySelector('#cp-verified');verified.checked=true;verified.dispatchEvent(new w.Event('change',{bubbles:true}));
+  w.document.querySelector('[data-action=record]').click();
+  w.document.querySelector('[data-action=back]').click();
+  assert.equal(checkbox().checked,true); assert.equal(w.document.querySelector('#cp-reference').value,'234');
+  w.document.querySelector('[data-action=record]').click();w.document.querySelector('[data-action=record]').click();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(records[0].reference,'234');assert.equal(records[0].printReference,true);
+  await w.CaptainPayments.open('7A','branch');
+  assert.equal(checkbox().checked,true);assert.equal(w.document.querySelector('#cp-reference').value,'');
+  w.document.querySelector('[data-method=Card]').click();assert.equal(checkbox().checked,false);
+  w.document.querySelector('[data-method="ROOM PENDING"]').click();assert.equal(checkbox().checked,true);
+  await w.CaptainPayments.open('6A','other-branch');assert.equal(checkbox().checked,false);
+  dom.window.close();
+});

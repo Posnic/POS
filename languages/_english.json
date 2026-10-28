@@ -5103,5 +5103,7 @@
   "lang_your_session_has_ended_please_sign_in_ag": "Your session has ended. Please sign in again.",
   "lang_your_standard_language_stays_unchanged_unt": "Your standard language stays unchanged until you save wording changes.",
   "lang_your_time_or_expertise": "Your time or expertise",
-  "lang_yourselecteddetails_title": "Selected details will be deleted"
+  "lang_yourselecteddetails_title": "Selected details will be deleted",
+  "lang_payment_print_reference": "Print reference on receipt",
+  "lang_payment_print_reference_storage": "Could not remember the receipt preference. Please retry."
 }

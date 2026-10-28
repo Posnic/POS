@@ -55,6 +55,13 @@ test('sale sheet and designed receipts display the same split and escape method 
     assert.match(content, /Cash\s*₹\s*200\.00/);
     assert.doesNotMatch(content, /UPI\s*₹\s*500\.00/);
   });
+  data.multi_payment = {'ROOM PENDING':500};
+  data.captain_payments = [{method:'ROOM PENDING',amount:500,reference:'234 <script>bad</script>',printReference:true}];
+  for (const format of ['a4','80','58']) {
+    const receipt=w.$('<div>').html(w.PosnicPro.receiptDesigner.render(data,format,false));
+    assert.match(receipt.text(), /ROOM PENDING · 234 <script>bad<\/script>/);
+    assert.equal(receipt.find('script').length,0);
+  }
   data.multi_payment = { '<img src=x onerror=alert(1)>': 500 };
   assert.equal(w.$('<div>').html(w.PosnicPro.sales.buildSaleSheet(data)).find('img').length, 0);
   dom.window.close();
@@ -65,4 +72,18 @@ test('desktop legacy card names and Captain card tenders use one Card total', ()
     assert.deepEqual(rows({ payment_mode: method, payment_status: 'Paid', sales_total: 500 }), [{ method: 'Card', amount: 500 }]);
   }
   assert.deepEqual(rows({ multi_payment: { CreditCard: 100, Card: 50, Cash: 25 } }), [{ method: 'Card', amount: 150 }, { method: 'Cash', amount: 25 }]);
+});
+
+test('receipt reference is explicit opt-in and never changes payment reporting', () => {
+  const { receiptRows } = require('../api/src/helpers/sale-payment-summary');
+  const sale = {multi_payment:{'ROOM PENDING':473, Card:20}, captain_payments:[
+    {method:'ROOM PENDING',amount:473,reference:'234',printReference:true},
+    {method:'Card',amount:20,reference:'private-bank-ref'},
+  ]};
+  assert.deepEqual(receiptRows(sale), [{method:'ROOM PENDING · 234',amount:473},{method:'Card',amount:20}]);
+  assert.deepEqual(rows(sale), [{method:'ROOM PENDING',amount:473},{method:'Card',amount:20}]);
+  sale.captain_payments[0].printReference = 'true';
+  assert.equal(receiptRows(sale)[0].method, 'ROOM PENDING');
+  sale.captain_payments = [{tenders:[{method:'ROOM PENDING', reference:'234', printReference:true},{method:'Card',reference:'A\nB',printReference:true}]}];
+  assert.equal(receiptRows(sale)[1].method, 'Card · A B');
 });

@@ -50,7 +50,7 @@ test('two tills exchange unit snapshots, quotes and clear markers without replay
 
     const conversion = { unit: 'ft', base_unit: 'm', factor: .3048, price: 32 };
     await a.collection('items').insertOne({ _id: itemId, license, branch_id: branch, unit: 'm', selling_units: [{ unit: 'ft', factor: .3048, price: 32 }], available_quantity: 6.952, updated_date: now });
-    await a.collection('sales').insertOne({ _id: saleId, license, branch_id: branch, sale_process: 'Hold', sales_total: 320, items: [{ item_id: String(itemId), item_unit: 'ft', item_quantity: 10, unit_conversion: conversion }], receipt_quote: require('../src/helpers/receipt-quote').select({source:'thirukkural',order:'sequential',showQr:true}, 'S222'), updated_date: now });
+    await a.collection('sales').insertOne({ _id: saleId, license, branch_id: branch, sale_process: 'Hold', sales_total: 320, multi_payment: {'ROOM PENDING':320}, captain_payments:[{method:'ROOM PENDING',amount:320,reference:'234',printReference:true}], items: [{ item_id: String(itemId), item_unit: 'ft', item_quantity: 10, unit_conversion: conversion }], receipt_quote: require('../src/helpers/receipt-quote').select({source:'thirukkural',order:'sequential',showQr:true}, 'S222'), updated_date: now });
     for (const name of ['items','sales']) {
       assert.equal(await pushCollection(a, sa, cfg('a'), name), 1);
       assert.equal(await pullCollection(b, sb, cfg('b'), name), 1);
@@ -58,6 +58,8 @@ test('two tills exchange unit snapshots, quotes and clear markers without replay
     }
     const received = await b.collection('sales').findOne({ _id: saleId });
     assert.deepEqual(received.items[0].unit_conversion, conversion);
+    assert.equal(require('../src/helpers/sale-payment-summary').receiptRows(received)[0].method, 'ROOM PENDING · 234');
+    assert.equal((await cloud.collection('sales').findOne({_id:saleId})).captain_payments[0].printReference, true);
     assert.equal(received.receipt_quote.url, 'https://www.posnic.com/tools/thirukural/222');
     assert.deepEqual(received.receipt_quote, require('../src/helpers/receipt-quote').select({source:'thirukkural',order:'sequential',showQr:true}, 'S222'));
     assert.equal((await b.collection('items').findOne({ _id: itemId })).available_quantity, 6.952);
@@ -81,6 +83,7 @@ test('two tills exchange unit snapshots, quotes and clear markers without replay
     await pullCollection(a, sa, cfg('a'), 'items');
     assert.deepEqual((await a.collection('items').findOne({ _id: itemId })).selling_units, []);
     assert.deepEqual((await a.collection('sales').findOne({ _id: saleId })).items[0].unit_conversion, conversion);
+    assert.equal(require('../src/helpers/sale-payment-summary').receiptRows(await a.collection('sales').findOne({_id:saleId}))[0].method, 'ROOM PENDING · 234');
   } finally {
     if (server) await new Promise(resolve => server.close(resolve));
     await apiClient.close(); await client.close(); await mongo.stop();
