@@ -5232,5 +5232,7 @@
   "lang_starttls_usually_587_or_2525": "ਸਟਾਰਟਲਸ (ਆਮ ਤੌਰ 'ਤੇ 587 ਜਾਂ 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicਕਲਾਉਡ ਈਮੇਲ ਦੀ ਵਰਤੋਂ ਕਰੋ ਜਾਂ ਬਿੱਲਾਂ ਅਤੇ ਰਿਪੋਰਟਾਂ ਲਈ ਆਪਣੇ ਖੁਦ ਦੇ ਖਾਤੇ ਨੂੰ ਜੋੜੋ.",
   "lang_send_this_report_automatically": "ਇਸ ਰਿਪੋਰਟ ਨੂੰ ਆਪਣੇ ਆਪ ਭੇਜੋ",
-  "lang_split_payment_help": "ਇੱਕ ਬਿੱਲ, ਕਈ ਭੁਗਤਾਨ ਵਿਧੀਆਂ. ਉਦਾਹਰਣ ਦੇ ਲਈ, ਅੱਧਾ ਕਾਰਡ ਅਤੇ ਅੱਧਾ ਨਕਦ ਵਿੱਚ."
+  "lang_split_payment_help": "ਇੱਕ ਬਿੱਲ, ਕਈ ਭੁਗਤਾਨ ਵਿਧੀਆਂ. ਉਦਾਹਰਣ ਦੇ ਲਈ, ਅੱਧਾ ਕਾਰਡ ਅਤੇ ਅੱਧਾ ਨਕਦ ਵਿੱਚ.",
+  "lang_payment_print_reference": "ਰਸੀਦ 'ਤੇ ਹਵਾਲਾ ਛਾਪੋ",
+  "lang_payment_print_reference_storage": "ਰਸੀਦ ਦੀ ਤਰਜੀਹ ਯਾਦ ਨਹੀਂ ਕਰ ਸਕਿਆ. ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
 }

@@ -5335,5 +5335,7 @@
   "lang_yourselecteddetails_title": "De geselecteerde gegevens worden verwijderd",
   "lang_split_payment_help": "Eén factuur, meerdere betaalmethoden. Bijvoorbeeld de helft met een kaart en de andere helft contant.",
   "lang_bank_account_routing_details": "Bankrekening en bankcodes",
-  "lang_postal_code": "Postcode"
+  "lang_postal_code": "Postcode",
+  "lang_payment_print_reference": "Referentie op de bon afdrukken",
+  "lang_payment_print_reference_storage": "Ik kon me de voorkeur voor de ontvangst niet herinneren. Probeer het opnieuw."
 }

@@ -164,6 +164,7 @@ function view(plan, options) {
       staff: p.staffName,
       at: p.at,
       reference: p.reference,
+      printReference: p.printReference === true,
       ...(p.upi ? { upi: p.upi } : {}),
       ...(p.tenders ? { tenders: p.tenders.map(({ allocations, ...tender }) => tender) } : {}),
     })),
@@ -221,7 +222,24 @@ function paymentReceipt(plan, c, payment) {
     payment_mode: payment.method,
     // This receipt covers this collection, not earlier payments on the sale.
     multi_payment: {},
-    captain_payments: [],
+    captain_payments: [
+      {
+        method: payment.method,
+        amount: payment.amountMinor / factor,
+        reference: payment.reference,
+        printReference: payment.printReference === true,
+        ...(payment.tenders
+          ? {
+              tenders: payment.tenders.map((tender) => ({
+                method: tender.method,
+                amount: tender.amountMinor / factor,
+                reference: tender.reference,
+                printReference: tender.printReference === true,
+              })),
+            }
+          : {}),
+      },
+    ],
     partial_check: false,
     partial_balance: 0,
     payment_pending: 0,
@@ -237,7 +255,14 @@ function paymentReceipt(plan, c, payment) {
     change_amount: payment.changeMinor / factor,
   });
   payload.extras = [
-    { label: 'Payment', value: payment.method },
+    {
+      label: 'Payment',
+      value:
+        require('../helpers/sale-payment-summary')
+          .receiptRows(payload.receiptDocument)
+          .map((row) => row.method)
+          .join(', ') || payment.method,
+    },
     {
       label: 'Received',
       value: (payment.receivedMinor / factor).toFixed(monetary.currencyDigits),
@@ -354,6 +379,7 @@ async function reconcile(db, c, plan) {
               method: p.method,
               amount: p.allocations[String(sale._id)] / factor,
               reference: p.reference,
+              printReference: p.printReference === true,
               ...(p.tenders
                 ? {
                     tenders: p.tenders
@@ -362,6 +388,7 @@ async function reconcile(db, c, plan) {
                         method: t.method,
                         amount: t.allocations[String(sale._id)] / factor,
                         reference: t.reference,
+                        printReference: t.printReference === true,
                       })),
                   }
                 : {}),
@@ -599,6 +626,7 @@ async function record(req) {
     method: input.method,
     receivedMinor: input.receivedMinor,
     reference: input.reference || '',
+    ...(input.printReference === true ? { printReference: true } : {}),
     ...(input.upi ? { upi: input.upi } : {}),
     ...(input.tenders ? { tenders: input.tenders } : {}),
   });
@@ -687,6 +715,7 @@ async function record(req) {
     changeMinor: input.receivedMinor - amount,
     method: input.method,
     reference: (input.reference || '').trim(),
+    printReference: input.printReference === true,
     ...(input.upi ? { upi: { ...c.options.upiPayee, verified: true } } : {}),
     allocations,
     ...(tenders ? { tenders: require('./captain-tenders').allocate(tenders, allocations) } : {}),

@@ -5235,5 +5235,7 @@
   "lang_starttls_usually_587_or_2525": "STARTTLS (genellikle 587 veya 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "PosnicBulut e-postasını kullanın veya faturalar ve raporlar için kendi hesabınızı bağlayın.",
   "lang_send_this_report_automatically": "Bu raporu otomatik olarak gönder",
-  "lang_split_payment_help": "Bir fatura, birkaç ödeme yöntemi. Örneğin, yarısı kartla ve yarısı nakit olarak."
+  "lang_split_payment_help": "Bir fatura, birkaç ödeme yöntemi. Örneğin, yarısı kartla ve yarısı nakit olarak.",
+  "lang_payment_print_reference": "Makbuzdaki referansı yazdır",
+  "lang_payment_print_reference_storage": "Makbuz tercihini hatırlayamadım. Lütfen tekrar deneyin."
 }

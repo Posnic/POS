@@ -28,6 +28,7 @@ function validate(tenders, amount, methods) {
       amountMinor: tender.amountMinor,
       receivedMinor: tender.receivedMinor,
       reference: (tender.reference || '').trim(),
+      printReference: tender.printReference === true,
       verified: tender.method !== 'Cash',
     };
   });
