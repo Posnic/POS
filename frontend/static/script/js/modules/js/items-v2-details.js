@@ -186,7 +186,7 @@
         value = value || {};
         var row = document.createElement('div'); row.className = 'iv2-selling-unit-row';
         row.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:8px;align-items:end;margin:8px 0';
-        row.innerHTML = '<label>Unit<input data-unit maxlength="20" placeholder="ft"></label><label>Base units per unit<input data-factor type="number" step="any" min="0.000000001" placeholder="0.3048"></label><label>Selling price<input data-price type="number" step="0.01" min="0.01" placeholder="Automatic" data-t-placeholder="lang_automatic"></label><label style="grid-column:1 / 4"><input type="checkbox" data-whole> <span data-t="lang_whole_selling_units">Whole quantities only (full lengths or packs)</span></label><button type="button" class="iv2-secondary" aria-label="Remove selling unit" data-t-aria-label="lang_remove_selling_unit">×</button>';
+        row.innerHTML = '<label>Unit<input data-unit maxlength="20" placeholder="ft"></label><label>Base units per unit<input data-factor type="number" step="any" min="0.000000001" placeholder="0.3048"></label><label>Selling price<input data-price type="number" step="0.01" min="0.01" placeholder="Automatic" data-t-placeholder="lang_automatic"></label><label style="grid-column:1 / 4"><input type="checkbox" data-whole> <span data-t="lang_whole_selling_units"><lang class="lang_whole_selling_units">Whole quantities only (full lengths or packs)</lang></span></label><button type="button" class="iv2-secondary" aria-label="Remove selling unit" data-t-aria-label="lang_remove_selling_unit">×</button>';
         row.querySelector('[data-unit]').value = value.unit || '';
         row.querySelector('[data-whole]').checked = value.whole_units === true;
         row.querySelector('[data-factor]').value = value.factor || '';
@@ -307,7 +307,7 @@
         if (!el('stock-locations')) {
             var locationsPanel = document.createElement('section');
             locationsPanel.style.gridColumn = '1 / -1';
-            locationsPanel.innerHTML = '<label for="iv2-stock-locations"><lang class="lang_stock_locations">Stock locations</lang></label><textarea id="iv2-stock-locations" class="form-control" rows="3" maxlength="1450" placeholder="Rack 5 / Shelf 2 / Box B"></textarea><p><lang class="lang_stock_locations_help">Optional. One location per line, up to 12. Put the main picking location first. Locations describe where to find the item; they do not divide its stock quantity.</lang></p>';
+            locationsPanel.innerHTML = '<label for="iv2-stock-locations"><lang class="lang_stock_locations">Stock locations</lang></label><textarea id="iv2-stock-locations" class="form-control" rows="3" maxlength="1450" placeholder="Rack 5 / Shelf 2 / Box B" data-t-placeholder="lang_rack_5_shelf_2_box_b"></textarea><p><lang class="lang_stock_locations_help">Optional. One location per line, up to 12. Put the main picking location first. Locations describe where to find the item; they do not divide its stock quantity.</lang></p>';
             el('reorder').parentElement.insertAdjacentElement('afterend', locationsPanel);
         }
         if(initialized)return;initialized=true;

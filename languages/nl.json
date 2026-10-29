@@ -5340,5 +5340,6 @@
   "lang_payment_print_reference_storage": "Ik kon me de voorkeur voor de ontvangst niet herinneren. Probeer het opnieuw.",
   "lang_stock_locations": "Locaties van de voorraad",
   "lang_stock_locations_help": "Optioneel. Eén locatie per lijn, maximaal 12. Zet eerst de belangrijkste pluklocatie. Locaties beschrijven waar het artikel te vinden is; ze verdelen de voorraadhoeveelheid niet.",
-  "lang_whole_selling_units": "Alleen hele hoeveelheden (volledige lengtes of verpakkingen)"
+  "lang_whole_selling_units": "Alleen hele hoeveelheden (volledige lengtes of verpakkingen)",
+  "lang_rack_5_shelf_2_box_b": "Rek 5 / Plank 2 / Doos B"
 }
