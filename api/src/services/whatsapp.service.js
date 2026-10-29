@@ -218,13 +218,26 @@ class WhatsAppService extends EventEmitter {
         const failedClient = this.clients.get(failedKey);
         if (failedClient === client && client) {
           this._safeCleanupClient(failedKey);
-          await client.destroy().catch(() => {});
+          await this._closeFailedClient(client);
           this.connectionStatus.set(failedKey, 'auth_failed');
         }
       } catch (_) {
         /* Invalid identifiers never create sessions. */
       }
       return { status: false, message: String(error?.message || error), connected: false };
+    }
+  }
+
+  async _closeFailedClient(client) {
+    // A lost DevTools connection can make destroy() skip a still-running
+    // browser. Close only the process owned by this failed client, preserving
+    // its authentication files and every other shop/browser session.
+    const browser = client.pupBrowser;
+    const child = browser?.process?.();
+    await client.destroy().catch(() => {});
+    if (child && child.exitCode === null && !child.killed) {
+      try { await browser.close(); } catch (_) { /* Lost DevTools connection. */ }
+      if (child.exitCode === null && !child.killed) child.kill();
     }
   }
 

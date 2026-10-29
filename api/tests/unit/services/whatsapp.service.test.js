@@ -80,6 +80,21 @@ const qrcode = require('qrcode');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const mockClient = Client.__mockInstance;
 
+test('failed startup closes its own orphaned browser without removing authentication', async () => {
+  const service = require('../../../src/services/whatsapp.service');
+  const child = { exitCode: null, killed: false, kill: jest.fn() };
+  const browser = { process: () => child, close: jest.fn().mockRejectedValue(new Error('Disconnected')) };
+  fs.rmSync.mockClear();
+  await service._closeFailedClient({ pupBrowser: browser, destroy: jest.fn().mockResolvedValue() });
+  expect(browser.close).toHaveBeenCalledTimes(1);
+  expect(child.kill).toHaveBeenCalledTimes(1);
+  expect(fs.rmSync).not.toHaveBeenCalled();
+  child.exitCode = 0;
+  child.kill.mockClear();
+  await service._closeFailedClient({ pupBrowser: browser, destroy: jest.fn().mockResolvedValue() });
+  expect(child.kill).not.toHaveBeenCalled();
+});
+
 test('transient cleanup preserves disk authentication; explicit logout removes it', () => {
   const service = require('../../../src/services/whatsapp.service');
   fs.rmSync.mockClear();
