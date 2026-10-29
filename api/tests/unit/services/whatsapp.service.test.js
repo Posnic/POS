@@ -87,10 +87,14 @@ test('desktop migration preserves legacy authentication and never overwrites a p
   service.sessionPath = '/profile/.wwebjs_auth';
   service.legacySessionPath = '/legacy/.wwebjs_auth';
   fs.cpSync.mockClear();
-  fs.existsSync.mockImplementation(p => String(p).includes('legacy'));
+  fs.existsSync.mockImplementation((p) => String(p).includes('legacy'));
   try {
     await service.initializeClient('migration', 'branch');
-    expect(fs.cpSync).toHaveBeenCalledWith(expect.stringContaining('legacy'), expect.stringContaining('profile'), { recursive: true, errorOnExist: true, force: false });
+    expect(fs.cpSync).toHaveBeenCalledWith(
+      expect.stringContaining('legacy'),
+      expect.stringContaining('profile'),
+      { recursive: true, errorOnExist: true, force: false }
+    );
     fs.cpSync.mockClear();
     fs.existsSync.mockReturnValue(true);
     await service.initializeClient('migration', 'branch');
@@ -107,7 +111,10 @@ test('web navigation retries attachment in the same client and bounds failures',
   jest.useFakeTimers();
   try {
     const service = require('../../../src/services/whatsapp.service');
-    const inject = jest.fn().mockRejectedValueOnce(new Error('Execution context was destroyed')).mockResolvedValue('ready');
+    const inject = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('Execution context was destroyed'))
+      .mockResolvedValue('ready');
     const client = { inject };
     service._recoverNavigationDuringInjection(client);
     const result = client.inject();
@@ -120,13 +127,18 @@ test('web navigation retries attachment in the same client and bounds failures',
     await jest.runAllTimersAsync();
     await rejection;
     expect(inject).toHaveBeenCalledTimes(3);
-  } finally { jest.useRealTimers(); }
+  } finally {
+    jest.useRealTimers();
+  }
 });
 
 test('failed startup closes its own orphaned browser without removing authentication', async () => {
   const service = require('../../../src/services/whatsapp.service');
   const child = { exitCode: null, killed: false, kill: jest.fn() };
-  const browser = { process: () => child, close: jest.fn().mockRejectedValue(new Error('Disconnected')) };
+  const browser = {
+    process: () => child,
+    close: jest.fn().mockRejectedValue(new Error('Disconnected')),
+  };
   fs.rmSync.mockClear();
   await service._closeFailedClient({ pupBrowser: browser, destroy: jest.fn().mockResolvedValue() });
   expect(browser.close).toHaveBeenCalledTimes(1);
@@ -818,7 +830,7 @@ test('recovery timeout and fresh QR stop before sending', async () => {
   expect(service.listenerCount('ready')).toBe(0);
 });
 test.each([undefined, new Error('LID chat has not synced')])(
-  'resolves a synced phone chat before sending when the LID chat is unavailable: %s',
+  'uses the verified phone address when the LID chat is unavailable: %s',
   async (lookupError) => {
     service.clients.set('branch_chat', mockClient);
     mockClient.getContactLidAndPhone.mockResolvedValueOnce([
@@ -833,6 +845,7 @@ test.each([undefined, new Error('LID chat has not synced')])(
       const result = await service.sendMessage('chat', 'branch', '919008427482', 'Test');
       expect(result.status).toBe(true);
       expect(mockClient.sendMessage).toHaveBeenCalledTimes(1);
+      expect(mockClient.getChatById).toHaveBeenCalledTimes(1);
       expect(mockClient.sendMessage).toHaveBeenCalledWith('919008427482@c.us', 'Test', {
         sendSeen: false,
       });
@@ -841,6 +854,45 @@ test.each([undefined, new Error('LID chat has not synced')])(
     }
   }
 );
+
+test('runtime compatibility is installed before sending without relying on postinstall', async () => {
+  service.clients.set('branch_compat', mockClient);
+  const evaluate = jest.fn().mockResolvedValue(undefined);
+  mockClient.pupPage = { evaluate };
+  mockClient.sendMessage.mockClear();
+  try {
+    const result = await service.sendMessage('compat', 'branch', '919008427482', 'Test');
+    expect(result.status).toBe(true);
+    expect(evaluate).toHaveBeenCalledWith(require('../../../src/utils/whatsapp-msgkey-compat'));
+    expect(evaluate.mock.invocationCallOrder[0]).toBeLessThan(
+      mockClient.sendMessage.mock.invocationCallOrder[0]
+    );
+    expect(mockClient.sendMessage).toHaveBeenCalledTimes(1);
+    evaluate.mockRejectedValueOnce(new Error('Browser disconnected'));
+    mockClient.sendMessage.mockClear();
+    expect((await service.sendMessage('compat', 'branch', '919008427482', 'Test')).status).toBe(
+      false
+    );
+    expect(mockClient.sendMessage).not.toHaveBeenCalled();
+  } finally {
+    delete mockClient.pupPage;
+  }
+});
+
+test('a new recipient does not require a previously synced phone chat', async () => {
+  service.clients.set('branch_newchat', mockClient);
+  mockClient.getContactLidAndPhone.mockResolvedValueOnce([]);
+  mockClient.getChatById = jest.fn().mockRejectedValue(new Error('Chat not found'));
+  mockClient.sendMessage.mockClear();
+  try {
+    const result = await service.sendMessage('newchat', 'branch', '919008427482', 'Test');
+    expect(result.status).toBe(true);
+    expect(mockClient.getChatById).not.toHaveBeenCalled();
+    expect(mockClient.sendMessage).toHaveBeenCalledTimes(1);
+  } finally {
+    delete mockClient.getChatById;
+  }
+});
 
 test('stalled initialization expires, preserves authentication and permits retry', async () => {
   jest.useFakeTimers();
