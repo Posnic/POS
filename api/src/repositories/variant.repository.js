@@ -49,6 +49,21 @@ class VariantsRepository {
       licenseId: scope?.license,
       branchId: scope?.branch_id,
     });
+    const variant = await this.model.findOne({ _id: id, ...tenant }).lean();
+    if (variant) return variant;
+
+    // Older create paths stored the branch but omitted its licence. Never
+    // relax the licence filter: establish ownership from the branch first,
+    // then repair only the still-unlicensed record in that branch.
+    const Branch = require('../models/branch.model');
+    const owner = await Branch.findOne({ _id: tenant.branch_id, license: tenant.license })
+      .select('_id')
+      .lean();
+    if (!owner) return null;
+    await this.model.updateOne(
+      { _id: id, branch_id: tenant.branch_id, license: null },
+      { $set: { license: tenant.license, updated_date: new Date() } }
+    );
     return await this.model.findOne({ _id: id, ...tenant }).lean();
   }
 
