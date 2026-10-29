@@ -5,7 +5,10 @@ function normalize(value) {
     throw new Error('Enter up to 12 stock locations.');
   const result = [];
   for (const entry of value) {
-    if (typeof entry !== 'string' || /[\x00-\x1f\x7f]/.test(entry))
+    if (
+      typeof entry !== 'string' ||
+      Array.from(entry).some((char) => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)
+    )
       throw new Error('Invalid stock location.');
     const label = entry.trim();
     if (!label || label.length > 120)
