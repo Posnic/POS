@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "A jelentés automatikus elküldése",
   "lang_split_payment_help": "Egy számla, több fizetési mód. Például fele kártyával és fele készpénzben.",
   "lang_payment_print_reference": "Nyomtassa ki a hivatkozást a nyugtán",
-  "lang_payment_print_reference_storage": "Nem emlékszem az átvételi preferenciára. Kérjük, próbálkozzon újra."
+  "lang_payment_print_reference_storage": "Nem emlékszem az átvételi preferenciára. Kérjük, próbálkozzon újra.",
+  "lang_bank_account_routing_details": "Bankszámla és útvonaltervezési adatok",
+  "lang_messaging_acl_manage_automation": "Automatikus üzenetek kezelése",
+  "lang_messaging_acl_manage_reports": "Ütemezett jelentések kezelése",
+  "lang_messaging_acl_manage_settings": "Üzenetbeállítások kezelése",
+  "lang_messaging_acl_send_bulk": "Tömeges ügyfélüzenetek küldése",
+  "lang_messaging_acl_send_email": "E-mailek küldése",
+  "lang_messaging_acl_send_sms": "Üzen SMS etek küldése",
+  "lang_messaging_acl_send_whatsapp": "Üzen WhatsApp etek küldése",
+  "lang_messaging_acl_view_history": "Üzenetelőzmények megtekintése",
+  "lang_postal_code": "Irányítószám",
+  "lang_stock_locations": "Készlethelyek",
+  "lang_stock_locations_help": "Választható. Soronként egy hely, legfeljebb 12. Helyezze először a fő szedési helyet. A helyek leírják, hol lehet megtalálni a terméket; nem osztják meg a készletmennyiséget.",
+  "lang_whole_selling_units": "Csak teljes mennyiségek (teljes hosszúságú vagy csomagolások)"
 }

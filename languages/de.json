@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "Diesen Bericht automatisch senden",
   "lang_split_payment_help": "Eine Rechnung, mehrere Zahlungsmethoden. Zum Beispiel zur Hälfte mit Karte und zur Hälfte in bar.",
   "lang_payment_print_reference": "Referenz auf Quittung ausdrucken",
-  "lang_payment_print_reference_storage": "Konnte mich nicht an die bevorzugte Quittung erinnern. Bitte versuchen Sie es erneut."
+  "lang_payment_print_reference_storage": "Konnte mich nicht an die bevorzugte Quittung erinnern. Bitte versuchen Sie es erneut.",
+  "lang_bank_account_routing_details": "Bankkonto und Bankleitzahl",
+  "lang_messaging_acl_manage_automation": "Automatische Nachrichten verwalten",
+  "lang_messaging_acl_manage_reports": "Geplante Berichte verwalten",
+  "lang_messaging_acl_manage_settings": "Messaging-Einstellungen verwalten",
+  "lang_messaging_acl_send_bulk": "Senden Sie massenweise Kundennachrichten",
+  "lang_messaging_acl_send_email": "E-Mails senden",
+  "lang_messaging_acl_send_sms": "SMSNachrichten senden",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppNachrichten senden",
+  "lang_messaging_acl_view_history": "Nachrichtenverlauf anzeigen",
+  "lang_postal_code": "PLZ",
+  "lang_stock_locations": "Standorte vorrätig",
+  "lang_stock_locations_help": "Fakultativ. Ein Standort pro Zeile, bis zu 12. Geben Sie den Hauptkommissionierort an die erste Stelle. Standorte beschreiben, wo der Artikel zu finden ist; sie teilen nicht die Bestandsmenge auf.",
+  "lang_whole_selling_units": "Nur ganze Mengen (volle Längen oder Packungen)"
 }

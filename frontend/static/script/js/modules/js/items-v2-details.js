@@ -178,7 +178,7 @@
     function isFamily() { return checked('has-variants') && document.querySelector('#items_v2 [name="iv2-kind"]:checked').value !== 'service'; }
     function sellingUnits() {
         return Array.from(el('selling-unit-rows').children).map(function(row) {
-            return { unit: row.querySelector('[data-unit]').value.trim(), factor: Number(row.querySelector('[data-factor]').value), price: row.querySelector('[data-price]').value === '' ? null : Number(row.querySelector('[data-price]').value) };
+            return { whole_units: row.querySelector('[data-whole]').checked, unit: row.querySelector('[data-unit]').value.trim(), factor: Number(row.querySelector('[data-factor]').value), price: row.querySelector('[data-price]').value === '' ? null : Number(row.querySelector('[data-price]').value) };
         });
     }
     function addSellingUnit(value) {
@@ -186,8 +186,9 @@
         value = value || {};
         var row = document.createElement('div'); row.className = 'iv2-selling-unit-row';
         row.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:8px;align-items:end;margin:8px 0';
-        row.innerHTML = '<label>Unit<input data-unit maxlength="20" placeholder="ft"></label><label>Base units per unit<input data-factor type="number" step="any" min="0.000000001" placeholder="0.3048"></label><label>Selling price<input data-price type="number" step="0.01" min="0.01" placeholder="Automatic" data-t-placeholder="lang_automatic"></label><button type="button" class="iv2-secondary" aria-label="Remove selling unit" data-t-aria-label="lang_remove_selling_unit">×</button>';
+        row.innerHTML = '<label>Unit<input data-unit maxlength="20" placeholder="ft"></label><label>Base units per unit<input data-factor type="number" step="any" min="0.000000001" placeholder="0.3048"></label><label>Selling price<input data-price type="number" step="0.01" min="0.01" placeholder="Automatic" data-t-placeholder="lang_automatic"></label><label style="grid-column:1 / 4"><input type="checkbox" data-whole> <span data-t="lang_whole_selling_units">Whole quantities only (full lengths or packs)</span></label><button type="button" class="iv2-secondary" aria-label="Remove selling unit" data-t-aria-label="lang_remove_selling_unit">×</button>';
         row.querySelector('[data-unit]').value = value.unit || '';
+        row.querySelector('[data-whole]').checked = value.whole_units === true;
         row.querySelector('[data-factor]').value = value.factor || '';
         row.querySelector('[data-price]').value = value.price == null ? '' : value.price;
         row.querySelector('button').onclick = function () { row.remove(); };
@@ -242,6 +243,7 @@
             plu_code: val('plu'), gtin: val('gtin'), barcodes: list(val('alt-barcodes')), purchase_unit: val('purchase-unit'), conversion_factor: number('pack-size'), brand: val('brand'), tags: list(val('tags')), position: Number(val('position')),
             items_mfg_date: val('mfg'), items_expiry_date: val('expiry'), icon: val('icon'), tile_color: auto ? auto.color : val('tile-color'), tile_shape: auto ? auto.shape : val('tile-shape'),
             image: photos.map(function (p) { return { name:p.uploaded||p.name, size:p.size, cover:p.cover }; }), cover_image: (function(){var p=photos.find(function(p){return p.cover==='yes';});return p?(p.uploaded||p.name):'item.svg';}()), channel_off: selected('channel-off') };
+        if (el('stock-locations')) out.stock_locations = val('stock-locations').split(/\r?\n/).map(function(v){return v.trim();}).filter(Boolean);
         // An older cached form must not erase saved parcel measurements.
         if (['weightKg','lengthCm','widthCm','heightCm'].every(function(k){return el('parcel-'+k);})) {
             out.parcel_details = Object.fromEntries(['weightKg','lengthCm','widthCm','heightCm'].map(function(k){return [k,val('parcel-'+k)||null];}));
@@ -287,7 +289,7 @@
         preview.textContent=val('icon')||'▦';
         preview.style.background=checked('auto-tile')&&P.autoTile?P.autoTile(val('name')).color:val('tile-color');preview.style.color='white';
     }
-    function reset() {if(el('selling-unit-rows'))el('selling-unit-rows').replaceChildren();['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){if(el('parcel-'+k))el('parcel-'+k).value='';});generation++;reading=0;photos=[];variants=[];signature='';el('variant-rows').replaceChildren();el('auto-tile').checked=true;photoPicker();P.itemTranslationsV2.reset();}
+    function reset() {if(el('stock-locations'))el('stock-locations').value='';if(el('selling-unit-rows'))el('selling-unit-rows').replaceChildren();['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){if(el('parcel-'+k))el('parcel-'+k).value='';});generation++;reading=0;photos=[];variants=[];signature='';el('variant-rows').replaceChildren();el('auto-tile').checked=true;photoPicker();P.itemTranslationsV2.reset();}
     function init() {
         if (!document.getElementById('iv2-hsn-search-button')) {
             var searchButton = button('Find HSN / SAC code', openHsnSearch);
@@ -302,6 +304,12 @@
             el('add-selling-unit').onclick = function () { addSellingUnit(); };
         }
 
+        if (!el('stock-locations')) {
+            var locationsPanel = document.createElement('section');
+            locationsPanel.style.gridColumn = '1 / -1';
+            locationsPanel.innerHTML = '<label for="iv2-stock-locations"><lang class="lang_stock_locations">Stock locations</lang></label><textarea id="iv2-stock-locations" class="form-control" rows="3" maxlength="1450" placeholder="Rack 5 / Shelf 2 / Box B"></textarea><p><lang class="lang_stock_locations_help">Optional. One location per line, up to 12. Put the main picking location first. Locations describe where to find the item; they do not divide its stock quantity.</lang></p>';
+            el('reorder').parentElement.insertAdjacentElement('afterend', locationsPanel);
+        }
         if(initialized)return;initialized=true;
         el('hsn').addEventListener('focus', hsnSuggestions);
         el('hsn').addEventListener('input', hsnSuggestions);
@@ -335,6 +343,7 @@
         reset();
         ['weightKg','lengthCm','widthCm','heightCm'].forEach(function(k){if(el('parcel-'+k))el('parcel-'+k).value=item.parcel_details && item.parcel_details[k]!=null?item.parcel_details[k]:'';});
         (item.selling_units || []).forEach(addSellingUnit);
+        if(el('stock-locations'))el('stock-locations').value=(item.stock_locations||[]).join('\n');
         var mapping = {mrp:'mrp_price',reorder:'reorder_point',plu:'plu_code',gtin:'gtin','purchase-unit':'purchase_unit','pack-size':'conversion_factor',brand:'brand',position:'sort_order',icon:'icon','tile-color':'tile_color','tile-shape':'tile_shape','service-unit':'service_unit','hsn':'hsncode','hsn-description':'hsndescription','hsn-rate':'tax','prep-note':'prep_note','prep-minutes':'prep_minutes'};
         Object.keys(mapping).forEach(function(id){if(item[mapping[id]] != null) el(id).value=item[mapping[id]];});
         ['mfg','expiry'].forEach(function(id){var v=item[id==='mfg'?'items_mfg_date':'items_expiry_date'];el(id).value=v?String(v).slice(0,10):'';});

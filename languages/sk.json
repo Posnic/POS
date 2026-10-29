@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Odoslať túto správu automaticky",
   "lang_split_payment_help": "Jeden účet, niekoľko spôsobov platby. Napríklad polovica kartou a polovica v hotovosti.",
   "lang_payment_print_reference": "Vytlačte referenciu pri prijatí",
-  "lang_payment_print_reference_storage": "Nepodarilo sa pamätať na preferenciu príjmu. Prosím, skúste to znova."
+  "lang_payment_print_reference_storage": "Nepodarilo sa pamätať na preferenciu príjmu. Prosím, skúste to znova.",
+  "lang_bank_account_routing_details": "Údaje o bankovom účte a smerovaní",
+  "lang_messaging_acl_manage_automation": "Správa automatických správ",
+  "lang_messaging_acl_manage_reports": "Správa naplánovaných zostáv",
+  "lang_messaging_acl_manage_settings": "Správa nastavení správ",
+  "lang_messaging_acl_send_bulk": "Odosielanie hromadných správ zákazníkom",
+  "lang_messaging_acl_send_email": "Odoslať e-maily",
+  "lang_messaging_acl_send_sms": "Posielanie SMS správ",
+  "lang_messaging_acl_send_whatsapp": "Posielanie WhatsApp správ",
+  "lang_messaging_acl_view_history": "Zobraziť históriu správ",
+  "lang_postal_code": "PSČ",
+  "lang_stock_locations": "Umiestnenia skladov",
+  "lang_stock_locations_help": "Voliteľné. Jedno miesto na riadok, až 12. Najskôr umiestnite hlavné miesto výberu. Lokality opisujú, kde položku nájsť; nerozdeľujú jej množstvo zásob.",
+  "lang_whole_selling_units": "Iba celé množstvá (celé dĺžky alebo balenia)"
 }

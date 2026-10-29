@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "Отправить этот отчет автоматически",
   "lang_split_payment_help": "Один счет, несколько способов оплаты. Например, наполовину картой, а наполовину наличными.",
   "lang_payment_print_reference": "Распечатайте ссылку на квитанции",
-  "lang_payment_print_reference_storage": "Не удалось запомнить предпочтительный чек. Пожалуйста, повторите попытку."
+  "lang_payment_print_reference_storage": "Не удалось запомнить предпочтительный чек. Пожалуйста, повторите попытку.",
+  "lang_bank_account_routing_details": "Банковский счет и сведения о маршруте",
+  "lang_messaging_acl_manage_automation": "Управляйте автоматическими сообщениями",
+  "lang_messaging_acl_manage_reports": "Управляйте запланированными отчетами",
+  "lang_messaging_acl_manage_settings": "Управляйте настройками обмена сообщениями",
+  "lang_messaging_acl_send_bulk": "Отправляйте массовые сообщения клиентам",
+  "lang_messaging_acl_send_email": "Отправляйте электронные письма",
+  "lang_messaging_acl_send_sms": "Отправляйте SMS сообщения",
+  "lang_messaging_acl_send_whatsapp": "Отправляйте WhatsApp сообщения",
+  "lang_messaging_acl_view_history": "Просмотр истории сообщений",
+  "lang_postal_code": "Почтовый индекс",
+  "lang_stock_locations": "Местонахождение запасов",
+  "lang_stock_locations_help": "Опционально. Одно местоположение на линию, до 12. Сначала укажите основное место комплектации. Местоположения описывают, где можно найти товар; они не делят количество товара на складе.",
+  "lang_whole_selling_units": "Только целыми партиями (полная длина или упаковка)"
 }

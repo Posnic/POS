@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "Tuma ripoti hii moja kwa moja",
   "lang_split_payment_help": "Muswada mmoja, njia kadhaa za malipo. Kwa mfano, nusu kwa kadi na nusu kwa pesa taslimu.",
   "lang_payment_print_reference": "Chapisha kumbukumbu kwenye risiti",
-  "lang_payment_print_reference_storage": "Sikuweza kukumbuka upendeleo wa risiti. Tafadhali jaribu tena."
+  "lang_payment_print_reference_storage": "Sikuweza kukumbuka upendeleo wa risiti. Tafadhali jaribu tena.",
+  "lang_bank_account_routing_details": "Akaunti ya benki na maelezo ya njia",
+  "lang_messaging_acl_manage_automation": "Dhibiti ujumbe moja kwa moja",
+  "lang_messaging_acl_manage_reports": "Simamia ripoti zilizopangwa",
+  "lang_messaging_acl_manage_settings": "Simamia mipangilio ya ujumbe",
+  "lang_messaging_acl_send_bulk": "Tuma ujumbe wingi wa wateja",
+  "lang_messaging_acl_send_email": "Tuma barua pepe",
+  "lang_messaging_acl_send_sms": "Tuma u SMS jumbe",
+  "lang_messaging_acl_send_whatsapp": "Tuma u WhatsApp jumbe",
+  "lang_messaging_acl_view_history": "Tazama historia ya ujumbe",
+  "lang_postal_code": "Msimbo wa posta",
+  "lang_stock_locations": "Maeneo ya hisa",
+  "lang_stock_locations_help": "Hiari. Eneo moja kwa kila mstari, hadi 12. Weka eneo kuu la kuchagua kwanza. Maeneo yanaelezea mahali pa kupata bidhaa; hawagawanyi kiasi chake cha hisa.",
+  "lang_whole_selling_units": "Kiasi nzima tu (urefu kamili au pakiti)"
 }

@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "Hantar laporan ini secara automatik",
   "lang_split_payment_help": "Satu bil, beberapa kaedah pembayaran. Sebagai contoh, separuh dengan kad dan separuh secara tunai.",
   "lang_payment_print_reference": "Cetak rujukan pada resit",
-  "lang_payment_print_reference_storage": "Tidak dapat mengingati keutamaan resit. Sila cuba semula."
+  "lang_payment_print_reference_storage": "Tidak dapat mengingati keutamaan resit. Sila cuba semula.",
+  "lang_bank_account_routing_details": "Butiran akaun bank dan penghalaan",
+  "lang_messaging_acl_manage_automation": "Urus mesej automatik",
+  "lang_messaging_acl_manage_reports": "Urus laporan berjadual",
+  "lang_messaging_acl_manage_settings": "Urus tetapan pemesejan",
+  "lang_messaging_acl_send_bulk": "Hantar mesej pelanggan pukal",
+  "lang_messaging_acl_send_email": "Hantar e-mel",
+  "lang_messaging_acl_send_sms": "Hantar SMS mesej",
+  "lang_messaging_acl_send_whatsapp": "Hantar WhatsApp mesej",
+  "lang_messaging_acl_view_history": "Lihat sejarah mesej",
+  "lang_postal_code": "Poskod",
+  "lang_stock_locations": "Lokasi stok",
+  "lang_stock_locations_help": "Pilihan. Satu lokasi setiap baris, sehingga 12. Letakkan lokasi pemilihan utama terlebih dahulu. Lokasi menerangkan di mana untuk mencari item; mereka tidak membahagikan kuantiti stoknya.",
+  "lang_whole_selling_units": "Kuantiti keseluruhan sahaja (panjang penuh atau pek)"
 }

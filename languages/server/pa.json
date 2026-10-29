@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "ਵਿਕਰੀ ਵਿੱਚ ਪ੍ਰਤੀ ਉਤਪਾਦ ਇੱਕ ਵਿਕਰੀ ਯੂਨਿਟ ਦੀ ਵਰਤੋਂ ਕਰੋ।",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppਕੋਈ ਸੁਨੇਹਾ ਹਵਾਲਾ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ. ਡਿਲਿਵਰੀ ਦੀ ਪੁਸ਼ਟੀ ਨਹੀਂ ਕੀਤੀ ਗਈ ਹੈ; ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਚੈਟ ਦੀ ਜਾਂਚ ਕਰੋ.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppਇਸ ਪ੍ਰਾਪਤਕਰਤਾ ਦੀ ਗੱਲਬਾਤ ਨੂੰ ਅਜੇ ਤੱਕ ਸਿੰਕ ਨਹੀਂ ਕੀਤਾ ਹੈ। ਕੋਈ ਸੁਨੇਹਾ ਨਹੀਂ ਭੇਜਿਆ ਗਿਆ। ਲਿੰਕਡ ਡਿਵਾਈਸ ਨੂੰ ਸਿੰਕ ਕਰਨਾ ਖਤਮ ਕਰਨ ਦੀ ਆਗਿਆ ਦਿਓ.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppਅਜੇ ਵੀ ਦੁਬਾਰਾ ਜੁੜ ਰਿਹਾ ਹੈ ਜਾਂ ਤਾਜ਼ੇ ਫੋਨ ਲਿੰਕ ਦੀ ਜ਼ਰੂਰਤ ਹੈ. ਕੋਈ ਸੁਨੇਹਾ ਨਹੀਂ ਭੇਜਿਆ ਗਿਆ।"
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppਅਜੇ ਵੀ ਦੁਬਾਰਾ ਜੁੜ ਰਿਹਾ ਹੈ ਜਾਂ ਤਾਜ਼ੇ ਫੋਨ ਲਿੰਕ ਦੀ ਜ਼ਰੂਰਤ ਹੈ. ਕੋਈ ਸੁਨੇਹਾ ਨਹੀਂ ਭੇਜਿਆ ਗਿਆ।",
+  "Messaging permission required.": "ਮੈਸੇਜਿੰਗ ਆਗਿਆ ਦੀ ਲੋੜ ਹੈ।",
+  "Schedule owner no longer has messaging access.": "ਅਨੁਸੂਚੀ ਮਾਲਕ ਕੋਲ ਹੁਣ ਮੈਸੇਜਿੰਗ ਪਹੁੰਚ ਨਹੀਂ ਹੈ।"
 }

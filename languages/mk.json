@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Испратете го овој извештај автоматски",
   "lang_split_payment_help": "Една сметка, неколку начини на плаќање. На пример, половина со картичка и половина во готово.",
   "lang_payment_print_reference": "Печатете референца при приемот",
-  "lang_payment_print_reference_storage": "Не можев да се сетам на преференцијата за прием. Ве молиме обидете се повторно."
+  "lang_payment_print_reference_storage": "Не можев да се сетам на преференцијата за прием. Ве молиме обидете се повторно.",
+  "lang_bank_account_routing_details": "Детали за банкарска сметка и рутирање",
+  "lang_messaging_acl_manage_automation": "Управување со автоматски пораки",
+  "lang_messaging_acl_manage_reports": "Управување со закажани извештаи",
+  "lang_messaging_acl_manage_settings": "Управувајте со поставките за пораки",
+  "lang_messaging_acl_send_bulk": "Испрати масовни пораки на клиентите",
+  "lang_messaging_acl_send_email": "Испрати е-пошта",
+  "lang_messaging_acl_send_sms": "Испрати SMS пораки",
+  "lang_messaging_acl_send_whatsapp": "Испрати WhatsApp пораки",
+  "lang_messaging_acl_view_history": "Погледнете ја историјата на пораките",
+  "lang_postal_code": "Поштенски број",
+  "lang_stock_locations": "Локации на акции",
+  "lang_stock_locations_help": "Факултативно. Една локација по линија, до 12. Прво ставете ја главната локација за берење. Локациите опишуваат каде да се најде предметот; тие не ја делат неговата количина на залихи.",
+  "lang_whole_selling_units": "Само цели количини (целосни должини или пакувања)"
 }

@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "שלח דוח זה באופן אוטומטי",
   "lang_split_payment_help": "שטר אחד, כמה אמצעי תשלום. לדוגמה, חצי בכרטיס וחצי במזומן.",
   "lang_payment_print_reference": "הדפס הפניה בקבלה",
-  "lang_payment_print_reference_storage": "לא זוכר את העדפת הקבלה. אנא נסה שוב."
+  "lang_payment_print_reference_storage": "לא זוכר את העדפת הקבלה. אנא נסה שוב.",
+  "lang_bank_account_routing_details": "חשבון בנק ופרטי ניתוב",
+  "lang_messaging_acl_manage_automation": "ניהול הודעות אוטומטיות",
+  "lang_messaging_acl_manage_reports": "ניהול דוחות מתוזמנים",
+  "lang_messaging_acl_manage_settings": "ניהול הגדרות העברת הודעות",
+  "lang_messaging_acl_send_bulk": "שלח הודעות לקוחות בכמות גדולה",
+  "lang_messaging_acl_send_email": "שלח הודעות דוא\"ל",
+  "lang_messaging_acl_send_sms": "שליחת SMS הודעות",
+  "lang_messaging_acl_send_whatsapp": "שליחת WhatsApp הודעות",
+  "lang_messaging_acl_view_history": "הצג היסטוריית הודעות",
+  "lang_postal_code": "מיקוד",
+  "lang_stock_locations": "מיקומי מלאי",
+  "lang_stock_locations_help": "אופציונלי. מיקום אחד לכל שורה, עד 12. שים תחילה את מיקום הקטיף הראשי. מיקומים מתארים היכן למצוא את הפריט; הם אינם מחלקים את כמות המלאי שלו.",
+  "lang_whole_selling_units": "כמויות שלמות בלבד (אורכים מלאים או חבילות)"
 }

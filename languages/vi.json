@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "Gửi báo cáo này tự động",
   "lang_split_payment_help": "Một hóa đơn, một số phương thức thanh toán. Ví dụ, một nửa bằng thẻ và một nửa bằng tiền mặt.",
   "lang_payment_print_reference": "In tài liệu tham khảo trên biên lai",
-  "lang_payment_print_reference_storage": "Không thể nhớ tùy chọn biên lai. Vui lòng thử lại."
+  "lang_payment_print_reference_storage": "Không thể nhớ tùy chọn biên lai. Vui lòng thử lại.",
+  "lang_bank_account_routing_details": "Tài khoản ngân hàng và chi tiết định tuyến",
+  "lang_messaging_acl_manage_automation": "Quản lý tin nhắn tự động",
+  "lang_messaging_acl_manage_reports": "Quản lý báo cáo đã lên lịch",
+  "lang_messaging_acl_manage_settings": "Quản lý cài đặt nhắn tin",
+  "lang_messaging_acl_send_bulk": "Gửi tin nhắn hàng loạt cho khách hàng",
+  "lang_messaging_acl_send_email": "Gửi email",
+  "lang_messaging_acl_send_sms": "Gửi SMS tin nhắn",
+  "lang_messaging_acl_send_whatsapp": "Gửi WhatsApp tin nhắn",
+  "lang_messaging_acl_view_history": "Xem lịch sử tin nhắn",
+  "lang_postal_code": "Mã bưu chính",
+  "lang_stock_locations": "Địa điểm chứng khoán",
+  "lang_stock_locations_help": "Tùy chọn. Một vị trí trên mỗi dòng, tối đa 12. Đặt vị trí hái chính lên hàng đầu. Vị trí mô tả nơi tìm mặt hàng; họ không chia số lượng hàng tồn kho của nó.",
+  "lang_whole_selling_units": "Chỉ số lượng toàn bộ (chiều dài đầy đủ hoặc gói)"
 }

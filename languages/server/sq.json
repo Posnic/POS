@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "Përdorni një njësi shitjeje për produkt në një shitje.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppNuk ka kthyer një referencë mesazhi. Dorëzimi është i pakonfirmuar; kontrolloni bisedën para se të riprovoni.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppende nuk ka sinkronizuar bisedën e këtij marrësi. Asnjë mesazh nuk është dërguar. Lejoni pajisjen e lidhur të përfundojë sinkronizimin.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppështë ende duke u rilidhur ose ka nevojë për një lidhje të re telefoni. Asnjë mesazh nuk është dërguar."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppështë ende duke u rilidhur ose ka nevojë për një lidhje të re telefoni. Asnjë mesazh nuk është dërguar.",
+  "Messaging permission required.": "Kërkohet leja e mesazheve",
+  "Schedule owner no longer has messaging access.": "Pronari i orarit nuk ka më qasje në mesazhe."
 }

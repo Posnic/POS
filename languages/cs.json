@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Odeslat tuto zprávu automaticky",
   "lang_split_payment_help": "Jeden účet, několik platebních metod. Například polovina kartou a polovina v hotovosti.",
   "lang_payment_print_reference": "Vytisknout odkaz na potvrzení",
-  "lang_payment_print_reference_storage": "Nelze si vzpomenout na preferenci účtenky. Zkuste to prosím znovu."
+  "lang_payment_print_reference_storage": "Nelze si vzpomenout na preferenci účtenky. Zkuste to prosím znovu.",
+  "lang_bank_account_routing_details": "Bankovní účet a údaje o směrování",
+  "lang_messaging_acl_manage_automation": "Správa automatických zpráv",
+  "lang_messaging_acl_manage_reports": "Správa naplánovaných sestav",
+  "lang_messaging_acl_manage_settings": "Správa nastavení zasílání zpráv",
+  "lang_messaging_acl_send_bulk": "Posílejte hromadné zákaznické zprávy",
+  "lang_messaging_acl_send_email": "Posílat e-maily",
+  "lang_messaging_acl_send_sms": "Posílat SMS zprávy",
+  "lang_messaging_acl_send_whatsapp": "Posílat WhatsApp zprávy",
+  "lang_messaging_acl_view_history": "Zobrazit historii zpráv",
+  "lang_postal_code": "Poštovní směrovací číslo",
+  "lang_stock_locations": "Umístění skladů",
+  "lang_stock_locations_help": "Volitelné. Jedno místo na řádek, až 12. Nejprve položte hlavní místo vychystávání. Umístění popisují, kde lze položku najít; nerozdělují její skladové množství.",
+  "lang_whole_selling_units": "Pouze celá množství (plné délky nebo balení)"
 }

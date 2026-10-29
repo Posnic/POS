@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "自动发送此报告",
   "lang_split_payment_help": "一张账单，几种付款方式。例如，一半是信用卡，一半是现金。",
   "lang_payment_print_reference": "在收据上打印参考信息",
-  "lang_payment_print_reference_storage": "记不起收据首选项了。请重试。"
+  "lang_payment_print_reference_storage": "记不起收据首选项了。请重试。",
+  "lang_bank_account_routing_details": "银行账户和路由详情",
+  "lang_messaging_acl_manage_automation": "管理自动消息",
+  "lang_messaging_acl_manage_reports": "管理预定报告",
+  "lang_messaging_acl_manage_settings": "管理消息设置",
+  "lang_messaging_acl_send_bulk": "发送批量客户消息",
+  "lang_messaging_acl_send_email": "发送电子邮件",
+  "lang_messaging_acl_send_sms": "发送SMS消息",
+  "lang_messaging_acl_send_whatsapp": "发送WhatsApp消息",
+  "lang_messaging_acl_view_history": "查看留言历史记录",
+  "lang_postal_code": "邮政编码",
+  "lang_stock_locations": "库存地点",
+  "lang_stock_locations_help": "可选。每行一个位置，最多 12 个。把主要的采摘地点放在第一位。地点描述了在哪里可以找到物品；它们不划分库存数量。",
+  "lang_whole_selling_units": "仅限整量（全长或包装）"
 }

@@ -44,3 +44,15 @@ test('removing the last alternate unit rejects stale new sales without changing 
     expect(units.stockQuantity({ unit_conversion: saved }, 10)).toBe(3.048);
   }
 });
+
+test('whole lengths reject fractions and keep their constraint after catalogue changes', () => {
+  const product = {
+    unit: 'm',
+    selling_units: [{ unit: 'length', factor: 6, price: 550, whole_units: true }],
+  };
+  const snapshot = units.resolve(product, 'length');
+  expect(units.stockQuantity({ unit_conversion: snapshot }, 2)).toBe(12);
+  expect(() => units.stockQuantity({ unit_conversion: snapshot }, 0.5)).toThrow(/whole number/);
+  const old = units.resolve({ unit: 'm' }, 'length', { unit_conversion: snapshot });
+  expect(old.whole_units).toBe(true);
+});

@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "ส่งรายงานนี้โดยอัตโนมัติ",
   "lang_split_payment_help": "หนึ่งบิลวิธีการชำระเงินหลายวิธีตัวอย่างเช่นครึ่งด้วยบัตรและครึ่งหนึ่งเป็นเงินสด",
   "lang_payment_print_reference": "พิมพ์อ้างอิงบนใบเสร็จรับเงิน",
-  "lang_payment_print_reference_storage": "จำความชอบของใบเสร็จรับเงินไม่ได้กรุณาลองอีกครั้ง"
+  "lang_payment_print_reference_storage": "จำความชอบของใบเสร็จรับเงินไม่ได้กรุณาลองอีกครั้ง",
+  "lang_bank_account_routing_details": "บัญชีธนาคารและรายละเอียดการกำหนดเส้นทาง",
+  "lang_messaging_acl_manage_automation": "จัดการข้อความอัตโนมัติ",
+  "lang_messaging_acl_manage_reports": "จัดการรายงานตามกำหนดเวลา",
+  "lang_messaging_acl_manage_settings": "จัดการการตั้งค่าการส่งข้อความ",
+  "lang_messaging_acl_send_bulk": "ส่งข้อความลูกค้าจำนวนมาก",
+  "lang_messaging_acl_send_email": "ส่งอีเมล",
+  "lang_messaging_acl_send_sms": "ส่งข้อคว SMS าม",
+  "lang_messaging_acl_send_whatsapp": "ส่งข้อคว WhatsApp าม",
+  "lang_messaging_acl_view_history": "ดูประวัติข้อความ",
+  "lang_postal_code": "รหัสไปรษณีย์",
+  "lang_stock_locations": "ที่ตั้งของสต็อก",
+  "lang_stock_locations_help": "ไม่จำเป็นหนึ่งสถานที่ต่อบรรทัดสูงสุด 12วางตำแหน่งการเลือกหลักก่อนสถานที่อธิบายว่าจะหาสินค้าได้ที่ไหน พวกเขาไม่แบ่งปริมาณสต็อก",
+  "lang_whole_selling_units": "ปริมาณทั้งหมดเท่านั้น (ความยาวเต็มหรือแพ็ค)"
 }

@@ -3056,6 +3056,8 @@
   "lang_payment_method": "Payment method",
   "lang_payment_method_summary": "Payment Method Summary",
   "lang_payment_methods": "Payment Methods",
+  "lang_payment_print_reference": "Print reference on receipt",
+  "lang_payment_print_reference_storage": "Could not remember the receipt preference. Please retry.",
   "lang_payment_reminder": "Payment Reminder",
   "lang_payment_reminders": "Payment reminders",
   "lang_payment_report": "Payment Report",
@@ -4480,6 +4482,8 @@
   "lang_stock_for_new_items": "Stock for new items",
   "lang_stock_found": "Stock found",
   "lang_stock_history_unavailable": "Stock history unavailable.",
+  "lang_stock_locations": "Stock locations",
+  "lang_stock_locations_help": "Optional. One location per line, up to 12. Put the main picking location first. Locations describe where to find the item; they do not divide its stock quantity.",
   "lang_stock_movement_is_in_the_stock_log": "; stock movement is in the stock log.",
   "lang_stock_on_hand": "Stock on hand",
   "lang_stock_preference": "Stock preference",
@@ -5023,6 +5027,7 @@
   "lang_which_items": "Which items",
   "lang_which_printer_prints_receipts_and_whether": "Which printer prints receipts, and whether the roll is 58mm, 80mm or A4, belong to this computer. The counter beside you may have a different one. They live in Hardware Manager, together with the cash drawer, kitchen printers and the weighing scale.",
   "lang_who_is_at_the_till": "Who is at the till?",
+  "lang_whole_selling_units": "Whole quantities only (full lengths or packs)",
   "lang_why_it_is_listed": "Why it is listed",
   "lang_why_use_it": "Why use it",
   "lang_width_cm": "Width (cm)",
@@ -5103,7 +5108,5 @@
   "lang_your_session_has_ended_please_sign_in_ag": "Your session has ended. Please sign in again.",
   "lang_your_standard_language_stays_unchanged_unt": "Your standard language stays unchanged until you save wording changes.",
   "lang_your_time_or_expertise": "Your time or expertise",
-  "lang_yourselecteddetails_title": "Selected details will be deleted",
-  "lang_payment_print_reference": "Print reference on receipt",
-  "lang_payment_print_reference_storage": "Could not remember the receipt preference. Please retry."
+  "lang_yourselecteddetails_title": "Selected details will be deleted"
 }

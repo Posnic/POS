@@ -89,6 +89,7 @@ async function catalogue(req) {
     const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     filter.$or = [
       { name: { $regex: escaped, $options: 'i' } },
+      ...(kind === 'items' ? [{ stock_locations: { $regex: escaped, $options: 'i' } }] : []),
       { barcode_id: q },
       { barcodes: q },
       { plu_code: q },

@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "このレポートを自動的に送信する",
   "lang_split_payment_help": "1 つの請求書、複数の支払い方法。たとえば、半分はカードで、半分は現金です。",
   "lang_payment_print_reference": "レシートにレファレンスを印刷",
-  "lang_payment_print_reference_storage": "レシート設定を思い出せませんでした。もう一度試してください。"
+  "lang_payment_print_reference_storage": "レシート設定を思い出せませんでした。もう一度試してください。",
+  "lang_bank_account_routing_details": "銀行口座とルーティングの詳細",
+  "lang_messaging_acl_manage_automation": "自動メッセージの管理",
+  "lang_messaging_acl_manage_reports": "定期レポートの管理",
+  "lang_messaging_acl_manage_settings": "メッセージ設定の管理",
+  "lang_messaging_acl_send_bulk": "顧客へのメッセージの一括送信",
+  "lang_messaging_acl_send_email": "E メールを送信",
+  "lang_messaging_acl_send_sms": "SMSメッセージを送信",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppメッセージを送信",
+  "lang_messaging_acl_view_history": "メッセージ履歴を表示する",
+  "lang_postal_code": "郵便番号",
+  "lang_stock_locations": "在庫場所",
+  "lang_stock_locations_help": "オプション。1 行につき 1 箇所、最大 12 箇所。メインピッキングロケーションを最初に配置します。ロケーションは品目の保管場所を示すもので、在庫数量の分割は行いません。",
+  "lang_whole_selling_units": "全数量のみ (全長またはパック)"
 }

@@ -367,7 +367,9 @@ $(document).ready(function () {
     $(document).bind('keydown', function (e) {
         if (window.location.hash.slice(1) !== '/sales/new') return;
 
-        var binding = TILL_KEYS[e.key];
+        var key = e.key || (e.originalEvent && e.originalEvent.key) ||
+            ({ 113: 'F2', 115: 'F4', 119: 'F8', 120: 'F9' })[e.which || e.keyCode];
+        var binding = TILL_KEYS[key];
         if (!binding) return;
 
         /*

@@ -5321,5 +5321,16 @@
   "lang_bank_account_routing_details": "வங்கிக் கணக்கு மற்றும் வங்கிக் குறியீட்டு விவரங்கள்",
   "lang_postal_code": "அஞ்சல் குறியீடு",
   "lang_payment_print_reference": "ரசீதில் குறிப்பை அச்சிடுங்கள்",
-  "lang_payment_print_reference_storage": "ரசீது விருப்பத்தை நினைவில் கொள்ள முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சி"
+  "lang_payment_print_reference_storage": "ரசீது விருப்பத்தை நினைவில் கொள்ள முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சி",
+  "lang_messaging_acl_manage_automation": "தானியங்கி செய்திகளை நிர",
+  "lang_messaging_acl_manage_reports": "திட்டமிடப்பட்ட அறிக்கைகளை நிர்வ",
+  "lang_messaging_acl_manage_settings": "செய்தி அமைப்புகளை நிர்வகித்து",
+  "lang_messaging_acl_send_bulk": "மொத்த வாடிக்கையாளர் செய்திகளை அனு",
+  "lang_messaging_acl_send_email": "மின்னஞ்சல்களை அன",
+  "lang_messaging_acl_send_sms": "SMSசெய்திகளை அனுப்பவும்",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppசெய்திகளை அனுப்பவும்",
+  "lang_messaging_acl_view_history": "செய்தி வரலாற்றைக் காண்க",
+  "lang_stock_locations": "பங்கு இருப்பிடங்கள்",
+  "lang_stock_locations_help": "விருப்பமானது. ஒரு வரிக்கு ஒரு இடம், 12 வரை. முதலில் பிரதான தேர்ந்தெடுக்கும் இடத்தை வைக்கவும். பொருளை எங்கு கண்டுபிடிப்பது என்பதை இருப்பிடங்கள் விவரிக்கின்றன; அவை அதன் பங்கு அளவைப் பிரிக்கவில்லை.",
+  "lang_whole_selling_units": "முழு அளவுகள் மட்டுமே (முழு நீளங்கள் அல்லது பொதிகள்)"
 }

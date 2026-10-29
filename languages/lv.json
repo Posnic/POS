@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Nosūtiet šo ziņojumu automātiski",
   "lang_split_payment_help": "Viens rēķins, vairākas maksājuma metodes. Piemēram, puse ar karti un puse skaidrā naudā.",
   "lang_payment_print_reference": "Izdrukājiet atsauci pēc saņemšanas",
-  "lang_payment_print_reference_storage": "Nevarēja atcerēties saņemšanas izvēli. Lūdzu, mēģiniet atkārtoti."
+  "lang_payment_print_reference_storage": "Nevarēja atcerēties saņemšanas izvēli. Lūdzu, mēģiniet atkārtoti.",
+  "lang_bank_account_routing_details": "Bankas konta un maršruta informācija",
+  "lang_messaging_acl_manage_automation": "Automātisko ziņojumu pārvaldīšana",
+  "lang_messaging_acl_manage_reports": "Pārvaldiet plānotos pārskatus",
+  "lang_messaging_acl_manage_settings": "Pārvaldīt ziņojumapmaiņas iestatījumus",
+  "lang_messaging_acl_send_bulk": "Lielapjoma klientu ziņojumu sūtīšana",
+  "lang_messaging_acl_send_email": "Sūtīt e-pastus",
+  "lang_messaging_acl_send_sms": "Ziņu sū SMS tīšana",
+  "lang_messaging_acl_send_whatsapp": "Ziņu sū WhatsApp tīšana",
+  "lang_messaging_acl_view_history": "Skatīt ziņojumu vēsturi",
+  "lang_postal_code": "Pasta indekss",
+  "lang_stock_locations": "Krājumu atrašanās vietas",
+  "lang_stock_locations_help": "Pēc izvēles. Viena vieta vienā rindā, līdz 12. Vispirms ievietojiet galveno atlases vietu. Atrašanās vietas apraksta, kur atrast preci; tās nesadala tā krājumu daudzumu.",
+  "lang_whole_selling_units": "Tikai veseli daudzumi (pilni garumi vai iepakojumi)"
 }

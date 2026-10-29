@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Skicka denna rapport automatiskt",
   "lang_split_payment_help": "En faktura, flera betalningsmetoder. Till exempel hälften med kort och hälften kontant.",
   "lang_payment_print_reference": "Skriv ut referens på kvittot",
-  "lang_payment_print_reference_storage": "Kunde inte komma ihåg kvittopreferensen. Vänligen försök igen."
+  "lang_payment_print_reference_storage": "Kunde inte komma ihåg kvittopreferensen. Vänligen försök igen.",
+  "lang_bank_account_routing_details": "Bankkonto och routingdetaljer",
+  "lang_messaging_acl_manage_automation": "Hantera automatiska meddelanden",
+  "lang_messaging_acl_manage_reports": "Hantera schemalagda rapporter",
+  "lang_messaging_acl_manage_settings": "Hantera meddelandeinställningar",
+  "lang_messaging_acl_send_bulk": "Skicka bulkkundmeddelanden",
+  "lang_messaging_acl_send_email": "Skicka e-post",
+  "lang_messaging_acl_send_sms": "Skicka SMS meddelanden",
+  "lang_messaging_acl_send_whatsapp": "Skicka WhatsApp meddelanden",
+  "lang_messaging_acl_view_history": "Visa meddelandehistorik",
+  "lang_postal_code": "Postnummer",
+  "lang_stock_locations": "Lagerplatser",
+  "lang_stock_locations_help": "Valfritt. En plats per rad, upp till 12. Sätt huvudplockningsplatsen först. Platser beskriver var du kan hitta artikeln; de delar inte upp dess lagerkvantitet.",
+  "lang_whole_selling_units": "Endast hela kvantiteter (hela längder eller förpackningar)"
 }

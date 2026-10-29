@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "ಈ ವರದಿಯನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಕಳುಹಿಸಿ",
   "lang_split_payment_help": "ಒಂದು ಬಿಲ್, ಹಲವಾರು ಪಾವತಿ ವಿಧಾನಗಳು. ಉದಾಹರಣೆಗೆ, ಅರ್ಧದಷ್ಟು ಕಾರ್ಡ್ ಮತ್ತು ಅರ್ಧದಷ್ಟು ನಗದು.",
   "lang_payment_print_reference": "ರಸೀದಿಯ ಮೇಲೆ ಉಲ್ಲೇಖ ಮುದ್ರ",
-  "lang_payment_print_reference_storage": "ರಸೀದಿ ಆದ್ಯತೆಯನ್ನು ನೆನಪಿನಲ್ಲಿಟ್ಟುಕೊಳ್ಳಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮರುಪ್ರಯತ್ನಿಸಿ."
+  "lang_payment_print_reference_storage": "ರಸೀದಿ ಆದ್ಯತೆಯನ್ನು ನೆನಪಿನಲ್ಲಿಟ್ಟುಕೊಳ್ಳಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮರುಪ್ರಯತ್ನಿಸಿ.",
+  "lang_bank_account_routing_details": "ಬ್ಯಾಂಕ್ ಖಾತೆ ಮತ್ತು ರೂಟಿಂಗ್ ವಿವರಗಳು",
+  "lang_messaging_acl_manage_automation": "ಸ್ವಯಂಚಾಲಿತ ಸಂದೇಶ ನಿರ್ವಹಿಸಿ",
+  "lang_messaging_acl_manage_reports": "ನಿಗದಿತ ವರದಿಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
+  "lang_messaging_acl_manage_settings": "ಸಂದೇಶ ಸೆಟ್ಟಿಂಗ್ಗಳನ್ನು ನಿರ್ವಹಿಸಿ",
+  "lang_messaging_acl_send_bulk": "ಬೃಹತ್ ಗ್ರಾಹಕ ಸಂದೇಶಗಳನ್ನು ಕಳುಹಿಸಿ",
+  "lang_messaging_acl_send_email": "ಇಮೇಲ್ಗಳನ್ನು ಕಳುಹಿಸಿ",
+  "lang_messaging_acl_send_sms": "SMSಸಂದೇಶಗಳನ್ನು ಕಳುಹಿಸಿ",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppಸಂದೇಶಗಳನ್ನು ಕಳುಹಿಸಿ",
+  "lang_messaging_acl_view_history": "ಸಂದೇಶ ಇತಿಹಾಸವನ್ನು ವೀಕ್ಷಿಸಿ",
+  "lang_postal_code": "ಅಂಚೆ ಸಂಕೇತ",
+  "lang_stock_locations": "ಸ್ಟಾಕ್ ಸ್ಥಳಗಳು",
+  "lang_stock_locations_help": "ಐಚ್ಛಿಕ. ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು ಸ್ಥಳ, 12 ವರೆಗೆ. ಮುಖ್ಯ ಆಯ್ಕೆಮಾಡುವ ಸ್ಥಳವನ್ನು ಮೊದಲು ಇರಿಸಿ. ಐಟಂ ಅನ್ನು ಎಲ್ಲಿ ಕಂಡುಹಿಡಿಯಬೇಕೆಂದು ಸ್ಥಳಗಳು ವಿವರಿಸುತ್ತವೆ; ಅವರು ಅದರ ಸ್ಟಾಕ್ ಪ್ರಮಾಣವನ್ನು ವಿಭಜಿಸುವುದಿಲ್ಲ.",
+  "lang_whole_selling_units": "ಸಂಪೂರ್ಣ ಪ್ರಮಾಣಗಳು ಮಾತ್ರ (ಪೂರ್ಣ ಉದ್ದಗಳು ಅಥವಾ ಪ್ಯಾಕ್ಗಳು)"
 }

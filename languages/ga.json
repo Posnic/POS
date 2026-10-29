@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Seol an tuarascáil seo go huath",
   "lang_split_payment_help": "Bille amháin, roinnt modhanna íocaíochta. Mar shampla, leath ar chárta agus leath in airgead tirim.",
   "lang_payment_print_reference": "Tagairt a phriontáil ar admháil",
-  "lang_payment_print_reference_storage": "Ní raibh sé in ann cuimhneamh ar an rogha admháil. Déan iarracht arís."
+  "lang_payment_print_reference_storage": "Ní raibh sé in ann cuimhneamh ar an rogha admháil. Déan iarracht arís.",
+  "lang_bank_account_routing_details": "Cuntas bainc agus sonraí ródaithe",
+  "lang_messaging_acl_manage_automation": "Teachtaireachtaí uathoibr",
+  "lang_messaging_acl_manage_reports": "Tuarascálacha sceidealta",
+  "lang_messaging_acl_manage_settings": "Bainistigh socruithe teachtai",
+  "lang_messaging_acl_send_bulk": "Seol mór-theachtaireachtaí do chu",
+  "lang_messaging_acl_send_email": "Seol ríomhphoist",
+  "lang_messaging_acl_send_sms": "Seol teachtai SMS reachtaí",
+  "lang_messaging_acl_send_whatsapp": "Seol teachtai WhatsApp reachtaí",
+  "lang_messaging_acl_view_history": "Féach ar stair teachtaireachtaí",
+  "lang_postal_code": "Cód poist",
+  "lang_stock_locations": "Suíomhanna stoic",
+  "lang_stock_locations_help": "Roghnach. Suíomh amháin in aghaidh an líne, suas go dtí 12. Cuir an príomh-shuíomh piocála ar dtús. Déanann suíomhanna cur síos ar an áit ar féidir an earra a aimsiú; ní roinneann siad a chainníocht stoc.",
+  "lang_whole_selling_units": "Cainníochtaí iomlána amháin (fad iomlán nó pacáistí)"
 }
