@@ -1,0 +1,39 @@
+Build a signed Windows installer without publishing
+
+Use the Windows computer with the USB signing token physically connected.
+The existing token signs as its certified publisher (currently BillMax), not
+Posnic Innovations Private Limited. A new publisher requires a new certificate.
+
+One-time prerequisites:
+- Git, Node.js 22.12 or newer, Windows SDK Signing Tools, VC++ x64 runtime.
+- Token middleware/driver and its certificate registered in CurrentUser\My.
+- Clone the POS repository; check out main and pull the latest changes.
+- For a full cloud-enabled release, clone the private Posnic/Gateway repository
+  beside POS (or supply -SyncAgentDir pointing to Gateway/apps/sync-agent).
+- From the POS folder, run src\download-mongodb.bat once.
+
+Then run from a PowerShell terminal in POS:
+  powershell -NoProfile -File .\scripts\build-signed-windows.ps1
+
+If Windows blocks the downloaded script, inspect it first, then unblock that
+file with Unblock-File .\scripts\build-signed-windows.ps1 and run again.
+If your organization requires signed scripts, follow its policy instead.
+
+If multiple signing certificates are listed:
+  powershell -NoProfile -File .\scripts\build-signed-windows.ps1 -Thumbprint YOUR_CERTIFICATE_THUMBPRINT
+
+The token software asks for the PIN during signing. Enter it there only.
+It may ask several times or use a cached unlocked session. Never send the PIN,
+private key or token to anyone. No signing password or GitHub token is required
+as a script argument. Dependencies are installed from the committed lockfiles.
+
+Output: dist\Posnic-VERSION-signed-RUN.zip
+Send the ZIP back, not just the EXE. It contains the signed installer, blockmap,
+update manifest, SHA256 checksums and build information. These exact files must
+remain together because signing changes the installer hashes.
+
+The command does not change versions, commit, push, tag or publish anything.
+The build is not release approval. The maintainer must verify the returned
+signature/checksums, source commit, installer and release version before upload.
+Use a fresh output on every run; no existing build directory is deleted.
+Do not run release:ship for this handoff; that command publishes a release.
