@@ -135,6 +135,7 @@ class WhatsAppService extends EventEmitter {
               : [],
         },
       });
+      this._recoverNavigationDuringInjection(client);
 
       let rejectDeadline;
       const deadline = new Promise((_, reject) => {
@@ -226,6 +227,21 @@ class WhatsAppService extends EventEmitter {
       }
       return { status: false, message: String(error?.message || error), connected: false };
     }
+  }
+
+  _recoverNavigationDuringInjection(client) {
+    // WhatsApp can reload while its web client is being attached. Retry that
+    // attachment in the same browser; never create another login/session.
+    if (typeof client.inject !== 'function') return;
+    const inject = client.inject.bind(client);
+    client.inject = async (...args) => {
+      for (let attempt = 0; ; attempt++) {
+        try { return await inject(...args); } catch (error) {
+          if (attempt >= 2 || !/Execution context was destroyed/i.test(String(error?.message || error))) throw error;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    };
   }
 
   async _closeFailedClient(client) {

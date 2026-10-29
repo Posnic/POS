@@ -80,6 +80,26 @@ const qrcode = require('qrcode');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const mockClient = Client.__mockInstance;
 
+test('web navigation retries attachment in the same client and bounds failures', async () => {
+  jest.useFakeTimers();
+  try {
+    const service = require('../../../src/services/whatsapp.service');
+    const inject = jest.fn().mockRejectedValueOnce(new Error('Execution context was destroyed')).mockResolvedValue('ready');
+    const client = { inject };
+    service._recoverNavigationDuringInjection(client);
+    const result = client.inject();
+    await jest.runAllTimersAsync();
+    await expect(result).resolves.toBe('ready');
+    expect(inject).toHaveBeenCalledTimes(2);
+    const failure = new Error('Execution context was destroyed');
+    inject.mockReset().mockRejectedValue(failure);
+    const rejection = expect(client.inject()).rejects.toBe(failure);
+    await jest.runAllTimersAsync();
+    await rejection;
+    expect(inject).toHaveBeenCalledTimes(3);
+  } finally { jest.useRealTimers(); }
+});
+
 test('failed startup closes its own orphaned browser without removing authentication', async () => {
   const service = require('../../../src/services/whatsapp.service');
   const child = { exitCode: null, killed: false, kill: jest.fn() };
