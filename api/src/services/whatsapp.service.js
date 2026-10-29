@@ -11,6 +11,13 @@ class WhatsAppService extends EventEmitter {
     this.qrCodes = new Map();
     this.connectionStatus = new Map();
     this.sessionPath = path.join(__dirname, '../../.wwebjs_auth');
+    this.legacySessionPath = this.sessionPath;
+    if (process.versions.electron) {
+      // Installed resources are replaceable and can exceed Chromium's Windows
+      // database path limit. Keep login databases in the writable app profile.
+      const app = require('electron').app;
+      this.sessionPath = path.join(app.getPath('userData'), '.wwebjs_auth');
+    }
 
     if (!fs.existsSync(this.sessionPath)) {
       fs.mkdirSync(this.sessionPath, { recursive: true });
@@ -66,6 +73,14 @@ class WhatsAppService extends EventEmitter {
       const qrcode = require('qrcode');
 
       const clientKey = this._clientKey(deviceId, branchId);
+      if (this.legacySessionPath !== this.sessionPath) {
+        const oldSession = path.join(this.legacySessionPath, `session-${clientKey}`);
+        const newSession = path.join(this.sessionPath, `session-${clientKey}`);
+        if (!fs.existsSync(newSession) && fs.existsSync(oldSession)) {
+          // Preserve existing linked accounts; retain the original as backup.
+          fs.cpSync(oldSession, newSession, { recursive: true, errorOnExist: true, force: false });
+        }
+      }
 
       if (this.clients.has(clientKey)) {
         const existingClient = this.clients.get(clientKey);

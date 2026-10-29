@@ -41,6 +41,7 @@ jest.mock('fs', () => ({
   existsSync: jest.fn().mockReturnValue(true),
   mkdirSync: jest.fn(),
   rmSync: jest.fn(),
+  cpSync: jest.fn(),
 }));
 
 jest.mock('whatsapp-web.js', () => {
@@ -79,6 +80,28 @@ const fs = require('fs');
 const qrcode = require('qrcode');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const mockClient = Client.__mockInstance;
+
+test('desktop migration preserves legacy authentication and never overwrites a profile session', async () => {
+  const service = require('../../../src/services/whatsapp.service');
+  const previous = { session: service.sessionPath, legacy: service.legacySessionPath };
+  service.sessionPath = '/profile/.wwebjs_auth';
+  service.legacySessionPath = '/legacy/.wwebjs_auth';
+  fs.cpSync.mockClear();
+  fs.existsSync.mockImplementation(p => String(p).includes('legacy'));
+  try {
+    await service.initializeClient('migration', 'branch');
+    expect(fs.cpSync).toHaveBeenCalledWith(expect.stringContaining('legacy'), expect.stringContaining('profile'), { recursive: true, errorOnExist: true, force: false });
+    fs.cpSync.mockClear();
+    fs.existsSync.mockReturnValue(true);
+    await service.initializeClient('migration', 'branch');
+    expect(fs.cpSync).not.toHaveBeenCalled();
+  } finally {
+    service._safeCleanupClient('branch_migration');
+    service.sessionPath = previous.session;
+    service.legacySessionPath = previous.legacy;
+    fs.existsSync.mockReturnValue(true);
+  }
+});
 
 test('web navigation retries attachment in the same client and bounds failures', async () => {
   jest.useFakeTimers();
