@@ -227,7 +227,7 @@ class VariantsService {
    * Create a new variant
    * Matches PHP: add() / variantInsertUpdate() insert
    */
-  async createVariant(data, branch_id = null, branch_name = '') {
+  async createVariant(data, branch_id = null, branch_name = '', licenseId = null) {
     try {
       const { name, product_type = [], description } = data;
 
@@ -265,11 +265,12 @@ class VariantsService {
         };
       }
 
+      const tenant = require('../utils/record-scope').scope({ licenseId, branchId: branch_id });
       const variantData = {
         name: trimmedName,
         fields,
         description: description ? String(description).trim() : DEFAULT_VALUES.DESCRIPTION,
-        branch_id: branch_id,
+        ...tenant,
         branch_name: branch_name,
       };
 
