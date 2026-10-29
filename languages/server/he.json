@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "לא ניתן למצוא את המספר הזה בWhatsApp. בדוק את קוד המדינה ואת המספר.",
   "This receipt link is invalid. Ask the shop to send it again.": "קישור קבלה זה אינו חוקי. בקש מהחנות לשלוח אותו שוב.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppלא החזיר הפניה להודעה. המסירה אינה מאושרת; בדוק את הצ'אט לפני שתנסה שוב.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppעדיין לא סנכרן את הצ'אט של הנמען הזה. שום הודעה לא נשלחה. אפשר להתקן המקושר לסיים את הסנכרון.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppעדיין מתחבר מחדש או זקוק לקישור טלפון חדש. שום הודעה לא נשלחה.",
   "Messaging permission required.": "נדרשת הרשאת העברת הודעות.",
   "Schedule owner no longer has messaging access.": "לבעלים של לוח הזמנים אין עוד גישה להודעות."

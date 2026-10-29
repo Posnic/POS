@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Seda numbrit ei leitudWhatsApp. Kontrollige riigi koodi ja numbrit.",
   "This receipt link is invalid. Ask the shop to send it again.": "See kviitungi link on kehtetu. Paluge poest see uuesti saata.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppei tagastanud sõnumi viidet. Kohaletoimetamine pole kinnitatud; kontrollige vestlust enne uuesti proovimist.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApppole selle saaja vestlust veel sünkrooninud. Ühtegi sõnumit ei saadetud. Luba lingitud seadmel sünkroonimine lõpetada.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppühendab endiselt uuesti või vajab värsket telefonilinki. Ühtegi sõnumit ei saadetud.",
   "Messaging permission required.": "Vajalik sõnumside luba.",
   "Schedule owner no longer has messaging access.": "Ajakava omanikul pole enam juurdepääsu sõnumitele."

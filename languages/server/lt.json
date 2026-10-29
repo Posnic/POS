@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Šio numerio nepavyko rastiWhatsApp. Patikrinkite šalies kodą ir numerį.",
   "This receipt link is invalid. Ask the shop to send it again.": "Ši gavimo nuoroda yra negaliojanti. Paprašykite parduotuvės atsiųsti jį dar kartą.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnegrąžino pranešimo nuorodos. Pristatymas nepatvirtintas; prieš bandydami pakartotinai patikrinkite pokalbį.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppdar nesinchronizavo šio gavėjo pokalbio. Jokia žinutė nebuvo išsiųsta. Leiskite susietam įrenginiui baigti sinchronizavimą.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppvis dar jungiasi iš naujo arba reikia naujos telefono nuorodos. Jokia žinutė nebuvo išsiųsta.",
   "Messaging permission required.": "Reikalingas leidimas žinučių siuntimui.",
   "Schedule owner no longer has messaging access.": "Tvarkaraščio savininkas nebeturi prieigos prie pranešimų."

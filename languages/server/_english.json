@@ -2835,9 +2835,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": [
     "src/services/whatsapp.service.js"
   ],
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": [
-    "src/services/whatsapp.service.js"
-  ],
   "WhatsApp is not connected. Please go to Settings → WhatsApp Connection and connect your WhatsApp first.": [
     "src/services/whatsapp.service.js"
   ],

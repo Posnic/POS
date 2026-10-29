@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Questo numero non è stato trovato suWhatsApp. Controlla il prefisso internazionale e il numero.",
   "This receipt link is invalid. Ask the shop to send it again.": "Questo link per la ricevuta non è valido. Chiedi al negozio di inviarlo nuovamente.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnon ha restituito un riferimento al messaggio. La consegna non è confermata; controlla la chat prima di riprovare.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppnon ha ancora sincronizzato la chat di questo destinatario. Non è stato inviato alcun messaggio. Consenti al dispositivo collegato di completare la sincronizzazione.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppsi sta ancora riconnettendo o necessita di un nuovo collegamento telefonico. Non è stato inviato alcun messaggio.",
   "Messaging permission required.": "È richiesta l'autorizzazione alla messaggistica.",
   "Schedule owner no longer has messaging access.": "Il proprietario della pianificazione non ha più accesso alla messaggistica."

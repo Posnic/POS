@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Toto číslo nebylo možné najít naWhatsApp. Zkontrolujte kód země a číslo.",
   "This receipt link is invalid. Ask the shop to send it again.": "Tento odkaz na potvrzení je neplatný. Požádejte obchod, aby jej znovu odeslal.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnevrátil odkaz na zprávu. Dodání není potvrzeno; před opětovným pokusem zkontrolujte chat.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppzatím nesynchronizoval chat tohoto příjemce. Nebyla odeslána žádná zpráva. Povolte připojenému zařízení dokončit synchronizaci.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppstále se znovu připojuje nebo potřebuje nové telefonní spojení. Nebyla odeslána žádná zpráva.",
   "Messaging permission required.": "Vyžaduje se oprávnění pro zasílání zpráv.",
   "Schedule owner no longer has messaging access.": "Vlastník plánu již nemá přístup ke zprávám."

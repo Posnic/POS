@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Αυτός ο αριθμός δεν βρέθηκε στοWhatsApp. Ελέγξτε τον κωδικό χώρας και τον αριθμό.",
   "This receipt link is invalid. Ask the shop to send it again.": "Αυτός ο σύνδεσμος απόδειξης δεν είναι έγκυρος. Ζητήστε από το κατάστημα να το στείλει ξανά.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppδεν επέστρεψε αναφορά μηνύματος. Η παράδοση δεν έχει επιβεβαιωθεί. Ελέγξτε τη συνομιλία πριν προσπαθήσετε ξανά.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppδεν έχει συγχρονίσει ακόμα τη συνομιλία αυτού του παραλήπτη. Κανένα μήνυμα δεν στάλθηκε. Επιτρέψτε στη συνδεδεμένη συσκευή να ολοκληρώσει τον συγχρονισμό.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppεξακολουθεί να επανασυνδέεται ή χρειάζεται έναν νέο σύνδεσμο τηλεφώνου. Κανένα μήνυμα δεν στάλθηκε.",
   "Messaging permission required.": "Απαιτείται άδεια ανταλλαγής μηνυμάτων.",
   "Schedule owner no longer has messaging access.": "Ο κάτοχος προγράμματος δεν έχει πλέον πρόσβαση σε μηνύματα."

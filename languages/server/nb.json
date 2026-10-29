@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Dette nummeret ble ikke funnet påWhatsApp. Sjekk landskoden og nummeret.",
   "This receipt link is invalid. Ask the shop to send it again.": "Denne kvitteringslenken er ugyldig. Be butikken om å sende den igjen.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppreturnerte ikke en meldingsreferanse. Levering er ubekreftet; sjekk chatten før du prøver på nytt.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApphar ikke synkronisert denne mottakerens chat ennå. Ingen melding ble sendt. La den koblede enheten fullføre synkroniseringen.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppkobler fortsatt til igjen eller trenger en ny telefonkobling. Ingen melding ble sendt.",
   "Messaging permission required.": "Meldingstillatelse kreves.",
   "Schedule owner no longer has messaging access.": "Tidsplaneier har ikke lenger meldingstilgang."

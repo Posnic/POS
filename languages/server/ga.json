@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Ní fhéadfaí an uimhir seo a fháil arWhatsApp. Seiceáil cód agus uimhir na tíre.",
   "This receipt link is invalid. Ask the shop to send it again.": "Tá an nasc admhála seo neamhbhailí. Iarr ar an siopa é a sheoladh arís.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppníor thug sé tagairt teachtaireachta ar ais. Níl seachadadh dearbhaithe; seiceáil an comhrá sula ndéanann tú iarracht arís",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppníor shioncronaigh sé comhrá an fhaighteora seo fós. Níor seoladh aon teachtaireacht. Lig don fheiste nasctha sioncrónú a chríochnú.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApptá sé fós ag athnascadh nó teastaíonn nasc úr teileafóin uait. Níor seoladh aon teachtaireacht.",
   "Messaging permission required.": "Teastaíonn cead teachtaireachtaí.",
   "Schedule owner no longer has messaging access.": "Níl rochtain ag úinéir an sceideal a thuilleadh"

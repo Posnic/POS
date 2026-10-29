@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Acest număr nu a putut fi găsit peWhatsApp. Verificați codul țării și numărul.",
   "This receipt link is invalid. Ask the shop to send it again.": "Acest link de primire nu este valid. Cereți magazinului să o trimită din nou.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnu a returnat o referință de mesaj. Livrarea nu este confirmată; verificați chat-ul înainte de a încerca din nou.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppnu a sincronizat încă chat-ul acestui destinatar. Nu a fost trimis niciun mesaj. Permiteți dispozitivului conectat să termine sincronizarea.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppîncă se reconectează sau are nevoie de o legătură telefonică nouă. Nu a fost trimis niciun mesaj.",
   "Messaging permission required.": "Este necesară permisiunea de mesagerie.",
   "Schedule owner no longer has messaging access.": "Proprietarul programului nu mai are acces la mesagerie."

@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Þetta númer var ekki að finna áWhatsApp. Athugaðu landsnúmerið og númerið.",
   "This receipt link is invalid. Ask the shop to send it again.": "Þessi kvittunartengill er ógildur. Biðjið verslunina um að senda hana aftur.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppskilaði ekki skilaboðatilvísun. Afhending er óstaðfest; athugaðu spjallið áður en þú reynir aftur.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApphefur ekki samstillt spjall þessa viðtakanda ennþá. Engin skilaboð voru send. Leyfðu tengdu tækinu að ljúka samstillingu.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApper enn að tengja aftur eða þarf nýjan símatengil. Engin skilaboð voru send.",
   "Messaging permission required.": "Skilaboðaleyfi krafist.",
   "Schedule owner no longer has messaging access.": "Eigandi dagskrár hefur ekki lengur aðgang að skilaboðum."

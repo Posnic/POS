@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Šo numuru nevarēja atrast vietnēWhatsApp. Pārbaudiet valsts kodu un numuru.",
   "This receipt link is invalid. Ask the shop to send it again.": "Šī kvīta saite nav derīga. Palūdziet veikalam nosūtīt to vēlreiz.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppneatdeva ziņojuma atsauci. Piegāde nav apstiprināta; pirms atkārtotas mēģināšanas pārbaudiet tērzēšanu.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppvēl nav sinhronizējis šī saņēmēja tērzēšanu. Ziņojums netika nosūtīts. Ļaujiet saistītajai ierīcei pabeigt sinhronizāciju.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppjoprojām atjauno savienojumu vai nepieciešama jauna tālruņa saite. Ziņojums netika nosūtīts.",
   "Messaging permission required.": "Ir nepieciešama ziņojumapmaiņas atļauja.",
   "Schedule owner no longer has messaging access.": "Grafika īpašniekam vairs nav piekļuves ziņojumapmaiņai."

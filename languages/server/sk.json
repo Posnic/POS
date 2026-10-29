@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Toto číslo sa nepodarilo nájsťWhatsApp. Skontrolujte kód krajiny a číslo.",
   "This receipt link is invalid. Ask the shop to send it again.": "Tento odkaz na potvrdenie je neplatný. Požiadajte obchod, aby ho poslal znova.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnevrátil odkaz na správu. Dodanie nie je potvrdené; pred opätovným skúšaním skontrolujte chat.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppzatiaľ nesynchronizoval chat tohto príjemcu. Nebola odoslaná žiadna správa. Povoliť prepojenému zariadeniu dokončiť synchronizáciu.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppstále sa znova pripája alebo potrebuje nové telefónne spojenie. Nebola odoslaná žiadna správa.",
   "Messaging permission required.": "Vyžaduje sa povolenie na správu.",
   "Schedule owner no longer has messaging access.": "Majiteľ plánu už nemá prístup k správam."

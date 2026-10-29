@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Ez a szám nem találhatóWhatsApp. Ellenőrizze az ország kódját és számát.",
   "This receipt link is invalid. Ask the shop to send it again.": "Ez az átvételi link érvénytelen. Kérje meg a boltot, hogy küldje el újra.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnem adott vissza üzenethivatkozást. A kézbesítés nem erősített meg; ellenőrizze a csevegést, mielőtt újrapróbálná.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppmég nem szinkronizálta a címzett csevegését. Üzenetet nem küldtek. Engedje, hogy a csatolt eszköz befejezze a szinkronizálást.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmég mindig újra csatlakozik, vagy új telefonkapcsolatra van szüksége. Üzenetet nem küldtek.",
   "Messaging permission required.": "Üzenetküldési engedély szükséges.",
   "Schedule owner no longer has messaging access.": "Az ütemezés tulajdonosának már nincs üzenetküldési hozzáférése."

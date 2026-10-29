@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "Bu numara üzerinde bulunamadıWhatsApp. Ülke kodunu ve numarasını kontrol edin.",
   "This receipt link is invalid. Ask the shop to send it again.": "Bu makbuz bağlantısı geçersiz. Mağazadan tekrar göndermesini isteyin.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppbir mesaj referansı döndürmedi. Teslimat onaylanmadı; yeniden denemeden önce sohbeti kontrol edin.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApphenüz bu alıcının sohbetini senkronize etmedi. Mesaj gönderilmedi. Bağlı cihazın senkronizasyonu bitirmesine izin verin.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApphala yeniden bağlanıyor veya yeni bir telefon bağlantısına ihtiyaç duyuyor. Mesaj gönderilmedi.",
   "Messaging permission required.": "Mesajlaşma izni gerekli.",
   "Schedule owner no longer has messaging access.": "Program sahibinin artık mesajlaşma erişimi yok."

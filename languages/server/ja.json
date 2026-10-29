@@ -977,7 +977,6 @@
   "This number could not be found on WhatsApp. Check the country code and number.": "この番号は見つかりませんでしたWhatsApp。国番号と国番号を確認してください。",
   "This receipt link is invalid. Ask the shop to send it again.": "この領収書リンクは無効です。ショップに再度送信するよう依頼してください。",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppメッセージリファレンスが返されませんでした。配信は未確認です。チャットを確認してから再試行してください。",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppこの受信者のチャットをまだ同期していません。メッセージは送信されませんでした。リンクされたデバイスによる同期の終了を許可します。",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppまだ再接続中か、新しい電話リンクが必要です。メッセージは送信されませんでした。",
   "Messaging permission required.": "メッセージング権限が必要です。",
   "Schedule owner no longer has messaging access.": "スケジュールの所有者にはメッセージングへのアクセス権がなくなりました。"
