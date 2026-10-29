@@ -17,11 +17,13 @@ Item edits use existing item write permission; inventory lookup uses item read p
 - API unit suites: 427 passing (sale service, selling units, item repository, WhatsApp service).
 - Combined integration/regression run: 45 passing (returns, Gateway/till sync, mobile inventory, location validation, unit picker, shortcuts).
 - Item editor browser test: loading/editing/saving locations passes. Layout checked at 1366px and 390px without horizontal overflow.
-- Mobile independent branch: type checking and full test suite pass; offline SQLite rack lookup and clearing covered.
+- Mobile latest-main branch: type checking, all 134 tests and web export pass; offline SQLite rack lookup and clearing covered.
 - Translation coverage: all used UI and server keys translated.
 - Disposable desktop beta: Ctrl+1, Ctrl+2, F4 parking and clearing one parked demo sale verified after applying source-equivalent fixes to the extracted test build.
 - WhatsApp runtime: current resolver found installed Chrome and WhatsApp Web generated a QR code. No phone linked and no message sent by that startup test.
 
 ## Remaining release verification
 
-The above is implementation/local evidence, not a production release claim. A fresh desktop package must be checked, then a phone must be linked to verify WhatsApp message receipt. Mobile still needs a device build and physical-device confirmation. The broad item-create visual test has an existing theme-color assertion mismatch (#506fe4 versus #0963e8); the focused location layout and edit/save tests pass. No live customer sale was created or deleted.
+The above is implementation/local evidence, not a production release claim. The fresh packaged desktop opened the disposable shop on isolated ports (API 42620, MongoDB 47620). A Windows Firewall prompt still requires the user decision before UI interaction can continue; then a phone must be linked to verify WhatsApp message receipt. Mobile still needs a device build and physical-device confirmation. The broad item-create visual test has an existing theme-color assertion mismatch (#506fe4 versus #0963e8); the focused location layout and edit/save tests pass. No live customer sale was created or deleted.
+
+The test package bundles Gateway fe6d7d4 and its 28 matching collection lanes. Its current source files were compared with the packaged API files and matched. Packaging tests (14) pass, including exclusion of hidden local backups. Test builds are unsigned and are not a stable release.
