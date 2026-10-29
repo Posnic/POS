@@ -89,7 +89,7 @@ test('a desk build ships the same api bytes a clean checkout would', () => {
      one day - a .env. None of that exists in CI, so CI could never catch
      it, and each would have shipped inside the installer. */
   const api = pkg.build.extraResources.find((e) => e && e.from === 'api');
-  for (const guard of ['!.env', '!.env.*', '!.local-db/**', '!uploads/**', '!public/**']) {
+  for (const guard of ['!.env', '!.env.*', '!.local-db/**', '!uploads/**', '!public/**', '!**/.*', '!**/.*/**']) {
     assert.ok(api.filter.includes(guard), `the api packaging filter lost ${guard}`);
   }
 });
