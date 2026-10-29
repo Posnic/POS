@@ -1034,8 +1034,11 @@ const formatSaleListEntry = (saleDoc) => {
   // display date + time consistently regardless of branch changes.
   const stringDate = saleDate ? saleDate.toISOString() : '';
 
-  const salesTotal = Number(doc.sales_total ?? doc.total ?? doc.items_total ?? 0);
-  const subtotal = Number(doc.sales_sub_total ?? doc.subtotal ?? salesTotal);
+  const salesTotal = Number(require('./reportable-sales').remainingSaleTotal(doc));
+  const hasReturn = ['PartialReturn', 'FullReturn'].includes(doc.sale_process);
+  const subtotal = Number(
+    (hasReturn ? doc.items_subtotal : null) ?? doc.sales_sub_total ?? doc.subtotal ?? salesTotal
+  );
 
   const customer = doc.customer && typeof doc.customer === 'object' ? doc.customer : undefined;
 
