@@ -45,15 +45,9 @@ PosnicPro.whatsapp = {
         // Show loading state
         $('#whatsapp_connect_btn').prop('disabled', true).html('<i class="feather icon-loader"></i> Connecting...');
         
-        // Resolve the currently selected branch (same source the rest of the app uses)
+        // Offline desktop sessions can have a selected server branch without a
+        // browser-stored selection. The API resolves and authorizes that branch.
         const branchId = PosnicPro.local.get('branch_id_set');
-        if (!branchId) {
-            this.showConnectButton();
-            $('#whatsapp_connect_btn').prop('disabled', false).html('<i class="feather icon-link mr-1"></i> Connect WhatsApp');
-            $('#whatsapp_refresh_status').prop('disabled', false);
-            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_select_a_branch_before_connecting_w', 'Please select a branch before connecting WhatsApp'));
-            return;
-        }
 
         // Poll while initialization is pending; WhatsApp may wait for phone authentication.
         this.startStatusPolling();
@@ -61,7 +55,7 @@ PosnicPro.whatsapp = {
         // Initialize connection
         const params = {
             url: 'whatsapp/initialize',
-            data: { device_id: deviceId, branch_id: branchId }
+            data: { device_id: deviceId, ...(branchId ? { branch_id: branchId } : {}) }
         };
 
         PosnicPro.post(params, (response) => {

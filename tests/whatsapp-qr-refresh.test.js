@@ -81,5 +81,11 @@ test('first-time hidden device fields refresh and connect with one internal iden
  wa.setDeviceId('saved-shop-phone');wa.checkStatus(true);
  assert.equal(gets.at(-1).p.data.device_id,'saved-shop-phone');
  wa.setDeviceId('');assert.equal(wa.deviceId,'posnic');
+ // A restored offline login may only have the branch in its server session.
+ w.PosnicPro.local.get=()=>null;
+ wa.connect();
+ assert.equal(posts.at(-1).data.device_id,'posnic');
+ assert.equal(Object.hasOwn(posts.at(-1).data,'branch_id'),false);
+ assert.deepEqual(alerts,[]);
  dom.window.close();
 });
