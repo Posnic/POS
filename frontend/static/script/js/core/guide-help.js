@@ -273,6 +273,8 @@
     root.document.addEventListener('change', function (event) {
         if (event.target && event.target.id === 'iv2-has-variants') paint();
     });
+    root.document.addEventListener('posnic:i18n-changed', paint);
+    if (root.PosnicPro.i18n && root.PosnicPro.i18n.ready) root.PosnicPro.i18n.ready.then(paint);
     root.addEventListener('hashchange', paint);
     root.addEventListener('posnic:guide-context', paint);
     if (root.jQuery) {

@@ -545,8 +545,11 @@ test('an older brand response cannot restore Posnic help after a newer white-lab
   let poll;
   let clickHelp;
   let manifestFetches = 0;
+  let languagePrefix = 'Translated: ';
+  const languageHandlers = {};
+  const labels = {};
   const host = { hidden: true };
-  const button = { setAttribute() {}, addEventListener: (type, handler) => {
+  const button = { setAttribute: (name, value) => { labels[name] = value; }, addEventListener: (type, handler) => {
     if (type === 'click') clickHelp = handler;
   } };
   const message = { hidden: true };
@@ -554,11 +557,11 @@ test('an older brand response cannot restore Posnic help after a newer white-lab
     getElementById: id => ({ posnic_guide_help_li: host, posnic_guide_help_button: button,
       posnic_guide_help_message: message })[id] || null,
     querySelectorAll: () => [],
-    addEventListener() {},
+    addEventListener: (name, handler) => { languageHandlers[name] = handler; },
   };
   const root = {
     document: doc, location: { hash: '#/settings/onlineordering' }, navigator: { userAgent: 'Chrome' },
-    PosnicPro: { versionBadge: { read: () => Promise.resolve(identity) }, i18n: { t: (key, fallback) => 'Translated: ' + fallback } },
+    PosnicPro: { versionBadge: { read: () => Promise.resolve(identity) }, i18n: { t: (key, fallback) => languagePrefix + fallback } },
     addEventListener() {}, setInterval: callback => { poll = callback; },
     open() { assert.fail('An unmapped build must not open an external guide'); },
     fetch: url => {
@@ -580,6 +583,15 @@ test('an older brand response cannot restore Posnic help after a newer white-lab
   clickHelp();
   assert.equal(message.hidden, false);
   assert.match(message.textContent, /^Translated: A guide for this exact build/);
+  languagePrefix = 'Changed language: ';
+  languageHandlers['posnic:i18n-changed']();
+  assert.match(labels['aria-label'], /^Changed language:/);
+  assert.equal(message.hidden, true, 'changing language closes stale explanatory text');
+  clickHelp();
+  assert.match(message.textContent, /^Changed language: A guide for this exact build/);
+  const core = require('node:fs').readFileSync(require('node:path').join(__dirname,
+    '../frontend/static/script/js/core/PosnicPro.js'), 'utf8');
+  assert.match(core, /PosnicPro\.i18n\.apply\(\);[\s\S]{0,150}document\.dispatchEvent\(new CustomEvent\('posnic:i18n-changed'\)\)/);
   poll();
   brandResponses.shift()({ ok: true, json: () => Promise.resolve(unbranded) });
   await drain();
