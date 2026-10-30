@@ -7802,7 +7802,8 @@ PosnicPro.settings.openFeaturePage = function ($card) {
 
     // show the page pane, keep the Features nav highlighted
     $('#v-pills-modules').removeClass('show active');
-    $('#v-pills-featureconf').addClass('show active');
+    $('#v-pills-featureconf').attr('data-guide-feature', key).addClass('show active');
+    window.dispatchEvent(new Event('posnic:guide-context'));
 };
 /*
  * Where each feature's configuration LIVES - its Manage sidebar entry.
@@ -7842,8 +7843,9 @@ $(document).on('click', '.fp-configure-link', function () {
 });
 PosnicPro.settings.closeFeaturePage = function () {
     PosnicPro.settings._fpCard = null;
-    $('#v-pills-featureconf').removeClass('show active');
+    $('#v-pills-featureconf').removeClass('show active').removeAttr('data-guide-feature');
     $('#v-pills-modules').addClass('show active');
+    window.dispatchEvent(new Event('posnic:guide-context'));
 };
 $(document).on('click', '#fp_back', function () {
     PosnicPro.settings.closeFeaturePage();

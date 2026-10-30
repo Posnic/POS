@@ -2378,6 +2378,7 @@ PosnicPro.sales = {
             if (PosnicPro.askposnic) PosnicPro.askposnic.checkoutPaymentReady();
             if (focusTender) $('#tendered_amount').focus();
         }
+        window.dispatchEvent(new Event('posnic:guide-context'));
     },
     paymentMethodEnabled: function (name) {
         const key = String(name || '').trim().toLowerCase();

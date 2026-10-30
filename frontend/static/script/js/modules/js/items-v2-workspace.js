@@ -9,6 +9,7 @@
         var tab = el('tab-' + id); if (!tab || tab.hidden) return;
         active = id;
         tabs().forEach(function (b) { var yes = b.dataset.section === id; b.setAttribute('aria-selected', String(yes)); b.tabIndex = yes ? 0 : -1; el('panel-' + b.dataset.section).hidden = !yes; });
+        window.dispatchEvent(new Event('posnic:guide-context'));
         el('section-select').value = id;
         if (id === 'languages') { el('item_translation_panel').hidden = false; el('item_translation_toggle').setAttribute('aria-expanded', 'true'); }
         if (focus) tab.focus();

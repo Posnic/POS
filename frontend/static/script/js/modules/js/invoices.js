@@ -1053,9 +1053,13 @@ PosnicPro.invoices = {
         $('#ie_pay_balance').html(PosnicPro.invoices._money(due));
         $('#ie_pay_reference').val('');
         $('#invoices_pay_strip').show();
+        window.dispatchEvent(new Event('posnic:guide-context'));
         $('#ie_pay_amount').focus().select();
     },
-    payClose: function () { $('#invoices_pay_strip').hide(); },
+    payClose: function () {
+        $('#invoices_pay_strip').hide();
+        window.dispatchEvent(new Event('posnic:guide-context'));
+    },
     payConfirm: function () {
         var inv = PosnicPro.invoices._current;
         if (!inv) { return; }
@@ -1070,6 +1074,7 @@ PosnicPro.invoices = {
             PosnicPro.alert(r.type, r.message);
             if (r.type === 'success') {
                 $('#invoices_pay_strip').hide();
+                window.dispatchEvent(new Event('posnic:guide-context'));
                 PosnicPro.invoices.showDetails(String(inv._id));
                 PosnicPro.invoices.load(true);
                 PosnicPro.invoices.loadSummary();

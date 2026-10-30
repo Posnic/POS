@@ -5315,6 +5315,18 @@ function startServer() {
   // before the API reads it, so the very first page load is already branded.
   seedBrandFromBuild();
   process.env.POSNIC_BRAND_DIR = BRAND_DIR;
+  // A runtime descriptor alone cannot reveal that a branded installer was
+  // shipped. Report the seed independently so public Posnic help stays hidden
+  // even if the local descriptor is missing or has not loaded yet.
+  try {
+    const seedDir = app.isPackaged
+      ? path.join(process.resourcesPath, 'brand-seed')
+      : path.join(__dirname, '..', 'builds', 'brand-seed');
+    fs.statSync(path.join(seedDir, 'brand.json'));
+    process.env.POSNIC_BUILD_BRANDED = '1';
+  } catch (err) {
+    process.env.POSNIC_BUILD_BRANDED = err && err.code === 'ENOENT' ? '0' : 'unknown';
+  }
 
   /*
    * Record urgent sync work as it happens.
@@ -5360,8 +5372,16 @@ function startServer() {
   try {
     const cloud = JSON.parse(fs.readFileSync(CLOUD_CONFIG_FILE, 'utf8'));
     if (cloud && cloud.gatewayUrl && cloud.deviceToken) process.env.POSNIC_SYNC_PAIRED = '1';
+    else process.env.POSNIC_GUIDE_BRAND_PENDING = '1';
   } catch (e) {
-    /* No file, or unreadable: not paired, which is the safe answer. */
+    /* A missing file is known unpaired. An unreadable or malformed existing
+       file leaves help branding unresolved even if account edition falls back. */
+    try {
+      fs.statSync(CLOUD_CONFIG_FILE);
+      process.env.POSNIC_GUIDE_BRAND_PENDING = '1';
+    } catch (statError) {
+      if (!statError || statError.code !== 'ENOENT') process.env.POSNIC_GUIDE_BRAND_PENDING = '1';
+    }
   }
 
   /*

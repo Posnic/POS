@@ -623,26 +623,54 @@ app.use(
 // the gateway hands it over, and a cloud shop reads it from its own database.
 const BRAND_DIR = process.env.POSNIC_BRAND_DIR || null;
 const BRAND_TTL_MS = 30_000;
-let brandCache = { at: 0, brand: null };
+const { guideBrandState, buildBrandFlag, readFileBrand, cosmeticBrand } = require('./src/helpers/guide-brand-state');
+let brandCache = { at: 0, brand: null, status: null };
 
-async function loadBrand() {
-  if (Date.now() - brandCache.at < BRAND_TTL_MS) return brandCache.brand;
+async function loadBrandState() {
+  if (brandCache.status && Date.now() - brandCache.at < BRAND_TTL_MS) return brandCache;
   let brand = null;
+  let descriptor = null;
+  let readSucceeded = false;
+  const buildEnabled = buildBrandFlag();
   try {
     if (BRAND_DIR) {
-      const file = path.join(BRAND_DIR, 'brand.json');
-      if (fs.existsSync(file)) brand = JSON.parse(fs.readFileSync(file, 'utf8'));
+      ({ descriptor, readSucceeded } = readFileBrand(BRAND_DIR,
+        { paired: process.env.POSNIC_SYNC_PAIRED === '1' || process.env.POSNIC_GUIDE_BRAND_PENDING === '1', buildEnabled }));
     } else {
       const mongoose = require('mongoose');
       if (mongoose.connection && mongoose.connection.readyState === 1) {
-        brand = await mongoose.connection.db.collection('app_brand').findOne({ _id: 'brand' });
+        descriptor = await mongoose.connection.db.collection('app_brand').findOne({ _id: 'brand' });
+        readSucceeded = true;
       }
     }
   } catch (err) {
-    brand = null; // branding must never be the reason a till fails to load
+    // Branding failure must not block the till, but must withhold Posnic help.
   }
-  brandCache = { at: Date.now(), brand: brand && brand.enabled ? brand : null };
-  return brandCache.brand;
+  const status = guideBrandState({ descriptor, readSucceeded, buildEnabled });
+  brand = cosmeticBrand(descriptor);
+  brandCache = { at: Date.now(), brand, status };
+  return brandCache;
+}
+
+async function loadBrand() {
+  const state = await loadBrandState();
+  return state.brand;
+}
+
+function publicGuideBrandStatus(status) {
+  return {
+    resolved: status.resolved,
+    enabled: status.enabled,
+    buildEnabled: status.buildEnabled,
+  };
+}
+
+async function guideBrandJson() {
+  const state = await loadBrandState();
+  return {
+    ...publicGuideBrandStatus(state.status),
+    ...(state.brand ? { enabled: true, name: state.brand.name || '' } : {}),
+  };
 }
 
 function brandLogoBytes(brand, which) {
@@ -673,9 +701,8 @@ const BRAND_LOGO_RE = /(?:^|\/)images\/logo\/(posnic-logo|posnic)\.svg$/;
 // on every single page load: the app knew the brand, and the page could not
 // ask for it, so a white-label till showed our name everywhere.
 const serveBrandJson = async (_req, res) => {
-  const brand = await loadBrand();
   res.set('cache-control', 'no-store');
-  res.json(brand ? { enabled: true, name: brand.name || '' } : { enabled: false });
+  res.json(await guideBrandJson());
 };
 // Registered separately rather than as an array: path matching changed in
 // Express 5, and this route being silently unmatched is the whole bug.
