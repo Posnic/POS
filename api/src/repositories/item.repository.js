@@ -6453,19 +6453,18 @@ class ItemRepository extends BaseModel {
         filter.license = ObjectId.isValid(licenseId) ? new ObjectId(licenseId) : licenseId;
       }
 
-      // Apply session filter dates to the query
+      // Catalogue writes use created_date; older imported records can use
+      // createdAt. Apply the existing report range to either representation.
       if (data.starting_date || data.ending_date) {
+        const created = { $ifNull: ['$created_date', '$createdAt'] };
+        const dateConditions = [];
         if (data.starting_date) {
-          filter.createdAt = { $gte: new Date(data.starting_date) };
+          dateConditions.push({ $gte: [created, new Date(data.starting_date)] });
         }
-
         if (data.ending_date) {
-          if (filter.createdAt) {
-            filter.createdAt.$lte = new Date(data.ending_date);
-          } else {
-            filter.createdAt = { $lte: new Date(data.ending_date) };
-          }
+          dateConditions.push({ $lte: [created, new Date(data.ending_date)] });
         }
+        filter.$expr = { $and: dateConditions };
       }
 
       console.log('\ud83d\udd0d itemStockReportTable - Filter:', JSON.stringify(filter, null, 2));

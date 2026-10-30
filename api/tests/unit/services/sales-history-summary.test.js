@@ -15,6 +15,29 @@ afterAll(async () => {
 beforeEach(async () => {
   await Model.deleteMany({});
 });
+
+test('partial and full returns use remaining totals without changing original invoices', async () => {
+  await Model.insertMany([
+    {
+      sale_process: 'PartialReturn',
+      sales_total: 315,
+      items_total: 210,
+      payment_status: 'Paid',
+      payment_mode: 'Cash',
+    },
+    {
+      sale_process: 'FullReturn',
+      sales_total: 100,
+      items_total: 0,
+      payment_status: 'Paid',
+      payment_mode: 'Cash',
+    },
+  ]);
+  const value = await summary(Model, {});
+  expect(value.currencies[0].total).toBe(210);
+  expect(value.currencies[0].payments).toEqual([{ method: 'Cash', amount: 210 }]);
+  expect((await Model.findOne({ sale_process: 'PartialReturn' })).sales_total).toBe(315);
+});
 test('all matching sales are counted regardless of page, with branch/date/search isolation and cancelled excluded', async () => {
   const date = new Date('2026-10-15T10:00:00Z');
   await Model.insertMany([
