@@ -8,8 +8,13 @@ function guideBrandState({ descriptor, readSucceeded, buildEnabled }) {
   const state = { resolved: false, enabled: false, buildEnabled: buildEnabled === true };
   if (typeof buildEnabled !== 'boolean' || readSucceeded !== true) return state;
   if (descriptor === null) return { ...state, resolved: true };
-  if (!descriptor || typeof descriptor !== 'object' || Array.isArray(descriptor) ||
-      typeof descriptor.enabled !== 'boolean') return state;
+  if (
+    !descriptor ||
+    typeof descriptor !== 'object' ||
+    Array.isArray(descriptor) ||
+    typeof descriptor.enabled !== 'boolean'
+  )
+    return state;
   return { ...state, resolved: true, enabled: descriptor.enabled };
 }
 
@@ -29,7 +34,10 @@ function buildBrandFlag(env = process.env) {
 
 function readFileBrand(dir, { paired, buildEnabled }, filesystem = fs) {
   try {
-    return { descriptor: JSON.parse(filesystem.readFileSync(path.join(dir, 'brand.json'), 'utf8')), readSucceeded: true };
+    return {
+      descriptor: JSON.parse(filesystem.readFileSync(path.join(dir, 'brand.json'), 'utf8')),
+      readSucceeded: true,
+    };
   } catch (err) {
     // Missing is meaningful only for an unpaired stock build. Corrupt or
     // unreadable files, and a paired shop awaiting its cloud brand, are unknown.
