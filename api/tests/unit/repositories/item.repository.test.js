@@ -526,6 +526,34 @@ describe('ItemRepository', () => {
         .mockResolvedValue({ status: true, data: { values: {} } });
     });
     afterEach(() => preferences.mockRestore());
+    test.each([null, ['name'], ['name', 'location']])(
+      'location matching respects saved fields and keeps tenant scope (%j)',
+      async (fields) => {
+        preferences.mockResolvedValue({
+          status: true,
+          data: {
+            values: {
+              sales_search_fields: fields,
+              sales_search_display_fields: ['location'],
+            },
+          },
+        });
+        col.aggregate.mockReturnValue(
+          mkAgg([{ _id: FAKE_ID, name: 'Pipe', stock_locations: ['Rack 5'] }])
+        );
+        const result = await repo.getOnlineItemsAjaxList(
+          { query: 'Rack 5' },
+          { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE }
+        );
+        const clauses = col.aggregate.mock.calls.at(-1)[0][0].$match.$and;
+        const matches = clauses.find((c) => c.$or && c.$or.some((p) => p.name)).$or;
+        expect(matches.some((p) => p.stock_locations)).toBe(!!fields?.includes('location'));
+        expect(clauses.some((c) => c['branch_access.branch_id'])).toBe(true);
+        expect(clauses.some((c) => c.license)).toBe(true);
+        expect(result.data[0].stock_locations).toEqual(['Rack 5']);
+        expect(result.data[0].sales_search_display_fields).toEqual(['location']);
+      }
+    );
     test.each([undefined, false, true])(
       'numeric-code matching opts in explicitly (%s)',
       async (enabled) => {

@@ -2900,7 +2900,6 @@ class ItemRepository extends BaseModel {
       } else if (regex) {
         searchConditions = [
           { name: regex },
-          { stock_locations: regex },
           { 'translations.name': regex },
           { itemid: regex },
           { short_code: regex },

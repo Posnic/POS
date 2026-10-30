@@ -11825,7 +11825,12 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
     if (!fields && d.barcode_id && d.barcode_id !== d.itemid) { meta.push(esc(d.barcode_id)); }
     if (!fields && d.unit) { meta.push(esc(d.unit)); }
     if (!fields && d.category_name) { meta.push(esc(d.category_name)); }
-    if (Array.isArray(d.stock_locations) && d.stock_locations.length) meta.push(esc(d.stock_locations.join(' · ')));
+    var locationHtml = '';
+    if (o.sales && fields && show('location') && Array.isArray(d.stock_locations) && d.stock_locations.length) {
+        locationHtml = '<div class="sug-meta sug-location" style="white-space:normal;overflow-wrap:anywhere">'
+            + '<lang class="lang_stock_locations">Stock locations</lang>: '
+            + esc(d.stock_locations.join(' · ')) + '</div>';
+    }
     var stock;
     if (d.item_kind === 'service') {
         stock = '<span class="sug-stock na"><lang class="lang_service">Service</lang></span>';
@@ -11850,7 +11855,7 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
     return '<div class="sug-row">' + thumb
         + '<div class="sug-main"><div class="sug-name">' + nameHtml + '</div>'
         + (meta.length ? '<div class="sug-meta">' + meta.join(' &middot; ') + '</div>' : '')
-        + '</div><div class="sug-side">' + priceHtml + stock + '</div></div>';
+        + locationHtml + '</div><div class="sug-side">' + priceHtml + stock + '</div></div>';
 };
 PosnicPro.sugActionRow = function (icon, cls, title, meta) {
     return '<div class="sug-row sug-action ' + cls + '">'
