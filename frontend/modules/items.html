@@ -158,11 +158,14 @@
 #view_print_lable .sl-primary:not(:disabled){background:var(--theme-btn-primary-bg, #2563b7);color:var(--theme-btn-primary-text, white)!important}
 #view_print_lable .sl-label p{color:inherit!important}
 #view_print_lable .sl-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:16px}#view_print_lable .sl-choice{border:1px solid var(--theme-border-color,#ccd6e4);border-radius:8px;padding:14px;text-align:left;background:var(--theme-card-bg,#fff);color:inherit;cursor:pointer;min-height:72px}#view_print_lable .sl-choice[aria-pressed="true"]{border:2px solid var(--theme-primary,#006bff);background:var(--theme-table-header-bg,#f0f6ff)}#view_print_lable .sl-choice:focus-visible{outline:2px solid var(--theme-primary,#006bff);outline-offset:2px}#view_print_lable .sl-choice small{display:block;margin-top:6px}#view_print_lable .sl-print-plan{margin:16px 0;padding:14px;border:1px solid var(--theme-border-color,#ccd6e4);border-radius:8px}#view_print_lable .sl-print-plan .sl-button{margin:0 6px 8px 0}#view_print_lable .sl-plan-products{max-height:220px;overflow:auto}#view_print_lable .sl-plan-row{display:grid;grid-template-columns:1fr 80px;align-items:center;gap:10px;padding:8px 0}#view_print_lable .sl-choice[hidden]{display:none}
+#view_print_lable #posnic_labels_guide_help_button{margin-left:auto;font-weight:700;min-width:40px;padding:5px}
+#view_print_lable #posnic_labels_guide_help_message:not([hidden]){display:block;padding:10px 24px;background:var(--theme-table-header-bg,#f0f6ff);color:var(--theme-text-primary,#263347)}
 #view_print_lable .sl-design-group{border:1px solid var(--theme-border-color,#d0dae5);border-radius:10px;padding:16px;margin:20px 0;background:var(--theme-card-bg,#fff)}#view_print_lable .sl-design-group legend{font-size:16px;font-weight:600;width:auto;padding:0 6px;margin:0}#view_print_lable .sl-design-group .sl-muted{margin-bottom:14px}#view_print_lable .sl-type-row{display:flex;align-items:center;gap:12px;min-width:0}#view_print_lable .sl-type-row .sl-field{flex:1;min-width:0}#view_print_lable .sl-type-row .sl-check{padding-top:20px;white-space:nowrap}
 </style>
 <div class="modal fade close_on_esc" id="view_print_lable" tabindex="-1" role="dialog" aria-labelledby="sl-title" aria-hidden="true">
  <div class="modal-dialog" role="document"><div class="modal-content sl-wizard">
-  <header class="sl-header"><div><h2 id="sl-title"><lang class="lang_shelf_label_printing">Shelf / product label printing</lang></h2><p class="sl-muted"><lang class="lang_select_products_check_the_labels_then_prin">Select products, check the labels, then print.</lang></p></div><button type="button" class="sl-close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">×</button></header>
+  <header class="sl-header"><div><h2 id="sl-title"><lang class="lang_shelf_label_printing">Shelf / product label printing</lang></h2><p class="sl-muted"><lang class="lang_select_products_check_the_labels_then_prin">Select products, check the labels, then print.</lang></p></div><button type="button" id="posnic_labels_guide_help_button" class="sl-button" aria-label="Help for shelf and product labels" data-t-aria-label="lang_guide_help_for_labels" aria-expanded="false" aria-controls="posnic_labels_guide_help_message" hidden>?</button><button type="button" class="sl-close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">×</button></header>
+  <span id="posnic_labels_guide_help_message" role="status" hidden></span>
   <nav class="sl-steps" aria-label="Print flow" data-t-aria-label="lang_print_flow"><button type="button" class="sl-button sl-step" data-sl-step="0" aria-current="step"><span>1</span><lang class="lang_products">Products</lang></button><button type="button" class="sl-button sl-step" data-sl-step="1" ><span>2</span><lang class="lang_layout">Layout</lang></button><button type="button" class="sl-button sl-step" data-sl-step="2" ><span>3</span><lang class="lang_preview">Preview</lang></button><button type="button" class="sl-button sl-step" data-sl-step="3" ><span>4</span><lang class="lang_printed">Print</lang></button></nav>
   <div class="sl-body">
    <section class="sl-panel" data-sl-panel="0"><h3><lang class="lang_select_products">Select products</lang></h3>
@@ -669,8 +672,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="feather icon-sliders mr-2"></i><lang class="lang_stock_adjust_title">Stock adjustment</lang></h5>
+                <button type="button" id="posnic_stock_adjust_guide_help_button" class="btn btn-outline-secondary ml-auto mr-2" aria-label="Help for stock adjustments" data-t-aria-label="lang_guide_help_for_stock_adjustments" aria-expanded="false" aria-controls="posnic_stock_adjust_guide_help_message" hidden>?</button>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true"><lang class="lang_text">&times;</lang></span></button>
             </div>
+            <span id="posnic_stock_adjust_guide_help_message" role="status" class="px-3" hidden></span>
             <div class="modal-body">
                 <div class="form-row">
                     <div class="form-group col-md-4">

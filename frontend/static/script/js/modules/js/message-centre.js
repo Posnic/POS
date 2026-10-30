@@ -196,6 +196,7 @@ PosnicPro.messageCentre = {
     if (tab === "campaigns") PosnicPro.campaigns.load();
     if (tab === "reports") PosnicPro.messageCentre.reports();
     if (tab === "history") PosnicPro.messageCentre.history();
+    window.dispatchEvent(new Event("posnic:guide-context"));
   },
 
   loadAutomatic: function () {
@@ -360,6 +361,7 @@ $(document).on("click", "[data-message-channel]", function () {
   });
   $("[data-message-channel]").attr("aria-pressed", "false");
   $(this).attr("aria-pressed", "true");
+  window.dispatchEvent(new Event("posnic:guide-context"));
 });
 $(document).on("click", "#message_email_save", function () {
   var button = $(this),

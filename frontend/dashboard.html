@@ -792,6 +792,11 @@
                windows previously rendered a shorter topbar). */
             .topbar { min-height: 68px; }
             .topbar .infobar > ul { display: flex; align-items: center; }
+            #posnic_guide_help_li[hidden], #posnic_guide_help_message[hidden] { display: none !important; }
+            #posnic_guide_help_li { position: relative; }
+            #posnic_guide_help_button { width: 36px; height: 36px; border: 1px solid var(--theme-border-color, #d8deeb); border-radius: 50%; background: var(--theme-card-bg, #fff); color: var(--theme-primary-color, #365bd6); font: 700 20px/1 system-ui, sans-serif; cursor: pointer; }
+            #posnic_guide_help_button:focus-visible { outline: 2px solid var(--theme-primary-color, #365bd6); outline-offset: 2px; }
+            #posnic_guide_help_message { position: fixed; z-index: 2000; width: min(320px, calc(100vw - 16px)); box-sizing: border-box; padding: 12px; border: 1px solid var(--theme-border-color, #d8deeb); border-radius: 8px; background: var(--theme-card-bg, #fff); color: var(--theme-text-primary, #16203a); box-shadow: 0 8px 24px rgba(0,0,0,.12); font-size: 13px; line-height: 1.45; }
         </style>
 
     </head>

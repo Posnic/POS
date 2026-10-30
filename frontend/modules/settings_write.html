@@ -332,7 +332,7 @@
                             </div>
                         </div>
 
-                        <div class="tab-pane fade" id="v-pills-integrations" role="tabpanel" aria-labelledby="v-pills-integrations-tab">
+                        <div class="tab-pane fade" id="v-pills-integrations" role="tabpanel" aria-labelledby="v-pills-integrations-tab" data-guide-route="/settings/integrations">
                                                         <div class="card m-b-30">
                                 <div class="card-header">
                                     <small class="text-muted"><lang class="lang_integrations_hint">What may touch this shop's data from outside - tokens say who, webhooks say where the change signals go.</lang></small>
@@ -341,10 +341,10 @@
                                     <div class="row">
                                         <div class="col-lg-3 core-subnav-col">
                                             <div class="nav flex-column nav-pills" id="integrations_subnav" role="tablist">
-                                                <a class="nav-link active" data-toggle="pill" href="#int-sub-tokens" role="tab"><i class="feather icon-key mr-2"></i><lang class="lang_int_tokens">API Tokens</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#int-sub-webhooks" role="tab"><i class="feather icon-send mr-2"></i><lang class="lang_int_webhooks">Webhooks</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#int-sub-connectors" role="tab" id="int_connectors_subtab" style="display:none;" onclick="PosnicPro.integrations.loadConnectors();"><i class="feather icon-box mr-2"></i><lang class="lang_int_connectors">Connectors</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#int-sub-analytics" role="tab" id="int_analytics_subtab"><i class="feather icon-bar-chart-2 mr-2"></i><lang class="lang_int_analytics">Analytics</lang></a>
+                                                <a class="nav-link active" data-toggle="pill" href="#int-sub-tokens" role="tab" data-guide-context="integrations:tokens"><i class="feather icon-key mr-2"></i><lang class="lang_int_tokens">API Tokens</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#int-sub-webhooks" role="tab" data-guide-context="integrations:webhooks"><i class="feather icon-send mr-2"></i><lang class="lang_int_webhooks">Webhooks</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#int-sub-connectors" role="tab" data-guide-context="integrations:connectors" id="int_connectors_subtab" style="display:none;" onclick="PosnicPro.integrations.loadConnectors();"><i class="feather icon-box mr-2"></i><lang class="lang_int_connectors">Connectors</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#int-sub-analytics" role="tab" data-guide-context="integrations:analytics" id="int_analytics_subtab"><i class="feather icon-bar-chart-2 mr-2"></i><lang class="lang_int_analytics">Analytics</lang></a>
                                             </div>
                                         </div>
                                         <div class="col-lg-9">
@@ -1165,7 +1165,7 @@
 </div>
                         </div>
                         
-                        <div class="tab-pane fade" id="v-pills-taxmodule" role="tabpanel" aria-labelledby="v-pills-taxmodule-tab">
+                        <div class="tab-pane fade" id="v-pills-taxmodule" role="tabpanel" aria-labelledby="v-pills-taxmodule-tab" data-guide-route="/settings/taxmodule">
                             <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title mb-0"><lang class="lang_module_tax">Tax</lang></h5>
@@ -1175,8 +1175,8 @@
                                         <div class="col-lg-3 core-subnav-col">
                                             <div class="nav flex-column nav-pills" id="taxmodule_subnav" role="tablist">
                                                 <a class="nav-link active" data-toggle="pill" href="#tax-sub-general" role="tab"><i class="feather icon-sliders mr-2"></i><lang class="lang_common_settings">General</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#tax-sub-rates" role="tab" onclick="PosnicPro.tax.taxTable();"><i class="feather icon-percent mr-2"></i><lang class="lang_taxrate_title">Tax Rates</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#tax-sub-groups" role="tab" onclick="PosnicPro.taxgroup.taxgroupTable();"><i class="feather icon-layers mr-2"></i><lang class="lang_tax_groups">Tax Groups</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#tax-sub-rates" role="tab" data-guide-context="tax:rates" onclick="PosnicPro.tax.taxTable();"><i class="feather icon-percent mr-2"></i><lang class="lang_taxrate_title">Tax Rates</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#tax-sub-groups" role="tab" data-guide-context="tax:groups" onclick="PosnicPro.taxgroup.taxgroupTable();"><i class="feather icon-layers mr-2"></i><lang class="lang_tax_groups">Tax Groups</lang></a>
                                             </div>
                                         </div>
                                         <div class="col-lg-9">
@@ -1414,7 +1414,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="v-pills-marketingmodule" role="tabpanel" aria-labelledby="v-pills-marketingmodule-tab">
+                        <div class="tab-pane fade" id="v-pills-marketingmodule" role="tabpanel" aria-labelledby="v-pills-marketingmodule-tab" data-guide-route="/settings/marketingmodule">
                             <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title mb-0"><lang class="lang_module_marketing">Marketing</lang></h5>
@@ -1423,11 +1423,11 @@
                                     <div class="row">
                                         <div class="col-lg-3 core-subnav-col">
                                             <div class="nav flex-column nav-pills" id="marketingmodule_subnav" role="tablist">
-                                                <a class="nav-link active" data-toggle="pill" href="#mkt-sub-loyalty" role="tab" onclick="PosnicPro.loyalty.load();"><i class="feather icon-award mr-2"></i><lang class="lang_loyalty_settings">Loyalty &amp; Rewards</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-coupons" role="tab" onclick="PosnicPro.coupons.load();"><i class="feather icon-tag mr-2"></i><lang class="lang_coupons_settings">Coupons</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-cashback" role="tab" onclick="PosnicPro.cashback.load();"><i class="feather icon-gift mr-2"></i><lang class="lang_cashback_settings">Cashback</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-campaigns" role="tab" onclick="PosnicPro.campaigns.load();"><i class="feather icon-send mr-2"></i><lang class="lang_campaigns_settings">Campaigns</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-pricing" role="tab" onclick="PosnicPro.pricelists.load();"><i class="feather icon-tag mr-2"></i><lang class="lang_pricelists">Customer Pricing</lang></a>
+                                                <a class="nav-link active" data-toggle="pill" href="#mkt-sub-loyalty" role="tab" data-guide-context="marketing:loyalty" onclick="PosnicPro.loyalty.load();"><i class="feather icon-award mr-2"></i><lang class="lang_loyalty_settings">Loyalty &amp; Rewards</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-coupons" role="tab" data-guide-context="marketing:coupons" onclick="PosnicPro.coupons.load();"><i class="feather icon-tag mr-2"></i><lang class="lang_coupons_settings">Coupons</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-cashback" role="tab" data-guide-context="marketing:cashback" onclick="PosnicPro.cashback.load();"><i class="feather icon-gift mr-2"></i><lang class="lang_cashback_settings">Cashback</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-campaigns" role="tab" data-guide-context="marketing:campaigns" onclick="PosnicPro.campaigns.load();"><i class="feather icon-send mr-2"></i><lang class="lang_campaigns_settings">Campaigns</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#mkt-sub-pricing" role="tab" data-guide-context="marketing:pricing" onclick="PosnicPro.pricelists.load();"><i class="feather icon-tag mr-2"></i><lang class="lang_pricelists">Customer Pricing</lang></a>
                                             </div>
                                         </div>
                                         <div class="col-lg-9">
@@ -1985,7 +1985,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="v-pills-messagingmodule" role="tabpanel" aria-labelledby="v-pills-messagingmodule-tab">
+                        <div class="tab-pane fade" id="v-pills-messagingmodule" role="tabpanel" aria-labelledby="v-pills-messagingmodule-tab" data-guide-route="/settings/messagingmodule">
                             <div class="card m-b-30">
                                 <div class="card-header">
                                     <h5 class="card-title mb-0"><lang class="lang_module_messaging">Messaging</lang></h5>
@@ -1994,9 +1994,9 @@
                                     <div class="row">
                                         <div class="col-lg-3 core-subnav-col">
                                             <div class="nav flex-column nav-pills" id="messagingmodule_subnav" role="tablist">
-                                                <a class="nav-link active" data-toggle="pill" href="#msg-sub-providers" role="tab" onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i><lang class="lang_messaging_settings">SMS &amp; WhatsApp Providers</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-whatsapp" role="tab" data-module="plan" data-access="read"><i class="feather icon-message-square mr-2"></i><lang class="lang_whatsapp_connection">WhatsApp Connection</lang></a>
-                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-email" role="tab" data-module="plan" data-access="read"><i class="feather icon-mail mr-2"></i><lang class="lang_mail">Report Email Settings</lang></a>
+                                                <a class="nav-link active" data-toggle="pill" href="#msg-sub-providers" role="tab" data-guide-context="messaging:providers" onclick="PosnicPro.messaging.load();"><i class="feather icon-cpu mr-2"></i><lang class="lang_messaging_settings">SMS &amp; WhatsApp Providers</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-whatsapp" role="tab" data-guide-context="messaging:whatsapp" data-module="plan" data-access="read"><i class="feather icon-message-square mr-2"></i><lang class="lang_whatsapp_connection">WhatsApp Connection</lang></a>
+                                                <a class="nav-link" data-toggle="pill" href="#msg-sub-email" role="tab" data-guide-context="messaging:email" data-module="plan" data-access="read"><i class="feather icon-mail mr-2"></i><lang class="lang_mail">Report Email Settings</lang></a>
                                                 <a class="nav-link" data-toggle="pill" href="#msg-sub-sms" role="tab" style="display:none;"><i class="feather icon-message-circle mr-2"></i><lang class="lang_sms_set">SMS Settings</lang></a>
                                             </div>
                                         </div>
@@ -2162,17 +2162,17 @@
                             <!-- WhatsApp Sub-tabs Navigation -->
                             <ul class="nav nav-tabs custom-tab-line mb-3" id="whatsappSubTabs" role="tablist">
                                 <li class="nav-item">
-                                    <a class="nav-link active" id="whatsapp-connection-tab" data-toggle="tab" href="#whatsapp-connection" role="tab" aria-controls="whatsapp-connection" aria-selected="true">
+                                    <a class="nav-link active" id="whatsapp-connection-tab" data-toggle="tab" href="#whatsapp-connection" role="tab" aria-controls="whatsapp-connection" aria-selected="true" data-guide-context="messaging:whatsapp:connection">
                                         <i class="feather icon-link mr-2"></i><lang class="lang_connection">Connection</lang>
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="whatsapp-template-tab" data-toggle="tab" href="#whatsapp-template" role="tab" aria-controls="whatsapp-template" aria-selected="false">
+                                    <a class="nav-link" id="whatsapp-template-tab" data-toggle="tab" href="#whatsapp-template" role="tab" aria-controls="whatsapp-template" aria-selected="false" data-guide-context="messaging:whatsapp:template">
                                         <i class="feather icon-file-text mr-2"></i><lang class="lang_template">Template</lang>
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="whatsapp-test-tab" data-toggle="tab" href="#whatsapp-test" role="tab" aria-controls="whatsapp-test" aria-selected="false">
+                                    <a class="nav-link" id="whatsapp-test-tab" data-toggle="tab" href="#whatsapp-test" role="tab" aria-controls="whatsapp-test" aria-selected="false" data-guide-context="messaging:whatsapp:test">
                                         <i class="feather icon-send mr-2"></i><lang class="lang_test_message">Test Message</lang>
                                     </a>
                                 </li>
@@ -3246,7 +3246,7 @@
 
 
                                                             </div>
-                        <div class="tab-pane fade" id="v-pills-tableorder" role="tabpanel"
+                        <div class="tab-pane fade" id="v-pills-tableorder" data-guide-route="/settings/tableorder" role="tabpanel"
                             aria-labelledby="v-pills-tableorder-tab">
                             <!--
                                 THREE TABS, NOT SIX CARDS IN A COLUMN.
@@ -3282,7 +3282,7 @@
                                     aria-selected="false"><i class="feather icon-truck mr-1"></i><lang class="lang_delivery">Delivery</lang></a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" id="restaurantprintmenu-tab-line" data-toggle="tab"
+                                <a class="nav-link" id="restaurantprintmenu-tab-line" data-toggle="tab" data-guide-context="restaurant:printable-menu"
                                     href="#restaurantprintmenu-line" role="tab" aria-controls="restaurantprintmenu-line"
                                     aria-selected="false"><i class="feather icon-file-text mr-1"></i><lang class="lang_printable_menu">Printable menu</lang></a>
                             </li>
@@ -4619,7 +4619,7 @@
                         
 
                         <!-- General Tab Start -->
-                        <div class="tab-pane fade show active" id="v-pills-general" role="tabpanel"
+                        <div class="tab-pane fade show active" id="v-pills-general" data-guide-route="/settings/general" role="tabpanel"
                             aria-labelledby="v-pills-general-tab">
                                                         <form class="form-validate" method="post" name="tax_discount_add" id="tax_discount_add">
                                 <div class="card m-b-30">
@@ -4629,16 +4629,16 @@
                                              dropdown on the right (settings.js coreTabsOverflow). -->
                                         <ul class="nav nav-tabs core-settings-tabs mb-3" id="core_settings_tabs" role="tablist">
                                             <li class="nav-item"><a class="nav-link active" data-toggle="tab"
-                                                    href="#core-tab-sale" role="tab"><i class="feather icon-shopping-cart mr-2"></i><lang class="lang_coretab_sale">Sale</lang></a></li>
+                                                    href="#core-tab-sale" data-guide-context="core:sale" role="tab"><i class="feather icon-shopping-cart mr-2"></i><lang class="lang_coretab_sale">Sale</lang></a></li>
                                             <li class="nav-item"><a class="nav-link" data-toggle="tab"
-                                                    href="#core-tab-receiving" role="tab"><i class="feather icon-truck mr-2"></i><lang class="lang_coretab_receiving">Receivings</lang></a></li>
+                                                    href="#core-tab-receiving" data-guide-context="core:receivings" role="tab"><i class="feather icon-truck mr-2"></i><lang class="lang_coretab_receiving">Receivings</lang></a></li>
                                             <li class="nav-item"><a class="nav-link" data-toggle="tab"
-                                                    href="#core-tab-inventory" role="tab"><i class="feather icon-package mr-2"></i><lang class="lang_coretab_inventory">Inventory</lang></a></li>
+                                                    href="#core-tab-inventory" data-guide-context="core:inventory" role="tab"><i class="feather icon-package mr-2"></i><lang class="lang_coretab_inventory">Inventory</lang></a></li>
                                             <li class="nav-item"><a class="nav-link" data-toggle="tab"
-                                                    href="#core-tab-print" role="tab"><i class="feather icon-printer mr-2"></i><lang class="lang_coretab_print">Print</lang></a></li>
+                                                    href="#core-tab-print" data-guide-context="core:print" role="tab"><i class="feather icon-printer mr-2"></i><lang class="lang_coretab_print">Print</lang></a></li>
                                             <li class="nav-item"><a class="nav-link" data-toggle="tab"
-                                                    href="#core-tab-payments" role="tab"><i class="feather icon-credit-card mr-2"></i><lang class="lang_coretab_payments">Payments</lang></a></li>
-                                            <li class="nav-item"><a class="nav-link" id="core-wording-tab" data-toggle="tab" href="#core-tab-wording" role="tab" aria-controls="core-tab-wording" aria-selected="false"><span class="mr-2" aria-hidden="true" style="font-weight:600">A文</span><lang class="lang_wording_profiles">Language &amp; labels</lang></a></li>
+                                                    href="#core-tab-payments" data-guide-context="core:payments" role="tab"><i class="feather icon-credit-card mr-2"></i><lang class="lang_coretab_payments">Payments</lang></a></li>
+                                            <li class="nav-item"><a class="nav-link" id="core-wording-tab" data-toggle="tab" href="#core-tab-wording" data-guide-context="core:wording" role="tab" aria-controls="core-tab-wording" aria-selected="false"><span class="mr-2" aria-hidden="true" style="font-weight:600">A文</span><lang class="lang_wording_profiles">Language &amp; labels</lang></a></li>
                                             <li class="nav-item dropdown core-tabs-more d-none">
                                                 <a class="nav-link dropdown-toggle" data-toggle="dropdown"
                                                     href="javascript:void(0)" role="button"><lang class="lang_tab_more">More</lang></a>
@@ -5270,10 +5270,10 @@
                                                 <div class="row">
                                                     <div class="col-lg-3 core-subnav-col">
                                                         <div class="nav flex-column nav-pills" id="payments_subnav" role="tablist">
-                                                            <a class="nav-link active" data-toggle="pill" href="#pay-sub-general" role="tab"><i class="feather icon-percent mr-2"></i><lang class="lang_splitpay_title">Split Payment</lang></a>
-                                                            <a class="nav-link" data-toggle="pill" href="#pay-sub-modes" role="tab" onclick="PosnicPro.payment.paymentTable();"><i class="feather icon-dollar-sign mr-2"></i><lang class="lang_payment_fields">Payment Modes</lang></a>
-                                                            <a class="nav-link" data-toggle="pill" href="#pay-sub-gateway" role="tab" data-module="plan" data-access="read"><i class="feather icon-credit-card mr-2"></i><lang class="lang_payment_gateway">Payment Gateway</lang></a>
-                                                            <a class="nav-link" data-toggle="pill" href="#pay-sub-denom" role="tab" onclick="PosnicPro.denom.denomTable();"><i class="feather icon-trending-up mr-2"></i><lang class="lang_denomination_fields">Cash Denominations</lang></a>
+                                                            <a class="nav-link active" data-toggle="pill" href="#pay-sub-general" data-guide-context="core:payments:split" role="tab"><i class="feather icon-percent mr-2"></i><lang class="lang_splitpay_title">Split Payment</lang></a>
+                                                            <a class="nav-link" data-toggle="pill" href="#pay-sub-modes" data-guide-context="core:payments:modes" role="tab" onclick="PosnicPro.payment.paymentTable();"><i class="feather icon-dollar-sign mr-2"></i><lang class="lang_payment_fields">Payment Modes</lang></a>
+                                                            <a class="nav-link" data-toggle="pill" href="#pay-sub-gateway" data-guide-context="core:payments:gateway" role="tab" data-module="plan" data-access="read"><i class="feather icon-credit-card mr-2"></i><lang class="lang_payment_gateway">Payment Gateway</lang></a>
+                                                            <a class="nav-link" data-toggle="pill" href="#pay-sub-denom" data-guide-context="core:payments:denominations" role="tab" onclick="PosnicPro.denom.denomTable();"><i class="feather icon-trending-up mr-2"></i><lang class="lang_denomination_fields">Cash Denominations</lang></a>
                                                         </div>
                                                     </div>
                                                     <div class="col-lg-9">
@@ -5610,8 +5610,8 @@
                                             <!-- ============ RECEIPT PRINT ============ -->
                                             <div class="tab-pane fade" id="core-tab-print" role="tabpanel">
                                                 <ul class="nav nav-tabs print-settings-tabs mb-3" role="tablist" aria-label="Print settings" data-t-aria-label="lang_print_settings">
-                                                    <li class="nav-item"><a class="nav-link active" id="print-printers-tab" data-toggle="tab" href="#print-printers" role="tab" aria-controls="print-printers" aria-selected="true"><i class="feather icon-printer mr-2" aria-hidden="true"></i><lang class="lang_printer_settings">Printer Settings</lang></a></li>
-                                                    <li class="nav-item"><a class="nav-link" id="print-design-tab" data-toggle="tab" href="#print-design" role="tab" aria-controls="print-design" aria-selected="false"><i class="feather icon-layout mr-2" aria-hidden="true"></i><lang class="lang_receipt_design">Receipt Design</lang></a></li>
+                                                    <li class="nav-item"><a class="nav-link active" id="print-printers-tab" data-toggle="tab" href="#print-printers" data-guide-context="core:print:printers" role="tab" aria-controls="print-printers" aria-selected="true"><i class="feather icon-printer mr-2" aria-hidden="true"></i><lang class="lang_printer_settings">Printer Settings</lang></a></li>
+                                                    <li class="nav-item"><a class="nav-link" id="print-design-tab" data-toggle="tab" href="#print-design" data-guide-context="core:print:design" role="tab" aria-controls="print-design" aria-selected="false"><i class="feather icon-layout mr-2" aria-hidden="true"></i><lang class="lang_receipt_design">Receipt Design</lang></a></li>
                                                 </ul>
                                                 <div class="tab-content">
                                                     <div class="tab-pane fade show active" id="print-printers" role="tabpanel" aria-labelledby="print-printers-tab">
@@ -6063,7 +6063,7 @@
 
                         <!-- Kiosk Setting Tab Start -->
                         <!-- Online Ordering -->
-                        <div class="tab-pane fade" data-module="plan" data-access="read" id="v-pills-onlineordering"
+                        <div class="tab-pane fade" data-module="plan" data-access="read" id="v-pills-onlineordering" data-guide-route="/settings/onlineordering"
                             role="tabpanel" aria-labelledby="v-pills-onlineordering-tab">
                             <div class="order-box">
                                 <div class="col-md-12 col-lg-12 col-xl-12">
@@ -6074,22 +6074,22 @@
                                         <div class="card-body">
                                             <ul class="nav nav-tabs custom-tab-line mb-3" role="tablist">
                                                 <li class="nav-item">
-                                                    <a class="nav-link active" id="kioskaccount-tab-line" data-toggle="tab"
+                                                    <a class="nav-link active" id="kioskaccount-tab-line" data-toggle="tab" data-guide-context="storefront"
                                                         href="#kioskaccount-line" role="tab" aria-controls="kioskaccount-line"
                                                         aria-selected="true"><i class="feather icon-shopping-bag mr-1"></i><lang class="lang_storefront">Storefront</lang></a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link" id="kioskpayment-tab-line" data-toggle="tab"
+                                                    <a class="nav-link" id="kioskpayment-tab-line" data-toggle="tab" data-guide-context="payment"
                                                         href="#kioskpayment-line" role="tab" aria-controls="kioskpayment-line"
                                                         aria-selected="false"><i class="feather icon-credit-card mr-1"></i><lang class="lang_payment_2">Payment</lang></a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link" id="onlineorders-tab-line" data-toggle="tab"
+                                                    <a class="nav-link" id="onlineorders-tab-line" data-toggle="tab" data-guide-context="approval"
                                                         href="#onlineorders-line" role="tab" aria-controls="onlineorders-line"
                                                         aria-selected="false"><i class="feather icon-bell mr-1"></i><lang class="lang_order_approval">New online orders</lang></a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link" id="onlineproducts-tab-line" data-toggle="tab"
+                                                    <a class="nav-link" id="onlineproducts-tab-line" data-toggle="tab" data-guide-context="catalogue"
                                                         href="#onlineproducts-line" role="tab" aria-controls="onlineproducts-line"
                                                         aria-selected="false"><i class="feather icon-package mr-1"></i><lang class="lang_what_it_sells">What it sells</lang></a>
                                                 </li>
