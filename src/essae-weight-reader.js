@@ -203,7 +203,8 @@ class EssaeWeightReader {
       ? Math.round(((this.weightHistory[n - 1] + this.weightHistory[n - 2]) / 2) * 1000) / 1000
       : Math.round(kg * 1000) / 1000;
 
-    if (this.lastReported !== null && Math.abs(value - this.lastReported) < this.config.minChangeKg) return;
+    // Every received frame refreshes the consumer, even at unchanged weight.
+    // Suppressing these made a second item wait indefinitely on a steady load.
     this.lastReported = value;
     this._broadcast(value);
   }

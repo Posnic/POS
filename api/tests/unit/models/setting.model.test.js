@@ -669,6 +669,31 @@ describe('editGeneralSetting', () => {
     jest.spyOn(m, 'updateBranchNameInCollections').mockResolvedValue(true);
   });
 
+  test('saves receipt contact details to the requested branch with tenant scope and a sync timestamp', async () => {
+    col.updateOne.mockResolvedValue({ matchedCount: 1 });
+    const target = '507f1f77bcf86cd799439099';
+    const r = await m.editGeneralSetting({
+      target_branch_id: target,
+      store_name: 'Sales Centre',
+      store_address: ' Office address ',
+      printing_address: ' Receipt address ',
+      store_email: 'shop+centre@example.com',
+      store_telephone: '+919008427482',
+    });
+    expect(r.status).toBe(true);
+    const [filter, update] = col.updateOne.mock.calls[0];
+    expect(String(filter._id)).toBe(target);
+    expect(String(filter.license)).toBe(LICENSE_ID);
+    expect(update.$set).toMatchObject({
+      store_address: 'Office address',
+      printing_address: 'Receipt address',
+      store_email: 'shop+centre@example.com',
+      store_telephone: '+919008427482',
+    });
+    expect(update.$set.updated_date).toBeInstanceOf(Date);
+    expect(r.data.printing_address).toBe('Receipt address');
+  });
+
   test('saves branch UPI text, preserves it when omitted, and rejects invalid payees before writing', async () => {
     col.updateOne.mockResolvedValue({ matchedCount: 1 });
     const result = await m.editGeneralSetting({
@@ -791,6 +816,32 @@ describe('updateCommonSettings', () => {
     col = makeMockCollection();
     jest.spyOn(m, 'getCollection').mockResolvedValue(col);
   });
+
+  test.each([0, '0', 6, 300, undefined])(
+    'redirect delay persists without resetting an omitted value: %s',
+    async (value) => {
+      const r = await m.updateCommonSettings(
+        value === undefined ? {} : { sale_redirect_seconds: value }
+      );
+      expect(r.status).toBe(true);
+      const [filter, update] = col.updateOne.mock.calls.at(-1);
+      expect(String(filter.license)).toBe(LICENSE_ID);
+      expect(String(filter._id)).toBe(BRANCH_ID);
+      if (value === undefined) expect(update.$set).not.toHaveProperty('sale_redirect_seconds');
+      else expect(update.$set.sale_redirect_seconds).toBe(Number(value));
+      expect(update.$set.updated_date).toBeInstanceOf(Date);
+    }
+  );
+
+  test.each([-1, 301, 1.5, '', 'abc', null, true])(
+    'rejects invalid redirect delay before writing: %s',
+    async (value) => {
+      const r = await m.updateCommonSettings({ sale_redirect_seconds: value });
+      expect(r.status).toBe(false);
+      expect(r.message).toMatch(/whole number from 0 to 300/);
+      expect(col.updateOne).not.toHaveBeenCalled();
+    }
+  );
 
   test('returns status:false when context is missing', async () => {
     m.branchId = null;

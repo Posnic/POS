@@ -13253,22 +13253,23 @@ PosnicPro.sales.readWeightFromMachine = async function () {
         return;
     }
 
+    const activeElement = document.activeElement;
+    const targetInput = $(activeElement).is('#sales_new_items_tbody input[name="addSalesLineItemQty"]')
+        ? activeElement
+        : $('#sales_new_items_tbody tr[id^="touch_row_"]').first().find('input[name="addSalesLineItemQty"]')[0];
+    if (!targetInput) {
+        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_items_in_cart_please_add_an_item_first', 'No items in cart. Please add an item first.'));
+        return;
+    }
     try {
         // Prefer a settled reading from the scale. The live display shows every
         // frame including mid-swing values, so reading it directly can bill the
         // customer for a weight the load never actually rested at.
         let weight = null;
         try {
-            weight = await window.WeightBridge.getCurrentWeight();
+            weight = await window.WeightBridge.getCurrentWeight({ stableOnly: true });
         } catch (e) {
-            console.warn('[weight] live read failed, falling back to display:', e);
-        }
-
-        // Fallback: scales that transmit only once per settle may go quiet
-        // before we ask, so use whatever the display last showed.
-        if (weight === null || weight === undefined || isNaN(weight) || weight <= 0) {
-            const weightText = $('#live_weight_value').text().trim();
-            weight = parseFloat(weightText);
+            console.warn('[weight] live read failed:', e);
         }
 
         if (!weight || weight <= 0 || isNaN(weight)) {
@@ -13281,54 +13282,13 @@ PosnicPro.sales.readWeightFromMachine = async function () {
             return;
         }
 
-        // Check if cursor is in an input field (but exclude item search box)
-        const activeElement = document.activeElement;
-        const isInputField = activeElement && (
-            activeElement.tagName === 'INPUT' ||
-            activeElement.tagName === 'TEXTAREA'
-        );
-
-        // Exclude the item search box from being filled with weight
-        const isSearchBox = activeElement && activeElement.id === 'sales_new_item_name';
-
-        if (isInputField && activeElement.type === 'text' && !isSearchBox) {
-            // Fill the focused input field
-            $(activeElement).val(weight.toFixed(3));
-            $(activeElement).trigger('change');
-            PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg filled');
-        } else {
-            // Update quantity of last added item in cart
-            // Find first row (newest item since items are prepended)
-            const firstRow = $('#sales_new_items_tbody tr[id^="touch_row_"]').first();
-
-            if (firstRow.length) {
-                // Extract item ID from row ID (touch_row_{id})
-                const rowId = firstRow.attr('id');
-                const itemId = rowId.replace('touch_row_', '');
-
-                // Find quantity input with name addSalesLineItemQty
-                const qtyInput = firstRow.find('input[inputmode="decimal" name="addSalesLineItemQty"]');
-                if (qtyInput.length) {
-                    qtyInput.val(weight.toFixed(3));
-
-                    // Get track_inventory and negative_stock from hidden fields
-                    const trackInventory = $('#trackInventory_' + itemId).text();
-                    const negativeStock = $('#negativeStock_' + itemId).text();
-
-                    // Small delay to ensure DOM is updated before triggering calculation
-                    setTimeout(function () {
-                        // Trigger price recalculation
-                        PosnicPro.sales.quantity.textOnChange(itemId, trackInventory, negativeStock);
-                    }, 100);
-
-                    PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg set for last item');
-                } else {
-                    PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_quantity_field_found_for_last_item', 'No quantity field found for last item'));
-                }
-            } else {
-                PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_items_in_cart_please_add_an_item_first', 'No items in cart. Please add an item first.'));
-            }
-        }
+        // A reading belongs to the row selected when the request started.
+        // Never apply a delayed reading to a replacement row or a new sale.
+        if (!targetInput.isConnected || !$(targetInput).closest('#sales_new_items_tbody').length) return;
+        const itemId = $(targetInput).closest('tr[id^="touch_row_"]').attr('id').replace('touch_row_', '');
+        $(targetInput).val(weight.toFixed(3));
+        PosnicPro.sales.quantity.textOnChange(itemId, $('#trackInventory_' + itemId).text(), $('#negativeStock_' + itemId).text());
+        PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg filled');
 
     } catch (error) {
         console.error('Weight reading error:', error);
@@ -13441,6 +13401,11 @@ PosnicPro.sales.initWeightMachine = function () {
             // Start live weight monitoring
             if (window.WeightBridge.startMonitoring) {
                 window.WeightBridge.startMonitoring(function (weight) {
+                    if (weight === null || weight === undefined || !Number.isFinite(weight)) {
+                        $('#live_weight_value').text('---');
+                        $('#live_weight_display').css({ background: '#f0f0f0', color: '#333' });
+                        return;
+                    }
                     if (weight !== null && weight !== undefined && !isNaN(weight)) {
                         $('#live_weight_value').text(weight.toFixed(3));
                         // Change color based on weight
@@ -13710,40 +13675,14 @@ $(document).on('click', '#print_receipt_a4, #print_receipt_thermal', function ()
     });
 });
 
-/*
- * The sale-done card closes itself, unless the cashier is using it.
- *
- * At a busy counter the next customer is already waiting, so making
- * somebody click "New sale" after every single sale is a step charged on
- * every transaction of the day. The card knows what comes next, so it can
- * do it.
- *
- * WHAT MAKES THIS SAFE IS THE CANCELLING, NOT THE DURATION.
- *
- * The failure that would make this worse than no timer at all: the card
- * closes at ten seconds while a hand is on its way to Print. That cashier
- * now has to go and find the sale again in front of a waiting customer,
- * and that single event costs more goodwill than the saved clicks earn
- * back over a hundred sales. So ANY sign of attention stops the clock -
- * moving onto the card, focusing a button, a keystroke, a touch - and
- * once stopped it does not restart. Somebody who has engaged with this
- * card gets to leave it when they choose.
- *
- * Printing deliberately does not restart it either. A print is exactly
- * the case where the next thing is handing paper to a customer, and
- * having the screen change during that is the wrong moment.
- */
+/* The completed sale returns after the configured delay. Interaction pauses
+ * a countdown; successful printing starts it again. Zero returns immediately. */
 /* Preview the configured print document with the current cart. */
 PosnicPro.sales.renderTenderReceiptPreview = function () {
     PosnicPro.tenderReceipt.show();
 };
 
 PosnicPro.sales.saleDoneTimer = {
-    /* Long enough to read the total and reach for Print; short enough that
-       the till is ready before the next customer has put their basket down.
-       Ten felt like waiting (owner: "dont wait too much time to close"). */
-    SECONDS: 6,
-
     _timer: null,
     _card: function () { return $('#newsalespage .sale-done-card'); },
 
@@ -13753,6 +13692,7 @@ PosnicPro.sales.saleDoneTimer = {
 
         var $card = self._card();
         if (!$card.length) { return; }
+        var seconds = PosnicPro.saleRedirectSeconds();
 
         /*
          * Somebody who asked for reduced motion gets no ring, and the ring is
@@ -13760,7 +13700,7 @@ PosnicPro.sales.saleDoneTimer = {
          * vanish with no notice at all - the exact surprise the ring exists to
          * prevent - so for them the card simply waits to be dismissed.
          */
-        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (seconds > 0 && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             return;
         }
 
@@ -13775,7 +13715,7 @@ PosnicPro.sales.saleDoneTimer = {
          * time. Pure CSS (the is-closing class starts the keyframe, the
          * variable sets its pace), so removing the class is the whole stop.
          */
-        $card.get(0).style.setProperty('--sale-done-secs', self.SECONDS + 's');
+        $card.get(0).style.setProperty('--sale-done-secs', seconds + 's');
         $card.removeClass('is-held is-closing');
         /* next frame, so a back-to-back sale restarts the animation */
         void $card.get(0).offsetWidth;
@@ -13790,7 +13730,7 @@ PosnicPro.sales.saleDoneTimer = {
             /* The same path the button takes, rather than a second way to
                start a sale that could drift away from the first. */
             $('#newsalespage .sale-done-primary').get(0).click();
-        }, self.SECONDS * 1000);
+        }, seconds * 1000);
     },
 
     /* Called by every interaction. Idempotent on purpose - mouseenter and

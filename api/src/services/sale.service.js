@@ -2760,6 +2760,7 @@ const getDailySalesReportAggregates = async ({ match, cancellationMatch }, { Sal
     {
       $group: {
         _id: {
+          item_id: { $ifNull: ['$items.item_id', '$items.id'] },
           name: '$items.name',
           sku: '$items.sku',
           tax_rate: '$items.tax_rate',
@@ -2920,6 +2921,7 @@ const getDailyReportPdfAggregates = async ({ match }, { SaleModel } = {}) => {
       {
         $group: {
           _id: {
+            item_id: { $ifNull: ['$items.item_id', '$items.id'] },
             name: '$items.name',
             sku: '$items.sku',
           },

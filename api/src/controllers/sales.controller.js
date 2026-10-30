@@ -1617,6 +1617,15 @@ class SalesController extends BaseController {
           { SaleModel }
         );
 
+      const closingBalances = await require('../services/report-closing-stock').closingStock(
+        await BaseModel.getDb(),
+        {
+          branch,
+          license: BaseModel.license || req.user.license || req.user.license_id,
+          end,
+          itemIds: productAgg.map((item) => item._id?.item_id).filter(Boolean),
+        }
+      );
       const productDetails = productAgg.map((item) => {
         const subtotal = item.subtotal ?? 0;
         const totalAmount = item.totalAmount ?? 0;
@@ -1627,6 +1636,7 @@ class SalesController extends BaseController {
           product_name: item._id?.name || item._id?.item_name || 'Unknown',
           product_sku: item._id?.sku || '',
           product_qty: totalQty,
+          closing_stock: closingBalances.get(String(item._id?.item_id)) ?? null,
           product_total: roundToTwo(totalAmount),
           product_subtotal: roundToTwo(subtotal),
           product_profit: roundToTwo(subtotal - totalCompanyPrice),
@@ -1989,6 +1999,15 @@ class SalesController extends BaseController {
 
       const { productAgg, paymentAgg, taxAgg, extraDiscountSummary } =
         await salesService.getDailyReportPdfAggregates({ match }, { SaleModel });
+      const closingBalances = await require('../services/report-closing-stock').closingStock(
+        await BaseModel.getDb(),
+        {
+          branch,
+          license: BaseModel.license || req.user.license || req.user.license_id,
+          end,
+          itemIds: productAgg.map((item) => item._id?.item_id).filter(Boolean),
+        }
+      );
 
       const timeZone = branchDoc.time_zone || process.env.DEFAULT_TIMEZONE || 'UTC';
 
@@ -2292,7 +2311,7 @@ class SalesController extends BaseController {
       const tableTop = 214;
       const headerHeight = 24;
       const rowHeight = 24;
-      const colWidths = [30, 138, 58, 38, 62, 68, 54, 67];
+      const colWidths = [25, 100, 48, 38, 58, 60, 48, 65, 73];
       const cellPad = 5;
       let xPos = tableLeft;
 
@@ -2327,6 +2346,7 @@ class SalesController extends BaseController {
           ['Discount', 'right'],
           ['Tax', 'right'],
           ['Amount', 'right'],
+          ['Closing stock', 'right'],
         ];
 
         let headerX = tableLeft;
@@ -2347,7 +2367,7 @@ class SalesController extends BaseController {
       // Helper to format quantity
       const formatQty = (value) => {
         const num = Number(value) || 0;
-        return Number.isInteger(num) ? num.toString() : num.toFixed(2);
+        return Number.isInteger(num) ? num.toString() : num.toFixed(3);
       };
 
       // Item rows
@@ -2396,7 +2416,7 @@ class SalesController extends BaseController {
         const maxNameChars = 30;
         const displayName =
           rawName.length > maxNameChars ? `${rawName.slice(0, maxNameChars - 1)}…` : rawName;
-        doc.text(cleanCellText(rawName, 26), xPos + cellPad, yPos + 8, {
+        doc.text(cleanCellText(rawName, 21), xPos + cellPad, yPos + 8, {
           width: colWidths[1] - cellPad * 2,
           lineBreak: false,
         });
@@ -2435,6 +2455,14 @@ class SalesController extends BaseController {
 
         writeMoney(amount, xPos + cellPad, yPos + 8, { width: colWidths[7] - cellPad * 2 });
 
+        xPos += colWidths[7];
+        const closing = closingBalances.get(String(item._id?.item_id));
+        doc.text(
+          closing === undefined ? 'Unavailable' : formatQty(closing),
+          xPos + cellPad,
+          yPos + 8,
+          { width: colWidths[8] - cellPad * 2, align: 'right', lineBreak: false }
+        );
         yPos += rowHeight;
       });
 
