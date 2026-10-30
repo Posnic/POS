@@ -547,9 +547,9 @@ test('an older brand response cannot restore Posnic help after a newer white-lab
   let manifestFetches = 0;
   let languagePrefix = 'Translated: ';
   const languageHandlers = {};
-  const labels = {};
+  const labels = { 'data-en-aria-label': 'Help for this page', 'data-en-title': 'Help for this page' };
   const host = { hidden: true };
-  const button = { setAttribute: (name, value) => { labels[name] = value; }, addEventListener: (type, handler) => {
+  const button = { removeAttribute: name => { delete labels[name]; }, setAttribute: (name, value) => { labels[name] = value; }, addEventListener: (type, handler) => {
     if (type === 'click') clickHelp = handler;
   } };
   const message = { hidden: true };
@@ -580,6 +580,8 @@ test('an older brand response cannot restore Posnic help after a newer white-lab
   await drain();
   assert.equal(host.hidden, false);
   assert.equal(manifestFetches, 1);
+  assert.equal(labels['data-en-aria-label'], undefined);
+  assert.equal(labels['data-en-title'], undefined);
   clickHelp();
   assert.equal(message.hidden, false);
   assert.match(message.textContent, /^Translated: A guide for this exact build/);
@@ -591,7 +593,7 @@ test('an older brand response cannot restore Posnic help after a newer white-lab
   assert.match(message.textContent, /^Changed language: A guide for this exact build/);
   const core = require('node:fs').readFileSync(require('node:path').join(__dirname,
     '../frontend/static/script/js/core/PosnicPro.js'), 'utf8');
-  assert.match(core, /PosnicPro\.i18n\.apply\(\);[\s\S]{0,150}document\.dispatchEvent\(new CustomEvent\('posnic:i18n-changed'\)\)/);
+  assert.match(core, /PosnicPro\.i18n\.apply\(\);[\s\S]{0,150}document\.dispatchEvent\(new document.defaultView.CustomEvent\('posnic:i18n-changed'\)\)/);
   poll();
   brandResponses.shift()({ ok: true, json: () => Promise.resolve(unbranded) });
   await drain();

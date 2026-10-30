@@ -5188,7 +5188,7 @@ PosnicPro.i18n = {
             if (PosnicPro.i18n.code() === 'en') PosnicPro.i18n.restore();
             PosnicPro.i18n.apply();
             if (PosnicPro.wording) PosnicPro.wording.refresh();
-            document.dispatchEvent(new CustomEvent('posnic:i18n-changed'));
+            document.dispatchEvent(new document.defaultView.CustomEvent('posnic:i18n-changed'));
         });
     }
 };

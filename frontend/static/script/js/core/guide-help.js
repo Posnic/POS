@@ -214,6 +214,8 @@
         if (button.removeAttribute) {
             button.removeAttribute('data-t-aria-label');
             button.removeAttribute('data-t-title');
+            button.removeAttribute('data-en-aria-label');
+            button.removeAttribute('data-en-title');
         }
         button.setAttribute('aria-label', label);
         button.setAttribute('title', label);
