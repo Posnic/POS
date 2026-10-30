@@ -182,7 +182,7 @@ const toNumberSafe = (value, fallback = 0) => {
 const roundQty = (value) => Math.round(toNumberSafe(value, 0) * 1000) / 1000;
 
 const normalizeReturnItemKey = (item = {}) =>
-  String(item.item_id || item.item || item.id || item._id || '');
+  String(item.line_id || item.item_id || item.item || item.id || item._id || '');
 
 const addQtyToMap = (map, key, qty) => {
   if (!key) return;
@@ -5069,8 +5069,14 @@ class SalesRepository {
 
       const licenseId = saleDocument.license || BaseModel.license || null;
 
-      const items = Array.isArray(payload.items) ? payload.items : [];
-      const returnItems = Array.isArray(payload.items_return) ? payload.items_return : [];
+      const items = require('../utils/order-line').reconcile(
+        Array.isArray(payload.items) ? payload.items : [],
+        saleDocument.items || []
+      );
+      const returnItems = require('../utils/order-line').reconcile(
+        Array.isArray(payload.items_return) ? payload.items_return : [],
+        saleDocument.items || []
+      );
       const now = new Date();
 
       if (!returnItems.length) {
@@ -5251,7 +5257,15 @@ class SalesRepository {
 
         const price = toNumberSafe(item.item_price, 0);
         const totalAmount = toNumberSafe(item.total_amount, qty * price);
-        const companyPrice = qty * toNumberSafe(itemDoc.company_price, 0);
+        const costLine = originalSaleItems.find(
+          (line) => normalizeReturnItemKey(line) === normalizeReturnItemKey(item)
+        );
+        const originalQty = toNumberSafe(costLine?.item_quantity, 0);
+        const companyPrice =
+          originalQty > 0 && Number.isFinite(Number(costLine?.company_price_total))
+            ? (qty * Number(costLine.company_price_total)) / originalQty
+            : require('../helpers/selling-units').stockQuantity(costLine || item, qty) *
+              toNumberSafe(itemDoc.company_price, 0);
 
         const taxType =
           item.tax_type === 'Exc' || item.tax_type === 'exclusive' ? 'exclusive' : 'inclusive';
@@ -5291,6 +5305,7 @@ class SalesRepository {
           item_discount_percentage: discountPercentage,
           item_quantity: qty,
           item_available_quantity: availableQty,
+          ...require('../utils/order-line').identity(item),
           item_id: rawItemId,
           total_amount: totalAmount,
           barcode_id: itemDoc.barcode_id,
@@ -5310,14 +5325,18 @@ class SalesRepository {
           item_unit:
             (
               originalSaleItems.find(
-                (line) => String(line.item_id || line.item) === String(rawItemId)
+                (line) =>
+                  normalizeReturnItemKey(line) === normalizeReturnItemKey(item) &&
+                  String(line.item_id || line.item) === String(rawItemId)
               ) || {}
             ).item_unit ||
             item.item_unit ||
             'qty',
           unit_conversion: (
             originalSaleItems.find(
-              (line) => String(line.item_id || line.item) === String(rawItemId)
+              (line) =>
+                normalizeReturnItemKey(line) === normalizeReturnItemKey(item) &&
+                String(line.item_id || line.item) === String(rawItemId)
             ) || {}
           ).unit_conversion,
         });
@@ -5350,13 +5369,25 @@ class SalesRepository {
         const price = toNumberSafe(item.item_price, 0);
         const totalAmount = toNumberSafe(item.total_amount, qty * price);
 
-        const companyPrice = qty * toNumberSafe(itemDoc.company_price, 0);
+        const costLine = originalSaleItems.find(
+          (line) => normalizeReturnItemKey(line) === normalizeReturnItemKey(item)
+        );
+        const originalQty = toNumberSafe(costLine?.item_quantity, 0);
+        const companyPrice =
+          originalQty > 0 && Number.isFinite(Number(costLine?.company_price_total))
+            ? (qty * Number(costLine.company_price_total)) / originalQty
+            : require('../helpers/selling-units').stockQuantity(costLine || item, qty) *
+              toNumberSafe(itemDoc.company_price, 0);
 
         const originalLine =
           originalSaleItems.find((line) => {
             if (!line || typeof line !== 'object') return false;
             const srcId = line.item_id || line.item || line.itemId;
-            return srcId && String(srcId) === String(rawItemId);
+            return (
+              srcId &&
+              String(srcId) === String(rawItemId) &&
+              normalizeReturnItemKey(line) === normalizeReturnItemKey(item)
+            );
           }) || null;
 
         const discountAmountRaw = toNumberSafe(originalLine && originalLine.item_discount, 0);
@@ -5414,6 +5445,7 @@ class SalesRepository {
           item_discount: discountAmount,
           item_discount_percentage: discountPercentage,
           item_quantity: qty,
+          ...require('../utils/order-line').identity(item),
           item_id: rawItemId,
           total_amount: totalAmount,
           barcode_id: itemDoc.barcode_id,
@@ -5550,7 +5582,9 @@ class SalesRepository {
           const openingBalance = Number(itemDoc.available_quantity || 0);
           const sourceLine =
             originalSaleItems.find(
-              (line) => String(line.item_id || line.item) === String(rawItemId)
+              (line) =>
+                normalizeReturnItemKey(line) === normalizeReturnItemKey(item) &&
+                String(line.item_id || line.item) === String(rawItemId)
             ) || {};
           const itemQty = require('../helpers/selling-units').stockQuantity(
             sourceLine,

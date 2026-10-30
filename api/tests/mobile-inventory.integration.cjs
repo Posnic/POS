@@ -337,3 +337,24 @@ test('availability duplicate review, alternates, restore, audit, retry, conflict
   req.user.access = { item: { read: true, write: false } };
   await assert.rejects(availability.change(req), { status: 403 });
 });
+
+test('locations are searchable inside the authorized branch and can be cleared', async () => {
+  await db
+    .collection('items')
+    .updateOne({ _id: row._id }, { $set: { stock_locations: ['Rack 5 / Shelf 2'] } });
+  await db
+    .collection('items')
+    .insertOne({
+      ...row,
+      _id: new ObjectId(),
+      branch_id: new ObjectId(),
+      stock_locations: ['Rack 5 / Shelf 2'],
+    });
+  req.query = { q: 'Rack 5' };
+  let result = await inventory.catalogue(req);
+  assert.equal(result.rows.length, 1);
+  assert.deepEqual(result.rows[0].stockLocations, ['Rack 5 / Shelf 2']);
+  await db.collection('items').updateOne({ _id: row._id }, { $set: { stock_locations: [] } });
+  result = await inventory.catalogue(req);
+  assert.equal(result.rows.length, 0);
+});

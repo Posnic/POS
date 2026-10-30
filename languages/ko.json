@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "이 보고서를 자동으로 전송",
   "lang_split_payment_help": "청구서 한 개, 여러 결제 방법예를 들어, 반은 카드로, 절반은 현금으로.",
   "lang_payment_print_reference": "영수증 시 참조 인쇄",
-  "lang_payment_print_reference_storage": "영수증 기본 설정이 기억나지 않습니다.다시 시도해 주세요."
+  "lang_payment_print_reference_storage": "영수증 기본 설정이 기억나지 않습니다.다시 시도해 주세요.",
+  "lang_bank_account_routing_details": "은행 계좌 및 라우팅 세부 정보",
+  "lang_messaging_acl_manage_automation": "자동 메시지 관리",
+  "lang_messaging_acl_manage_reports": "예약된 보고서 관리",
+  "lang_messaging_acl_manage_settings": "메시징 설정 관리",
+  "lang_messaging_acl_send_bulk": "대량 고객 메시지 전송",
+  "lang_messaging_acl_send_email": "이메일 보내기",
+  "lang_messaging_acl_send_sms": "SMS메시지 보내기",
+  "lang_messaging_acl_send_whatsapp": "WhatsApp메시지 보내기",
+  "lang_messaging_acl_view_history": "메시지 기록 보기",
+  "lang_postal_code": "우편번호",
+  "lang_stock_locations": "재고 위치",
+  "lang_stock_locations_help": "선택 사항.라인당 한 위치, 최대 12개주 피킹 위치를 먼저 배치하세요.위치는 품목을 찾을 수 있는 위치를 설명하며 재고 수량을 나누지는 않습니다.",
+  "lang_whole_selling_units": "전체 수량만 (전체 길이 또는 팩)"
 }

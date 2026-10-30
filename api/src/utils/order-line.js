@@ -38,7 +38,11 @@ function reconcile(incoming, existing) {
     byProduct.set(product(line), matches);
   }
   const result = incoming.map((line) => {
-    if (id(line)) return { ...line };
+    if (id(line)) {
+      const saved = existing.find((row) => id(row) === id(line));
+      if (saved && product(saved) !== product(line)) throw new Error('order_line_product_changed');
+      return { ...line };
+    }
     const matches = byProduct.get(product(line)) || [];
     if (matches.length > 1) throw new Error('ambiguous_order_lines');
     return { ...line, ...(matches.length === 1 ? identity(matches[0]) : {}) };

@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "এই প্রতিবেদন স্বয়ংক্রিয়ভাবে",
   "lang_split_payment_help": "একটি বিল, বেশ কয়েকটি পেমেন্ট পদ্ধতি। উদাহরণস্বরূপ, অর্ধেক কার্ড দ্বারা এবং অর্ধেক নগদ অর্",
   "lang_payment_print_reference": "রসিদে রেফারেন্স প্রিন্ট করুন",
-  "lang_payment_print_reference_storage": "রসিদ পছন্দ মনে রাখা যায়নি। দয়া করে আবার চেষ্টা করুন।"
+  "lang_payment_print_reference_storage": "রসিদ পছন্দ মনে রাখা যায়নি। দয়া করে আবার চেষ্টা করুন।",
+  "lang_bank_account_routing_details": "ব্যাংক অ্যাকাউন্ট এবং রাউটিং বিবরণ",
+  "lang_messaging_acl_manage_automation": "স্বয়ংক্রিয় বার্তা পরিচাল",
+  "lang_messaging_acl_manage_reports": "নির্ধারিত রিপোর্ট পরিচালনা",
+  "lang_messaging_acl_manage_settings": "বার্তা সেটিংস পরিচালনা",
+  "lang_messaging_acl_send_bulk": "বাল্ক গ্রাহক বার্তা প্রেরণ করুন",
+  "lang_messaging_acl_send_email": "ইমেল পাঠান",
+  "lang_messaging_acl_send_sms": "SMSবার্তা পাঠান",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppবার্তা পাঠান",
+  "lang_messaging_acl_view_history": "বার্তার ইতিহাস দেখুন",
+  "lang_postal_code": "পোস্টাল কোড",
+  "lang_stock_locations": "স্টক অবস্থান",
+  "lang_stock_locations_help": "ঐচ্ছিক। প্রতি লাইনে একটি অবস্থান, 12 পর্যন্ত। প্রথমে মূল বাছাই করার অবস্থান রাখুন। অবস্থানগুলি আইটেমটি কোথায় পাওয়া যায় তা বর্ণনা করে; তারা এর স্টক পরিমাণ ভাগ করে না।",
+  "lang_whole_selling_units": "শুধুমাত্র পুরো পরিমাণ (সম্পূর্ণ দৈর্ঘ্য বা প্যাক)"
 }

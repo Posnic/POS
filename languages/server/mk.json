@@ -967,7 +967,6 @@
   "Audience choices": "Избор на публиката",
   "Choose a table first.": "Најпрво изберете табела.",
   "Choose an enabled venue and enter a room number (up to 40 characters).": "Изберете овозможено место и внесете број на соба (до 40 знаци).",
-  "Combine this product into one line when selling in an alternate unit.": "Комбинирајте го овој производ во една линија кога продавате во алтернативна единица.",
   "Enter a valid phone number including country code.": "Внесете валиден телефонски број вклучувајќи го и кодот на земјата.",
   "Enter the number of guests.": "Внесете го бројот на гости.",
   "Receipt sharing is unavailable. Configure receipt file storage before sending an SMS bill.": "Споделувањето на сметките е недостапно. Конфигурирајте го складирањето на датотеката за прием пред да испра SMS тите сметка.",
@@ -977,8 +976,8 @@
   "The bill PDF could not be prepared. Nothing was sent.": "Предлог-законот PDF не можеше да се подготви. Ништо не беше испратено.",
   "This number could not be found on WhatsApp. Check the country code and number.": "Овој број не може да се најде наWhatsApp. Проверете го кодот и бројот на земјата.",
   "This receipt link is invalid. Ask the shop to send it again.": "Оваа врска за потврда е невалидна. Побарајте од продавницата повторно да го испрати.",
-  "Use one selling unit per product in a sale.": "Користете една продажна единица по производ во продажба.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне вратија референца за порака. Испораката е непотврдена; проверете го разговорот пред повторно да се обидете.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppсè уште не го синхронизирал разговорот на овој примач. Ниту една порака не е испратена. Дозволете на поврзаниот уред да заврши синхронизирањето.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppсè уште се поврзува или му треба нова телефонска врска. Ниту една порака не е испратена."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppсè уште се поврзува или му треба нова телефонска врска. Ниту една порака не е испратена.",
+  "Messaging permission required.": "Потребна е дозвола за пораки.",
+  "Schedule owner no longer has messaging access.": "Сопственикот на распоредот повеќе нема пристап до пораки."
 }

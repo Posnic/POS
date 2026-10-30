@@ -1535,6 +1535,9 @@ PosnicPro.items = {
         });
         let unit = (typeof (data.unit) != "undefined" && data.unit !== null) ? data.unit : "qty";
         $('#item_view_units').text(unit);
+        var locations = Array.isArray(data.stock_locations) ? data.stock_locations : [];
+        $('#item_view_locations_row').prop('hidden', !locations.length);
+        $('#item_view_stock_locations').text(locations.join(' · '));
         if (!itemHsnAvailable() || response.data.tax_method === 'default') {
             $('.item-taxdefault').show();
             $('.item-hsntax').hide();

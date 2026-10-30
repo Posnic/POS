@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "ارسال این گزارش به صورت خودکار",
   "lang_split_payment_help": "یک صورتحساب، چندین روش پرداخت. به عنوان مثال، نیمی با کارت و نیمی به صورت نقدی.",
   "lang_payment_print_reference": "چاپ مرجع در رسید",
-  "lang_payment_print_reference_storage": "نمی توانم ترجیح رسید را به خاطر بسپارید. لطفا دوباره امتحان کنید"
+  "lang_payment_print_reference_storage": "نمی توانم ترجیح رسید را به خاطر بسپارید. لطفا دوباره امتحان کنید",
+  "lang_bank_account_routing_details": "حساب بانکی و جزئیات مسیریابی",
+  "lang_messaging_acl_manage_automation": "مدیریت پیام های خودکار",
+  "lang_messaging_acl_manage_reports": "مدیریت گزارش های برنامه ریزی شده",
+  "lang_messaging_acl_manage_settings": "تنظیمات پیام رسانی را مدیریت کنید",
+  "lang_messaging_acl_send_bulk": "ارسال پیام های انبوه مشتری",
+  "lang_messaging_acl_send_email": "ارسال ایمیل",
+  "lang_messaging_acl_send_sms": "ارسال SMS پیام",
+  "lang_messaging_acl_send_whatsapp": "ارسال WhatsApp پیام",
+  "lang_messaging_acl_view_history": "مشاهده تاریخچه پیام",
+  "lang_postal_code": "کد پستی",
+  "lang_stock_locations": "مکان های سهام",
+  "lang_stock_locations_help": "اختیاری یک مکان در هر خط، تا 12. محل اصلی چیدن را در ابتدا قرار دهید. مکان ها توصیف می کنند که کالا را کجا پیدا کنید؛ آنها مقدار موجودی آن را تقسیم نمی کنند.",
+  "lang_whole_selling_units": "فقط مقادیر کامل (طول کامل یا بسته بندی)"
 }

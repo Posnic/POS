@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Pošljite to poročilo samodejno",
   "lang_split_payment_help": "En račun, več načinov plačila. Na primer, polovica s kartico in polovica v gotovini.",
   "lang_payment_print_reference": "Natisnite referenco ob prejemu",
-  "lang_payment_print_reference_storage": "Nisem se mogel spomniti preferenc prejema. Prosim, poskusite znova."
+  "lang_payment_print_reference_storage": "Nisem se mogel spomniti preferenc prejema. Prosim, poskusite znova.",
+  "lang_bank_account_routing_details": "Podatki o bančnem računu in usmerjanju",
+  "lang_messaging_acl_manage_automation": "Upravljanje samodejnih sporočil",
+  "lang_messaging_acl_manage_reports": "Upravljanje načrtovanih poročil",
+  "lang_messaging_acl_manage_settings": "Upravljanje nastavitev sporočil",
+  "lang_messaging_acl_send_bulk": "Pošiljanje množičnih sporočil strank",
+  "lang_messaging_acl_send_email": "Pošlji e-poštna sporočila",
+  "lang_messaging_acl_send_sms": "Pošiljanje spor SMS očil",
+  "lang_messaging_acl_send_whatsapp": "Pošiljanje spor WhatsApp očil",
+  "lang_messaging_acl_view_history": "Oglejte si zgodovino sporočil",
+  "lang_postal_code": "Poštna številka",
+  "lang_stock_locations": "Lokacije zalog",
+  "lang_stock_locations_help": "Neobvezno. Ena lokacija na vrstico, do 12. Najprej postavite glavno mesto izbiranja. Lokacije opisujejo, kje najti izdelek; ne delijo njegove količine zaloge.",
+  "lang_whole_selling_units": "Samo celotne količine (polne dolžine ali pakiranja)"
 }

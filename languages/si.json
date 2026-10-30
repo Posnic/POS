@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "මෙම වාර්තාව ස්වයංක්රීයව යවන්න",
   "lang_split_payment_help": "එක් බිල්පතක්, ගෙවීම් ක්රම කිහිපයක්. උදාහරණයක් ලෙස, කාඩ්පතෙන් අඩක් සහ මුදල් වලින් භාගයක්.",
   "lang_payment_print_reference": "රිසිට්පත මත යොමු මුද්රණය කරන්න",
-  "lang_payment_print_reference_storage": "රිසිට්පත් මනාපය මතක තබා ගත නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න."
+  "lang_payment_print_reference_storage": "රිසිට්පත් මනාපය මතක තබා ගත නොහැකි විය. කරුණාකර නැවත උත්සාහ කරන්න.",
+  "lang_bank_account_routing_details": "බැංකු ගිණුම සහ මාර්ගගත විස්තර",
+  "lang_messaging_acl_manage_automation": "ස්වයංක්රීය පණිවිඩ",
+  "lang_messaging_acl_manage_reports": "නියමිත වාර්තා කළමනාකරණය කරන්න",
+  "lang_messaging_acl_manage_settings": "පණිවිඩ සැකසුම් කළමනාකරණය කරන්න",
+  "lang_messaging_acl_send_bulk": "තොග පාරිභෝගික පණිවිඩ යවන්න",
+  "lang_messaging_acl_send_email": "ඊමේල් යවන්න",
+  "lang_messaging_acl_send_sms": "පණිවිඩ SMS යැවීම",
+  "lang_messaging_acl_send_whatsapp": "පණිවිඩ WhatsApp යැවීම",
+  "lang_messaging_acl_view_history": "පණිවිඩ ඉතිහාසය බලන්න",
+  "lang_postal_code": "තැපැල් කේතය",
+  "lang_stock_locations": "කොටස් ස්ථාන",
+  "lang_stock_locations_help": "විකල්ප. එක් පේළියකට එක් ස්ථානයක්, 12 දක්වා. මුලින්ම ප්රධාන තෝරාගැනීමේ ස්ථානය තබන්න. ස්ථානයන් අයිතමය සොයා ගත යුතු ස්ථානය විස්තර කරයි; ඒවා එහි කොටස් ප්රමාණය බෙදන්නේ නැත.",
+  "lang_whole_selling_units": "සම්පූර්ණ ප්රමාණ පමණි (සම්පූර්ණ දිග හෝ ඇසුරුම්)"
 }

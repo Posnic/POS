@@ -21,11 +21,11 @@ test('settings reject empty typed fields, invalid fields and wrong payloads',()=
  assert.deepEqual(prefs.validate('sales_search_fields',['name','name']),['name']);
 });
 const source=fs.readFileSync('frontend/static/script/js/modules/js/sales.js','utf8');
-function render(fields,sales=true){
+function render(fields,sales=true,locations=['Rack 5 / Shelf 2','Box B']){
  const dom=new JSDOM('');const $=require('jquery')(dom.window);
  const PosnicPro={local:{get:()=>5},resolveTile:()=>({}),tileShapeCss:()=>''};
  vm.runInNewContext(source.slice(source.indexOf('PosnicPro.sugRow ='),source.indexOf('PosnicPro.sugActionRow =')),{PosnicPro,$});
- return PosnicPro.sugRow({item_name:'Name',itemid:'SKU-1',barcode_id:'123456',supplier_name:'Vendor',category_name:'Category',available_quantity:8,sales_search_display_fields:fields},'Name',{sales,price:1.75,currency:'GBP'});
+ return PosnicPro.sugRow({item_name:'Name',itemid:'SKU-1',barcode_id:'123456',supplier_name:'Vendor',category_name:'Category',available_quantity:8,stock_locations:locations,sales_search_display_fields:fields},'Name',{sales,price:1.75,currency:'GBP'});
 }
 test('sales display can show barcode and supplier without SKU, price, stock or image',()=>{
  const html=render(['barcode','supplier']);assert.match(html,/Barcode: 123456/);assert.match(html,/Supplier: Vendor/);
@@ -35,3 +35,20 @@ test('purchase ignores sales display settings and preserves its default display'
  const html=render(['barcode','supplier'],false);assert.match(html,/SKU-1/);assert.match(html,/Category/);assert.match(html,/1.75/);assert.match(html,/In stock/);assert.ok(!html.includes('Vendor'));
 });
 test('empty custom display still shows the product name',()=>{const html=render([]);assert.match(html,/Name/);assert.ok(!html.includes('SKU-1'));});
+
+test('locations are opt-in independently for matching and display',()=>{
+ const regex=/Rack 5/i;
+ assert.deepEqual(prefs.validate('sales_search_fields',['name','location']),['name','location']);
+ assert.deepEqual(prefs.validate('sales_search_display_fields',['location']),['location']);
+ assert.deepEqual(prefs.conditions(['location'],'Rack 5',regex),[{stock_locations:regex}]);
+ assert.ok(!prefs.conditions(null,'Rack 5',regex).some(c=>'stock_locations' in c));
+ for(const fields of [undefined,null,[],['sku']])assert.doesNotMatch(render(fields),/Rack 5|sug-location/);
+ assert.match(render(['location']),/Rack 5 \/ Shelf 2 · Box B/);
+ assert.doesNotMatch(render(['location'],false),/Rack 5|sug-location/);
+ assert.doesNotMatch(render(['location'],true,[]),/sug-location/);
+});
+
+test('location labels are escaped rather than executable dropdown markup',()=>{
+ const html=render(['location'],true,['<img src=x onerror=alert(1)>']);
+ assert.match(html,/&lt;img/);assert.doesNotMatch(html,/<img src=x/);
+});

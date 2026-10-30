@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "Bu raporu otomatik olarak gönder",
   "lang_split_payment_help": "Bir fatura, birkaç ödeme yöntemi. Örneğin, yarısı kartla ve yarısı nakit olarak.",
   "lang_payment_print_reference": "Makbuzdaki referansı yazdır",
-  "lang_payment_print_reference_storage": "Makbuz tercihini hatırlayamadım. Lütfen tekrar deneyin."
+  "lang_payment_print_reference_storage": "Makbuz tercihini hatırlayamadım. Lütfen tekrar deneyin.",
+  "lang_bank_account_routing_details": "Banka hesabı ve yönlendirme detayları",
+  "lang_messaging_acl_manage_automation": "Otomatik mesajları yönetme",
+  "lang_messaging_acl_manage_reports": "Zamanlanmış raporları yönetme",
+  "lang_messaging_acl_manage_settings": "Mesajlaşma ayarlarını yönetme",
+  "lang_messaging_acl_send_bulk": "Toplu müşteri mesajları gönderin",
+  "lang_messaging_acl_send_email": "E-posta gönder",
+  "lang_messaging_acl_send_sms": "SMSMesaj gönder",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppMesaj gönder",
+  "lang_messaging_acl_view_history": "Mesaj geçmişini görüntüle",
+  "lang_postal_code": "Posta kodu",
+  "lang_stock_locations": "Stok yerleri",
+  "lang_stock_locations_help": "İsteğe bağlı. Satır başına bir konum, 12'ye kadar. Önce ana toplama yerini koyun. Konumlar, öğenin nerede bulunacağını açıklar; stok miktarını bölmezler.",
+  "lang_whole_selling_units": "Yalnızca tam miktarlar (tam uzunluklar veya paketler)"
 }

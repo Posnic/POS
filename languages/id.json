@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "Kirim laporan ini secara otomatis",
   "lang_split_payment_help": "Satu tagihan, beberapa metode pembayaran. Misalnya, setengah dengan kartu dan setengah tunai.",
   "lang_payment_print_reference": "Cetak referensi pada tanda terima",
-  "lang_payment_print_reference_storage": "Tidak dapat mengingat preferensi tanda terima. Silakan coba lagi."
+  "lang_payment_print_reference_storage": "Tidak dapat mengingat preferensi tanda terima. Silakan coba lagi.",
+  "lang_bank_account_routing_details": "Rincian rekening bank dan perutean",
+  "lang_messaging_acl_manage_automation": "Kelola pesan otomatis",
+  "lang_messaging_acl_manage_reports": "Kelola laporan yang dijadwalkan",
+  "lang_messaging_acl_manage_settings": "Kelola pengaturan pesan",
+  "lang_messaging_acl_send_bulk": "Kirim pesan pelanggan massal",
+  "lang_messaging_acl_send_email": "Kirim email",
+  "lang_messaging_acl_send_sms": "Kirim SMS pesan",
+  "lang_messaging_acl_send_whatsapp": "Kirim WhatsApp pesan",
+  "lang_messaging_acl_view_history": "Lihat riwayat pesan",
+  "lang_postal_code": "Kode pos",
+  "lang_stock_locations": "Lokasi stok",
+  "lang_stock_locations_help": "Opsional. Satu lokasi per baris, hingga 12. Letakkan lokasi pengambilan utama terlebih dahulu. Lokasi menjelaskan di mana menemukan barang; mereka tidak membagi jumlah stoknya.",
+  "lang_whole_selling_units": "Jumlah utuh saja (panjang penuh atau paket)"
 }

@@ -967,7 +967,6 @@
   "Audience choices": "Kitle seçimleri",
   "Choose a table first.": "Önce bir masa seçin.",
   "Choose an enabled venue and enter a room number (up to 40 characters).": "Etkinleştirilmiş bir mekan seçin ve bir oda numarası girin (en fazla 40 karakter).",
-  "Combine this product into one line when selling in an alternate unit.": "Alternatif bir birimde satış yaparken bu ürünü tek bir satırda birleştirin.",
   "Enter a valid phone number including country code.": "Ülke kodu da dahil olmak üzere geçerli bir telefon numarası girin.",
   "Enter the number of guests.": "Misafir sayısını girin.",
   "Receipt sharing is unavailable. Configure receipt file storage before sending an SMS bill.": "Makbuz paylaşımı kullanılamıyor. Fatura göndermeden önce makbuz dosyası depolamasını yapılandır SMS ın.",
@@ -977,8 +976,8 @@
   "The bill PDF could not be prepared. Nothing was sent.": "Fatura PDF'si hazırlanamadı. Hiçbir şey gönderilmedi.",
   "This number could not be found on WhatsApp. Check the country code and number.": "Bu numara üzerinde bulunamadıWhatsApp. Ülke kodunu ve numarasını kontrol edin.",
   "This receipt link is invalid. Ask the shop to send it again.": "Bu makbuz bağlantısı geçersiz. Mağazadan tekrar göndermesini isteyin.",
-  "Use one selling unit per product in a sale.": "Bir satışta ürün başına bir satış birimi kullanın.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppbir mesaj referansı döndürmedi. Teslimat onaylanmadı; yeniden denemeden önce sohbeti kontrol edin.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApphenüz bu alıcının sohbetini senkronize etmedi. Mesaj gönderilmedi. Bağlı cihazın senkronizasyonu bitirmesine izin verin.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApphala yeniden bağlanıyor veya yeni bir telefon bağlantısına ihtiyaç duyuyor. Mesaj gönderilmedi."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApphala yeniden bağlanıyor veya yeni bir telefon bağlantısına ihtiyaç duyuyor. Mesaj gönderilmedi.",
+  "Messaging permission required.": "Mesajlaşma izni gerekli.",
+  "Schedule owner no longer has messaging access.": "Program sahibinin artık mesajlaşma erişimi yok."
 }

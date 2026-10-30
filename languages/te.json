@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "ఈ నివేదికను స్వయంచాలకంగా పంపండి",
   "lang_split_payment_help": "ఒక బిల్లు, అనేక చెల్లింపు పద్ధతులు. ఉదాహరణకు, సగం కార్డు ద్వారా మరియు సగం నగదు.",
   "lang_payment_print_reference": "రశీదుపై సూచనను ముద్రించండి",
-  "lang_payment_print_reference_storage": "రసీదు ప్రాధాన్యతను గుర్తుంచుకోలేకపోయింది. దయచేసి తిరిగి ప్రయత్నించండి."
+  "lang_payment_print_reference_storage": "రసీదు ప్రాధాన్యతను గుర్తుంచుకోలేకపోయింది. దయచేసి తిరిగి ప్రయత్నించండి.",
+  "lang_bank_account_routing_details": "బ్యాంక్ ఖాతా మరియు రౌటింగ్ వివరాలు",
+  "lang_messaging_acl_manage_automation": "ఆటోమేటిక్ సందేశాలను నిర్వహించండి",
+  "lang_messaging_acl_manage_reports": "షెడ్యూల్ చేసిన నివేదికలను నిర్వహించండి",
+  "lang_messaging_acl_manage_settings": "సందేశ సెట్టింగులను నిర్వహించండి",
+  "lang_messaging_acl_send_bulk": "బల్క్ కస్టమర్ సందేశాలను పంపండి",
+  "lang_messaging_acl_send_email": "ఇమెయిల్స్ పంపండి",
+  "lang_messaging_acl_send_sms": "SMSసందేశాలను పంపండి",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppసందేశాలను పంపండి",
+  "lang_messaging_acl_view_history": "సందేశ చరిత్రను వీక్షించండి",
+  "lang_postal_code": "పోస్టల్ కోడ్",
+  "lang_stock_locations": "స్టాక్ స్థానాలు",
+  "lang_stock_locations_help": "ఐచ్ఛికం. ప్రతి లైన్కు ఒక స్థానం, 12 వరకు. మొదట ప్రధాన పికింగ్ స్థానాన్ని ఉంచండి. స్థానాలు వస్తువును ఎక్కడ కనుగొనాలో వివరిస్తాయి; వారు దాని స్టాక్ పరిమాణాన్ని విభజించరు.",
+  "lang_whole_selling_units": "మొత్తం పరిమాణాలు మాత్రమే (పూర్తి పొడవులు లేదా ప్యాక్లు)"
 }

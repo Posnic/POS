@@ -793,7 +793,8 @@ describe('Item.LegacyItemModel › class identity', () => {
     //   dish-facts publishes nothing derived from an estimate).
     // Optional parcel measurements are projected without requiring them on legacy items.
     // + configured selling units, retained by legacy catalogue reads.
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(84);
+    // + branch stock locations, retained by legacy catalogue reads.
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(85);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         /* Named as well as counted: a count alone passes if one field is
@@ -802,6 +803,7 @@ describe('Item.LegacyItemModel › class identity', () => {
         parcel_details: expect.any(Object),
         available_for_sale: expect.any(Object),
         selling_units: expect.objectContaining({ select: true }),
+        stock_locations: expect.objectContaining({ select: true }),
         availability_revision: expect.any(Object),
         default_language: expect.any(Object),
         translations: expect.any(Object),

@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "हा अहवाल आपोआप पाठ",
   "lang_split_payment_help": "एक बिल, अनेक पेमेंट पद्धती. उदाहरणार्थ, कार्डद्वारे अर्धा आणि आधा रोख",
   "lang_payment_print_reference": "पावतीवर संदर्भ प्रिंट",
-  "lang_payment_print_reference_storage": "पावती प्राधान्य लक्षात ठेवले नाही पुन्हा प्रयत्न करा."
+  "lang_payment_print_reference_storage": "पावती प्राधान्य लक्षात ठेवले नाही पुन्हा प्रयत्न करा.",
+  "lang_bank_account_routing_details": "बँक खाते आणि रूटिंग तपशील",
+  "lang_messaging_acl_manage_automation": "स्वयंचलित संदेश",
+  "lang_messaging_acl_manage_reports": "नियोजित अहवाल व्य",
+  "lang_messaging_acl_manage_settings": "मेसेजिंग सेटिंग्ज",
+  "lang_messaging_acl_send_bulk": "मोठ्या प्रमाणात ग्राहक",
+  "lang_messaging_acl_send_email": "ईमेल पाठवा",
+  "lang_messaging_acl_send_sms": "संदेश पा SMS ठवा",
+  "lang_messaging_acl_send_whatsapp": "संदेश पा WhatsApp ठवा",
+  "lang_messaging_acl_view_history": "संदेश इतिहास पहा",
+  "lang_postal_code": "पोस्टल कोड",
+  "lang_stock_locations": "स्टॉक स्थाने",
+  "lang_stock_locations_help": "पर्यायी. प्रति लाइन एक स्थान, 12 पर्यंत. मुख्य निवडण्याचे स्थान प्रथम ठे स्थाने आयटम कोठे शोधायचे हे वर्णन करतात; ते त्याचे स्टॉक प्रमाण विभाजित",
+  "lang_whole_selling_units": "केवळ संपूर्ण प्रमाण (पूर्ण लांबी किंवा पॅक)"
 }

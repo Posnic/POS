@@ -1,7 +1,7 @@
 'use strict';
 
-const SEARCH = ['name', 'sku', 'barcode', 'plu', 'supplier', 'category'];
-const DISPLAY = ['sku', 'barcode', 'supplier', 'category', 'price', 'stock', 'image'];
+const SEARCH = ['name', 'sku', 'barcode', 'plu', 'supplier', 'category', 'location'];
+const DISPLAY = ['sku', 'barcode', 'supplier', 'category', 'price', 'stock', 'image', 'location'];
 const DEFAULT_SEARCH = ['name', 'sku', 'barcode', 'plu'];
 
 function validate(key, value) {
@@ -25,6 +25,7 @@ function conditions(fields, query, regex) {
     barcode: ['barcode_id', 'barcodes'],
     supplier: ['supplier_name'],
     category: ['category_name'],
+    location: ['stock_locations'],
   };
   return selected.flatMap((field) =>
     field === 'plu'

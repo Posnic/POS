@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Dërgo këtë raport automatikisht",
   "lang_split_payment_help": "Një faturë, disa mënyra pagese. Për shembull, gjysma me kartë dhe gjysma në para.",
   "lang_payment_print_reference": "Shtypni referencën në faturë",
-  "lang_payment_print_reference_storage": "Nuk mund të mbaj mend preferencën e faturës. Ju lutemi përsëriteni."
+  "lang_payment_print_reference_storage": "Nuk mund të mbaj mend preferencën e faturës. Ju lutemi përsëriteni.",
+  "lang_bank_account_routing_details": "Llogarinë bankare dhe detajet e rutimit",
+  "lang_messaging_acl_manage_automation": "Menaxhoni mesazhet automatike",
+  "lang_messaging_acl_manage_reports": "Menaxho raportet e planifikuara",
+  "lang_messaging_acl_manage_settings": "Menaxhimi i cilësimeve të",
+  "lang_messaging_acl_send_bulk": "Dërgoni mesazhe me shumicë",
+  "lang_messaging_acl_send_email": "Dërgoni email",
+  "lang_messaging_acl_send_sms": "Dërgo SMS mesazhe",
+  "lang_messaging_acl_send_whatsapp": "Dërgo WhatsApp mesazhe",
+  "lang_messaging_acl_view_history": "Shiko historinë e mesazheve",
+  "lang_postal_code": "Kodi Postar",
+  "lang_stock_locations": "Vendndodhjet e aksioneve",
+  "lang_stock_locations_help": "Opsionale. Një vend për linjë, deri në 12. Vendosni vendin kryesor të zgjedhjes së pari. Vendndodhjet përshkruajnë se ku mund të gjeni artikullin; ato nuk ndajnë sasinë e stokut të tij.",
+  "lang_whole_selling_units": "Vetëm sasi të plota (gjatësi ose pako të plota)"
 }

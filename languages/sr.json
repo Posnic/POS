@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Pošaljite ovaj izveštaj automatski",
   "lang_split_payment_help": "Jedan račun, nekoliko načina plaćanja. Na primer, pola karticom i pola u gotovini.",
   "lang_payment_print_reference": "Odštampajte referencu po prijemu",
-  "lang_payment_print_reference_storage": "Nisam mogao da se setim preferencije prijema. Molim vas pokušajte ponovo."
+  "lang_payment_print_reference_storage": "Nisam mogao da se setim preferencije prijema. Molim vas pokušajte ponovo.",
+  "lang_bank_account_routing_details": "Detalji o bankovnom računu i rutiranju",
+  "lang_messaging_acl_manage_automation": "Upravljanje automatskim porukama",
+  "lang_messaging_acl_manage_reports": "Upravljanje zakazanim izvještajima",
+  "lang_messaging_acl_manage_settings": "Upravljajte podešavanjima poruka",
+  "lang_messaging_acl_send_bulk": "Pošaljite masovne poruke kupaca",
+  "lang_messaging_acl_send_email": "Pošaljite e-poštu",
+  "lang_messaging_acl_send_sms": "Pošaljite SMS poruke",
+  "lang_messaging_acl_send_whatsapp": "Pošaljite WhatsApp poruke",
+  "lang_messaging_acl_view_history": "Pogledajte istoriju poruka",
+  "lang_postal_code": "Poštanski broj",
+  "lang_stock_locations": "Lokacije zaliha",
+  "lang_stock_locations_help": "Opcionalno. Jedna lokacija po liniji, do 12. Prvo stavite glavnu lokaciju za biranje. Lokacije opisuju gde se može naći predmet; ne dele njegovu količinu zaliha.",
+  "lang_whole_selling_units": "Samo cele količine (pune dužine ili pakovanja)"
 }
