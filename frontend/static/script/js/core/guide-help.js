@@ -185,6 +185,10 @@
         var active = owner && owner.querySelector('.nav-link.active[data-guide-context]');
         return active ? active.getAttribute('data-guide-context') : null;
     }
+    function translate(key, fallback) {
+        var i18n = root.PosnicPro.i18n;
+        return i18n && typeof i18n.t === 'function' ? i18n.t(key, fallback) : fallback;
+    }
     function paint() {
         var context = pageContext(root.document, routePath(root.location.hash));
         current = resolveGuide(brand, identity, root.location.hash, context, manifest);
@@ -202,8 +206,15 @@
             if (modalMessage) modalMessage.hidden = true;
         });
         if (!current.visible) return;
-        var label = current.kind === 'article' ? 'Help for this page, version ' + current.version :
-            current.kind === 'library' ? 'Guide library, version ' + current.version : 'Help for this page; exact guide unavailable';
+        var label = current.kind === 'article' ? translate('lang_guide_help_page_version', 'Help for this page, version {version}').replace('{version}', current.version) :
+            current.kind === 'library' ? translate('lang_guide_library_version', 'Guide library, version {version}').replace('{version}', current.version) :
+            translate('lang_guide_exact_unavailable', 'Help for this page; exact guide unavailable');
+        // Dynamic versioned labels are translated here; do not let the static
+        // initial-label marker overwrite them during a later DOM scan.
+        if (button.removeAttribute) {
+            button.removeAttribute('data-t-aria-label');
+            button.removeAttribute('data-t-title');
+        }
         button.setAttribute('aria-label', label);
         button.setAttribute('title', label);
     }
@@ -244,7 +255,7 @@
             root.open(GUIDE_ORIGIN + current.href, '_blank', 'noopener,noreferrer');
             return;
         }
-        status.textContent = 'A guide for this exact build is not available yet. Use About Posnic to copy the app, page and server versions for support.';
+        status.textContent = translate('lang_guide_build_unavailable_explanation', 'A guide for this exact build is not available yet. Use About Posnic to copy the app, page and server versions for support.');
         status.hidden = !status.hidden;
         trigger.setAttribute('aria-expanded', String(!status.hidden));
         if (status === message) positionMessage();

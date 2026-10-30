@@ -558,7 +558,7 @@ test('an older brand response cannot restore Posnic help after a newer white-lab
   };
   const root = {
     document: doc, location: { hash: '#/settings/onlineordering' }, navigator: { userAgent: 'Chrome' },
-    PosnicPro: { versionBadge: { read: () => Promise.resolve(identity) } },
+    PosnicPro: { versionBadge: { read: () => Promise.resolve(identity) }, i18n: { t: (key, fallback) => 'Translated: ' + fallback } },
     addEventListener() {}, setInterval: callback => { poll = callback; },
     open() { assert.fail('An unmapped build must not open an external guide'); },
     fetch: url => {
@@ -579,6 +579,7 @@ test('an older brand response cannot restore Posnic help after a newer white-lab
   assert.equal(manifestFetches, 1);
   clickHelp();
   assert.equal(message.hidden, false);
+  assert.match(message.textContent, /^Translated: A guide for this exact build/);
   poll();
   brandResponses.shift()({ ok: true, json: () => Promise.resolve(unbranded) });
   await drain();
