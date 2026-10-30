@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Изпратете този отчет автоматично",
   "lang_split_payment_help": "Една сметка, няколко начина на плащане. Например, половината с карта и половината в брой.",
   "lang_payment_print_reference": "Отпечатайте справка при получаване",
-  "lang_payment_print_reference_storage": "Не можах да си спомня предпочитанията за получаване. Моля, опитайте отново."
+  "lang_payment_print_reference_storage": "Не можах да си спомня предпочитанията за получаване. Моля, опитайте отново.",
+  "lang_bank_account_routing_details": "Данни за банкова сметка и маршрутизиране",
+  "lang_messaging_acl_manage_automation": "Управление на автоматични съобщения",
+  "lang_messaging_acl_manage_reports": "Управление на планирани отчети",
+  "lang_messaging_acl_manage_settings": "Управление на настройките за съобщения",
+  "lang_messaging_acl_send_bulk": "Изпращане на групови клиентски съобщения",
+  "lang_messaging_acl_send_email": "Изпращане на имейли",
+  "lang_messaging_acl_send_sms": "Изпращане на SMS съобщения",
+  "lang_messaging_acl_send_whatsapp": "Изпращане на WhatsApp съобщения",
+  "lang_messaging_acl_view_history": "Преглед на историята на съобщенията",
+  "lang_postal_code": "Пощенски код",
+  "lang_stock_locations": "Местоположение на складовете",
+  "lang_stock_locations_help": "По желание. Едно място на линия, до 12. Първо поставете основното място за бране. Местоположенията описват къде да намерите артикула; те не разделят количеството на запасите му.",
+  "lang_whole_selling_units": "Само цели количества (пълни дължини или опаковки)"
 }

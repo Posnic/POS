@@ -1147,7 +1147,7 @@ PosnicPro.sales = {
             if (String(lists[i].customer_category_id) === String(catId)) { list = lists[i]; break; }
         }
         if (!list) { return params; }
-        var itemId = String(params.id ? params.id : params.item_id);
+        var itemId = String(params.product_id || params.id || params.item_id);
         var override = null;
         (list.item_overrides || []).forEach(function (o) {
             if (String(o.item_id) === itemId) { override = o; }
@@ -1331,7 +1331,7 @@ PosnicPro.sales = {
         // written here so search, scan, camera, tiles and recents all count.
         if (PosnicPro.sales._recentPush && params.sales_type !== 'instant') {
             PosnicPro.sales._recentPush('recent_items', {
-                id: params.id || params.item_id,
+                id: params.product_id || params.id || params.item_id,
                 name: params.item_name || params.name,
                 price: params.selling_price,
                 image: params.image || 'item.svg'
@@ -1630,7 +1630,7 @@ PosnicPro.sales = {
             '    <td name ="addSalesLineTotal" id="addSalesLineTotal_' + id + '" class="font_size14" ' + kotHideStyle + '>' + line_total.toFixed(2) + '</td>' +
             '    <td id="addSalesRemoveLineItem_' + id + '" class="text-center font_size14">' + saleEditIcon + removeLineItem +
             '    </td>' +
-            '    <td name="addSalesLineItemId" id="addSalesLineItemId_' + id + '" style="display:none;">' + id + '</td>' +
+            '    <td name="addSalesLineItemId" id="addSalesLineItemId_' + id + '" data-product-id="' + PosnicPro.escapeHtml(params.product_id || params.item_id || id) + '" data-line-id="' + PosnicPro.escapeHtml(params.line_id || '') + '" style="display:none;">' + id + '</td>' +
             '    <td id="addSalesLineItemTaxType_' + id + '" style="display:none;"><span class="badge badge-info-inverse">' + taxTypeText + '</span></td>' +
             '    <td id="addSalesLineItemSellingPrice_' + id + '" style="display:none;">' + params.selling_price + '</td>' +
             '    <td  name ="addSalesLineItemCompanyPrice"  id="addSalesLineItemCompanyPrice_' + id + '" style="display:none;">' + params.company_price + '</td>' +
@@ -1670,7 +1670,9 @@ PosnicPro.sales = {
             '</tr>';
         PosnicPro.sales.SaleTableLineItems[id] = {
             item_id: id,
+            product_id: params.product_id || params.item_id || id,
             item_quantity: item_quantity,
+            unit_conversion: params.unit_conversion,
             addSalesLineDiscount: addSalesLineDiscount,
             addSalesLineItemCompanyPrice_: params.company_price,
             addSalesLineItemPrice: params.selling_price,
@@ -4300,7 +4302,8 @@ PosnicPro.sales.addSale = {
                     item_discount_percentage: $('#addSalesLineDiscountPercentage_' + itemid).text(),
                     item_quantity: $('#touchsale_item_qty' + itemid).val(),
                     item_available_quantity: $('#addSalesLineavailableQty_' + itemid).text(),
-                    item_id: $('#addSalesLineItemId_' + itemid).text(),
+                    item_id: $('#addSalesLineItemId_' + itemid).attr('data-product-id') || $('#addSalesLineItemId_' + itemid).text(),
+                    line_id: $('#addSalesLineItemId_' + itemid).attr('data-line-id') || undefined,
                     total_amount: $('#addSalesLineTotal_' + itemid).text(),
                     barcode_id: $('#addSalesLineItemBarcodeId_' + itemid).text(),
                     company_price_total: $('#addSalesLineItemCompanyPrice_' + itemid).text(),
@@ -4774,7 +4777,8 @@ PosnicPro.sales.editSale = {
                     item_quantity: total_item_quantity,
                     item_available_quantity: available_qty,
                     payment_mode: $('.payment_mode').val(),
-                    item_id: $('#addSalesLineItemId_' + itemid).text(),
+                    item_id: $('#addSalesLineItemId_' + itemid).attr('data-product-id') || $('#addSalesLineItemId_' + itemid).text(),
+                    line_id: $('#addSalesLineItemId_' + itemid).attr('data-line-id') || undefined,
                     total_amount: $('#addSalesLineTotal_' + itemid).text(),
                     barcode_id: $('#addSalesLineItemBarcodeId_' + itemid).text(),
                     company_price_total: $('#addSalesLineItemCompanyPrice_' + itemid).text(),
@@ -4811,7 +4815,8 @@ PosnicPro.sales.editSale = {
                     item_discount: $('#returnSalesLineDiscountAmount_' + itemid).text(),
                     item_discount_percentage: $('#returnSalesLineItemDiscount_' + itemid).text(),
                     item_quantity: $('#returnSalesLineItemQty_' + itemid).text(),
-                    item_id: $('#returnSalesLineItemId_' + itemid).text(),
+                    item_id: $('#returnSalesLineItemId_' + itemid).attr('data-product-id') || $('#returnSalesLineItemId_' + itemid).text(),
+                    line_id: $('#returnSalesLineItemId_' + itemid).attr('data-line-id') || undefined,
                     total_amount: $('#returnSalesLineTotal_' + itemid).text(),
                     barcode_id: $('#returnSalesLineItemBarcodeId_' + itemid).text(),
                     company_price_total: $('#returnSalesLineItemCompanyPrice_' + itemid).text(),
@@ -4908,7 +4913,8 @@ PosnicPro.sales.editSale = {
                     item_discount: $('#addSalesLineDiscountAmount_' + itemid).text(),
                     item_discount_percentage: $('#addSalesLineDiscountPercentage_' + itemid).text(),
                     item_quantity: $('#touchsale_item_qty' + itemid).val(),
-                    item_id: $('#addSalesLineItemId_' + itemid).text(),
+                    item_id: $('#addSalesLineItemId_' + itemid).attr('data-product-id') || $('#addSalesLineItemId_' + itemid).text(),
+                    line_id: $('#addSalesLineItemId_' + itemid).attr('data-line-id') || undefined,
                     total_amount: $('#addSalesLineTotal_' + itemid).text(),
                     barcode_id: $('#addSalesLineItemBarcodeId_' + itemid).text(),
                     company_price_total: $('#addSalesLineItemCompanyPrice_' + itemid).text(),
@@ -5348,7 +5354,8 @@ PosnicPro.sales.holdSale = {
                     item_discount_percentage: $('#addSalesLineDiscountPercentage_' + itemid).text(),
                     item_quantity: $('#touchsale_item_qty' + itemid).val(),
                     item_available_quantity: $('#addSalesLineavailableQty_' + itemid).text(),
-                    item_id: $('#addSalesLineItemId_' + itemid).text(),
+                    item_id: $('#addSalesLineItemId_' + itemid).attr('data-product-id') || $('#addSalesLineItemId_' + itemid).text(),
+                    line_id: $('#addSalesLineItemId_' + itemid).attr('data-line-id') || undefined,
                     total_amount: $('#addSalesLineTotal_' + itemid).text(),
                     barcode_id: $('#addSalesLineItemBarcodeId_' + itemid).text(),
                     company_price_total: $('#addSalesLineItemCompanyPrice_' + itemid).text(),
@@ -5915,7 +5922,7 @@ PosnicPro.sales.quantity = {
             '    <td class="text-center"></td>' +
             '    <td id="returnsalesOrderType_' + id + '" style="display:none;">' + ordertype + '</td>' +
             '    <td id="returnSalesLineDiscountAmount_' + id + '" style="display:none;">' + discount_amount + '</td>' +
-            '    <td id="returnSalesLineItemId_' + id + '" style="display:none;">' + item_id + '</td>' +
+            '    <td id="returnSalesLineItemId_' + id + '" data-product-id="' + PosnicPro.escapeHtml($('#addSalesLineItemId_' + id).attr('data-product-id') || item_id) + '" data-line-id="' + PosnicPro.escapeHtml($('#addSalesLineItemId_' + id).attr('data-line-id') || '') + '" style="display:none;">' + item_id + '</td>' +
             '    <td id="returnSalesLineItemBarcodeId_' + id + '" style="display:none;">' + barcode_id + '</td>' +
             '    <td id="returnSalesLineItemCompanyPrice_' + id + '" style="display:none;">' + company_price + '</td>' +
             '    <td id="addSalesLineItemSupplier_' + id + '" style="display:none;">' + supplier + '</td>' +
@@ -6104,7 +6111,7 @@ PosnicPro.sales.quantity = {
             '    <td name ="addSalesLineTotal" id="addSalesLineTotal_' + id + '" class="text-center font_size14">' + updateSalesLineTotal + '</td>' +
             '    <td id="addSalesRemoveLineItem_' + id + '" class="text-center font_size14">' + removeLineItem +
             '    </td>' +
-            '    <td name="addSalesLineItemId" id="addSalesLineItemId_' + id + '" style="display:none;">' + id + '</td>' +
+            '    <td name="addSalesLineItemId" id="addSalesLineItemId_' + id + '" data-product-id="' + PosnicPro.escapeHtml($('#returnSalesLineItemId_' + id).attr('data-product-id') || id) + '" data-line-id="' + PosnicPro.escapeHtml($('#returnSalesLineItemId_' + id).attr('data-line-id') || '') + '" style="display:none;">' + id + '</td>' +
             '    <td name="addSalesLineItemCompanyPrice"  id="addSalesLineItemCompanyPrice_' + id + '" style="display:none;">' + company_price + '</td>' +
             '    <td name="addSalesLineItemBarcodeId" id="addSalesLineItemBarcodeId_' + id + '" style="display:none;">' + barcode_id + '</td>' +
             '    <td name="addSalesLineItemSupplier" id="addSalesLineItemSupplier_' + id + '" style="display:none;">' + supplier + '</td>' +
@@ -6281,7 +6288,7 @@ PosnicPro.sales.quantity = {
                 '    <td class="text-center"></td>' +
                 '    <td id="returnsalesOrderType_' + id + '" style="display:none;">' + ordertype + '</td>' +
                 '    <td id="returnSalesLineDiscountAmount_' + id + '" style="display:none;">' + discount_amount + '</td>' +
-                '    <td id="returnSalesLineItemId_' + id + '" style="display:none;">' + item_id + '</td>' +
+                '    <td id="returnSalesLineItemId_' + id + '" data-product-id="' + PosnicPro.escapeHtml($('#addSalesLineItemId_' + id).attr('data-product-id') || item_id) + '" data-line-id="' + PosnicPro.escapeHtml($('#addSalesLineItemId_' + id).attr('data-line-id') || '') + '" style="display:none;">' + item_id + '</td>' +
                 '    <td id="returnSalesLineItemBarcodeId_' + id + '" style="display:none;">' + barcode_id + '</td>' +
                 '    <td id="returnSalesLineItemCompanyPrice_' + id + '" style="display:none;">' + company_price + '</td>' +
                 '    <td id="addSalesLineItemSupplier_' + id + '" style="display:none;">' + supplier + '</td>' +
@@ -6402,7 +6409,7 @@ PosnicPro.sales.quantity = {
             '    <td class="text-center"></td>' +
             '    <td id="returnsalesOrderType_' + id + '" style="display:none;">' + ordertype + '</td>' +
             '    <td id="returnSalesLineDiscountAmount_' + id + '" style="display:none;">' + discount_amount + '</td>' +
-            '    <td id="returnSalesLineItemId_' + id + '" style="display:none;">' + item_id + '</td>' +
+            '    <td id="returnSalesLineItemId_' + id + '" data-product-id="' + PosnicPro.escapeHtml($('#addSalesLineItemId_' + id).attr('data-product-id') || item_id) + '" data-line-id="' + PosnicPro.escapeHtml($('#addSalesLineItemId_' + id).attr('data-line-id') || '') + '" style="display:none;">' + item_id + '</td>' +
             '    <td id="returnSalesLineItemBarcodeId_' + id + '" style="display:none;">' + barcode_id + '</td>' +
             '    <td id="returnSalesLineItemCompanyPrice_' + id + '" style="display:none;">' + company_price + '</td>' +
             '    <td id="addSalesLineItemSupplier_' + id + '" style="display:none;">' + supplier + '</td>' +
@@ -6811,6 +6818,7 @@ PosnicPro.sales.lineEdit = {
                 if (e.key === 'Enter') { e.preventDefault(); PosnicPro.sales.lineEdit._save(false); }
             });
         }
+        $('#le_save_both').toggle(PosnicPro.sales.lineEdit.canUpdateItem(id));
         $('#sale_line_edit_name').text($('#addSalesLineItemName_' + id).data('id') || 'Edit line');
         var inclusive = $('#addSalesLineItemTaxType_' + id).text() !== 'Exc';
         var grossEntry = inclusive || !!(PosnicPro.saleExtensions && PosnicPro.saleExtensions.policy('inclusivePriceEntry'));
@@ -6832,12 +6840,18 @@ PosnicPro.sales.lineEdit = {
         $('#sale_line_edit').modal('show');
         setTimeout(function () { $('#le_price').focus().select(); }, 350);
     },
+    canUpdateItem: function (id) {
+        var line = PosnicPro.sales.SaleTableLineItems[id];
+        var conversion = line && line.unit_conversion;
+        return !conversion || conversion.unit === conversion.base_unit;
+    },
     _save: function (updateItem) {
         var id = PosnicPro.sales.lineEdit._id;
         if (!id || !$('#touch_row_' + id).length) { $('#sale_line_edit').modal('hide'); return; }
+        updateItem = updateItem && PosnicPro.sales.lineEdit.canUpdateItem(id);
         $('#sale_line_edit').modal('hide');
         var taxType = $('#addSalesLineItemTaxType_' + id).text();
-        var patch = { id: $('#addSalesLineItemId_' + id).text() || id };
+        var patch = { id: $('#addSalesLineItemId_' + id).attr('data-product-id') || $('#addSalesLineItemId_' + id).text() || id };
         var np = parseFloat($('#le_price').val());
         var nq = parseFloat($('#le_qty').val());
         var nd = parseFloat($('#le_disc').val());
@@ -7156,7 +7170,8 @@ PosnicPro.sales.calculation = {
                 $('#addSalesDiscount_' + itemid).text(canonicalLine.discount);
             }
             return {
-                item_id: $('#addSalesLineItemId_' + itemid).text(),
+                item_id: $('#addSalesLineItemId_' + itemid).attr('data-product-id') || $('#addSalesLineItemId_' + itemid).text(),
+                    line_id: $('#addSalesLineItemId_' + itemid).attr('data-line-id') || undefined,
                 item_price: $('#addSalesLineItemPrice_' + itemid).text(),
                 item_unit: $('#addSalesLineItemUnit_' + itemid).text(),
                 item_quantity: $('#touchsale_item_qty' + itemid).val(),
@@ -8879,6 +8894,10 @@ PosnicPro.sales.recentMenu = {
                     "sale_inline_item_price": PosnicPro.sales.savedSellingPrice(val),
                     "return": val.return,
                     "item_id": val.item_id,
+                "id": val.line_id || val.item_id,
+                "product_id": val.item_id,
+                "line_id": val.line_id,
+                "unit_conversion": val.unit_conversion,
                     "item_name": val.item_name,
                     "selling_price": PosnicPro.sales.savedSellingPrice(val),
                     "itemid": val.barcode_id,
@@ -8916,6 +8935,10 @@ PosnicPro.sales.recentMenu = {
             lineItem = {
                 "sale_inline_item_price": PosnicPro.sales.savedSellingPrice(val),
                 "item_id": val.item_id,
+                "id": val.line_id || val.item_id,
+                "product_id": val.item_id,
+                "line_id": val.line_id,
+                "unit_conversion": val.unit_conversion,
                 "item_name": val.item_name,
                 "selling_price": PosnicPro.sales.savedSellingPrice(val),
                 "itemid": val.barcode_id,
@@ -10796,7 +10819,8 @@ PosnicPro.quotes = {
             var itemid = $(this).find(':nth-child(9)').text();
             if (!itemid) { return null; }
             return {
-                item_id: $('#addSalesLineItemId_' + itemid).text(),
+                item_id: $('#addSalesLineItemId_' + itemid).attr('data-product-id') || $('#addSalesLineItemId_' + itemid).text(),
+                    line_id: $('#addSalesLineItemId_' + itemid).attr('data-line-id') || undefined,
                 item_name: $('#addSalesLineItemName_' + itemid).data('originalName') || $('#addSalesLineItemName_' + itemid).text(),
                     ...(window.PosnicItemText ? window.PosnicItemText.snapshot($('#addSalesLineItemName_' + itemid).data('itemText')) : {}),
                 barcode_id: $('#addSalesLineItemBarcodeId_' + itemid).text(),
@@ -11801,6 +11825,12 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
     if (!fields && d.barcode_id && d.barcode_id !== d.itemid) { meta.push(esc(d.barcode_id)); }
     if (!fields && d.unit) { meta.push(esc(d.unit)); }
     if (!fields && d.category_name) { meta.push(esc(d.category_name)); }
+    var locationHtml = '';
+    if (o.sales && fields && show('location') && Array.isArray(d.stock_locations) && d.stock_locations.length) {
+        locationHtml = '<div class="sug-meta sug-location" style="white-space:normal;overflow-wrap:anywhere">'
+            + '<lang class="lang_stock_locations">Stock locations</lang>: '
+            + esc(d.stock_locations.join(' · ')) + '</div>';
+    }
     var stock;
     if (d.item_kind === 'service') {
         stock = '<span class="sug-stock na"><lang class="lang_service">Service</lang></span>';
@@ -11825,7 +11855,7 @@ PosnicPro.sugRow = function (d, nameHtml, o) {
     return '<div class="sug-row">' + thumb
         + '<div class="sug-main"><div class="sug-name">' + nameHtml + '</div>'
         + (meta.length ? '<div class="sug-meta">' + meta.join(' &middot; ') + '</div>' : '')
-        + '</div><div class="sug-side">' + priceHtml + stock + '</div></div>';
+        + locationHtml + '</div><div class="sug-side">' + priceHtml + stock + '</div></div>';
 };
 PosnicPro.sugActionRow = function (icon, cls, title, meta) {
     return '<div class="sug-row sug-action ' + cls + '">'
@@ -11845,12 +11875,15 @@ PosnicPro.sales.chooseSellingUnit = function (item, done) {
         if (!result || result.dismiss) return;
         var choice = rows[Number(typeof result === 'string' ? result : result.value)];
         if (!choice) return;
-        var existingUnit = $('#addSalesLineItemUnit_' + id).text();
-        if (existingUnit && existingUnit !== choice.unit) {
-            PosnicPro.alert('error', 'This item is already in the cart in ' + existingUnit + '. Remove that line before choosing another unit.'); return;
-        }
+        var productId = item.product_id || item.item_id || item.id;
+        var cart = PosnicPro.sales.SaleTableLineItems || {};
+        var rowId = Object.keys(cart).find(function (key) {
+            var row = cart[key];
+            return String(row.product_id || row.item_id) === String(productId) && row.addSalesLineItemUnit === choice.unit;
+        });
+        if (!rowId) rowId = 'unit_' + crypto.randomUUID().replace(/-/g, '');
         var price = choice.price == null ? Number(item.selling_price) * Number(choice.factor) : Number(choice.price);
-        done(Object.assign({}, item, { unit: choice.unit, selling_price: Number(price.toFixed(2)), sale_inline_item_price: Number(price.toFixed(2)), discount_amount: Number((Number(item.discount_amount || 0) * Number(choice.factor)).toFixed(2)), available_quantity: Number(item.available_quantity || 0) / Number(choice.factor), _sellingUnitChosen: true }));
+        done(Object.assign({}, item, { id: rowId, product_id: productId, line_id: rowId, unit: choice.unit, selling_price: Number(price.toFixed(2)), sale_inline_item_price: Number(price.toFixed(2)), discount_amount: Number((Number(item.discount_amount || 0) * Number(choice.factor)).toFixed(2)), available_quantity: Number(item.available_quantity || 0) / Number(choice.factor), unit_conversion: { unit: choice.unit, base_unit: item.unit || 'qty', factor: Number(choice.factor), whole_units: choice.whole_units === true }, _sellingUnitChosen: true, _wholeUnits: choice.whole_units === true }));
     });
 };
 PosnicPro.sales.askSearchQuantity = function (item, id) {
@@ -11899,7 +11932,7 @@ PosnicPro.sales.askSearchQuantity = function (item, id) {
         confirmButtonText: PosnicPro.i18n.t('lang_add_to_sale', 'Add to sale'),
         inputValidator: function (value) {
             return new Promise(function (resolve, reject) {
-                if (Number.isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 100000) resolve();
+                if (Number.isFinite(Number(value)) && Number(value) > 0 && Number(value) <= 100000 && (!item._wholeUnits || Number.isInteger(Number(value)))) resolve();
                 else reject(PosnicPro.i18n.t('lang_enter_a_valid_quantity', 'Enter a valid quantity.'));
             });
         }
@@ -11909,6 +11942,7 @@ PosnicPro.sales.askSearchQuantity = function (item, id) {
         if (!result || result.dismiss) { $('#sales_new_item_name').focus(); return; }
         var qty = Number(typeof result === 'string' || typeof result === 'number' ? result : result.value);
         if (!Number.isFinite(qty) || qty <= 0 || qty > 100000) return;
+        if (item._sellingUnitChosen) id = item.id;
         function add(details) {
             var current = Number($('#touchsale_item_qty' + id).val()) || 0;
             if (PosnicPro.sales.SaleAction !== 'return' && (details.track_inventory === true || details.track_inventory === 'true') && details.negative_stock !== true && details.negative_stock !== 'true' && qty + current > Number(details.available_quantity || 0)) {
@@ -13219,22 +13253,23 @@ PosnicPro.sales.readWeightFromMachine = async function () {
         return;
     }
 
+    const activeElement = document.activeElement;
+    const targetInput = $(activeElement).is('#sales_new_items_tbody input[name="addSalesLineItemQty"]')
+        ? activeElement
+        : $('#sales_new_items_tbody tr[id^="touch_row_"]').first().find('input[name="addSalesLineItemQty"]')[0];
+    if (!targetInput) {
+        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_items_in_cart_please_add_an_item_first', 'No items in cart. Please add an item first.'));
+        return;
+    }
     try {
         // Prefer a settled reading from the scale. The live display shows every
         // frame including mid-swing values, so reading it directly can bill the
         // customer for a weight the load never actually rested at.
         let weight = null;
         try {
-            weight = await window.WeightBridge.getCurrentWeight();
+            weight = await window.WeightBridge.getCurrentWeight({ stableOnly: true });
         } catch (e) {
-            console.warn('[weight] live read failed, falling back to display:', e);
-        }
-
-        // Fallback: scales that transmit only once per settle may go quiet
-        // before we ask, so use whatever the display last showed.
-        if (weight === null || weight === undefined || isNaN(weight) || weight <= 0) {
-            const weightText = $('#live_weight_value').text().trim();
-            weight = parseFloat(weightText);
+            console.warn('[weight] live read failed:', e);
         }
 
         if (!weight || weight <= 0 || isNaN(weight)) {
@@ -13247,54 +13282,13 @@ PosnicPro.sales.readWeightFromMachine = async function () {
             return;
         }
 
-        // Check if cursor is in an input field (but exclude item search box)
-        const activeElement = document.activeElement;
-        const isInputField = activeElement && (
-            activeElement.tagName === 'INPUT' ||
-            activeElement.tagName === 'TEXTAREA'
-        );
-
-        // Exclude the item search box from being filled with weight
-        const isSearchBox = activeElement && activeElement.id === 'sales_new_item_name';
-
-        if (isInputField && activeElement.type === 'text' && !isSearchBox) {
-            // Fill the focused input field
-            $(activeElement).val(weight.toFixed(3));
-            $(activeElement).trigger('change');
-            PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg filled');
-        } else {
-            // Update quantity of last added item in cart
-            // Find first row (newest item since items are prepended)
-            const firstRow = $('#sales_new_items_tbody tr[id^="touch_row_"]').first();
-
-            if (firstRow.length) {
-                // Extract item ID from row ID (touch_row_{id})
-                const rowId = firstRow.attr('id');
-                const itemId = rowId.replace('touch_row_', '');
-
-                // Find quantity input with name addSalesLineItemQty
-                const qtyInput = firstRow.find('input[inputmode="decimal" name="addSalesLineItemQty"]');
-                if (qtyInput.length) {
-                    qtyInput.val(weight.toFixed(3));
-
-                    // Get track_inventory and negative_stock from hidden fields
-                    const trackInventory = $('#trackInventory_' + itemId).text();
-                    const negativeStock = $('#negativeStock_' + itemId).text();
-
-                    // Small delay to ensure DOM is updated before triggering calculation
-                    setTimeout(function () {
-                        // Trigger price recalculation
-                        PosnicPro.sales.quantity.textOnChange(itemId, trackInventory, negativeStock);
-                    }, 100);
-
-                    PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg set for last item');
-                } else {
-                    PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_quantity_field_found_for_last_item', 'No quantity field found for last item'));
-                }
-            } else {
-                PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_items_in_cart_please_add_an_item_first', 'No items in cart. Please add an item first.'));
-            }
-        }
+        // A reading belongs to the row selected when the request started.
+        // Never apply a delayed reading to a replacement row or a new sale.
+        if (!targetInput.isConnected || !$(targetInput).closest('#sales_new_items_tbody').length) return;
+        const itemId = $(targetInput).closest('tr[id^="touch_row_"]').attr('id').replace('touch_row_', '');
+        $(targetInput).val(weight.toFixed(3));
+        PosnicPro.sales.quantity.textOnChange(itemId, $('#trackInventory_' + itemId).text(), $('#negativeStock_' + itemId).text());
+        PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg filled');
 
     } catch (error) {
         console.error('Weight reading error:', error);
@@ -13407,6 +13401,11 @@ PosnicPro.sales.initWeightMachine = function () {
             // Start live weight monitoring
             if (window.WeightBridge.startMonitoring) {
                 window.WeightBridge.startMonitoring(function (weight) {
+                    if (weight === null || weight === undefined || !Number.isFinite(weight)) {
+                        $('#live_weight_value').text('---');
+                        $('#live_weight_display').css({ background: '#f0f0f0', color: '#333' });
+                        return;
+                    }
                     if (weight !== null && weight !== undefined && !isNaN(weight)) {
                         $('#live_weight_value').text(weight.toFixed(3));
                         // Change color based on weight
@@ -13676,40 +13675,14 @@ $(document).on('click', '#print_receipt_a4, #print_receipt_thermal', function ()
     });
 });
 
-/*
- * The sale-done card closes itself, unless the cashier is using it.
- *
- * At a busy counter the next customer is already waiting, so making
- * somebody click "New sale" after every single sale is a step charged on
- * every transaction of the day. The card knows what comes next, so it can
- * do it.
- *
- * WHAT MAKES THIS SAFE IS THE CANCELLING, NOT THE DURATION.
- *
- * The failure that would make this worse than no timer at all: the card
- * closes at ten seconds while a hand is on its way to Print. That cashier
- * now has to go and find the sale again in front of a waiting customer,
- * and that single event costs more goodwill than the saved clicks earn
- * back over a hundred sales. So ANY sign of attention stops the clock -
- * moving onto the card, focusing a button, a keystroke, a touch - and
- * once stopped it does not restart. Somebody who has engaged with this
- * card gets to leave it when they choose.
- *
- * Printing deliberately does not restart it either. A print is exactly
- * the case where the next thing is handing paper to a customer, and
- * having the screen change during that is the wrong moment.
- */
+/* The completed sale returns after the configured delay. Interaction pauses
+ * a countdown; successful printing starts it again. Zero returns immediately. */
 /* Preview the configured print document with the current cart. */
 PosnicPro.sales.renderTenderReceiptPreview = function () {
     PosnicPro.tenderReceipt.show();
 };
 
 PosnicPro.sales.saleDoneTimer = {
-    /* Long enough to read the total and reach for Print; short enough that
-       the till is ready before the next customer has put their basket down.
-       Ten felt like waiting (owner: "dont wait too much time to close"). */
-    SECONDS: 6,
-
     _timer: null,
     _card: function () { return $('#newsalespage .sale-done-card'); },
 
@@ -13719,6 +13692,7 @@ PosnicPro.sales.saleDoneTimer = {
 
         var $card = self._card();
         if (!$card.length) { return; }
+        var seconds = PosnicPro.saleRedirectSeconds();
 
         /*
          * Somebody who asked for reduced motion gets no ring, and the ring is
@@ -13726,7 +13700,7 @@ PosnicPro.sales.saleDoneTimer = {
          * vanish with no notice at all - the exact surprise the ring exists to
          * prevent - so for them the card simply waits to be dismissed.
          */
-        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (seconds > 0 && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             return;
         }
 
@@ -13741,7 +13715,7 @@ PosnicPro.sales.saleDoneTimer = {
          * time. Pure CSS (the is-closing class starts the keyframe, the
          * variable sets its pace), so removing the class is the whole stop.
          */
-        $card.get(0).style.setProperty('--sale-done-secs', self.SECONDS + 's');
+        $card.get(0).style.setProperty('--sale-done-secs', seconds + 's');
         $card.removeClass('is-held is-closing');
         /* next frame, so a back-to-back sale restarts the animation */
         void $card.get(0).offsetWidth;
@@ -13756,7 +13730,7 @@ PosnicPro.sales.saleDoneTimer = {
             /* The same path the button takes, rather than a second way to
                start a sale that could drift away from the first. */
             $('#newsalespage .sale-done-primary').get(0).click();
-        }, self.SECONDS * 1000);
+        }, seconds * 1000);
     },
 
     /* Called by every interaction. Idempotent on purpose - mouseenter and

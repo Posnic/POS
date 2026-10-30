@@ -967,7 +967,6 @@
   "Audience choices": "オーディエンスの選択",
   "Choose a table first.": "最初にテーブルを選択してください。",
   "Choose an enabled venue and enter a room number (up to 40 characters).": "有効な会場を選択し、部屋番号 (最大 40 文字) を入力します。",
-  "Combine this product into one line when selling in an alternate unit.": "別のユニットで販売する場合は、この商品を 1 つの行にまとめてください。",
   "Enter a valid phone number including country code.": "国コードを含む有効な電話番号を入力してください。",
   "Enter the number of guests.": "ゲストの人数を入力します。",
   "Receipt sharing is unavailable. Configure receipt file storage before sending an SMS bill.": "領収書の共有はできません。SMS請求書を送信する前に、領収書ファイルのストレージを設定します。",
@@ -977,8 +976,8 @@
   "The bill PDF could not be prepared. Nothing was sent.": "請求書 PDF を作成できませんでした。何も送信されませんでした。",
   "This number could not be found on WhatsApp. Check the country code and number.": "この番号は見つかりませんでしたWhatsApp。国番号と国番号を確認してください。",
   "This receipt link is invalid. Ask the shop to send it again.": "この領収書リンクは無効です。ショップに再度送信するよう依頼してください。",
-  "Use one selling unit per product in a sale.": "1 回の販売では、1 つの商品につき 1 つの販売単位を使用します。",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppメッセージリファレンスが返されませんでした。配信は未確認です。チャットを確認してから再試行してください。",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppこの受信者のチャットをまだ同期していません。メッセージは送信されませんでした。リンクされたデバイスによる同期の終了を許可します。",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppまだ再接続中か、新しい電話リンクが必要です。メッセージは送信されませんでした。"
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppまだ再接続中か、新しい電話リンクが必要です。メッセージは送信されませんでした。",
+  "Messaging permission required.": "メッセージング権限が必要です。",
+  "Schedule owner no longer has messaging access.": "スケジュールの所有者にはメッセージングへのアクセス権がなくなりました。"
 }

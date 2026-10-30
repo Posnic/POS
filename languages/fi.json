@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Lähetä tämä raportti automaattisesti",
   "lang_split_payment_help": "Yksi lasku, useita maksutapoja. Esimerkiksi puolet kortilla ja puolet käteisellä.",
   "lang_payment_print_reference": "Tulosta viite kuitista",
-  "lang_payment_print_reference_storage": "Kuittiasetusta ei muistanut. Yritä uudelleen."
+  "lang_payment_print_reference_storage": "Kuittiasetusta ei muistanut. Yritä uudelleen.",
+  "lang_bank_account_routing_details": "Pankkitili- ja reititystiedot",
+  "lang_messaging_acl_manage_automation": "Automaattisten viestien hallinta",
+  "lang_messaging_acl_manage_reports": "Hallitse ajoitettuja raportteja",
+  "lang_messaging_acl_manage_settings": "Viestiasetusten hallinta",
+  "lang_messaging_acl_send_bulk": "Lähetä joukkoasiakasviestejä",
+  "lang_messaging_acl_send_email": "Lähetä sähköposteja",
+  "lang_messaging_acl_send_sms": "Lähetä SMS viestejä",
+  "lang_messaging_acl_send_whatsapp": "Lähetä WhatsApp viestejä",
+  "lang_messaging_acl_view_history": "Näytä viestihistoria",
+  "lang_postal_code": "Postinumero",
+  "lang_stock_locations": "Varastopaikat",
+  "lang_stock_locations_help": "Valinnainen. Yksi sijainti riviä kohden, enintään 12. Aseta tärkein poimintapaikka ensin. Sijainnit kuvaavat, mistä tuote löytyy; ne eivät jaa sen varastomäärää.",
+  "lang_whole_selling_units": "Vain kokonaiset määrät (täyspituudet tai pakkaukset)"
 }

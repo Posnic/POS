@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "أرسل هذا التقرير تلقائيًا",
   "lang_split_payment_help": "فاتورة واحدة، عدة طرق دفع. على سبيل المثال، النصف بالبطاقة والنصف الآخر نقدًا.",
   "lang_payment_print_reference": "طباعة المرجع عند الاستلام",
-  "lang_payment_print_reference_storage": "لا يمكن تذكر تفضيل الإيصال. يرجى إعادة المحاولة."
+  "lang_payment_print_reference_storage": "لا يمكن تذكر تفضيل الإيصال. يرجى إعادة المحاولة.",
+  "lang_bank_account_routing_details": "الحساب المصرفي وتفاصيل التوجيه",
+  "lang_messaging_acl_manage_automation": "إدارة الرسائل التلقائية",
+  "lang_messaging_acl_manage_reports": "إدارة التقارير المجدولة",
+  "lang_messaging_acl_manage_settings": "إدارة إعدادات المراسلة",
+  "lang_messaging_acl_send_bulk": "إرسال رسائل عملاء مجمعة",
+  "lang_messaging_acl_send_email": "إرسال رسائل البريد الإلكتروني",
+  "lang_messaging_acl_send_sms": "إرسال SMS رسائل",
+  "lang_messaging_acl_send_whatsapp": "إرسال WhatsApp رسائل",
+  "lang_messaging_acl_view_history": "عرض سجل الرسائل",
+  "lang_postal_code": "الرمز البريدي",
+  "lang_stock_locations": "مواقع الأسهم",
+  "lang_stock_locations_help": "اختياري. موقع واحد لكل سطر، حتى 12. ضع موقع الانتقاء الرئيسي أولاً. تصف المواقع مكان العثور على العنصر؛ ولا تقسم كمية مخزونه.",
+  "lang_whole_selling_units": "الكميات الكاملة فقط (الأطوال الكاملة أو العبوات)"
 }

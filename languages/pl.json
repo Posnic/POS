@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Wyślij ten raport automatycznie",
   "lang_split_payment_help": "Jeden rachunek, kilka metod płatności. Na przykład połowa kartą, a połowa gotówką.",
   "lang_payment_print_reference": "Wydrukuj referencję na paragonie",
-  "lang_payment_print_reference_storage": "Nie pamiętam preferencji odbioru. Proszę spróbuj ponownie."
+  "lang_payment_print_reference_storage": "Nie pamiętam preferencji odbioru. Proszę spróbuj ponownie.",
+  "lang_bank_account_routing_details": "Konto bankowe i szczegóły trasy",
+  "lang_messaging_acl_manage_automation": "Zarządzanie wiadomościami automatycznymi",
+  "lang_messaging_acl_manage_reports": "Zarządzanie zaplanowanymi raportami",
+  "lang_messaging_acl_manage_settings": "Zarządzanie ustawieniami wiadomości",
+  "lang_messaging_acl_send_bulk": "Wysyłanie masowych wiadomości klientów",
+  "lang_messaging_acl_send_email": "Wysyłaj e-maile",
+  "lang_messaging_acl_send_sms": "Wysył SMS anie wiadomości",
+  "lang_messaging_acl_send_whatsapp": "Wysył WhatsApp anie wiadomości",
+  "lang_messaging_acl_view_history": "Wyświetl historię wiadomości",
+  "lang_postal_code": "Kod pocztowy",
+  "lang_stock_locations": "Lokalizacje magazynowe",
+  "lang_stock_locations_help": "Opcjonalnie. Jedna lokalizacja na linię, do 12. Najpierw umieść główną lokalizację zbioru. Lokalizacje opisują, gdzie można znaleźć przedmiot; nie dzielą jego ilości zapasów.",
+  "lang_whole_selling_units": "Tylko całe ilości (pełne długości lub opakowania)"
 }

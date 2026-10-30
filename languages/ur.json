@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "یہ رپورٹ خود بخود بھیجیں",
   "lang_split_payment_help": "ایک بل، ادائیگی کے متعدد طریقے۔ مثال کے طور پر، آدھا کارڈ اور آدھا نقد میں۔",
   "lang_payment_print_reference": "رسید پر حوالہ پرنٹ کریں",
-  "lang_payment_print_reference_storage": "رسید کی ترجیح یاد نہیں سکتا۔ براہ کرم دوبارہ کوشش کریں۔"
+  "lang_payment_print_reference_storage": "رسید کی ترجیح یاد نہیں سکتا۔ براہ کرم دوبارہ کوشش کریں۔",
+  "lang_bank_account_routing_details": "بینک اکاؤنٹ اور روٹنگ کی تفصیلات",
+  "lang_messaging_acl_manage_automation": "خودکار پیغامات کا انتظام کریں",
+  "lang_messaging_acl_manage_reports": "شیڈول رپورٹس کا انتظام",
+  "lang_messaging_acl_manage_settings": "پیغام رسانی کی ترتیبات",
+  "lang_messaging_acl_send_bulk": "بڑے کسٹمر کے پیغامات بھ",
+  "lang_messaging_acl_send_email": "ای میل بھیجیں",
+  "lang_messaging_acl_send_sms": "SMSپیغامات بھیجیں",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppپیغامات بھیجیں",
+  "lang_messaging_acl_view_history": "پیغام کی تاریخ دیکھیں",
+  "lang_postal_code": "پوسٹل کوڈ",
+  "lang_stock_locations": "اسٹاک کے مقامات",
+  "lang_stock_locations_help": "اختیاری. ایک مقام فی لائن، 12 تک۔ منتخب کرنے کے مرکزی مقام کو پہلے رکھیں۔ مقامات بتاتے ہیں کہ آئٹم کہاں تلاش کی جائے۔ وہ اس کے اسٹاک کی مقدار کو تقسیم نہیں کرتے ہیں۔",
+  "lang_whole_selling_units": "صرف پوری مقدار (مکمل لمبائی یا پیک)"
 }

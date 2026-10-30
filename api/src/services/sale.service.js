@@ -349,16 +349,16 @@ const processSale = async (
 
     // 3. Process Items & Calculations
     let items = data.items || [];
-    // Stock edit tracking is keyed by product, so one product cannot carry
-    // competing unit conversions in the same document.
-    const submittedUnits = new Map();
+    // Product stock is shared, but edits and conversion snapshots belong to a line.
+    const orderLine = require('../utils/order-line');
+    const unitsByProduct = new Map();
     for (const line of items) {
-      const productId = String(line.item_id || '');
-      const unit = String(line.item_unit || '').trim();
-      if (submittedUnits.has(productId) && submittedUnits.get(productId) !== unit)
-        return { status: false, message: 'Use one selling unit per product in a sale.' };
-      submittedUnits.set(productId, unit);
+      const key = String(line.item_id || '');
+      const units = unitsByProduct.get(key) || new Set();
+      units.add(String(line.item_unit || ''));
+      unitsByProduct.set(key, units);
     }
+    if ([...unitsByProduct.values()].some((units) => units.size > 1)) orderLine.validate(items);
 
     // Robust numeric parser for legacy string values that may contain
     // commas or currency/percent symbols.
@@ -410,7 +410,8 @@ const processSale = async (
         if (existingSale.items) {
           existingSale.items.forEach((oldItem) => {
             if (oldItem.item_id) {
-              oldItemsData[String(oldItem.item_id)] = {
+              oldItemsData[orderLine.key(oldItem)] = {
+                item_id: String(oldItem.item_id),
                 quantity: parseFloat(oldItem.item_quantity),
                 unit_conversion: oldItem.unit_conversion,
                 name: oldItem.item_name || '',
@@ -534,14 +535,6 @@ const processSale = async (
           status: false,
           message:
             'Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.',
-        };
-      if (
-        unitConversion.factor !== 1 &&
-        items.filter((line) => String(line.item_id) === itemId).length > 1
-      )
-        return {
-          status: false,
-          message: 'Combine this product into one line when selling in an alternate unit.',
         };
       const stockQuantity = require('../helpers/selling-units').stockQuantity(
         { unit_conversion: unitConversion },
@@ -692,7 +685,7 @@ const processSale = async (
         changeQty = itemQuantity;
       } else {
         // Edit Mode
-        const itemIdStr = String(itemId);
+        const itemIdStr = orderLine.key(item);
         let oldQty = 0;
         let oldStatus = '';
 
@@ -935,7 +928,7 @@ const processSale = async (
       Object.keys(oldItemsData).forEach((remItemId) => {
         const remItem = oldItemsData[remItemId];
         changes_items.push({
-          item_id: remItemId,
+          item_id: remItem.item_id,
           item_name: remItem.name,
           item_quantity: remItem.quantity,
           stock_quantity: require('../helpers/selling-units').stockQuantity(
@@ -1566,7 +1559,7 @@ const processSale = async (
         const doc = await itemRepository.findItemById(item.item_id);
         if (doc && doc.track_inventory && !doc.negative_stock) {
           const requiredStock = require('../helpers/selling-units').stockQuantity(
-            itemsale.find((line) => String(line.item_id) === String(item.item_id)),
+            itemsale.find((line) => orderLine.key(line) === orderLine.key(item)),
             item.item_quantity
           );
           if (doc.available_quantity < requiredStock) {
@@ -1594,7 +1587,7 @@ const processSale = async (
       for (const item of items) {
         const doc = await itemRepository.findItemById(item.item_id);
         const qty = require('../helpers/selling-units').stockQuantity(
-          itemsale.find((line) => line.item_id === item.item_id),
+          itemsale.find((line) => orderLine.key(line) === orderLine.key(item)),
           item.item_quantity
         );
         const isTracked = doc && (doc.track_inventory === true || doc.track_inventory === 'true');
@@ -1832,15 +1825,20 @@ const processSale = async (
         if (!doc) continue;
 
         const qty = require('../helpers/selling-units').stockQuantity(
-          itemsale.find((line) => line.item_id === item.item_id),
+          itemsale.find((line) => orderLine.key(line) === orderLine.key(item)),
           item.item_quantity
         );
         // This quantity already left stock in a durable host operation. The
         // sale retains that reference; there is no second movement or stock log.
         if (extensionStock?.itemIds.has(String(doc._id))) continue;
         const reservation = stockReservations.get(String(doc._id));
-        const opening = reservation ? reservation.opening : doc.available_quantity;
-        const newAvailable = reservation ? reservation.closing : opening - qty;
+        // One reservation covers every unit of this product. Each receipt line
+        // still needs its own consecutive stock-log balances.
+        const opening = reservation
+          ? reservation.opening - (reservation.loggedQuantity || 0)
+          : doc.available_quantity;
+        const newAvailable = opening - qty;
+        if (reservation) reservation.loggedQuantity = (reservation.loggedQuantity || 0) + qty;
         const count = `-${qty}`;
         const isTracked = doc.track_inventory === true || doc.track_inventory === 'true';
 
@@ -2759,6 +2757,7 @@ const getDailySalesReportAggregates = async ({ match, cancellationMatch }, { Sal
     {
       $group: {
         _id: {
+          item_id: { $ifNull: ['$items.item_id', '$items.id'] },
           name: '$items.name',
           sku: '$items.sku',
           tax_rate: '$items.tax_rate',
@@ -2919,6 +2918,7 @@ const getDailyReportPdfAggregates = async ({ match }, { SaleModel } = {}) => {
       {
         $group: {
           _id: {
+            item_id: { $ifNull: ['$items.item_id', '$items.id'] },
             name: '$items.name',
             sku: '$items.sku',
           },

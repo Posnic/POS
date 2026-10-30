@@ -21,13 +21,21 @@ PosnicPro.pricesettings = {
     },
 
     loadCategories: function () {
-        if (this._catsLoaded) return;
+        // Refresh on every visit: categories may be added on another screen or
+        // arrive from sync while this page's module remains loaded.
+        var request = this._categoryRequest = (this._categoryRequest || 0) + 1;
+        var branch = PosnicPro.local.get('branch_id_set');
         PosnicPro.get({ url: 'categories/getCategoryAjaxList', data: 'query=' }, function (response) {
+            if (request !== PosnicPro.pricesettings._categoryRequest || branch !== PosnicPro.local.get('branch_id_set')) return;
+            var previousMargin = $('#ps_margin_category').val();
+            var previousCustom = $('#ps_custom_category').val();
             var opts = '<option value="" data-t="lang_choose_a_category_2">Choose a category</option>';
             $.each((response && response.suggestions) || [], function (i, c) {
                 opts += '<option value="' + c.id + '">' + $('<div>').text(c.name).html() + '</option>';
             });
             $('#ps_margin_category, #ps_custom_category').html(opts);
+            $('#ps_margin_category').val(previousMargin || '');
+            $('#ps_custom_category').val(previousCustom || '');
             PosnicPro.pricesettings.setPriceCategories((response && response.suggestions) || []);
             PosnicPro.pricesettings._catsLoaded = true;
         });

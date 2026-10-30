@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Ibgħat dan ir-rapport awtomatikament",
   "lang_split_payment_help": "Polza waħda, diversi metodi ta 'ħlas. Pereżempju, nofs bil-karta u nofs fi flus kontanti.",
   "lang_payment_print_reference": "Stampa referenza mal-irċevuta",
-  "lang_payment_print_reference_storage": "Ma stajtx niftakar il-preferenza tal-irċevuta. Jekk jogħġbok ipprova mill-ġdid."
+  "lang_payment_print_reference_storage": "Ma stajtx niftakar il-preferenza tal-irċevuta. Jekk jogħġbok ipprova mill-ġdid.",
+  "lang_bank_account_routing_details": "Dettalji tal-kont bankarju u tar-rotta",
+  "lang_messaging_acl_manage_automation": "Immaniġġja messaġġi awtomatiċi",
+  "lang_messaging_acl_manage_reports": "Immaniġġja r-rapporti skedati",
+  "lang_messaging_acl_manage_settings": "Ġestija s-settings tal-messaġġi",
+  "lang_messaging_acl_send_bulk": "Ibgħat messaġġi għall-klijenti bl-ing",
+  "lang_messaging_acl_send_email": "Ibgħat emails",
+  "lang_messaging_acl_send_sms": "Ibgħat mess SMS aġġi",
+  "lang_messaging_acl_send_whatsapp": "Ibgħat mess WhatsApp aġġi",
+  "lang_messaging_acl_view_history": "Ara l-istorja tal-messaġġi",
+  "lang_postal_code": "Kodiċi postali",
+  "lang_stock_locations": "Postijiet tal-istokk",
+  "lang_stock_locations_help": "Obbligatorju. Post wieħed għal kull linja, sa 12. Poġġi l-ewwel il-post prinċipali tal-għażla. Il-postijiet jiddeskrivu fejn issib l-oġġett; dawn ma jaqsmux il-kwantità tal-istokk tiegħu.",
+  "lang_whole_selling_units": "Kwantitajiet sħaħ biss (tulijiet jew pakketti sħaħ)"
 }

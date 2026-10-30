@@ -17,11 +17,21 @@ PosnicPro.whatsapp = {
     lastQRCode: null,
     connected: false,
 
+    // The connection name is internal; first-time shops have no saved value.
+    setDeviceId: function(value) {
+        this.deviceId = String(value || '').trim() || 'posnic';
+        $('#whatsapp_device_id, #messaging_wa_device').val(this.deviceId);
+        return this.deviceId;
+    },
+    resolveDeviceId: function() {
+        return this.setDeviceId($('#whatsapp_device_id').val() || $('#messaging_wa_device').val() || this.deviceId);
+    },
+
     /**
      * Initialize WhatsApp connection
      */
     connect: function() {
-        const deviceId = $('#whatsapp_device_id').val().trim() || 'posnic';
+        const deviceId = this.resolveDeviceId();
         $('#whatsapp_device_id').val(deviceId);
         $('#messaging_wa_device').val(deviceId);
         
@@ -35,15 +45,9 @@ PosnicPro.whatsapp = {
         // Show loading state
         $('#whatsapp_connect_btn').prop('disabled', true).html('<i class="feather icon-loader"></i> Connecting...');
         
-        // Resolve the currently selected branch (same source the rest of the app uses)
+        // Offline desktop sessions can have a selected server branch without a
+        // browser-stored selection. The API resolves and authorizes that branch.
         const branchId = PosnicPro.local.get('branch_id_set');
-        if (!branchId) {
-            this.hideConnectLoading();
-            $('#whatsapp_connect_btn').prop('disabled', false).html('<i class="feather icon-link mr-1"></i> Connect WhatsApp');
-            $('#whatsapp_refresh_status').prop('disabled', false);
-            PosnicPro.alert('error', PosnicPro.i18n.t('lang_please_select_a_branch_before_connecting_w', 'Please select a branch before connecting WhatsApp'));
-            return;
-        }
 
         // Poll while initialization is pending; WhatsApp may wait for phone authentication.
         this.startStatusPolling();
@@ -51,7 +55,7 @@ PosnicPro.whatsapp = {
         // Initialize connection
         const params = {
             url: 'whatsapp/initialize',
-            data: { device_id: deviceId, branch_id: branchId }
+            data: { device_id: deviceId, ...(branchId ? { branch_id: branchId } : {}) }
         };
 
         PosnicPro.post(params, (response) => {
@@ -140,7 +144,7 @@ PosnicPro.whatsapp = {
      * Check connection status
      */
     checkStatus: function(silent = false) {
-        const deviceId = this.deviceId || $('#whatsapp_device_id').val().trim();
+        const deviceId = this.resolveDeviceId();
         
         if (!deviceId) {
             if (!silent) {
@@ -185,7 +189,7 @@ PosnicPro.whatsapp = {
     fetchAndDisplayQR: function() {
         const params = {
             url: 'whatsapp/getQRCode',
-            data: { device_id: this.deviceId || $('#whatsapp_device_id').val().trim() }
+            data: { device_id: this.resolveDeviceId() }
         };
 
         PosnicPro.get(params, (response) => {
@@ -307,7 +311,7 @@ PosnicPro.whatsapp = {
      * Disconnect WhatsApp
      */
     disconnect: function() {
-        const deviceId = this.deviceId || $('#whatsapp_device_id').val().trim();
+        const deviceId = this.resolveDeviceId();
         
         if (!deviceId) {
             PosnicPro.alert('error', PosnicPro.i18n.t('lang_device_id_not_found', 'Device ID not found'));
@@ -375,7 +379,7 @@ PosnicPro.whatsapp = {
      * Send WhatsApp message
      */
     sendMessage: function() {
-        const deviceId = this.deviceId || $('#whatsapp_device_id').val().trim();
+        const deviceId = this.resolveDeviceId();
         const phoneNumber = $('#whatsapp_phone_number').val().trim();
         const message = $('#whatsapp_message_text').val().trim();
         
@@ -613,13 +617,9 @@ PosnicPro.whatsapp = {
 
         PosnicPro.get(params, (response) => {
             if (response.type === 'success' && response.data) {
-                const deviceId = response.data.whatsapp_device_id;
-                if (deviceId) {
-                    $('#whatsapp_device_id').val(deviceId);
-                    $('#messaging_wa_device').val(deviceId);
-                    this.deviceId = deviceId;
-                    this.checkStatus(true);
-                }
+                if (branchId !== PosnicPro.local.get('branch_id_set')) return;
+                this.setDeviceId(response.data.whatsapp_device_id);
+                this.checkStatus(true);
             }
         });
     },
@@ -1158,7 +1158,7 @@ $(document).ready(function() {
         
         // Also check status after a short delay to ensure device ID is loaded
         setTimeout(() => {
-            const deviceId = $('#whatsapp_device_id').val().trim();
+            const deviceId = PosnicPro.whatsapp.resolveDeviceId();
             console.log('Checking WhatsApp status on tab switch, device ID:', deviceId);
             if (deviceId) {
                 PosnicPro.whatsapp.checkStatus(true);
@@ -1180,7 +1180,7 @@ $(document).ready(function() {
         // Check connection status when connection tab is shown
         if (target === '#whatsapp-connection') {
             console.log('WhatsApp connection sub-tab shown, checking status...');
-            const deviceId = $('#whatsapp_device_id').val().trim();
+            const deviceId = PosnicPro.whatsapp.resolveDeviceId();
             console.log('Device ID for status check:', deviceId);
             if (deviceId) {
                 PosnicPro.whatsapp.checkStatus(true);

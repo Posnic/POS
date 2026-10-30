@@ -11,6 +11,13 @@ class WhatsAppService extends EventEmitter {
     this.qrCodes = new Map();
     this.connectionStatus = new Map();
     this.sessionPath = path.join(__dirname, '../../.wwebjs_auth');
+    this.legacySessionPath = this.sessionPath;
+    if (process.versions.electron) {
+      // Installed resources are replaceable and can exceed Chromium's Windows
+      // database path limit. Keep login databases in the writable app profile.
+      const app = require('electron').app;
+      this.sessionPath = path.join(app.getPath('userData'), '.wwebjs_auth');
+    }
 
     if (!fs.existsSync(this.sessionPath)) {
       fs.mkdirSync(this.sessionPath, { recursive: true });
@@ -66,6 +73,14 @@ class WhatsAppService extends EventEmitter {
       const qrcode = require('qrcode');
 
       const clientKey = this._clientKey(deviceId, branchId);
+      if (this.legacySessionPath !== this.sessionPath) {
+        const oldSession = path.join(this.legacySessionPath, `session-${clientKey}`);
+        const newSession = path.join(this.sessionPath, `session-${clientKey}`);
+        if (!fs.existsSync(newSession) && fs.existsSync(oldSession)) {
+          // Preserve existing linked accounts; retain the original as backup.
+          fs.cpSync(oldSession, newSession, { recursive: true, errorOnExist: true, force: false });
+        }
+      }
 
       if (this.clients.has(clientKey)) {
         const existingClient = this.clients.get(clientKey);
@@ -135,6 +150,7 @@ class WhatsAppService extends EventEmitter {
               : [],
         },
       });
+      this._recoverNavigationDuringInjection(client);
 
       let rejectDeadline;
       const deadline = new Promise((_, reject) => {
@@ -218,13 +234,51 @@ class WhatsAppService extends EventEmitter {
         const failedClient = this.clients.get(failedKey);
         if (failedClient === client && client) {
           this._safeCleanupClient(failedKey);
-          await client.destroy().catch(() => {});
+          await this._closeFailedClient(client);
           this.connectionStatus.set(failedKey, 'auth_failed');
         }
       } catch (_) {
         /* Invalid identifiers never create sessions. */
       }
       return { status: false, message: String(error?.message || error), connected: false };
+    }
+  }
+
+  _recoverNavigationDuringInjection(client) {
+    // WhatsApp can reload while its web client is being attached. Retry that
+    // attachment in the same browser; never create another login/session.
+    if (typeof client.inject !== 'function') return;
+    const inject = client.inject.bind(client);
+    client.inject = async (...args) => {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return await inject(...args);
+        } catch (error) {
+          if (
+            attempt >= 2 ||
+            !/Execution context was destroyed/i.test(String(error?.message || error))
+          )
+            throw error;
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+    };
+  }
+
+  async _closeFailedClient(client) {
+    // A lost DevTools connection can make destroy() skip a still-running
+    // browser. Close only the process owned by this failed client, preserving
+    // its authentication files and every other shop/browser session.
+    const browser = client.pupBrowser;
+    const child = browser?.process?.();
+    await client.destroy().catch(() => {});
+    if (child && child.exitCode === null && !child.killed) {
+      try {
+        await browser.close();
+      } catch (_) {
+        /* Lost DevTools connection. */
+      }
+      if (child.exitCode === null && !child.killed) child.kill();
     }
   }
 
@@ -359,6 +413,11 @@ class WhatsAppService extends EventEmitter {
       if (!/^[1-9]\d{7,14}$/.test(digits)) {
         return { status: false, message: 'Enter a valid phone number including country code.' };
       }
+      // Desktop runtimes can omit npm postinstall patches. Restore the SDK's
+      // message lookup before sending, so a successful send returns its ID.
+      if (client.pupPage) {
+        await client.pupPage.evaluate(require('../utils/whatsapp-msgkey-compat'));
+      }
       const recipient = await client.getNumberId(digits);
       if (!recipient?._serialized) {
         return {
@@ -372,25 +431,19 @@ class WhatsAppService extends EventEmitter {
         const matched = addresses.find((address) => address.pn === chatId);
         if (matched?.lid) chatId = matched.lid;
       }
-      if (typeof client.getChatById === 'function') {
+      if (chatId !== recipient._serialized && typeof client.getChatById === 'function') {
         // A linked-device ID can be known before its chat has synced.
-        // Resolve the phone chat before sending; never retry an actual send.
+        // Fall back to the verified phone address if the LID chat has not
+        // synced. A first message need not have an existing phone chat:
+        // sendMessage creates it. Never retry an actual send.
         let chat;
         try {
           chat = await client.getChatById(chatId);
         } catch (error) {
-          if (chatId === recipient._serialized) throw error;
+          chat = null;
         }
         if (!chat && chatId !== recipient._serialized) {
           chatId = recipient._serialized;
-          chat = await client.getChatById(chatId);
-        }
-        if (!chat) {
-          return {
-            status: false,
-            message:
-              'WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.',
-          };
         }
       }
       // Sending a receipt must not mark incoming customer messages as read.

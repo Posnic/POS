@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "ਇਸ ਰਿਪੋਰਟ ਨੂੰ ਆਪਣੇ ਆਪ ਭੇਜੋ",
   "lang_split_payment_help": "ਇੱਕ ਬਿੱਲ, ਕਈ ਭੁਗਤਾਨ ਵਿਧੀਆਂ. ਉਦਾਹਰਣ ਦੇ ਲਈ, ਅੱਧਾ ਕਾਰਡ ਅਤੇ ਅੱਧਾ ਨਕਦ ਵਿੱਚ.",
   "lang_payment_print_reference": "ਰਸੀਦ 'ਤੇ ਹਵਾਲਾ ਛਾਪੋ",
-  "lang_payment_print_reference_storage": "ਰਸੀਦ ਦੀ ਤਰਜੀਹ ਯਾਦ ਨਹੀਂ ਕਰ ਸਕਿਆ. ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+  "lang_payment_print_reference_storage": "ਰਸੀਦ ਦੀ ਤਰਜੀਹ ਯਾਦ ਨਹੀਂ ਕਰ ਸਕਿਆ. ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+  "lang_bank_account_routing_details": "ਬੈਂਕ ਖਾਤਾ ਅਤੇ ਰੂਟਿੰਗ ਵੇਰਵੇ",
+  "lang_messaging_acl_manage_automation": "ਸਵੈਚਾਲਤ ਸੁਨੇਹਿਆਂ",
+  "lang_messaging_acl_manage_reports": "ਨਿਯਤ ਰਿਪੋਰਟਾਂ ਦਾ ਪ੍ਰਬੰਧਨ",
+  "lang_messaging_acl_manage_settings": "ਮੈਸੇਜਿੰਗ ਸੈਟਿੰਗਾਂ ਦਾ",
+  "lang_messaging_acl_send_bulk": "ਥੋਕ ਗਾਹਕ ਸੁਨੇਹੇ ਭੇਜੋ",
+  "lang_messaging_acl_send_email": "ਈਮੇਲ ਭੇਜੋ",
+  "lang_messaging_acl_send_sms": "ਸੁਨੇ SMS ਹੇ ਭੇਜੋ",
+  "lang_messaging_acl_send_whatsapp": "ਸੁਨੇ WhatsApp ਹੇ ਭੇਜੋ",
+  "lang_messaging_acl_view_history": "ਸੁਨੇਹਾ ਇਤਿਹਾਸ ਵੇਖੋ",
+  "lang_postal_code": "ਡਾਕ ਕੋਡ",
+  "lang_stock_locations": "ਸਟਾਕ ਸਥਾਨ",
+  "lang_stock_locations_help": "ਵਿਕਲਪਿਕ. ਪ੍ਰਤੀ ਲਾਈਨ ਇੱਕ ਸਥਾਨ, 12 ਤੱਕ. ਮੁੱਖ ਚੁਣਨ ਵਾਲੀ ਥਾਂ ਨੂੰ ਪਹਿਲਾਂ ਰੱਖੋ। ਸਥਾਨ ਦੱਸਦੇ ਹਨ ਕਿ ਆਈਟਮ ਕਿੱਥੇ ਲੱਭਣੀ ਹੈ; ਉਹ ਇਸਦੀ ਸਟਾਕ ਮਾਤਰਾ ਨੂੰ ਵੰਡਦੇ ਨਹੀਂ ਹਨ।",
+  "lang_whole_selling_units": "ਸਿਰਫ ਪੂਰੀ ਮਾਤਰਾ (ਪੂਰੀ ਲੰਬਾਈ ਜਾਂ ਪੈਕ)"
 }

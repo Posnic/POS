@@ -1,4 +1,8 @@
 {
+  "lang_after_payment": "Na betaling",
+  "lang_sale_redirect_seconds": "Terug naar Nieuwe verkoop na (seconden)",
+  "lang_sale_redirect_help": "0 = direct. Geldt na een geslaagde verkoop. Het afdrukken van de bon gaat door. Klik op het voltooiingspaneel om het aftellen te pauzeren.",
+  "lang_closing_stock": "Eindvoorraad",
   "lang_01_01_2018_dd_mm_yyyy": "01/01/2018 - dd/mm/jjjj",
   "lang_01_01_2018_mm_dd_yyyy": "01/01/2018 - mm/dd/jjjj",
   "lang_01_january_18_d_mm_yy": "01 januari 18 - d MM jj",
@@ -5337,5 +5341,9 @@
   "lang_bank_account_routing_details": "Bankrekening en bankcodes",
   "lang_postal_code": "Postcode",
   "lang_payment_print_reference": "Referentie op de bon afdrukken",
-  "lang_payment_print_reference_storage": "Ik kon me de voorkeur voor de ontvangst niet herinneren. Probeer het opnieuw."
+  "lang_payment_print_reference_storage": "Ik kon me de voorkeur voor de ontvangst niet herinneren. Probeer het opnieuw.",
+  "lang_stock_locations": "Locaties van de voorraad",
+  "lang_stock_locations_help": "Optioneel. Eén locatie per lijn, maximaal 12. Zet eerst de belangrijkste pluklocatie. Locaties beschrijven waar het artikel te vinden is; ze verdelen de voorraadhoeveelheid niet.",
+  "lang_whole_selling_units": "Alleen hele hoeveelheden (volledige lengtes of verpakkingen)",
+  "lang_rack_5_shelf_2_box_b": "Rek 5 / Plank 2 / Doos B"
 }

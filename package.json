@@ -222,6 +222,9 @@
       "!**/*.test.js",
       "!**/*.spec.js",
       "src/scale-parser.js",
+      "src/scale-options.js",
+      "src/scale-profiles.js",
+      "src/scale-tcp-port.js",
       "src/essae-weight-reader.js",
       "src/pin-lock.js",
       "src/pin-lock-ipc.js",
@@ -337,6 +340,8 @@
         "to": "api",
         "filter": [
           "**/*",
+          "!**/.*",
+          "!**/.*/**",
           "!**/*.md",
           "!**/*.log",
           "!**/.git/**",

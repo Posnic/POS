@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "Envoyer ce rapport automatiquement",
   "lang_split_payment_help": "Une facture, plusieurs modes de paiement. Par exemple, la moitié par carte et l'autre moitié en espèces.",
   "lang_payment_print_reference": "Imprimer la référence sur le reçu",
-  "lang_payment_print_reference_storage": "Je ne me souvenais pas de la préférence de réception. Veuillez réessayer."
+  "lang_payment_print_reference_storage": "Je ne me souvenais pas de la préférence de réception. Veuillez réessayer.",
+  "lang_bank_account_routing_details": "Compte bancaire et informations de routage",
+  "lang_messaging_acl_manage_automation": "Gérer les messages automatiques",
+  "lang_messaging_acl_manage_reports": "Gérer les rapports planifiés",
+  "lang_messaging_acl_manage_settings": "Gérer les paramètres de messagerie",
+  "lang_messaging_acl_send_bulk": "Envoyer des messages en masse aux clients",
+  "lang_messaging_acl_send_email": "Envoyer des e-mails",
+  "lang_messaging_acl_send_sms": "Envoyer SMS des messages",
+  "lang_messaging_acl_send_whatsapp": "Envoyer WhatsApp des messages",
+  "lang_messaging_acl_view_history": "Afficher l'historique des messages",
+  "lang_postal_code": "code postal",
+  "lang_stock_locations": "Emplacements des stocks",
+  "lang_stock_locations_help": "Facultatif. Un emplacement par ligne, jusqu'à 12. Placez le lieu de cueillette principal en premier. Les emplacements indiquent où trouver l'article ; ils ne divisent pas la quantité en stock.",
+  "lang_whole_selling_units": "Quantités entières uniquement (longueurs complètes ou paquets)"
 }

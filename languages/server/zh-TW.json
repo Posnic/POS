@@ -967,7 +967,6 @@
   "Audience choices": "觀眾選擇",
   "Choose a table first.": "首先選擇一個表格。",
   "Choose an enabled venue and enter a room number (up to 40 characters).": "選擇已啟用的場地並輸入房間號碼（最多 40 個字符）。",
-  "Combine this product into one line when selling in an alternate unit.": "在替代單位銷售時，將此產品合併為一條線。",
   "Enter a valid phone number including country code.": "輸入有效的電話號碼，包括國家代碼。",
   "Enter the number of guests.": "輸入客人數。",
   "Receipt sharing is unavailable. Configure receipt file storage before sending an SMS bill.": "收據共用無法使用。在傳送帳單之前設定收據檔案儲存SMS空間。",
@@ -977,8 +976,8 @@
   "The bill PDF could not be prepared. Nothing was sent.": "無法準備法案 PDF。沒有發送任何東西",
   "This number could not be found on WhatsApp. Check the country code and number.": "找不到此號碼WhatsApp。檢查國家代碼和號碼。",
   "This receipt link is invalid. Ask the shop to send it again.": "此收據連結無效。要求商店再次發送。",
-  "Use one selling unit per product in a sale.": "銷售中每個產品使用一個銷售單位。",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApp沒有返回郵件引用。交貨尚未確認，請先檢查聊天，然後再重試。",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApp尚未同步此收件人的聊天。沒有發送任何訊息。允許連結的裝置完成同步。",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApp仍在重新連接或需要新的電話鏈接。沒有發送任何訊息。"
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApp仍在重新連接或需要新的電話鏈接。沒有發送任何訊息。",
+  "Messaging permission required.": "需要消息傳遞權限。",
+  "Schedule owner no longer has messaging access.": "排程擁有者不再具有郵件存取權限。"
 }

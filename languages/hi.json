@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "इस रिपोर्ट को अपने आप भेजें",
   "lang_split_payment_help": "एक बिल, कई भुगतान विधियां। उदाहरण के लिए, आधा कार्ड से और आधा नकद में।",
   "lang_payment_print_reference": "रसीद पर संदर्भ प्रिंट करें",
-  "lang_payment_print_reference_storage": "रसीद की प्राथमिकता याद नहीं आ सकी। कृपया फिर से कोशिश करें।"
+  "lang_payment_print_reference_storage": "रसीद की प्राथमिकता याद नहीं आ सकी। कृपया फिर से कोशिश करें।",
+  "lang_bank_account_routing_details": "बैंक अकाउंट और रूटिंग विवरण",
+  "lang_messaging_acl_manage_automation": "स्वचालित संदेश प्रबंधित करें",
+  "lang_messaging_acl_manage_reports": "शेड्यूल की गई रिपोर्ट प्रबंधित करें",
+  "lang_messaging_acl_manage_settings": "मैसेजिंग सेटिंग मैनेज करें",
+  "lang_messaging_acl_send_bulk": "बल्क ग्राहक संदेश भेजें",
+  "lang_messaging_acl_send_email": "ईमेल भेजें",
+  "lang_messaging_acl_send_sms": "SMSसन्देश भेजें",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppसंदेश भेजो",
+  "lang_messaging_acl_view_history": "संदेश का इतिहास देखें",
+  "lang_postal_code": "पोस्टल कोड",
+  "lang_stock_locations": "स्टॉक लोकेशन",
+  "lang_stock_locations_help": "ऐच्छिक। प्रति पंक्ति एक स्थान, 12 तक। मुख्य पिकिंग लोकेशन को पहले रखें। स्थान बताते हैं कि आइटम को कहाँ खोजना है; वे इसकी स्टॉक मात्रा को विभाजित नहीं करते हैं।",
+  "lang_whole_selling_units": "केवल पूरी मात्रा (पूरी लंबाई या पैक)"
 }

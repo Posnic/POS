@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Αποστολή αυτόματης αναφοράς",
   "lang_split_payment_help": "Ένας λογαριασμός, αρκετοί τρόποι πληρωμής. Για παράδειγμα, μισό με κάρτα και μισό σε μετρητά.",
   "lang_payment_print_reference": "Εκτύπωση αναφοράς στην απόδειξη",
-  "lang_payment_print_reference_storage": "Δεν μπορώ να θυμηθώ την προτίμηση απόδειξης. Παρακαλώ δοκιμάστε ξανά."
+  "lang_payment_print_reference_storage": "Δεν μπορώ να θυμηθώ την προτίμηση απόδειξης. Παρακαλώ δοκιμάστε ξανά.",
+  "lang_bank_account_routing_details": "Τραπεζικός λογαριασμός και στοιχεία δρομολόγησης",
+  "lang_messaging_acl_manage_automation": "Διαχείριση αυτόματων μηνυμάτων",
+  "lang_messaging_acl_manage_reports": "Διαχείριση προγραμματισμένων αναφορών",
+  "lang_messaging_acl_manage_settings": "Διαχείριση ρυθμίσεων ανταλλαγής μηνυμάτων",
+  "lang_messaging_acl_send_bulk": "Αποστολή μαζικών μηνυμάτων πελατών",
+  "lang_messaging_acl_send_email": "Αποστολή μηνυμάτων ηλεκτρονικού ταχυδρομείου",
+  "lang_messaging_acl_send_sms": "Αποστολή SMS μηνυμάτων",
+  "lang_messaging_acl_send_whatsapp": "Αποστολή WhatsApp μηνυμάτων",
+  "lang_messaging_acl_view_history": "Προβολή ιστορικού μηνυμάτων",
+  "lang_postal_code": "Ταχυδρομικός κώδικας",
+  "lang_stock_locations": "Τοποθεσίες αποθεμάτων",
+  "lang_stock_locations_help": "Προαιρετικό. Μία θέση ανά γραμμή, μέχρι 12. Βάλτε πρώτα την κύρια τοποθεσία συλλογής. Οι τοποθεσίες περιγράφουν πού μπορείτε να βρείτε το αντικείμενο. Δεν διαιρούν την ποσότητα αποθέματος.",
+  "lang_whole_selling_units": "Μόνο ολόκληρες ποσότητες (ολόκληρα μήκη ή συσκευασίες)"
 }

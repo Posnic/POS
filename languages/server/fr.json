@@ -967,7 +967,6 @@
   "Audience choices": "Choix du public",
   "Choose a table first.": "Choisissez d'abord une table.",
   "Choose an enabled venue and enter a room number (up to 40 characters).": "Choisissez un lieu activé et saisissez un numéro de chambre (40 caractères maximum).",
-  "Combine this product into one line when selling in an alternate unit.": "Combinez ce produit en une seule ligne lorsque vous le vendez dans une autre unité.",
   "Enter a valid phone number including country code.": "Entrez un numéro de téléphone valide, y compris le code du pays.",
   "Enter the number of guests.": "Entrez le nombre d'invités.",
   "Receipt sharing is unavailable. Configure receipt file storage before sending an SMS bill.": "Le partage des reçus n'est pas disponible. Configurez le stockage des fichiers de reçus avant d'envoyer une SMS facture.",
@@ -977,8 +976,8 @@
   "The bill PDF could not be prepared. Nothing was sent.": "Le PDF de la facture n'a pas pu être préparé. Rien n'a été envoyé.",
   "This number could not be found on WhatsApp. Check the country code and number.": "Ce numéro n'a pas pu être trouvé surWhatsApp. Vérifiez le code et le numéro du pays.",
   "This receipt link is invalid. Ask the shop to send it again.": "Ce lien de réception n'est pas valide. Demandez à la boutique de l'envoyer à nouveau.",
-  "Use one selling unit per product in a sale.": "Utilisez une unité de vente par produit lors d'une vente.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppn'a pas renvoyé de référence de message. La livraison n'est pas confirmée ; consultez le chat avant de réessayer.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppn'a pas encore synchronisé le chat de ce destinataire. Aucun message n'a été envoyé. Autorisez l'appareil associé à terminer la synchronisation.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppest toujours en train de se reconnecter ou a besoin d'un nouveau lien téléphonique. Aucun message n'a été envoyé."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppest toujours en train de se reconnecter ou a besoin d'un nouveau lien téléphonique. Aucun message n'a été envoyé.",
+  "Messaging permission required.": "Autorisation de messagerie requise.",
+  "Schedule owner no longer has messaging access.": "Le propriétaire du planning n'a plus accès à la messagerie."
 }

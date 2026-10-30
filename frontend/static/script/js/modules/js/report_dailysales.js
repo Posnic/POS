@@ -221,12 +221,15 @@ PosnicPro.quickreport = {
           "productDiscount",
           "productTax",
           "productTotal",
+          "Closing stock",
         ];
         var productAllDataRow = [];
 
         for (var i = 0; i < productData.length; i++) {
           var p = productData[i];
-          var pQty = safeNum(p.product_qty);
+          // Aggregated decimal weights can contain floating-point tails.
+          // Keep the displayed and exported quantity at the supported precision.
+          var pQty = Number(safeNum(p.product_qty).toFixed(3));
           var pSubtotal = safeNum(p.product_subtotal);
           var pTotal = safeNum(p.product_total);
           var pProfit = safeNum(p.product_profit);
@@ -273,6 +276,7 @@ PosnicPro.quickreport = {
               '&nbsp;<span class="number">' +
               pTotal +
               "</span> </td>" +
+              '<td class="font-12 text-right">' + (p.closing_stock == null ? 'Unavailable' : Number(p.closing_stock).toFixed(3)) + '</td>' +
               " </tr>";
 
             $("#daily_report_product_details tbody").append(rowHTMLLine);
@@ -284,6 +288,7 @@ PosnicPro.quickreport = {
               pDiscount,
               pTax,
               pTotal,
+              p.closing_stock == null ? "Unavailable" : p.closing_stock,
             ]);
           }
         }
@@ -291,7 +296,7 @@ PosnicPro.quickreport = {
 
         // Qty is a count, so avoid showing .00 when it's a whole number
         var qtyValue = safeNum(qty);
-        var qtyDecimals = qtyValue % 1 === 0 ? 0 : 2;
+        var qtyDecimals = qtyValue % 1 === 0 ? 0 : 3;
         $(".daily_report_qty_price").number(qtyValue, qtyDecimals);
 
         $(".daily_report_product_price").number(safeNum(price), 2);
@@ -399,7 +404,7 @@ PosnicPro.quickreport = {
           }),
           tenderTotal: safeNum(tenderTotal),
           products: productAllDataRow.map(function (row) {
-            return { name: row[0], qty: safeNum(row[2]), total: safeNum(row[6]) };
+            return { name: row[0], qty: safeNum(row[2]), total: safeNum(row[6]), closingStock: row[7] };
           }),
         };
 
@@ -922,6 +927,9 @@ PosnicPro.quickreport = {
          * Printing a computed "expected" from incomplete information would be
          * worse than printing a line to write on.
          */
+        { type: 'pairs', name: 'CLOSING STOCK', rows: report.products.map(function (p) {
+          return { label: p.name, value: p.closingStock == null || p.closingStock === 'Unavailable' ? 'Unavailable' : Number(p.closingStock).toFixed(3) };
+        }) },
         { type: 'blanks', name: 'HANDOVER', rows: [
           { label: PosnicPro.i18n.t('lang_cash_sales', 'Cash sales'), value: money(cash) },
           'Opening float', 'Cash counted', 'Difference', 'Handed to', 'Signature'

@@ -237,6 +237,8 @@
             color: #155724;
         }
 
+        #scaleNetwork.hidden { display: none; }
+        #scaleNetwork:not(.hidden) { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
         .hidden {
             display: none;
         }
@@ -596,6 +598,35 @@
                         <div class="port-info" id="selectedPortInfo" style="display: none;"></div>
                     </div>
 
+
+                    <div class="form-group"><label for="scaleProfile">Scale type / protocol</label><select id="scaleProfile" data-scale="protocol"></select><p id="scaleProfileNote" style="font-size:13px"></p></div>
+                    <div class="form-group"><label>Connection<select id="scaleTransport" data-scale="transport"><option value="serial">USB COM / RS-232</option><option value="tcp">Network TCP/IP (text protocol)</option></select></label></div>
+                    <div id="scaleNetwork" class="hidden"><label>Scale IP address / host<input data-scale="host" placeholder="192.168.1.100" maxlength="253"></label><label>TCP port<input data-scale="tcpPort" data-number type="number" min="1" max="65535" value="4001"></label></div>
+                    <details style="margin:16px 0">
+                        <summary style="cursor:pointer;font-weight:600">Scale connection and reading format</summary>
+                        <p>For serial connections, match these values to the scale's manual. Readings are converted to kilograms.</p>
+                        <div id="scaleOptions" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+                            <label>Baud rate<select data-scale="baudRate" data-number><option>1200</option><option>2400</option><option>4800</option><option selected>9600</option><option>19200</option><option>38400</option><option>57600</option><option>115200</option></select></label>
+                            <label>Data bits<select data-scale="dataBits" data-number><option>7</option><option selected>8</option></select></label>
+                            <label>Parity<select data-scale="parity"><option value="none">None</option><option value="even">Even</option><option value="odd">Odd</option><option value="mark">Mark</option><option value="space">Space</option></select></label>
+                            <label>Stop bits<select data-scale="stopBits" data-number><option>1</option><option>1.5</option><option>2</option></select></label>
+                            <label>Unit when not sent by scale<select data-scale="unit"><option value="auto">Auto: decimal kg / integer grams</option><option value="kg">Kilograms</option><option value="g">Grams</option><option value="lb">Pounds</option><option value="oz">Ounces</option></select></label>
+                            <label>Decimal separator<select data-scale="decimalSeparator"><option value=".">Point (0.375)</option><option value=",">Comma (0,375)</option></select></label>
+                            <label>Implied decimal places<input data-scale="integerDecimals" data-number type="number" min="0" max="6" value="0"></label>
+                            <label>Number to read (0 = auto)<input data-scale="numberIndex" data-number type="number" min="0" max="20" value="0"></label>
+                            <label>Fixed frame length (0 = automatic)<input data-scale="frameLength" data-number type="number" min="0" max="256" value="0"></label>
+                            <label>Maximum capacity (kg)<input data-scale="maxKg" data-number type="number" min="0.001" max="999999" step="any" value="9999"></label>
+                            <label>Matching readings to settle<input data-scale="stableFrames" data-number type="number" min="1" max="20" value="5"></label>
+                            <label>Reading timeout (milliseconds)<input data-scale="idleMs" data-number type="number" min="500" max="60000" value="3000"></label>
+                            <label><input data-scale="rtscts" type="checkbox"> RTS/CTS flow control</label>
+                        </div>
+                        <p style="font-size:13px">Units sent by the scale always take priority. For 00375 meaning 0.375 kg, choose Kilograms and 3 implied decimal places. If a message contains several numbers, choose its weight number (1 = first). For fixed-width streams without line endings, enter the frame length from the manual.</p>
+                        <details><summary>Scale requires a read command</summary>
+                            <label>Read command (hex bytes, optional)<input data-scale="pollHex" maxlength="192" placeholder="Only enter the command documented by the manufacturer"></label>
+                            <label>Repeat every (milliseconds)<input data-scale="pollIntervalMs" data-number type="number" min="100" max="60000" value="1000"></label>
+                        </details>
+                        <p style="font-size:13px">Connect, place a known weight and verify the live value below. Choose a protocol documented by your scale manufacturer. Proprietary binary, USB HID and OPOS devices need their matching driver; do not select a text preset for them.</p>
+                    </details>
                     <button id="connectToPortBtn" class="btn btn-success hidden" disabled>🔌 Connect to Device</button>
                 </div>
 
@@ -607,7 +638,7 @@
 
                     <div id="liveWeightDisplay" class="live-data">
                         <div style="font-size: 18px; margin-bottom: 12px;">Current Weight:</div>
-                        <div id="weightValue">---.-- kg</div>
+                        <div id="weightValue">---.--- kg</div><div id="scaleReadingStatus" role="status">Waiting for a reading</div><pre id="scaleRawReading" style="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;text-align:left"></pre>
                         <div id="lastUpdate" style="font-size: 13px; margin-top: 12px; opacity: 0.8;"></div>
                     </div>
 
@@ -1168,6 +1199,7 @@
     <script src="kitchen-screen-fit.js"></script>
     <script src="../api/src/kitchen-board/i18n.js"></script>
     <script src="hardware-workspace.js"></script>
+    <script src="scale-profiles.js"></script>
     <script>
         /*
          * What this operating system calls its default printer.
@@ -1311,7 +1343,7 @@
                 availablePorts = await window.electronAPI.hardware.scanSerialPorts(enableSimulation);
 
                 if (availablePorts.length === 0) {
-                    alert('No serial ports found. Try enabling Simulation Mode.');
+                    alert('No COM ports found. Check the cable and install the scale manufacturer’s USB/serial driver. Simulation is only a test, not a hardware connection.');
                     return;
                 }
 
@@ -1350,7 +1382,44 @@
             }
         }
 
+        function scaleOptionsFromForm() {
+            const options = {};
+            document.querySelectorAll('[data-scale]').forEach(el => {
+                if (!el.checkValidity()) throw Error('Check scale setting: ' + el.dataset.scale);
+                options[el.dataset.scale] = el.type === 'checkbox' ? el.checked : el.hasAttribute('data-number') ? Number(el.value) : el.value.trim();
+            });
+            return options;
+        }
+        function restoreScaleOptions(options) {
+            document.querySelectorAll('[data-scale]').forEach(el => {
+                if (!options || options[el.dataset.scale] === undefined) return;
+                if (el.type === 'checkbox') el.checked = options[el.dataset.scale] === true;
+                else el.value = options[el.dataset.scale];
+            });
+            const profile = window.ScaleProfiles.find(p => p.id === document.getElementById('scaleProfile').value);
+            document.getElementById('scaleProfileNote').textContent = profile ? profile.note : '';
+            updateScaleTransport();
+        }
+        function updateScaleTransport() {
+            const network = document.getElementById('scaleTransport').value === 'tcp';
+            document.getElementById('scaleNetwork').classList.toggle('hidden', !network);
+            listPortsBtn.closest('.form-group').classList.toggle('hidden', network);
+            portsDropdownSection.classList.toggle('hidden', network || !availablePorts.length);
+            connectToPortBtn.classList.toggle('hidden', !network && !selectedPortPath);
+            connectToPortBtn.disabled = !network && !selectedPortPath;
+        }
+        const scaleProfileSelect = document.getElementById('scaleProfile');
+        (window.ScaleProfiles || []).forEach(profile => { const option=document.createElement('option');option.value=profile.id;option.textContent=profile.name;scaleProfileSelect.appendChild(option); });
+        scaleProfileSelect.addEventListener('change', () => {
+            const profile=window.ScaleProfiles.find(p=>p.id===scaleProfileSelect.value);
+            if (!profile) return;
+            restoreScaleOptions({ ...profile.options, protocol:profile.id, frameLength:0, numberIndex:0, integerDecimals:0, decimalSeparator:'.' });
+            document.getElementById('scaleProfileNote').textContent=profile.note;
+        });
+        document.getElementById('scaleTransport').addEventListener('change', updateScaleTransport);
         async function connectToSelectedPort() {
+            const isNetwork = document.getElementById('scaleTransport').value === 'tcp';
+            if (isNetwork) selectedPortPath = 'tcp://' + document.querySelector('[data-scale=host]').value.trim() + ':' + document.querySelector('[data-scale=tcpPort]').value;
             if (!selectedPortPath) return;
 
             const selectedPort = availablePorts.find(p => p.path === selectedPortPath);
@@ -1360,7 +1429,8 @@
             connectToPortBtn.textContent = '🔄 Connecting...';
 
             try {
-                const result = await window.electronAPI.hardware.connectPort(selectedPortPath, isMock);
+                const options = scaleOptionsFromForm();
+                const result = await window.electronAPI.hardware.connectPort(selectedPortPath, { ...options, isMock });
                 if (result.success) {
                     connectedPortPath = selectedPortPath;
                     portSelection.classList.add('hidden');
@@ -1369,6 +1439,7 @@
                     // Persist for auto-reconnect on next startup
                     await window.electronAPI.preferences.set('hardware.weightMachine', {
                         port: connectedPortPath,
+                        options,
                         isMock: isMock,
                         simulation: document.getElementById('enableSimulation').checked
                     });
@@ -1392,13 +1463,16 @@
             portsDropdown.value = '';
             selectedPortInfo.style.display = 'none';
             connectToPortBtn.classList.add('hidden');
+            updateScaleTransport();
         }
 
         function updateWeightDisplay(data) {
             if (!weightValue) return;
 
             if (typeof data === 'object' && data.weight !== undefined) {
-                weightValue.textContent = `${data.weight} kg`;
+                weightValue.textContent = data.isValid !== false && Number.isFinite(data.weight) ? data.weight.toFixed(3) + ' kg' : '---.--- kg';
+                document.getElementById('scaleReadingStatus').textContent = data.isValid === false ? data.error || 'Invalid reading' : data.stable ? 'Stable reading' : 'Waiting for the weight to settle';
+                document.getElementById('scaleRawReading').textContent = 'Raw: ' + JSON.stringify(String(data.raw || '').slice(0, 200));
                 if (lastUpdate && data.timestamp) {
                     const timestamp = new Date(data.timestamp).toLocaleTimeString();
                     lastUpdate.textContent = `Last updated: ${timestamp}`;
@@ -1432,6 +1506,9 @@
         // INITIALIZATION
         // ===========================
         if (window.electronAPI && window.electronAPI.hardware) {
+            if (window.electronAPI.hardware.onScaleRaw) window.electronAPI.hardware.onScaleRaw(raw => {
+                document.getElementById('scaleRawReading').textContent = 'Raw: ' + JSON.stringify(raw);
+            });
             window.electronAPI.hardware.onUsbData((data) => {
                 updateWeightDisplay(data);
             });
@@ -1451,20 +1528,8 @@
 
         // Auto-reconnect
         async function autoReconnect() {
-            try {
-                const prefs = await window.electronAPI.preferences.get('hardware.weightMachine');
-                if (prefs && prefs.enabled && prefs.port) {
-                    const result = await window.electronAPI.hardware.connectPort(prefs.port);
-                    if (result.success) {
-                        connectedPortPath = prefs.port;
-                        portSelection.classList.add('hidden');
-                        connectedState.classList.remove('hidden');
-                        connectedPortDisplay.textContent = `Connected to: ${connectedPortPath}`;
-                    }
-                }
-            } catch (error) {
-                // No previous connection
-            }
+            const prefs = await window.electronAPI.preferences.get('hardware.weightMachine');
+            restoreScaleOptions(prefs && prefs.options);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -3677,7 +3742,9 @@
                     }
 
                     // Try to reconnect
-                    const result = await window.electronAPI.hardware.connectPort(saved.port, !!(saved.isMock));
+                    restoreScaleOptions(saved.options);
+                    const status = await window.electronAPI.hardware.getStatus();
+                    const result = status.connected && status.port === saved.port ? { success: true } : await window.electronAPI.hardware.connectPort(saved.port, { ...(saved.options || {}), isMock: saved.isMock === true });
                     if (result && result.success) {
                         connectedPortPath = saved.port;
                         portSelection.classList.add('hidden');

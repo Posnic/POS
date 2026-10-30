@@ -967,7 +967,6 @@
   "Audience choices": "Pilihan audiens",
   "Choose a table first.": "Pilih tabel terlebih dahulu.",
   "Choose an enabled venue and enter a room number (up to 40 characters).": "Pilih tempat yang diaktifkan dan masukkan nomor kamar (hingga 40 karakter).",
-  "Combine this product into one line when selling in an alternate unit.": "Gabungkan produk ini menjadi satu baris saat menjual di unit alternatif.",
   "Enter a valid phone number including country code.": "Masukkan nomor telepon yang valid termasuk kode negara.",
   "Enter the number of guests.": "Masukkan jumlah tamu.",
   "Receipt sharing is unavailable. Configure receipt file storage before sending an SMS bill.": "Berbagi tanda terima tidak tersedia. Konfigurasikan penyimpanan file tanda terima sebelum mengirim SMS tagihan.",
@@ -977,8 +976,8 @@
   "The bill PDF could not be prepared. Nothing was sent.": "RUU PDF tidak dapat disiapkan. Tidak ada yang dikirim.",
   "This number could not be found on WhatsApp. Check the country code and number.": "Nomor ini tidak dapat ditemukan diWhatsApp. Periksa kode dan nomor negara.",
   "This receipt link is invalid. Ask the shop to send it again.": "Tautan tanda terima ini tidak valid. Minta toko untuk mengirimkannya lagi.",
-  "Use one selling unit per product in a sale.": "Gunakan satu unit penjualan per produk dalam penjualan.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApptidak mengembalikan referensi pesan. Pengiriman belum dikonfirmasi; periksa obrolan sebelum mencoba lagi.",
-  "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppbelum menyinkronkan obrolan penerima ini. Tidak ada pesan yang dikirim. Izinkan perangkat yang ditautkan untuk menyelesaikan sinkronisasi.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmasih terhubung kembali atau membutuhkan tautan telepon baru. Tidak ada pesan yang dikirim."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmasih terhubung kembali atau membutuhkan tautan telepon baru. Tidak ada pesan yang dikirim.",
+  "Messaging permission required.": "Diperlukan izin pengiriman pesan.",
+  "Schedule owner no longer has messaging access.": "Pemilik jadwal tidak lagi memiliki akses pesan."
 }

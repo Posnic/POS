@@ -95,6 +95,7 @@ function mapItem(row, options = {}) {
   return {
     id: id(row._id),
     name: String(row.name || row.item_name || 'Item'),
+    stockLocations: require('../helpers/stock-locations').read(row),
     ...(options.decimal && row.item_weight_machine_based
       ? {
           quantityScale: 1000,

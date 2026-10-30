@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "自動傳送此報告",
   "lang_split_payment_help": "一張賬單，多種付款方式。例如，一半用卡，一半用現金。",
   "lang_payment_print_reference": "在收據上列印參考",
-  "lang_payment_print_reference_storage": "無法記住收據偏好設定。請重試。"
+  "lang_payment_print_reference_storage": "無法記住收據偏好設定。請重試。",
+  "lang_bank_account_routing_details": "銀行帳戶和路由詳細信息",
+  "lang_messaging_acl_manage_automation": "管理自動訊息",
+  "lang_messaging_acl_manage_reports": "管理排程報告",
+  "lang_messaging_acl_manage_settings": "管理訊息設定",
+  "lang_messaging_acl_send_bulk": "傳送大量客戶訊息",
+  "lang_messaging_acl_send_email": "發送電子郵件",
+  "lang_messaging_acl_send_sms": "傳送訊SMS息",
+  "lang_messaging_acl_send_whatsapp": "傳送訊WhatsApp息",
+  "lang_messaging_acl_view_history": "檢視訊息記錄",
+  "lang_postal_code": "郵遞區號",
+  "lang_stock_locations": "庫存地點",
+  "lang_stock_locations_help": "可選。每行一個位置，最多 12 個。將主要採集地點放在第一位。位置描述找到該項目的位置；它們不會分割其庫存數量。",
+  "lang_whole_selling_units": "僅限整個數量（全長或包裝）"
 }

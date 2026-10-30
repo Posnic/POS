@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Send denne rapport automatisk",
   "lang_split_payment_help": "En regning, flere betalingsmetoder. For eksempel halvt med kort og halvt kontant.",
   "lang_payment_print_reference": "Udskriv reference på kvitteringen",
-  "lang_payment_print_reference_storage": "Kunne ikke huske kvitteringspræferencen. Prøv igen."
+  "lang_payment_print_reference_storage": "Kunne ikke huske kvitteringspræferencen. Prøv igen.",
+  "lang_bank_account_routing_details": "Bankkonto og ruteoplysninger",
+  "lang_messaging_acl_manage_automation": "Administrer automatiske meddelelser",
+  "lang_messaging_acl_manage_reports": "Administrer planlagte rapporter",
+  "lang_messaging_acl_manage_settings": "Administrer meddelelsesindstillinger",
+  "lang_messaging_acl_send_bulk": "Send massemeddelelser til kunder",
+  "lang_messaging_acl_send_email": "Send e-mails",
+  "lang_messaging_acl_send_sms": "Send SMS beskeder",
+  "lang_messaging_acl_send_whatsapp": "Send WhatsApp beskeder",
+  "lang_messaging_acl_view_history": "Se meddelelseshistorik",
+  "lang_postal_code": "Postnummer",
+  "lang_stock_locations": "Lagerplaceringer",
+  "lang_stock_locations_help": "Valgfri. Én placering pr. Linje, op til 12. Sæt hovedplukningsstedet først. Placeringer beskriver, hvor du kan finde varen; de deler ikke dens lagermængde.",
+  "lang_whole_selling_units": "Kun hele mængder (fulde længder eller pakninger)"
 }

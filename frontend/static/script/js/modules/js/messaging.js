@@ -181,7 +181,11 @@ PosnicPro.messaging = {
     $("#messaging_sms_template").val(s.sms_template || "");
     $("#messaging_wa_enabled").prop("checked", !!s.whatsapp_enabled);
     $("#messaging_wa_mode").val(s.whatsapp_mode || "web");
-    $("#messaging_wa_device").val(s.whatsapp_device_id || "");
+    $("#messaging_wa_device").val(s.whatsapp_device_id || "posnic");
+    if (PosnicPro.whatsapp && PosnicPro.whatsapp.setDeviceId) {
+      PosnicPro.whatsapp.setDeviceId(s.whatsapp_device_id);
+      if ((s.whatsapp_mode || "web") === "web") PosnicPro.whatsapp.checkStatus(true);
+    }
     $("#messaging_wa_host").val(s.whatsapp_host || "");
     var cloud = s.whatsapp_cloud || {};
     var waSet = s.whatsapp_secrets_set || {};

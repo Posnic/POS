@@ -260,3 +260,77 @@ test('actual return rounding reconciles, including a fully discounted zero-value
     1000
   );
 });
+
+test('returning feet from a mixed pipe bill preserves the full length and restores metres exactly once', async () => {
+  const license = new ObjectId(),
+    branch = new ObjectId(),
+    item = new ObjectId(),
+    sale = new ObjectId();
+  BaseModel.license = license;
+  BaseModel.currentBranch = branch;
+  BaseModel.loggedUser = new ObjectId();
+  await db.collection('branches').insertOne({ _id: branch, license, currency: 'INR' });
+  await db
+    .collection('items')
+    .insertOne({
+      _id: item,
+      license,
+      available_quantity: 10,
+      company_price: 70,
+      track_inventory: true,
+    });
+  const full = {
+    line_id: 'full',
+    item_id: String(item),
+    item_name: 'Pipe',
+    item_unit: 'length',
+    item_quantity: 1,
+    item_price: 550,
+    total_amount: 550,
+    tax: 0,
+    tax_type: 'inclusive',
+    unit_conversion: { unit: 'length', base_unit: 'm', factor: 6, whole_units: true },
+  };
+  const feet = {
+    ...full,
+    line_id: 'cut',
+    item_unit: 'ft',
+    item_quantity: 10,
+    item_price: 32,
+    total_amount: 320,
+    unit_conversion: { unit: 'ft', base_unit: 'm', factor: 0.3048 },
+  };
+  await db
+    .collection('sales')
+    .insertOne({
+      _id: sale,
+      license,
+      branch_id: branch,
+      date: new Date(),
+      sale_process: 'Add',
+      payment_status: 'Paid',
+      sales_total: 870,
+      items: [full, feet],
+      items_return: [],
+      items_return_total: 0,
+    });
+  const payload = {
+    sales_id: String(sale),
+    items: [full, { ...feet, item_quantity: 8, total_amount: 256 }],
+    items_return: [{ ...feet, item_quantity: 2, total_amount: 64 }],
+    print: false,
+  };
+  const result = await repository.returnSalesOrder(payload, {});
+  assert.equal(result.status, true, JSON.stringify(result));
+  const updated = await db.collection('sales').findOne({ _id: sale });
+  assert.deepEqual(
+    updated.items.map((x) => [x.line_id, x.item_unit, x.item_quantity]),
+    [
+      ['full', 'length', 1],
+      ['cut', 'ft', 8],
+    ]
+  );
+  assert.equal((await db.collection('items').findOne({ _id: item })).available_quantity, 10.6096);
+  await repository.returnSalesOrder(payload, {});
+  assert.equal((await db.collection('items').findOne({ _id: item })).available_quantity, 10.6096);
+});

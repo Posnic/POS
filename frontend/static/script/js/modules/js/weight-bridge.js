@@ -84,14 +84,20 @@
                     }, 6000);   // scales need a moment to settle
 
                     stop = window.electronAPI.hardware.onUsbData(function (data) {
+                        if (data && typeof data === 'object' && (data.isValid === false || data.weight === null)) { latest = null; return; }
                         var weight = (typeof data === 'object') ? data.weight : parseFloat(data);
-                        if (!isFinite(weight)) return;
+                        if (!Number.isFinite(weight) || weight < 0) return;
                         latest = weight;
                         // `stable` comes from the scale reader; older builds
                         // without it fall back to accepting the first reading.
                         var isStable = (typeof data === 'object' && 'stable' in data) ? data.stable === true : !stableOnly;
                         if (isStable && weight > 0) finish(weight, true);
                     });
+                    // Single-send scales may already have a fresh stable reading.
+                    // The main process rejects expired/disconnected cached readings.
+                    if (window.electronAPI.hardware.broadcastWeight) {
+                        Promise.resolve(window.electronAPI.hardware.broadcastWeight()).catch(function () {});
+                    }
 
                 } catch (error) {
                     console.error('[WeightBridge] Error reading weight:', error);
@@ -119,7 +125,9 @@
                     
                     // Set up listener FIRST for ongoing weight updates
                     stopListening = window.electronAPI.hardware.onUsbData((data) => {
+                        if (data && typeof data === 'object' && (data.isValid === false || data.weight === null)) { callback(null); return; }
                         const weight = typeof data === 'object' ? data.weight : parseFloat(data);
+                        if (!Number.isFinite(weight) || weight < 0) { callback(null); return; }
                         console.log('[WeightBridge] Received weight update:', weight, 'kg');
                         callback(weight);
                     });

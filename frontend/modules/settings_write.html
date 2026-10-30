@@ -4649,6 +4649,12 @@
 
                                             <!-- ============ SALE ============ -->
                                             <div class="tab-pane fade show active" id="core-tab-sale" role="tabpanel">
+                                                <fieldset class="border rounded p-3 mb-4">
+                                                    <legend class="h6"><lang class="lang_after_payment">After payment</lang></legend>
+                                                    <label for="sale_redirect_seconds"><lang class="lang_sale_redirect_seconds">Return to New Sale after (seconds)</lang></label>
+                                                    <input class="form-control" style="max-width:180px" type="number" id="sale_redirect_seconds" name="sale_redirect_seconds" min="0" max="300" step="1" required aria-describedby="sale_redirect_help">
+                                                    <small id="sale_redirect_help" class="form-text text-muted"><lang class="lang_sale_redirect_help">0 = immediately. Applies after a successful sale. Receipt printing continues. Click the completion panel to pause a countdown.</lang></small>
+                                                </fieldset>
 <fieldset class="border rounded p-3 mb-4">
                                                     <legend class="h6"><lang class="lang_sales_item_search">Sales item search</lang></legend>
                                                     <p><lang class="lang_choose_fields_for_typed_searches_exact_bar">Choose fields for typed searches. Exact barcode scans always work.</lang></p>
@@ -4668,6 +4674,7 @@
                                                     <input type="checkbox" name="sales_search_fields" value="supplier"> <lang class="lang_newsupplier_title">Supplier</lang></label>
                                                     <label class="mr-3">
                                                     <input type="checkbox" name="sales_search_fields" value="category"> <lang class="lang_newcategory_title">Category</lang></label>
+                                                <label class="mr-3"><input type="checkbox" name="sales_search_fields" value="location"> <lang class="lang_stock_locations">Stock locations</lang></label>
                                                     </div>
                                                     <label>
                                                     <input type="checkbox" id="sales_search_custom_display"> <lang class="lang_customize_fields_shown_in_sales_search_res">Customize fields shown in Sales search results and the barcode chooser</lang></label>
@@ -4687,6 +4694,7 @@
                                                     <input type="checkbox" name="sales_search_display_fields" value="stock"> <lang class="lang_stock">Stock</lang></label>
                                                     <label class="mr-3">
                                                     <input type="checkbox" name="sales_search_display_fields" value="image"> <lang class="lang_image">Image</lang></label>
+                                                <label class="mr-3"><input type="checkbox" name="sales_search_display_fields" value="location"> <lang class="lang_stock_locations">Stock locations</lang></label>
                                                     </div>
                                                     </fieldset>
                                                 <!--

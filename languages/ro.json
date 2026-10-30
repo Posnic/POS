@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Trimiteți automat acest raport",
   "lang_split_payment_help": "O factură, mai multe metode de plată. De exemplu, jumătate cu card și jumătate în numerar.",
   "lang_payment_print_reference": "Tipăriți referința la chitanță",
-  "lang_payment_print_reference_storage": "Nu mi-am putut aminti preferința de primire. Vă rugăm să încercați din nou."
+  "lang_payment_print_reference_storage": "Nu mi-am putut aminti preferința de primire. Vă rugăm să încercați din nou.",
+  "lang_bank_account_routing_details": "Cont bancar și detalii de rutare",
+  "lang_messaging_acl_manage_automation": "Gestionați mesajele automate",
+  "lang_messaging_acl_manage_reports": "Gestionarea rapoartelor programate",
+  "lang_messaging_acl_manage_settings": "Gestionarea setărilor de mesagerie",
+  "lang_messaging_acl_send_bulk": "Trimiteți mesaje în vrac ale clienților",
+  "lang_messaging_acl_send_email": "Trimiteți e-mailuri",
+  "lang_messaging_acl_send_sms": "Trimiteți SMS mesaje",
+  "lang_messaging_acl_send_whatsapp": "Trimiteți WhatsApp mesaje",
+  "lang_messaging_acl_view_history": "Vizualizați istoricul mesajelor",
+  "lang_postal_code": "Cod poștal",
+  "lang_stock_locations": "Locații de stoc",
+  "lang_stock_locations_help": "Opțional. O locație pe linie, până la 12. Puneți mai întâi locația principală de preluare. Locațiile descriu unde se găsește articolul; nu îi împart cantitatea de stoc.",
+  "lang_whole_selling_units": "Numai cantități întregi (lungimi complete sau ambalaje)"
 }

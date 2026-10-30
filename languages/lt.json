@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Atsiųskite šią ataskaitą automatiškai",
   "lang_split_payment_help": "Viena sąskaita, keli mokėjimo būdai. Pavyzdžiui, pusė kortele ir pusė grynaisiais.",
   "lang_payment_print_reference": "Spausdinkite nuorodą gavimo metu",
-  "lang_payment_print_reference_storage": "Nepavyko prisiminti gavimo pirmenybės. Prašome pabandyti iš naujo."
+  "lang_payment_print_reference_storage": "Nepavyko prisiminti gavimo pirmenybės. Prašome pabandyti iš naujo.",
+  "lang_bank_account_routing_details": "Banko sąskaitos ir maršruto duomenys",
+  "lang_messaging_acl_manage_automation": "Tvarkykite automatinius pranešimus",
+  "lang_messaging_acl_manage_reports": "Suplanuotų ataskaitų tvarkymas",
+  "lang_messaging_acl_manage_settings": "Tvarkykite pranešimų nustatymus",
+  "lang_messaging_acl_send_bulk": "Siųsti masinius klientų pranešimus",
+  "lang_messaging_acl_send_email": "Siųsti el. Laiškus",
+  "lang_messaging_acl_send_sms": "Siųsti SMS žinutes",
+  "lang_messaging_acl_send_whatsapp": "Siųsti WhatsApp žinutes",
+  "lang_messaging_acl_view_history": "Peržiūrėti pranešimų istoriją",
+  "lang_postal_code": "Pašto kodas",
+  "lang_stock_locations": "Akcijų vietos",
+  "lang_stock_locations_help": "Neprivaloma. Viena vieta vienoje eilutėje, iki 12. Pirmiausia įdėkite pagrindinę rinkimo vietą. Vietos apibūdina, kur rasti daiktą; jos nedalija jo atsargų kiekio.",
+  "lang_whole_selling_units": "Tik sveiki kiekiai (pilni ilgiai arba pakuotės)"
 }

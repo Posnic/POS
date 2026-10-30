@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "ഈ റിപ്പോർട്ട് യാന്ത്രികമായി അയയ്ക്കുക",
   "lang_split_payment_help": "ഒരു ബിൽ, നിരവധി പേയ്മെന്റ് രീതികൾ. ഉദാഹരണത്തിന്, പകുതി കാർഡും പകുതി പണവും.",
   "lang_payment_print_reference": "രസീതിയിൽ റഫറൻസ് അച്ചടിക്കുക",
-  "lang_payment_print_reference_storage": "രസീത് മുൻഗണന ഓർമ്മിക്കാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക."
+  "lang_payment_print_reference_storage": "രസീത് മുൻഗണന ഓർമ്മിക്കാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.",
+  "lang_bank_account_routing_details": "ബാങ്ക് അക്കൗണ്ട്, റൂട്ടിംഗ് വിശദാംശങ്ങൾ",
+  "lang_messaging_acl_manage_automation": "യാന്ത്രിക സന്ദേശങ്ങൾ നിയന്ത്രിക്കുക",
+  "lang_messaging_acl_manage_reports": "ഷെഡ്യൂൾ ചെയ്ത റിപ്പോർട്ടുകൾ നിയന്ത്രിക്കുക",
+  "lang_messaging_acl_manage_settings": "സന്ദേശമയയ്ക്കൽ ക്രമീകരണങ്ങൾ നിയന്ത്രിക്കുക",
+  "lang_messaging_acl_send_bulk": "ബൾക്ക് ഉപഭോക്തൃ സന്ദേശങ്ങൾ അയയ്ക്കുക",
+  "lang_messaging_acl_send_email": "ഇമെയിലുകൾ അയയ്ക്കുക",
+  "lang_messaging_acl_send_sms": "SMSസന്ദേശങ്ങൾ അയയ്ക്കുക",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppസന്ദേശങ്ങൾ അയയ്ക്കുക",
+  "lang_messaging_acl_view_history": "സന്ദേശ ചരിത്രം കാണുക",
+  "lang_postal_code": "തപാൽ കോഡ്",
+  "lang_stock_locations": "സ്റ്റോക്ക് ലൊക്കേഷനുകൾ",
+  "lang_stock_locations_help": "ഓപ്ഷണൽ. ഒരു ലൈനിന് ഒരു സ്ഥാനം, 12 വരെ. പ്രധാന പിക്കിംഗ് ലൊക്കേഷൻ ആദ്യം ഇടുക. ഇനം എവിടെ കണ്ടെത്തണമെന്ന് ലൊക്കേഷനുകൾ വിവരിക്കുന്നു; അവർ അതിന്റെ സ്റ്റോക്ക് അളവ് വിഭജിക്കുന്നില്ല.",
+  "lang_whole_selling_units": "മുഴുവൻ അളവുകളും മാത്രം (മുഴുവൻ നീളവും പായ്ക്കുകളും)"
 }

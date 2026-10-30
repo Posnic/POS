@@ -5237,5 +5237,18 @@
   "lang_send_this_report_automatically": "આ અહેવાલ આપમેળે મોકલો",
   "lang_split_payment_help": "એક બિલ, ઘણી ચુકવણી પદ્ધતિઓ. ઉદાહરણ તરીકે, કાર્ડ દ્વારા અડધા અને રોકડમાં અડધા.",
   "lang_payment_print_reference": "રસીદ પર સંદર્ભ છાપો",
-  "lang_payment_print_reference_storage": "રસીદ પસંદગી યાદ રાખી શકાઈ નથી. કૃપા કરીને ફરીથી પ્રયાસ કરો."
+  "lang_payment_print_reference_storage": "રસીદ પસંદગી યાદ રાખી શકાઈ નથી. કૃપા કરીને ફરીથી પ્રયાસ કરો.",
+  "lang_bank_account_routing_details": "બેંક એકાઉન્ટ અને રૂટીંગ વિગતો",
+  "lang_messaging_acl_manage_automation": "સ્વચાલિત સંદેશાઓનું સંચાલન",
+  "lang_messaging_acl_manage_reports": "નિર્ધારિત અહેવાલોનું સંચાલન",
+  "lang_messaging_acl_manage_settings": "મેસેજિંગ સેટિંગ્સનો",
+  "lang_messaging_acl_send_bulk": "બલ્ક ગ્રાહક સંદેશા મોકલો",
+  "lang_messaging_acl_send_email": "ઇમેઇલ્સ મોકલો",
+  "lang_messaging_acl_send_sms": "SMSસંદેશાઓ મોકલો",
+  "lang_messaging_acl_send_whatsapp": "WhatsAppસંદેશાઓ મોકલો",
+  "lang_messaging_acl_view_history": "સંદેશ ઇતિહાસ જુઓ",
+  "lang_postal_code": "પોસ્ટલ કોડ",
+  "lang_stock_locations": "સ્ટોક સ્થાનો",
+  "lang_stock_locations_help": "વૈકલ્પિક. લાઇન દીઠ એક સ્થાન, 12 સુધી. મુખ્ય ચૂંટણીનું સ્થાન પ્રથમ મૂકો. સ્થાનો વસ્તુ ક્યાં શોધવી તે વર્ણવે છે; તેઓ તેના સ્ટોક જથ્થાને વિભાજિત કરતા નથી.",
+  "lang_whole_selling_units": "ફક્ત સંપૂર્ણ જથ્થો (સંપૂર્ણ લંબાઈ અથવા પેક)"
 }

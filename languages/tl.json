@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Awtomatikong ipadala ang ulat na ito",
   "lang_split_payment_help": "Isang singil, maraming mga paraan ng pagbabayad. Halimbawa, kalahati sa pamamagitan ng card at kalahati sa cash.",
   "lang_payment_print_reference": "I-print ang sanggunian sa resibo",
-  "lang_payment_print_reference_storage": "Hindi matandaan ang kagustuhan ng resibo. Mangyaring subukang muli."
+  "lang_payment_print_reference_storage": "Hindi matandaan ang kagustuhan ng resibo. Mangyaring subukang muli.",
+  "lang_bank_account_routing_details": "Mga detalye ng bank account at routing",
+  "lang_messaging_acl_manage_automation": "Pamahalaan ang mga awtomatikong men",
+  "lang_messaging_acl_manage_reports": "Pamahalaan ang naka-isked",
+  "lang_messaging_acl_manage_settings": "Pamahalaan ang mga setting ng pag",
+  "lang_messaging_acl_send_bulk": "Magpadala ng maraming mensahe ng customer",
+  "lang_messaging_acl_send_email": "Magpadala ng mga email",
+  "lang_messaging_acl_send_sms": "Magpadala ng mensa SMS he",
+  "lang_messaging_acl_send_whatsapp": "Magpadala ng mensa WhatsApp he",
+  "lang_messaging_acl_view_history": "Tingnan ang kasaysayan ng men",
+  "lang_postal_code": "Postal code",
+  "lang_stock_locations": "Mga lokasyon ng stock",
+  "lang_stock_locations_help": "Opsyonal. Isang lokasyon bawat linya, hanggang sa 12. Ilagay muna ang pangunahing lokasyon ng pagpili. Inilalarawan ng mga lokasyon kung saan mahahanap ang item; hindi nila hinahati ang dami ng stock nito.",
+  "lang_whole_selling_units": "Buong dami lamang (buong haba o pack)"
 }

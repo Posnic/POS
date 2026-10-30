@@ -5315,5 +5315,18 @@
   "lang_send_this_report_automatically": "Invia questo rapporto automaticamente",
   "lang_split_payment_help": "Una fattura, diversi metodi di pagamento. Ad esempio, metà con carta e metà in contanti.",
   "lang_payment_print_reference": "Stampa il riferimento sulla ricevuta",
-  "lang_payment_print_reference_storage": "Non riuscivo a ricordare la preferenza per la ricevuta. Riprova."
+  "lang_payment_print_reference_storage": "Non riuscivo a ricordare la preferenza per la ricevuta. Riprova.",
+  "lang_bank_account_routing_details": "Conto bancario e dettagli di routing",
+  "lang_messaging_acl_manage_automation": "Gestisci i messaggi automatici",
+  "lang_messaging_acl_manage_reports": "Gestisci i report pianificati",
+  "lang_messaging_acl_manage_settings": "Gestisci le impostazioni di messaggistica",
+  "lang_messaging_acl_send_bulk": "Invia messaggi collettivi ai clienti",
+  "lang_messaging_acl_send_email": "Inviare email",
+  "lang_messaging_acl_send_sms": "Inviare SMS messaggi",
+  "lang_messaging_acl_send_whatsapp": "Inviare WhatsApp messaggi",
+  "lang_messaging_acl_view_history": "Visualizza la cronologia dei messaggi",
+  "lang_postal_code": "Codice postale",
+  "lang_stock_locations": "Posizioni delle scorte",
+  "lang_stock_locations_help": "Facoltativo Una posizione per riga, fino a 12. Inserisci per primo il luogo di prelievo principale. Le sedi descrivono dove trovare l'articolo; non ne dividono la quantità in magazzino.",
+  "lang_whole_selling_units": "Solo quantità intere (lunghezze complete o confezioni)"
 }

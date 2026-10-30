@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Надіслати цей звіт автоматично",
   "lang_split_payment_help": "Один рахунок, кілька способів оплати. Наприклад, наполовину карткою і наполовину готівкою.",
   "lang_payment_print_reference": "Роздрукувати посилання на квитанції",
-  "lang_payment_print_reference_storage": "Не можу згадати перевагу квитанції. Будь ласка, повторіть спробу."
+  "lang_payment_print_reference_storage": "Не можу згадати перевагу квитанції. Будь ласка, повторіть спробу.",
+  "lang_bank_account_routing_details": "Банківський рахунок і реквізити маршрутизації",
+  "lang_messaging_acl_manage_automation": "Керування автоматичними повідомленнями",
+  "lang_messaging_acl_manage_reports": "Керування запланованими звітами",
+  "lang_messaging_acl_manage_settings": "Керування настройками обміну повідомленнями",
+  "lang_messaging_acl_send_bulk": "Надсилайте масові повідомлення клієнтів",
+  "lang_messaging_acl_send_email": "Відправляти електронні листи",
+  "lang_messaging_acl_send_sms": "Надіслати SMS повідомлення",
+  "lang_messaging_acl_send_whatsapp": "Надіслати WhatsApp повідомлення",
+  "lang_messaging_acl_view_history": "Переглянути історію повідомлень",
+  "lang_postal_code": "Поштовий індекс",
+  "lang_stock_locations": "Місцезнаходження запасів",
+  "lang_stock_locations_help": "Необов'язковий. Одне розташування на рядок, до 12. Спочатку поставте основне місце збору. Розташування описують, де знайти товар; вони не ділять його кількість на складі.",
+  "lang_whole_selling_units": "Тільки цілі кількості (повні довжини або упаковки)"
 }

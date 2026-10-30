@@ -5311,5 +5311,18 @@
   "lang_send_this_report_automatically": "Enviar este informe automáticamente",
   "lang_split_payment_help": "Una factura, varios métodos de pago. Por ejemplo, la mitad con tarjeta y la otra mitad en efectivo.",
   "lang_payment_print_reference": "Imprima la referencia en el recibo",
-  "lang_payment_print_reference_storage": "No se pudo recordar la preferencia de recibo. Vuelva a intentarlo."
+  "lang_payment_print_reference_storage": "No se pudo recordar la preferencia de recibo. Vuelva a intentarlo.",
+  "lang_bank_account_routing_details": "Detalles de la cuenta bancaria y de la ruta",
+  "lang_messaging_acl_manage_automation": "Gestiona los mensajes automáticos",
+  "lang_messaging_acl_manage_reports": "Gestione los informes programados",
+  "lang_messaging_acl_manage_settings": "Administra la configuración de mensajería",
+  "lang_messaging_acl_send_bulk": "Envía mensajes masivos a clientes",
+  "lang_messaging_acl_send_email": "Enviar correos electrónicos",
+  "lang_messaging_acl_send_sms": "Enviar SMS mensajes",
+  "lang_messaging_acl_send_whatsapp": "Enviar WhatsApp mensajes",
+  "lang_messaging_acl_view_history": "Ver el historial de mensajes",
+  "lang_postal_code": "Código postal",
+  "lang_stock_locations": "Ubicaciones de stock",
+  "lang_stock_locations_help": "Opcional. Una ubicación por línea, hasta 12. Pon primero la ubicación principal de recogida. Las ubicaciones describen dónde encontrar el artículo; no dividen la cantidad de existencias.",
+  "lang_whole_selling_units": "Solo cantidades enteras (unidades enteras o paquetes)"
 }

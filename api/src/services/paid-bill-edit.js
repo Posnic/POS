@@ -16,7 +16,7 @@ function quantities(items) {
   const result = new Map();
   for (const item of items || []) {
     const key = String(item.item_id);
-    const qty = quantity(item);
+    const qty = require('../helpers/selling-units').stockQuantity(item, quantity(item));
     if (!ObjectId.isValid(key) || !Number.isFinite(qty) || qty < 0) fail('Invalid item quantity.');
     result.set(key, (result.get(key) || 0) + qty);
   }

@@ -5234,5 +5234,18 @@
   "lang_send_this_report_automatically": "Saatke see aruanne automaatselt",
   "lang_split_payment_help": "Üks arve, mitu makseviisi. Näiteks pool kaardiga ja pool sularahas.",
   "lang_payment_print_reference": "Prindi viide kviitungile",
-  "lang_payment_print_reference_storage": "Kviitungi eelistust ei mäletanud. Palun proovige uuesti."
+  "lang_payment_print_reference_storage": "Kviitungi eelistust ei mäletanud. Palun proovige uuesti.",
+  "lang_bank_account_routing_details": "Pangakonto ja marsruudi andmed",
+  "lang_messaging_acl_manage_automation": "Automaatsõnumite haldamine",
+  "lang_messaging_acl_manage_reports": "Planeeritud aruannete haldamine",
+  "lang_messaging_acl_manage_settings": "Sõnumside seadete haldamine",
+  "lang_messaging_acl_send_bulk": "Hulgisõnumite saatmine",
+  "lang_messaging_acl_send_email": "Saada e-kirju",
+  "lang_messaging_acl_send_sms": "Sõ SMS numite saatmine",
+  "lang_messaging_acl_send_whatsapp": "Sõ WhatsApp numite saatmine",
+  "lang_messaging_acl_view_history": "Vaata sõnumite ajalugu",
+  "lang_postal_code": "Postiindeks",
+  "lang_stock_locations": "Varude asukohad",
+  "lang_stock_locations_help": "Valikuline. Üks asukoht rea kohta, kuni 12. Pange esikohale peamine korjamiskoht. Asukohad kirjeldavad, kust kauba leida; nad ei jaga selle varukogust.",
+  "lang_whole_selling_units": "Ainult terved kogused (täispikkused või pakendid)"
 }

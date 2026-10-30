@@ -659,6 +659,7 @@ PosnicPro.settings = {
                     
                     // Store general settings including hardware_weight_machine_enable
                     var generalSettings = {
+                        sale_redirect_seconds: PosnicPro.saleRedirectSeconds(),
                         stock_management: response.data['stock_management'] !== false,
                         hardware_weight_machine_enable: response.data['hardware_weight_machine_enable'] || false,
                         till_lock_enable: response.data['till_lock_enable'] || false,
@@ -891,6 +892,7 @@ PosnicPro.settings = {
                 $('#textlocal_sender').val(data.textlocal_sender);
                 $('#textlocal_api').val(data.textlocal_api || '');
                 $('#sales_prefix').val(data.sales_prefix || 'S');
+                $('#sale_redirect_seconds').val(PosnicPro.saleRedirectSeconds(data));
                 $('#sales_search_custom_fields').prop('checked', Array.isArray(data.sales_search_fields))
                     .off('change.salesSearch').on('change.salesSearch', function () {
                         $('[name="sales_search_fields"]').prop('disabled', !this.checked);
@@ -1029,6 +1031,7 @@ PosnicPro.settings = {
 
                 // Store general settings including hardware_weight_machine_enable
                 var generalSettings = {
+                    sale_redirect_seconds: data.sale_redirect_seconds,
                     stock_management: data.stock_management !== false,
                     hardware_weight_machine_enable: data.hardware_weight_machine_enable || false,
                     till_lock_enable: data.till_lock_enable || false,
@@ -2304,6 +2307,7 @@ if ($wrapper.length) {
                 keyboard_view: ($('#keyboard_view').is(":checked")) ? 'true' : 'false',
                 whatsapp_receipt: ($('#whatsapp_receipt').is(":checked")) ? 'true' : 'false',
                 balance_view: true,
+                sale_redirect_seconds: Number($('#sale_redirect_seconds').val()),
                 customer_checkbox: ($('#default_customer_enable_disable').is(":checked")) ? 'true' : 'false',
                 supplier_checkbox: ($('#default_supplier_enable_disable').is(":checked")) ? 'true' : 'false',
                 tax_checkbox: ($('#default_tax_enable_disable').is(":checked")) ? 'true' : 'false',
@@ -2454,6 +2458,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 // since the toggles-only rebuild).
                 var generalSettings = {
                     stock_management: $('#stock_management').is(':checked'),
+                    sale_redirect_seconds: Number($('#sale_redirect_seconds').val()),
                     hardware_weight_machine_enable: $('#hardware_weight_machine_enable').is(':checked'),
                     till_lock_enable: $('#till_lock_enable').is(':checked'),
                     till_lock_idle_minutes: parseInt($('#till_lock_idle_minutes').val(), 10) || 0,
@@ -4959,6 +4964,7 @@ $("#tax_discount_add").validate({
         $(element).css("border-color", "#eae8e8");
     },
     rules: {
+        sale_redirect_seconds: { required: true, digits: true, min: 0, max: 300 },
         default_customer: {
             required: true,
             minlength: 3,

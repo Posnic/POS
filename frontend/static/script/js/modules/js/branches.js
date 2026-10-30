@@ -1,6 +1,20 @@
 PosnicPro.branches = {
     branchAction: 'add',
     branch_phone: null,
+    applyCurrentBranchIdentity: function (branch) {
+        if (String(branch.id) !== String(PosnicPro.local.get('branch_id_set'))) return false;
+        $('.branch-name,#header_current_branch').text(branch.branch_name || '');
+        PosnicPro.local.set('branchname', branch.branch_name);
+        PosnicPro.local.set('branchemail', branch.store_email);
+        PosnicPro.local.setVolatile('branchphone', branch.store_telephone);
+        PosnicPro.local.set('branchaddress', branch.store_address);
+        PosnicPro.local.set('branchgstin', branch.branch_gstin_number || '');
+        db.customerDisplay.put({id: '2', clear: 'no', get: 'no', branch: [{
+            name: branch.branch_name, phone: branch.store_telephone, email: branch.store_email,
+            address: branch.store_address, image: branch.branch_image
+        }]});
+        return true;
+    },
     showAdd: function () {
         PosnicPro.branches.loadSelectBranchState(PosnicPro.local.get('countryid'), 'add');
         var loader = $(".loader-branch");
@@ -312,6 +326,10 @@ PosnicPro.branches = {
                 + '<th class="br-col-address"><lang class="lang_address_title">Address</lang></th><th class="br-col-state"><lang class="lang_state_title">State</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
                 var isCurrent = current === String(r._id);
+                if (isCurrent) {
+                    $('.branch-name,#header_current_branch').text(r.branch_name || '');
+                    PosnicPro.local.set('branchname', r.branch_name || '');
+                }
                 html += '<tr class="md-row branches-row highlight-select'
                     + (PosnicPro.listDoc.activeId('branches') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
                     + '<td>' + esc(r.branch_name)
@@ -453,18 +471,7 @@ PosnicPro.branches = {
                         $('#branch_name option[value="' + response.data['id'] + '"]').text(response.data['branch_name']);
                         $(".infobar-settings-sidebar-overlay").css({"background": "transparent", "position": "initial"});
                         $("#infobar-settings-sidebar-branch").removeClass("sidebarshow");
-                        let branch_id = PosnicPro.local.get('branch_id_set');
-                        if (branch_id === response.data['id']) {
-                            $(".branch-name").html(response.data['branch_name']);
-                        }
-                        PosnicPro.local.set('branchname', response.data['branch_name']);
-                        PosnicPro.local.set('branchemail', response.data['store_email']);
-                        PosnicPro.local.setVolatile('branchphone', response.data['store_telephone']);
-                        PosnicPro.local.set('branchaddress', response.data['store_address']);
-                    PosnicPro.local.set('branchgstin', response.data['branch_gstin_number'] || '');
-                        let branchRecord = [];
-                        branchRecord.push({name: response.data['branch_name'], phone: response.data['store_telephone'], email: response.data['store_email'], address: response.data['store_address'], image: response.data['branch_image']});
-                        db.customerDisplay.put({id: '2', 'clear': 'no', 'get': 'no', branch: branchRecord});
+                        PosnicPro.branches.applyCurrentBranchIdentity(response.data);
                         hasher.setHash('branches');
                     }
 
