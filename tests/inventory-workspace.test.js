@@ -89,3 +89,18 @@ test('nested reason dialog yields Bootstrap focus trap and restores it after can
  w.swal=async()=>{throw new Error('dialog failed');};await assert.rejects(w.PosnicPro.inventorycounts.dialog({}),/dialog failed/);assert.equal(restored,2);
  }finally{w.close();}
 });
+
+test('damage details load audit only on demand and cache it until reopened',async()=>{
+ const dom=new JSDOM('<div id="inventorycounts"><div class="count-workspace"><div id="inventory_count_detail"></div></div></div>',{runScripts:'outside-only',url:'http://localhost'}),w=dom.window;
+ try{
+ w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/jquery.min.js'),'utf8'));
+ const urls=[],entry={id:'entry',reference:'SP-1',state:'accepted',occurredOn:'2026-11-01',created_date:'2026-11-01',createdByName:'Tester',local:true,lines:[],applied:[]};
+ w.PosnicPro={i18n:{t:(k,v)=>v},local:{get:()=> 'b'},request(o,ok){urls.push(o.url);ok({data:o.url.includes('view=audit')?{audit:[{action:'Created',user:'Tester',at:'2026-11-01',note:'Checked'}]}:o.url.includes('view=details')?entry:o.url.includes('spoilage?')?{rows:[{...entry,_id:'entry'}],reasons:[],today:'2026-11-01'}:[{id:'b',name:'Shop'}]});}};
+ w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/modules/js/inventory_counts.js'),'utf8'));
+ const p=w.PosnicPro.inventorycounts;p.popup=()=>{};await p.openSpoilage();const $=w.$,tick=()=>new Promise(r=>setImmediate(r));
+ $('.sp_open').trigger('click');await tick();assert.equal($('#sp_details_tab').attr('aria-selected'),'true');assert.equal($('#sp_audit_panel').prop('hidden'),true);assert.equal(urls.filter(x=>x.includes('view=audit')).length,0);
+ $('#sp_audit_tab').trigger('click');await tick();assert.equal($('#sp_details_panel').prop('hidden'),true);assert.match($('#sp_audit_panel').text(),/Checked/);
+ $('#sp_details_tab').trigger('click');$('#sp_audit_tab').trigger('click');await tick();assert.equal(urls.filter(x=>x.includes('view=audit')).length,1);
+ $('.sp_open').trigger('click');await tick();assert.equal($('#sp_audit_panel').prop('hidden'),true);$('#sp_audit_tab').trigger('click');await tick();assert.equal(urls.filter(x=>x.includes('view=audit')).length,2);
+ }finally{w.close();}
+});

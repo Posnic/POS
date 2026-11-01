@@ -145,3 +145,13 @@ test('history pagination returns 25 unique records and a cursor for the remainin
  const second=await service.list({...req,query:{limit:25,after:first.next}});assert.equal(second.rows.length,2);assert.equal(second.next,null);
  assert.equal(new Set([...first.rows,...second.rows].map(x=>String(x._id))).size,27);assert.equal(await stock(),10);
 });
+
+test('spoilage details omit history and audit view is scoped and read only',async()=>{
+await draft();
+const detail=await service.get({...req,query:{view:'details'}});assert.equal(detail.audit,undefined);assert(detail.lines.length);
+const history=await service.get({...req,query:{view:'audit'}});assert.equal(history.audit[0].action,'Created');assert.equal(history.lines,undefined);
+assert.equal(await stock(),10);
+await assert.rejects(service.get({...req,params:{id:String(new ObjectId())},query:{view:'audit'}}),/not found/);
+await db.collection('spoilage_commands').deleteOne({_id:new ObjectId(req.params.id)});
+const shared=await service.get({...req,query:{view:'audit'}});assert.equal(shared.audit[0].action,'Created');
+});

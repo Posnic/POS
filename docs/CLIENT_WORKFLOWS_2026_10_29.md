@@ -157,3 +157,9 @@ Removed the standalone Apply to branches toolbar button. Copy catalogue to other
 
 ### Availability dialog context — 2026-11-01
 Explains show/hide sales availability, provides initial and empty-search guidance, and shows Review availability changes only for actual checkbox edits. Changing a checkbox invalidates an earlier confirmation preview. No availability API, persisted fields or sync write paths changed. Local UI checked with empty search, matching product, toggle and revert; no product changes saved. Tests: availability-context.test.js and catalogue-action-context.test.js passed. Packaged dashboard/script match installed files. Screenshots 51 and 52. Installer: branded-desktop-1.9.2-availability-context-2026-11-01.exe.
+
+### Spoilage detail tabs — 1 November 2026
+
+Details opens by default; audit history has a separate tab and is fetched only on first selection. Switching tabs reuses the response within that popup; reopening fetches fresh history. The audit-only read retains tenant/branch authorization, supports synced read-only records and does not publish or modify stock. The existing detail API remains compatible; the new UI requests view=details to omit history. No persisted fields, sync lanes or write semantics change.
+
+Validation: 21 targeted workspace/spoilage checks passed, covering lazy requests, tab switching, reopening, history omission and audit-only reads. Frontend build completed. The installed test app was updated separately; the previously downloaded EXE does not yet include this follow-up.

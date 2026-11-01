@@ -443,6 +443,29 @@ $(document).on('click', '.mobile-inventory-close', function () {
         $('<p>').text(d.occurredOn+' · Entered by '+d.createdByName+' · '+new Date(d.created_date).toLocaleString()+(d.decisionByName?' · Reviewed by '+d.decisionByName:'' )).appendTo(root);
         if(!d.local)$('<p class="text-warning">').text('Read-only synced record. Review or correct this entry on the '+d.origin.toLowerCase()+' installation where it was created.').appendTo(root);
         if(d.lastError)$('<p class="text-danger">').text(d.lastError).appendTo(root);
+        var shell=root;
+        var tabs=$('<div class="nav nav-tabs mb-3" role="tablist">').appendTo(shell);
+        var detailsTab=$('<button type="button" id="sp_details_tab" class="nav-link active" role="tab" aria-selected="true" aria-controls="sp_details_panel">').text(PosnicPro.i18n.t('lang_item_details_title','Details')).appendTo(tabs);
+        var auditTab=$('<button type="button" id="sp_audit_tab" class="nav-link" role="tab" aria-selected="false" aria-controls="sp_audit_panel">').text(PosnicPro.i18n.t('lang_audit_history','Audit history')).appendTo(tabs);
+        root=$('<div id="sp_details_panel" role="tabpanel" aria-labelledby="sp_details_tab">').appendTo(shell);
+        var auditPanel=$('<div id="sp_audit_panel" role="tabpanel" aria-labelledby="sp_audit_tab" hidden>').appendTo(shell),auditLoaded=false,auditLoading=false;
+        async function selectTab(audit){
+            detailsTab.toggleClass('active',!audit).attr('aria-selected',String(!audit));auditTab.toggleClass('active',audit).attr('aria-selected',String(audit));
+            root.prop('hidden',audit);auditPanel.prop('hidden',!audit);
+            if(!audit||auditLoaded||auditLoading)return;
+            auditLoading=true;auditPanel.empty().attr('aria-busy','true').append($('<p role="status" class="text-muted">').text(PosnicPro.i18n.t('lang_loading','Loading...')));
+            try{
+                var history=await request('inventory-counts/spoilage/'+encodeURIComponent(d.id)+'?view=audit');
+                if(!auditPanel[0].isConnected)return;
+                auditPanel.empty();
+                if((history.audit||[]).length)auditPanel.append(table(['Action','User','Time','Remarks'],history.audit.map(function(a){return [a.action,a.user,new Date(a.at).toLocaleString(),a.note];})));
+                else auditPanel.append($('<p class="text-muted">').text(PosnicPro.i18n.t('lang_no_records','No Records')));
+                auditLoaded=true;
+            }catch(e){auditPanel.empty().append($('<p role="alert" class="text-danger">').text(e.message));}
+            finally{auditLoading=false;auditPanel.attr('aria-busy','false');}
+        }
+        detailsTab.on('click',function(){selectTab(false);});auditTab.on('click',function(){selectTab(true);});
+        tabs.on('keydown','button',function(e){if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();var audit=this===detailsTab[0];(audit?auditTab:detailsTab).trigger('focus');selectTab(audit);}});
         root.append(table(['SKU','Product','Unit','Recorded','Applied','Estimated cost','Reason','Remarks'],d.lines.map(function(l){return [l.sku,l.name,l.unit,(l.quantity/1000).toFixed(3),(d.applied||[]).includes(l.itemId)?(l.quantity/1000).toFixed(3):'0.000',l.estimatedValue==null?'Unknown':l.estimatedValue.toFixed(2),l.reason,l.remarks];})));
         var known=d.lines.reduce(function(n,l){return n+(l.estimatedValue||0);},0),unknown=d.lines.filter(function(l){return l.estimatedValue==null;}).length;
         var quantities={};d.lines.forEach(function(l){quantities[l.unit]=(quantities[l.unit]||0)+l.quantity;});
@@ -454,13 +477,13 @@ $(document).on('click', '.mobile-inventory-close', function () {
         if(d.canWrite&&['draft','pending','approving','conflict'].includes(d.state))button('sp_apply','Retry save','btn-primary');
         if(d.canWrite&&d.kind!=='reversal'&&['accepted','conflict','reversal_pending'].includes(d.state)&&(d.applied||[]).length)button('sp_reverse','Undo stock deduction');
         button('sp_close','Close','btn-link');
-        $('<h6 class="mt-3">').text(PosnicPro.i18n.t('lang_audit_history', 'Audit history')).appendTo(root);root.append(table(['Action','User','Time','Remarks'],(d.audit||[]).map(function(a){return [a.action,a.user,new Date(a.at).toLocaleString(),a.note];})));
+
         root.attr('tabindex','-1');root[0].focus({preventScroll:true});
     }
     $(document).on('click','#sp_filter',function(){run(function(){return load();});}).on('click','#sp_more',function(){run(function(){return load('next');});})
     .on('click','#sp_prev',function(){run(function(){return load('prev');});})
     .on('change','#sp_branch',async function(){if($('#sp_entry_rows').length&&!await p.confirmLeave('Discard unsaved entry and change branch?')){$(this).val(branch);return;}branch=this.value;generation++;$('#sp_detail').empty();run(function(){return load();});})
-    .on('click','#sp_new',function(){listScroll=window.scrollY;listTrigger=this;run(function(){return editor();});}).on('click','.sp_open',function(){var id=$(this).attr('data-id');listScroll=window.scrollY;listTrigger=this;run(async function(){show(await request('inventory-counts/spoilage/'+id));});})
+    .on('click','#sp_new',function(){listScroll=window.scrollY;listTrigger=this;run(function(){return editor();});}).on('click','.sp_open',function(){var id=$(this).attr('data-id');listScroll=window.scrollY;listTrigger=this;run(async function(){show(await request('inventory-counts/spoilage/'+id+'?view=details'));});})
     .on('input','#sp_product_search',function(){clearTimeout(searchTimer);productRequest++;searchTimer=setTimeout(function(){matches(false);},250);})
     .on('change','#sp_product_category',function(){matches(false);})
     .on('click','#sp_product_more',function(){matches(true);})
