@@ -222,6 +222,9 @@
       "!**/*.test.js",
       "!**/*.spec.js",
       "src/scale-parser.js",
+      "src/scale-options.js",
+      "src/scale-profiles.js",
+      "src/scale-tcp-port.js",
       "src/essae-weight-reader.js",
       "src/pin-lock.js",
       "src/pin-lock-ipc.js",
@@ -287,6 +290,10 @@
       {
         "from": "src/server.js",
         "to": "server.js"
+      },
+      {
+        "from": "src/uploads-migration.js",
+        "to": "uploads-migration.js"
       },
       {
         "from": "src/extension-signing-key.pub",

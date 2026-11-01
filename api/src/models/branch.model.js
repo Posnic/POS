@@ -23,6 +23,7 @@ const path = require('path');
 const branchSchema = new Schema(
   {
     mobile_pos: { type: Schema.Types.Mixed },
+    spoilage_approver_ids: [{ type: Schema.Types.ObjectId }],
     branch_upi_id: { type: String },
     branch_upi_name: { type: String },
     restaurant_require_guests: { type: Boolean, default: false },
@@ -100,6 +101,9 @@ const branchSchema = new Schema(
     whatsapp_receipt: { type: Boolean, default: false },
     whatsapp_device_id: { type: String, default: '' },
     item_stock_default: { type: String, enum: ['always_available', 'track_quantities'] },
+    catalogue_apply_all_branches: { type: Boolean, default: false },
+    catalogue_policy: { type: Schema.Types.Mixed },
+    catalogue_sharing_error: { type: String },
     inventory_policy: {
       enabled: { type: Boolean, default: true },
       approvalActions: {
@@ -111,6 +115,7 @@ const branchSchema = new Schema(
     stock_management: { type: Boolean, default: false },
     stock_management_log: { type: Boolean, default: false },
     sale_inline_editor: { type: Boolean, default: false },
+    sale_redirect_seconds: { type: Number, min: 0, max: 300 },
     printall: { type: Boolean, default: false },
     enable_notification_reminders: { type: Boolean, default: false },
     enable_email_reminders: { type: Boolean, default: false },
@@ -399,6 +404,7 @@ class BranchModel {
       ssl_tls_type: { type: 'String', select: true },
       state: { type: 'String', select: true },
       sale_inline_editor: { type: 'String', select: true },
+      sale_redirect_seconds: { type: 'Number', select: true },
       stock_management: { type: 'String', select: true },
       stock_management_log: { type: 'String', select: true },
       store_address: { type: 'String', select: true },

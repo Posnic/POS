@@ -54,6 +54,7 @@ function saveRecovery({ userData, recoveryRoot, names }) {
   return destination;
 }
 const businessFiles = [
+  'uploads',
   'mongodb', '.mongodb-credentials.json', '.mongodb-setup-done', '.credential-key.json', '.local-secrets.json',
   'posnic-cloud.json', 'cloud-shop-identity.json', '.startup-ready',
   'connector-runtime', '.install-credentials.json',

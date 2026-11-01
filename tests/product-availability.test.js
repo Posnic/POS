@@ -32,7 +32,7 @@ test('desktop availability previews exact changes and retries the same identity 
   assert.deepEqual(writes[0], writes[1]);
   assert.equal(writes[0].changes.length, 1);
   assert.equal(writes[0].changes[0].itemId, rows[1].id);
-  assert.match($('.availability-status').text(), /Server confirmed/);
+  assert.match($('.availability-status').text(), /Availability saved/);
   assert.equal(rows[1].quantity, 8000);
   dom.window.close();
 });

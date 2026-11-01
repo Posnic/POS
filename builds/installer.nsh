@@ -96,6 +96,18 @@ Var POSNIC_POWERSHELL
   IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 repair_mode_done
     StrCpy $POSNIC_REPAIR_MODE "1"
   repair_mode_done:
+  ; Preserve legacy uploaded images BEFORE the old uninstaller replaces binaries.
+  IfFileExists "$INSTDIR\resources\api\uploads\*" 0 uploads_migration_done
+    InitPluginsDir
+    File /oname=$PLUGINSDIR\migrate-uploads.ps1 "${BUILD_RESOURCES_DIR}\migrate-uploads.ps1"
+    nsExec::ExecToStack '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\migrate-uploads.ps1" -Source "$INSTDIR\resources\api\uploads" -Destination "$APPDATA\posnic\uploads"'
+    Pop $0
+    Pop $1
+    ${If} $0 != 0
+      MessageBox MB_OK|MB_ICONSTOP "Could not preserve uploaded images. Setup has stopped before replacing the application. $1" /SD IDOK
+      Abort
+    ${EndIf}
+  uploads_migration_done:
 !macroend
 
 ; Custom installation messages

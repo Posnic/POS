@@ -563,6 +563,7 @@ PosnicPro.items = {
     },
     loadList: function (page) {
         PosnicPro.items.mountFilters();
+        PosnicPro.items.refreshCatalogueTools();
         var self = PosnicPro.items;
         if (page) { self._page = page; }
         var filters = PosnicPro.listFilter.legacyFilters('items', { dateKey: 'updated_date' });
@@ -797,6 +798,15 @@ PosnicPro.items = {
             + pricingBits
             + '</div>';
         var record = '<div class="q-block"><div class="q-label"><lang class="lang_on_record">On record</lang></div>'
+            + (d.creation_origin ? '<div class="q-muted">Created by: ' + esc(d.creation_origin.actor_name) + '</div>'
+                + '<div class="q-muted">Creation method: ' + esc(({ add_item: 'Add item', quick_item: 'Quick item', item_import: 'File import' })[d.creation_origin.operation] || d.creation_origin.operation) + '</div>'
+                + '<div class="q-muted">Access: ' + esc(d.creation_origin.authentication) + '</div>'
+                + '<div class="q-muted">Source: ' + esc(d.creation_origin.source) + '</div>'
+                + '<div class="q-muted">Client (reported): ' + esc(d.creation_origin.client) + '</div>'
+                + '<div class="q-muted">Creation time (UTC): ' + esc(d.creation_origin.recorded_at) + '</div>'
+                + '<div class="q-muted">Request: ' + esc(d.creation_origin.request_id) + '</div>'
+                : '<div class="q-muted">Created by: ' + esc(d.created_by || 'Not recorded') + '</div>'
+                    + '<div class="q-muted"><lang class="lang_creation_method_not_recorded">Creation method: Not recorded</lang></div>')
             + (d.created_date ? '<div class="q-muted">Added ' + esc(PosnicPro.convertDate(d.created_date)) + '</div>' : '')
             + (d.updated_date ? '<div class="q-muted">Updated ' + esc(PosnicPro.convertDate(d.updated_date)) + '</div>' : '')
             + (tracked && Number(d.low_stock) > 0 ? '<div class="q-muted">Low-stock alert at ' + esc(d.low_stock) + '</div>' : '')
@@ -2168,6 +2178,51 @@ PosnicPro.items = {
        (it carries current stock); the server logs every change with the
        reason as its process. */
     _adjRows: {},
+    catalogueSharingLocal: function () {
+        return !!window.electronAPI || /Electron/i.test(navigator.userAgent) || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
+    },
+    refreshCatalogueTools: function () {
+        var link=$('#items_share_catalogue');link.prop('hidden',true);
+        if(this.catalogueSharingLocal())return;
+        PosnicPro.get('items/catalogue-sharing',function(response){
+            var policy=response && response.data;
+            link.prop('hidden',!(response.type==='success' && policy && (policy.branches||[]).some(function(b){return b.id!==policy.currentBranch;})));
+        });
+    },
+    shareCatalogue: function () {
+        if(this.catalogueSharingLocal())return;
+
+        PosnicPro.get('items/catalogue-sharing', function (response) {
+            if (response.type !== 'success') return PosnicPro.alert('error', response.message);
+            var policy = response.data, destinations = policy.branches.filter(function (b) { return b.id !== policy.currentBranch; });
+            if(!destinations.length)return;
+            var esc = function (s) { return $('<span>').text(s).html(); };
+            var source=policy.branches.find(function(b){return b.id===policy.currentBranch;});
+            var selected = String($('#selectrow').val() || '').split(',').filter(function (id) { return /^[a-f0-9]{24}$/i.test(id); });
+            swal({ title: PosnicPro.i18n.t('lang_copy_catalogue_to_other_branches', 'Copy catalogue to other branches'),
+                html: '<p>' + (selected.length ? selected.length + ' selected products' : 'All products from '+esc(source ? source.name : 'the current branch')) + ': copy product details and prices. Existing stock stays unchanged; new products start at zero stock. Conflicting product codes are reported.</p>' + (policy.error ? '<p role="alert">' + esc(policy.error) + '</p>' : '') + '<div style="text-align:left"><strong><lang class="lang_destination_branches">Destination branches</lang></strong>' + destinations.map(function (b) { return '<label class="d-block"><input class="catalogue-target" type="checkbox" checked value="' + esc(b.id) + '"> ' + esc(b.name) + '</label>'; }).join('') + '<hr><label><input id="catalogue-auto" type="checkbox" ' + (policy.enabled ? 'checked ' : '') + (policy.canConfigure ? '' : 'disabled') + '> Always apply future product updates to all branches I can access</label><p><lang class="lang_automatic_sharing_includes_desktop_edits_a">Automatic sharing includes desktop edits after they sync to cloud.</lang></p></div>',
+                showCancelButton: true, confirmButtonText: 'Copy product details and prices',
+                preConfirm: function () {
+                    var ids = $('.catalogue-target:checked').map(function () { return this.value; }).get();
+                    if (!ids.length) return Promise.reject('Choose at least one destination branch.');
+                    return Promise.resolve({ branches: ids, enabled: $('#catalogue-auto').is(':checked') });
+                }
+            }).then(function (answer) {
+                if (!answer || answer.dismiss) return;
+                answer = { value: answer.value || answer };
+                function apply(saved) {
+                    if (saved.type !== 'success') return PosnicPro.alert('error', saved.message);
+                    PosnicPro.post({ url: 'items/catalogue-sharing', data: JSON.stringify({ branches: answer.value.branches, ids: selected.length ? selected : undefined }) }, function (result) {
+                        if (result.type !== 'success') return PosnicPro.alert('error', result.message);
+                        var data = result.data;
+                        swal({ title: PosnicPro.i18n.t('lang_branch_update_results', 'Branch update results'), html: '<p>' + data.updated + ' updated · ' + data.created + ' created · ' + data.conflicts.length + ' conflicts</p>' + data.conflicts.map(function (c) { var b = policy.branches.find(function (v) { return v.id === c.branchId; }); return '<p>' + esc(c.item) + ' — ' + esc(b ? b.name : c.branchId) + ': ' + esc(c.message) + '</p>'; }).join('') });
+                    });
+                }
+                if (answer.value.enabled === policy.enabled) apply({ type: 'success' });
+                else PosnicPro.put({ url: 'items/catalogue-sharing', data: JSON.stringify({ enabled: answer.value.enabled }) }, apply);
+            }).catch(function () {});
+        });
+    },
     openStockAdjustment: function () {
         PosnicPro.items._adjustmentComplete = null;
         PosnicPro.items._adjRows = {};
@@ -6166,16 +6221,26 @@ $(document).ready(function () {
 // Inventory review includes hidden products; sales endpoints exclude them.
 PosnicPro.items.availability = function () {
     $('#product-availability-dialog').remove();
-    var modal = $('<div class="modal fade" id="product-availability-dialog" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><lang class="lang_product_availability">Product availability</lang></h5><button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">×</button></div><div class="modal-body"><form><label><lang class="lang_scan_barcode_or_search_products">Scan barcode or search products</lang></label><div class="input-group"><input class="form-control" aria-label="Scan barcode or search products" data-t-aria-label="lang_scan_barcode_or_search_products"><div class="input-group-append"><button class="btn btn-primary" type="submit"><i class="feather icon-search"></i> Search</button></div></div></form><p class="mt-3">Hidden products retain stock, receipts and history. Select the records explicitly; nothing is merged or deleted.</p><div class="availability-status" role="status"></div><div class="availability-rows"></div><div class="availability-preview"></div></div><div class="modal-footer"><button class="btn btn-outline-primary availability-review" type="button"><lang class="lang_review_changes">Review changes</lang></button><button class="btn btn-primary availability-confirm" type="button" hidden><lang class="lang_confirm_changes">Confirm changes</lang></button></div></div></div></div>').appendTo('body');
+    var modal = $('<div class="modal fade" id="product-availability-dialog" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><lang class="lang_product_availability">Product availability</lang></h5><button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">×</button></div><div class="modal-body"><form><label><lang class="lang_scan_barcode_or_search_products">Scan barcode or search products</lang></label><div class="input-group"><input class="form-control" aria-label="Scan barcode or search products" data-t-aria-label="lang_scan_barcode_or_search_products"><div class="input-group-append"><button class="btn btn-primary" type="submit"><i class="feather icon-search"></i> Search</button></div></div></form><p class="mt-3">Show or hide products on the sales screen. Search for a product, change “Available for sale”, then review and save. Hiding a product keeps its stock and sales history.</p><div class="availability-status" role="status"></div><div class="availability-rows"></div><div class="availability-preview"></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button><button class="btn btn-outline-primary availability-review" type="button" hidden><lang class="lang_review_changes">Review changes</lang></button><button class="btn btn-primary availability-confirm" type="button" hidden><lang class="lang_confirm_changes">Confirm changes</lang></button></div></div></div></div>').appendTo('body');
     var rows = [], changes = [], requestId = '', busy = false, permitted = false;
     var status = modal.find('.availability-status'), list = modal.find('.availability-rows');
+    status.text(PosnicPro.i18n.t('lang_search_by_product_name_sku_or_barcode_to_g', 'Search by product name, SKU or barcode to get started.'));
+    function resetReview() {
+        changes = []; modal.find('.availability-preview').empty();
+        modal.find('.availability-confirm').prop('hidden', true);
+        var count = rows.filter(function (r) {
+            return list.find('input[data-item-id="' + r.id + '"]').prop('checked') !== (r.availableForSale !== false);
+        }).length;
+        modal.find('.availability-review').prop('hidden', !permitted || !count).text('Review availability changes (' + count + ')');
+    }
+    list.on('change', 'input', resetReview);
     function load(after) {
         PosnicPro.get('mobile/v1/inventory/catalogue?kind=items&q=' + encodeURIComponent(modal.find('input').first().val() || '') + (after ? '&after=' + after : ''), function (page) {
             if (!Array.isArray(page.rows)) { status.text(PosnicPro.i18n.t('lang_could_not_load_products', 'Could not load products.')); return; }
             permitted = page.permissions && page.permissions.write;
             rows = rows.concat(page.rows);
             if (page.next) { load(page.next); return; }
-            list.empty(); status.text(PosnicPro.i18n.t('lang_server_catalogue_offline_tills_receive_cha', 'Server catalogue. Offline tills receive changes when they reconnect.'));
+            list.empty(); status.text(rows.length ? rows.length + ' product(s) found. ' + (permitted ? PosnicPro.i18n.t('lang_change_available_for_sale_below_to_show_or', 'Change Available for sale below to show or hide a product.') : PosnicPro.i18n.t('lang_you_have_read_only_access_to_product_avail', 'You have read-only access to product availability.')) : 'No products found. Try another name, SKU or barcode.');
             var prices = new Set(rows.map(function (r) { return Math.round(r.price * (r.taxInclusive ? 1 : 1 + r.taxBps / 10000)); }));
             if (prices.size > 1) $('<p class="font-weight-bold text-warning"><lang class="lang_different_selling_prices_check_carefully">Different selling prices. Check carefully</lang></p>').appendTo(list);
             rows.forEach(function (r) {
@@ -6190,7 +6255,7 @@ PosnicPro.items.availability = function () {
             });
         }, function () { status.text(PosnicPro.i18n.t('lang_could_not_reach_server_no_changes_confirme', 'Could not reach server. No changes confirmed.')); });
     }
-    modal.find('form').on('submit', function (e) { e.preventDefault(); if (busy) return; rows = []; changes = []; modal.find('.availability-preview').empty(); modal.find('.availability-confirm').prop('hidden', true); load(''); });
+    modal.find('form').on('submit', function (e) { e.preventDefault(); if (busy) return; rows = []; list.empty(); resetReview(); status.text('Searching products…'); load(''); });
     modal.find('.availability-review').on('click', function () {
         if (busy || !permitted) return;
         changes = []; var preview = modal.find('.availability-preview').empty();
@@ -6211,8 +6276,8 @@ PosnicPro.items.availability = function () {
         PosnicPro.post({url:'mobile/v1/inventory/availability', data:JSON.stringify({id:requestId, changes:changes})}, function (result) {
             busy = false; modal.find('button,input').prop('disabled', false);
             if (!Array.isArray(result.results)) { status.text(PosnicPro.i18n.t('lang_not_confirmed_retry_the_same_request', 'Not confirmed. Retry the same request.')); return; }
-            status.text(result.results.some(function (r) { return r.state !== 'confirmed'; }) ? 'Some records changed meanwhile. Search again and review those records.' : 'Server confirmed. Refresh sales catalogues on connected tills. Offline tills must reconnect.');
-            modal.find('.availability-confirm').prop('hidden', true); list.empty(); modal.find('.availability-preview').empty();
+            status.text(result.results.some(function (r) { return r.state !== 'confirmed'; }) ? 'Some records changed meanwhile. Search again and review those records.' : 'Availability saved. Hidden products no longer appear for sale; their stock and history are kept.');
+            rows = []; list.empty(); resetReview();
         }, function () { busy = false; modal.find('button,input').prop('disabled', false); status.text(PosnicPro.i18n.t('lang_not_confirmed_retry_the_same_change_will_n', 'Not confirmed. Retry; the same change will not be applied twice.')); });
     });
     modal.modal('show');

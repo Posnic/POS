@@ -186,6 +186,7 @@ function savedOrderSetup() {
     const end = source.indexOf('\n    },', start);
     win.eval(owner + '.' + name + ' = ' + source.slice(source.indexOf('function', start), end + 6) + ';');
   }
+  win.eval(source.slice(source.indexOf('PosnicPro.sales.isWeighedItem ='), source.indexOf("$(document).on('click', '.sale-weight-amount'")));
   load('PosnicPro.sales', 'savedSellingPrice');
   load('PosnicPro.sales', 'addSalesLineItems');
   sales.parkedMenu = {};

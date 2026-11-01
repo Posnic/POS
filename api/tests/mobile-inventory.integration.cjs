@@ -93,6 +93,57 @@ test('damage cannot silently clamp an excessive reduction', async () => {
   assert.equal((await inventory.confirm(req)).state, 'conflict');
   assert.equal((await db.collection('items').findOne({ _id: row._id })).available_quantity, 10);
 });
+
+test('administrator cancels a conflict with a reason without overwriting newer stock', async () => {
+  await prepare('count', 8800);
+  await db.collection('items').updateOne({_id:row._id},{$set:{available_quantity:9}});
+  await inventory.confirm(req);
+  req.user={...req.user,_id:new ObjectId(),usertype:'admin',username:'admin'};
+  assert.equal((await inventory.get(req)).canCancel,true);
+  req.body={};
+  await assert.rejects(inventory.cancel(req),{status:400});
+  req.body={reason:'Recounted using current stock'};
+  const cancelled=await inventory.cancel(req);
+  assert.equal(cancelled.state,'cancelled');
+  assert.equal(cancelled.cancellation.actor,'admin');
+  await inventory.cancel(req);
+  await inventory.confirm(req);
+  assert.equal((await db.collection('items').findOne({_id:row._id})).available_quantity,9);
+  assert.equal(await db.collection('stocklogs').countDocuments(),0);
+});
+
+test('cancelling remaining changes preserves already applied rows and rejects processing state', async () => {
+  await prepare();
+  await db.collection('inventory_operations').updateOne({_id:req.params.id},{$set:{state:'applying'}});
+  req.body={reason:'Do not continue'};
+  await assert.rejects(inventory.cancel(req),{status:409});
+  await db.collection('inventory_operations').updateOne({_id:req.params.id},{$set:{state:'conflict',applied:[String(row._id)]}});
+  const result=await inventory.cancel(req);
+  assert.deepEqual(result.applied,[String(row._id)]);
+  assert.equal((await db.collection('items').findOne({_id:row._id})).available_quantity,10);
+});
+
+test('partial count cancellation preserves successful stock effects and denies another ordinary writer', async () => {
+  const second={...row,_id:new ObjectId(),name:'Second item'};
+  await db.collection('items').insertOne(second);
+  await prepare('count',8000);
+  req.body.id='partial-count-002';
+  req.body.lines.push({itemId:String(second._id),quantity:7000,revision:inventory.revision(second)});
+  const draft=await inventory.prepare(req);req.params={id:draft.operationId};
+  await db.collection('items').updateOne({_id:second._id},{$set:{available_quantity:9}});
+  const conflict=await inventory.confirm(req);
+  assert.equal(conflict.state,'conflict');assert.deepEqual(conflict.applied,[String(row._id)]);
+  const author=req.user;
+  req.user={_id:new ObjectId(),usertype:'staff',access:{item:{read:true,write:true}}};
+  assert.equal((await inventory.get(req)).canCancel,false);
+  req.body={reason:'Recount later'};
+  await assert.rejects(inventory.cancel(req),{status:403});
+  req.user=author;
+  await inventory.cancel(req);await inventory.confirm(req);
+  assert.equal((await db.collection('items').findOne({_id:row._id})).available_quantity,8);
+  assert.equal((await db.collection('items').findOne({_id:second._id})).available_quantity,9);
+  assert.equal(await db.collection('stocklogs').countDocuments(),1);
+});
 test('payload identity, branch wall and revoked write permission are enforced', async () => {
   const draft = await prepare();
   req.body.lines[0].quantity = 2000;
@@ -336,4 +387,13 @@ test('availability duplicate review, alternates, restore, audit, retry, conflict
   req.user.usertype = 'staff';
   req.user.access = { item: { read: true, write: false } };
   await assert.rejects(availability.change(req), { status: 403 });
+});
+
+
+test('product picker paginates tracked catalogue and filters category and name',async()=>{
+ const category=new ObjectId();await db.collection('items').insertMany(Array.from({length:60},(_,i)=>({...row,_id:new ObjectId(),name:'Picker '+i,category_id:category,track_inventory:i!==59})));
+ req.query={limit:'25',tracked:'true',category:String(category),q:'Picker'};
+ const first=await inventory.catalogue(req);assert.equal(first.rows.length,25);assert(first.next);
+ const second=await inventory.catalogue({...req,query:{...req.query,after:first.next}});assert.equal(second.rows.length,25);assert(!second.rows.some(r=>first.rows.some(f=>f.id===r.id)));
+ const third=await inventory.catalogue({...req,query:{...req.query,after:second.next}});assert.equal(third.rows.length,9);assert.equal(third.next,null);
 });

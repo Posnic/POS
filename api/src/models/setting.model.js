@@ -1585,6 +1585,13 @@ class SettingModel extends BaseModel {
         keyboard_view: keyboardView,
         whatsapp_receipt: whatsappReceipt,
         balance_view: true,
+        ...(data.sale_redirect_seconds !== undefined
+          ? {
+              sale_redirect_seconds: require('../utils/sale-redirect').validateSeconds(
+                data.sale_redirect_seconds
+              ),
+            }
+          : {}),
         customer_checkbox: customerCheckbox,
         supplier_checkbox: supplierCheckbox,
         tax_checkbox: taxCheckbox,
@@ -1733,6 +1740,7 @@ class SettingModel extends BaseModel {
         keyboard_view: 'keyboard_view',
         whatsapp_receipt: 'whatsapp_receipt',
         balance_view: 'balance_view',
+        sale_redirect_seconds: 'sale_redirect_seconds',
         customer_checkbox: 'customer_checkbox',
         supplier_checkbox: 'supplier_checkbox',
         tax_checkbox: 'tax_checkbox',

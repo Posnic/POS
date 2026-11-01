@@ -406,3 +406,16 @@ test('availability hides primary and alternate duplicates from desktop sales but
   await availability.change(req);
   expect((await scan()).length).toBe(2);
 });
+
+test('admin re-import preserves existing centre access and advances sync timestamps', async () => {
+  const centre = new ObjectId();
+  const old = new Date('2020-01-01T00:00:00Z');
+  const item = await seed({ branch_access: [{branch_id:ctx.branchId},{branch_id:centre}], updated_date:old, image:'keep.png' });
+  const result = await repo.importItems([csv({selling_price:9})],ctx);
+  expect(result.status).toBe(true);
+  const saved=await db.collection('items').findOne({_id:item._id});
+  expect(saved.branch_access.map(x=>String(x.branch_id))).toEqual([String(ctx.branchId),String(centre)]);
+  expect(saved.updated_date.getTime()).toBeGreaterThan(old.getTime());
+  expect(saved.image).toBe('keep.png');
+  expect(saved.selling_price).toBe(9);
+});

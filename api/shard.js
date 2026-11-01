@@ -335,6 +335,7 @@ async function main() {
   });
 
   server.listen(PORT, HOST, () => {
+    server.once('close', require('./src/services/catalogue-sharing').start({ tenants: () => byHost.values() }));
     if (releaseExtensions) server.once('close', releaseExtensions);
     server.once('close', require('./src/services/price-schedule-worker').start({ tenants: () => byHost.values() }));
     const stopNotifications =

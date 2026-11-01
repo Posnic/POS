@@ -1,5 +1,7 @@
 const { SerialPort } = require('serialport');
 const { ScaleReader } = require('./scale-parser');
+const { normalizeScaleOptions } = require('./scale-options');
+const { ScaleTcpPort } = require('./scale-tcp-port');
 const { BrowserWindow, app } = require('electron');
 const fs = require('fs');
 const path = require('path');
@@ -21,6 +23,9 @@ class HardwareManager {
     this.currentPort = null;
     this.lastData = '';
     this.lastWeight = 0;
+    this.reconnectTimer = null;
+    this.pollTimer = null;
+    this.mockInterval = null;
     this.mainWindow = null;
     // Cash drawer
     this.cashDrawerPort = null;
@@ -32,20 +37,17 @@ class HardwareManager {
     this.mainWindow = window;
   }
 
+  broadcastScale(data) {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send('usb-data', data);
+    }
+  }
+
   broadcastLastWeight() {
-    const weightData = {
-      raw: `Last weight: ${this.lastWeight}`,
-      weight: this.lastWeight,
-      timestamp: new Date().toISOString(),
-      isValid: true
-    };
-    
-    const allWindows = BrowserWindow.getAllWindows();
-    allWindows.forEach((win) => {
-      if (!win.isDestroyed()) {
-        win.webContents.send('usb-data', weightData);
-      }
-    });
+    const fresh = this.isConnected() && Number.isFinite(this.lastWeight) && this.lastReadingAt && Date.now() - this.lastReadingAt <= (this.scaleOptions?.idleMs || 3000);
+    this.broadcastScale({ weight: fresh ? this.lastWeight : null, stable: fresh && this.lastWeightStable === true,
+      isValid: !!fresh, timestamp: this.lastReadingAt ? new Date(this.lastReadingAt).toISOString() : null,
+      raw: this.lastData || '', error: fresh ? '' : 'No recent scale reading' });
   }
 
   async scanSerialPorts(enableSimulation = false) {
@@ -111,7 +113,7 @@ class HardwareManager {
       if (this.deliberateDisconnect) return;
       if (this.currentPort && this.currentPort.isOpen) return;
 
-      const result = await this.connectPort(portPath).catch((err) => ({
+      const result = await this.connectPort(portPath, this.scaleOptions || {}).catch((err) => ({
         success: false, error: err.message,
       }));
       if (result && result.success) {
@@ -137,7 +139,7 @@ class HardwareManager {
   async autoConnectSaved(saved) {
     if (!saved || !saved.port) return { success: false, error: 'no saved scale' };
     console.log('[Scale] reopening saved port', saved.port);
-    const result = await this.connectPort(saved.port, !!saved.isMock).catch((err) => ({
+    const result = await this.connectPort(saved.port, { ...(saved.options || {}), isMock: saved.isMock === true }).catch((err) => ({
       success: false, error: err.message,
     }));
     if (!result || !result.success) {
@@ -149,185 +151,100 @@ class HardwareManager {
     return result;
   }
 
-  async connectPort(portPath, isMock = false) {
-    // Mock connection for simulation
-    if (isMock) {
-      console.log('Connecting to mock port:', portPath);
-      this.currentPort = {
-        path: portPath,
-        isOpen: true,
-        isMock: true
-      };
-      
-      // Start simulating weight data
+  async connectPort(portPath, input = false) {
+    let options;
+    try { options = normalizeScaleOptions(input); } catch (error) { return { success: false, error: error.message }; }
+    if (typeof portPath !== 'string' || !portPath.trim()) return { success: false, error: 'Choose a serial port' };
+    const requestId = this._connectRequestId = (this._connectRequestId || 0) + 1;
+    await this.disconnectPort(true);
+    if (requestId !== this._connectRequestId) return { success: false, error: 'Connection cancelled' };
+    this.deliberateDisconnect = false;
+    this.scaleOptions = options;
+    const generation = this._scaleGeneration;
+    if (options.isMock) {
+      this.currentPort = { path: portPath, isOpen: true, isMock: true };
       this.mockInterval = setInterval(() => {
-        const weight = (Math.random() * 10 + 0.5).toFixed(2); // Random weight between 0.5 and 10.5 kg
-        const weightData = {
-          raw: `+${weight} kg`,
-          weight: parseFloat(weight),
-          timestamp: new Date().toISOString(),
-          isValid: true,
-          isMock: true
-        };
-        
-        const allWindows = BrowserWindow.getAllWindows();
-        allWindows.forEach((win) => {
-          if (!win.isDestroyed()) {
-            win.webContents.send('usb-data', weightData);
-          }
-        });
-      }, 1000); // Send data every second
-      
-      return { success: true };
+        this.lastWeight = 0.375; this.lastWeightStable = true; this.lastReadingAt = Date.now();
+        this.broadcastScale({ raw: 'SIMULATION 0.375 kg', weight: 0.375, stable: true, timestamp: new Date().toISOString(), isValid: true, isMock: true });
+      }, 1000);
+      return { success: true, options };
     }
-
-    // Real connection
-    if (this.currentPort && this.currentPort.isOpen) {
-      try {
-        this.currentPort.close();
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (e) {
-        console.error('Error closing existing port:', e);
-      }
-    }
-
     try {
-      // Scales vary: 9600 8-N-1 is the common default, but 7-E-1 and other
-      // baud rates are used often enough that they must be selectable.
-      const serialOpts = (typeof isMock === 'object' && isMock) ? isMock : {};
-      this.currentPort = new SerialPort({
-        path: portPath,
-        baudRate: Number(serialOpts.baudRate) || 9600,
-        dataBits: Number(serialOpts.dataBits) || 8,
-        stopBits: Number(serialOpts.stopBits) || 1,
-        parity: serialOpts.parity || 'none',
-        lock: true
-      });
-
-      // Raw bytes, not lines: scales differ on delimiters (CR only, STX/ETX,
-      // or none at all), so the reader does the framing. See scale-parser.js.
-      this.scaleReader = new ScaleReader();
-
-      const broadcast = (weightData) => {
-        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-          this.mainWindow.webContents.send('usb-data', weightData);
-        }
-        for (const win of BrowserWindow.getAllWindows()) {
-          if (win !== this.mainWindow && !win.isDestroyed()) {
-            win.webContents.send('usb-data', weightData);
-          }
-        }
+      const port = options.transport === 'tcp' ? new ScaleTcpPort(options) : new SerialPort({ path: portPath, baudRate: options.baudRate, dataBits: options.dataBits,
+        stopBits: options.stopBits, parity: options.parity, rtscts: options.rtscts, lock: true, autoOpen: false });
+      this.currentPort = port;
+      const reader = new ScaleReader(options); this.scaleReader = reader;
+      const invalidate = (error, raw = '') => {
+        if (this.currentPort !== port) return;
+        this.lastWeight = null; this.lastWeightStable = false;
+        this.broadcastScale({ weight: null, stable: false, isValid: false, raw, error, timestamp: new Date().toISOString() });
       };
-
-      this.scaleReader.on('weight', ({ kg, stable, raw, how }) => {
-        const changed = Math.abs(kg - this.lastWeight) > 0.001;
-        if (!changed && !stable) return;
-        this.lastWeight = kg;
-        this.lastWeightStable = stable;
-        broadcast({
-          raw,
-          weight: kg,
-          stable,                       // safe to bill only when true
-          parsedBy: how,
-          timestamp: new Date().toISOString(),
-          isValid: true,
+      reader.on('weight', ({ kg, stable, raw, how }) => {
+        if (this.currentPort !== port) return;
+        this.lastWeight = kg; this.lastWeightStable = stable; this.lastData = raw; this.lastReadingAt = Date.now();
+        this.broadcastScale({ raw, weight: kg, stable, parsedBy: how, timestamp: new Date().toISOString(), isValid: true });
+      });
+      reader.on('invalid', ({ reason, raw }) => invalidate(reason, raw));
+      port.on('data', chunk => {
+        if (this.currentPort !== port) return;
+        const raw = chunk.toString('latin1').slice(0, 256);
+        for (const win of BrowserWindow.getAllWindows()) {
+          if (!win.isDestroyed()) win.webContents.send('scale-raw', raw);
+        }
+        reader.push(chunk);
+      });
+      port.on('error', error => invalidate(error.message));
+      port.on('close', () => {
+        reader.stopIdleWatch();
+        if (this.currentPort !== port) return;
+        if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null; }
+        invalidate('Scale disconnected. Reconnecting automatically.');
+        if (!this.deliberateDisconnect) this.scheduleReconnect(portPath);
+      });
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => { if (options.transport === 'tcp') port.close(); reject(new Error('Opening the scale connection timed out')); }, 5000);
+        port.open(error => {
+          clearTimeout(timeout);
+          if (generation !== this._scaleGeneration && port.isOpen) port.close();
+          error ? reject(error) : resolve();
         });
       });
-
-      this.scaleReader.on('empty', () => {
-        this.lastWeight = 0;
-        this.lastWeightStable = true;
-      });
-
-      this.currentPort.on('data', (chunk) => this.scaleReader.push(chunk));
-
-      this.currentPort.on('open', () => {
-        console.log('Port opened:', portPath);
-        this.scaleReader.startIdleWatch();
-      });
-
-      this.currentPort.on('error', (err) => {
-        console.error('Serial Port Error:', err);
-        if (this.mainWindow) {
-          this.mainWindow.webContents.send('port-error', err.message);
-        }
-      });
-
-      /*
-       * Come back after the cable does.
-       *
-       * A scale on a counter gets knocked, unplugged by the cleaner, or power
-       * cycled, and its USB serial port disappears with it. Nothing here
-       * listened for that, so the port stayed shut until somebody opened
-       * Hardware Manager and pressed Connect again - which is why a shop
-       * reports the scale "not working" when the app is running perfectly
-       * well and simply has no port open.
-       *
-       * A deliberate disconnect is remembered so it is not immediately undone.
-       */
-      this.currentPort.on('close', () => {
-        if (this.deliberateDisconnect) {
-          this.deliberateDisconnect = false;
-          return;
-        }
-        console.warn('[Scale] port closed unexpectedly, will retry:', portPath);
-        if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-          this.mainWindow.webContents.send('port-error',
-            'Scale disconnected. Reconnecting automatically.');
-        }
-        this.scheduleReconnect(portPath);
-      });
-
-      // A connection that came up clears any retry that was still pending.
-      this.reconnectAttempt = 0;
-      return { success: true };
-    } catch (err) {
-      console.error('Failed to open port:', err);
-      
-      let errorMessage = err.message;
-      if (err.message.includes('Access denied') || err.message.includes('EACCES')) {
-        errorMessage = `Port ${portPath} is in use by another application. Please close any other programs using this port and try again.`;
-      } else if (err.message.includes('ENOENT') || err.message.includes('cannot open')) {
-        errorMessage = `Port ${portPath} not found. The device may have been disconnected.`;
+      if (generation !== this._scaleGeneration) {
+        if (port.isOpen) port.close();
+        return { success: false, error: 'Connection cancelled' };
       }
-      
-      return { success: false, error: errorMessage };
+      reader.startIdleWatch();
+      if (options.pollHex) {
+        const command = Buffer.from(options.pollHex, 'hex');
+        const request = () => { if (port.isOpen) port.write(command, error => { if (error) invalidate(error.message); }); };
+        request(); this.pollTimer = setInterval(request, options.pollIntervalMs);
+      }
+      this.reconnectAttempt = 0;
+      return { success: true, options };
+    } catch (error) {
+      if (generation === this._scaleGeneration) {
+        await this.disconnectPort();
+        this.deliberateDisconnect = false;
+      }
+      return { success: false, error: error.message };
     }
   }
 
-  async disconnectPort() {
-    // Someone asked for this, so the close handler must not treat it as a
-    // dropped cable and reopen the port behind them.
+  async disconnectPort(internal = false) {
+    if (!internal) this._connectRequestId = (this._connectRequestId || 0) + 1;
+    this._scaleGeneration = (this._scaleGeneration || 0) + 1;
     this.deliberateDisconnect = true;
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
+    for (const key of ['reconnectTimer', 'mockInterval', 'pollTimer']) {
+      if (this[key]) { clearTimeout(this[key]); clearInterval(this[key]); this[key] = null; }
     }
-    this.reconnectAttempt = 0;
-
-    if (this.currentPort && this.currentPort.isOpen) {
-      // Handle mock connection
-      if (this.mockInterval) {
-        clearInterval(this.mockInterval);
-        this.mockInterval = null;
-      }
-      
-      if (!this.currentPort.isMock) {
-        this.currentPort.close();
-      }
-
-      if (this.scaleReader) {
-        this.scaleReader.stopIdleWatch();   // otherwise the timer outlives the port
-        this.scaleReader.reset();
-      }
-      this.currentPort = null;
-      this.lastData = '';
-      this.lastWeight = 0;
-      this.lastWeightStable = false;
-      console.log('Port disconnected');
-      return { success: true };
+    if (this.scaleReader) { this.scaleReader.stopIdleWatch(); this.scaleReader.reset(); }
+    const port = this.currentPort; this.currentPort = null;
+    this.lastData = ''; this.lastWeight = null; this.lastWeightStable = false; this.lastReadingAt = 0;
+    if (port && (port.isOpen || port instanceof ScaleTcpPort) && !port.isMock) {
+      await new Promise(resolve => { try { port.close(() => resolve()); } catch (_) { resolve(); } });
     }
-    return { success: false, error: 'No port open' };
+    this.broadcastScale({ weight: null, stable: false, isValid: false, error: 'Scale disconnected' });
+    return { success: true };
   }
 
   isConnected() {
@@ -338,7 +255,7 @@ class HardwareManager {
     if (this.isConnected() && this.currentPort) {
       return { 
         connected: true, 
-        port: this.currentPort.path 
+        port: this.currentPort.path, options: this.scaleOptions
       };
     }
     return { connected: false };

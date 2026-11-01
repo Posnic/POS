@@ -199,7 +199,22 @@ PosnicPro.quickreport = {
             ? response.data.product_details
             : [];
 
-        if (productData.length > 0) {
+        var spoilageData = response.data && response.data.spoilage_details || [];
+        var spoilageHeader = ['Reference','Date','Status','Product','Unit','Recorded quantity','Applied loss / reversal','Applied value at cost','Reason','Remarks','SKU','Opening stock','Stock received','Sales quantity','Other increases','Other decreases','Closing stock'];
+        var spoilageRows = [];
+        spoilageData.forEach(function (entry) { (entry.lines || []).forEach(function (line) {
+          spoilageRows.push([entry.reference,entry.occurredOn,entry.state,line.name,line.unit,line.quantity / 1000,(entry.applied || []).indexOf(line.itemId) >= 0 ? (entry.kind === 'reversal' ? -1 : 1) * line.quantity / 1000 : 0,(entry.applied || []).indexOf(line.itemId) < 0 ? 0 : line.estimatedValue == null ? 'Unknown' : (entry.kind === 'reversal' ? -1 : 1) * line.estimatedValue,line.reason,line.remarks,line.sku].concat(['opening','received','sold','otherIn','otherOut','closing'].map(function(k){return !line.stockSummary || line.stockSummary[k] == null ? 'Unavailable' : line.stockSummary[k];})));
+        }); });
+        $('#daily_spoilage_section').remove();
+        if (spoilageRows.length) {
+          var spoilageSection = $('<section id="daily_spoilage_section" class="mt-3">').append($('<h5>').text(PosnicPro.i18n.t('lang_spoilage_damage', 'Spoilage / damage')));
+          $('<p class="text-muted">').text('Saved entries deduct stock; negative quantities and values undo a loss. Values use cost at entry. Stock columns are totals for the selected period, repeated for the same product. Missing or incomplete stock history is shown as Unavailable.').appendTo(spoilageSection);
+          var spoilageTable = $('<table class="table table-bordered table-sm">').appendTo($('<div class="table-responsive">').appendTo(spoilageSection));
+          var spoilageHead = $('<tr>').appendTo($('<thead>').appendTo(spoilageTable)); spoilageHeader.forEach(function (v) { $('<th>').text(v).appendTo(spoilageHead); });
+          var spoilageBody = $('<tbody>').appendTo(spoilageTable); spoilageRows.forEach(function (row) { var tr=$('<tr>').appendTo(spoilageBody); row.forEach(function(v){$('<td>').text(v).appendTo(tr);}); });
+          $('#export_daily_report').append(spoilageSection);
+        }
+        if (productData.length > 0 || spoilageRows.length > 0) {
           $(".hide-show-dailyimgreport").hide();
           $(".hide-show-dailyreport").show();
         } else {
@@ -221,12 +236,15 @@ PosnicPro.quickreport = {
           "productDiscount",
           "productTax",
           "productTotal",
+          "Closing stock",
         ];
         var productAllDataRow = [];
 
         for (var i = 0; i < productData.length; i++) {
           var p = productData[i];
-          var pQty = safeNum(p.product_qty);
+          // Aggregated decimal weights can contain floating-point tails.
+          // Keep the displayed and exported quantity at the supported precision.
+          var pQty = Number(safeNum(p.product_qty).toFixed(3));
           var pSubtotal = safeNum(p.product_subtotal);
           var pTotal = safeNum(p.product_total);
           var pProfit = safeNum(p.product_profit);
@@ -273,6 +291,7 @@ PosnicPro.quickreport = {
               '&nbsp;<span class="number">' +
               pTotal +
               "</span> </td>" +
+              '<td class="font-12 text-right">' + (p.closing_stock == null ? 'Unavailable' : Number(p.closing_stock).toFixed(3)) + '</td>' +
               " </tr>";
 
             $("#daily_report_product_details tbody").append(rowHTMLLine);
@@ -284,6 +303,7 @@ PosnicPro.quickreport = {
               pDiscount,
               pTax,
               pTotal,
+              p.closing_stock == null ? "Unavailable" : p.closing_stock,
             ]);
           }
         }
@@ -291,7 +311,7 @@ PosnicPro.quickreport = {
 
         // Qty is a count, so avoid showing .00 when it's a whole number
         var qtyValue = safeNum(qty);
-        var qtyDecimals = qtyValue % 1 === 0 ? 0 : 2;
+        var qtyDecimals = qtyValue % 1 === 0 ? 0 : 3;
         $(".daily_report_qty_price").number(qtyValue, qtyDecimals);
 
         $(".daily_report_product_price").number(safeNum(price), 2);
@@ -367,13 +387,13 @@ PosnicPro.quickreport = {
           $("#daily_report_tender_details tbody").append(rowHTMLLine2);
           paymentAllDataRow.push([label, totalAmt]);
         }
-        
+
         // Re-check after loop to hide if total is still 0
         if (tenderTotal <= 0) {
           $("#tender_type_heading").hide();
           $("#daily_report_tender_details").closest(".col-sm-12").hide();
         }
-        
+
         // Display tender total as-is (backend already accounts for discounts)
         $(".daily_report_product_tender_total").number(safeNum(tenderTotal), 2);
 
@@ -399,7 +419,7 @@ PosnicPro.quickreport = {
           }),
           tenderTotal: safeNum(tenderTotal),
           products: productAllDataRow.map(function (row) {
-            return { name: row[0], qty: safeNum(row[2]), total: safeNum(row[6]) };
+            return { name: row[0], qty: safeNum(row[2]), total: safeNum(row[6]), closingStock: row[7] };
           }),
         };
 
@@ -429,10 +449,10 @@ PosnicPro.quickreport = {
           });
           $('#dayend_export_summary_body').html(rows);
         })();
-        
+
         // Clear existing rows
         $("#daily_report_extra_discount_details tbody").children("tr").remove();
-        
+
         // Hide table if no extra discount
         if (total_sale_extra_discount <= 0) {
           $("#extra_discount_heading").hide();
@@ -440,16 +460,16 @@ PosnicPro.quickreport = {
         } else {
           $("#extra_discount_heading").show();
           $("#daily_report_extra_discount_details").closest(".col-sm-12").show();
-          
+
           // Add rows for each discount type
           if (extraDiscountByType.length > 0) {
             let currency = PosnicPro.local.get('currencySign') || '₹';
-            
+
             extraDiscountByType.forEach(function(item) {
               let discountType = item.type || 'amount';
               let discountAmount = safeNum(item.sale_extra_discount_total) || 0;
               let discountValue = safeNum(item.extra_discount_total) || 0;
-              
+
               if (discountAmount > 0) {
                 let typeLabel = '';
                 if (discountType === 'percent' || discountType === 'percentage') {
@@ -459,18 +479,18 @@ PosnicPro.quickreport = {
                 } else {
                   typeLabel = 'Additional Discount';
                 }
-                
+
                 let rowHTML = '<tr>' +
                   '<td class="text-left">' + typeLabel + '</td>' +
                   '<td class="text-right">' + currency + ' <span class="number">' + discountAmount.toFixed(2) + '</span></td>' +
                   '</tr>';
-                
+
                 $("#daily_report_extra_discount_details tbody").append(rowHTML);
               }
             });
           }
         }
-        
+
         $(".daily_report_extra_discount_total").number(total_sale_extra_discount, 2);
 
         // ---- Table-wise totals ----
@@ -587,15 +607,15 @@ PosnicPro.quickreport = {
           $("#daily_report_tax_details tbody").append(rowHTMLTaxLine);
           taxAllDataRow.push([taxName, totalTax]);
         }
-        
+
         // Re-check after loop to hide if total is still 0
         if (taxTotal <= 0) {
           $("#tax_type_heading").hide();
           $("#daily_report_tax_details").closest(".col-sm-12").hide();
         }
-        
+
         $(".daily_report_product_tax_total").number(safeNum(taxTotal), 2);
-        
+
         if (PosnicPro.local.get("table_options") === "enable") {
           $("#daily_report_dine_details").show();
         } else {
@@ -720,6 +740,7 @@ PosnicPro.quickreport = {
             csv.push(taxAllDataRow[k]);
           }
 
+          if (spoilageRows.length) { csv.push(['Spoilage / damage']); csv.push(spoilageHeader); spoilageRows.forEach(function(row){csv.push(row);}); }
           PosnicPro.JSONToCSVConvertor(csv, "Daily", true);
         }
       },
@@ -922,6 +943,9 @@ PosnicPro.quickreport = {
          * Printing a computed "expected" from incomplete information would be
          * worse than printing a line to write on.
          */
+        { type: 'pairs', name: 'CLOSING STOCK', rows: report.products.map(function (p) {
+          return { label: p.name, value: p.closingStock == null || p.closingStock === 'Unavailable' ? 'Unavailable' : Number(p.closingStock).toFixed(3) };
+        }) },
         { type: 'blanks', name: 'HANDOVER', rows: [
           { label: PosnicPro.i18n.t('lang_cash_sales', 'Cash sales'), value: money(cash) },
           'Opening float', 'Cash counted', 'Difference', 'Handed to', 'Signature'

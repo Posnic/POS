@@ -232,7 +232,7 @@ class ItemService {
       // URLs like /uploads/item_images/<file> are served correctly by
       // the existing express static mount and remain compatible with
       // legacy PHP paths.
-      const uploadBaseDir = path.join(rootDir, 'uploads');
+      const uploadBaseDir = require('../utils/uploads-path');
       const itemImagesDir = path.join(uploadBaseDir, 'item_images');
       const publicDir = path.join(rootDir, 'public');
 

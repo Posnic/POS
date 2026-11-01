@@ -363,6 +363,8 @@ PosnicPro.categories = {
         // Send the currently selected branch so the category is saved against the
         // branch the user actually has open (same source the rest of the app uses).
         categoryFormData.branch_id = PosnicPro.local.get('branch_id_set');
+        categoryFormData.apply_branches = $('#category_apply_options input:checked').map(function () { return this.value; }).get();
+        if (!categoryFormData.apply_branches.length) categoryFormData.apply_branches = [categoryFormData.branch_id];
         var params = {
             method: method,
             url: url,
@@ -372,6 +374,10 @@ PosnicPro.categories = {
 
             if (response.type === 'success') {
                 loader.find(".loadingSpinner:first").remove();
+                if (response.data && response.data.branch_results) {
+                    var conflicts = response.data.branch_results.filter(function (r) { return r.status === 'conflict'; });
+                    if (conflicts.length) PosnicPro.alert('warning', 'Category saved locally, but ' + conflicts.length + ' branch updates need attention: ' + conflicts.map(function (r) { return r.message; }).join('; '));
+                }
                 $('#category_value_check').val('');
                 $("#category_image_upload").attr('src', 'static/images/default/category.svg');
                 $(".category_add").trigger('reset');
@@ -512,6 +518,7 @@ PosnicPro.categories = {
                 PosnicPro.record_id = id;
                 $('#category_id').val(PosnicPro.record_id);
                 $('#category_name').val(data.name);
+                $('#category_sort_order').val(data.sort_order || 0);
                 PosnicPro.categories.setCatTileColor(data.tile_color || '');
                 PosnicPro.categories.setCatTileShape(data.tile_shape || '');
                 $('#category_discount_amount').val(data.discount_amount);
@@ -887,4 +894,19 @@ $(document).on('click', '#category_tile_shapes .tile-shape', function () {
     var shape = $(this).data('shape') || '';
     if (($('#category_tile_shape').val() || '') === shape) { shape = ''; }
     PosnicPro.categories.setCatTileShape(shape);
+});
+
+$(document).on('shown.bs.modal', '#categories_new', function () {
+    var captured = PosnicPro.local.get('branch_id_set');
+    $('#category_apply_picker').prop('hidden', true).prop('open', false);
+    $('#category_apply_options').empty();
+    PosnicPro.get('categories/sharing-options', function (r) {
+        if (r.type !== 'success' || captured !== PosnicPro.local.get('branch_id_set')) return;
+        var data = r.data;
+        if (data.localOnly || data.branches.length < 2) return;
+        $('#category_apply_picker').prop('hidden', false);
+        data.branches.forEach(function (b) {
+            $('<label class="d-block">').append($('<input type="checkbox" class="mr-2">').val(b.id).prop('checked', b.id === captured), document.createTextNode(b.name)).appendTo('#category_apply_options');
+        });
+    });
 });

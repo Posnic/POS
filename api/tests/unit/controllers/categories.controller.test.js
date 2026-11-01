@@ -28,6 +28,12 @@ jest.mock('../../../src/services/category.service', () =>
   }))
 );
 
+// Branch-sharing authorization and distribution are covered by integration tests.
+jest.mock('../../../src/services/category-sharing', () => ({
+  prepare: jest.fn().mockResolvedValue({ targets: [] }),
+  distribute: jest.fn().mockResolvedValue([]),
+}));
+
 jest.mock('../../../src/models/branch.model', () => ({
   findById: jest.fn(),
   findOne: jest.fn(),
@@ -138,6 +144,7 @@ beforeEach(() => {
   jest.clearAllMocks();
 
   svc = {
+    repository: { findById: jest.fn().mockResolvedValue({ name: 'Original category' }) },
     getAllCategories: jest.fn(),
     getCategoryById: jest.fn(),
     createCategory: jest.fn(),
@@ -417,7 +424,7 @@ describe('create', () => {
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success', data: createdCat() })
+      expect.objectContaining({ type: 'success', data: { ...createdCat(), branch_results: [] } })
     );
   });
 
@@ -575,7 +582,7 @@ describe('update', () => {
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success', data: updatedCat() })
+      expect.objectContaining({ type: 'success', data: { ...updatedCat(), branch_results: [] } })
     );
   });
 

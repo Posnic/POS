@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "Gebruik één verkoopeenheid per product in een verkoop.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppheeft geen berichtreferentie geretourneerd. De bezorging is niet bevestigd; controleer de chat voordat je het opnieuw probeert.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppheeft de chat van deze ontvanger nog niet gesynchroniseerd. Er is geen bericht verzonden. Laat het gekoppelde apparaat de synchronisatie voltooien.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmaakt nog steeds opnieuw verbinding of heeft een nieuwe telefoonverbinding nodig. Er is geen bericht verzonden."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmaakt nog steeds opnieuw verbinding of heeft een nieuwe telefoonverbinding nodig. Er is geen bericht verzonden.",
+  "Messaging permission required.": "Machtiging voor berichten vereist.",
+  "Schedule owner no longer has messaging access.": "De eigenaar van de planning heeft geen toegang meer tot berichten."
 }

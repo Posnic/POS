@@ -119,6 +119,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     disconnectPort: () => ipcRenderer.invoke('hardware:disconnect-port'),
     getStatus: () => ipcRenderer.invoke('hardware:get-status'),
     broadcastWeight: () => ipcRenderer.invoke('hardware:broadcast-weight'),
+    onScaleRaw: (callback) => {
+      const handler = (event, raw) => callback(raw);
+      ipcRenderer.on('scale-raw', handler);
+      return () => ipcRenderer.removeListener('scale-raw', handler);
+    },
     // Returns an unsubscribe function: a page that asks for one weight must be
     // able to stop listening, or every reading piles up another handler.
     onUsbData: (callback) => {

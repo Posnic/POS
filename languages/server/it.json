@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "Utilizza un'unità di vendita per prodotto in una vendita.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnon ha restituito un riferimento al messaggio. La consegna non è confermata; controlla la chat prima di riprovare.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppnon ha ancora sincronizzato la chat di questo destinatario. Non è stato inviato alcun messaggio. Consenti al dispositivo collegato di completare la sincronizzazione.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppsi sta ancora riconnettendo o necessita di un nuovo collegamento telefonico. Non è stato inviato alcun messaggio."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppsi sta ancora riconnettendo o necessita di un nuovo collegamento telefonico. Non è stato inviato alcun messaggio.",
+  "Messaging permission required.": "È richiesta l'autorizzazione alla messaggistica.",
+  "Schedule owner no longer has messaging access.": "Il proprietario della pianificazione non ha più accesso alla messaggistica."
 }

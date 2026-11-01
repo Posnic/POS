@@ -1,9 +1,11 @@
 <div class="vertical-layout page_loader" id="inventorycounts" style="display:none">
     <div id="containerbar"><div class="breadcrumbbar crumbbar_padding"><div class="row align-items-center row_filter"><div class="col"><h4 class="page-title break_title mb-0"><lang class="lang_stock_counts">Stock Counts</lang></h4></div><div class="col-auto">
-<button class="btn btn-primary" data-module="item" data-access="write" onclick="PosnicPro.items.openStockAdjustment();"><i class="feather icon-plus" aria-hidden="true"></i> <lang class="lang_start_recount">Start recount</lang></button>
+<button id="inventory-overview" class="btn btn-primary-rgba" onclick="PosnicPro.inventorycounts.navigate('overview');"><lang class="lang_overview">Overview</lang></button>
+<button class="btn btn-primary-rgba" data-module="item" data-access="write" onclick="PosnicPro.inventorycounts.navigate('audit');"><i class="feather icon-clipboard" aria-hidden="true"></i> <lang class="lang_start_stock_audit">Start stock audit</lang></button>
+<button class="btn btn-primary-rgba" data-module="item" data-access="read" onclick="PosnicPro.inventorycounts.navigate('damage');"><i class="feather icon-alert-triangle" aria-hidden="true"></i> <lang class="lang_spoilage_damage">Spoilage / damage</lang></button>
 <button class="btn btn-primary-rgba" data-module="item" data-access="write" onclick="PosnicPro.items.openBulkStock();"><lang class="lang_bulk_stock_update">Bulk stock update</lang></button>
-<a class="btn btn-primary-rgba" href="#/stocklogs"><lang class="lang_inventory_logs">Inventory logs</lang></a>
-<a class="btn btn-primary-rgba" href="#/lowstockitems"><lang class="lang_low_stock_list">Low stock list</lang></a>
+<a class="btn btn-primary-rgba" href="#/stocklogs" onclick="PosnicPro.inventorycounts.navigate('logs');return false;"><lang class="lang_inventory_logs">Inventory logs</lang></a>
+<a class="btn btn-primary-rgba" href="#/lowstockitems" onclick="PosnicPro.inventorycounts.navigate('lowstock');return false;"><lang class="lang_low_stock_list">Low stock list</lang></a>
 <button class="btn btn-primary-rgba" onclick="PosnicPro.inventorycounts.load();"><i class="feather icon-refresh-cw" aria-hidden="true"></i> <lang class="lang_wf_refresh">Refresh</lang></button>
 </div><div class="col-auto" data-ask-entry style="display:none"><a class="btn btn-primary-rgba" href="#/askposnic"><lang class="lang_prepare_with_ask_posnic">Prepare with Ask Posnic</lang></a></div></div></div></div>
     <div class="contentbar stock-count-content"><div class="row"><div class="col-lg-12"><div class="card m-b-30 count-workspace"><div class="card-body"><h5><i class="feather icon-clipboard" aria-hidden="true"></i> <lang class="lang_saved_count_worksheets">Saved count worksheets</lang></h5><p class="text-muted"><lang class="lang_start_recount_to_review_and_apply_actual_s">Start recount to review and apply actual stock quantities. Completed adjustments appear in Inventory logs; saved draft worksheets appear below.</lang></p><div id="inventory_counts_list" class="text-muted"><lang class="lang_loading_stock_counts">Loading stock counts…</lang></div><div id="inventory_count_detail" class="mt-4" style="display:none"></div></div></div></div></div></div>
@@ -46,4 +48,125 @@
 #inventorycounts .mobile-inventory-more { margin:16px 20px; }
 #inventorycounts button:focus-visible { outline:3px solid #93b9ed; outline-offset:2px; }
 @media(max-width:767px) { #inventorycounts .inventory-panel-header { padding:14px; } #inventorycounts .inventory-table td,#inventorycounts .inventory-table th { padding:12px; } #inventorycounts .contentbar { padding:16px; } }
+</style>
+<style>
+#inventorycounts.count-editing .count-workspace > .card-body > :not(#inventory_count_detail) { display:none!important; }
+#inventorycounts.count-editing #inventory_count_detail { margin-top:0!important; }
+</style>
+<style id="spoilage-layout">
+#spoilage_panel .sp-entry-tools, #spoilage_panel .sp-picker-tools { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:12px 0; }
+#spoilage_panel .sp-entry-tools label { margin:0 14px 0 0; }
+#spoilage_panel .sp-entry-tools #sp_date { width:160px; }
+#spoilage_panel #sp_product_search { width:280px; max-width:100%; }
+#spoilage_panel #sp_product_category { width:210px; max-width:100%; }
+#spoilage_panel .sp-picker { border:1px solid var(--theme-border-color,#dce3ec); border-radius:10px; padding:12px 16px; margin:16px 0; }
+#spoilage_panel .sp-results { max-height:280px; overflow:auto; }
+#spoilage_panel .sp-results table { min-width:550px; }
+#spoilage_panel .sp-results th { position:sticky; top:0; z-index:1; }
+#spoilage_panel #sp_product_status { margin-right:auto; }
+#inventorycounts.count-reviewing:not(.count-editing) .count-workspace > .card-body > :not(#mobile_inventory_detail) { display:none!important; }
+#inventorycounts.count-reviewing #mobile_inventory_detail { margin-top:0!important; background:var(--theme-card-bg,#fff); }
+#inventorycounts #mobile_inventory_detail .inventory-panel-header { flex-wrap:wrap; }
+#inventorycounts .breadcrumbbar { padding-top:24px!important; padding-bottom:20px; }
+#inventorycounts .row_filter { row-gap:12px; }
+#inventorycounts .count-workspace, #inventorycounts .count-workspace > .card-body { border:0!important; border-radius:0; box-shadow:none!important; background:transparent!important; }
+#inventorycounts .breadcrumbbar .btn { min-height:40px; display:inline-flex; align-items:center; justify-content:center; border:1px solid transparent; box-shadow:none!important; }
+#inventorycounts .breadcrumbbar .btn, #inventorycounts .breadcrumbbar .btn:focus { background:transparent!important; color:var(--theme-primary-color,#0968cb)!important; }
+#inventorycounts .breadcrumbbar .btn i { color:inherit!important; }
+#inventorycounts .breadcrumbbar .btn:hover { background:var(--theme-body-bg,#edf4fc)!important; }
+#inventorycounts .breadcrumbbar .btn:focus-visible { outline:2px solid #0968cb; outline-offset:3px; }
+#inventorycounts:not(.count-editing):not(.count-section) #inventory-overview,
+#inventorycounts[data-section="logs"] > #containerbar a[href="#/stocklogs"],
+#inventorycounts[data-section="lowstock"] > #containerbar a[href="#/lowstockitems"],
+#inventorycounts.count-editing:has(#audit_branch) .breadcrumbbar button[onclick*="audit"],
+#inventorycounts.count-editing:has(#spoilage_panel) .breadcrumbbar button[onclick*="damage"] { background:#0968cb!important; color:#fff!important; border-color:#0968cb; }
+#inventorycounts #inventory_count_detail:has(#audit_branch) { padding:20px; border:1px solid var(--theme-border-color,#dce3ec); border-radius:12px; background:var(--theme-card-bg,#fff); }
+#inventory_section_host > .vertical-layout { margin:0!important; padding:0!important; width:100%!important; }
+#inventory_section_host .contentbar { padding:16px 0!important; }
+#inventory_section_host .breadcrumbbar { margin:0!important; padding:0 0 16px!important; }
+#inventory_section_host .page-title { font-size:18px; }
+#inventory_count_detail:has(#audit_branch) > .d-flex:first-child { padding-bottom:16px; border-bottom:1px solid var(--theme-border-color,#dce3ec); flex-wrap:wrap; }
+#inventory_count_detail:has(#audit_branch) .form-control, #inventory_count_detail:has(#audit_branch) .btn { min-height:40px; margin:0; }
+#inventory_count_detail:has(#audit_branch) > .table-responsive { border:1px solid var(--theme-border-color,#dce3ec); border-radius:8px; margin:16px 0; }
+#inventory_count_detail:has(#audit_branch) table { margin:0; min-width:800px; }
+#inventory_count_detail:has(#audit_branch) th, #inventory_count_detail:has(#audit_branch) td { padding:12px; vertical-align:middle; }
+#inventory_count_detail:has(#audit_branch) th { border-top:0; background:var(--theme-body-bg,#f5f7fa); }
+#inventorycounts #spoilage_panel { padding:20px; border:1px solid var(--theme-border-color,#dce3ec); border-radius:12px; background:var(--theme-card-bg,#fff); color:var(--theme-text-primary,#24364b); }
+#spoilage_panel > .d-flex:first-child { gap:16px; padding-bottom:16px; border-bottom:1px solid var(--theme-border-color,#dce3ec); }
+#spoilage_panel #sp_branch { width:220px!important; max-width:50%; }
+#spoilage_panel > .d-flex:nth-child(2) { display:flex!important; flex-wrap:wrap; gap:10px!important; align-items:center!important; }
+#spoilage_panel > .d-flex:nth-child(2) .form-control { width:140px!important; min-width:0; }
+#spoilage_panel > .d-flex:nth-child(2) #sp_search { width:220px!important; }
+#spoilage_panel .form-control, #spoilage_panel .btn { min-height:40px; margin:0; box-sizing:border-box; font-size:13px; }
+#spoilage_panel .btn { white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; }
+#spoilage_panel #sp_status { display:block; margin:12px 0; line-height:1.6; }
+#spoilage_panel #sp_list > .d-flex { padding:12px 0!important; gap:16px!important; }
+#spoilage_panel #sp_list > .d-flex > span { min-width:0; overflow-wrap:anywhere; }
+#spoilage_panel #sp_list .btn { flex-shrink:0; min-width:64px; }
+#spoilage_panel #sp_detail:not(:empty) { margin-top:24px!important; padding-top:20px; border-top:1px solid var(--theme-border-color,#dce3ec); }
+#spoilage_panel #sp_detail > h5 { margin:0 0 16px; line-height:1.5; overflow-wrap:anywhere; }
+#spoilage_panel #sp_detail > .d-flex:has(#sp_date) { display:grid!important; grid-template-columns:160px minmax(160px,1fr) minmax(180px,1.2fr) auto; gap:12px!important; align-items:center; }
+#spoilage_panel #sp_detail > .d-flex:has(#sp_date) .form-control { width:100%!important; min-width:0; }
+#spoilage_panel .table-responsive { border:1px solid var(--theme-border-color,#dce3ec); border-radius:8px; margin:16px 0; }
+#spoilage_panel table { margin:0; min-width:850px; width:100%; }
+#spoilage_panel th { background:var(--theme-body-bg,#f5f7fa); white-space:nowrap; font-weight:600; border-top:0; }
+#spoilage_panel th, #spoilage_panel td { padding:12px; vertical-align:middle; }
+#spoilage_panel td:first-child { min-width:140px; }
+#spoilage_panel .sp_qty { width:110px!important; }
+#spoilage_panel .sp_reason { width:150px!important; }
+#spoilage_panel .sp_remarks { width:100%; min-width:210px!important; }
+#spoilage_panel #sp_detail > p { margin:12px 0; line-height:1.6; }
+#spoilage_panel #sp_detail > .d-flex:last-child { gap:12px!important; flex-wrap:wrap; }
+#spoilage_panel:has(#sp_detail:not(:empty)) > .d-flex:nth-child(2), #spoilage_panel:has(#sp_detail:not(:empty)) > #sp_list, #spoilage_panel:has(#sp_detail:not(:empty)) > #sp_paging { display:none!important; }
+#spoilage_panel:has(#sp_detail:not(:empty)) #sp_detail { border-top:0; margin-top:16px!important; padding-top:0; }
+@media(max-width:1050px) {
+  #spoilage_panel > .d-flex:nth-child(2) { grid-template-columns:repeat(3,minmax(130px,1fr)) auto auto auto; }
+  #spoilage_panel #sp_search { grid-column:1 / 4; grid-row:2; }
+  #spoilage_panel #sp_filter, #spoilage_panel #sp_export, #spoilage_panel #sp_new { grid-row:2; }
+}
+@media(max-width:767px) {
+  #inventorycounts #spoilage_panel { padding:14px; }
+  #spoilage_panel > .d-flex:nth-child(2) { display:flex!important; }
+  #spoilage_panel > .d-flex:nth-child(2) .form-control { flex:1 1 140px; }
+  #spoilage_panel #sp_detail > .d-flex:has(#sp_date) { grid-template-columns:1fr 1fr; }
+}
+</style>
+
+<style>
+#inventory_popup .modal-dialog { width:calc(100% - 40px); max-width:1120px; margin:32px auto; }
+#inventory_popup .modal-content { border-radius:12px; }
+#inventory_popup .modal-header,#inventory_popup .modal-footer { padding:16px 24px; }
+#inventory_popup .modal-body { padding:24px; max-height:calc(100vh - 200px); overflow:auto; }
+#inventory_popup .modal-body > div { margin:0!important; }
+#inventory_popup table th { background:var(--theme-body-bg,#f4f6f9); white-space:nowrap; }
+#inventory_popup table td,#inventory_popup table th { padding:12px; vertical-align:middle; }
+#inventory_popup .sp-results { max-height:45vh; overflow:auto; }
+#inventory_popup #sp_picker { border:0; padding:0; }
+#inventory_popup #sp_back,#inventory_popup .mobile-inventory-close,#inventory_popup #sp_close { display:none; }
+#inventory_popup .inventory-panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+#inventory_popup .sp-picker-tools { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:16px; }
+#inventory_popup #sp_product_search { width:280px; }
+#inventory_popup #sp_product_category { width:210px; }
+</style>
+<style>
+#sp_list table { width:100%; table-layout:fixed; }
+#sp_list th:first-child { width:30%; }
+#sp_list th:last-child { width:100px; }
+#sp_list td { overflow-wrap:anywhere; white-space:normal; }
+#stocklogs table td { overflow-wrap:anywhere; white-space:normal; max-width:300px; }
+</style>
+
+<style>
+#inventory_popup .inventory-panel-header h5 { margin:0; font-size:16px; display:flex; align-items:center; gap:10px; }
+#inventory_popup .inventory-panel-header h5 i { color:#1769d2; }
+#inventory_popup .inventory-status { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:20px; font-size:12px; font-weight:600; white-space:nowrap; background:#edf3ff; color:#2459a6; }
+#inventory_popup .inventory-status.complete { background:#e9f6ef; color:#24734b; }
+#inventory_popup .inventory-status.conflict { background:#fff1e4; color:#9b5310; }
+#inventory_popup .inventory-status.prepared,#inventory_popup .inventory-status.applying { background:#fff7dd; color:#826515; }
+#inventory_popup .inventory-panel-header h5 { width:100%; justify-content:space-between; }
+#inventory_popup .modal-footer .btn { color:#0968cb; border-color:#0968cb; }
+</style>
+<style>
+#spoilage_panel #sp_list table { min-width:0; }
+#spoilage_panel #sp_list th,#spoilage_panel #sp_list td { min-width:0; padding:12px; }
 </style>

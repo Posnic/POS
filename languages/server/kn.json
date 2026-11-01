@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "ಮಾರಾಟದಲ್ಲಿ ಪ್ರತಿ ಉತ್ಪನ್ನಕ್ಕೆ ಒಂದು ಮಾರಾಟ ಘಟಕವನ್ನು ಬಳಸಿ.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppಸಂದೇಶ ಉಲ್ಲೇಖವನ್ನು ಹಿಂತಿರುಗಿಸಲಿಲ್ಲ. ವಿತರಣೆಯನ್ನು ದೃಢೀಕರಿಸಲಾಗಿಲ್ಲ; ಮರುಪ್ರಯತ್ನಿಸುವ ಮೊದಲು ಚಾಟ್ ಅನ್ನು ಪರಿಶೀಲಿಸಿ.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppಈ ಸ್ವೀಕರಿಸುವವರ ಚಾಟ್ ಅನ್ನು ಇನ್ನೂ ಸಿಂಕ್ ಮಾಡಿಲ್ಲ. ಯಾವುದೇ ಸಂದೇಶವನ್ನು ಕಳುಹಿಸಲಾಗಿಲ್ಲ. ಲಿಂಕ್ ಮಾಡಿದ ಸಾಧನವನ್ನು ಸಿಂಕ್ ಮಾಡುವುದನ್ನು ಮುಗಿಸಲು ಅನುಮತಿಸಿ.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppಇನ್ನೂ ಮರುಸಂಪರ್ಕಿಸುತ್ತಿದೆ ಅಥವಾ ತಾಜಾ ಫೋನ್ ಲಿಂಕ್ ಅಗತ್ಯವಿದೆ. ಯಾವುದೇ ಸಂದೇಶವನ್ನು ಕಳುಹಿಸಲಾಗಿಲ್ಲ."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppಇನ್ನೂ ಮರುಸಂಪರ್ಕಿಸುತ್ತಿದೆ ಅಥವಾ ತಾಜಾ ಫೋನ್ ಲಿಂಕ್ ಅಗತ್ಯವಿದೆ. ಯಾವುದೇ ಸಂದೇಶವನ್ನು ಕಳುಹಿಸಲಾಗಿಲ್ಲ.",
+  "Messaging permission required.": "ಸಂದೇಶ ಕಳುಹಿಸುವ ಅನುಮತಿ ಅಗತ್ಯವಿದೆ.",
+  "Schedule owner no longer has messaging access.": "ವೇಳಾಪಟ್ಟಿ ಮಾಲೀಕರು ಇನ್ನು ಮುಂದೆ ಸಂದೇಶ ಪ್ರವೇಶವನ್ನು ಹೊಂದಿಲ್ಲ."
 }

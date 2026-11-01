@@ -413,6 +413,7 @@ const limiter = rateLimit({
   },
 });
 app.use('/api', limiter);
+app.use(require('./src/utils/item-creation-origin').middleware);
 
 // Body parser, reading data from body into req.body
 // Allow larger payloads for CSV imports and base64 image uploads
@@ -939,7 +940,7 @@ app.use(
     res.header('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
   },
-  express.static(path.join(__dirname, 'uploads'))
+  express.static(require('./src/utils/uploads-path'))
 );
 
 /*

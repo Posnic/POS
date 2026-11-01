@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "Sử dụng một đơn vị bán cho mỗi sản phẩm trong một đợt bán hàng.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppkhông trả về một tham chiếu tin nhắn. Giao hàng chưa được xác nhận; kiểm tra cuộc trò chuyện trước khi thử lại.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppchưa đồng bộ hóa cuộc trò chuyện của người nhận này. Không có tin nhắn nào được gửi. Cho phép thiết bị được liên kết hoàn tất đồng bộ hóa.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppvẫn đang kết nối lại hoặc cần một liên kết điện thoại mới. Không có tin nhắn nào được gửi."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppvẫn đang kết nối lại hoặc cần một liên kết điện thoại mới. Không có tin nhắn nào được gửi.",
+  "Messaging permission required.": "Yêu cầu quyền nhắn tin.",
+  "Schedule owner no longer has messaging access.": "Chủ sở hữu lịch trình không còn quyền truy cập nhắn tin."
 }

@@ -113,9 +113,11 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-12">
-                        <label for="category_description">
-                            <lang class="lang_description_title"> Description </lang>
-                        </label>
+                        <details id="category_apply_picker" class="mb-3" hidden><summary><lang class="lang_apply_to_current_branch">Apply to: Current branch ▾</lang></summary><div id="category_apply_options" class="p-2"></div></details>
+                        <label for="category_sort_order"><lang class="lang_sort_number">Sort number</lang></label>
+                        <input type="number" id="category_sort_order" name="sort_order" class="form-control" min="0" max="2147483646" step="1" value="0">
+                        <small class="d-block mt-1 mb-3"><lang class="lang_categories_are_displayed_in_this_order_ite">Categories are displayed in this order; items within a category use SKU order.</lang></small>
+                        <label for="category_description"><lang class="lang_description_title"> Description </lang></label>
                         <textarea name="description" id="category_description" class="form-control border-control" minlength="3" maxlength="500" placeholder="Enter the Description" data-t-placeholder="lang_enter_the_description"></textarea>
                     </div>
                 </div>

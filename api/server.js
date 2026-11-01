@@ -113,6 +113,7 @@ const startServer = async () => {
     await require('./src/db/tenant-context').runWithTenant({ db: mongoose.connection.db },
       () => require('./src/services/price-schedule-worker').drain(mongoose.connection.db, { startup: true }));
     const server = app.listen(PORT, HOST, () => {
+      server.once('close', require('./src/services/catalogue-sharing').start({ tenants: () => [{ db: mongoose.connection.db }] }));
       server.once('close', require('./src/services/price-schedule-worker').start({
         tenants: () => [{ db: mongoose.connection.db }],
       }));

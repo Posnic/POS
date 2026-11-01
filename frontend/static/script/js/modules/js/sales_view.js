@@ -1995,7 +1995,7 @@ PosnicPro.sales.view = {
                     $('.tax-print-hideshow').toggle(!hasTaxRows && data.tax > 0);
                 }
 
-                $('.total-noof-item').html(itemTotalQty.toFixed(2));
+                $('.total-noof-item').html(String(Number(itemTotalQty.toFixed(3))));
                 $('.print-total').attr('data-currency-digits', moneyDigits);
                 $('span.number').number(true, moneyDigits);
 
@@ -2373,7 +2373,7 @@ PosnicPro.sales.view = {
                 $('#roundoff-value').html(roundOff);
                 $('#roundoff_standard_print').html(roundOffStandardPrint);
                 //                grandTotal = (PosnicPro.roundoff === true) ? Math.round(grandTotal).toFixed(2) : Number(grandTotal).toFixed(2);
-                $('.total-noof-item').html(itemTotalQty.toFixed(2));
+                $('.total-noof-item').html(String(Number(itemTotalQty.toFixed(3))));
                 $('.print-subtotal').html(currency + '&nbsp;<span class="number">' + subTotal + '</span>');
                 $('.print-total').html('<strong>' + currency + '&nbsp;<span class="number">' + grandTotal + '</span></strong>');
 

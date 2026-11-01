@@ -1,4 +1,5 @@
-const httpStatus = require('http-status');
+const httpStatusModule = require('http-status');
+const httpStatus = httpStatusModule.default || httpStatusModule;
 const { User } = require('../models');
 // Token was used by logout and refreshAuth without ever being imported, so both
 // threw ReferenceError instead of doing their work.

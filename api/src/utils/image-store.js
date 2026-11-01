@@ -59,7 +59,7 @@ const EXT_FOR = {
   'image/webp': 'webp',
 };
 
-const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads');
+const UPLOAD_DIR = require('./uploads-path');
 
 /** Bytes -> the key they will live under, for this tenant and kind. */
 function keyFor({ tenantId, kind, buffer, mimeType }) {

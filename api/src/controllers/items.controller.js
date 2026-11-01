@@ -1773,7 +1773,9 @@ class ItemsController extends BaseController {
       if (
         !this.checkPermission(
           'item',
-          ['list', 'status', 'download', 'branches'].includes(action) ? 'read' : 'write',
+          ['list', 'status', 'download', 'branches', 'pricePreference'].includes(action)
+            ? 'read'
+            : 'write',
           req.user
         )
       )
@@ -1788,9 +1790,39 @@ class ItemsController extends BaseController {
       const b = req.body;
       let data;
       switch (action) {
+        case 'expand':
+          data = await service.expandRows(c, b);
+          break;
         case 'prepare':
           data = await service.prepare(c, b);
           break;
+        case 'pricePreference':
+          data = {
+            allBranches:
+              (
+                await (await require('../models/base.model').getDb()).collection('users').findOne(
+                  {
+                    _id: new (require('mongodb').ObjectId)(c.userId),
+                    license: new (require('mongodb').ObjectId)(c.licenseId),
+                  },
+                  { projection: { price_all_branches: 1 } }
+                )
+              )?.price_all_branches !== false,
+          };
+          break;
+        case 'savePricePreference': {
+          if (typeof b.allBranches !== 'boolean') throw new Error('Invalid branch preference');
+          const db = await require('../models/base.model').getDb();
+          const { ObjectId } = require('mongodb');
+          await db
+            .collection('users')
+            .updateOne(
+              { _id: new ObjectId(c.userId), license: new ObjectId(c.licenseId) },
+              { $set: { price_all_branches: b.allBranches, updated_date: new Date() } }
+            );
+          data = { allBranches: b.allBranches };
+          break;
+        }
         case 'branches':
           data = c.branches;
           break;

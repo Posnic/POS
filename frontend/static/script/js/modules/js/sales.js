@@ -148,7 +148,8 @@ PosnicPro.sales = {
         var displayPage = 'sales';
         $('#' + displayPage + '_new').show();
         db.saleAutoFocus.get('1').then(function (data) {
-            if (data && data.addSale === true) {
+            if (PosnicPro.sales._focusAfterCompletedSale || (data && data.addSale === true)) {
+                PosnicPro.sales._focusAfterCompletedSale = false;
                 $('#sales_new_item_name').focus();
             } else {
                 $('#sales_new_item_name').blur();
@@ -1327,6 +1328,10 @@ PosnicPro.sales = {
         }).catch(function () { /* dismissed */ });
     },
     addSalesLineItems: function (params) {
+        if (!params._quantityConfirmed && PosnicPro.sales.isWeighedItem && PosnicPro.sales.isWeighedItem(params) && PosnicPro.sales.SaleAction !== 'return') {
+            PosnicPro.sales.askSearchQuantity(Object.assign({}, params, { _searchDetailsLoaded: true }), params.id || params.item_id);
+            return;
+        }
         // Recency (owner feedback): every added item feeds the recent list -
         // written here so search, scan, camera, tiles and recents all count.
         if (PosnicPro.sales._recentPush && params.sales_type !== 'instant') {
@@ -1620,9 +1625,10 @@ PosnicPro.sales = {
         // whole-line editor door (owner ask): one pencil, every field
         var saleEditIcon = (PosnicPro.local.get('sale_quick_edit') === 'disable') ? '' :
             '<a href="javascript:void(0)" class="sale-line-act sale-line-edit" data-id="' + id + '" title="Edit price, qty, discount, tax" data-t-title="lang_edit_price_qty_discount_tax"><i class="feather icon-edit-2"></i></a>';
+        var amountWeightButton = PosnicPro.sales.isWeighedItem(params) ? '<button type="button" class="btn btn-sm btn-outline-primary sale-weight-amount" data-id="' + id + '" title="Weigh for a requested amount" data-t-title="lang_weigh_for_a_requested_amount"><i class="feather icon-target" aria-hidden="true"></i> By amount</button>' : '';
         var rowHTMLLine = '<tr id="touch_row_' + id + '" class="touch-sales-hover-effect border-top pt-3"' + (saleEditIcon ? ' data-sale-edit="' + id + '" tabindex="0"' : '') + '> ' +
             '    <td id="addSalesLineItemName_' + id + '" class="font_size14" data-id="' + PosnicPro.escapeHtml(item_name) + '" ' + colWidth + '>' + PosnicPro.escapeHtml(item_name) + inlineNote + '</td>' +
-            '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + '</td>' +
+            '    <td id="addSalesLineItemQty_' + id + '" class="text-center add_circle font_size14">' + addLineItemQty + amountWeightButton + '</td>' +
             '    <td name ="addSalesLineItemUnit" id="addSalesLineItemUnit_' + id + '" class="text-center">' + item_unit + '</td>' +
             '    <td name ="addSalesLineItemPrice" id="addSalesLineItemPrice_' + id + '" class="font_size14" ' + kotHideStyle + '>' + mrpPrice.toFixed(2) + inlinePrice + '</td>' +
             '    <td name ="addSalesLineItemDiscount" id="addSalesLineItemDiscountprint_' + id + '" class="text-center font_size14" ' + kotHideStyle + '>' + discount_percentages + inlineDiscount + '</td>' +
@@ -11853,6 +11859,82 @@ PosnicPro.sales.chooseSellingUnit = function (item, done) {
         done(Object.assign({}, item, { unit: choice.unit, selling_price: Number(price.toFixed(2)), sale_inline_item_price: Number(price.toFixed(2)), discount_amount: Number((Number(item.discount_amount || 0) * Number(choice.factor)).toFixed(2)), available_quantity: Number(item.available_quantity || 0) / Number(choice.factor), _sellingUnitChosen: true }));
     });
 };
+// The same compact quantity popup serves tile and search selection.
+PosnicPro.sales.weighEntry = async function (item, options) {
+    options = options || {};
+    var unit = String(item.unit || 'kg').trim().toLowerCase();
+    var factor = ({ kg:1, kgs:1, kilogram:1, kilograms:1, g:1000, gm:1000, gram:1000, grams:1000, tonne:.001, tonnes:.001 })[unit];
+    if (!factor) { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_set_a_weight_unit_kg_g_or_tonnes_for_this', 'Set a weight unit (kg, g or tonnes) for this product.')); return null; }
+    var settings = {}; try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) {}
+    var price = Number(item.selling_price) || 0, tax = settings.module_tax_enable === false ? 0 : Math.max(0, Number(item.tax) || 0);
+    var base = item.tax_type === 'inclusive' && tax ? price / (1 + tax / 100) : price;
+    var discount = Number(item.discount_amount) > 0 ? Number(item.discount_amount) : base * Math.max(0, Number(item.discount_percentage) || 0) / 100;
+    var rate = Math.max(0, base - discount) * (1 + tax / 100);
+    if (Number.isFinite(options.lineRate)) rate = options.lineRate;
+    var currency = PosnicPro.local.get('currencySign') || '';
+    var mode = options.mode === 'amount' ? 'amount' : 'weight', source = 'scale', active = true, busy = false, timer, reading = null, stamp = 0;
+    var branch = PosnicPro.local.get('branch_id_set'), epoch = 0;
+    var esc = function (v) { return $('<span>').text(v).html(); };
+    function update() {
+        $('#weigh_amount_wrap').prop('hidden', mode !== 'amount');
+        $('[data-weigh-mode]').each(function () { $(this).toggleClass('btn-primary', this.dataset.weighMode === mode).toggleClass('btn-outline-primary', this.dataset.weighMode !== mode); });
+        $('[data-weigh-source]').each(function () { $(this).toggleClass('btn-primary', this.dataset.weighSource === source).toggleClass('btn-outline-primary', this.dataset.weighSource !== source); });
+        $('#weigh_quantity').prop('readOnly', source === 'scale');
+        var amount = Number($('#weigh_amount').val()), weight = Number($('#weigh_quantity').val());
+        $('#weigh_target').text(amount > 0 && rate > 0 ? 'Target ' + (amount / (rate * factor)).toFixed(3) + ' kg · ' + Math.round(amount / (rate * factor) * 1000) + ' g' : 'Enter a positive amount.');
+        $('#weigh_total').text(weight > 0 && Number.isFinite(weight) ? currency + (weight * factor * rate).toFixed(2) : '—');
+    }
+    async function read() {
+        if (!active || source !== 'scale' || busy) return;
+        var token = epoch; busy = true;
+        try {
+            if (!window.WeightBridge || !window.WeightBridge.isAvailable()) throw new Error('Scale unavailable. Connect a scale or select Manual.');
+            var value = await window.WeightBridge.getCurrentWeight({ stableOnly: true });
+            if (!active || source !== 'scale' || token !== epoch) return;
+            if (!Number.isFinite(value) || value <= 0 || value > 100000) throw new Error('Waiting for a stable positive weight.');
+            reading = Number(value.toFixed(3)); stamp = Date.now();
+            $('#weigh_quantity').val(reading.toFixed(3)); $('#weigh_status').text(PosnicPro.i18n.t('lang_stable_scale_weight', 'Stable scale weight')); update();
+        } catch (e) {
+            if (active && token === epoch && source === 'scale') { reading = null; stamp = 0; $('#weigh_quantity').val(''); $('#weigh_status').text(e.message || 'Waiting for scale. Select Manual to enter weight.'); update(); }
+        } finally { busy = false; }
+    }
+    try {
+        var result = await swal({ title: PosnicPro.i18n.t('lang_quantity', 'Quantity'), width: 480,
+            html: '<div style="text-align:left"><div class="d-flex justify-content-between mb-3"><strong>' + esc(item.item_name || item.name || '') + '</strong><span>' + esc(currency) + rate.toFixed(2) + ' / ' + esc(unit) + '</span></div>' +
+            '<div class="d-flex justify-content-between flex-wrap mb-3" style="gap:8px"><div><button type="button" class="btn btn-sm btn-primary" data-weigh-mode="weight"><lang class="lang_weight">Weight</lang></button> <button type="button" class="btn btn-sm btn-outline-primary" data-weigh-mode="amount"><lang class="lang_amount_title">Amount</lang></button></div><div><button type="button" class="btn btn-sm btn-primary" data-weigh-source="scale"><i class="feather icon-anchor"></i> Scale</button> <button type="button" class="btn btn-sm btn-outline-primary" data-weigh-source="manual"><lang class="lang_manual">Manual</lang></button></div></div>' +
+            '<div id="weigh_amount_wrap" hidden><label for="weigh_amount">Requested amount (' + esc(currency) + ')</label><input class="form-control" id="weigh_amount" type="number" min="0.01" step="0.01"><p id="weigh_target" class="my-2"></p></div>' +
+            '<label for="weigh_quantity"><lang class="lang_measured_weight_kg">Measured weight (kg)</lang></label><input class="form-control" style="font-size:24px" id="weigh_quantity" type="number" step="0.001" min="0.001" readonly><small id="weigh_status" role="status">Waiting for scale…</small>' +
+            '<div class="d-flex justify-content-between mt-3"><span><lang class="lang_line_total">Line total</lang></span><strong id="weigh_total" style="font-size:22px">—</strong></div></div>',
+            showCancelButton: true, confirmButtonText: options.confirmButtonText || 'Add to sale',
+            onOpen: function () {
+                $('[data-weigh-mode]').on('click', function () { mode = this.dataset.weighMode; update(); if (mode === 'amount') $('#weigh_amount').focus(); });
+                $('[data-weigh-source]').on('click', function () { source = this.dataset.weighSource; epoch++; reading = null; stamp = 0; $('#weigh_quantity').val(''); $('#weigh_status').text(source === 'manual' ? 'Manually entered weight' : 'Waiting for scale…'); update(); if (source === 'manual') $('#weigh_quantity').focus(); else read(); });
+                $('#weigh_quantity,#weigh_amount').on('input', update).on('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); if (!e.originalEvent || !e.originalEvent.repeat) swal.clickConfirm(); } });
+                update(); read(); timer = setInterval(read, 800);
+            },
+            preConfirm: function () {
+                var text = String($('#weigh_quantity').val()), weight = Number(text), amountText = String($('#weigh_amount').val()), amount = Number(amountText);
+                if (!/^\d+(\.\d{1,3})?$/.test(text) || !Number.isFinite(weight) || weight <= 0 || weight > 100000) return Promise.reject('Enter a positive weight with up to three decimal places.');
+                if (source === 'scale' && (!reading || Date.now() - stamp > 2500)) return Promise.reject('Wait for a fresh stable scale reading.');
+                if (mode === 'amount' && (!/^\d+(\.\d{1,2})?$/.test(amountText) || amount <= 0 || amount > 1000000000 || !Number.isFinite(rate) || rate <= 0)) return Promise.reject('Enter a valid amount and use a product with a positive selling price.');
+                var quantity = Number((weight * factor).toFixed(3));
+                if (quantity <= 0 || quantity > 100000 || Math.abs(quantity - weight * factor) > 1e-7) return Promise.reject('Use kg or g so this weight can be billed accurately to three decimals.');
+                return Promise.resolve({ quantity: quantity, total: Number((quantity * rate).toFixed(2)), amount: amount, mode: mode, weight: weight });
+            },
+            onClose: function () { active = false; clearInterval(timer); }
+        });
+        active = false; clearInterval(timer);
+        if (!result || result.dismiss || branch !== PosnicPro.local.get('branch_id_set')) return null;
+        result = result.value || result;
+        if (result.mode === 'amount' && Math.round(result.total * 100) !== Math.round(result.amount * 100)) {
+            var accepted = await swal({ title: PosnicPro.i18n.t('lang_confirm_actual_amount', 'Confirm actual amount'), text: result.weight.toFixed(3) + ' kg costs ' + currency + result.total.toFixed(2) + '. Requested ' + currency + result.amount.toFixed(2) + '.', showCancelButton: true, confirmButtonText: 'Add at ' + currency + result.total.toFixed(2) });
+            if (!accepted || accepted.dismiss) return null;
+        }
+        return branch === PosnicPro.local.get('branch_id_set') ? result.quantity : null;
+    } catch (_) { return null; }
+    finally { active = false; clearInterval(timer); }
+};
+
 PosnicPro.sales.askSearchQuantity = function (item, id) {
     if (id && !item._searchDetailsLoaded) {
         PosnicPro.sales.itemCache.get(id, function (details) {
@@ -11864,6 +11946,20 @@ PosnicPro.sales.askSearchQuantity = function (item, id) {
         PosnicPro.sales.chooseSellingUnit(item, function (chosen) { PosnicPro.sales.askSearchQuantity(chosen, id); }); return;
     }
     var weighed = PosnicPro.sales.isWeighedItem && PosnicPro.sales.isWeighedItem(item);
+    if (weighed && PosnicPro.sales.SaleAction !== 'return') {
+        item = PosnicPro.sales._applyPriceList(item);
+        PosnicPro.sales.weighEntry(item).then(function (qty) {
+            if (qty == null) return;
+            var current = Number($('#touchsale_item_qty' + id).val()) || 0;
+            if ([true, 'true'].includes(item.track_inventory) && ![true, 'true'].includes(item.negative_stock) && qty + current > Number(item.available_quantity || 0)) {
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_measured_weight_exceeds_available_stock', 'Measured weight exceeds available stock.')); return;
+            }
+            PosnicPro.sales.addSalesLineItems(Object.assign({}, item, { item_quantity: qty, _quantityConfirmed: true }));
+            $('#sales_new_item_name').focus();
+        });
+        return;
+    }
+
     var settings = {};
     try { settings = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (_) { /* manual entry */ }
     var scaleOn = settings.hardware_weight_machine_enable === true || settings.hardware_weight_machine_enable === 'true';
@@ -13219,22 +13315,23 @@ PosnicPro.sales.readWeightFromMachine = async function () {
         return;
     }
 
+    const activeElement = document.activeElement;
+    const targetInput = $(activeElement).is('#sales_new_items_tbody input[name="addSalesLineItemQty"]')
+        ? activeElement
+        : $('#sales_new_items_tbody tr[id^="touch_row_"]').first().find('input[name="addSalesLineItemQty"]')[0];
+    if (!targetInput) {
+        PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_items_in_cart_please_add_an_item_first', 'No items in cart. Please add an item first.'));
+        return;
+    }
     try {
         // Prefer a settled reading from the scale. The live display shows every
         // frame including mid-swing values, so reading it directly can bill the
         // customer for a weight the load never actually rested at.
         let weight = null;
         try {
-            weight = await window.WeightBridge.getCurrentWeight();
+            weight = await window.WeightBridge.getCurrentWeight({ stableOnly: true });
         } catch (e) {
-            console.warn('[weight] live read failed, falling back to display:', e);
-        }
-
-        // Fallback: scales that transmit only once per settle may go quiet
-        // before we ask, so use whatever the display last showed.
-        if (weight === null || weight === undefined || isNaN(weight) || weight <= 0) {
-            const weightText = $('#live_weight_value').text().trim();
-            weight = parseFloat(weightText);
+            console.warn('[weight] live read failed:', e);
         }
 
         if (!weight || weight <= 0 || isNaN(weight)) {
@@ -13247,54 +13344,13 @@ PosnicPro.sales.readWeightFromMachine = async function () {
             return;
         }
 
-        // Check if cursor is in an input field (but exclude item search box)
-        const activeElement = document.activeElement;
-        const isInputField = activeElement && (
-            activeElement.tagName === 'INPUT' ||
-            activeElement.tagName === 'TEXTAREA'
-        );
-
-        // Exclude the item search box from being filled with weight
-        const isSearchBox = activeElement && activeElement.id === 'sales_new_item_name';
-
-        if (isInputField && activeElement.type === 'text' && !isSearchBox) {
-            // Fill the focused input field
-            $(activeElement).val(weight.toFixed(3));
-            $(activeElement).trigger('change');
-            PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg filled');
-        } else {
-            // Update quantity of last added item in cart
-            // Find first row (newest item since items are prepended)
-            const firstRow = $('#sales_new_items_tbody tr[id^="touch_row_"]').first();
-
-            if (firstRow.length) {
-                // Extract item ID from row ID (touch_row_{id})
-                const rowId = firstRow.attr('id');
-                const itemId = rowId.replace('touch_row_', '');
-
-                // Find quantity input with name addSalesLineItemQty
-                const qtyInput = firstRow.find('input[inputmode="decimal" name="addSalesLineItemQty"]');
-                if (qtyInput.length) {
-                    qtyInput.val(weight.toFixed(3));
-
-                    // Get track_inventory and negative_stock from hidden fields
-                    const trackInventory = $('#trackInventory_' + itemId).text();
-                    const negativeStock = $('#negativeStock_' + itemId).text();
-
-                    // Small delay to ensure DOM is updated before triggering calculation
-                    setTimeout(function () {
-                        // Trigger price recalculation
-                        PosnicPro.sales.quantity.textOnChange(itemId, trackInventory, negativeStock);
-                    }, 100);
-
-                    PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg set for last item');
-                } else {
-                    PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_quantity_field_found_for_last_item', 'No quantity field found for last item'));
-                }
-            } else {
-                PosnicPro.alert('warning', PosnicPro.i18n.t('lang_no_items_in_cart_please_add_an_item_first', 'No items in cart. Please add an item first.'));
-            }
-        }
+        // A reading belongs to the row selected when the request started.
+        // Never apply a delayed reading to a replacement row or a new sale.
+        if (!targetInput.isConnected || !$(targetInput).closest('#sales_new_items_tbody').length) return;
+        const itemId = $(targetInput).closest('tr[id^="touch_row_"]').attr('id').replace('touch_row_', '');
+        $(targetInput).val(weight.toFixed(3));
+        PosnicPro.sales.quantity.textOnChange(itemId, $('#trackInventory_' + itemId).text(), $('#negativeStock_' + itemId).text());
+        PosnicPro.alert('success', 'Weight ' + weight.toFixed(3) + ' kg filled');
 
     } catch (error) {
         console.error('Weight reading error:', error);
@@ -13314,6 +13370,38 @@ PosnicPro.sales.isWeighedItem = function (itemData) {
     var v = itemData.item_weight_machine_based;
     return v === '1' || v === 1 || v === true || v === 'true';
 };
+
+$(document).on('click', '.sale-weight-amount', async function (event) {
+    event.preventDefault(); event.stopImmediatePropagation();
+    var id = $(this).attr('data-id'), row = document.getElementById('touch_row_' + id);
+    var input = document.getElementById('touchsale_item_qty' + id);
+    if (!row || !input || PosnicPro.sales.SaleAction !== 'add') return;
+    var price = Number($('#addSalesLineItemSellingPrice_' + id).text());
+    var tax = parseFloat($('#addSalesLineItemTax_' + id).text()) || 0;
+    var exclusive = $('#addSalesLineItemTaxType_' + id).text() === 'Exc';
+    var discount = parseFloat($('#addSalesLineItemDiscount_' + id).text()) || 0;
+    var unit = $('#addSalesLineItemUnit_' + id).text().trim().toLowerCase() || 'kg';
+    var factor = ({ kg: 1, kgs: 1, kilogram: 1, kilograms: 1, g: 1000, gm: 1000, grams: 1000, gram: 1000, tonne: 0.001, tonnes: 0.001 })[unit];
+    if (!factor) return PosnicPro.alert('warning', 'Set this product’s weight unit to kg, g or tonnes before using By amount.');
+    // Use the actual line rate, including line tax/discount. Bill-level
+    // discounts and rounding are still calculated by the checkout engine.
+    var rate = (price - ($('#discountSign' + id).text() === '%' ? price * discount / 100 : discount)) * (exclusive ? 1 + tax / 100 : 1);
+    if (!exclusive && tax > 0 && discount > 0 && $('#discountSign' + id).text() !== '%') {
+        rate = (parseFloat($('#addSalesLineItemPrice_' + id).text()) - discount) * (1 + tax / 100);
+    }
+    if (!Number.isFinite(rate) || rate <= 0) return PosnicPro.alert('warning', PosnicPro.i18n.t('lang_set_a_positive_selling_price_before_weighi', 'Set a positive selling price before weighing by amount.'));
+    function alive() { return row.isConnected && input.isConnected && document.getElementById('touch_row_' + id) === row; }
+    try {
+        var quantity = await PosnicPro.sales.weighEntry({ item_name: $('#addSalesLineItemName_' + id).text(), unit: unit, selling_price: price }, { mode: 'amount', lineRate: rate, confirmButtonText: 'Update weight' });
+        if (quantity == null || !alive()) return;
+        if (Number($('#addSalesLineItemSellingPrice_' + id).text()) !== price) return PosnicPro.alert('warning', PosnicPro.i18n.t('lang_price_changed_weigh_by_amount_again', 'Price changed. Weigh by amount again.'));
+        if ($('#trackInventory_' + id).text() === 'true' && $('#negativeStock_' + id).text() === 'false' && quantity > Number(PosnicPro.sales.SaleTableLineItems[id].available_quantity)) return PosnicPro.alert('warning', PosnicPro.i18n.t('lang_measured_weight_exceeds_available_stock_th', 'Measured weight exceeds available stock. The quantity has not been changed.'));
+        $(input).val(quantity.toFixed(3));
+        PosnicPro.sales.quantity.textOnChange(id, $('#trackInventory_' + id).text(), $('#negativeStock_' + id).text());
+    } catch (error) {
+        if (error instanceof Error) PosnicPro.alert('error', error.message);
+    }
+});
 
 /*
  * Say the scale could not be read, and carry on.
@@ -13407,6 +13495,11 @@ PosnicPro.sales.initWeightMachine = function () {
             // Start live weight monitoring
             if (window.WeightBridge.startMonitoring) {
                 window.WeightBridge.startMonitoring(function (weight) {
+                    if (weight === null || weight === undefined || !Number.isFinite(weight)) {
+                        $('#live_weight_value').text('---');
+                        $('#live_weight_display').css({ background: '#f0f0f0', color: '#333' });
+                        return;
+                    }
                     if (weight !== null && weight !== undefined && !isNaN(weight)) {
                         $('#live_weight_value').text(weight.toFixed(3));
                         // Change color based on weight
@@ -13676,40 +13769,14 @@ $(document).on('click', '#print_receipt_a4, #print_receipt_thermal', function ()
     });
 });
 
-/*
- * The sale-done card closes itself, unless the cashier is using it.
- *
- * At a busy counter the next customer is already waiting, so making
- * somebody click "New sale" after every single sale is a step charged on
- * every transaction of the day. The card knows what comes next, so it can
- * do it.
- *
- * WHAT MAKES THIS SAFE IS THE CANCELLING, NOT THE DURATION.
- *
- * The failure that would make this worse than no timer at all: the card
- * closes at ten seconds while a hand is on its way to Print. That cashier
- * now has to go and find the sale again in front of a waiting customer,
- * and that single event costs more goodwill than the saved clicks earn
- * back over a hundred sales. So ANY sign of attention stops the clock -
- * moving onto the card, focusing a button, a keystroke, a touch - and
- * once stopped it does not restart. Somebody who has engaged with this
- * card gets to leave it when they choose.
- *
- * Printing deliberately does not restart it either. A print is exactly
- * the case where the next thing is handing paper to a customer, and
- * having the screen change during that is the wrong moment.
- */
+/* The completed sale returns after the configured delay. Interaction pauses
+ * a countdown; successful printing starts it again. Zero returns immediately. */
 /* Preview the configured print document with the current cart. */
 PosnicPro.sales.renderTenderReceiptPreview = function () {
     PosnicPro.tenderReceipt.show();
 };
 
 PosnicPro.sales.saleDoneTimer = {
-    /* Long enough to read the total and reach for Print; short enough that
-       the till is ready before the next customer has put their basket down.
-       Ten felt like waiting (owner: "dont wait too much time to close"). */
-    SECONDS: 6,
-
     _timer: null,
     _card: function () { return $('#newsalespage .sale-done-card'); },
 
@@ -13719,6 +13786,7 @@ PosnicPro.sales.saleDoneTimer = {
 
         var $card = self._card();
         if (!$card.length) { return; }
+        var seconds = PosnicPro.saleRedirectSeconds();
 
         /*
          * Somebody who asked for reduced motion gets no ring, and the ring is
@@ -13726,7 +13794,7 @@ PosnicPro.sales.saleDoneTimer = {
          * vanish with no notice at all - the exact surprise the ring exists to
          * prevent - so for them the card simply waits to be dismissed.
          */
-        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        if (seconds > 0 && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             return;
         }
 
@@ -13741,7 +13809,7 @@ PosnicPro.sales.saleDoneTimer = {
          * time. Pure CSS (the is-closing class starts the keyframe, the
          * variable sets its pace), so removing the class is the whole stop.
          */
-        $card.get(0).style.setProperty('--sale-done-secs', self.SECONDS + 's');
+        $card.get(0).style.setProperty('--sale-done-secs', seconds + 's');
         $card.removeClass('is-held is-closing');
         /* next frame, so a back-to-back sale restarts the animation */
         void $card.get(0).offsetWidth;
@@ -13756,7 +13824,7 @@ PosnicPro.sales.saleDoneTimer = {
             /* The same path the button takes, rather than a second way to
                start a sale that could drift away from the first. */
             $('#newsalespage .sale-done-primary').get(0).click();
-        }, self.SECONDS * 1000);
+        }, seconds * 1000);
     },
 
     /* Called by every interaction. Idempotent on purpose - mouseenter and
@@ -13817,6 +13885,23 @@ $(document).on('click', '.infobar-tender-close', function () {
     PosnicPro.sales.saleDoneTimer.stop();
     var primary = $('#newsalespage .sale-done-primary').get(0);
     if (primary) { primary.click(); }
+});
+
+// The next transaction starts at product search, including when the route
+// is already /sales/new and the router therefore does not run again.
+$(document).on('click', '#newsalespage .sale-done-primary', function () {
+    PosnicPro.sales.saleDoneTimer.stop();
+    PosnicPro.sales._focusAfterCompletedSale = true;
+    window.setTimeout(function () {
+        var input = document.getElementById('sales_new_item_name');
+        if (!input || !$(input).is(':visible') || input.disabled ||
+            $('.modal.show:visible, .swal2-modal:visible').length ||
+            $('#infobar-settings-sidebar-tender-details').hasClass('sidebarview')) return;
+        if (document.activeElement && document.activeElement !== document.body &&
+            /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) &&
+            document.activeElement !== input) return;
+        input.focus();
+    }, 0);
 });
 
 $(document).on('click', '#sales_list_rows tr.sales-row', function () {
