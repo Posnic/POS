@@ -114,7 +114,7 @@ test('saved damage explains completion, offers a clean new entry and never calls
  w.PosnicPro={i18n:{t:(k,v)=>v},local:{get:()=> 'b'},request(o,ok){calls.push(o);ok({data:o.url.includes('view=details')?entry:o.url.includes('catalogue')?{rows:[]}:o.url.includes('spoilage?')?{rows:[{...entry,_id:'entry'}],canWrite:true,reasons:[],today:'2026-11-01'}:[{id:'b',name:'Shop'}]});}};
  w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/modules/js/inventory_counts.js'),'utf8'));
  await w.PosnicPro.inventorycounts.openSpoilage();const $=w.$,tick=()=>new Promise(r=>setImmediate(r));
- $('.sp_open').trigger('click');await tick();assert.match($('#sp_detail [role="status"]').text(),/Saved .* stock updated/);assert.equal($('#inventory_popup #sp_done').text(),'Done');
+ $('.sp_open').trigger('click');await tick();assert.match($('#sp_detail [role="status"]').text(),/Completed .* stock deducted/);assert.equal($('#inventory_popup #sp_done').text(),'Done');
  $('#sp_another').trigger('click');await tick();assert.equal($('#sp_entry_rows tr').length,0);assert.equal($('#sp_date').val(),'2026-11-01');assert.equal($('#sp_close').length,1);
  entry.state='conflict';$('.sp_open').trigger('click');await tick();assert.equal($('#sp_another').length,0);assert.equal($('#sp_detail .alert-success').length,0);assert.equal($('#inventory_popup #sp_done').text(),'Close');
  entry.state='accepted';entry.kind='reversal';$('.sp_open').trigger('click');await tick();assert.match($('#sp_detail [role="status"]').text(),/stock restored/);
@@ -130,7 +130,7 @@ test('overview tabs separate worksheets and status-filtered history',()=>{
  const urls=[];w.PosnicPro={i18n:{t:(k,v)=>v},local:{get:()=> 'b'},get(url,ok){urls.push(url);ok(url==='inventory-counts'?{data:[]}:{rows:[]});}};
  w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/modules/js/inventory_counts.js'),'utf8'));
  const p=w.PosnicPro.inventorycounts,$=w.$;p.load();
- assert.equal($('#count_overview_tabs button.active').text(),'Needs attention');assert.match(urls.at(-1),/status=attention/);assert.equal($('#inventory_counts_list').css('display'),'none');
+ assert.equal($('#count_overview_tabs button.active').text(),'All activity');assert.doesNotMatch(urls.at(-1),/status=/);$('#count_overview_tabs [data-view="attention"]').trigger('click');assert.match(urls.at(-1),/status=attention/);assert.equal($('#inventory_counts_list').css('display'),'none');
  $('#count_overview_tabs [data-view="complete"]').trigger('click');assert.match(urls.at(-1),/status=complete/);assert.match($('#mobile_inventory_rows').text(),/No completed/);
  $('#count_overview_tabs [data-view="worksheets"]').trigger('click');assert.equal(urls.at(-1),'inventory-counts');assert.equal($('#mobile_inventory_operations').css('display'),'none');assert.notEqual($('#inventory_counts_list').css('display'),'none');
  $('#count_overview_tabs [data-view="cancelled"]').trigger('click');assert.match(urls.at(-1),/status=cancelled/);assert.equal($('#count_overview_tabs button.active').length,1);
