@@ -50,7 +50,7 @@ assert.equal(await db.collection('stocklogs').countDocuments(),2);
 });
 test('reversal needs approval, restores once and preserves original history',async()=>{
 await pending();await service.decide({...owner(),body:{decision:'accept'}});const original=req.params.id;
-let reversal=await service.reverse({...owner(),body:{note:'Incorrect spoiled quantity'}});assert.equal(reversal.state,'pending');assert.equal(await stock(),8.5);
+const reversal=await service.reverse({...owner(),body:{note:'Incorrect spoiled quantity'}});assert.equal(reversal.state,'pending');assert.equal(await stock(),8.5);
 assert.equal((await service.get(req)).state,'reversal_pending');
 const approve={...owner(),params:{id:reversal.id},body:{decision:'accept'}};await service.decide(approve);await service.decide(approve);
 assert.equal(await stock(),10);assert.equal((await service.get(req)).state,'reversed');assert.equal(await db.collection('stocklogs').countDocuments(),2);
@@ -69,7 +69,7 @@ await assert.rejects(service.decide({...remote,body:{decision:'accept'}}),/anoth
 const alien={...req,tenantContext:{...req.tenantContext,licenseId:String(new ObjectId())}};await assert.rejects(service.get(alien),/Branch not found/);
 });
 test('daily report and Excel separate pending, rejected, accepted losses and reversals',async()=>{
-await pending();let rows=await service.daily(db,{branch:req.tenantContext.branchId,license:req.tenantContext.licenseId,from:'2026-10-30',to:'2026-10-30'});assert.equal(rows[0].state,'pending');assert.equal(rows[0].applied,undefined);
+await pending();const rows=await service.daily(db,{branch:req.tenantContext.branchId,license:req.tenantContext.licenseId,from:'2026-10-30',to:'2026-10-30'});assert.equal(rows[0].state,'pending');assert.equal(rows[0].applied,undefined);
 await service.decide({...owner(),body:{decision:'accept'}});const file=await service.report({...req,query:{from:'2026-10-30',to:'2026-10-30'}});const book=new ExcelJS.Workbook();await book.xlsx.load(Buffer.from(file.base64,'base64'));assert.equal(book.worksheets[0].getCell('J2').value,1.5);assert.equal(book.worksheets[0].getCell('N2').value,30);
 assert.equal((await service.list({...req,query:{status:'pending'}})).rows.length,0);
 });
@@ -85,7 +85,7 @@ w.eval(fs.readFileSync(require('path').join(__dirname,'../../frontend/static/scr
 w.scrollTo=()=>{}; w.HTMLElement.prototype.scrollIntoView=function(){}; w.crypto.randomUUID=require('crypto').randomUUID;w.confirm=()=>true;
 w.prompt=()=>{throw Error('prompt() is not supported.');};
 w.swal=async options=>options.preConfirm('Local test reversal');
-let actor=req.user;
+const actor=req.user;
 w.PosnicPro={local:{get:()=>req.tenantContext.branchId},i18n:{t:(k,v)=>v},request:async(o,ok,bad)=>{try{
 const u=new URL(o.url,'http://localhost'),body=o.data?JSON.parse(o.data):{},request={...req,user:actor,query:Object.fromEntries(u.searchParams),body,method:o.method||'GET'};let data;
 if(u.pathname==='/items/priceSheet')data=[{id:req.tenantContext.branchId,name:'Test branch'}];

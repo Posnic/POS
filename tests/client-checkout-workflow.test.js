@@ -9,7 +9,7 @@ function fixture() {
   const w = dom.window;
   w.eval(jquery);
   w.$.expr.pseudos.visible = n => n.style.display !== 'none';
-  w.PosnicPro = { local: { get: () => '₹' }, alert() {}, sales: { SaleAction: 'add', quantity: { textOnChange() {} }, saleDoneTimer: { stop() {} } } };
+  w.PosnicPro = { i18n: { t: (key, fallback) => fallback }, local: { get: () => '₹' }, alert() {}, sales: { SaleAction: 'add', quantity: { textOnChange() {} }, saleDoneTimer: { stop() {} } } };
   w.PosnicPro.local.get = key => key === 'general_settings' ? '{}' : key === 'branch_id_set' ? 'branch-a' : '₹';
   const weighStart = source.indexOf('PosnicPro.sales.weighEntry =');
   w.eval(source.slice(weighStart, source.indexOf('PosnicPro.sales.askSearchQuantity =', weighStart)));

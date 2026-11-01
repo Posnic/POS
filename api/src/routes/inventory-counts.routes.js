@@ -5,10 +5,16 @@ const controller = require('../controllers/inventory-counts.controller');
 const { protect } = require('../middleware/auth');
 router.use(protect);
 const sheets = require('../services/stock-count-sheet');
-const upload = require('multer')({ storage: require('multer').memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 1 } });
-const sheetAction = fn => async (req, res) => {
-  try { res.json({ type: 'success', data: await fn(await sheets.scoped(req)) }); }
-  catch (e) { res.status(e.status || 400).json({ type: 'error', message: e.message }); }
+const upload = require('multer')({
+  storage: require('multer').memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+});
+const sheetAction = (fn) => async (req, res) => {
+  try {
+    res.json({ type: 'success', data: await fn(await sheets.scoped(req)) });
+  } catch (e) {
+    res.status(e.status || 400).json({ type: 'error', message: e.message });
+  }
 };
 const inventory = require('../services/mobile-inventory');
 const spoilage = require('../services/spoilage');

@@ -2217,7 +2217,13 @@ class ItemRepository extends BaseModel {
         }
         return {
           status: true,
-          data: { id: result.insertedId.toString(), ...updateData, branchSharing: await require('../services/catalogue-sharing').automatic([result.insertedId]) },
+          data: {
+            id: result.insertedId.toString(),
+            ...updateData,
+            branchSharing: await require('../services/catalogue-sharing').automatic([
+              result.insertedId,
+            ]),
+          },
           message: SUCCESS_MESSAGES.ITEM_CREATED,
         };
       }
@@ -3192,7 +3198,16 @@ class ItemRepository extends BaseModel {
                 items: { $push: '$$ROOT' },
               },
             },
-            { $sort: { _categoryOrder: 1, _categoryName: 1, _skuNumber: 1, _skuText: 1, name: 1, first_id: 1 } },
+            {
+              $sort: {
+                _categoryOrder: 1,
+                _categoryName: 1,
+                _skuNumber: 1,
+                _skuText: 1,
+                name: 1,
+                first_id: 1,
+              },
+            },
             { $skip: offset },
             { $limit: size + 1 },
           ])
@@ -3200,7 +3215,10 @@ class ItemRepository extends BaseModel {
         nextOffset = groups.length > size ? offset + size : null;
         items = groups.slice(0, size).flatMap((group) => group.items);
       } else {
-        let cursor = collection.aggregate([{ $match: match }, ...require('../utils/catalogue-order').stages()]);
+        let cursor = collection.aggregate([
+          { $match: match },
+          ...require('../utils/catalogue-order').stages(),
+        ]);
         if (offset) cursor = cursor.skip(offset);
         items = await cursor.limit(limit).toArray();
         nextOffset = items.length === limit ? offset + limit : null;
@@ -3382,7 +3400,9 @@ class ItemRepository extends BaseModel {
       const insertResult = await collection.insertOne(document);
       const inserted = { ...document, _id: insertResult.insertedId };
       const simplified = BaseModel.simplifyFields(inserted);
-      simplified.branchSharing = await require('../services/catalogue-sharing').automatic([insertResult.insertedId]);
+      simplified.branchSharing = await require('../services/catalogue-sharing').automatic([
+        insertResult.insertedId,
+      ]);
 
       return {
         status: true,
@@ -6667,9 +6687,26 @@ class ItemRepository extends BaseModel {
     const collection = await this.getCollection(this.collectionName);
     const [total, items] = await Promise.all([
       collection.countDocuments(filter),
-      collection.aggregate([{ $match: filter }, ...require('../utils/catalogue-order').stages(),
-        { $skip: (page - 1) * pageSize }, { $limit: pageSize },
-        { $project: { name: 1, itemid: 1, unit: 1, selling_units: 1, selling_price: 1, company_price: 1, mrp_price: 1, branch_id: 1, selling_price_hold_until: 1 } }])
+      collection
+        .aggregate([
+          { $match: filter },
+          ...require('../utils/catalogue-order').stages(),
+          { $skip: (page - 1) * pageSize },
+          { $limit: pageSize },
+          {
+            $project: {
+              name: 1,
+              itemid: 1,
+              unit: 1,
+              selling_units: 1,
+              selling_price: 1,
+              company_price: 1,
+              mrp_price: 1,
+              branch_id: 1,
+              selling_price_hold_until: 1,
+            },
+          },
+        ])
         .toArray(),
     ]);
     return { total, items, page, pageSize };

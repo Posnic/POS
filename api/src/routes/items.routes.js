@@ -86,31 +86,58 @@ router.post(
 router.use(protect);
 router.use((req, res, next) => {
   const json = res.json.bind(res);
-  res.json = body => {
+  res.json = (body) => {
     if (body && req.catalogueSharingConflicts) {
       body.branchSharingConflicts = req.catalogueSharingConflicts;
-      body.message = (body.message || 'Saved.') + ' ' + req.catalogueSharingConflicts + ' branch updates need review. Open Items → Apply to branches to review and retry.';
+      body.message =
+        (body.message || 'Saved.') +
+        ' ' +
+        req.catalogueSharingConflicts +
+        ' branch updates need review. Open Items → Apply to branches to review and retry.';
     } else if (body && req.catalogueSharingQueued) {
       body.branchSharingQueued = true;
-      body.message = (body.message || 'Saved.') + ' Updates to other branches will run in cloud after sync.';
+      body.message =
+        (body.message || 'Saved.') + ' Updates to other branches will run in cloud after sync.';
     }
     return json(body);
   };
   next();
 });
 const catalogueSharing = require('../services/catalogue-sharing');
-const catalogueAction = fn => async (req, res) => {
-  try { res.json({ type: 'success', data: await fn(req) }); }
-  catch (e) { res.status(400).json({ type: 'error', message: e.message }); }
+const catalogueAction = (fn) => async (req, res) => {
+  try {
+    res.json({ type: 'success', data: await fn(req) });
+  } catch (e) {
+    res.status(400).json({ type: 'error', message: e.message });
+  }
 };
 router.get('/catalogue-sharing', catalogueAction(catalogueSharing.policy));
 router.put('/catalogue-sharing', catalogueAction(catalogueSharing.policy));
-router.post('/catalogue-sharing', catalogueAction(async req => {
-  const c = await catalogueSharing.context(req);
-  const db = await require('../models/base.model').getDb();
-  const rows = await db.collection('items').find({ branch_id: new (require('mongodb').ObjectId)(c.branchId), license: new (require('mongodb').ObjectId)(c.licenseId), is_deleted: { $ne: true }, del_status: { $nin: [1,'1',true] } }, { projection: { _id: 1 } }).limit(2001).toArray();
-  return catalogueSharing.distribute(req, req.body.ids || rows.map(r => r._id), req.body.branches || 'all');
-}));
+router.post(
+  '/catalogue-sharing',
+  catalogueAction(async (req) => {
+    const c = await catalogueSharing.context(req);
+    const db = await require('../models/base.model').getDb();
+    const rows = await db
+      .collection('items')
+      .find(
+        {
+          branch_id: new (require('mongodb').ObjectId)(c.branchId),
+          license: new (require('mongodb').ObjectId)(c.licenseId),
+          is_deleted: { $ne: true },
+          del_status: { $nin: [1, '1', true] },
+        },
+        { projection: { _id: 1 } }
+      )
+      .limit(2001)
+      .toArray();
+    return catalogueSharing.distribute(
+      req,
+      req.body.ids || rows.map((r) => r._id),
+      req.body.branches || 'all'
+    );
+  })
+);
 const stockPreference = require('../services/item-stock-preference');
 const preferenceHandler = (fn) => async (req, res, next) => {
   try {

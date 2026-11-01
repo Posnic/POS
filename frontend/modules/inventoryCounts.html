@@ -1,8 +1,8 @@
 <div class="vertical-layout page_loader" id="inventorycounts" style="display:none">
     <div id="containerbar"><div class="breadcrumbbar crumbbar_padding"><div class="row align-items-center row_filter"><div class="col"><h4 class="page-title break_title mb-0"><lang class="lang_stock_counts">Stock Counts</lang></h4></div><div class="col-auto">
-<button id="inventory-overview" class="btn btn-primary-rgba" onclick="PosnicPro.inventorycounts.navigate('overview');">Overview</button>
-<button class="btn btn-primary-rgba" data-module="item" data-access="write" onclick="PosnicPro.inventorycounts.navigate('audit');"><i class="feather icon-clipboard" aria-hidden="true"></i> Start stock audit</button>
-<button class="btn btn-primary-rgba" data-module="item" data-access="read" onclick="PosnicPro.inventorycounts.navigate('damage');"><i class="feather icon-alert-triangle" aria-hidden="true"></i> Spoilage / damage</button>
+<button id="inventory-overview" class="btn btn-primary-rgba" onclick="PosnicPro.inventorycounts.navigate('overview');"><lang class="lang_overview">Overview</lang></button>
+<button class="btn btn-primary-rgba" data-module="item" data-access="write" onclick="PosnicPro.inventorycounts.navigate('audit');"><i class="feather icon-clipboard" aria-hidden="true"></i> <lang class="lang_start_stock_audit">Start stock audit</lang></button>
+<button class="btn btn-primary-rgba" data-module="item" data-access="read" onclick="PosnicPro.inventorycounts.navigate('damage');"><i class="feather icon-alert-triangle" aria-hidden="true"></i> <lang class="lang_spoilage_damage">Spoilage / damage</lang></button>
 <button class="btn btn-primary-rgba" data-module="item" data-access="write" onclick="PosnicPro.items.openBulkStock();"><lang class="lang_bulk_stock_update">Bulk stock update</lang></button>
 <a class="btn btn-primary-rgba" href="#/stocklogs" onclick="PosnicPro.inventorycounts.navigate('logs');return false;"><lang class="lang_inventory_logs">Inventory logs</lang></a>
 <a class="btn btn-primary-rgba" href="#/lowstockitems" onclick="PosnicPro.inventorycounts.navigate('lowstock');return false;"><lang class="lang_low_stock_list">Low stock list</lang></a>

@@ -207,7 +207,7 @@ PosnicPro.quickreport = {
         }); });
         $('#daily_spoilage_section').remove();
         if (spoilageRows.length) {
-          var spoilageSection = $('<section id="daily_spoilage_section" class="mt-3">').append($('<h5>').text('Spoilage / damage'));
+          var spoilageSection = $('<section id="daily_spoilage_section" class="mt-3">').append($('<h5>').text(PosnicPro.i18n.t('lang_spoilage_damage', 'Spoilage / damage')));
           $('<p class="text-muted">').text('Saved entries deduct stock; negative quantities and values undo a loss. Values use cost at entry. Stock columns are totals for the selected period, repeated for the same product. Missing or incomplete stock history is shown as Unavailable.').appendTo(spoilageSection);
           var spoilageTable = $('<table class="table table-bordered table-sm">').appendTo($('<div class="table-responsive">').appendTo(spoilageSection));
           var spoilageHead = $('<tr>').appendTo($('<thead>').appendTo(spoilageTable)); spoilageHeader.forEach(function (v) { $('<th>').text(v).appendTo(spoilageHead); });

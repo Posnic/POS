@@ -97,7 +97,13 @@ const normalizeBoolean = (value) => {
  */
 const validateCategoryData = (data) => {
   const errors = [];
-  if (data.sort_order !== undefined && (!Number.isSafeInteger(Number(data.sort_order)) || Number(data.sort_order) < 0 || Number(data.sort_order) > 2147483646)) errors.push('Sort number must be a non-negative whole number.');
+  if (
+    data.sort_order !== undefined &&
+    (!Number.isSafeInteger(Number(data.sort_order)) ||
+      Number(data.sort_order) < 0 ||
+      Number(data.sort_order) > 2147483646)
+  )
+    errors.push('Sort number must be a non-negative whole number.');
 
   if (!data.name || data.name.trim().length === 0) {
     errors.push('Category name is required');

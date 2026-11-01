@@ -1,3 +1,4 @@
+const uploadsRoot = require('../utils/uploads-path');
 const { loginCookieDays } = require('../utils/token-lifetime');
 const { redact } = require('../utils/redact');
 const { clientIp } = require('../utils/client-ip');
@@ -1787,7 +1788,7 @@ class UsersController extends BaseController {
         }
       } else {
         // Local storage (matches PHP line 592-599)
-        const uploadDir = path.join(require('../utils/uploads-path'), 'user_images');
+        const uploadDir = path.join(uploadsRoot, 'user_images');
 
         // Create directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {

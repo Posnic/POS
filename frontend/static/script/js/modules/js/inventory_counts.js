@@ -60,7 +60,7 @@ PosnicPro.inventorycounts.dialog = async function(options) {
     }
 };
 PosnicPro.inventorycounts.confirmLeave = async function(text) {
-    var answer=await PosnicPro.inventorycounts.dialog({title:'Discard unsaved changes?',text:text,type:'warning',showCancelButton:true,confirmButtonText:'Discard changes',cancelButtonText:'Keep editing',confirmButtonColor:'#c93d4b',cancelButtonColor:'#0968cb'});
+    var answer=await PosnicPro.inventorycounts.dialog({title:PosnicPro.i18n.t('lang_discard_unsaved_changes', 'Discard unsaved changes?'),text:text,type:'warning',showCancelButton:true,confirmButtonText:'Discard changes',cancelButtonText:'Keep editing',confirmButtonColor:'#c93d4b',cancelButtonColor:'#0968cb'});
     return !!answer && !answer.dismiss && answer.value!==false;
 };
 PosnicPro.inventorycounts.restorePopup = function() {
@@ -75,7 +75,7 @@ PosnicPro.inventorycounts.closePopup = function() {
 PosnicPro.inventorycounts.popup = function(id,title) {
     var p=this, content=$('#'+id);
     if(!content.length)return;
-    if(!$('#inventory_popup').length)$('body').append('<div id="inventory_popup" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="inventory_popup_title"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><div class="modal-header"><h5 id="inventory_popup_title" class="modal-title"></h5><button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button></div><div class="modal-body"></div><div class="modal-footer"><button class="btn btn-outline-secondary" data-dismiss="modal">Close</button></div></div></div></div>');
+    if(!$('#inventory_popup').length)$('body').append('<div id="inventory_popup" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="inventory_popup_title"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><div class="modal-header"><h5 id="inventory_popup_title" class="modal-title"></h5><button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">&times;</button></div><div class="modal-body"></div><div class="modal-footer"><button class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button></div></div></div></div>');
     if(!content.closest('#inventory_popup').length){p.restorePopup();content.before('<span id="inventory_popup_anchor" hidden></span>');content.appendTo('#inventory_popup .modal-body').show();}
     $('#inventory_popup_title').text(title);
     $('#inventory_popup').off('hide.bs.modal.inventory').on('hide.bs.modal.inventory',function(){p.restorePopup();});
@@ -154,9 +154,9 @@ PosnicPro.inventorycounts.openMobile = function (id) {
         root.trigger('focus');
         if (r.state === 'conflict') {
             $('<p role="status">').text('Stock changed after this count was prepared. Recount the unresolved items using current stock, or cancel the remaining changes. Already applied rows will not be reversed.').appendTo(root);
-            if (r.canRecount) $('<button class="btn btn-primary mr-2 mobile-inventory-recount">').text('Recount unresolved items').on('click', function () { self.closePopup(); self.startAudit({ itemIds:r.lines.filter(function(l){return !(r.applied || []).includes(l.itemId);}).map(function(l){return l.itemId;}) }); }).appendTo(root);
-            if (r.canCancel) $('<button class="btn btn-outline-danger mobile-inventory-cancel">').attr('data-id',id).text('Cancel remaining changes').appendTo(root);
-            if (!r.canCancel && !r.canRecount) $('<p>').text('Ask a user with stock write access to this branch to resolve this entry.').appendTo(root);
+            if (r.canRecount) $('<button class="btn btn-primary mr-2 mobile-inventory-recount">').text(PosnicPro.i18n.t('lang_recount_unresolved_items', 'Recount unresolved items')).on('click', function () { self.closePopup(); self.startAudit({ itemIds:r.lines.filter(function(l){return !(r.applied || []).includes(l.itemId);}).map(function(l){return l.itemId;}) }); }).appendTo(root);
+            if (r.canCancel) $('<button class="btn btn-outline-danger mobile-inventory-cancel">').attr('data-id',id).text(PosnicPro.i18n.t('lang_cancel_remaining_changes', 'Cancel remaining changes')).appendTo(root);
+            if (!r.canCancel && !r.canRecount) $('<p>').text(PosnicPro.i18n.t('lang_ask_a_user_with_stock_write_access_to_this', 'Ask a user with stock write access to this branch to resolve this entry.')).appendTo(root);
         }
         if (r.cancellation) $('<p>').text('Remaining changes cancelled by ' + r.cancellation.actor + ': ' + r.cancellation.reason + '. Previously applied rows remain applied.').appendTo(root);
     });
@@ -168,7 +168,7 @@ $(document).on('click', '.mobile-inventory-more', function () { PosnicPro.invent
 $(document).on('click', '.mobile-inventory-open', function () { PosnicPro.inventorycounts.openMobile($(this).attr('data-id')); });
 $(document).on('click', '.mobile-inventory-cancel', async function () {
     var button=$(this), id=button.attr('data-id'), branch=PosnicPro.local.get('branch_id_set');
-    var answer=await PosnicPro.inventorycounts.dialog({title:'Cancel remaining changes',text:'Already applied stock changes will remain. Enter a reason; this entry stays in history.',input:'text',showCancelButton:true,confirmButtonText:'Cancel remaining changes',preConfirm:function(value){return String(value||'').trim() ? Promise.resolve(value) : Promise.reject('Enter a reason.');}});
+    var answer=await PosnicPro.inventorycounts.dialog({title:PosnicPro.i18n.t('lang_cancel_remaining_changes', 'Cancel remaining changes'),text:'Already applied stock changes will remain. Enter a reason; this entry stays in history.',input:'text',showCancelButton:true,confirmButtonText:'Cancel remaining changes',preConfirm:function(value){return String(value||'').trim() ? Promise.resolve(value) : Promise.reject('Enter a reason.');}});
     if (!answer || answer.dismiss || branch!==PosnicPro.local.get('branch_id_set')) return;
     var reason=typeof answer==='string'?answer:answer.value; if (!reason) return;
     button.prop('disabled',true);
@@ -224,8 +224,8 @@ $(document).on('click', '.mobile-inventory-close', function () {
         matches.slice(offset, offset + auditPageSize).forEach(function (r) {
             var tr = $('<tr>').appendTo(body);
             [r.sku, r.name, r.unit, r.quantity == null ? 'Invalid stock' : (r.quantity / 1000).toFixed(3)].forEach(function (v) { $('<td>').text(v).appendTo(tr); });
-            $('<td>').append($('<input class="form-control audit-new" type="number" min="0" step="0.001" placeholder="No change" style="width:110px">').attr('data-id', r.id).attr('aria-label', 'New stock for ' + r.name).val(edits[r.id] ?? '')).appendTo(tr);
-            $('<td>').append($('<input class="form-control audit-reason" list="audit_reasons" placeholder="Choose or type" maxlength="500" style="width:200px">').attr('data-id', r.id).attr('aria-label', 'Reason for ' + r.name).val(reasons[r.id] || '')).appendTo(tr);
+            $('<td>').append($('<input class="form-control audit-new" type="number" min="0" step="0.001" placeholder="No change" data-t-placeholder="lang_no_change" style="width:110px">').attr('data-id', r.id).attr('aria-label', 'New stock for ' + r.name).val(edits[r.id] ?? '')).appendTo(tr);
+            $('<td>').append($('<input class="form-control audit-reason" list="audit_reasons" placeholder="Choose or type" data-t-placeholder="lang_choose_or_type" maxlength="500" style="width:200px">').attr('data-id', r.id).attr('aria-label', 'Reason for ' + r.name).val(reasons[r.id] || '')).appendTo(tr);
         });
         $('#audit_page_info').text((matches.length ? offset + 1 : 0) + '–' + Math.min(offset + auditPageSize, matches.length) + ' of ' + matches.length + ' products · Page ' + auditPage + ' of ' + pages);
         $('#audit_prev').prop('disabled', auditPage <= 1);
@@ -245,7 +245,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
             var page = await api({ url: scope('inventory-counts/catalogue?kind=categories' + (after ? '&after=' + encodeURIComponent(after) : '')), method: 'GET' });
             if (ticket !== sequence) return; check(); categories = categories.concat(page.rows); after = page.next;
         } while (after);
-        var category = $('#audit_category').empty().append($('<option value="">').text('All categories'));
+        var category = $('#audit_category').empty().append($('<option value="">').text(PosnicPro.i18n.t('lang_all_categories', 'All categories')));
         categories.sort(function (a,b) { return a.sortOrder - b.sortOrder || a.name.localeCompare(b.name); });
         categories.forEach(function (c) { category.append($('<option>').val(c.id).text(c.name)); });
         rows.sort(function (a,b) { return (categories.findIndex(function (c) { return c.id === a.categoryId; }) - categories.findIndex(function (c) { return c.id === b.categoryId; })) || a.sku.localeCompare(b.sku, undefined, { numeric: true }) || a.name.localeCompare(b.name); });
@@ -257,10 +257,10 @@ $(document).on('click', '.mobile-inventory-close', function () {
         p.detailRequest=(p.detailRequest||0)+1;
         $('#inventorycounts').removeClass('count-reviewing').addClass('count-editing');
         activeBranch = branch = PosnicPro.local.get('branch_id_set'); auditPageSize=25;
-        $('#inventory_count_detail').show().html('<div class="d-flex align-items-center justify-content-between mb-3" style="gap:12px"><h5 class="mb-0">Stock adjustment</h5><label class="mb-0 d-flex align-items-center" style="gap:8px">Branch <select id="audit_branch" class="form-control" style="width:170px" aria-label="Stock adjustment branch"></select></label></div>' +
-            '<div class="d-flex flex-wrap align-items-center mb-3" style="gap:8px"><input id="audit_search" class="form-control" style="width:220px;max-width:100%" placeholder="Search product / SKU" aria-label="Search products"><select id="audit_category" class="form-control" style="width:190px" aria-label="Category"><option value="">All categories</option></select><span class="flex-grow-1"></span><button class="btn btn-outline-primary" id="audit_download">Excel</button><button class="btn btn-outline-primary" id="audit_print">Print</button><button class="btn btn-outline-primary" id="audit_upload">Upload</button><input type="file" id="audit_file" accept=".xlsx,.csv" hidden></div>' +
+        $('#inventory_count_detail').show().html('<div class="d-flex align-items-center justify-content-between mb-3" style="gap:12px"><h5 class="mb-0"><lang class="lang_stock_adjust_title">Stock adjustment</lang></h5><label class="mb-0 d-flex align-items-center" style="gap:8px">Branch <select id="audit_branch" class="form-control" style="width:170px" aria-label="Stock adjustment branch" data-t-aria-label="lang_stock_adjustment_branch"></select></label></div>' +
+            '<div class="d-flex flex-wrap align-items-center mb-3" style="gap:8px"><input id="audit_search" class="form-control" style="width:220px;max-width:100%" placeholder="Search product / SKU" data-t-placeholder="lang_search_product_sku" aria-label="Search products" data-t-aria-label="lang_search_products"><select id="audit_category" class="form-control" style="width:190px" aria-label="Category" data-t-aria-label="lang_newcategory_title"><option value="" data-t="lang_all_categories">All categories</option></select><span class="flex-grow-1"></span><button class="btn btn-outline-primary" id="audit_download"><lang class="lang_excel">Excel</lang></button><button class="btn btn-outline-primary" id="audit_print"><lang class="lang_printed">Print</lang></button><button class="btn btn-outline-primary" id="audit_upload"><lang class="lang_upload">Upload</lang></button><input type="file" id="audit_file" accept=".xlsx,.csv" hidden></div>' +
             '<datalist id="audit_reasons"><option value="Monthly stock count"><option value="Damaged during handling"><option value="Spoilage / expired stock"><option value="Opening stock correction"><option value="Stock entry correction"></datalist>' +
-            '<div class="table-responsive"><table class="table"><thead><tr><th>SKU</th><th>Product</th><th>Unit</th><th>Current stock</th><th>New stock</th><th>Reason</th></tr></thead><tbody id="audit_rows"></tbody></table></div><div class="d-flex justify-content-between align-items-center flex-wrap my-3" style="gap:12px"><label class="mb-0 d-flex align-items-center" style="gap:8px">Rows <select id="audit_page_size" class="form-control" aria-label="Rows per page" style="width:85px"><option>25</option><option>50</option><option>100</option></select></label><span id="audit_page_info" role="status"></span><div><button id="audit_prev" class="btn btn-outline-primary">Previous</button> <button id="audit_next" class="btn btn-outline-primary">Next</button></div></div><div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:12px"><small id="audit_status" role="status"></small><button class="btn btn-primary" id="audit_review">Review changes</button></div><div id="audit_review_panel" class="mt-3"></div>');
+            '<div class="table-responsive"><table class="table"><thead><tr><th><lang class="lang_sku_title">SKU</lang></th><th><lang class="lang_product">Product</lang></th><th><lang class="lang_unit_title">Unit</lang></th><th><lang class="lang_current_stock">Current stock</lang></th><th><lang class="lang_new_stock">New stock</lang></th><th><lang class="lang_stock_adjust_reason">Reason</lang></th></tr></thead><tbody id="audit_rows"></tbody></table></div><div class="d-flex justify-content-between align-items-center flex-wrap my-3" style="gap:12px"><label class="mb-0 d-flex align-items-center" style="gap:8px">Rows <select id="audit_page_size" class="form-control" aria-label="Rows per page" data-t-aria-label="lang_rows_per_page" style="width:85px"><option>25</option><option>50</option><option>100</option></select></label><span id="audit_page_info" role="status"></span><div><button id="audit_prev" class="btn btn-outline-primary"><lang class="lang_previous">Previous</lang></button> <button id="audit_next" class="btn btn-outline-primary"><lang class="lang_next">Next</lang></button></div></div><div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:12px"><small id="audit_status" role="status"></small><button class="btn btn-primary" id="audit_review"><lang class="lang_review_changes">Review changes</lang></button></div><div id="audit_review_panel" class="mt-3"></div>');
         try {
             branches = await api({ url: 'items/priceSheet', method: 'POST', data: JSON.stringify({ action: 'branches' }) }); check();
             branches.forEach(function (b) { $('#audit_branch').append($('<option>').val(b.id).text(b.name)); }); $('#audit_branch').val(branch).prop('disabled', branches.length < 2);
@@ -289,30 +289,30 @@ $(document).on('click', '.mobile-inventory-close', function () {
     $(document).on('click', '#audit_print', function () {
         try { check(); } catch (e) { return fail(e); }
         var win = window.open('', '_blank'); if (!win) return fail(new Error('Allow the print window and retry.'));
-        win.document.write('<!doctype html><title>Stock count worksheet</title><style>body{font:12px sans-serif}table{width:100%;border-collapse:collapse}td,th{border:1px solid #aaa;padding:8px}thead{display:table-header-group}</style><h1>Stock count worksheet</h1><p>' + p.esc(branches.find(function (b) { return b.id === branch; })?.name || branch) + ' · ' + p.esc(new Date().toLocaleString()) + '</p><table><thead><tr><th>SKU</th><th>Product</th><th>Unit</th><th>Current stock</th><th>New stock</th><th>Reason</th></tr></thead><tbody>' + filtered().map(function (r) { return '<tr>' + [r.sku,r.name,r.unit,r.quantity / 1000,'',''].map(function (v) { return '<td>' + p.esc(v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>');
+        win.document.write('<!doctype html><title>Stock count worksheet</title><style>body{font:12px sans-serif}table{width:100%;border-collapse:collapse}td,th{border:1px solid #aaa;padding:8px}thead{display:table-header-group}</style><h1><lang class="lang_stock_count_worksheet">Stock count worksheet</lang></h1><p>' + p.esc(branches.find(function (b) { return b.id === branch; })?.name || branch) + ' · ' + p.esc(new Date().toLocaleString()) + '</p><table><thead><tr><th><lang class="lang_sku_title">SKU</lang></th><th><lang class="lang_product">Product</lang></th><th><lang class="lang_unit_title">Unit</lang></th><th><lang class="lang_current_stock">Current stock</lang></th><th><lang class="lang_new_stock">New stock</lang></th><th><lang class="lang_stock_adjust_reason">Reason</lang></th></tr></thead><tbody>' + filtered().map(function (r) { return '<tr>' + [r.sku,r.name,r.unit,r.quantity / 1000,'',''].map(function (v) { return '<td>' + p.esc(v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>');
         win.document.close(); win.focus(); win.print();
     });
     function review(r) {
         reviewId = r.operationId;
         p.popup('audit_review_panel','Review stock adjustments');
         var panel = $('#audit_review_panel').empty().append($('<h5>').text('Review stock adjustments · ' + r.state));
-        var table = $('<table class="table"><thead><tr><th>Product</th><th>Current</th><th>New</th><th>Reason</th><th>Status</th></tr></thead><tbody></tbody></table>').appendTo($('<div class="table-responsive">').appendTo(panel));
+        var table = $('<table class="table"><thead><tr><th><lang class="lang_product">Product</lang></th><th><lang class="lang_current">Current</lang></th><th><lang class="lang_addvariant_title">New</lang></th><th><lang class="lang_stock_adjust_reason">Reason</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody></tbody></table>').appendTo($('<div class="table-responsive">').appendTo(panel));
         r.lines.forEach(function (l) { var tr = $('<tr>').appendTo(table.find('tbody')); [l.name,l.expected / 1000,l.quantity / 1000,l.reason,r.applied.includes(l.itemId) ? 'Applied' : r.state].forEach(function (v) { $('<td>').text(v).appendTo(tr); }); });
-        if (['prepared','applying'].includes(r.state)) panel.append($('<button id="audit_confirm" class="btn btn-primary">').text(r.approvalRequired ? 'Approve adjustments' : 'Confirm adjustments'));
-        panel.append(' ').append($('<button id="audit_report" class="btn btn-outline-primary">').text('Download results'));
+        if (['prepared','applying'].includes(r.state)) panel.append($('<button id="audit_confirm" class="btn btn-primary">').text(r.approvalRequired ? PosnicPro.i18n.t('lang_approve_adjustments', 'Approve adjustments') : PosnicPro.i18n.t('lang_confirm_adjustments', 'Confirm adjustments')));
+        panel.append(' ').append($('<button id="audit_report" class="btn btn-outline-primary">').text(PosnicPro.i18n.t('lang_download_results', 'Download results')));
         if (r.state === 'conflict') {
             panel.append($('<p role="alert">').text('Stock changed after counting. Recount unresolved items or cancel remaining changes. Already applied rows remain applied.'));
-            $('<button class="btn btn-primary mr-2">').text('Recount unresolved items').on('click',async function(){
+            $('<button class="btn btn-primary mr-2">').text(PosnicPro.i18n.t('lang_recount_unresolved_items', 'Recount unresolved items')).on('click',async function(){
                 p.closePopup();recountIds=r.lines.filter(function(l){return !r.applied.includes(l.itemId);}).map(function(l){return l.itemId;});
-                $('#audit_file').val(''); try {check();await load();$('#audit_status').text('Stock refreshed. Enter actual counts for the unresolved items.');}catch(e){fail(e);}
+                $('#audit_file').val(''); try {check();await load();$('#audit_status').text(PosnicPro.i18n.t('lang_stock_refreshed_enter_actual_counts_for_th', 'Stock refreshed. Enter actual counts for the unresolved items.'));}catch(e){fail(e);}
             }).appendTo(panel);
-            $('<button class="btn btn-outline-danger">').text('Cancel remaining changes').on('click',async function(){
+            $('<button class="btn btn-outline-danger">').text(PosnicPro.i18n.t('lang_cancel_remaining_changes', 'Cancel remaining changes')).on('click',async function(){
                 var id=r.operationId, selectedBranch=branch, button=$(this);
-                var answer=await PosnicPro.inventorycounts.dialog({title:'Cancel remaining changes',text:'Applied rows remain applied. Enter a cancellation reason.',input:'text',showCancelButton:true,confirmButtonText:'Cancel remaining changes',preConfirm:function(v){return String(v||'').trim()?Promise.resolve(v):Promise.reject('Enter a reason.');}});
+                var answer=await PosnicPro.inventorycounts.dialog({title:PosnicPro.i18n.t('lang_cancel_remaining_changes', 'Cancel remaining changes'),text:'Applied rows remain applied. Enter a cancellation reason.',input:'text',showCancelButton:true,confirmButtonText:'Cancel remaining changes',preConfirm:function(v){return String(v||'').trim()?Promise.resolve(v):Promise.reject('Enter a reason.');}});
                 if(!answer||answer.dismiss||branch!==selectedBranch)return;
                 var reason=typeof answer==='string'?answer:answer.value;if(!reason)return;
                 button.prop('disabled',true);
-                try {check();var result=await api({url:scope('inventory-counts/audit/'+encodeURIComponent(id)+'/cancel'),method:'POST',data:JSON.stringify({reason:reason})});check();if(branch===selectedBranch){review(result);$('#audit_status').text('Remaining changes cancelled. Applied rows remain applied.');}}catch(e){fail(e);}finally{button.prop('disabled',false);}
+                try {check();var result=await api({url:scope('inventory-counts/audit/'+encodeURIComponent(id)+'/cancel'),method:'POST',data:JSON.stringify({reason:reason})});check();if(branch===selectedBranch){review(result);$('#audit_status').text(PosnicPro.i18n.t('lang_remaining_changes_cancelled_applied_rows_r', 'Remaining changes cancelled. Applied rows remain applied.'));}}catch(e){fail(e);}finally{button.prop('disabled',false);}
             }).appendTo(panel);
         }
     }
@@ -333,12 +333,12 @@ $(document).on('click', '.mobile-inventory-close', function () {
                 if (!lines.length || lines.length > 200) throw new Error('Review between 1 and 200 changes at a time.');
                 result = await api({ url: scope('inventory-counts/audit'), method: 'POST', data: JSON.stringify({ id: operationId, mode: 'count', reason: 'Stock adjustment', lines: lines }) });
             }
-            check(); if (selected !== branch) return; review(result); $('#audit_status').text('Prepared for review. Stock has not changed.');
+            check(); if (selected !== branch) return; review(result); $('#audit_status').text(PosnicPro.i18n.t('lang_prepared_for_review_stock_has_not_changed', 'Prepared for review. Stock has not changed.'));
         } catch (e) { fail(e); } finally { button.prop('disabled', false); }
     });
     $(document).on('click', '#audit_confirm', async function () {
         var button = $(this).prop('disabled', true), selected = branch;
-        try { check(); var r = await api({ url: scope('inventory-counts/audit/' + encodeURIComponent(reviewId) + '/confirm'), method: 'POST', data: '{}' }); check(); if (selected === branch) { review(r); $('#audit_status').text(r.state === 'complete' ? 'Stock adjustment saved.' : 'Review the row status before retrying.'); } }
+        try { check(); var r = await api({ url: scope('inventory-counts/audit/' + encodeURIComponent(reviewId) + '/confirm'), method: 'POST', data: '{}' }); check(); if (selected === branch) { review(r); $('#audit_status').text(r.state === 'complete' ? PosnicPro.i18n.t('lang_stock_adjustment_saved', 'Stock adjustment saved.') : PosnicPro.i18n.t('lang_review_the_row_status_before_retrying', 'Review the row status before retrying.')); } }
         catch (e) { fail(e); } finally { button.prop('disabled', false); }
     }).on('click', '#audit_report', async function () {
         try { check(); var selected = branch, r = await api({ url: scope('inventory-counts/audit/' + encodeURIComponent(reviewId) + '/report'), method: 'GET' }); check(); if (selected === branch) download(r); } catch (e) { fail(e); }
@@ -369,23 +369,23 @@ $(document).on('click', '.mobile-inventory-close', function () {
         info=await request('inventory-counts/spoilage?'+query()+'&limit=25'+(historyCursors[historyPage]?'&after='+historyCursors[historyPage]:''));next=info.next;
         $('#sp_new').toggle(info.canWrite);
         var root=$('#sp_list').empty(), body=$('<tbody>');
-        var grid=$('<table class="table"><thead><tr><th>Reference</th><th>Date</th><th>Status</th><th>Entered by</th><th></th></tr></thead></table>').append(body);
+        var grid=$('<table class="table"><thead><tr><th><lang class="lang_reference_title">Reference</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_userstatus">Status</lang></th><th><lang class="lang_entered_by">Entered by</lang></th><th></th></tr></thead></table>').append(body);
         $('<div class="table-responsive">').append(grid).appendTo(root);
         info.rows.forEach(function(d){var row=$('<tr>').appendTo(body);
             [d.reference,d.occurredOn,labels[d.state]||d.state,d.createdByName].forEach(function(v){$('<td>').text(v).appendTo(row);});
-            $('<td class="text-right">').append($('<button class="btn btn-sm btn-outline-primary sp_open">').attr('data-id',d._id).text('View')).appendTo(row);
+            $('<td class="text-right">').append($('<button class="btn btn-sm btn-outline-primary sp_open">').attr('data-id',d._id).text(PosnicPro.i18n.t('lang_view', 'View'))).appendTo(row);
         });
-        if(!info.rows.length)root.html('<p class="p-3 text-muted">No entries match these filters.</p>');
+        if(!info.rows.length)root.html('<p class="p-3 text-muted"><lang class="lang_no_entries_match_these_filters">No entries match these filters.</lang></p>');
         $('#sp_page_info').text('Page '+(historyPage+1)+' · '+info.rows.length+' entries');
         $('#sp_prev').prop('hidden',false).prop('disabled',historyPage===0);
         $('#sp_more').prop('hidden',false).prop('disabled',!next);
-        $('#sp_status').text('Record losses, review saved entries or export the filtered history.');
+        $('#sp_status').text(PosnicPro.i18n.t('lang_record_losses_review_saved_entries_or_expo', 'Record losses, review saved entries or export the filtered history.'));
     }
     p.openSpoilage=async function(){
         p.leaveSection();
         $('#inventorycounts').addClass('count-editing');
         generation++;signedBranch=branch=PosnicPro.local.get('branch_id_set');draft=null;selected=[];
-        $('#inventory_count_detail').show().html('<section id="spoilage_panel"><div class="d-flex justify-content-between align-items-center mb-3"><h5 class="mb-0">Spoilage / damage</h5><select id="sp_branch" aria-label="Spoilage branch" class="form-control" style="width:170px"></select></div><div class="d-flex flex-wrap align-items-center mb-3" style="gap:8px"><input id="sp_from" type="date" aria-label="From date" class="form-control" style="width:150px"><input id="sp_to" type="date" aria-label="To date" class="form-control" style="width:150px"><select id="sp_state" aria-label="Entry status" class="form-control" style="width:170px"><option value="">All statuses</option></select><input id="sp_search" aria-label="Find spoilage product" placeholder="Product / SKU / reference" class="form-control" style="width:220px"><button id="sp_filter" class="btn btn-outline-primary">Filter</button><button id="sp_export" class="btn btn-outline-primary">Excel</button><button id="sp_new" class="btn btn-primary">New entry</button></div><small id="sp_status" role="status"></small><div id="sp_list" class="my-3"></div><div id="sp_paging" class="d-flex align-items-center justify-content-between"><span id="sp_page_info" role="status"></span><div><button id="sp_prev" class="btn btn-outline-primary">Previous</button> <button id="sp_more" class="btn btn-outline-primary">Next</button></div></div><div id="sp_detail" class="mt-3"></div></section>');
+        $('#inventory_count_detail').show().html('<section id="spoilage_panel"><div class="d-flex justify-content-between align-items-center mb-3"><h5 class="mb-0"><lang class="lang_spoilage_damage">Spoilage / damage</lang></h5><select id="sp_branch" aria-label="Spoilage branch" data-t-aria-label="lang_spoilage_branch" class="form-control" style="width:170px"></select></div><div class="d-flex flex-wrap align-items-center mb-3" style="gap:8px"><input id="sp_from" type="date" aria-label="From date" data-t-aria-label="lang_from_date" class="form-control" style="width:150px"><input id="sp_to" type="date" aria-label="To date" data-t-aria-label="lang_to_date" class="form-control" style="width:150px"><select id="sp_state" aria-label="Entry status" data-t-aria-label="lang_entry_status" class="form-control" style="width:170px"><option value="" data-t="lang_all_statuses">All statuses</option></select><input id="sp_search" aria-label="Find spoilage product" data-t-aria-label="lang_find_spoilage_product" placeholder="Product / SKU / reference" data-t-placeholder="lang_product_sku_reference" class="form-control" style="width:220px"><button id="sp_filter" class="btn btn-outline-primary"><lang class="lang_filter">Filter</lang></button><button id="sp_export" class="btn btn-outline-primary"><lang class="lang_excel">Excel</lang></button><button id="sp_new" class="btn btn-primary"><lang class="lang_new_entry_2">New entry</lang></button></div><small id="sp_status" role="status"></small><div id="sp_list" class="my-3"></div><div id="sp_paging" class="d-flex align-items-center justify-content-between"><span id="sp_page_info" role="status"></span><div><button id="sp_prev" class="btn btn-outline-primary"><lang class="lang_previous">Previous</lang></button> <button id="sp_more" class="btn btn-outline-primary"><lang class="lang_next">Next</lang></button></div></div><div id="sp_detail" class="mt-3"></div></section>');
         Object.keys(labels).forEach(function(k){$('#sp_state').append($('<option>').val(k).text(labels[k]));});
         try{var branches=await request('items/priceSheet','POST',{action:'branches'});branches.forEach(function(b){$('#sp_branch').append($('<option>').val(b.id).text(b.name));});$('#sp_branch').val(branch).prop('disabled',branches.length<2);await load();}catch(e){error(e);}
     };
@@ -396,8 +396,8 @@ $(document).on('click', '.mobile-inventory-close', function () {
         var body=$('#sp_entry_rows').empty();selected.forEach(function(l){var tr=$('<tr>').attr('data-id',l.itemId).appendTo(body);[l.name,l.unit,(l.available/1000).toFixed(3)].forEach(function(v){$('<td>').text(v).appendTo(tr);});
             $('<td>').append($('<input type="number" min="0.001" step="0.001" class="form-control sp_qty" style="width:120px">').attr('aria-label','Spoiled quantity for '+l.name).val(l.text??(l.quantity/1000||''))).appendTo(tr);
             var reason=$('<select class="form-control sp_reason" style="width:170px">').attr('aria-label','Reason for '+l.name);info.reasons.forEach(function(v){reason.append($('<option>').val(v).text(v));});reason.val(l.reason||'Spoilage');$('<td>').append(reason).appendTo(tr);
-            $('<td>').append($('<input maxlength="500" class="form-control sp_remarks" placeholder="Optional details" style="min-width:180px">').attr('aria-label','Remarks for '+l.name).val(l.remarks||'')).appendTo(tr);
-            $('<td>').append($('<button class="btn btn-sm btn-outline-danger sp_remove">').attr('data-id',l.itemId).text('Remove')).appendTo(tr);
+            $('<td>').append($('<input maxlength="500" class="form-control sp_remarks" placeholder="Optional details" data-t-placeholder="lang_optional_details" style="min-width:180px">').attr('aria-label','Remarks for '+l.name).val(l.remarks||'')).appendTo(tr);
+            $('<td>').append($('<button class="btn btn-sm btn-outline-danger sp_remove">').attr('data-id',l.itemId).text(PosnicPro.i18n.t('lang_remove', 'Remove'))).appendTo(tr);
         });
     }
     async function matches(more){
@@ -422,11 +422,11 @@ $(document).on('click', '.mobile-inventory-close', function () {
         p.closePopup();catalogue=[];productNext=null;productRequest++;
         draft=existing||{clientId:crypto.randomUUID(),revision:0,occurredOn:info.today};selected=existing?existing.lines.map(function(l){return Object.assign({},l,{text:(l.quantity/1000).toFixed(3)});}):[];
         $('#sp_detail').show().html(`
-<h5>New spoilage / damage entry</h5>
-<div class="sp-entry-tools"><label>Date<input id="sp_date" type="date" class="form-control"></label><button id="sp_online" class="btn btn-outline-primary">Add products</button><button id="sp_sheet_download" class="btn btn-outline-primary">Download Excel</button><button id="sp_sheet_upload" class="btn btn-outline-primary">Upload Excel / CSV</button><input id="sp_sheet_file" type="file" accept=".xlsx,.csv" hidden></div>
+<h5><lang class="lang_new_spoilage_damage_entry">New spoilage / damage entry</lang></h5>
+<div class="sp-entry-tools"><label>Date<input id="sp_date" type="date" class="form-control"></label><button id="sp_online" class="btn btn-outline-primary"><lang class="lang_add_products">Add products</lang></button><button id="sp_sheet_download" class="btn btn-outline-primary"><lang class="lang_download_excel">Download Excel</lang></button><button id="sp_sheet_upload" class="btn btn-outline-primary"><lang class="lang_upload_excel_csv">Upload Excel / CSV</lang></button><input id="sp_sheet_file" type="file" accept=".xlsx,.csv" hidden></div>
 <p class="text-muted">Add products or upload a completed spoilage sheet. Review before saving; importing does not change stock.</p>
-<div id="sp_picker" class="sp-picker" style="display:none"><div class="sp-picker-tools"><input id="sp_product_search" placeholder="Search name, SKU or barcode" aria-label="Search products" class="form-control"><select id="sp_product_category" aria-label="Category" class="form-control"><option value="">All categories</option></select><button id="sp_picker_close" class="btn btn-link">Done selecting</button></div><div class="table-responsive sp-results"><table class="table table-sm"><thead><tr><th>SKU</th><th>Product</th><th>Unit</th><th>Available</th><th></th></tr></thead><tbody id="sp_product_results"></tbody></table></div><div class="sp-picker-tools"><small id="sp_product_status" role="status"></small><button id="sp_product_more" class="btn btn-outline-primary" hidden>Load more</button></div></div>
-<h6 class="mt-3">Selected products · review quantities</h6><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Product</th><th>Unit</th><th>Available</th><th>Spoiled</th><th>Reason</th><th>Remarks (optional)</th><th></th></tr></thead><tbody id="sp_entry_rows"></tbody></table></div><p id="sp_import_status" role="status"></p><p class="text-muted">Enter the quantity lost, not the remaining stock.</p><div class="d-flex" style="gap:8px"><button id="sp_save" class="btn btn-primary">Save &amp; update stock</button><button id="sp_close" class="btn btn-link">Close</button></div>`);
+<div id="sp_picker" class="sp-picker" style="display:none"><div class="sp-picker-tools"><input id="sp_product_search" placeholder="Search name, SKU or barcode" data-t-placeholder="lang_search_name_sku_or_barcode" aria-label="Search products" data-t-aria-label="lang_search_products" class="form-control"><select id="sp_product_category" aria-label="Category" data-t-aria-label="lang_newcategory_title" class="form-control"><option value="" data-t="lang_all_categories">All categories</option></select><button id="sp_picker_close" class="btn btn-link"><lang class="lang_done_selecting">Done selecting</lang></button></div><div class="table-responsive sp-results"><table class="table table-sm"><thead><tr><th><lang class="lang_sku_title">SKU</lang></th><th><lang class="lang_product">Product</lang></th><th><lang class="lang_unit_title">Unit</lang></th><th><lang class="lang_available">Available</lang></th><th></th></tr></thead><tbody id="sp_product_results"></tbody></table></div><div class="sp-picker-tools"><small id="sp_product_status" role="status"></small><button id="sp_product_more" class="btn btn-outline-primary" hidden><lang class="lang_load_more">Load more</lang></button></div></div>
+<h6 class="mt-3">Selected products · review quantities</h6><div class="table-responsive"><table class="table table-sm"><thead><tr><th><lang class="lang_product">Product</lang></th><th><lang class="lang_unit_title">Unit</lang></th><th><lang class="lang_available">Available</lang></th><th><lang class="lang_spoiled">Spoiled</lang></th><th><lang class="lang_stock_adjust_reason">Reason</lang></th><th><lang class="lang_remarks_optional">Remarks (optional)</lang></th><th></th></tr></thead><tbody id="sp_entry_rows"></tbody></table></div><p id="sp_import_status" role="status"></p><p class="text-muted"><lang class="lang_enter_the_quantity_lost_not_the_remaining">Enter the quantity lost, not the remaining stock.</lang></p><div class="d-flex" style="gap:8px"><button id="sp_save" class="btn btn-primary"><lang class="lang_save_update_stock">Save &amp; update stock</lang></button><button id="sp_close" class="btn btn-link"><lang class="lang_close_title">Close</lang></button></div>`);
         $('#sp_date').val(draft.occurredOn);renderEntryRows();
         var after; do {var page=await request('inventory-counts/catalogue?kind=categories'+(after?'&after='+after:''));page.rows.forEach(function(c){$('#sp_product_category').append($('<option>').val(c.id).text(c.name));});after=page.next;}while(after);
         await matches(false);
@@ -438,7 +438,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
     }
     function show(d){
         draft=d;p.popup('sp_detail','Spoilage / damage details');var root=$('#sp_detail').empty();
-        $('<button id="sp_back" class="btn btn-outline-secondary mb-3">').text('Close details').appendTo(root);
+        $('<button id="sp_back" class="btn btn-outline-secondary mb-3">').text(PosnicPro.i18n.t('lang_close_details', 'Close details')).appendTo(root);
         $('<h5>').text(d.reference+' · '+(labels[d.state]||d.state)).appendTo(root);
         $('<p>').text(d.occurredOn+' · Entered by '+d.createdByName+' · '+new Date(d.created_date).toLocaleString()+(d.decisionByName?' · Reviewed by '+d.decisionByName:'' )).appendTo(root);
         if(!d.local)$('<p class="text-warning">').text('Read-only synced record. Review or correct this entry on the '+d.origin.toLowerCase()+' installation where it was created.').appendTo(root);
@@ -454,7 +454,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
         if(d.canWrite&&['draft','pending','approving','conflict'].includes(d.state))button('sp_apply','Retry save','btn-primary');
         if(d.canWrite&&d.kind!=='reversal'&&['accepted','conflict','reversal_pending'].includes(d.state)&&(d.applied||[]).length)button('sp_reverse','Undo stock deduction');
         button('sp_close','Close','btn-link');
-        $('<h6 class="mt-3">').text('Audit history').appendTo(root);root.append(table(['Action','User','Time','Remarks'],(d.audit||[]).map(function(a){return [a.action,a.user,new Date(a.at).toLocaleString(),a.note];})));
+        $('<h6 class="mt-3">').text(PosnicPro.i18n.t('lang_audit_history', 'Audit history')).appendTo(root);root.append(table(['Action','User','Time','Remarks'],(d.audit||[]).map(function(a){return [a.action,a.user,new Date(a.at).toLocaleString(),a.note];})));
         root.attr('tabindex','-1');root[0].focus({preventScroll:true});
     }
     $(document).on('click','#sp_filter',function(){run(function(){return load();});}).on('click','#sp_more',function(){run(function(){return load('next');});})
@@ -466,8 +466,8 @@ $(document).on('click', '.mobile-inventory-close', function () {
     .on('click','#sp_product_more',function(){matches(true);})
     .on('click','#sp_online',function(){collect();p.popup('sp_picker','Add products');$('#sp_picker').show();$('#sp_product_search').trigger('focus');})
     .on('click','#sp_picker_close',function(){p.closePopup();$('#sp_picker').hide();$('#sp_entry_rows .sp_qty').filter(function(){return !this.value;}).first().trigger('focus');})
-    .on('click','.sp_add_result',function(){collect();var id=$(this).attr('data-id'),r=catalogue.find(function(r){return r.id===id;});if(!r||selected.some(function(l){return l.itemId===id;}))return;if(selected.length>=200)return error(new Error('Use at most 200 products.'));selected.push({itemId:r.id,name:r.name,unit:r.unit,available:r.quantity,reason:'Spoilage',text:'',remarks:''});renderEntryRows();$(this).prop('disabled',true).text('Added');$('#sp_product_status').text(catalogue.length+' products shown · '+selected.length+' selected');})
-    .on('click','.sp_remove',function(){collect();var id=$(this).attr('data-id');selected=selected.filter(function(l){return l.itemId!==id;});renderEntryRows();$('.sp_add_result').filter(function(){return $(this).attr('data-id')===id;}).prop('disabled',false).text('Add');})
+    .on('click','.sp_add_result',function(){collect();var id=$(this).attr('data-id'),r=catalogue.find(function(r){return r.id===id;});if(!r||selected.some(function(l){return l.itemId===id;}))return;if(selected.length>=200)return error(new Error('Use at most 200 products.'));selected.push({itemId:r.id,name:r.name,unit:r.unit,available:r.quantity,reason:'Spoilage',text:'',remarks:''});renderEntryRows();$(this).prop('disabled',true).text(PosnicPro.i18n.t('lang_added', 'Added'));$('#sp_product_status').text(catalogue.length+' products shown · '+selected.length+' selected');})
+    .on('click','.sp_remove',function(){collect();var id=$(this).attr('data-id');selected=selected.filter(function(l){return l.itemId!==id;});renderEntryRows();$('.sp_add_result').filter(function(){return $(this).attr('data-id')===id;}).prop('disabled',false).text(PosnicPro.i18n.t('lang_nav_add', 'Add'));})
     .on('click','#sp_sheet_download',function(){run(async function(){download(await request('inventory-counts/spoilage-sheet?q='+encodeURIComponent($('#sp_product_search').val()||'')+'&category='+encodeURIComponent($('#sp_product_category').val()||'')));});})
     .on('click','#sp_sheet_upload',function(){$('#sp_sheet_file').trigger('click');})
     .on('change','#sp_sheet_file',async function(){
@@ -486,7 +486,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
     .on('click','#sp_apply',function(){run(async function(){show(await request('inventory-counts/spoilage/'+draft.id+'/apply','POST',{}));await load();});})
     .on('click','#sp_reverse',function(){run(async function(){
         var entryId=draft.id;
-        var result=await PosnicPro.inventorycounts.dialog({title:'Undo stock deduction',text:'Enter a reason. The deducted stock will be restored.',input:'text',inputPlaceholder:'Reason for undoing this entry',showCancelButton:true,confirmButtonText:'Restore stock',preConfirm:function(note){
+        var result=await PosnicPro.inventorycounts.dialog({title:PosnicPro.i18n.t('lang_undo_stock_deduction', 'Undo stock deduction'),text:'Enter a reason. The deducted stock will be restored.',input:'text',inputPlaceholder:'Reason for undoing this entry',showCancelButton:true,confirmButtonText:'Restore stock',preConfirm:function(note){
             note=String(note||'').trim();
             return note ? Promise.resolve(note) : Promise.reject('Enter a reason.');
         }});

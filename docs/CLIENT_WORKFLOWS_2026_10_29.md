@@ -50,7 +50,7 @@ Cloud rollout is still pending. The unidentified client permission toast still n
 
 ## Installed desktop verification - 31 October (manual hardware substitute)
 
-Installed the test EXE into the normal GSHCL program directory and used an isolated local test profile (`outputs/GSHCL-installed-manual-2026-10-31`). Cloud sync was disabled before sales/stock testing. A cloud activation had occurred during initial setup; this run is not a live cloud verification.
+Installed the test EXE into the normal branded-desktop program directory and used an isolated local test profile (`outputs/branded-desktop-installed-manual-2026-10-31`). Cloud sync was disabled before sales/stock testing. A cloud activation had occurred during initial setup; this run is not a live cloud verification.
 
 Native desktop tests passed:
 - Weighed tile opens the compact popup before adding a line. Scale is selected initially; Manual accepts 0.605 kg at 50/kg and shows 30.25.
@@ -85,7 +85,7 @@ Production cloud rollout and live two-device network verification are still pend
 
 Final packaged installer reinstalled without manual resource changes and reopened the native desktop dashboard successfully. Repeated installed checks passed: modern login 400/401/200, legacy login, 37 retained image hashes and image HTTP 200, QA Onion stock 99 kg, spoilage history accessible. The test profile remains cloud-disconnected.
 
-Final EXE: C:\Users\Kayal\Downloads\GSHCL-Test-2026-10-31\GSHCL-1.9.2-verified-fixes-2026-10-31.exe
+Final EXE: Downloads/branded-desktop-Test-2026-10-31\branded-desktop-1.9.2-verified-fixes-2026-10-31.exe
 SHA256: 3F900359EF1896A5FA6C427ECC05F3C2193E0F3A1C4BF5878F3B225027A1A110
 This supersedes the earlier hash above. Unsigned local test build; not a production cloud deployment.
 
@@ -97,7 +97,7 @@ Fixed receipt total quantity rounding to two decimals (line and total now preser
 
 135 focused automated checks passed (81 frontend/checkout/report, 42 API price/spoilage/day-end, 12 audit/sharing), plus attribution and package checks. Installed checks confirmed 37 retained image hashes, expected login 400/401/200 responses, stock 97.270 kg, price restored to 50, saved branch/receipt contacts and redirect zero seconds. Two synthetic sales were saved; production was untouched.
 
-Final installer: C:\Users\Kayal\Downloads\GSHCL-Test-2026-11-01\GSHCL-1.9.2-tested-2026-11-01.exe
+Final installer: Downloads/branded-desktop-Test-2026-11-01\branded-desktop-1.9.2-tested-2026-11-01.exe
 SHA256: 34B478DF324F82C430B3ADD3F0EC3D8F9A69F28ED328642B5E5955C0E55979CE
 This supersedes previous test installers. Physical scale/printer, live cloud deployment/two-device sync, and the exact unidentified client permission toast remain unverified. Multi-branch sharing passed local integration checks, not a live multi-device desktop test.
 
@@ -117,7 +117,7 @@ Spoilage Excel download and XLSX/CSV upload preview validate branch identifiers,
 
 36 focused API/DOM integration checks plus the workspace navigation check passed. After the final spacing/stale-response changes, all 13 affected spoilage/navigation tests passed again. Installed UI checks covered both embedded tabs, product search/Add, Excel upload and review without saving; the installed API confirmed unchanged stock 97.270 kg. These changes and the conflict-recovery actions above are now packaged together, superseding the earlier note that the installed API lacked them.
 
-Installer: C:\Users\Kayal\Downloads\GSHCL-Test-2026-11-01\GSHCL-1.9.2-stock-workspace-2026-11-01.exe
+Installer: Downloads/branded-desktop-Test-2026-11-01\branded-desktop-1.9.2-stock-workspace-2026-11-01.exe
 SHA256: 3F1B79267CCB67BD791A76972CE90C1845B9C99B63DF491296E544EABBCCAFFA
 Production cloud was not deployed in this task.
 
@@ -130,7 +130,7 @@ Spoilage line remarks are optional for online entry and Excel/CSV preview; the s
 15 focused tests passed, including page boundary/size/filter behavior, edit retention, optional-remarks preview and direct stock deduction, and existing spoilage save/undo validation. Physical multi-device sync is not retested by this UI/validation change.
 
 Installed verification: page one showed 1–25 of 31 products and page two 26–31, with Next correctly disabled on the last page. The installed Excel-preview endpoint accepted blank remarks and retained stock 97.270. Screenshot: outputs/desktop-proof-2026-11-01/41-stock-pagination.png.
-Updated installer: C:\Users\Kayal\Downloads\GSHCL-Test-2026-11-01\GSHCL-1.9.2-pagination-2026-11-01.exe
+Updated installer: Downloads/branded-desktop-Test-2026-11-01\branded-desktop-1.9.2-pagination-2026-11-01.exe
 SHA256: 1396AB4D653ECA05BF8F1F5B39693764B65CE6E78751F132BC7F3A6A08A90F3D
 
 ## Inventory log toolbar — 1 November 2026
@@ -143,7 +143,7 @@ Review, stock-adjustment preview and damage View now use a bounded Bootstrap pop
 
 Validation: 18 focused tests passed (workspace navigation, popup restoration/discard cancellation, audit edit retention, spoilage operations and a 27-record pagination case). Native installed-app checks covered View/Review popup open/close, product selection, cancel/discard, and Damage → Logs. Test profile only; no production records changed. UI and read pagination changes do not add sync collections or alter inventory write/reversal semantics.
 
-Artifact: GSHCL-1.9.2-stock-popups-2026-11-01.exe; SHA256 65BF4597BE1707F5A0DE09B0CB0982BA68E8FD46347BB4C9FFE02A97B8015C75.
+Artifact: branded-desktop-1.9.2-stock-popups-2026-11-01.exe; SHA256 65BF4597BE1707F5A0DE09B0CB0982BA68E8FD46347BB4C9FFE02A97B8015C75.
 
 Final CSS-only table-width polish was copied from the packaged dashboard to the installed application after installer verification. Dashboard SHA256 matches package: 25B16D52A4F4E4BD54C3B440460FD2F9F4105CE728C380B9C25B759DCF2A06EA. Final native screenshot 47 confirms fully visible View actions at 1200px window width.
 
@@ -152,9 +152,8 @@ Final CSS-only table-width polish was copied from the packaged dashboard to the 
 Bootstrap's active review modal was redirecting focus away from SweetAlert reason inputs. Inventory confirmation dialogs now temporarily suspend that modal's focus handler and restore it after the child dialog settles (including dismissal or failure). Covers cancellation in both operation review paths and spoilage Undo. Five workspace regression tests passed, including nested input focus and restoration. Native desktop verification typed a cancellation reason, submitted an empty reason to exercise validation, retyped successfully, and dismissed without altering the operation. Screenshot: 48-reason-input-working.png.
 
 ### Catalogue action context — 2026-11-01
-Removed the standalone Apply to branches toolbar button. Copy catalogue to other branches is now under Tools, shown only on cloud accounts with another accessible branch. Local tills hide it without making a policy request. The dialog identifies source, scope and destination branches and explains stock preservation. Five eligibility scenarios passed; installed packaged frontend visually verified with Tools open (50-item-toolbar-context.png). Dashboard and bundle hashes match packaged build. EXE: GSHCL-1.9.2-catalogue-context-2026-11-01.exe. No cloud deployment or catalogue data changes performed.
+Removed the standalone Apply to branches toolbar button. Copy catalogue to other branches is now under Tools, shown only on cloud accounts with another accessible branch. Local tills hide it without making a policy request. The dialog identifies source, scope and destination branches and explains stock preservation. Five eligibility scenarios passed; installed packaged frontend visually verified with Tools open (50-item-toolbar-context.png). Dashboard and bundle hashes match packaged build. EXE: branded-desktop-1.9.2-catalogue-context-2026-11-01.exe. No cloud deployment or catalogue data changes performed.
 
 
 ### Availability dialog context — 2026-11-01
-Explains show/hide sales availability, provides initial and empty-search guidance, and shows Review availability changes only for actual checkbox edits. Changing a checkbox invalidates an earlier confirmation preview. No availability API, persisted fields or sync write paths changed. Local UI checked with empty search, matching product, toggle and revert; no product changes saved. Tests: availability-context.test.js and catalogue-action-context.test.js passed. Packaged dashboard/script match installed files. Screenshots 51 and 52. Installer: GSHCL-1.9.2-availability-context-2026-11-01.exe.
-
+Explains show/hide sales availability, provides initial and empty-search guidance, and shows Review availability changes only for actual checkbox edits. Changing a checkbox invalidates an earlier confirmation preview. No availability API, persisted fields or sync write paths changed. Local UI checked with empty search, matching product, toggle and revert; no product changes saved. Tests: availability-context.test.js and catalogue-action-context.test.js passed. Packaged dashboard/script match installed files. Screenshots 51 and 52. Installer: branded-desktop-1.9.2-availability-context-2026-11-01.exe.

@@ -821,7 +821,10 @@ async function sheet(c, query = {}) {
     'Categories',
     ...(multi ? ['Branch code'] : []),
   ]);
-  for await (const it of x.items.aggregate([{ $match: filter }, ...require('../utils/catalogue-order').stages()]))
+  for await (const it of x.items.aggregate([
+    { $match: filter },
+    ...require('../utils/catalogue-order').stages(),
+  ]))
     ws.addRow([
       safe(it.name),
       safe(it.itemid || ''),
@@ -930,7 +933,9 @@ async function importSheet(c, input, file) {
     await append(c, input.jobId, { start, rows: rows.slice(start, start + 500) });
   return finish(c, input.jobId, rows.length);
 }
-async function expandRows(c, input) { return require('./price-branch-expansion')(c, input, normalize); }
+async function expandRows(c, input) {
+  return require('./price-branch-expansion')(c, input, normalize);
+}
 module.exports = {
   expandRows,
   checkWorkbookArchive,

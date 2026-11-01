@@ -1,4 +1,4 @@
-const test = require('node:test');
+const test = typeof global.test === 'function' ? global.test : require('node:test');
 const assert = require('node:assert/strict');
 const origin = require('../src/utils/item-creation-origin');
 const { sanitizeItemData } = require('../src/helpers/items.helper');

@@ -73,6 +73,22 @@ test('automatic sharing defaults off, requires branch permission to enable, and 
   req.user.usertype = 'staff'; req.user.access = { item: { write: true }, branch: { write: false } };
   await assert.rejects(sharing.policy(req), /Branch settings permission/);
 });
+test('automatic-sharing policy signatures use the active shop secret', async () => {
+  const { runWithTenant } = require('../src/db/tenant-context');
+  const crypto = require('node:crypto');
+  req.method = 'PUT'; req.body = { enabled: true };
+  const signatureFor = async key => runWithTenant({ db, secrets: { JWT_SECRET: key } }, async () => {
+    await sharing.policy(req);
+    return (await db.collection('branches').findOne({ _id: source.branch_id })).catalogue_policy.signature;
+  });
+  const a = await signatureFor('isolated-shop-a');
+  const b = await signatureFor('isolated-shop-b');
+  assert.notEqual(a, b);
+  assert.equal(a, crypto.createHmac('sha256', 'isolated-shop-a').update(
+    ['catalogue-policy-v1', String(source.license), String(source.branch_id), String(req.user._id)].join(':')
+  ).digest('hex'));
+});
+
 test('cloud worker propagates synced edits under a signed policy without replay or stock changes', async () => {
   req.user.license = source.license;
   await db.collection('users').insertOne(req.user);
@@ -113,9 +129,9 @@ test('category sharing preserves local edits until explicitly applied and rename
   const service=require('../src/services/category-sharing');
   const category={_id:new ObjectId(),name:'Vegetables',sort_order:20,license:source.license,branch_id:source.branch_id};
   req.body={apply_branches:[String(targetBranch)]};
-  let plan=await service.prepare(req);
+  const plan=await service.prepare(req);
   assert.equal((await service.distribute(plan,category))[0].status,'created');
-  let target=await db.collection('categories').findOne({branch_id:targetBranch});
+  const target=await db.collection('categories').findOne({branch_id:targetBranch});
   await db.collection('categories').updateOne({_id:target._id},{$set:{sort_order:35}});
   req.body={};assert.equal((await service.prepare(req)).targets.length,0);
   assert.equal((await db.collection('categories').findOne({_id:target._id})).sort_order,35);
