@@ -2,6 +2,14 @@
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 jest.mock('../../../src/services/sale.service');
+jest.mock('../../../src/services/spoilage', () => ({
+  ...jest.requireActual('../../../src/services/spoilage'),
+  daily: jest.fn().mockResolvedValue([]),
+}));
+jest.mock('../../../src/services/report-closing-stock', () => ({
+  closingStock: jest.fn().mockResolvedValue(new Map()),
+  reconciliation: jest.fn().mockResolvedValue(new Map()),
+}));
 jest.mock('../../../src/services/receipt-document.service', () => ({
   prepare: jest
     .fn()

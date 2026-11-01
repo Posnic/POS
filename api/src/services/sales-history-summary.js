@@ -1,6 +1,7 @@
 'use strict';
 const Money = require('../utils/currency');
 const payments = require('../helpers/sale-payment-summary');
+const { remainingSaleTotal } = require('../helpers/reportable-sales');
 
 // Stream only summary fields: pagination must never limit the totals, and a
 // large All time selection must not materialize whole sale/item documents.
@@ -40,7 +41,7 @@ async function historySummary(Model, filter) {
       ]);
       if (!groups.has(key)) groups.set(key, { ...policy, totalMinor: 0, methods: new Map() });
       const group = groups.get(key);
-      const total = sale.sales_total ?? sale.total ?? sale.items_total ?? 0;
+      const total = remainingSaleTotal(sale);
       group.totalMinor += Money.toMinor(total, policy);
       if (!Number.isSafeInteger(group.totalMinor))
         throw new Error('Sales summary exceeds supported amount');

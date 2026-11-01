@@ -129,16 +129,15 @@ describe('ItemRepository', () => {
   describe('price grid', () => {
     const context = { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE, userName: 'Owner' };
     test('scopes pagination and escapes search input', async () => {
-      const chain = mkChain([]);
-      col.find.mockReturnValue(chain);
       await repo.priceGrid({ search: 'a.*', page: 2 }, context);
-      expect(col.find.mock.calls[0][0]).toMatchObject({
-        license: FAKE_LICENSE,
-      });
-      expect(col.find.mock.calls[0][0].branch_id.$in.map(String)).toEqual([FAKE_BRANCH]);
-      expect(new RegExp(col.find.mock.calls[0][0].$or[0].name.$regex).test('abc')).toBe(false);
-      expect(chain.skip).toHaveBeenCalledWith(50);
-      expect(chain.limit).toHaveBeenCalledWith(50);
+      const pipeline = col.aggregate.mock.calls[0][0];
+      const filter = pipeline[0].$match;
+      expect(filter).toMatchObject({ license: FAKE_LICENSE });
+      expect(filter.branch_id.$in.map(String)).toEqual([FAKE_BRANCH]);
+      expect(new RegExp(filter.$or[0].name.$regex).test('abc')).toBe(false);
+      expect(pipeline).toContainEqual({ $skip: 50 });
+      expect(pipeline).toContainEqual({ $limit: 50 });
+      expect(pipeline.some((stage) => stage.$sort?._categoryOrder === 1)).toBe(true);
     });
     test('rejects zero and duplicate IDs before writing', async () => {
       await expect(
@@ -607,7 +606,7 @@ describe('ItemRepository', () => {
 
   describe('getOnlineSalesItems', () => {
     test('returns sales items', async () => {
-      col.find.mockReturnValue(mkChain([{ track_inventory: false, name: 'A' }]));
+      col.aggregate.mockReturnValue(mkChain([{ track_inventory: false, name: 'A' }]));
       const r = await repo.getOnlineSalesItems(
         {},
         { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE }

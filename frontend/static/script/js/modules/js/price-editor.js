@@ -21,8 +21,10 @@
     }
     priceBranches = await api({ action: "branches" });
     if (key() !== capturedKey) return;
+    var preference = await api({ action: "pricePreference" });
+    if (key() !== capturedKey) return;
     if (!selectedBranches.length)
-      selectedBranches = [String(PosnicPro.local.get("branch_id_set"))];
+      selectedBranches = preference.allBranches ? priceBranches.map(function (b) { return b.id; }) : [String(PosnicPro.local.get("branch_id_set"))];
     selectedBranches = selectedBranches.filter(function (id) {
       return priceBranches.some(function (b) {
         return b.id === id;
@@ -47,6 +49,12 @@
     $('<summary class="btn btn-light">').appendTo(picker);
     selectionLabel();
     var box = $('<div class="ps-branch-options">').appendTo(picker);
+    $('<label class="d-flex p-2">').append($('<input type="checkbox" class="mr-2">').prop('checked', preference.allBranches).on('change', async function () {
+      var checkbox = this; checkbox.disabled = true;
+      try { await api({ action: 'savePricePreference', allBranches: checkbox.checked }); }
+      catch (e) { checkbox.checked = !checkbox.checked; error(e); }
+      finally { checkbox.disabled = false; }
+    }), document.createTextNode('Use all accessible branches by default')).appendTo(box);
     $('<button class="btn btn-light ml-2">')
       .text("All accessible branches")
       .on("click", function () {
@@ -63,10 +71,10 @@
       var row = $('<div class="ps-branch-row">').appendTo(box);
       $('<label class="m-2">')
         .append(
-          $('<input type="checkbox">')
+          $('<input class="ps-branch-choice" type="checkbox">')
             .prop("checked", selectedBranches.includes(b.id))
             .on("change", function () {
-              selectedBranches = $("#ps-branches input:checked")
+              selectedBranches = $("#ps-branches input.ps-branch-choice:checked")
                 .map(function () {
                   return this.value;
                 })
@@ -437,6 +445,7 @@
   p.showDataTablePage = function () {
     if (scope !== key()) p._catsLoaded = false;
     originalShow.call(p);
+    selectedBranches = [];
     visible = {
       itemid: true,
       unit: true,
@@ -564,6 +573,7 @@
     filter = "changes";
     count();
     try {
+      rows = await api({ action: 'expand', rows: rows, branches: selectedBranches, allowZero: zero });
       var jobId = id();
       await api({
         action: "create",

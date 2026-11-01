@@ -36,6 +36,7 @@ const sanitizeItemData = (data = {}) => {
   delete sanitized.updatedAt;
   delete sanitized.created_by;
   delete sanitized.created_by_id;
+  delete sanitized.creation_origin;
   delete sanitized.updated_by;
   delete sanitized.updated_by_id;
   delete sanitized.is_deleted;

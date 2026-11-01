@@ -3,6 +3,12 @@ const { app: electronApp } = require('electron');
 const fs = require('fs');
 const Module = require('module');
 
+process.env.POSNIC_UPLOADS_DIR = path.join(electronApp.getPath('userData'), 'uploads');
+require('./uploads-migration').migrateUploads(
+  path.join(electronApp.isPackaged ? process.resourcesPath : path.join(__dirname, '..'), 'api', 'uploads'),
+  process.env.POSNIC_UPLOADS_DIR
+);
+
 // Add api node_modules to module paths BEFORE requiring setup-mongodb
 // This allows setup-mongodb.js to find 'mongodb' package
 const initialApiPath = electronApp.isPackaged 

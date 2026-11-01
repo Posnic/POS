@@ -15,6 +15,7 @@ const salesChannels = require('../utils/sales-channels');
 const { NotFoundError, BadRequestError } = require('../utils/appError');
 const { toNumberExpression } = require('../helpers/sales.helper');
 const { notifyKotReady } = require('../helpers/kot-notify');
+const { reportSaleTotal } = require('../helpers/reportable-sales');
 
 // Helper to get model instance or class
 const getModel = (SaleModel) => SaleModel || Sale;
@@ -41,11 +42,7 @@ const buildDailyPaymentAggregationPipeline = (match) => [
   { $match: match },
   {
     $project: {
-      sales_total: {
-        $toDouble: {
-          $ifNull: [{ $ifNull: ['$sales_total', '$total'] }, 0],
-        },
-      },
+      sales_total: reportSaleTotal(),
       items_total: {
         $toDouble: { $ifNull: ['$items_total', 0] },
       },

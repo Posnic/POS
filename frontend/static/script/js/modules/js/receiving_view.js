@@ -858,7 +858,7 @@ PosnicPro.receivings.view = {
                         $('#tax_print_hide').show();
                     }
                 }
-                $('.total-noof-item').html(itemTotalQty.toFixed(2));
+                $('.total-noof-item').html(String(Number(itemTotalQty.toFixed(3))));
                 $('span.number').number(true, 2);
 
                 var contents = $(".print-modal-body").html();
@@ -1128,7 +1128,7 @@ PosnicPro.receivings.view = {
                         $('#tax_print_hide').show();
                     }
                 }
-                $('.total-noof-item').html(itemTotalQty.toFixed(2));
+                $('.total-noof-item').html(String(Number(itemTotalQty.toFixed(3))));
                 $('.print-subtotal').html(currency + '&nbsp;<span class="number">' + subTotal + '</span>');
                 $('.print-total').html('<strong>' + currency + '&nbsp;<span class="number">' + grandTotal + '</span></strong>');
 

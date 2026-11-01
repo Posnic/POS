@@ -6,6 +6,10 @@ const { toJSON, paginate } = require('./plugins');
 const itemSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
+    creation_origin: { type: mongoose.Schema.Types.Mixed, immutable: true },
+    catalogue_source_id: String,
+    catalogue_shared_fingerprint: String,
+    catalogue_distribution: mongoose.Schema.Types.Mixed,
     default_language: { type: String, default: '' },
     translations: {
       type: [{ _id: false, locale: String, name: String, description: String }],
@@ -346,6 +350,9 @@ class ItemModel {
     branch_id: { type: 'ObjectId', select: true },
     branch_name: { type: 'String', select: true },
     created_date: { type: 'Date', select: true },
+    creation_origin: { type: 'Object', select: true },
+    catalogue_source_id: { type: 'String', select: true },
+    catalogue_distribution: { type: 'Object', select: true },
     updated_date: { type: 'Date', select: true },
     created_by: { type: 'String', select: false },
     created_by_id: { type: 'ObjectId', select: false },

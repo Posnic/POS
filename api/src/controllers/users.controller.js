@@ -1,3 +1,4 @@
+const uploadsRoot = require('../utils/uploads-path');
 const { loginCookieDays } = require('../utils/token-lifetime');
 const { redact } = require('../utils/redact');
 const { clientIp } = require('../utils/client-ip');
@@ -14,7 +15,8 @@ const {
   jwtLifetimeSeconds,
   handsetLifetimeSeconds,
 } = require('../middleware/auth');
-const httpStatus = require('http-status');
+const httpStatusModule = require('http-status');
+const httpStatus = httpStatusModule.default || httpStatusModule;
 const { AppError } = require('../utils/appError');
 const { ObjectId } = require('mongodb');
 const BaseModel = require('../models/base.model');
@@ -1786,7 +1788,7 @@ class UsersController extends BaseController {
         }
       } else {
         // Local storage (matches PHP line 592-599)
-        const uploadDir = path.join(__dirname, '../../uploads/user_images/');
+        const uploadDir = path.join(uploadsRoot, 'user_images');
 
         // Create directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {

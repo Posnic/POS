@@ -381,6 +381,7 @@ const protect = async (req, res, next) => {
       if (!principal) {
         return res.status(401).json({ status: 'error', message: 'Invalid or revoked API token' });
       }
+      req.isScopedApiToken = true;
       return continueWithTenant(req, res, next, principal);
     }
 

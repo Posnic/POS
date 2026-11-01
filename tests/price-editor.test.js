@@ -75,7 +75,7 @@ async function fixture() {
       done({
         type: "success",
         data:
-          b.action === "finish"
+          b.action === "expand" ? b.rows : b.action === "finish"
             ? { job, counts: { pending: 1 }, rows: [], page: 1, total: 1 }
             : job,
       });

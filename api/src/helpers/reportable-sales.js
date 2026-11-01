@@ -26,11 +26,26 @@ function reportableSales(processes = GRAPH_ALLOWED_SALE_PROCESSES) {
 // be absent or stale after editing a KOT. Preserve zero and use legacy aliases
 // only when the canonical bill total is absent.
 function reportSaleTotal() {
+  const original = {
+    $ifNull: ['$sales_total', { $ifNull: ['$total', { $ifNull: ['$items_total', 0] }] }],
+  };
   return {
     $toDouble: {
-      $ifNull: ['$sales_total', { $ifNull: ['$total', { $ifNull: ['$items_total', 0] }] }],
+      $cond: [
+        { $in: ['$sale_process', ['PartialReturn', 'FullReturn']] },
+        { $ifNull: ['$items_total', original] },
+        original,
+      ],
     },
   };
+}
+
+// Returns retain the original invoice for the audit ledger. Remaining-item
+// views and net sales reports must use the separately persisted balance.
+function remainingSaleTotal(sale) {
+  if (['PartialReturn', 'FullReturn'].includes(sale.sale_process) && sale.items_total != null)
+    return sale.items_total;
+  return sale.sales_total ?? sale.total ?? sale.items_total ?? 0;
 }
 
 // Item allocations are used by the day-end tax report. Older sales may have
@@ -68,4 +83,4 @@ function reportSaleTax() {
   };
 }
 
-module.exports = { reportableSales, reportSaleTotal, reportSaleTax };
+module.exports = { reportableSales, reportSaleTotal, reportSaleTax, remainingSaleTotal };

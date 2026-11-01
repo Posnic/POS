@@ -1,3 +1,20 @@
+<style>
+#stocklogs .stocklogs-toolbar { gap:8px 12px; margin:0; }
+#stocklogs .stocklogs-toolbar > .col-auto,
+#stocklogs .stocklogs-toolbar > .col { padding:0; }
+#stocklogs .stocklogs-toolbar > .col { flex:1 1 600px; min-width:0; }
+#stocklogs .stocklogs-toolbar .page-title { padding:0; white-space:nowrap; }
+#stocklogs #stocklogs_quick_filters { margin:0; gap:8px; flex-wrap:nowrap!important; }
+#stocklogs #stocklogs_move_dd { height:38px; min-width:90px; }
+#stocklogs #stocklogs_filter_panel { margin:0; }
+#stocklogs #stocklogs_filter_panel .lf-row { margin:0; align-items:center; }
+#stocklogs #stocklogs_controls { display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin:0; }
+#stocklogs #stocklogs_controls .btn { margin:0; white-space:nowrap; min-height:38px; }
+@media(max-width:1399px) {
+ #stocklogs .stocklogs-toolbar > .col { flex-basis:100%; order:4; }
+ #stocklogs .stocklogs-toolbar > .col-auto.text-right { margin-left:auto; }
+}
+</style>
 <div class="vertical-layout page_loader" id="stocklogs" style="display: none">
     <!-- Inventory Logs, built to LIST_PAGE_UX_STANDARD.md: the stock ledger
          the transition machinery writes, read-only by design. A row is a
@@ -6,10 +23,26 @@
          own, so the standard's cross-link rule applies instead of a pane. -->
     <div id="containerbar">
         <div class="breadcrumbbar crumbbar_padding">
-            <div class="row align-items-center row_filter">
+            <div class="row align-items-center row_filter stocklogs-toolbar">
                 <div class="col-auto">
                     <h4 class="page-title break_title mb-0"><lang class="lang_invenlog_title">Inventory Logs</lang></h4>
                 </div>
+                <div class="col-auto stocklogs-movement">                <!-- Movement as a labeled dropdown (LIST_PAGE_UX_STANDARD §2:
+                     quick filters are dropdowns, never chips). -->
+                <div class="d-flex align-items-center" style="gap:8px;" id="stocklogs_quick_filters">
+                    <span class="p-qf-label"><lang class="lang_movement">Movement</lang></span>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false" id="stocklogs_move_dd"><lang class="lang_report_all">All</lang></button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move=""><lang class="lang_report_all">All</lang></a>
+                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="purchases"><lang class="lang_po_title">Purchases</lang></a>
+                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="sales"><lang class="lang_rgrp_sales">Sales</lang></a>
+                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="items"><lang class="lang_item_edits">Item edits</lang></a>
+                        </div>
+                    </div>
+                </div>
+</div>
                 <div class="col">
                     <div class="lf-panel" id="stocklogs_filter_panel" style="display:none;"></div>
                 </div>
@@ -18,7 +51,7 @@
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false" title="Export CSV" data-t-title="lang_export_csv" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
-                            <i class="feather icon-share"></i>
+                            <i class="feather icon-share mr-2"></i><lang class="lang_export">Export</lang>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.stocklogs.exportCsv(); return false;"><lang class="lang_this_page_what_is_shown">This page (what is shown)</lang></a>
@@ -39,21 +72,6 @@
         <div id="stocklogs_split">
         <div class="card m-b-30 md-rail" id="stocklogs_list_card">
             <div class="card-body">
-                <!-- Movement as a labeled dropdown (LIST_PAGE_UX_STANDARD §2:
-                     quick filters are dropdowns, never chips). -->
-                <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="stocklogs_quick_filters">
-                    <span class="p-qf-label"><lang class="lang_movement">Movement</lang></span>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false" id="stocklogs_move_dd"><lang class="lang_report_all">All</lang></button>
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move=""><lang class="lang_report_all">All</lang></a>
-                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="purchases"><lang class="lang_po_title">Purchases</lang></a>
-                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="sales"><lang class="lang_rgrp_sales">Sales</lang></a>
-                            <a class="dropdown-item il-move-opt" href="javascript:void(0)" data-move="items"><lang class="lang_item_edits">Item edits</lang></a>
-                        </div>
-                    </div>
-                </div>
                 <div id="stocklogs_list_rows" class="md-rail-rows text-muted"><lang class="lang_loading_movements">Loading movements ...</lang></div>
                 <div class="q-pager" id="stocklogs_list_paging"></div>
             </div>
