@@ -136,3 +136,20 @@ test('overview tabs separate worksheets and status-filtered history',()=>{
  $('#count_overview_tabs [data-view="cancelled"]').trigger('click');assert.match(urls.at(-1),/status=cancelled/);assert.equal($('#count_overview_tabs button.active').length,1);
  }finally{w.close();}
 });
+
+
+test('review reveals missing reason across pages and opens review after correction',async()=>{
+ const dom=new JSDOM('<div id="inventorycounts"><div class="contentbar"><div class="count-workspace"><div id="inventory_count_detail"></div></div></div></div>',{runScripts:'outside-only',url:'http://localhost'}),w=dom.window;
+ try{
+ w.HTMLElement.prototype.scrollIntoView=function(){};
+ w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/jquery.min.js'),'utf8'));
+ const items=Array.from({length:30},(_,i)=>({id:String(i+1),name:'Product '+(i+1),sku:String(i+1),unit:'kg',quantity:1000,tracked:true,categoryId:'c',revision:'r'}));let writes=0;const errors=[];
+ w.PosnicPro={alert:(type,text)=>errors.push(text),i18n:{t:(k,v)=>v},local:{get:()=> 'b'},request(o,ok){if(o.url.includes('inventory-counts/audit?')){writes++;return ok({data:{operationId:'a',state:'prepared',applied:[],lines:[{itemId:'1',name:'Product 1',expected:1000,quantity:2000,reason:'Monthly count'}]}});}ok({data:o.url.includes('priceSheet')?[{id:'b',name:'Shop'}]:o.url.includes('kind=categories')?{rows:[]}:{rows:items}});}};
+ w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/modules/js/inventory_counts.js'),'utf8'));
+ await w.PosnicPro.inventorycounts.startAudit();const $=w.$,tick=()=>new Promise(r=>setImmediate(r));
+ $('.audit-new[data-id="1"]').val('2').trigger('input');$('#audit_next').trigger('click');$('#audit_review').trigger('click');await tick();
+ assert.equal(writes,0);assert.equal(w.document.activeElement.getAttribute('data-id'),'1');assert.equal(w.document.activeElement.classList.contains('audit-reason'),true);assert.match($('#audit_field_error').text(),/reason/);assert.match(errors[0],/reason/);assert.equal($('#audit_review').prop('disabled'),false);
+ $('.audit-reason[data-id="1"]').val('Monthly count').trigger('input');assert.equal($('#audit_field_error').length,0);$('#audit_review').trigger('click');await tick();
+ assert.equal(writes,1);assert.equal($('#audit_review_panel').parent().hasClass('modal-body'),true);assert.equal($('#audit_confirm').length,1);
+ }finally{w.close();}
+});

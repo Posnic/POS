@@ -234,7 +234,20 @@ $(document).on('click', '.mobile-inventory-close', function () {
     }
     function scope(url) { return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'targetBranchId=' + encodeURIComponent(branch); }
     function check() { if (activeBranch !== PosnicPro.local.get('branch_id_set')) throw new Error('Signed-in branch changed. Reopen stock adjustment.'); }
-    function fail(e) { $('#audit_status').text(e.message); }
+    function fail(e) {
+        $('#audit_status').text(e.message).attr('role','alert').addClass('text-danger');
+        if(typeof PosnicPro.alert==='function')PosnicPro.alert('error',e.message);
+    }
+    function invalidRow(id, field, message) {
+        var matches=filtered(), index=matches.findIndex(function(r){return r.id===id;});
+        if(index<0){$('#audit_search').val('');$('#audit_category').val('');matches=filtered();index=matches.findIndex(function(r){return r.id===id;});}
+        auditPage=Math.floor(Math.max(0,index)/auditPageSize)+1;render();
+        var input=$('#audit_rows .'+field).filter(function(){return $(this).attr('data-id')===id;}).first();
+        input.addClass('is-invalid').attr('aria-invalid','true').attr('aria-describedby','audit_field_error');
+        $('<div id="audit_field_error" class="invalid-feedback" role="alert">').text(message).insertAfter(input);
+        if(input[0]){input[0].scrollIntoView({block:'center',behavior:'auto'});input.trigger('focus');}
+        throw new Error(message);
+    }
     function filtered() {
         var q = String($('#audit_search').val() || '').toLowerCase(), category = $('#audit_category').val();
         return rows.filter(function (r) { return (!recountIds || recountIds.includes(r.id)) && (!category || r.categoryId === category) && (r.name.toLowerCase().includes(q) || r.sku.toLowerCase().includes(q)); });
@@ -293,6 +306,8 @@ $(document).on('click', '.mobile-inventory-close', function () {
     };
     $(document).on('input', '.audit-new,.audit-reason', function () {
         ($(this).hasClass('audit-new') ? edits : reasons)[$(this).attr('data-id')] = this.value;
+        $(this).removeClass('is-invalid').removeAttr('aria-invalid aria-describedby').siblings('.invalid-feedback').remove();
+        $('#audit_status').removeClass('text-danger').attr('role','status');
         operationId = null; $('#audit_file').val(''); $('#audit_review_panel').empty();
     }).on('input', '#audit_search', function(){auditPage=1;render();}).on('change', '#audit_category', function(){auditPage=1;render();});
     $(document).on('change','#audit_page_size',function(){auditPageSize=Number(this.value);auditPage=1;render();}).on('click','#audit_prev',function(){auditPage=Math.max(1,auditPage-1);render();}).on('click','#audit_next',function(){auditPage++;render();});
@@ -341,6 +356,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
     }
     $(document).on('click', '#audit_review', async function () {
         var button = $(this).prop('disabled', true), selected = branch;
+        $('#audit_status').removeClass('text-danger').attr('role','status').text('Preparing review...');
         try {
             check(); operationId = operationId || ('audit_' + crypto.randomUUID()); var result, file = $('#audit_file')[0].files[0];
             if (file) {
@@ -348,8 +364,8 @@ $(document).on('click', '.mobile-inventory-close', function () {
                 result = await api({ url: scope('inventory-counts/sheet'), method: 'POST', data: form, contentType: false, processData: false });
             } else {
                 var lines = Object.keys(edits).filter(function (id) { return edits[id] !== ''; }).map(function (id) {
-                    if (!/^\d+(\.\d{1,3})?$/.test(edits[id])) throw new Error('Enter non-negative stock with at most three decimals.');
-                    if (!reasons[id]?.trim()) throw new Error('Choose or type a reason for every changed row.');
+                    if (!/^\d+(\.\d{1,3})?$/.test(edits[id])) invalidRow(id,'audit-new','Enter non-negative stock with at most three decimals.');
+                    if (!reasons[id]?.trim()) invalidRow(id,'audit-reason','Choose or type a reason for this stock change.');
                     var row = rows.find(function (r) { return r.id === id; });
                     return { itemId: id, quantity: Math.round(Number(edits[id]) * 1000), revision: row.revision, reason: reasons[id].trim() };
                 });
