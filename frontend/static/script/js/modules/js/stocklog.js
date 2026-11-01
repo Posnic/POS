@@ -1,4 +1,9 @@
 PosnicPro.stocklogs = {
+    quantity: function (value) {
+        if (value == null || value === '') { return value; }
+        var number = Number(value);
+        return Number.isFinite(number) ? Number(number.toFixed(3)) : value;
+    },
     /* Deep link #/stocklogs/<id>: land on the ledger with that movement
        open in the right pane - the item's own page is a link inside,
        never a redirect (owner rule). Recognises the echo of its own
@@ -43,7 +48,7 @@ PosnicPro.stocklogs = {
     openDoc: function (logId) {
         var r = (PosnicPro.stocklogs._lastRows || []).filter(function (x) { return String(x._id) === String(logId); })[0];
         if (!r) { return; }
-        var n = Number(r.count) || 0;
+        var n = Number(PosnicPro.stocklogs.quantity(r.count)) || 0;
         PosnicPro.listDoc.open({
             key: 'stocklogs',
             id: r._id,
@@ -67,9 +72,9 @@ PosnicPro.stocklogs = {
         var change = '—';
         if (o.change != null) {
             change = '<span style="color:' + (o.change < 0 ? 'var(--theme-danger-color, #c0392b)' : 'var(--theme-success-color, #1a7f37)') + ';">'
-                + (o.change > 0 ? '+' : '') + o.change + '</span>';
+                + (o.change > 0 ? '+' : '') + PosnicPro.stocklogs.quantity(o.change) + '</span>';
         } else if (o.qty != null) {
-            change = esc(o.qty);
+            change = esc(PosnicPro.stocklogs.quantity(o.qty));
         }
         /* The reference IS a document - a bill number for sale movements, a
            purchase number for receivings - so it links to its record
@@ -87,8 +92,8 @@ PosnicPro.stocklogs = {
         }
         return PosnicPro.listDoc.stats([
             { v: change, l: PosnicPro.i18n.t('lang_change', 'Change') },
-            { v: o.opening != null ? esc(o.opening) : null, l: PosnicPro.i18n.t('lang_opening_2', 'Opening') },
-            { v: o.opening != null ? esc(o.closing) : null, l: PosnicPro.i18n.t('lang_closing_2', 'Closing') }
+            { v: o.opening != null ? esc(PosnicPro.stocklogs.quantity(o.opening)) : null, l: PosnicPro.i18n.t('lang_opening_2', 'Opening') },
+            { v: o.opening != null ? esc(PosnicPro.stocklogs.quantity(o.closing)) : null, l: PosnicPro.i18n.t('lang_closing_2', 'Closing') }
         ])
             + PosnicPro.listDoc.grid([
                 { label: PosnicPro.i18n.t('lang_movement', 'Movement'), lines: [
@@ -229,7 +234,7 @@ PosnicPro.stocklogs = {
                 + '<th class="text-right il-col-bal"><lang class="lang_opening_2">Opening</lang></th><th class="text-right"><lang class="lang_change">Change</lang></th>'
                 + '<th class="text-right il-col-bal"><lang class="lang_closing_2">Closing</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
-                var n = Number(r.count) || 0;
+                var n = Number(PosnicPro.stocklogs.quantity(r.count)) || 0;
                 var note = r.note ? '<div class="q-muted" style="font-size:11.5px; white-space:normal;">' + esc(r.note) + '</div>' : '';
                 html += '<tr class="md-row stocklogs-row highlight-select'
                     + (PosnicPro.listDoc.activeId('stocklogs') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
@@ -238,10 +243,10 @@ PosnicPro.stocklogs = {
                     + '<td class="il-col-ref q-muted">' + esc(r.reference || '-') + '</td>'
                     + '<td class="il-col-by">' + esc(r.changed_by || '-') + '</td>'
                     + '<td class="il-col-date">' + esc(PosnicPro.convertDate(r.string_date)) + '</td>'
-                    + '<td class="text-right il-col-bal q-muted">' + esc(r.opening_balance) + '</td>'
+                    + '<td class="text-right il-col-bal q-muted">' + esc(self.quantity(r.opening_balance)) + '</td>'
                     + '<td class="text-right" style="color:' + (n < 0 ? 'var(--theme-danger-color, #c0392b)' : 'var(--theme-success-color, #1a7f37)') + ';">'
                     + (n > 0 ? '+' : '') + n + '</td>'
-                    + '<td class="text-right il-col-bal q-muted">' + esc(r.closing_balance) + '</td>'
+                    + '<td class="text-right il-col-bal q-muted">' + esc(self.quantity(r.closing_balance)) + '</td>'
                     + '</tr>';
             });
             html += '</tbody></table></div>';
@@ -284,7 +289,7 @@ PosnicPro.stocklogs = {
             head: ['Item', 'Movement', 'Note', 'Reference', 'By', 'Date', 'Opening', 'Change', 'Closing'],
             map: function (r) {
                 return [r.item_name, r.process, r.note || '', r.reference || '', r.changed_by || '',
-                    PosnicPro.convertDate(r.string_date), r.opening_balance, r.count, r.closing_balance];
+                    PosnicPro.convertDate(r.string_date), PosnicPro.stocklogs.quantity(r.opening_balance), PosnicPro.stocklogs.quantity(r.count), PosnicPro.stocklogs.quantity(r.closing_balance)];
             }
         };
     },
