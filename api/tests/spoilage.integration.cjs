@@ -98,7 +98,7 @@ w.eval(fs.readFileSync(require('path').join(__dirname,'../../frontend/static/scr
 const wait=async fn=>{for(let i=0;i<200;i++){if(fn())return;await new Promise(r=>setTimeout(r,5));}throw new Error(w.document.body.textContent);};
 await w.PosnicPro.inventorycounts.openSpoilage();w.$('#sp_new').click();await wait(()=>w.$('.sp_add_result').length);
 w.$('.sp_add_result').first().click();w.$('.sp_qty').val('1.500');w.$('.sp_remarks').val('Crushed in transit');w.$('#sp_save').click();await wait(()=>w.$('#sp_reverse').length);
-assert.equal(await stock(),8.5);assert.match(w.$('#sp_detail').text(),/Saved/);
+assert.equal(await stock(),8.5);assert.match(w.$('#sp_detail').text(),/Completed/);
 assert.equal(w.$('#sp_policy,#sp_accept,#sp_submit_new').length,0);
 w.$('#sp_reverse').click();await wait(()=>/Local test reversal/.test(w.$('#sp_detail').text()));
 assert.equal(await stock(),10);
@@ -140,8 +140,18 @@ test('spoilage remarks are optional but reasons and the 500 character limit rema
 
 test('history pagination returns 25 unique records and a cursor for the remaining rows',async()=>{
  const original=await draft();const entry=await db.collection('spoilage_entries').findOne({_id:new ObjectId(original.id)});
- await db.collection('spoilage_entries').insertMany(Array.from({length:26},(_,i)=>({...entry,_id:new ObjectId(),clientId:'page-'+i,reference:'PAGE-'+i})));
+ await db.collection('spoilage_entries').insertMany(Array.from({length:26},(_,i)=>({...entry,_id:new ObjectId(),clientId:'page-'+i,reference:'PAGE-'+i,created_date:new Date(Date.UTC(2026,10,2,0,0,26-i))})));
  const first=await service.list({...req,query:{limit:25}});assert.equal(first.rows.length,25);assert(first.next);
  const second=await service.list({...req,query:{limit:25,after:first.next}});assert.equal(second.rows.length,2);assert.equal(second.next,null);
- assert.equal(new Set([...first.rows,...second.rows].map(x=>String(x._id))).size,27);assert.equal(await stock(),10);
+ const combined=[...first.rows,...second.rows];assert.equal(new Set(combined.map(x=>String(x._id))).size,27);for(let i=1;i<combined.length;i++)assert(new Date(combined[i-1].created_date)>=new Date(combined[i].created_date));assert.equal(await stock(),10);
+});
+
+test('spoilage details omit history and audit view is scoped and read only',async()=>{
+await draft();
+const detail=await service.get({...req,query:{view:'details'}});assert.equal(detail.audit,undefined);assert(detail.lines.length);
+const history=await service.get({...req,query:{view:'audit'}});assert.equal(history.audit[0].action,'Created');assert.equal(history.lines,undefined);
+assert.equal(await stock(),10);
+await assert.rejects(service.get({...req,params:{id:String(new ObjectId())},query:{view:'audit'}}),/not found/);
+await db.collection('spoilage_commands').deleteOne({_id:new ObjectId(req.params.id)});
+const shared=await service.get({...req,query:{view:'audit'}});assert.equal(shared.audit[0].action,'Created');
 });

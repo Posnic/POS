@@ -18,7 +18,7 @@ PosnicPro.inventorycounts = {
         var self = this;
         PosnicPro.get('inventory-counts', function (response) {
             var rows = response && response.data || [];
-            if (!rows.length) return $('#inventory_counts_list').html('<div class="text-center p-4"><lang class="lang_no_stock_count_drafts_yet">No stock-count drafts yet.</lang><p class="mt-3 mb-0">Use Start recount to enter actual quantities and review the stock changes before applying them.</p></div>');
+            if (!rows.length) return $('#inventory_counts_list').html('<div class="text-center p-4"><lang class="lang_no_stock_count_drafts_yet">No stock-count drafts yet.</lang><p class="mt-3 mb-0">Saved count drafts appear here. Starting an audit or saving spoilage does not create a worksheet.</p></div>');
             $('#inventory_counts_list').html('<div class="table-responsive"><table class="table"><thead><tr><th><lang class="lang_created">Created</lang></th><th><lang class="lang_scope">Scope</lang></th><th><lang class="lang_userstatus">Status</lang></th><th></th></tr></thead><tbody>' + rows.map(function (row) { return '<tr><td>' + self.esc(moment(row.created_at).format('LLL')) + '</td><td>' + self.esc(row.scope || 'all') + '</td><td><span class="badge badge-primary-inverse">' + self.esc(row.status) + '</span></td><td class="text-right"><button class="btn btn-sm btn-primary-rgba inventory-count-open" data-id="' + self.esc(row._id) + '">Review</button></td></tr>'; }).join('') + '</tbody></table></div>');
         });
     },
@@ -67,6 +67,7 @@ PosnicPro.inventorycounts.restorePopup = function() {
     var content=$('#inventory_popup .modal-body').children(), anchor=$('#inventory_popup_anchor');
     if(anchor.length){content.insertBefore(anchor).hide();anchor.remove();}
     if(content.attr('id')==='sp_detail')content.empty();
+    $('#inventory_popup .modal-footer').empty();
 };
 PosnicPro.inventorycounts.closePopup = function() {
     this.restorePopup();
@@ -77,6 +78,7 @@ PosnicPro.inventorycounts.popup = function(id,title) {
     if(!content.length)return;
     if(!$('#inventory_popup').length)$('body').append('<div id="inventory_popup" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="inventory_popup_title"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><div class="modal-header"><h5 id="inventory_popup_title" class="modal-title"></h5><button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">&times;</button></div><div class="modal-body"></div><div class="modal-footer"><button class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button></div></div></div></div>');
     if(!content.closest('#inventory_popup').length){p.restorePopup();content.before('<span id="inventory_popup_anchor" hidden></span>');content.appendTo('#inventory_popup .modal-body').show();}
+    $('#inventory_popup .modal-footer').html('<button class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button>');
     $('#inventory_popup_title').text(title);
     $('#inventory_popup').off('hide.bs.modal.inventory').on('hide.bs.modal.inventory',function(){p.restorePopup();});
     if($.fn.modal)$('#inventory_popup').modal('show');
@@ -102,30 +104,51 @@ PosnicPro.inventorycounts.statusBadge = function (state) {
     var value = labels[state], known = Object.prototype.hasOwnProperty.call(labels,state);
     return $('<span class="inventory-status">').addClass(known ? state : '').append($('<i aria-hidden="true" class="feather">').addClass(state === 'complete' ? 'icon-check-circle' : state === 'conflict' ? 'icon-alert-circle' : 'icon-clock')).append(document.createTextNode(value ? PosnicPro.i18n.t(value[0],value[1]) : state));
 };
+PosnicPro.inventorycounts.overviewTab = 'all';
+PosnicPro.inventorycounts.selectOverviewTab = function (tab) {
+    if(!['all','attention','complete','cancelled','worksheets'].includes(tab))return;
+    this.overviewTab=tab;
+    $('#count_overview_tabs button').each(function(){var active=$(this).attr('data-view')===tab;$(this).toggleClass('active',active).attr('aria-selected',String(active));});
+    $('#inventory_counts_list,#count_worksheet_intro').toggle(tab==='worksheets');
+    $('#mobile_inventory_operations').toggle(tab!=='worksheets');
+    if(tab==='worksheets'){this.mobileRequest=(this.mobileRequest||0)+1;originalInventoryLoad.call(this);}
+    else this.loadMobile();
+};
+PosnicPro.inventorycounts.setupOverviewTabs = function () {
+    if($('#count_overview_tabs').length)return;
+    var list=$('#inventory_counts_list');
+    $(list.prevAll('h5,p').get().reverse()).wrapAll('<div id="count_worksheet_intro"></div>');
+    $('#count_worksheet_intro p').text('Saved count drafts are worksheets for reference. Completed stock updates are shown in the Completed tab.');
+    var tabs=$('<div id="count_overview_tabs" class="nav nav-tabs mb-3" role="tablist" aria-label="Inventory activity" data-t-aria-label="lang_inventory_activity">');
+    [['all','All activity'],['attention','Needs attention'],['complete','Completed'],['cancelled','Cancelled'],['worksheets','Saved worksheets']].forEach(function(t){$('<button type="button" class="nav-link" role="tab">').attr('data-view',t[0]).text(t[1]).appendTo(tabs);});
+    var intro=$('#count_worksheet_intro');tabs.insertBefore(intro.length?intro:list);
+};
+$(document).on('click','#count_overview_tabs button',function(){PosnicPro.inventorycounts.selectOverviewTab($(this).attr('data-view'));});
 PosnicPro.inventorycounts.loadMobile = function (after) {
+    if(this.overviewTab==='worksheets')return;
     var self = this, branch = PosnicPro.local.get('branch_id_set'), ticket = self.mobileRequest = (self.mobileRequest || 0) + 1;
-    if (!$('#mobile_inventory_operations').length) $('#inventory_counts_list').after('<section id="mobile_inventory_operations" class="inventory-panel"><div class="inventory-panel-header"><h5><i class="feather icon-smartphone" aria-hidden="true"></i><lang class="lang_mobile_inventory_operations">Mobile inventory operations</lang></h5><button class="btn btn-sm btn-outline-primary mobile-inventory-refresh"><i class="feather icon-refresh-cw" aria-hidden="true"></i><lang class="lang_wf_refresh">Refresh</lang></button></div><div id="mobile_inventory_rows" aria-live="polite"></div></section><div id="mobile_inventory_detail" tabindex="-1"></div>');
-    $('#mobile_inventory_operations').attr('aria-busy','true');
-    PosnicPro.get('mobile/v1/inventory/operations' + (after ? '?after=' + encodeURIComponent(after) : ''), function (r) {
+    if (!$('#mobile_inventory_operations').length) $('#inventory_counts_list').after('<section id="mobile_inventory_operations" class="inventory-panel"><div class="inventory-panel-header"><h5><i class="feather icon-smartphone" aria-hidden="true"></i><span><lang class="lang_inventory_activity">Inventory activity</lang></span></h5><button class="btn btn-sm btn-outline-primary mobile-inventory-refresh"><i class="feather icon-refresh-cw" aria-hidden="true"></i><lang class="lang_wf_refresh">Refresh</lang></button></div><div id="mobile_inventory_rows" aria-live="polite"></div></section><div id="mobile_inventory_detail" tabindex="-1"></div>');
+    $('#mobile_inventory_operations').show().attr('aria-busy','true');
+    PosnicPro.get('mobile/v1/inventory/operations?' + (self.overviewTab && self.overviewTab!=='all'?'status='+encodeURIComponent(self.overviewTab)+'&':'') + (after ? 'after=' + encodeURIComponent(after) : ''), function (r) {
         if (ticket !== self.mobileRequest || branch !== PosnicPro.local.get('branch_id_set')) return;
         $('#mobile_inventory_operations').attr('aria-busy','false');
         var root = $('#mobile_inventory_rows');
         if (!Array.isArray(r.rows)) { if (!after) root.empty(); return $('<p class="inventory-empty" role="alert">').text(PosnicPro.i18n.t('lang_could_not_load_inventory_operations', 'Could not load inventory operations.')).appendTo(root); }
         if (!after) root.empty();
         root.find('.mobile-inventory-more').remove();
-        if (!r.rows.length && !root.find('tbody tr').length) return root.html('<div class="inventory-empty">' + self.esc(PosnicPro.i18n.t('lang_no_mobile_inventory_operations_yet', 'No mobile inventory operations yet.')) + '</div>');
+        if (!r.rows.length && !root.find('tbody tr').length) return root.html('<div class="inventory-empty">' + self.esc(self.overviewTab==='all'?'No inventory activity yet.':self.overviewTab==='complete'?'No completed entries yet.':self.overviewTab==='cancelled'?'No cancelled entries.':'Nothing needs attention. Completed entries are in the Completed tab.') + '</div>');
         if (!root.find('table').length) root.append('<div class="table-responsive"><table class="table inventory-table"><thead><tr><th><lang class="lang_activity_2">Activity</lang></th><th><lang class="lang_created">Created</lang></th><th class="text-right"><lang class="lang_items">Items</lang></th><th><lang class="lang_userstatus">Status</lang></th><th><span class="sr-only"><lang class="lang_review_title">Review</lang></span></th></tr></thead><tbody></tbody></table></div>');
         r.rows.forEach(function (row) {
             var tr = $('<tr>').appendTo(root.find('tbody')), icon = {count:'clipboard',receive:'truck',damage:'alert-triangle',loss:'minus-circle'}[row.mode] || 'package';
             var cell = $('<td>').appendTo(tr), operation = $('<div class="inventory-operation">').appendTo(cell);
             $('<span class="inventory-operation-icon" aria-hidden="true">').append($('<i class="feather">').addClass('icon-' + icon)).appendTo(operation);
             var description = $('<div>').appendTo(operation);
-            $('<strong>').text(self.operationLabel(row.mode)).appendTo(description);
+            $('<strong>').text(/^RV-SP-/.test(row.reason||'')?'Stock restored':/^SP-/.test(row.reason||'')?'Spoilage / damage':self.operationLabel(row.mode)).appendTo(description);
             if (row.reason) $('<small>').text(row.reason).appendTo(description);
             $('<td class="inventory-date">').text(row.createdAt && moment(row.createdAt).isValid() ? moment(row.createdAt).format('lll') : '—').appendTo(tr);
             $('<td class="text-right">').text((row.lines || []).length).appendTo(tr);
             $('<td>').append(self.statusBadge(row.state)).appendTo(tr);
-            $('<td class="text-right">').append($('<button class="btn btn-sm btn-outline-primary mobile-inventory-open">').text(PosnicPro.i18n.t('lang_review_title', 'Review')).append(' ').append($('<i class="feather icon-arrow-right" aria-hidden="true">')).attr('data-id', row.operationId)).appendTo(tr);
+            $('<td class="text-right">').append($('<button class="btn btn-sm btn-outline-primary mobile-inventory-open">').text(['complete','cancelled'].includes(row.state)?'View':'Review').append(' ').append($('<i class="feather icon-arrow-right" aria-hidden="true">')).attr('data-id', row.operationId)).appendTo(tr);
         });
         if (r.next) $('<button class="btn btn-sm btn-outline-primary mobile-inventory-more">').text(PosnicPro.i18n.t('lang_load_more', 'Load more')).attr('data-after', r.next).appendTo(root);
     });
@@ -162,7 +185,7 @@ PosnicPro.inventorycounts.openMobile = function (id) {
     });
 };
 var originalInventoryLoad = PosnicPro.inventorycounts.load;
-PosnicPro.inventorycounts.load = function () { originalInventoryLoad.call(this); this.loadMobile(); };
+PosnicPro.inventorycounts.load = function () { this.setupOverviewTabs(); this.selectOverviewTab(this.overviewTab || 'all'); };
 $(document).on('click', '.mobile-inventory-refresh', function () { PosnicPro.inventorycounts.loadMobile(); });
 $(document).on('click', '.mobile-inventory-more', function () { PosnicPro.inventorycounts.loadMobile($(this).attr('data-after')); });
 $(document).on('click', '.mobile-inventory-open', function () { PosnicPro.inventorycounts.openMobile($(this).attr('data-id')); });
@@ -211,7 +234,20 @@ $(document).on('click', '.mobile-inventory-close', function () {
     }
     function scope(url) { return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'targetBranchId=' + encodeURIComponent(branch); }
     function check() { if (activeBranch !== PosnicPro.local.get('branch_id_set')) throw new Error('Signed-in branch changed. Reopen stock adjustment.'); }
-    function fail(e) { $('#audit_status').text(e.message); }
+    function fail(e) {
+        $('#audit_status').text(e.message).attr('role','alert').addClass('text-danger');
+        if(typeof PosnicPro.alert==='function')PosnicPro.alert('error',e.message);
+    }
+    function invalidRow(id, field, message) {
+        var matches=filtered(), index=matches.findIndex(function(r){return r.id===id;});
+        if(index<0){$('#audit_search').val('');$('#audit_category').val('');matches=filtered();index=matches.findIndex(function(r){return r.id===id;});}
+        auditPage=Math.floor(Math.max(0,index)/auditPageSize)+1;render();
+        var input=$('#audit_rows .'+field).filter(function(){return $(this).attr('data-id')===id;}).first();
+        input.addClass('is-invalid').attr('aria-invalid','true').attr('aria-describedby','audit_field_error');
+        $('<div id="audit_field_error" class="invalid-feedback" role="alert">').text(message).insertAfter(input);
+        if(input[0]){input[0].scrollIntoView({block:'center',behavior:'auto'});input.trigger('focus');}
+        throw new Error(message);
+    }
     function filtered() {
         var q = String($('#audit_search').val() || '').toLowerCase(), category = $('#audit_category').val();
         return rows.filter(function (r) { return (!recountIds || recountIds.includes(r.id)) && (!category || r.categoryId === category) && (r.name.toLowerCase().includes(q) || r.sku.toLowerCase().includes(q)); });
@@ -270,6 +306,8 @@ $(document).on('click', '.mobile-inventory-close', function () {
     };
     $(document).on('input', '.audit-new,.audit-reason', function () {
         ($(this).hasClass('audit-new') ? edits : reasons)[$(this).attr('data-id')] = this.value;
+        $(this).removeClass('is-invalid').removeAttr('aria-invalid aria-describedby').siblings('.invalid-feedback').remove();
+        $('#audit_status').removeClass('text-danger').attr('role','status');
         operationId = null; $('#audit_file').val(''); $('#audit_review_panel').empty();
     }).on('input', '#audit_search', function(){auditPage=1;render();}).on('change', '#audit_category', function(){auditPage=1;render();});
     $(document).on('change','#audit_page_size',function(){auditPageSize=Number(this.value);auditPage=1;render();}).on('click','#audit_prev',function(){auditPage=Math.max(1,auditPage-1);render();}).on('click','#audit_next',function(){auditPage++;render();});
@@ -295,7 +333,21 @@ $(document).on('click', '.mobile-inventory-close', function () {
     function review(r) {
         reviewId = r.operationId;
         p.popup('audit_review_panel','Review stock adjustments');
-        var panel = $('#audit_review_panel').empty().append($('<h5>').text('Review stock adjustments · ' + r.state));
+        var complete=r.state==='complete';
+        var panel = $('#audit_review_panel').empty().append($('<h5>').text(complete?'Stock adjustment completed':'Review stock adjustments'));
+        if(complete){
+            edits={};reasons={};operationId=null;$('#audit_file').val('');render();
+            $('<div class="alert alert-success" role="status">').text(PosnicPro.i18n.t('lang_stock_updated_successfully_no_further_appr', 'Stock updated successfully. No further approval is needed.')).appendTo(panel);
+            $('#audit_status').removeClass('text-danger').text(PosnicPro.i18n.t('lang_stock_adjustment_saved_continue_counting_o', 'Stock adjustment saved. Continue counting or return to Overview.'));
+            var footer=$('#inventory_popup .modal-footer').empty();
+            $('<button type="button" class="btn btn-outline-primary">').text(PosnicPro.i18n.t('lang_back_to_overview', 'Back to overview')).on('click',function(){p.closePopup();p.navigate('overview');}).appendTo(footer);
+            $('<button type="button" class="btn btn-primary">').text(PosnicPro.i18n.t('lang_continue_counting', 'Continue counting')).on('click',function(){p.closePopup();}).appendTo(footer);
+            $('#inventory_popup').off('hidden.bs.modal.auditComplete').one('hidden.bs.modal.auditComplete',async function(){
+                if(!$('#inventorycounts').hasClass('count-editing'))return;
+                var previousPage=auditPage;
+                try{await load();auditPage=previousPage;render();}catch(e){fail(e);}
+            });
+        }else $('<p class="text-muted">').text(PosnicPro.i18n.t('lang_check_the_quantities_below_then_confirm_to', 'Check the quantities below, then confirm to update stock.')).appendTo(panel);
         var table = $('<table class="table"><thead><tr><th><lang class="lang_product">Product</lang></th><th><lang class="lang_current">Current</lang></th><th><lang class="lang_addvariant_title">New</lang></th><th><lang class="lang_stock_adjust_reason">Reason</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody></tbody></table>').appendTo($('<div class="table-responsive">').appendTo(panel));
         r.lines.forEach(function (l) { var tr = $('<tr>').appendTo(table.find('tbody')); [l.name,l.expected / 1000,l.quantity / 1000,l.reason,r.applied.includes(l.itemId) ? 'Applied' : r.state].forEach(function (v) { $('<td>').text(v).appendTo(tr); }); });
         if (['prepared','applying'].includes(r.state)) panel.append($('<button id="audit_confirm" class="btn btn-primary">').text(r.approvalRequired ? PosnicPro.i18n.t('lang_approve_adjustments', 'Approve adjustments') : PosnicPro.i18n.t('lang_confirm_adjustments', 'Confirm adjustments')));
@@ -318,6 +370,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
     }
     $(document).on('click', '#audit_review', async function () {
         var button = $(this).prop('disabled', true), selected = branch;
+        $('#audit_status').removeClass('text-danger').attr('role','status').text(PosnicPro.i18n.t('lang_preparing_review', 'Preparing review...'));
         try {
             check(); operationId = operationId || ('audit_' + crypto.randomUUID()); var result, file = $('#audit_file')[0].files[0];
             if (file) {
@@ -325,15 +378,15 @@ $(document).on('click', '.mobile-inventory-close', function () {
                 result = await api({ url: scope('inventory-counts/sheet'), method: 'POST', data: form, contentType: false, processData: false });
             } else {
                 var lines = Object.keys(edits).filter(function (id) { return edits[id] !== ''; }).map(function (id) {
-                    if (!/^\d+(\.\d{1,3})?$/.test(edits[id])) throw new Error('Enter non-negative stock with at most three decimals.');
-                    if (!reasons[id]?.trim()) throw new Error('Choose or type a reason for every changed row.');
+                    if (!/^\d+(\.\d{1,3})?$/.test(edits[id])) invalidRow(id,'audit-new','Enter non-negative stock with at most three decimals.');
+                    if (!reasons[id]?.trim()) invalidRow(id,'audit-reason','Choose or type a reason for this stock change.');
                     var row = rows.find(function (r) { return r.id === id; });
                     return { itemId: id, quantity: Math.round(Number(edits[id]) * 1000), revision: row.revision, reason: reasons[id].trim() };
                 });
                 if (!lines.length || lines.length > 200) throw new Error('Review between 1 and 200 changes at a time.');
                 result = await api({ url: scope('inventory-counts/audit'), method: 'POST', data: JSON.stringify({ id: operationId, mode: 'count', reason: 'Stock adjustment', lines: lines }) });
             }
-            check(); if (selected !== branch) return; review(result); $('#audit_status').text(PosnicPro.i18n.t('lang_prepared_for_review_stock_has_not_changed', 'Prepared for review. Stock has not changed.'));
+            check(); if (selected !== branch) return; review(result); if(result.state!=='complete')$('#audit_status').text(PosnicPro.i18n.t('lang_prepared_for_review_stock_has_not_changed', 'Prepared for review. Stock has not changed.'));
         } catch (e) { fail(e); } finally { button.prop('disabled', false); }
     });
     $(document).on('click', '#audit_confirm', async function () {
@@ -348,7 +401,9 @@ $(document).on('click', '.mobile-inventory-close', function () {
 // Spoilage is a separately approved stock movement, never a count overwrite.
 (function (p) {
     var branch, signedBranch, info, catalogue=[], draft, selected=[], busy=false, next, generation=0, listScroll=0, listTrigger=null, productNext=null, productRequest=0, searchTimer, historyCursors=[null], historyPage=0;
-    var labels={draft:'Not saved',pending:'Not saved',approving:'Saving',accepted:'Saved',rejected:'Rejected',conflict:'Stock conflict',reversed:'Reversed',reversal_pending:'Restoring stock'};
+    var labels={draft:'Not saved',pending:'Not saved',approving:'Saving',accepted:'Completed',rejected:'Rejected',conflict:'Stock conflict',reversed:'Undone - stock restored',reversal_pending:'Restoring stock'};
+    function outcome(d){return d.state==='accepted'?(d.kind==='reversal'||/^RV-SP-/.test(d.reference||'')?'Completed - stock restored':'Completed - stock deducted'):(labels[d.state]||d.state);}
+    function nextStep(d){return ['accepted','reversed','rejected'].includes(d.state)?'No action needed':d.state==='conflict'?'Open entry to resolve the stock conflict':d.state==='draft'?'Open entry to finish saving':'Open entry to check or retry';}
     function request(url,method,data) {
         if (signedBranch !== PosnicPro.local.get('branch_id_set')) return Promise.reject(new Error('Signed-in branch changed. Reopen Spoilage / damage.'));
         var token=generation;
@@ -369,10 +424,10 @@ $(document).on('click', '.mobile-inventory-close', function () {
         info=await request('inventory-counts/spoilage?'+query()+'&limit=25'+(historyCursors[historyPage]?'&after='+historyCursors[historyPage]:''));next=info.next;
         $('#sp_new').toggle(info.canWrite);
         var root=$('#sp_list').empty(), body=$('<tbody>');
-        var grid=$('<table class="table"><thead><tr><th><lang class="lang_reference_title">Reference</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_userstatus">Status</lang></th><th><lang class="lang_entered_by">Entered by</lang></th><th></th></tr></thead></table>').append(body);
+        var grid=$('<table class="table"><thead><tr><th><lang class="lang_reference_title">Reference</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_userstatus">Status</lang></th><th><lang class="lang_entered_by">Entered by</lang></th><th><lang class="lang_next_step">Next step</lang></th><th></th></tr></thead></table>').append(body);
         $('<div class="table-responsive">').append(grid).appendTo(root);
         info.rows.forEach(function(d){var row=$('<tr>').appendTo(body);
-            [d.reference,d.occurredOn,labels[d.state]||d.state,d.createdByName].forEach(function(v){$('<td>').text(v).appendTo(row);});
+            [d.reference,d.occurredOn,outcome(d),d.createdByName,nextStep(d)].forEach(function(v){$('<td>').text(v).appendTo(row);});
             $('<td class="text-right">').append($('<button class="btn btn-sm btn-outline-primary sp_open">').attr('data-id',d._id).text(PosnicPro.i18n.t('lang_view', 'View'))).appendTo(row);
         });
         if(!info.rows.length)root.html('<p class="p-3 text-muted"><lang class="lang_no_entries_match_these_filters">No entries match these filters.</lang></p>');
@@ -439,10 +494,41 @@ $(document).on('click', '.mobile-inventory-close', function () {
     function show(d){
         draft=d;p.popup('sp_detail','Spoilage / damage details');var root=$('#sp_detail').empty();
         $('<button id="sp_back" class="btn btn-outline-secondary mb-3">').text(PosnicPro.i18n.t('lang_close_details', 'Close details')).appendTo(root);
-        $('<h5>').text(d.reference+' · '+(labels[d.state]||d.state)).appendTo(root);
+        $('<h5>').text(d.reference+' · '+outcome(d)).appendTo(root);
         $('<p>').text(d.occurredOn+' · Entered by '+d.createdByName+' · '+new Date(d.created_date).toLocaleString()+(d.decisionByName?' · Reviewed by '+d.decisionByName:'' )).appendTo(root);
         if(!d.local)$('<p class="text-warning">').text('Read-only synced record. Review or correct this entry on the '+d.origin.toLowerCase()+' installation where it was created.').appendTo(root);
         if(d.lastError)$('<p class="text-danger">').text(d.lastError).appendTo(root);
+        if(d.state==='accepted'){
+            var success=$('<div class="alert alert-success" role="status">').appendTo(root);
+            $('<strong class="d-block">').text(d.kind==='reversal'?'Completed - stock restored':'Completed - stock deducted').appendTo(success);
+            $('<span>').text(d.kind==='reversal'?'The stock has been restored. No further action is needed.':'The spoiled quantities have been deducted from stock. You’re done - no approval is needed.').appendTo(success);
+        }
+        var footer=$('#inventory_popup .modal-footer').empty();
+        if(d.canWrite&&d.state==='accepted')$('<button type="button" id="sp_another" class="btn btn-outline-primary">').text(PosnicPro.i18n.t('lang_add_another_entry', 'Add another entry')).appendTo(footer);
+        $('<button type="button" id="sp_done" class="btn btn-primary">').text(d.state==='accepted'?'Done':'Close').appendTo(footer);
+        var shell=root;
+        var tabs=$('<div class="nav nav-tabs mb-3" role="tablist">').appendTo(shell);
+        var detailsTab=$('<button type="button" id="sp_details_tab" class="nav-link active" role="tab" aria-selected="true" aria-controls="sp_details_panel">').text(PosnicPro.i18n.t('lang_item_details_title','Details')).appendTo(tabs);
+        var auditTab=$('<button type="button" id="sp_audit_tab" class="nav-link" role="tab" aria-selected="false" aria-controls="sp_audit_panel">').text(PosnicPro.i18n.t('lang_audit_history','Audit history')).appendTo(tabs);
+        root=$('<div id="sp_details_panel" role="tabpanel" aria-labelledby="sp_details_tab">').appendTo(shell);
+        var auditPanel=$('<div id="sp_audit_panel" role="tabpanel" aria-labelledby="sp_audit_tab" hidden>').appendTo(shell),auditLoaded=false,auditLoading=false;
+        async function selectTab(audit){
+            detailsTab.toggleClass('active',!audit).attr('aria-selected',String(!audit));auditTab.toggleClass('active',audit).attr('aria-selected',String(audit));
+            root.prop('hidden',audit);auditPanel.prop('hidden',!audit);
+            if(!audit||auditLoaded||auditLoading)return;
+            auditLoading=true;auditPanel.empty().attr('aria-busy','true').append($('<p role="status" class="text-muted">').text(PosnicPro.i18n.t('lang_loading','Loading…')));
+            try{
+                var history=await request('inventory-counts/spoilage/'+encodeURIComponent(d.id)+'?view=audit');
+                if(!auditPanel[0].isConnected)return;
+                auditPanel.empty();
+                if((history.audit||[]).length)auditPanel.append(table(['Action','User','Time','Remarks'],history.audit.map(function(a){return [a.action,a.user,new Date(a.at).toLocaleString(),a.note];})));
+                else auditPanel.append($('<p class="text-muted">').text(PosnicPro.i18n.t('lang_no_records','No Records')));
+                auditLoaded=true;
+            }catch(e){auditPanel.empty().append($('<p role="alert" class="text-danger">').text(e.message));}
+            finally{auditLoading=false;auditPanel.attr('aria-busy','false');}
+        }
+        detailsTab.on('click',function(){selectTab(false);});auditTab.on('click',function(){selectTab(true);});
+        tabs.on('keydown','button',function(e){if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();var audit=this===detailsTab[0];(audit?auditTab:detailsTab).trigger('focus');selectTab(audit);}});
         root.append(table(['SKU','Product','Unit','Recorded','Applied','Estimated cost','Reason','Remarks'],d.lines.map(function(l){return [l.sku,l.name,l.unit,(l.quantity/1000).toFixed(3),(d.applied||[]).includes(l.itemId)?(l.quantity/1000).toFixed(3):'0.000',l.estimatedValue==null?'Unknown':l.estimatedValue.toFixed(2),l.reason,l.remarks];})));
         var known=d.lines.reduce(function(n,l){return n+(l.estimatedValue||0);},0),unknown=d.lines.filter(function(l){return l.estimatedValue==null;}).length;
         var quantities={};d.lines.forEach(function(l){quantities[l.unit]=(quantities[l.unit]||0)+l.quantity;});
@@ -452,15 +538,17 @@ $(document).on('click', '.mobile-inventory-close', function () {
         function button(id,text,css){$('<button>').attr('id',id).attr('class','btn '+(css||'btn-outline-primary')).text(text).appendTo(actions);}
         if(d.canEdit)button('sp_edit','Edit');
         if(d.canWrite&&['draft','pending','approving','conflict'].includes(d.state))button('sp_apply','Retry save','btn-primary');
-        if(d.canWrite&&d.kind!=='reversal'&&['accepted','conflict','reversal_pending'].includes(d.state)&&(d.applied||[]).length)button('sp_reverse','Undo stock deduction');
-        button('sp_close','Close','btn-link');
-        $('<h6 class="mt-3">').text(PosnicPro.i18n.t('lang_audit_history', 'Audit history')).appendTo(root);root.append(table(['Action','User','Time','Remarks'],(d.audit||[]).map(function(a){return [a.action,a.user,new Date(a.at).toLocaleString(),a.note];})));
+        if(d.canWrite&&d.kind!=='reversal'&&['accepted','conflict','reversal_pending'].includes(d.state)&&(d.applied||[]).length){
+            $('<span class="text-muted align-self-center">').text(PosnicPro.i18n.t('lang_made_a_mistake', 'Made a mistake?')).appendTo(actions);
+            button('sp_reverse','Undo stock deduction','btn-link');
+        }
+
         root.attr('tabindex','-1');root[0].focus({preventScroll:true});
     }
     $(document).on('click','#sp_filter',function(){run(function(){return load();});}).on('click','#sp_more',function(){run(function(){return load('next');});})
     .on('click','#sp_prev',function(){run(function(){return load('prev');});})
     .on('change','#sp_branch',async function(){if($('#sp_entry_rows').length&&!await p.confirmLeave('Discard unsaved entry and change branch?')){$(this).val(branch);return;}branch=this.value;generation++;$('#sp_detail').empty();run(function(){return load();});})
-    .on('click','#sp_new',function(){listScroll=window.scrollY;listTrigger=this;run(function(){return editor();});}).on('click','.sp_open',function(){var id=$(this).attr('data-id');listScroll=window.scrollY;listTrigger=this;run(async function(){show(await request('inventory-counts/spoilage/'+id));});})
+    .on('click','#sp_new',function(){listScroll=window.scrollY;listTrigger=this;run(function(){return editor();});}).on('click','.sp_open',function(){var id=$(this).attr('data-id');listScroll=window.scrollY;listTrigger=this;run(async function(){show(await request('inventory-counts/spoilage/'+id+'?view=details'));});})
     .on('input','#sp_product_search',function(){clearTimeout(searchTimer);productRequest++;searchTimer=setTimeout(function(){matches(false);},250);})
     .on('change','#sp_product_category',function(){matches(false);})
     .on('click','#sp_product_more',function(){matches(true);})
@@ -481,6 +569,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
             var data=r.data||r;selected=data.lines.map(function(l){return Object.assign({},l,{text:(l.quantity/1000).toFixed(3)});});renderEntryRows();$('#sp_picker').hide();$('#sp_import_status').text(selected.length+' rows ready for review. Stock has not changed. Check quantities, reasons and date, then Save & update stock.');
         },function(xhr){if(token===generation){$('#sp_save').prop('disabled',false);$('#sp_import_status').text(xhr.responseJSON?.message||'Could not check sheet.');}});
     })
+    .on('click','#sp_another',function(){if(draft&&draft.canWrite&&draft.state==='accepted')run(function(){return editor();});})
     .on('click','#sp_save',function(){run(save);})
     .on('click','#sp_edit',function(){run(function(){return editor(draft);});})
     .on('click','#sp_apply',function(){run(async function(){show(await request('inventory-counts/spoilage/'+draft.id+'/apply','POST',{}));await load();});})
@@ -495,7 +584,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
         if(!note || !draft || draft.id!==entryId)return;
         show(await request('inventory-counts/spoilage/'+entryId+'/undo','POST',{note:note}));await load();
     });})
-    .on('click','#sp_close,#sp_back',async function(){if($('#sp_entry_rows').length&&!await p.confirmLeave('Close without saving these edits?'))return;p.closePopup();generation++;productRequest++;$('#sp_detail').empty();if(listTrigger&&listTrigger.isConnected)listTrigger.focus({preventScroll:true});window.scrollTo({top:listScroll,behavior:'instant'});})
+    .on('click','#sp_close,#sp_back,#sp_done',async function(){if($('#sp_entry_rows').length&&!await p.confirmLeave('Close without saving these edits?'))return;p.closePopup();generation++;productRequest++;$('#sp_detail').empty();if(listTrigger&&listTrigger.isConnected)listTrigger.focus({preventScroll:true});window.scrollTo({top:listScroll,behavior:'instant'});})
     .on('click','#sp_export',function(){run(async function(){download(await request('inventory-counts/spoilage/report?'+query()));});})
     ;
 })(PosnicPro.inventorycounts);

@@ -5411,5 +5411,15 @@
   "lang_undo_stock_deduction": "Voorraadaftrek ongedaan maken",
   "lang_upload_excel_csv": "Excel/CSV uploaden",
   "lang_weigh_for_a_requested_amount": "Weeg voor een gevraagde hoeveelheid",
-  "lang_you_have_read_only_access_to_product_avail": "Je hebt alleen leesbare toegang tot de beschikbaarheid van producten."
+  "lang_you_have_read_only_access_to_product_avail": "Je hebt alleen leesbare toegang tot de beschikbaarheid van producten.",
+  "lang_add_another_entry": "Nog een invoer toevoegen",
+  "lang_back_to_overview": "Terug naar overzicht",
+  "lang_check_the_quantities_below_then_confirm_to": "Controleer de onderstaande hoeveelheden en bevestig om de voorraad bij te werken.",
+  "lang_continue_counting": "Verder tellen",
+  "lang_inventory_activity": "Voorraadactiviteit",
+  "lang_made_a_mistake": "Een fout gemaakt?",
+  "lang_next_step": "Volgende stap",
+  "lang_preparing_review": "Controle voorbereiden...",
+  "lang_stock_adjustment_saved_continue_counting_o": "Voorraadaanpassing opgeslagen. Ga verder met tellen of keer terug naar het overzicht.",
+  "lang_stock_updated_successfully_no_further_appr": "Voorraad bijgewerkt. Er is geen verdere goedkeuring nodig."
 }

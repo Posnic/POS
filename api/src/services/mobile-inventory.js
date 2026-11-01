@@ -384,6 +384,11 @@ async function abandonRequest(req) {
 async function list(req) {
   const c = await access(req);
   const filter = wall(c);
+  const status = req.query?.status;
+  if (status && !['attention', 'complete', 'cancelled'].includes(status))
+    mobile.fail('Invalid inventory status filter.', 400);
+  if (status === 'attention') filter.state = { $nin: ['complete', 'cancelled'] };
+  else if (status) filter.state = status;
   if (req.query?.after) filter._id = { $gt: String(req.query.after) };
   const rows = await req.db
     .collection('inventory_operations')
