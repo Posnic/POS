@@ -4971,10 +4971,10 @@
                                                     </fieldset>
                                                 </div>
 
-                                                <!-- Legacy hidden blocks ride along unchanged: their ids are
-                                                     read by updateCommonSetting and old data still round-trips. -->
-                                                <div class="form-row" style="display: none;">
-                                                    <fieldset class="col-12 form-group border p-3 field-general-setting">
+                                                <!-- Retired reminder controls remain for legacy value readers.
+                                                     Configure reminders on the module pages, never here. -->
+                                                <div id="legacy_payment_reminder_settings" class="form-row d-none" hidden aria-hidden="true">
+                                                    <fieldset class="col-12 form-group border p-3 field-general-setting d-none" hidden>
                                                         <legend class="w-auto px-2"><lang class="lang_outstanding_customer_payment_reminder_noti">Outstanding Customer Payment Reminder
                                                             (Notification/Email/SMS)</lang></legend>
                                                         <div class="row">
