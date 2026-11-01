@@ -333,7 +333,21 @@ $(document).on('click', '.mobile-inventory-close', function () {
     function review(r) {
         reviewId = r.operationId;
         p.popup('audit_review_panel','Review stock adjustments');
-        var panel = $('#audit_review_panel').empty().append($('<h5>').text('Review stock adjustments · ' + r.state));
+        var complete=r.state==='complete';
+        var panel = $('#audit_review_panel').empty().append($('<h5>').text(complete?'Stock adjustment completed':'Review stock adjustments'));
+        if(complete){
+            edits={};reasons={};operationId=null;$('#audit_file').val('');render();
+            $('<div class="alert alert-success" role="status">').text('Stock updated successfully. No further approval is needed.').appendTo(panel);
+            $('#audit_status').removeClass('text-danger').text('Stock adjustment saved. Continue counting or return to Overview.');
+            var footer=$('#inventory_popup .modal-footer').empty();
+            $('<button type="button" class="btn btn-outline-primary">').text('Back to overview').on('click',function(){p.closePopup();p.navigate('overview');}).appendTo(footer);
+            $('<button type="button" class="btn btn-primary">').text('Continue counting').on('click',function(){p.closePopup();}).appendTo(footer);
+            $('#inventory_popup').off('hidden.bs.modal.auditComplete').one('hidden.bs.modal.auditComplete',async function(){
+                if(!$('#inventorycounts').hasClass('count-editing'))return;
+                var previousPage=auditPage;
+                try{await load();auditPage=previousPage;render();}catch(e){fail(e);}
+            });
+        }else $('<p class="text-muted">').text('Check the quantities below, then confirm to update stock.').appendTo(panel);
         var table = $('<table class="table"><thead><tr><th><lang class="lang_product">Product</lang></th><th><lang class="lang_current">Current</lang></th><th><lang class="lang_addvariant_title">New</lang></th><th><lang class="lang_stock_adjust_reason">Reason</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody></tbody></table>').appendTo($('<div class="table-responsive">').appendTo(panel));
         r.lines.forEach(function (l) { var tr = $('<tr>').appendTo(table.find('tbody')); [l.name,l.expected / 1000,l.quantity / 1000,l.reason,r.applied.includes(l.itemId) ? 'Applied' : r.state].forEach(function (v) { $('<td>').text(v).appendTo(tr); }); });
         if (['prepared','applying'].includes(r.state)) panel.append($('<button id="audit_confirm" class="btn btn-primary">').text(r.approvalRequired ? PosnicPro.i18n.t('lang_approve_adjustments', 'Approve adjustments') : PosnicPro.i18n.t('lang_confirm_adjustments', 'Confirm adjustments')));
@@ -372,7 +386,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
                 if (!lines.length || lines.length > 200) throw new Error('Review between 1 and 200 changes at a time.');
                 result = await api({ url: scope('inventory-counts/audit'), method: 'POST', data: JSON.stringify({ id: operationId, mode: 'count', reason: 'Stock adjustment', lines: lines }) });
             }
-            check(); if (selected !== branch) return; review(result); $('#audit_status').text(PosnicPro.i18n.t('lang_prepared_for_review_stock_has_not_changed', 'Prepared for review. Stock has not changed.'));
+            check(); if (selected !== branch) return; review(result); if(result.state!=='complete')$('#audit_status').text(PosnicPro.i18n.t('lang_prepared_for_review_stock_has_not_changed', 'Prepared for review. Stock has not changed.'));
         } catch (e) { fail(e); } finally { button.prop('disabled', false); }
     });
     $(document).on('click', '#audit_confirm', async function () {

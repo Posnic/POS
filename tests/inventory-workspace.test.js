@@ -144,12 +144,15 @@ test('review reveals missing reason across pages and opens review after correcti
  w.HTMLElement.prototype.scrollIntoView=function(){};
  w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/jquery.min.js'),'utf8'));
  const items=Array.from({length:30},(_,i)=>({id:String(i+1),name:'Product '+(i+1),sku:String(i+1),unit:'kg',quantity:1000,tracked:true,categoryId:'c',revision:'r'}));let writes=0;const errors=[];
- w.PosnicPro={alert:(type,text)=>errors.push(text),i18n:{t:(k,v)=>v},local:{get:()=> 'b'},request(o,ok){if(o.url.includes('inventory-counts/audit?')){writes++;return ok({data:{operationId:'a',state:'prepared',applied:[],lines:[{itemId:'1',name:'Product 1',expected:1000,quantity:2000,reason:'Monthly count'}]}});}ok({data:o.url.includes('priceSheet')?[{id:'b',name:'Shop'}]:o.url.includes('kind=categories')?{rows:[]}:{rows:items}});}};
+ w.PosnicPro={alert:(type,text)=>errors.push(text),i18n:{t:(k,v)=>v},local:{get:()=> 'b'},request(o,ok){if(o.url.includes('inventory-counts/audit/a/confirm'))return ok({data:{operationId:'a',state:'complete',applied:['1'],lines:[{itemId:'1',name:'Product 1',expected:1000,quantity:2000,reason:'Monthly count'}]}});if(o.url.includes('inventory-counts/audit?')){writes++;return ok({data:{operationId:'a',state:'prepared',applied:[],lines:[{itemId:'1',name:'Product 1',expected:1000,quantity:2000,reason:'Monthly count'}]}});}ok({data:o.url.includes('priceSheet')?[{id:'b',name:'Shop'}]:o.url.includes('kind=categories')?{rows:[]}:{rows:items}});}};
  w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/modules/js/inventory_counts.js'),'utf8'));
  await w.PosnicPro.inventorycounts.startAudit();const $=w.$,tick=()=>new Promise(r=>setImmediate(r));
  $('.audit-new[data-id="1"]').val('2').trigger('input');$('#audit_next').trigger('click');$('#audit_review').trigger('click');await tick();
  assert.equal(writes,0);assert.equal(w.document.activeElement.getAttribute('data-id'),'1');assert.equal(w.document.activeElement.classList.contains('audit-reason'),true);assert.match($('#audit_field_error').text(),/reason/);assert.match(errors[0],/reason/);assert.equal($('#audit_review').prop('disabled'),false);
  $('.audit-reason[data-id="1"]').val('Monthly count').trigger('input');assert.equal($('#audit_field_error').length,0);$('#audit_review').trigger('click');await tick();
  assert.equal(writes,1);assert.equal($('#audit_review_panel').parent().hasClass('modal-body'),true);assert.equal($('#audit_confirm').length,1);
+ $('#audit_confirm').trigger('click');await tick();assert.match($('#audit_review_panel').text(),/No further approval/);assert.equal($('#audit_confirm').length,0);assert.equal($('.audit-new[data-id="1"]').val(),'');assert.match($('#inventory_popup .modal-footer').text(),/Continue counting/);assert.doesNotMatch($('#audit_status').text(),/Stock has not changed/);
+ $('#audit_next').trigger('click');assert.match($('#audit_page_info').text(),/Page 2/);
+
  }finally{w.close();}
 });
