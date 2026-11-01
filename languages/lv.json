@@ -5232,5 +5232,7 @@
   "lang_starttls_usually_587_or_2525": "STARTTLS (parasti 587 vai 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Izmantojiet Posnic mākoņa e-pastu vai pievienojiet savu kontu rēķiniem un pārskatiem.",
   "lang_send_this_report_automatically": "Nosūtiet šo ziņojumu automātiski",
-  "lang_split_payment_help": "Viens rēķins, vairākas maksājuma metodes. Piemēram, puse ar karti un puse skaidrā naudā."
+  "lang_split_payment_help": "Viens rēķins, vairākas maksājuma metodes. Piemēram, puse ar karti un puse skaidrā naudā.",
+  "lang_payment_print_reference": "Izdrukājiet atsauci pēc saņemšanas",
+  "lang_payment_print_reference_storage": "Nevarēja atcerēties saņemšanas izvēli. Lūdzu, mēģiniet atkārtoti."
 }

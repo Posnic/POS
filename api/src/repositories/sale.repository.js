@@ -1659,6 +1659,17 @@ class SalesRepository {
           }
         }
       }
+      if (['PartialReturn', 'FullReturn'].includes(saleDoc.sale_process) && !transferredBill) {
+        for (const [source, targets] of [
+          ['items_total', ['sales_total', 'total']],
+          ['items_subtotal', ['sales_sub_total', 'subtotal']],
+        ]) {
+          const value = saleDoc[source];
+          if (value != null && value !== '' && Number.isFinite(Number(value))) {
+            for (const target of targets) normalized[target] = Number(value);
+          }
+        }
+      }
 
       normalized.restaurant_details = require('../helpers/restaurant-sale-details')(
         saleDoc,

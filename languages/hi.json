@@ -5313,5 +5313,7 @@
   "lang_starttls_usually_587_or_2525": "STARTTLS (आमतौर पर 587 या 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Posnicक्लाउड ईमेल का उपयोग करें या बिल और रिपोर्ट के लिए अपना खुद का अकाउंट कनेक्ट करें।",
   "lang_send_this_report_automatically": "इस रिपोर्ट को अपने आप भेजें",
-  "lang_split_payment_help": "एक बिल, कई भुगतान विधियां। उदाहरण के लिए, आधा कार्ड से और आधा नकद में।"
+  "lang_split_payment_help": "एक बिल, कई भुगतान विधियां। उदाहरण के लिए, आधा कार्ड से और आधा नकद में।",
+  "lang_payment_print_reference": "रसीद पर संदर्भ प्रिंट करें",
+  "lang_payment_print_reference_storage": "रसीद की प्राथमिकता याद नहीं आ सकी। कृपया फिर से कोशिश करें।"
 }

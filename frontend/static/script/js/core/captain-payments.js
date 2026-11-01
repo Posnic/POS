@@ -1,6 +1,8 @@
 (function () {
   "use strict";
   const messages = [
+    { label: 'Print reference on receipt', t: 'lang_payment_print_reference' },
+    { label: 'Could not remember the receipt preference. Please retry.', t: 'lang_payment_print_reference_storage' },
     { label: 'Cash towards bill', t: 'lang_cash_towards_bill' },
     { label: 'Cash handed over', t: 'lang_cash_handed_over' },
     { label: 'Still to collect', t: 'lang_cash_still_to_collect' },
@@ -87,6 +89,16 @@
           "'": "&#39;",
         })[c],
     );
+  function referencePreferenceKey(paymentMethod) {
+    return 'posnic.printPaymentReference:' + JSON.stringify([base(), branchId, paymentMethod]);
+  }
+  function printReference(paymentMethod) {
+    try { return localStorage.getItem(referencePreferenceKey(paymentMethod)) === 'true'; }
+    catch (_) { return false; }
+  }
+  function referenceCheckbox(paymentMethod) {
+    return '<label class="cp-confirm"><input type="checkbox" data-print-reference="' + esc(paymentMethod) + '" ' + (printReference(paymentMethod) ? 'checked' : '') + '><span>' + esc(t('Print reference on receipt')) + '</span></label>';
+  }
   const mobile = () => !!window.POSNIC;
   const base = () =>
     mobile() ? POSNIC.session?.base || POSNIC.server.baseUrl : location.origin;
@@ -151,7 +163,7 @@
   function mixedTenders() {
     return plan.methods.filter(m => tenderInputs[m]?.amount !== undefined && tenderInputs[m].amount !== '').map(m => {
       const v = tenderInputs[m], amountMinor = CaptainMoney.toMinor(v.amount, monetary());
-      return { method:m, amountMinor, receivedMinor:m === 'Cash' && v.received ? CaptainMoney.toMinor(v.received, monetary()) : amountMinor, reference:v.reference || '', verified:m !== 'Cash' && !!v.verified };
+      return { method:m, amountMinor, receivedMinor:m === 'Cash' && v.received ? CaptainMoney.toMinor(v.received, monetary()) : amountMinor, reference:v.reference || '', printReference:printReference(m), verified:m !== 'Cash' && !!v.verified };
     }).filter(v => v.amountMinor !== 0);
   }
   function tenderRows(rows) {
@@ -179,7 +191,7 @@
     return '<div class="cp-split"><div class="cp-change"><span>' + esc(t('Left to allocate')) + '</span><strong id="cp-split-remaining" aria-live="polite">' + esc(money(splitRemaining())) + '</strong></div>' + plan.methods.map(m => {
       const v = tenderInputs[m] || {};
       return '<fieldset><legend>' + esc(t(m === 'Upi' ? 'UPI' : m)) + '</legend><label>' + esc((m === 'Cash' ? t('Cash towards bill') : t('Amount'))) + '<input data-tender="' + esc(m) + '" data-field="amount" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.amount || '') + '"></label>' +
-        (m === 'Cash' ? '<label>' + esc(t('Cash handed over')) + '<input data-tender="Cash" data-field="received" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.received || '') + '"></label>' + cashTools() : '<label>' + esc(t('Payment reference (optional)')) + '<input data-tender="' + esc(m) + '" data-field="reference" maxlength="100" value="' + esc(v.reference || '') + '"></label><label class="cp-confirm"><input type="checkbox" data-tender="' + esc(m) + '" data-field="verified" ' + (v.verified ? 'checked' : '') + '><span>' + esc(t('I verified this payment on the terminal or bank app.')) + '</span></label>') + '</fieldset>';
+        (m === 'Cash' ? '<label>' + esc(t('Cash handed over')) + '<input data-tender="Cash" data-field="received" inputmode="decimal" type="number" min="0" step="' + 1/monetary().factor + '" value="' + esc(v.received || '') + '"></label>' + cashTools() : '<label>' + esc(t('Payment reference (optional)')) + '<input data-tender="' + esc(m) + '" data-field="reference" maxlength="100" value="' + esc(v.reference || '') + '"></label>' + referenceCheckbox(m) + '<label class="cp-confirm"><input type="checkbox" data-tender="' + esc(m) + '" data-field="verified" ' + (v.verified ? 'checked' : '') + '><span>' + esc(t('I verified this payment on the terminal or bank app.')) + '</span></label>') + '</fieldset>';
     }).join('') + '</div>';
   }
   function render() {
@@ -192,7 +204,7 @@
         body += `
         ${plan.guests.filter((g) => !g.paid).length > 1 ? `<label>${esc(t("Guest"))}<select id="cp-guest"><option value="">${esc(t("All remaining guests"))}</option>${plan.guests.map((g, i) => (g.paid ? "" : `<option value="${i}" ${selected === String(i) ? "selected" : ""} translate="no">${esc(g.name)} · ${esc(money(g.totalMinor))}</option>`)).join("")}</select></label>` : ""}
         <div class="cp-methods" role="group" aria-label="${esc(t("Collect payment"))}">${[...plan.methods, ...(plan.methods.length > 1 ? ["Mixed"] : [])].map((m) => `<button type="button" data-method="${esc(m)}" aria-pressed="${method === m}">${esc(t(m === "Mixed" ? "Split payment" : m === "Upi" ? "UPI" : m))}</button>`).join("")}</div>
-        ${method === "Mixed" ? splitFields() : method === "Cash" ? `<label>${esc(t("Cash handed over"))}<input id="cp-received" inputmode="decimal" type="number" min="0" step="${1 / monetary().factor}" value="${esc(received)}"></label>${cashTools()}` : `<label>${esc(t("Payment reference (optional)"))}<input id="cp-reference" maxlength="100" value="${esc(reference)}"></label><label class="cp-confirm"><input type="checkbox" id="cp-verified" ${verified ? "checked" : ""}><span>${esc(t("I verified this payment on the terminal or bank app."))}</span></label>`}
+        ${method === "Mixed" ? splitFields() : method === "Cash" ? `<label>${esc(t("Cash handed over"))}<input id="cp-received" inputmode="decimal" type="number" min="0" step="${1 / monetary().factor}" value="${esc(received)}"></label>${cashTools()}` : `<label>${esc(t("Payment reference (optional)"))}<input id="cp-reference" maxlength="100" value="${esc(reference)}"></label>${referenceCheckbox(method)}<label class="cp-confirm"><input type="checkbox" id="cp-verified" ${verified ? "checked" : ""}><span>${esc(t("I verified this payment on the terminal or bank app."))}</span></label>`}
         <p class="cp-help">${esc(t("Confirm only after receiving the money. This does not charge a card or bank account."))}</p>`;
       if (plan.dueMinor === 0)
         body += `<p role="status">${esc(t("Payment recorded"))}</p>`;
@@ -286,6 +298,7 @@
           receivedMinor: tenders ? tenders.reduce((n,v)=>n+v.receivedMinor,0) : method === "Cash" ? cash : paid,
           ...(tenders ? { tenders } : {}),
           reference,
+          printReference: method !== "Cash" && method !== "Mixed" && printReference(method),
           request_id: crypto.randomUUID(),
           ...(!mobile() && !window.electronAPI && !/Electron/i.test(navigator.userAgent)
             ? { receiptDelivery: "browser" } : {}),
@@ -406,6 +419,10 @@
       }
     });
     dialog.addEventListener("change", (e) => {
+      if (e.target.hasAttribute('data-print-reference') && !busy && !pending) {
+        try { localStorage.setItem(referencePreferenceKey(e.target.dataset.printReference), String(e.target.checked)); }
+        catch (_) { error = 'Could not remember the receipt preference. Please retry.'; render(); }
+      }
       if (e.target.id === "cp-guest") {
         selected = e.target.value;
         tenderInputs = {};
@@ -429,7 +446,7 @@
         const m = e.target.dataset.tender, field = e.target.dataset.field;
         tenderInputs[m] ||= {};
         tenderInputs[m][field] = field === 'verified' ? e.target.checked : e.target.value;
-        if (field === 'amount') { tenderInputs[m].verified = false; const check = e.target.closest('fieldset').querySelector('[type=checkbox]'); if(check) check.checked = false; dialog.querySelector('#cp-split-remaining').textContent = money(splitRemaining()); }
+        if (field === 'amount') { tenderInputs[m].verified = false; const check = e.target.closest('fieldset').querySelector('[data-field=verified]'); if(check) check.checked = false; dialog.querySelector('#cp-split-remaining').textContent = money(splitRemaining()); }
       }
       if (e.target.id === "cp-reference") reference = e.target.value;
       if (e.target.id === "cp-received") {

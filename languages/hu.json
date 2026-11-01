@@ -5232,5 +5232,7 @@
   "lang_starttls_usually_587_or_2525": "STARTTLS (általában 587 vagy 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Használjon Posnic felhőalapú e-mailt, vagy csatlakoztassa saját fiókját számlákhoz és jelentésekhez.",
   "lang_send_this_report_automatically": "A jelentés automatikus elküldése",
-  "lang_split_payment_help": "Egy számla, több fizetési mód. Például fele kártyával és fele készpénzben."
+  "lang_split_payment_help": "Egy számla, több fizetési mód. Például fele kártyával és fele készpénzben.",
+  "lang_payment_print_reference": "Nyomtassa ki a hivatkozást a nyugtán",
+  "lang_payment_print_reference_storage": "Nem emlékszem az átvételi preferenciára. Kérjük, próbálkozzon újra."
 }

@@ -5313,5 +5313,7 @@
   "lang_starttls_usually_587_or_2525": "STARTTLS (kawaida 587 au 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Tumia bar Posnic ua pepe ya wingu au unganisha akaunti yako mwenyewe kwa bili na ripoti.",
   "lang_send_this_report_automatically": "Tuma ripoti hii moja kwa moja",
-  "lang_split_payment_help": "Muswada mmoja, njia kadhaa za malipo. Kwa mfano, nusu kwa kadi na nusu kwa pesa taslimu."
+  "lang_split_payment_help": "Muswada mmoja, njia kadhaa za malipo. Kwa mfano, nusu kwa kadi na nusu kwa pesa taslimu.",
+  "lang_payment_print_reference": "Chapisha kumbukumbu kwenye risiti",
+  "lang_payment_print_reference_storage": "Sikuweza kukumbuka upendeleo wa risiti. Tafadhali jaribu tena."
 }

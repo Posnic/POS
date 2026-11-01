@@ -5232,5 +5232,7 @@
   "lang_starttls_usually_587_or_2525": "STARTTLS (obično 587 ili 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Koristite e-poštu u Posnic oblaku ili povežite vlastiti račun za račune i izvješća.",
   "lang_send_this_report_automatically": "Automatski pošaljite ovo izvješće",
-  "lang_split_payment_help": "Jedan račun, nekoliko načina plaćanja. Na primjer, pola karticom i pola u gotovini."
+  "lang_split_payment_help": "Jedan račun, nekoliko načina plaćanja. Na primjer, pola karticom i pola u gotovini.",
+  "lang_payment_print_reference": "Ispišite referencu na primitku",
+  "lang_payment_print_reference_storage": "Nisam se mogao sjetiti preferencije primitka. Molim vas, pokušajte ponovo."
 }

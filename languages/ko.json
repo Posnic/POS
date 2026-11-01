@@ -5235,5 +5235,7 @@
   "lang_starttls_usually_587_or_2525": "STARTTLS (보통 587개 또는 252개)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Posnic클라우드 이메일을 사용하거나 청구서 및 보고서를 위해 자신의 계정을 연결하세요.",
   "lang_send_this_report_automatically": "이 보고서를 자동으로 전송",
-  "lang_split_payment_help": "청구서 한 개, 여러 결제 방법예를 들어, 반은 카드로, 절반은 현금으로."
+  "lang_split_payment_help": "청구서 한 개, 여러 결제 방법예를 들어, 반은 카드로, 절반은 현금으로.",
+  "lang_payment_print_reference": "영수증 시 참조 인쇄",
+  "lang_payment_print_reference_storage": "영수증 기본 설정이 기억나지 않습니다.다시 시도해 주세요."
 }

@@ -5232,5 +5232,7 @@
   "lang_starttls_usually_587_or_2525": "STARTTLS (paprastai 587 arba 2525)",
   "lang_use_posnic_cloud_email_or_connect_your_own": "Naudokite Posnic debesies el. paštą arba prijunkite savo sąskaitą sąskaitoms ir ataskaitoms.",
   "lang_send_this_report_automatically": "Atsiųskite šią ataskaitą automatiškai",
-  "lang_split_payment_help": "Viena sąskaita, keli mokėjimo būdai. Pavyzdžiui, pusė kortele ir pusė grynaisiais."
+  "lang_split_payment_help": "Viena sąskaita, keli mokėjimo būdai. Pavyzdžiui, pusė kortele ir pusė grynaisiais.",
+  "lang_payment_print_reference": "Spausdinkite nuorodą gavimo metu",
+  "lang_payment_print_reference_storage": "Nepavyko prisiminti gavimo pirmenybės. Prašome pabandyti iš naujo."
 }

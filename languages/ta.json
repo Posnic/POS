@@ -5319,5 +5319,7 @@
   "lang_send_this_report_automatically": "இந்த அறிக்கையை தானாக அனுப்பவும்",
   "lang_split_payment_help": "ஒரே பில்லுக்கு பல கட்டண முறைகள். எடுத்துக்காட்டாக, பாதியை அட்டை மூலமும் மீதியை ரொக்கமாகவும் செலுத்தலாம்.",
   "lang_bank_account_routing_details": "வங்கிக் கணக்கு மற்றும் வங்கிக் குறியீட்டு விவரங்கள்",
-  "lang_postal_code": "அஞ்சல் குறியீடு"
+  "lang_postal_code": "அஞ்சல் குறியீடு",
+  "lang_payment_print_reference": "ரசீதில் குறிப்பை அச்சிடுங்கள்",
+  "lang_payment_print_reference_storage": "ரசீது விருப்பத்தை நினைவில் கொள்ள முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சி"
 }
