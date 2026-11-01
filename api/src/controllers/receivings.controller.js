@@ -1,3 +1,4 @@
+const uploadsRoot = require('../utils/uploads-path');
 // src/controllers/receivings_controller.js
 const mongoose = require('mongoose');
 const { currentConnection } = require('../db/tenant-context');
@@ -451,7 +452,7 @@ class ReceivingsController extends BaseController {
         const buffer = Buffer.from(data, 'base64');
 
         // Save to local storage
-        const uploadDir = path.join(require('../utils/uploads-path'), 'receiving_images');
+        const uploadDir = path.join(uploadsRoot, 'receiving_images');
 
         // Ensure directory exists
         await fs.mkdir(uploadDir, { recursive: true });

@@ -1,3 +1,4 @@
+const uploadsRoot = require('../utils/uploads-path');
 // src/controllers/categories.controller.js
 const BaseController = require('./base.controller');
 const CategoryService = require('../services/category.service');
@@ -1194,7 +1195,7 @@ class CategoriesController extends BaseController {
         return this.error(res, error.message, 404);
       }
     } else {
-      const uploadDir = path.join(require('../utils/uploads-path'), 'category_images');
+      const uploadDir = path.join(uploadsRoot, 'category_images');
 
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });

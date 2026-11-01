@@ -1,3 +1,4 @@
+const uploadsRoot = require('../utils/uploads-path');
 // src/controllers/customers-refactored.controller.js
 const asyncHandler = require('express-async-handler');
 const CustomerService = require('../services/customer.service');
@@ -1360,7 +1361,7 @@ class CustomerController extends BaseController {
       const fileName = `${timestamp}-posnic_category-${uniqueId}${fileExtension}`;
 
       // Use transaction_images folder as requested (without public folder)
-      const uploadDir = path.join(require('../utils/uploads-path'), 'transaction_images');
+      const uploadDir = path.join(uploadsRoot, 'transaction_images');
 
       // Ensure directory exists
       if (!fs.existsSync(uploadDir)) {
