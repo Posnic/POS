@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "1 回の販売では、1 つの商品につき 1 つの販売単位を使用します。",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppメッセージリファレンスが返されませんでした。配信は未確認です。チャットを確認してから再試行してください。",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppこの受信者のチャットをまだ同期していません。メッセージは送信されませんでした。リンクされたデバイスによる同期の終了を許可します。",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppまだ再接続中か、新しい電話リンクが必要です。メッセージは送信されませんでした。"
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppまだ再接続中か、新しい電話リンクが必要です。メッセージは送信されませんでした。",
+  "Messaging permission required.": "メッセージング権限が必要です。",
+  "Schedule owner no longer has messaging access.": "スケジュールの所有者にはメッセージングへのアクセス権がなくなりました。"
 }

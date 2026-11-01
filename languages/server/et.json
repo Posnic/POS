@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "Kasutage müügis ühte müügiühikut toote kohta.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppei tagastanud sõnumi viidet. Kohaletoimetamine pole kinnitatud; kontrollige vestlust enne uuesti proovimist.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsApppole selle saaja vestlust veel sünkrooninud. Ühtegi sõnumit ei saadetud. Luba lingitud seadmel sünkroonimine lõpetada.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppühendab endiselt uuesti või vajab värsket telefonilinki. Ühtegi sõnumit ei saadetud."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppühendab endiselt uuesti või vajab värsket telefonilinki. Ühtegi sõnumit ei saadetud.",
+  "Messaging permission required.": "Vajalik sõnumside luba.",
+  "Schedule owner no longer has messaging access.": "Ajakava omanikul pole enam juurdepääsu sõnumitele."
 }

@@ -980,5 +980,7 @@
   "Use one selling unit per product in a sale.": "అమ్మకంలో ప్రతి ఉత్పత్తికి ఒక అమ్మకపు యూనిట్ను ఉపయోగించండి.",
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppసందేశ సూచనను తిరిగి ఇవ్వలేదు. డెలివరీ ధృవీకరించబడలేదు; తిరిగి ప్రయత్నించే ముందు చాట్ను తనిఖీ చేయండి.",
   "WhatsApp has not synced this recipient’s chat yet. No message was sent. Allow the linked device to finish syncing.": "WhatsAppఈ గ్రహీత యొక్క చాట్ను ఇంకా సమకాలీకరించలేదు. సందేశం పంపబడలేదు. లింక్ చేయబడిన పరికరాన్ని సమకాలీకరించడాన్ని పూర్తి చేయడానికి అనుమతించండి.",
-  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppఇప్పటికీ తిరిగి కనెక్ట్ అవుతోంది లేదా తాజా ఫోన్ లింక్ అవసరం. సందేశం పంపబడలేదు."
+  "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppఇప్పటికీ తిరిగి కనెక్ట్ అవుతోంది లేదా తాజా ఫోన్ లింక్ అవసరం. సందేశం పంపబడలేదు.",
+  "Messaging permission required.": "సందేశ అనుమతి అవసరం.",
+  "Schedule owner no longer has messaging access.": "షెడ్యూల్ యజమానికి ఇకపై సందేశ ప్రాప్యత లేదు."
 }
