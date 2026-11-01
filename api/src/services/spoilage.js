@@ -92,6 +92,15 @@ function view(doc, req, c, local) {
 async function get(req) {
   const c = await inventory.access(req),
     id = oid(req.params?.id);
+  if (req.query?.view === 'audit') {
+    const filter = { _id: id, ...wall(c) };
+    const options = { projection: { audit: 1 } };
+    const record =
+      (await req.db.collection('spoilage_commands').findOne(filter, options)) ||
+      (await req.db.collection('spoilage_entries').findOne(filter, options));
+    if (!record) fail('Spoilage entry not found.', 404);
+    return { id: String(record._id), audit: record.audit || [] };
+  }
   const local = await req.db.collection('spoilage_commands').findOne({ _id: id, ...wall(c) });
   // Repair a crash between completing a reversal and publishing its parent.
   if (local?.kind === 'reversal' && local.state === 'accepted') {
@@ -118,7 +127,9 @@ async function get(req) {
     ? await publish(req, local)
     : await req.db.collection('spoilage_entries').findOne({ _id: id, ...wall(c) });
   if (!doc) fail('Spoilage entry not found.', 404);
-  return view(doc, req, c, !!local);
+  const result = view(doc, req, c, !!local);
+  if (req.query?.view === 'details') delete result.audit;
+  return result;
 }
 async function lines(req, c, input) {
   if (!Array.isArray(input) || !input.length || input.length > 200) fail('Add 1 to 200 products.');
@@ -497,12 +508,25 @@ function filters(query, c) {
 async function list(req) {
   const c = await inventory.access(req),
     filter = filters(req.query || {}, c);
-  if (req.query?.after) filter._id = { $lt: oid(req.query.after) };
+  if (req.query?.after) {
+    const anchor = await req.db
+      .collection('spoilage_entries')
+      .findOne({ _id: oid(req.query.after), ...wall(c) }, { projection: { created_date: 1 } });
+    if (!anchor) fail('History changed. Refresh the list and try again.');
+    filter.$and = [
+      {
+        $or: [
+          { created_date: { $lt: anchor.created_date } },
+          { created_date: anchor.created_date, _id: { $lt: anchor._id } },
+        ],
+      },
+    ];
+  }
   const limit = [25, 50, 100].includes(Number(req.query?.limit)) ? Number(req.query.limit) : 100;
   const rows = await req.db
     .collection('spoilage_entries')
     .find(filter)
-    .sort({ _id: -1 })
+    .sort({ created_date: -1, _id: -1 })
     .limit(limit + 1)
     .toArray();
   return {
