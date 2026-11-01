@@ -67,6 +67,7 @@ PosnicPro.inventorycounts.restorePopup = function() {
     var content=$('#inventory_popup .modal-body').children(), anchor=$('#inventory_popup_anchor');
     if(anchor.length){content.insertBefore(anchor).hide();anchor.remove();}
     if(content.attr('id')==='sp_detail')content.empty();
+    $('#inventory_popup .modal-footer').empty();
 };
 PosnicPro.inventorycounts.closePopup = function() {
     this.restorePopup();
@@ -77,6 +78,7 @@ PosnicPro.inventorycounts.popup = function(id,title) {
     if(!content.length)return;
     if(!$('#inventory_popup').length)$('body').append('<div id="inventory_popup" class="modal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="inventory_popup_title"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"><div class="modal-header"><h5 id="inventory_popup_title" class="modal-title"></h5><button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title">&times;</button></div><div class="modal-body"></div><div class="modal-footer"><button class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button></div></div></div></div>');
     if(!content.closest('#inventory_popup').length){p.restorePopup();content.before('<span id="inventory_popup_anchor" hidden></span>');content.appendTo('#inventory_popup .modal-body').show();}
+    $('#inventory_popup .modal-footer').html('<button class="btn btn-outline-secondary" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button>');
     $('#inventory_popup_title').text(title);
     $('#inventory_popup').off('hide.bs.modal.inventory').on('hide.bs.modal.inventory',function(){p.restorePopup();});
     if($.fn.modal)$('#inventory_popup').modal('show');
@@ -443,6 +445,14 @@ $(document).on('click', '.mobile-inventory-close', function () {
         $('<p>').text(d.occurredOn+' · Entered by '+d.createdByName+' · '+new Date(d.created_date).toLocaleString()+(d.decisionByName?' · Reviewed by '+d.decisionByName:'' )).appendTo(root);
         if(!d.local)$('<p class="text-warning">').text('Read-only synced record. Review or correct this entry on the '+d.origin.toLowerCase()+' installation where it was created.').appendTo(root);
         if(d.lastError)$('<p class="text-danger">').text(d.lastError).appendTo(root);
+        if(d.state==='accepted'){
+            var success=$('<div class="alert alert-success" role="status">').appendTo(root);
+            $('<strong class="d-block">').text(d.kind==='reversal'?'Saved — stock restored':'Saved — stock updated').appendTo(success);
+            $('<span>').text(d.kind==='reversal'?'The stock has been restored. No further action is needed.':'The spoiled quantities have been deducted from stock. You’re done — no approval is needed.').appendTo(success);
+        }
+        var footer=$('#inventory_popup .modal-footer').empty();
+        if(d.canWrite&&d.state==='accepted')$('<button type="button" id="sp_another" class="btn btn-outline-primary">').text('Add another entry').appendTo(footer);
+        $('<button type="button" id="sp_done" class="btn btn-primary">').text(d.state==='accepted'?'Done':'Close').appendTo(footer);
         var shell=root;
         var tabs=$('<div class="nav nav-tabs mb-3" role="tablist">').appendTo(shell);
         var detailsTab=$('<button type="button" id="sp_details_tab" class="nav-link active" role="tab" aria-selected="true" aria-controls="sp_details_panel">').text(PosnicPro.i18n.t('lang_item_details_title','Details')).appendTo(tabs);
@@ -475,8 +485,10 @@ $(document).on('click', '.mobile-inventory-close', function () {
         function button(id,text,css){$('<button>').attr('id',id).attr('class','btn '+(css||'btn-outline-primary')).text(text).appendTo(actions);}
         if(d.canEdit)button('sp_edit','Edit');
         if(d.canWrite&&['draft','pending','approving','conflict'].includes(d.state))button('sp_apply','Retry save','btn-primary');
-        if(d.canWrite&&d.kind!=='reversal'&&['accepted','conflict','reversal_pending'].includes(d.state)&&(d.applied||[]).length)button('sp_reverse','Undo stock deduction');
-        button('sp_close','Close','btn-link');
+        if(d.canWrite&&d.kind!=='reversal'&&['accepted','conflict','reversal_pending'].includes(d.state)&&(d.applied||[]).length){
+            $('<span class="text-muted align-self-center">').text('Made a mistake?').appendTo(actions);
+            button('sp_reverse','Undo stock deduction','btn-link');
+        }
 
         root.attr('tabindex','-1');root[0].focus({preventScroll:true});
     }
@@ -504,6 +516,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
             var data=r.data||r;selected=data.lines.map(function(l){return Object.assign({},l,{text:(l.quantity/1000).toFixed(3)});});renderEntryRows();$('#sp_picker').hide();$('#sp_import_status').text(selected.length+' rows ready for review. Stock has not changed. Check quantities, reasons and date, then Save & update stock.');
         },function(xhr){if(token===generation){$('#sp_save').prop('disabled',false);$('#sp_import_status').text(xhr.responseJSON?.message||'Could not check sheet.');}});
     })
+    .on('click','#sp_another',function(){if(draft&&draft.canWrite&&draft.state==='accepted')run(function(){return editor();});})
     .on('click','#sp_save',function(){run(save);})
     .on('click','#sp_edit',function(){run(function(){return editor(draft);});})
     .on('click','#sp_apply',function(){run(async function(){show(await request('inventory-counts/spoilage/'+draft.id+'/apply','POST',{}));await load();});})
@@ -518,7 +531,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
         if(!note || !draft || draft.id!==entryId)return;
         show(await request('inventory-counts/spoilage/'+entryId+'/undo','POST',{note:note}));await load();
     });})
-    .on('click','#sp_close,#sp_back',async function(){if($('#sp_entry_rows').length&&!await p.confirmLeave('Close without saving these edits?'))return;p.closePopup();generation++;productRequest++;$('#sp_detail').empty();if(listTrigger&&listTrigger.isConnected)listTrigger.focus({preventScroll:true});window.scrollTo({top:listScroll,behavior:'instant'});})
+    .on('click','#sp_close,#sp_back,#sp_done',async function(){if($('#sp_entry_rows').length&&!await p.confirmLeave('Close without saving these edits?'))return;p.closePopup();generation++;productRequest++;$('#sp_detail').empty();if(listTrigger&&listTrigger.isConnected)listTrigger.focus({preventScroll:true});window.scrollTo({top:listScroll,behavior:'instant'});})
     .on('click','#sp_export',function(){run(async function(){download(await request('inventory-counts/spoilage/report?'+query()));});})
     ;
 })(PosnicPro.inventorycounts);

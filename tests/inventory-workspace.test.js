@@ -104,3 +104,20 @@ test('damage details load audit only on demand and cache it until reopened',asyn
  $('.sp_open').trigger('click');await tick();assert.equal($('#sp_audit_panel').prop('hidden'),true);$('#sp_audit_tab').trigger('click');await tick();assert.equal(urls.filter(x=>x.includes('view=audit')).length,2);
  }finally{w.close();}
 });
+
+
+test('saved damage explains completion, offers a clean new entry and never calls a stock write on navigation',async()=>{
+ const dom=new JSDOM('<div id="inventorycounts"><div class="count-workspace"><div id="inventory_count_detail"></div></div></div>',{runScripts:'outside-only',url:'http://localhost'}),w=dom.window;
+ try{
+ w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/jquery.min.js'),'utf8'));
+ const calls=[],entry={id:'entry',reference:'SP-1',state:'accepted',occurredOn:'2026-11-01',created_date:'2026-11-01',createdByName:'Tester',local:true,canWrite:true,lines:[],applied:[]};
+ w.PosnicPro={i18n:{t:(k,v)=>v},local:{get:()=> 'b'},request(o,ok){calls.push(o);ok({data:o.url.includes('view=details')?entry:o.url.includes('catalogue')?{rows:[]}:o.url.includes('spoilage?')?{rows:[{...entry,_id:'entry'}],canWrite:true,reasons:[],today:'2026-11-01'}:[{id:'b',name:'Shop'}]});}};
+ w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/modules/js/inventory_counts.js'),'utf8'));
+ await w.PosnicPro.inventorycounts.openSpoilage();const $=w.$,tick=()=>new Promise(r=>setImmediate(r));
+ $('.sp_open').trigger('click');await tick();assert.match($('#sp_detail [role="status"]').text(),/Saved .* stock updated/);assert.equal($('#inventory_popup #sp_done').text(),'Done');
+ $('#sp_another').trigger('click');await tick();assert.equal($('#sp_entry_rows tr').length,0);assert.equal($('#sp_date').val(),'2026-11-01');assert.equal($('#sp_close').length,1);
+ entry.state='conflict';$('.sp_open').trigger('click');await tick();assert.equal($('#sp_another').length,0);assert.equal($('#sp_detail .alert-success').length,0);assert.equal($('#inventory_popup #sp_done').text(),'Close');
+ entry.state='accepted';entry.kind='reversal';$('.sp_open').trigger('click');await tick();assert.match($('#sp_detail [role="status"]').text(),/stock restored/);
+ assert.equal(calls.filter(o=>o.method==='POST' && /spoilage\//.test(o.url)).length,0);
+ }finally{w.close();}
+});
