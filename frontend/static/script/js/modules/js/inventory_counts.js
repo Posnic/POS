@@ -119,7 +119,7 @@ PosnicPro.inventorycounts.setupOverviewTabs = function () {
     var list=$('#inventory_counts_list');
     $(list.prevAll('h5,p').get().reverse()).wrapAll('<div id="count_worksheet_intro"></div>');
     $('#count_worksheet_intro p').text('Saved count drafts are worksheets for reference. Completed stock updates are shown in the Completed tab.');
-    var tabs=$('<div id="count_overview_tabs" class="nav nav-tabs mb-3" role="tablist" aria-label="Inventory activity">');
+    var tabs=$('<div id="count_overview_tabs" class="nav nav-tabs mb-3" role="tablist" aria-label="Inventory activity" data-t-aria-label="lang_inventory_activity">');
     [['all','All activity'],['attention','Needs attention'],['complete','Completed'],['cancelled','Cancelled'],['worksheets','Saved worksheets']].forEach(function(t){$('<button type="button" class="nav-link" role="tab">').attr('data-view',t[0]).text(t[1]).appendTo(tabs);});
     var intro=$('#count_worksheet_intro');tabs.insertBefore(intro.length?intro:list);
 };
@@ -127,7 +127,7 @@ $(document).on('click','#count_overview_tabs button',function(){PosnicPro.invent
 PosnicPro.inventorycounts.loadMobile = function (after) {
     if(this.overviewTab==='worksheets')return;
     var self = this, branch = PosnicPro.local.get('branch_id_set'), ticket = self.mobileRequest = (self.mobileRequest || 0) + 1;
-    if (!$('#mobile_inventory_operations').length) $('#inventory_counts_list').after('<section id="mobile_inventory_operations" class="inventory-panel"><div class="inventory-panel-header"><h5><i class="feather icon-smartphone" aria-hidden="true"></i><span>Inventory activity</span></h5><button class="btn btn-sm btn-outline-primary mobile-inventory-refresh"><i class="feather icon-refresh-cw" aria-hidden="true"></i><lang class="lang_wf_refresh">Refresh</lang></button></div><div id="mobile_inventory_rows" aria-live="polite"></div></section><div id="mobile_inventory_detail" tabindex="-1"></div>');
+    if (!$('#mobile_inventory_operations').length) $('#inventory_counts_list').after('<section id="mobile_inventory_operations" class="inventory-panel"><div class="inventory-panel-header"><h5><i class="feather icon-smartphone" aria-hidden="true"></i><span><lang class="lang_inventory_activity">Inventory activity</lang></span></h5><button class="btn btn-sm btn-outline-primary mobile-inventory-refresh"><i class="feather icon-refresh-cw" aria-hidden="true"></i><lang class="lang_wf_refresh">Refresh</lang></button></div><div id="mobile_inventory_rows" aria-live="polite"></div></section><div id="mobile_inventory_detail" tabindex="-1"></div>');
     $('#mobile_inventory_operations').show().attr('aria-busy','true');
     PosnicPro.get('mobile/v1/inventory/operations?' + (self.overviewTab && self.overviewTab!=='all'?'status='+encodeURIComponent(self.overviewTab)+'&':'') + (after ? 'after=' + encodeURIComponent(after) : ''), function (r) {
         if (ticket !== self.mobileRequest || branch !== PosnicPro.local.get('branch_id_set')) return;
@@ -337,17 +337,17 @@ $(document).on('click', '.mobile-inventory-close', function () {
         var panel = $('#audit_review_panel').empty().append($('<h5>').text(complete?'Stock adjustment completed':'Review stock adjustments'));
         if(complete){
             edits={};reasons={};operationId=null;$('#audit_file').val('');render();
-            $('<div class="alert alert-success" role="status">').text('Stock updated successfully. No further approval is needed.').appendTo(panel);
-            $('#audit_status').removeClass('text-danger').text('Stock adjustment saved. Continue counting or return to Overview.');
+            $('<div class="alert alert-success" role="status">').text(PosnicPro.i18n.t('lang_stock_updated_successfully_no_further_appr', 'Stock updated successfully. No further approval is needed.')).appendTo(panel);
+            $('#audit_status').removeClass('text-danger').text(PosnicPro.i18n.t('lang_stock_adjustment_saved_continue_counting_o', 'Stock adjustment saved. Continue counting or return to Overview.'));
             var footer=$('#inventory_popup .modal-footer').empty();
-            $('<button type="button" class="btn btn-outline-primary">').text('Back to overview').on('click',function(){p.closePopup();p.navigate('overview');}).appendTo(footer);
-            $('<button type="button" class="btn btn-primary">').text('Continue counting').on('click',function(){p.closePopup();}).appendTo(footer);
+            $('<button type="button" class="btn btn-outline-primary">').text(PosnicPro.i18n.t('lang_back_to_overview', 'Back to overview')).on('click',function(){p.closePopup();p.navigate('overview');}).appendTo(footer);
+            $('<button type="button" class="btn btn-primary">').text(PosnicPro.i18n.t('lang_continue_counting', 'Continue counting')).on('click',function(){p.closePopup();}).appendTo(footer);
             $('#inventory_popup').off('hidden.bs.modal.auditComplete').one('hidden.bs.modal.auditComplete',async function(){
                 if(!$('#inventorycounts').hasClass('count-editing'))return;
                 var previousPage=auditPage;
                 try{await load();auditPage=previousPage;render();}catch(e){fail(e);}
             });
-        }else $('<p class="text-muted">').text('Check the quantities below, then confirm to update stock.').appendTo(panel);
+        }else $('<p class="text-muted">').text(PosnicPro.i18n.t('lang_check_the_quantities_below_then_confirm_to', 'Check the quantities below, then confirm to update stock.')).appendTo(panel);
         var table = $('<table class="table"><thead><tr><th><lang class="lang_product">Product</lang></th><th><lang class="lang_current">Current</lang></th><th><lang class="lang_addvariant_title">New</lang></th><th><lang class="lang_stock_adjust_reason">Reason</lang></th><th><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody></tbody></table>').appendTo($('<div class="table-responsive">').appendTo(panel));
         r.lines.forEach(function (l) { var tr = $('<tr>').appendTo(table.find('tbody')); [l.name,l.expected / 1000,l.quantity / 1000,l.reason,r.applied.includes(l.itemId) ? 'Applied' : r.state].forEach(function (v) { $('<td>').text(v).appendTo(tr); }); });
         if (['prepared','applying'].includes(r.state)) panel.append($('<button id="audit_confirm" class="btn btn-primary">').text(r.approvalRequired ? PosnicPro.i18n.t('lang_approve_adjustments', 'Approve adjustments') : PosnicPro.i18n.t('lang_confirm_adjustments', 'Confirm adjustments')));
@@ -370,7 +370,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
     }
     $(document).on('click', '#audit_review', async function () {
         var button = $(this).prop('disabled', true), selected = branch;
-        $('#audit_status').removeClass('text-danger').attr('role','status').text('Preparing review...');
+        $('#audit_status').removeClass('text-danger').attr('role','status').text(PosnicPro.i18n.t('lang_preparing_review', 'Preparing review...'));
         try {
             check(); operationId = operationId || ('audit_' + crypto.randomUUID()); var result, file = $('#audit_file')[0].files[0];
             if (file) {
@@ -401,8 +401,8 @@ $(document).on('click', '.mobile-inventory-close', function () {
 // Spoilage is a separately approved stock movement, never a count overwrite.
 (function (p) {
     var branch, signedBranch, info, catalogue=[], draft, selected=[], busy=false, next, generation=0, listScroll=0, listTrigger=null, productNext=null, productRequest=0, searchTimer, historyCursors=[null], historyPage=0;
-    var labels={draft:'Not saved',pending:'Not saved',approving:'Saving',accepted:'Completed',rejected:'Rejected',conflict:'Stock conflict',reversed:'Undone — stock restored',reversal_pending:'Restoring stock'};
-    function outcome(d){return d.state==='accepted'?(d.kind==='reversal'||/^RV-SP-/.test(d.reference||'')?'Completed — stock restored':'Completed — stock deducted'):(labels[d.state]||d.state);}
+    var labels={draft:'Not saved',pending:'Not saved',approving:'Saving',accepted:'Completed',rejected:'Rejected',conflict:'Stock conflict',reversed:'Undone - stock restored',reversal_pending:'Restoring stock'};
+    function outcome(d){return d.state==='accepted'?(d.kind==='reversal'||/^RV-SP-/.test(d.reference||'')?'Completed - stock restored':'Completed - stock deducted'):(labels[d.state]||d.state);}
     function nextStep(d){return ['accepted','reversed','rejected'].includes(d.state)?'No action needed':d.state==='conflict'?'Open entry to resolve the stock conflict':d.state==='draft'?'Open entry to finish saving':'Open entry to check or retry';}
     function request(url,method,data) {
         if (signedBranch !== PosnicPro.local.get('branch_id_set')) return Promise.reject(new Error('Signed-in branch changed. Reopen Spoilage / damage.'));
@@ -424,7 +424,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
         info=await request('inventory-counts/spoilage?'+query()+'&limit=25'+(historyCursors[historyPage]?'&after='+historyCursors[historyPage]:''));next=info.next;
         $('#sp_new').toggle(info.canWrite);
         var root=$('#sp_list').empty(), body=$('<tbody>');
-        var grid=$('<table class="table"><thead><tr><th><lang class="lang_reference_title">Reference</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_userstatus">Status</lang></th><th><lang class="lang_entered_by">Entered by</lang></th><th>Next step</th><th></th></tr></thead></table>').append(body);
+        var grid=$('<table class="table"><thead><tr><th><lang class="lang_reference_title">Reference</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_userstatus">Status</lang></th><th><lang class="lang_entered_by">Entered by</lang></th><th><lang class="lang_next_step">Next step</lang></th><th></th></tr></thead></table>').append(body);
         $('<div class="table-responsive">').append(grid).appendTo(root);
         info.rows.forEach(function(d){var row=$('<tr>').appendTo(body);
             [d.reference,d.occurredOn,outcome(d),d.createdByName,nextStep(d)].forEach(function(v){$('<td>').text(v).appendTo(row);});
@@ -500,11 +500,11 @@ $(document).on('click', '.mobile-inventory-close', function () {
         if(d.lastError)$('<p class="text-danger">').text(d.lastError).appendTo(root);
         if(d.state==='accepted'){
             var success=$('<div class="alert alert-success" role="status">').appendTo(root);
-            $('<strong class="d-block">').text(d.kind==='reversal'?'Completed — stock restored':'Completed — stock deducted').appendTo(success);
-            $('<span>').text(d.kind==='reversal'?'The stock has been restored. No further action is needed.':'The spoiled quantities have been deducted from stock. You’re done — no approval is needed.').appendTo(success);
+            $('<strong class="d-block">').text(d.kind==='reversal'?'Completed - stock restored':'Completed - stock deducted').appendTo(success);
+            $('<span>').text(d.kind==='reversal'?'The stock has been restored. No further action is needed.':'The spoiled quantities have been deducted from stock. You’re done - no approval is needed.').appendTo(success);
         }
         var footer=$('#inventory_popup .modal-footer').empty();
-        if(d.canWrite&&d.state==='accepted')$('<button type="button" id="sp_another" class="btn btn-outline-primary">').text('Add another entry').appendTo(footer);
+        if(d.canWrite&&d.state==='accepted')$('<button type="button" id="sp_another" class="btn btn-outline-primary">').text(PosnicPro.i18n.t('lang_add_another_entry', 'Add another entry')).appendTo(footer);
         $('<button type="button" id="sp_done" class="btn btn-primary">').text(d.state==='accepted'?'Done':'Close').appendTo(footer);
         var shell=root;
         var tabs=$('<div class="nav nav-tabs mb-3" role="tablist">').appendTo(shell);
@@ -516,7 +516,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
             detailsTab.toggleClass('active',!audit).attr('aria-selected',String(!audit));auditTab.toggleClass('active',audit).attr('aria-selected',String(audit));
             root.prop('hidden',audit);auditPanel.prop('hidden',!audit);
             if(!audit||auditLoaded||auditLoading)return;
-            auditLoading=true;auditPanel.empty().attr('aria-busy','true').append($('<p role="status" class="text-muted">').text(PosnicPro.i18n.t('lang_loading','Loading...')));
+            auditLoading=true;auditPanel.empty().attr('aria-busy','true').append($('<p role="status" class="text-muted">').text(PosnicPro.i18n.t('lang_loading','Loading…')));
             try{
                 var history=await request('inventory-counts/spoilage/'+encodeURIComponent(d.id)+'?view=audit');
                 if(!auditPanel[0].isConnected)return;
@@ -539,7 +539,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
         if(d.canEdit)button('sp_edit','Edit');
         if(d.canWrite&&['draft','pending','approving','conflict'].includes(d.state))button('sp_apply','Retry save','btn-primary');
         if(d.canWrite&&d.kind!=='reversal'&&['accepted','conflict','reversal_pending'].includes(d.state)&&(d.applied||[]).length){
-            $('<span class="text-muted align-self-center">').text('Made a mistake?').appendTo(actions);
+            $('<span class="text-muted align-self-center">').text(PosnicPro.i18n.t('lang_made_a_mistake', 'Made a mistake?')).appendTo(actions);
             button('sp_reverse','Undo stock deduction','btn-link');
         }
 
