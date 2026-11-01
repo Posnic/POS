@@ -417,3 +417,17 @@ test('product picker paginates tracked catalogue and filters category and name',
  const second=await inventory.catalogue({...req,query:{...req.query,after:first.next}});assert.equal(second.rows.length,25);assert(!second.rows.some(r=>first.rows.some(f=>f.id===r.id)));
  const third=await inventory.catalogue({...req,query:{...req.query,after:second.next}});assert.equal(third.rows.length,9);assert.equal(third.next,null);
 });
+
+
+test('overview status filters precede pagination and preserve branch isolation', async () => {
+  const draft = await prepare();
+  const original = await db.collection('inventory_operations').findOne({_id:draft.operationId});
+  await db.collection('inventory_operations').insertMany(Array.from({length:55},(_,i)=>({...original,_id:String(i).padStart(64,'0'),state:'complete'})));
+  await db.collection('inventory_operations').insertOne({...original,_id:'f'.repeat(64),state:'complete',branch_id:new ObjectId()});
+  req.query={status:'attention'};
+  const attention=await inventory.list(req);assert.equal(attention.rows.length,1);assert.equal(attention.rows[0].state,'prepared');
+  req.query={status:'complete'};const first=await inventory.list(req);assert.equal(first.rows.length,50);assert(first.next);
+  req.query={status:'complete',after:first.next};const second=await inventory.list(req);assert.equal(second.rows.length,5);assert.equal(second.next,null);
+  req.query={status:'cancelled'};assert.equal((await inventory.list(req)).rows.length,0);
+  req.query={status:'bad'};await assert.rejects(inventory.list(req),/Invalid inventory status/);
+});
