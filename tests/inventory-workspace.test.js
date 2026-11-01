@@ -121,3 +121,18 @@ test('saved damage explains completion, offers a clean new entry and never calls
  assert.equal(calls.filter(o=>o.method==='POST' && /spoilage\//.test(o.url)).length,0);
  }finally{w.close();}
 });
+
+
+test('overview tabs separate worksheets and status-filtered history',()=>{
+ const dom=new JSDOM('<div><h5>Saved worksheets</h5><p>Old help</p><div id="inventory_counts_list"></div></div>',{runScripts:'outside-only',url:'http://localhost'}),w=dom.window;
+ try{
+ w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/jquery.min.js'),'utf8'));
+ const urls=[];w.PosnicPro={i18n:{t:(k,v)=>v},local:{get:()=> 'b'},get(url,ok){urls.push(url);ok(url==='inventory-counts'?{data:[]}:{rows:[]});}};
+ w.eval(fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/modules/js/inventory_counts.js'),'utf8'));
+ const p=w.PosnicPro.inventorycounts,$=w.$;p.load();
+ assert.equal($('#count_overview_tabs button.active').text(),'Needs attention');assert.match(urls.at(-1),/status=attention/);assert.equal($('#inventory_counts_list').css('display'),'none');
+ $('#count_overview_tabs [data-view="complete"]').trigger('click');assert.match(urls.at(-1),/status=complete/);assert.match($('#mobile_inventory_rows').text(),/No completed/);
+ $('#count_overview_tabs [data-view="worksheets"]').trigger('click');assert.equal(urls.at(-1),'inventory-counts');assert.equal($('#mobile_inventory_operations').css('display'),'none');assert.notEqual($('#inventory_counts_list').css('display'),'none');
+ $('#count_overview_tabs [data-view="cancelled"]').trigger('click');assert.match(urls.at(-1),/status=cancelled/);assert.equal($('#count_overview_tabs button.active').length,1);
+ }finally{w.close();}
+});
