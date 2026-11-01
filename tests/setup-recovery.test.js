@@ -14,12 +14,16 @@ function fixture(t) {
   fs.writeFileSync(path.join(userData, 'preferences.json'), '{"receipt_printer":"counter"}');
   fs.writeFileSync(path.join(userData, 'posnic-cloud.json'), '{"token":"old"}');
   fs.writeFileSync(path.join(userData, '.credential-key.json'), 'key');
+  fs.mkdirSync(path.join(userData, 'uploads'));
+  fs.writeFileSync(path.join(userData, 'uploads', 'product.jpg'), 'product image');
   return { userData, recoveryRoot };
 }
 test('fresh setup archives every selected byte before removing the old shop; hardware stays by default', t => {
   const options = fixture(t), archive = resetSavedData(options);
   assert.equal(fs.readFileSync(path.join(archive, 'mongodb/data/collection.wt'), 'utf8'), 'unsynced sale');
   assert.equal(fs.existsSync(path.join(options.userData, 'mongodb')), false);
+  assert.equal(fs.readFileSync(path.join(archive, 'uploads/product.jpg'), 'utf8'), 'product image');
+  assert.equal(fs.existsSync(path.join(options.userData, 'uploads')), false);
   assert.equal(fs.existsSync(path.join(options.userData, 'posnic-cloud.json')), false);
   assert.equal(fs.existsSync(path.join(options.userData, 'preferences.json')), true);
   assert.equal(fs.readFileSync(path.join(archive, '.credential-key.json'), 'utf8'), 'key');

@@ -452,6 +452,7 @@ async function processBatch(c, id, skipInvalid) {
         );
       }
       await x.rows.updateOne({ _id: row._id }, { $set: { status: 'updated', reason: '' } });
+      await require('./catalogue-sharing').automatic([row.itemId]);
       processed.push({ id: row.itemId, changes: row.changes });
     }
     const remaining = await x.rows.countDocuments(pending);
@@ -820,7 +821,7 @@ async function sheet(c, query = {}) {
     'Categories',
     ...(multi ? ['Branch code'] : []),
   ]);
-  for await (const it of x.items.find(filter).sort({ name: 1, _id: 1 }))
+  for await (const it of x.items.aggregate([{ $match: filter }, ...require('../utils/catalogue-order').stages()]))
     ws.addRow([
       safe(it.name),
       safe(it.itemid || ''),
@@ -890,7 +891,7 @@ async function importSheet(c, input, file) {
   const fields = Object.keys(FIELDS).filter((f) => index(`New ${FIELDS[f]}`));
   if (!fields.length || fields.some((f) => !index(`Current ${FIELDS[f]}`)))
     throw new Error('Both current and new price columns are required');
-  const rows = [];
+  let rows = [];
   const allowed = branchScope.selected(c, input.branches);
   const exportedDates = new Set();
   ws.eachRow((row, number) => {
@@ -918,6 +919,7 @@ async function importSheet(c, input, file) {
       changes,
     });
   });
+  rows = await expandRows(c, { ...input, rows });
   await create(c, input);
   const x = await collections(c);
   await x.jobs.updateOne(
@@ -928,7 +930,10 @@ async function importSheet(c, input, file) {
     await append(c, input.jobId, { start, rows: rows.slice(start, start + 500) });
   return finish(c, input.jobId, rows.length);
 }
+async function expandRows(c, input) { return require('./price-branch-expansion')(c, input, normalize); }
 module.exports = {
+  expandRows,
+  checkWorkbookArchive,
   configure,
   cancel,
   prepare,

@@ -110,6 +110,7 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Branch',
     },
+    price_all_branches: { type: Boolean },
     branch_access: {
       // PHP line 184: ['branch_id' => new MongoDB\BSON\ObjectID(...), 'branch_name' => ..., 'branch_image' => ...]
       type: [
@@ -650,6 +651,7 @@ userSchema.statics.userPage = async function (filters = {}, options = {}, contex
       activeregister_name: { type: 'String', select: true },
       apikey: { type: 'String', select: true },
       branch_access: { type: 'Array', select: true },
+      price_all_branches: { type: 'Bool', select: true },
       Collection: { type: 'String', select: true },
       created_by: { type: 'String', select: false },
       created_by_id: { type: 'ObjectId', select: false },

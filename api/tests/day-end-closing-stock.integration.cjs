@@ -48,3 +48,21 @@ test('closing stock is historical, tenant and branch scoped, precise, and never 
     await server.stop();
   }
 });
+
+test('spoilage reconciliation accounts for receipts, sales, undo and other movements without inventing missing history', async()=>{
+ const server=await MongoMemoryServer.create(), client=await MongoClient.connect(server.getUri());
+ try {
+ const db=client.db('reconciliation'),branch=new ObjectId(),license=new ObjectId(),item=new ObjectId(),unknown=new ObjectId();
+ const log=(hour,opening,closing,process,extra={})=>({branch_id:branch,license,view_item_id:item,date:new Date('2026-10-30T'+hour+':00:00Z'),opening_balance:opening,closing_balance:closing,process,...extra});
+ await db.collection('stocklogs').insertMany([
+ log('08',10,15,'Add Purchase'),log('09',15,13,'Add Sale'),log('10',13,11.5,'Mobile inventory damage',{spoilage_reference:'loss'}),
+ log('11',11.5,13,'Mobile inventory receive',{spoilage_reference:'undo'}),log('12',13,12,'Stock count'),
+ log('13',12,999,'Add Purchase',{branch_id:new ObjectId()})]);
+ const options={branch,license,start:new Date('2026-10-30T00:00:00Z'),end:new Date('2026-10-31T00:00:00Z'),itemIds:[item,unknown]};
+ const {reconciliation}=require('../src/services/report-closing-stock');let result=await reconciliation(db,options);
+ assert.deepEqual(result.get(String(item)),{opening:10,received:5,sold:2,spoilage:0,otherIn:0,otherOut:1,closing:12,complete:true});
+ assert.equal(result.get(String(unknown)).complete,false);assert.equal(result.get(String(unknown)).received,null);
+ await db.collection('stocklogs').insertOne(log('14',20,19,'Add Sale'));
+ result=await reconciliation(db,options);assert.equal(result.get(String(item)).complete,false);assert.equal(result.get(String(item)).sold,null);
+ }finally{await client.close();await server.stop();}
+});

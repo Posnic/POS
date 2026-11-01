@@ -209,8 +209,7 @@ class SyncAgentManager {
        * than guessing at a directory.
        */
       UPLOADS_DIR: path.join(
-        this.app.isPackaged ? process.resourcesPath : path.join(__dirname, '..'),
-        'api',
+        this.app.getPath('userData'),
         'uploads'
       ),
       // lets the agent answer support "upload logs" requests

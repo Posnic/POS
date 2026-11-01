@@ -1360,7 +1360,7 @@ class CustomerController extends BaseController {
       const fileName = `${timestamp}-posnic_category-${uniqueId}${fileExtension}`;
 
       // Use transaction_images folder as requested (without public folder)
-      const uploadDir = path.join(__dirname, '../../uploads/transaction_images');
+      const uploadDir = path.join(require('../utils/uploads-path'), 'transaction_images');
 
       // Ensure directory exists
       if (!fs.existsSync(uploadDir)) {

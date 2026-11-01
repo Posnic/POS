@@ -157,6 +157,7 @@ PosnicPro.stocklogs = {
         $('#v-pills-inventory-tab,#stockReport_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
         $('.page-title-box,#stocklogs').show();
+        PosnicPro.inventorycounts.mountSection('logs');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_inventory').show();
     },
@@ -329,6 +330,13 @@ PosnicPro.stocklogs = {
     },
     /*Display the low stock of item details like  only display below 10 available quantity of each item */
     viewLowStockDashboard: function () {
+        // Login and checkout also refresh the bell. Restricted cashiers must
+        // not make inventory-only requests merely to open their workspace.
+        if (!PosnicPro.aclLoaded() || !PosnicPro.checkAccess('item', 'read')) {
+            $('.lowstock-section').hide();
+            if (PosnicPro.bellFeed) PosnicPro.bellFeed.setLowStock(0);
+            return;
+        }
         if (PosnicPro.expiryReminders) PosnicPro.expiryReminders.refresh();
         var notificationValue = localStorage.getItem("notificationrange");
         var params = {

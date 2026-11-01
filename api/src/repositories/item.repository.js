@@ -1,4 +1,5 @@
 const pricingAuthority = require('../services/pricing-authority');
+const itemCreationOrigin = require('../utils/item-creation-origin');
 const sellingPriceHold = require('../utils/selling-price-hold');
 const itemText = require('../utils/item-localization');
 const gtin = require('../utils/gtin');
@@ -373,6 +374,7 @@ class ItemRepository extends BaseModel {
    * view reads.
    */
   async logItemChanges(itemRef, oldDoc = {}, newDoc = {}, context = {}, process = 'Edit') {
+    await require('../services/catalogue-sharing').automatic([itemRef._id]);
     const textVal = (v) => (v === undefined || v === null ? '' : String(v).trim());
     const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
@@ -2150,6 +2152,7 @@ class ItemRepository extends BaseModel {
           created_date: now,
           created_by: loggedUserName || 'System',
           created_by_id: loggedUserId || null,
+          creation_origin: itemCreationOrigin.record('add_item', context, now),
           item_status: ITEM_STATUS.REGULAR,
         };
 
@@ -2214,7 +2217,7 @@ class ItemRepository extends BaseModel {
         }
         return {
           status: true,
-          data: { id: result.insertedId.toString(), ...updateData },
+          data: { id: result.insertedId.toString(), ...updateData, branchSharing: await require('../services/catalogue-sharing').automatic([result.insertedId]) },
           message: SUCCESS_MESSAGES.ITEM_CREATED,
         };
       }
@@ -3170,7 +3173,7 @@ class ItemRepository extends BaseModel {
         const groups = await collection
           .aggregate([
             { $match: match },
-            { $sort: { sort_order: 1, name: 1, _id: 1 } },
+            ...require('../utils/catalogue-order').stages(),
             {
               $group: {
                 _id: {
@@ -3180,13 +3183,16 @@ class ItemRepository extends BaseModel {
                     { family: '$variant_group_id' },
                   ],
                 },
-                sort_order: { $first: '$sort_order' },
+                _categoryOrder: { $first: '$_categoryOrder' },
+                _categoryName: { $first: '$_categoryName' },
+                _skuNumber: { $first: '$_skuNumber' },
+                _skuText: { $first: '$_skuText' },
                 name: { $first: '$name' },
                 first_id: { $first: '$_id' },
                 items: { $push: '$$ROOT' },
               },
             },
-            { $sort: { sort_order: 1, name: 1, first_id: 1 } },
+            { $sort: { _categoryOrder: 1, _categoryName: 1, _skuNumber: 1, _skuText: 1, name: 1, first_id: 1 } },
             { $skip: offset },
             { $limit: size + 1 },
           ])
@@ -3194,7 +3200,7 @@ class ItemRepository extends BaseModel {
         nextOffset = groups.length > size ? offset + size : null;
         items = groups.slice(0, size).flatMap((group) => group.items);
       } else {
-        let cursor = collection.find(match).sort({ sort_order: 1, name: 1, _id: 1 });
+        let cursor = collection.aggregate([{ $match: match }, ...require('../utils/catalogue-order').stages()]);
         if (offset) cursor = cursor.skip(offset);
         items = await cursor.limit(limit).toArray();
         nextOffset = items.length === limit ? offset + limit : null;
@@ -3329,6 +3335,7 @@ class ItemRepository extends BaseModel {
         ],
         created_date: now,
         created_by: context.userName || 'System',
+        creation_origin: itemCreationOrigin.record('quick_item', context, now),
         created_by_id:
           (context.userId && ObjectId.isValid(context.userId)
             ? new ObjectId(context.userId)
@@ -3375,6 +3382,7 @@ class ItemRepository extends BaseModel {
       const insertResult = await collection.insertOne(document);
       const inserted = { ...document, _id: insertResult.insertedId };
       const simplified = BaseModel.simplifyFields(inserted);
+      simplified.branchSharing = await require('../services/catalogue-sharing').automatic([insertResult.insertedId]);
 
       return {
         status: true,
@@ -6660,23 +6668,9 @@ class ItemRepository extends BaseModel {
     const collection = await this.getCollection(this.collectionName);
     const [total, items] = await Promise.all([
       collection.countDocuments(filter),
-      collection
-        .find(filter, {
-          projection: {
-            name: 1,
-            itemid: 1,
-            unit: 1,
-            selling_units: 1,
-            selling_price: 1,
-            company_price: 1,
-            mrp_price: 1,
-            branch_id: 1,
-            selling_price_hold_until: 1,
-          },
-        })
-        .sort({ name: 1, _id: 1 })
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
+      collection.aggregate([{ $match: filter }, ...require('../utils/catalogue-order').stages(),
+        { $skip: (page - 1) * pageSize }, { $limit: pageSize },
+        { $project: { name: 1, itemid: 1, unit: 1, selling_units: 1, selling_price: 1, company_price: 1, mrp_price: 1, branch_id: 1, selling_price_hold_until: 1 } }])
         .toArray(),
     ]);
     return { total, items, page, pageSize };
@@ -6796,6 +6790,7 @@ class ItemRepository extends BaseModel {
   }
 
   async _importItems(data, context = {}) {
+    context = { ...context, creationBatchId: require('node:crypto').randomUUID() };
     const insertedIds = [],
       updatedIds = [];
     try {
@@ -7441,6 +7436,7 @@ class ItemRepository extends BaseModel {
           created_date: now,
           created_by: userName,
           created_by_id: userId,
+          creation_origin: itemCreationOrigin.record('item_import', context, now),
         };
 
         const updateData = {
@@ -7608,6 +7604,7 @@ class ItemRepository extends BaseModel {
       });
 
       if (insertedIds.length > 0 || updatedIds.length > 0) {
+        await require('../services/catalogue-sharing').automatic([...insertedIds, ...updatedIds]);
         const touched = await collection
           .find({ _id: { $in: [...insertedIds, ...updatedIds] }, license: licenseObjectId })
           .toArray();

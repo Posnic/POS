@@ -188,6 +188,10 @@ const {
 
 // Apply authentication middleware to all routes
 router.use(protect);
+router.get('/sharing-options', async (req, res) => {
+  try { const c = await require('../services/category-sharing').context(req); res.json({ type: 'success', data: { currentBranch: c.branchId, branches: c.branches, localOnly: process.env.POSNIC_DESKTOP === '1' } }); }
+  catch (e) { res.status(403).json({ type: 'error', message: e.message }); }
+});
 
 // GET /api/categories - Get all categories with pagination and filters (PHP-compatible)
 router.get('/', validateSearch, async (req, res) => {

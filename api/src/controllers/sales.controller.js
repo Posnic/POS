@@ -1821,7 +1821,19 @@ class SalesController extends BaseController {
       };
 
       // ---- Build response data ----
+      const spoilageService = require('../services/spoilage');
+      const spoilageDetails = await spoilageService.daily(await BaseModel.getDb(), {
+        branch, license: BaseModel.license || req.user.license || req.user.license_id,
+        from: spoilageService.dateAt(start, branchDoc.time_zone || 'UTC'),
+        to: spoilageService.dateAt(new Date(+new Date(end) - 1), branchDoc.time_zone || 'UTC'),
+      });
+      const spoilageBalances = await require('../services/report-closing-stock').reconciliation(await BaseModel.getDb(), {
+        branch, license: BaseModel.license || req.user.license || req.user.license_id,
+        start: new Date(start), end: new Date(end), itemIds: spoilageDetails.flatMap(entry => entry.lines.map(line => line.itemId)),
+      });
+      for (const entry of spoilageDetails) for (const line of entry.lines) line.stockSummary = spoilageBalances.get(String(line.itemId)) || null;
       const responseData = {
+        spoilage_details: spoilageDetails,
         branch_details: branchDetails,
         product_details: productDetails,
         payment_details: paymentDetails,

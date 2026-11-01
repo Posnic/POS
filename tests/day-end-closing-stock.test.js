@@ -13,3 +13,17 @@ test('day-end table and CSV retain closing stock and mark unknown balances',()=>
  assert.equal(w.$('#daily_report_product_details tbody tr').first().children().eq(3).text(),'1.769');
  dom.window.close();
 });
+test('spoilage remains visible without sales and distinguishes pending from applied losses and reversals',()=>{
+ const dom=new JSDOM(read('frontend/modules/dailyReport.html'),{runScripts:'outside-only'}),w=dom.window;w.eval(read('frontend/static/script/js/jquery.min.js'));w.$.fn.number=function(){return this};
+ try {
+ const src=read('frontend/static/script/js/modules/js/report_dailysales.js');
+ const render=w.Function('response','currency','safeNum','esc',src.slice(src.indexOf('        // ---- Products ----'),src.indexOf('        // ---- Payments ----'))+'return {spoilageHeader,spoilageRows};');
+ const line={itemId:'a',name:'Onion',sku:'2',unit:'kg',quantity:1500,estimatedValue:30,reason:'Spoilage',remarks:'Inspection'};
+ const r=render({data:{product_details:[],spoilage_details:[{reference:'SP-1',occurredOn:'2026-10-30',state:'pending',kind:'spoilage',lines:[line]},{reference:'SP-2',occurredOn:'2026-10-30',state:'accepted',kind:'spoilage',lines:[line],applied:['a']},{reference:'RV-2',occurredOn:'2026-10-30',state:'accepted',kind:'reversal',lines:[line],applied:['a']}]}},'INR',v=>Number(v)||0,String);
+ assert.deepEqual(Array.from(r.spoilageRows,row=>row[6]),[0,1.5,-1.5]);
+ assert.deepEqual(Array.from(r.spoilageRows,row=>row[7]),[0,30,-30]);
+ assert.equal(r.spoilageRows[0][11],'Unavailable');
+ assert.equal(r.spoilageHeader.length,17);
+ assert.equal(w.$('#daily_spoilage_section tbody tr').length,3);assert.notEqual(w.$('.hide-show-dailyreport').css('display'),'none');
+ }finally{dom.window.close();}
+});

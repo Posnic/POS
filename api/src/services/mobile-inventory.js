@@ -88,6 +88,7 @@ async function catalogue(req) {
   if (q) {
     const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     filter.$or = [
+      { itemid: { $regex: escaped, $options: 'i' } },
       { name: { $regex: escaped, $options: 'i' } },
       { barcode_id: q },
       { barcodes: q },
@@ -95,19 +96,22 @@ async function catalogue(req) {
       { sku: q },
     ];
   }
+  if (kind === 'items' && req.query?.category) filter.category_id = oid(req.query.category);
+  if (kind === 'items' && req.query?.tracked === 'true') filter.track_inventory = { $in: [true, 'true'] };
+  const limit = req.query?.limit === '25' ? 25 : 200;
   if (kind === 'items' && req.query?.barcode) {
     const barcode = String(req.query.barcode).trim().slice(0, 512);
     filter.$or = [{ barcode_id: barcode }, { barcodes: barcode }];
   }
   const projection =
-    kind === 'items' ? undefined : { name: 1, category_name: 1, supplier_name: 1, status: 1 };
+    kind === 'items' ? undefined : { name: 1, category_name: 1, supplier_name: 1, status: 1, sort_order: 1 };
   const rows = await req.db
     .collection(kind)
     .find(filter, { projection })
     .sort({ _id: 1 })
-    .limit(201)
+    .limit(limit + 1)
     .toArray();
-  const page = rows.slice(0, 200);
+  const page = rows.slice(0, limit);
   return {
     shopId: c.shopId,
     branchId: String(c.branchId),
@@ -121,8 +125,9 @@ async function catalogue(req) {
             id: String(r._id),
             name: String(r.name || r.category_name || r.supplier_name || ''),
             active: r.status !== 'inactive',
+            sortOrder: Number(r.sort_order) || 0,
           })),
-    next: rows.length > 200 ? String(page.at(-1)._id) : null,
+    next: rows.length > limit ? String(page.at(-1)._id) : null,
   };
 }
 async function history(req) {
@@ -184,6 +189,7 @@ function validate(body) {
       (body.mode === 'count' && !/^[a-f0-9]{64}$/.test(line.revision || ''))
     )
       mobile.fail('Invalid or duplicate inventory line.', 400);
+    if (line.reason !== undefined && (typeof line.reason !== 'string' || !line.reason.trim() || line.reason.length > 500)) mobile.fail('Enter a reason of 1 to 500 characters for each changed item.', 400);
     seen.add(itemId);
   }
   if (typeof body.reason !== 'string' || !body.reason.trim() || body.reason.length > 500)
@@ -195,6 +201,7 @@ function validate(body) {
     lines: body.lines.map((l) => ({
       itemId: String(oid(l.itemId)),
       quantity: l.quantity,
+      reason: l.reason?.trim() || body.reason.trim(),
       ...(body.mode === 'count' ? { revision: l.revision } : {}),
     })),
   };
@@ -217,17 +224,20 @@ function result(doc) {
       name: l.name,
       quantity: l.quantity,
       expected: l.expected,
+      reason: l.reason || doc.reason,
       ...(doc.results?.[l.itemId] || {}),
     })),
     applied: doc.applied || [],
     approvalRequired: doc.approvalRequired,
+    cancellation: doc.cancellation || null,
   };
 }
-async function prepare(req) {
+async function prepare(req, deps = {}) {
   const c = await access(req, true);
   const body = validate(req.body);
   const operations = req.db.collection('inventory_operations');
-  const _id = key(c, c.userId, body.id),
+  const operationUser = deps.operationUserId || c.userId;
+  const _id = key(c, operationUser, body.id),
     payloadHash = mobile.hash(mobile.canonical(body));
   const old = await operations.findOne({ _id, ...wall(c) });
   if (old) {
@@ -239,7 +249,7 @@ async function prepare(req) {
   for (const line of body.lines) {
     const row = await req.db
       .collection('items')
-      .findOne({ _id: oid(line.itemId), ...wall(c), is_deleted: { $ne: true } });
+      .findOne({ _id: oid(line.itemId), ...wall(c), is_deleted: { $ne: true }, del_status: { $nin: [1, '1', true] } });
     if (!row || ![true, 'true'].includes(row.track_inventory))
       mobile.fail('Item is unavailable for stock operations.', 409);
     const expected = milli(row.available_quantity || 0);
@@ -250,7 +260,7 @@ async function prepare(req) {
       mobile.fail('Item quantity needs correction on the till.', 409);
     if (body.mode === 'count' && line.revision !== revision(row))
       mobile.fail('Stock changed. Refresh and recount this item.', 409);
-    if (!row.item_weight_machine_based && line.quantity % 1000)
+    if (![true, 'true', 1, '1'].includes(row.item_weight_machine_based) && line.quantity % 1000)
       mobile.fail('This item requires a whole quantity.', 400);
     lines.push({
       ...line,
@@ -269,11 +279,12 @@ async function prepare(req) {
     payloadHash,
     mode: body.mode,
     reason: body.reason,
-    userId: c.userId,
+    userId: operationUser,
     actor: String(req.user.username || ''),
     createdAt: new Date(),
     lines,
-    approvalRequired: permissions(req, c).approvalActions.includes(body.mode),
+    approvalRequired: deps.requireApproval === true || permissions(req, c).approvalActions.includes(body.mode),
+    ...(deps.spoilageReference ? { spoilageReference: deps.spoilageReference } : {}),
     state: 'prepared',
     applied: [],
   };
@@ -297,7 +308,12 @@ async function operation(req, write = false) {
   return { c, doc };
 }
 async function get(req) {
-  return result((await operation(req)).doc);
+  const { c, doc } = await operation(req);
+  const manager = ['owner', 'admin', 'super_admin'].includes(String(req.user.usertype || req.user.role).toLowerCase());
+  return { ...result(doc),
+    canRecount: doc.mode === 'count' && doc.state === 'conflict' && mobile.allowed(req.user, 'item', 'write') && !doc.spoilageReference,
+    canCancel: ['prepared', 'conflict'].includes(doc.state) && mobile.allowed(req.user, 'item', 'write') && !doc.spoilageReference && (manager || String(doc.userId) === String(c.userId))
+  };
 }
 async function requestStatus(req) {
   const c = await access(req);
@@ -338,7 +354,7 @@ async function abandonRequest(req) {
     { upsert: true }
   );
   await operations.updateOne(
-    { _id, ...wall(c), state: 'prepared', userId: c.userId },
+    { _id, ...wall(c), state: 'prepared', userId: c.userId, spoilageReference: { $exists: false } },
     { $set: { state: 'cancelled' } }
   );
   return result(await operations.findOne({ _id, ...wall(c) }));
@@ -357,21 +373,29 @@ async function list(req) {
 }
 async function cancel(req) {
   const { c, doc } = await operation(req, true);
-  if (String(doc.userId) !== String(c.userId))
-    mobile.fail('Only the author can cancel this draft.', 403);
-  await req.db
+  if (doc.spoilageReference) mobile.fail('Use the spoilage approval workflow for this entry.', 403);
+  const manager = ['owner', 'admin', 'super_admin'].includes(String(req.user.usertype || req.user.role).toLowerCase());
+  if (String(doc.userId) !== String(c.userId) && !manager)
+    mobile.fail('Only the author or an administrator can cancel remaining changes.', 403);
+  if (doc.state === 'cancelled') return get(req);
+  if (!['prepared', 'conflict'].includes(doc.state)) mobile.fail('This operation is processing or completed. Refresh its status.', 409);
+  const reason = String(req.body?.reason || '').trim();
+  if (doc.state === 'conflict' && (!reason || reason.length > 500)) mobile.fail('Enter a cancellation reason (up to 500 characters).', 400);
+  const cancelled = await req.db
     .collection('inventory_operations')
-    .updateOne({ _id: doc._id, state: 'prepared' }, { $set: { state: 'cancelled' } });
+    .updateOne({ _id: doc._id, ...wall(c), state: doc.state }, { $set: { state: 'cancelled', updatedAt: new Date(), cancellation: { userId: c.userId, actor: String(req.user.username || ''), at: new Date(), reason: reason || 'Cancelled before confirmation' } } });
+  if (!cancelled.matchedCount) mobile.fail('The operation changed. Refresh before cancelling.', 409);
   return get(req);
 }
 async function confirm(req, deps = {}) {
   const { c, doc } = await operation(req, true);
+  if (doc.spoilageReference && !deps.spoilageApproval) mobile.fail('Use the spoilage approval workflow for this entry.', 403);
   const operations = req.db.collection('inventory_operations');
   if (['complete', 'cancelled'].includes(doc.state)) return result(doc);
   const requiresApproval =
     doc.approvalRequired || permissions(req, c).approvalActions.includes(doc.mode);
   if (
-    requiresApproval &&
+    requiresApproval && !deps.spoilageApproval &&
     !['owner', 'admin', 'super_admin'].includes(
       String(req.user.usertype || req.user.role).toLowerCase()
     )
@@ -390,6 +414,7 @@ async function confirm(req, deps = {}) {
       ...wall(c),
       is_deleted: { $ne: true },
       track_inventory: { $in: [true, 'true'] },
+      del_status: { $nin: [1, '1', true] },
       [marker]: { $exists: false },
     };
     if (doc.mode === 'count')
@@ -450,7 +475,8 @@ async function confirm(req, deps = {}) {
           item_barcode_id: row.barcode_id || '',
           process: 'Mobile inventory ' + doc.mode,
           reference: doc._id,
-          note: doc.reason,
+          ...(doc.spoilageReference ? { spoilage_reference: doc.spoilageReference } : {}),
+          note: line.reason || doc.reason,
           opening_balance: effect.opening,
           closing_balance: effect.closing,
           count: String(effect.closing - effect.opening),

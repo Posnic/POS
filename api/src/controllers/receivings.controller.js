@@ -451,7 +451,7 @@ class ReceivingsController extends BaseController {
         const buffer = Buffer.from(data, 'base64');
 
         // Save to local storage
-        const uploadDir = path.join(config.uploadDir || './uploads', 'receiving_images');
+        const uploadDir = path.join(require('../utils/uploads-path'), 'receiving_images');
 
         // Ensure directory exists
         await fs.mkdir(uploadDir, { recursive: true });

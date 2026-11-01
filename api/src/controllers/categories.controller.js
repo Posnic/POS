@@ -568,7 +568,11 @@ class CategoriesController extends BaseController {
       return this.error(res, 'Enter discount_amount or discount_percentage, not both', 400);
     }
 
+    const sharing = require('../services/category-sharing');
+    let sharingPlan;
+    try { sharingPlan = await sharing.prepare(req); } catch (e) { return this.error(res, e.message, 403); }
     const result = await this.service.createCategory(categoryData);
+    if (result.status) result.data.branch_results = await sharing.distribute(sharingPlan, result.data);
 
     if (result.status) {
       return this.success(res, result.data, result.message, 201);
@@ -649,7 +653,12 @@ class CategoriesController extends BaseController {
       }
     }
 
+    const sharing = require('../services/category-sharing');
+    let sharingPlan;
+    try { sharingPlan = await sharing.prepare(req); } catch (e) { return this.error(res, e.message, 403); }
+    const before = await this.service.repository.findById(id);
     const result = await this.service.updateCategory(id, updateData);
+    if (result.status) result.data.branch_results = await sharing.distribute(sharingPlan, result.data, before?.name);
 
     if (result.status) {
       return this.success(res, result.data, result.message);
@@ -1175,7 +1184,7 @@ class CategoriesController extends BaseController {
         return this.error(res, error.message, 404);
       }
     } else {
-      const uploadDir = path.join(__dirname, '../../uploads/category_images/');
+      const uploadDir = path.join(require('../utils/uploads-path'), 'category_images');
 
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
