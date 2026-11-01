@@ -11,6 +11,7 @@
     "authority on what syncs; 'synced' here mirrors it and the build checks the mirror."
   ],
   "synced": {
+    "spoilage_entries": "branch",
     "recycle_bin": "branch",
     "waitercalls": "branch",
     "sales": "branch",
@@ -41,6 +42,7 @@
     "modifier_groups": "branch"
   },
   "local_only": {
+    "spoilage_commands": "Authoritative approval/rejection and stock execution journal belongs to the originating installation. Read-only spoilage_entries snapshots sync for reports; another till must never execute their commands. Review actions direct users to the originating cloud or till.",
     "app_brand": "White-label branding is provisioned by the tenant/build configuration, not by catalogue replication between installations.",
     "price_sheet_jobs": "Price update staging, execution leases and recovery jobs belong to the installation applying them. Updated item prices sync normally; jobs must never replay on another installation.",
     "price_sheet_rows": "Staged price changes and per-row recovery receipts belong to the executing price-sheet job and stay on that installation.",

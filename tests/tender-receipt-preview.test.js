@@ -429,3 +429,13 @@ test('final printing retrieves the saved sale before rendering the receipt', () 
     assert.equal(printed, saved);
     dom.window.close();
 });
+
+for (const layout of ['80', '58', 'a4']) {
+    test(layout + ': fractional receipt total retains three decimal places', () => {
+        const { dom, $, branch, data, preview } = till();
+        data.items[0].item_quantity = 0.605;
+        const result = $('<div>').html(preview.documentFor(branch, data, layout));
+        assert.equal(result.find('.total-noof-item').text().trim(), '0.605');
+        dom.window.close();
+    });
+}

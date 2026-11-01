@@ -22,6 +22,8 @@ const categorySchema = new mongoose.Schema(
       minlength: 2,
       maxlength: 100,
     },
+    catalogue_source_id: { type: String },
+    sort_order: { type: Number, default: 0, min: 0, max: 2147483646 },
     discount_amount: {
       type: Number,
       default: 0,

@@ -227,7 +227,7 @@ test('API request identity, note pagination, stable Excel IDs and dated brand fi
     { jobId: String(new ObjectId()), branches: 'all' },
     { originalname: 'renamed.xlsx', buffer: await wb.xlsx.writeBuffer() }
   );
-  assert.equal(imported.counts.pending, 1);
+  assert.equal(imported.counts.pending, 2); // One edited SKU applies to all selected branches.
   assert.equal(imported.job.exportedAt.length, 1);
   const list = await service.list(c, { page: 1, pageSize: 10 });
   assert.equal(list.total, 2);

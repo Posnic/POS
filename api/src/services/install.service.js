@@ -1245,7 +1245,7 @@ class InstallService {
       const datasetPack = await demoDatasetSvc.loadDatasetPack({
         currency: params.currencyCode,
         businessType,
-        uploadsRoot: path.join(__dirname, '../../uploads'),
+        uploadsRoot: require('../utils/uploads-path'),
       });
       if (datasetPack) {
         demoData = datasetPack;

@@ -10,6 +10,7 @@ PosnicPro.lowstockitems = {
         $('#v-pills-inventory-tab,#view_itemslow_page').addClass('active');
         $('#v-pills-inventory').addClass('show active');
         $('.page-title-box,#lowstockitems').show();
+        PosnicPro.inventorycounts.mountSection('lowstock');
         $('.dashboard_img_menu').hide();
         $('#image_sidebar_lowstock').show();
     },

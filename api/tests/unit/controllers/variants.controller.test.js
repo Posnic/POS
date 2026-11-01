@@ -288,7 +288,7 @@ describe('create', () => {
       message: 'variant added successfully',
       data: 'newid1',
     });
-    const req = mockReq({ body: { name: 'Color', product_type: ['Red', 'Blue'] } });
+    const req = scopedReq({ body: { name: 'Color', product_type: ['Red', 'Blue'] } });
     const res = mockRes();
     await ctrl.create(req, res);
     expect(res.status).toHaveBeenCalledWith(201);
@@ -308,13 +308,14 @@ describe('create', () => {
       message: 'ok',
       data: 'nid',
     });
-    const req = mockReq({ body: { name: 'Size' } });
+    const req = scopedReq({ body: { name: 'Size' } });
     const res = mockRes();
     await ctrl.create(req, res);
     expect(mockService.createVariant).toHaveBeenCalledWith(
       req.body,
       expect.any(String), // branch_id
-      expect.any(String) // branch_name
+      expect.any(String), // branch_name
+      expect.any(String) // authenticated licence
     );
   });
 
@@ -325,14 +326,14 @@ describe('create', () => {
       message: 'ok',
       data: 'nid',
     });
-    const req = mockReq({
+    const req = scopedReq({
       body: { name: 'Color' },
       user: { _id: 'u1', branch_id: 'b1', branch_name: 'B' },
     });
     const res = mockRes();
     await ctrl.create(req, res);
     expect(mockCreateActivityLog).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'CREATE', entity: 'Variant' })
+      expect.objectContaining({ action: 'create', entity: 'product' })
     );
   });
 
@@ -341,7 +342,7 @@ describe('create', () => {
       exist('This variant details already exist in our system')
     );
     const res = mockRes();
-    await ctrl.create(mockReq({ body: { name: 'Color' } }), res);
+    await ctrl.create(scopedReq({ body: { name: 'Color' } }), res);
     expect(res.status).toHaveBeenCalledWith(406);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
   });
@@ -349,7 +350,7 @@ describe('create', () => {
   test('400 when service returns status false (validation/business fail)', async () => {
     mockService.createVariant.mockResolvedValue(bad('Variant name is required'));
     const res = mockRes();
-    await ctrl.create(mockReq({ body: {} }), res);
+    await ctrl.create(scopedReq({ body: {} }), res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json.mock.calls[0][0].message).toBe('Variant name is required');
   });
@@ -357,21 +358,21 @@ describe('create', () => {
   test('does NOT call createActivityLog when creation fails', async () => {
     mockService.createVariant.mockResolvedValue(bad('fail'));
     const res = mockRes();
-    await ctrl.create(mockReq({ body: { name: 'X' } }), res);
+    await ctrl.create(scopedReq({ body: { name: 'X' } }), res);
     expect(mockCreateActivityLog).not.toHaveBeenCalled();
   });
 
   test('does NOT call createActivityLog when variant already exists', async () => {
     mockService.createVariant.mockResolvedValue(exist());
     const res = mockRes();
-    await ctrl.create(mockReq({ body: { name: 'Color' } }), res);
+    await ctrl.create(scopedReq({ body: { name: 'Color' } }), res);
     expect(mockCreateActivityLog).not.toHaveBeenCalled();
   });
 
   test('500 on exception', async () => {
     mockService.createVariant.mockRejectedValue(new Error('DB error'));
     const res = mockRes();
-    await ctrl.create(mockReq({ body: { name: 'Color' } }), res);
+    await ctrl.create(scopedReq({ body: { name: 'Color' } }), res);
     expect(res.status).toHaveBeenCalledWith(500);
   });
 
@@ -383,7 +384,7 @@ describe('create', () => {
       data: 'id1',
     });
     mockCreateActivityLog.mockRejectedValue(new Error('log server down'));
-    const req = mockReq({ body: { name: 'Color' } });
+    const req = scopedReq({ body: { name: 'Color' } });
     const res = mockRes();
     await ctrl.create(req, res);
     expect(res.status).toHaveBeenCalledWith(201);
@@ -436,7 +437,7 @@ describe('update', () => {
     const res = mockRes();
     await ctrl.update(req, res);
     expect(mockCreateActivityLog).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'UPDATE', entity: 'Variant', entityId: 'v1' })
+      expect.objectContaining({ action: 'update', entity: 'product', entityId: 'v1' })
     );
   });
 
@@ -506,7 +507,7 @@ describe('delete', () => {
     const res = mockRes();
     await ctrl.delete(req, res);
     expect(mockCreateActivityLog).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'DELETE', entity: 'Variant' })
+      expect.objectContaining({ action: 'delete', entity: 'product' })
     );
   });
 
@@ -586,7 +587,7 @@ describe('legacyDelete', () => {
     const res = mockRes();
     await ctrl.legacyDelete(req, res);
     expect(mockCreateActivityLog).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'BULK_DELETE', entity: 'Variant' })
+      expect.objectContaining({ action: 'delete', entity: 'product' })
     );
   });
 
@@ -665,7 +666,7 @@ describe('bulkDelete', () => {
     const res = mockRes();
     await ctrl.bulkDelete(req, res);
     expect(mockCreateActivityLog).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'BULK_DELETE', entity: 'Variant' })
+      expect.objectContaining({ action: 'delete', entity: 'product' })
     );
   });
 

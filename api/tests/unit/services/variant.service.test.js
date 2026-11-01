@@ -68,6 +68,9 @@ const service = require('../../../src/services/variant.service');
 
 const FAKE_ID = '64f8f2f4c2b9c0a1e4000001';
 const FAKE_BRANCH_ID = '64f8f2f4c2b9c0a1e4000002';
+const FAKE_LICENSE_ID = '64f8f2f4c2b9c0a1e4000003';
+const createVariant = (data, branch = FAKE_BRANCH_ID, name = '') =>
+  service.createVariant(data, branch, name, FAKE_LICENSE_ID);
 
 const mockVariantDoc = {
   _id: { toString: () => FAKE_ID },
@@ -433,45 +436,45 @@ describe('VariantsService (singleton)', () => {
     const validData = { name: 'Color', product_type: ['Red', 'Blue'] };
 
     test('returns error when name is missing', async () => {
-      const r = await service.createVariant({ product_type: ['Red'] });
+      const r = await createVariant({ product_type: ['Red'] });
       expect(r.status).toBe(false);
       expect(r.message).toBe('Variant name is required');
       expect(repository.create).not.toHaveBeenCalled();
     });
 
     test('returns error when name is empty string', async () => {
-      const r = await service.createVariant({ name: '', product_type: ['Red'] });
+      const r = await createVariant({ name: '', product_type: ['Red'] });
       expect(r.status).toBe(false);
       expect(r.message).toBe('Variant name is required');
     });
 
     test('returns error when name is whitespace only', async () => {
-      const r = await service.createVariant({ name: '   ', product_type: ['Red'] });
+      const r = await createVariant({ name: '   ', product_type: ['Red'] });
       expect(r.status).toBe(false);
       expect(r.message).toBe('Variant name is required');
     });
 
     test('returns error when product_type is empty array', async () => {
-      const r = await service.createVariant({ name: 'Color', product_type: [] });
+      const r = await createVariant({ name: 'Color', product_type: [] });
       expect(r.status).toBe(false);
       expect(r.message).toBe('At least one variant value is required');
     });
 
     test('returns error when product_type has only empty/null entries', async () => {
-      const r = await service.createVariant({ name: 'Color', product_type: ['', null, '  '] });
+      const r = await createVariant({ name: 'Color', product_type: ['', null, '  '] });
       expect(r.status).toBe(false);
       expect(r.message).toBe('At least one variant value is required');
     });
 
     test('returns error when product_type is missing (defaults to [])', async () => {
-      const r = await service.createVariant({ name: 'Color' });
+      const r = await createVariant({ name: 'Color' });
       expect(r.status).toBe(false);
       expect(r.message).toBe('At least one variant value is required');
     });
 
     test('returns status:"exist" when duplicate name found', async () => {
       repository.existsByName.mockResolvedValue(true);
-      const r = await service.createVariant(validData, FAKE_BRANCH_ID);
+      const r = await createVariant(validData, FAKE_BRANCH_ID);
       expect(r.status).toBe('exist');
       expect(r.type).toBe('error');
       expect(r.message).toBe('This variant already exists');
@@ -479,30 +482,31 @@ describe('VariantsService (singleton)', () => {
 
     test('calls existsByName with trimmed name, null excludeId, and branch_id', async () => {
       repository.create.mockResolvedValue({ ...mockVariantDoc });
-      await service.createVariant({ name: '  Color  ', product_type: ['Red'] }, FAKE_BRANCH_ID);
+      await createVariant({ name: '  Color  ', product_type: ['Red'] }, FAKE_BRANCH_ID);
       expect(repository.existsByName).toHaveBeenCalledWith('Color', null, FAKE_BRANCH_ID);
     });
 
     test('calls repository.create with correct document shape', async () => {
       repository.create.mockResolvedValue({ ...mockVariantDoc });
-      await service.createVariant(validData, FAKE_BRANCH_ID, 'Main Branch');
+      await createVariant(validData, FAKE_BRANCH_ID, 'Main Branch');
       const [doc] = repository.create.mock.calls[0];
       expect(doc.name).toBe('Color');
       expect(doc.fields).toEqual([{ name: 'Red' }, { name: 'Blue' }]);
-      expect(doc.branch_id).toBe(FAKE_BRANCH_ID);
+      expect(String(doc.branch_id)).toBe(FAKE_BRANCH_ID);
+      expect(String(doc.license)).toBe(FAKE_LICENSE_ID);
       expect(doc.branch_name).toBe('Main Branch');
     });
 
     test('trims name before saving', async () => {
       repository.create.mockResolvedValue({ ...mockVariantDoc });
-      await service.createVariant({ name: '  Size  ', product_type: ['S'] });
+      await createVariant({ name: '  Size  ', product_type: ['S'] });
       const [doc] = repository.create.mock.calls[0];
       expect(doc.name).toBe('Size');
     });
 
     test('trims description before saving', async () => {
       repository.create.mockResolvedValue({ ...mockVariantDoc });
-      await service.createVariant({
+      await createVariant({
         name: 'Color',
         product_type: ['Red'],
         description: '  Desc  ',
@@ -513,14 +517,14 @@ describe('VariantsService (singleton)', () => {
 
     test('uses empty string for description when not provided', async () => {
       repository.create.mockResolvedValue({ ...mockVariantDoc });
-      await service.createVariant(validData);
+      await createVariant(validData);
       const [doc] = repository.create.mock.calls[0];
       expect(doc.description).toBe('');
     });
 
     test('returns status:true with variant _id string on success', async () => {
       repository.create.mockResolvedValue({ _id: { toString: () => FAKE_ID } });
-      const r = await service.createVariant(validData);
+      const r = await createVariant(validData);
       expect(r.status).toBe(true);
       expect(r.type).toBe('success');
       expect(r.data).toBe(FAKE_ID);
@@ -528,14 +532,14 @@ describe('VariantsService (singleton)', () => {
 
     test('filters empty strings from product_type', async () => {
       repository.create.mockResolvedValue({ _id: { toString: () => FAKE_ID } });
-      await service.createVariant({ name: 'Color', product_type: ['Red', '', '  ', 'Blue'] });
+      await createVariant({ name: 'Color', product_type: ['Red', '', '  ', 'Blue'] });
       const [doc] = repository.create.mock.calls[0];
       expect(doc.fields).toEqual([{ name: 'Red' }, { name: 'Blue' }]);
     });
 
     test('returns status:false on repository throw', async () => {
       repository.create.mockRejectedValue(new Error('Insert failed'));
-      const r = await service.createVariant(validData);
+      const r = await createVariant(validData);
       expect(r.status).toBe(false);
       expect(r.error).toBe('Insert failed');
     });

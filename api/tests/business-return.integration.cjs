@@ -162,6 +162,18 @@ test('actual partial/full return writes reconcile with Business and preserve the
   for (const returnedQuantity of [1, 2]) {
     const f = await returned({ returnedQuantity });
     assert.equal(f.stored.sales_total, 200);
+    const remaining = 200 - returnedQuantity * 100;
+    const display = require('../src/helpers/sales.helper').formatSaleListEntry(f.stored);
+    assert.equal(Number(display.sales_total), remaining);
+    const detail = await repository.getLegacyDetails(String(f.stored._id));
+    assert.equal(detail.status, true, detail.message);
+    assert.equal(Number(detail.data.sales_total), remaining);
+    const { reportSaleTotal } = require('../src/helpers/reportable-sales');
+    const [report] = await db
+      .collection('sales')
+      .aggregate([{ $match: { _id: f.stored._id } }, { $project: { amount: reportSaleTotal() } }])
+      .toArray();
+    assert.equal(report.amount, remaining);
     assert.equal(f.stored.items_return_total, returnedQuantity * 100);
     assert.equal(f.stored.business_item_origin.salesTotal, '200');
     assert.equal(f.stored.business_item_origin.lines[0].quantity, '2');

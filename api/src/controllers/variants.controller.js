@@ -305,17 +305,25 @@ class VariantsController {
   static async create(req, res) {
     try {
       // Extract branch_id from user session using comprehensive resolver
-      const { branch_id, branch_name } = await resolveBranchContext(req);
+      const { branch_name } = await resolveBranchContext(req);
 
-      const result = await variantsService.createVariant(req.body, branch_id, branch_name);
+      const tenant = require('../utils/record-scope').requestScope(req);
+      const result = await variantsService.createVariant(
+        req.body,
+        tenant.branch_id.toString(),
+        branch_name,
+        tenant.license.toString()
+      );
 
       if (result.status === true) {
         await safeCreateActivityLog({
-          action: 'CREATE',
-          entity: 'Variant',
+          action: 'create',
+          entity: 'product',
           entityId: result.data,
           description: `Variant ${req.body.name} created`,
           user: req.user?._id,
+          branch: tenant.branch_id,
+          license: req.tenantContext?.licenseId || req.user?.license || req.user?.license_id,
         });
 
         return res.status(HTTP_STATUS.CREATED).json({
@@ -360,11 +368,13 @@ class VariantsController {
 
       if (result.status === true) {
         await safeCreateActivityLog({
-          action: 'UPDATE',
-          entity: 'Variant',
+          action: 'update',
+          entity: 'product',
           entityId: id,
           description: `Variant ${req.body.name} updated`,
           user: req.user?._id,
+          branch: req.tenantContext?.branchId || branch_id,
+          license: req.tenantContext?.licenseId || req.user?.license || req.user?.license_id,
           changes: req.body,
         });
 
@@ -409,11 +419,13 @@ class VariantsController {
 
       if (result.status) {
         await safeCreateActivityLog({
-          action: 'DELETE',
-          entity: 'Variant',
+          action: 'delete',
+          entity: 'product',
           entityId: id,
           description: 'Variant deleted',
           user: req.user?._id,
+          branch: req.tenantContext?.branchId || branch_id,
+          license: req.tenantContext?.licenseId || req.user?.license || req.user?.license_id,
         });
 
         return res.status(HTTP_STATUS.OK).json({
@@ -451,10 +463,12 @@ class VariantsController {
 
       if (result.status) {
         await safeCreateActivityLog({
-          action: 'BULK_DELETE',
-          entity: 'Variant',
+          action: 'delete',
+          entity: 'product',
           description: `${result.data} variants deleted`,
           user: req.user?._id,
+          branch: req.tenantContext?.branchId || branch_id,
+          license: req.tenantContext?.licenseId || req.user?.license || req.user?.license_id,
         });
 
         return res.status(HTTP_STATUS.OK).json({
@@ -492,10 +506,12 @@ class VariantsController {
 
       if (result.status) {
         await safeCreateActivityLog({
-          action: 'BULK_DELETE',
-          entity: 'Variant',
+          action: 'delete',
+          entity: 'product',
           description: `${result.data} variants deleted`,
           user: req.user?._id,
+          branch: req.tenantContext?.branchId || branch_id,
+          license: req.tenantContext?.licenseId || req.user?.license || req.user?.license_id,
         });
 
         return res.status(HTTP_STATUS.OK).json({

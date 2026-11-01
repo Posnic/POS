@@ -73,6 +73,8 @@ PosnicPro.variants = {
        shared clearListFilters/refresh doors still call it. */
     variantsTable: function () {
         PosnicPro.variants.loadList(1);
+        var id = PosnicPro.listDoc.activeId('variants');
+        if (id) { PosnicPro.variants.openDoc(id); }
     },
     _page: 1,
     PAGE_SIZE: 25,
@@ -91,7 +93,7 @@ PosnicPro.variants = {
     },
     showDataTablePage: function () {
         PosnicPro.variants._chrome();
-        PosnicPro.variants.loadList(1);
+        PosnicPro.variants.variantsTable();
     },
     mountFilters: function (force) {
         if (!$('#variants_filter_panel').length) { return; }

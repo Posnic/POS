@@ -985,16 +985,19 @@
                                         });
 
 
-                                        PosnicPro.stocklogs.viewLowStockDashboard();
                                         var branch_id = PosnicPro.local.get('branch_id_set');
                                         $("#branch_name option[value='" + branch_id + "']").prop("selected", "selected");
-                                        PosnicPro.settings.viewSettings(branch_id);
                                     });
 
 
                                     PosnicPro.get('users/getUserAccessDetails', function (response) {
+                                        if (!response || response.type !== 'success' || !response.data) return;
                                         PosnicPro.userACL = response.data;
                                         PosnicPro.ACLApplyForAll();
+                                        $(function () {
+                                            PosnicPro.stocklogs.viewLowStockDashboard();
+                                            PosnicPro.settings.viewSettings(PosnicPro.local.get('branch_id_set'));
+                                        });
                                         PosnicPro.dashboard.datePicker();
                                         PosnicPro.redirectPage();
                                     });

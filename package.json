@@ -292,6 +292,10 @@
         "to": "server.js"
       },
       {
+        "from": "src/uploads-migration.js",
+        "to": "uploads-migration.js"
+      },
+      {
         "from": "src/extension-signing-key.pub",
         "to": "extension-signing-key.pub"
       },
