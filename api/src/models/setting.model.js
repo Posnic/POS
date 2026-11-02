@@ -284,10 +284,10 @@ class SettingModel extends BaseModel {
           general = { ...seed, _id: ins.insertedId };
         }
         try {
-          const branches = await this.getCollection('branch');
+          const branches = await this.getCollection('branches');
           await branches.updateOne(
-            { _id: branchIdNorm },
-            { $set: { default_supplier: general._id } }
+            { _id: branchIdNorm, ...healLicense },
+            { $set: { default_supplier: general._id, updated_date: new Date() } }
           );
         } catch (e) {
           /* best-effort pointer */
@@ -316,6 +316,18 @@ class SettingModel extends BaseModel {
       });
 
       if (!supplier) {
+        // Repair only this branch's saved default, never an arbitrary requested
+        // supplier or a foreign tenant's record. Reuse the normal default path.
+        if (this.branchId && this.licenseId) {
+          const branches = await this.getCollection('branches');
+          const branch = await branches.findOne({
+            _id: this.normalizeId(this.branchId),
+            ...licenseFilter,
+          });
+          if (branch?.default_supplier && String(branch.default_supplier) === String(supplierId)) {
+            return this.getDefaultSupplier(null);
+          }
+        }
         return {
           status: false,
           data: null,
@@ -1848,6 +1860,10 @@ class SettingModel extends BaseModel {
     const onOnly = (v) => v === 'true' || v === true;
     return {
       staff_shifts_enable: { parse: offOnly, dflt: true },
+      table_options: { parse: onOnly, dflt: false },
+      hardware_weight_machine_enable: { parse: onOnly, dflt: false },
+      ai_enabled: { parse: offOnly, dflt: true },
+      ask_posnic_enabled: { parse: onOnly, dflt: false },
       staff_tips_enable: { parse: onOnly, dflt: false },
       staff_roster_enable: { parse: offOnly, dflt: true },
       cash_register_enable: { parse: offOnly, dflt: true },

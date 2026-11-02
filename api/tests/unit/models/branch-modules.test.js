@@ -47,6 +47,34 @@ const TARGET = '64a000000000000000000bbb';
 const LICENSE = '64a00000000000000000ccc1';
 
 describe('updateBranchModules', () => {
+  test('session feature save includes restaurant, scale and AI switches without changing receipt defaults', async () => {
+    const rows = [
+      {
+        _id: '64a000000000000000000aaa',
+        license: LICENSE,
+        default_supplier: 'saved',
+        print_type: 'thermal',
+      },
+    ];
+    const model = makeModel(rows);
+    const result = await model.updateCommonSettings({
+      modules_only: true,
+      table_options: 'true',
+      hardware_weight_machine_enable: 'true',
+      ai_enabled: 'false',
+      ask_posnic_enabled: 'true',
+    });
+    expect(result.status).toBe(true);
+    expect(rows[0]).toMatchObject({
+      table_options: true,
+      hardware_weight_machine_enable: true,
+      ai_enabled: false,
+      ask_posnic_enabled: true,
+      default_supplier: 'saved',
+      print_type: 'thermal',
+    });
+    expect(rows[0].updated_date).toBeInstanceOf(Date);
+  });
   test('writes only the sent toggles, parsed by each key`s own rule', async () => {
     const rows = [{ _id: TARGET, license: LICENSE, module_tax_enable: true, sales_prefix: 'SAL' }];
     const model = makeModel(rows);
