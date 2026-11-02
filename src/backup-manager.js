@@ -162,12 +162,14 @@ class BackupManager {
       }
       
       const backupFolderName = `posnic-backup-${timestamp}`;
-      const backupFolder = path.join(config.path, backupFolderName);
+      // Reserve a distinct directory even when two runs share a timestamp.
+      const backupFolder = fs.mkdtempSync(path.join(config.path, backupFolderName + '-'));
       
       console.log(`[BackupManager] Starting backup → ${backupFolder}`);
       
       // Connect to MongoDB and dump all collections
       const { collections, totalDocs, totalSize, dataHash } = await this._dumpDatabase(backupFolder);
+      if (collections.some(c => c.error)) throw new Error('Backup incomplete: one or more collections could not be exported');
       
       // Deduplication: if hash matches last backup, skip
       if (!options.force && config.lastBackupHash && config.lastBackupHash === dataHash) {
@@ -524,6 +526,17 @@ class BackupManager {
       for (const c of manifest.collections) {
         const file = path.join(backupFolder, `${c.name}.json.gz`);
         if (fs.existsSync(file) && !this._isInside(backupFolder, file)) throw new Error('Backup file escapes selected folder');
+        // Validate every collection before any existing data can be replaced.
+        if (c.error || !fs.existsSync(file)) throw new Error('Incomplete backup: ' + c.name);
+        const json = zlib.gunzipSync(fs.readFileSync(file)).toString('utf8');
+        if (c.hash && crypto.createHash('sha256').update(json).digest('hex') !== c.hash) {
+          throw new Error('Backup checksum mismatch: ' + c.name);
+        }
+        const docs = require('bson').EJSON.parse(json, { relaxed: false });
+        if (!Array.isArray(docs) || docs.some(d => !d || typeof d !== 'object' || Array.isArray(d)) ||
+            (typeof c.documents === 'number' && docs.length !== c.documents)) {
+          throw new Error('Invalid backup documents: ' + c.name);
+        }
       }
       const backupSize = this._getFolderSize(backupFolder);
       console.log(`[BackupManager] Restoring backup from ${manifest.timestamp} (${(backupSize / 1024 / 1024).toFixed(2)} MB)`);
@@ -580,7 +593,7 @@ class BackupManager {
               try {
                 await collection.drop();
               } catch (dropErr) {
-                // Collection may not exist, ignore
+                if (dropErr.code !== 26 && dropErr.codeName !== 'NamespaceNotFound') throw dropErr;
               }
             }
             
@@ -611,10 +624,12 @@ class BackupManager {
         
         const durationMs = Date.now() - startTime;
         const totalDocuments = restored.reduce((sum, r) => sum + (r.documents || 0), 0);
+        const failures = restored.filter(r => r.error);
         
         this.appendHistory({
           timestamp: new Date().toISOString(),
-          status: 'restored',
+          status: failures.length ? 'failed' : 'restored',
+          ...(failures.length ? { error: 'Restore incomplete: ' + failures.map(r => r.name).join(', ') } : {}),
           source: backupFolder,
           collections: restored.length,
           totalDocuments: totalDocuments,
@@ -626,7 +641,8 @@ class BackupManager {
         console.log(`[BackupManager] Restore complete: ${restored.length} collections, ${totalDocuments} docs, ${(backupSize / 1024 / 1024).toFixed(2)} MB, ${(durationMs / 1000).toFixed(1)}s`);
         
         return { 
-          success: true, 
+          success: failures.length === 0,
+          ...(failures.length ? { error: 'Restore incomplete; some collections failed. Keep the backup and review before using this shop.' } : {}),
           restored, 
           manifest,
           size: backupSize,
