@@ -186,7 +186,7 @@
         }
         if (key === 'systemstatus') {
             data = await api.desktop.capabilities();
-            return card(t('installation', 'This installation'), rows([[t('version', 'Installed version'), data.version], [t('platform', 'Operating system'), { win32: 'Windows', darwin: 'macOS', linux: 'Linux' }[api.platform] || api.platform], [t('edition', 'Installation'), data.backup ? PosnicPro.i18n.t('lang_community', 'Community') : PosnicPro.i18n.t('lang_cloud', 'Cloud')]]) + '<div class="desktop-actions">' + open('log', t('view_logs', 'View application logs')) + open('hardware', t('hardware_diagnostics', 'Hardware diagnostics')) + open('about', t('about', 'About Posnic')) + '</div>');
+            return card(t('installation', 'This installation'), rows([[t('version', 'Installed version'), data.version], [t('platform', 'Operating system'), { win32: 'Windows', darwin: 'macOS', linux: 'Linux' }[api.platform] || api.platform], [t('edition', 'Installation'), data.cloudConnected ? PosnicPro.i18n.t('lang_cloud', 'Cloud') : PosnicPro.i18n.t('lang_community', 'Community')]]) + '<div class="desktop-actions">' + open('log', t('view_logs', 'View application logs')) + open('hardware', t('hardware_diagnostics', 'Hardware diagnostics')) + open('about', t('about', 'About Posnic')) + '</div>');
         }
         if (key === 'kitchen') {
             var loadedKitchen = await Promise.all([api.kot.getConfig(), api.kot.getStatus(), api.printer.list()]);
