@@ -48,14 +48,14 @@ function handlerSource() {
  * Run it. `at` is the page the browser is on, `url` the call that failed.
  * Returns the toasts raised and wherever the browser was sent.
  */
-function fail({ at = '/login.html', url = 'setting/getThemeSettings', status = 401, body = null, hasFailureCallback = false } = {}) {
+function fail({ at = '/login.html', url = 'setting/getThemeSettings', status = 401, body = null, hasFailureCallback = false, username = 'ravi' } = {}) {
   const toasts = [];
   let wentTo = null;
 
   const PosnicPro = {
     alert: (type, message) => toasts.push({ type, message }),
     i18n: { t: (key, english) => english },
-    local: { get: () => 'ravi' },
+    local: { get: () => username },
     users: { createCookie: () => {} },
     themeManager: null,
     csrfToken: null,
@@ -74,17 +74,29 @@ function fail({ at = '/login.html', url = 'setting/getThemeSettings', status = 4
 
   const body_ = 'function (xhr, status, error) ' + handlerSource();
   const run = new Function(
-    '$', 'PosnicPro', 'window', 'navigator', 'localStorage', 'console', 'url', 'failure',
+    '$', 'PosnicPro', 'window', 'navigator', 'localStorage', 'console', 'url', 'failure', 'params',
     'return ' + body_ + ';'
   )(
     $, PosnicPro, fakeWindow, { userAgent: 'Mozilla' }, { removeItem() {}, setItem() {} },
     { debug() {}, error() {}, log() {} },
-    url, hasFailureCallback ? () => {} : null
+    url, hasFailureCallback ? () => {} : null, {}
   );
 
   run(xhr, 'error', 'error');
   return { toasts, wentTo, PosnicPro };
 }
+
+test('provider errors preserve a restored desktop session without username metadata', () => {
+  for (const status of [400, 403, 500, 0]) {
+    const { wentTo, toasts } = fail({
+      at: '/public/dashboard.html', url: 'messaging/test', status, username: null,
+      body: { type: 'error', message: 'Test could not be sent' }, hasFailureCallback: true,
+    });
+    assert.strictEqual(wentTo, null);
+    assert.strictEqual(toasts[0].message, 'Test could not be sent');
+  }
+  assert.match(fail({ at: '/public/dashboard.html', status: 401, username: null }).wentTo, /login.html/);
+});
 
 test('asking for settings before signing in says nothing at all', () => {
   const { toasts, wentTo } = fail({

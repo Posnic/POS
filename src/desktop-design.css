@@ -73,6 +73,7 @@
 .desktop-window .section-title { font-size: 17px; font-weight: 650; margin-bottom: 20px; background: transparent; color: var(--w-text); }
 .desktop-window .stat-card { text-align: start; padding: 18px; }
 .desktop-window .stat-card .icon { display: none; }
+.desktop-window[data-desktop-window="backup"] .stat-card .icon { display: flex; margin-bottom: 10px; color: var(--w-accent); }
 .desktop-window .stat-card .value { font-size: 19px; background: transparent; color: var(--w-text); }
 .desktop-window :is(.stat-card .label, .stat-card .sub, .panel-note, .panel-hint, .ver-label, .last-check, .progress-meta, .switch-row em) { background: transparent; color: var(--w-muted) !important; }
 .desktop-window .stats-grid { gap: 12px; }

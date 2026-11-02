@@ -15,22 +15,18 @@ before(
     db = client.db('item-v2-fields');
     BaseModel.database = db;
     ctx = { branchId: new ObjectId(), licenseId: new ObjectId() };
-    await db
-      .collection('branches')
-      .insertOne({
-        _id: ctx.branchId,
-        license: ctx.licenseId,
-        branch_name: 'Test',
-        register: [],
-        cashdenom_fields: [],
-        currency_value: [],
-        time_zone: 'UTC',
-      });
-    branchSpy = mocks
-      .spyOn(Branch, 'findOne')
-      .mockImplementation((filter) => ({
-        select: () => ({ lean: () => db.collection('branches').findOne(filter) }),
-      }));
+    await db.collection('branches').insertOne({
+      _id: ctx.branchId,
+      license: ctx.licenseId,
+      branch_name: 'Test',
+      register: [],
+      cashdenom_fields: [],
+      currency_value: [],
+      time_zone: 'UTC',
+    });
+    branchSpy = mocks.spyOn(Branch, 'findOne').mockImplementation((filter) => ({
+      select: () => ({ lean: () => db.collection('branches').findOne(filter) }),
+    }));
     service = new ItemService();
     service.repository.checkPlan = async () => 0;
     service.repository.logItemChanges = async () => {};
@@ -55,6 +51,7 @@ test('advanced item fields from the v2 browser persist and read back', async () 
     image: [],
     cover_image: 'item.svg',
     selling_units: [{ unit: 'ft', factor: 0.3048, price: 32 }],
+    stock_locations: ['Rack 5 / Shelf 2', 'Store / Box B'],
   };
   const result = await service.addItem({ data, ...ctx });
   assert.equal(result.status, true, JSON.stringify(result));
@@ -71,6 +68,7 @@ test('advanced item fields from the v2 browser persist and read back', async () 
     'conversion_factor',
     'purchase_unit',
     'selling_units',
+    'stock_locations',
     'brand',
     'items_mfg_date',
     'items_expiry_date',
@@ -93,6 +91,7 @@ test('advanced item fields from the v2 browser persist and read back', async () 
   assert.equal(item.tax, 5);
   const legacy = { ...data };
   delete legacy.gtin;
+  delete legacy.stock_locations;
   let updated = await service.updateItem({ id: String(item._id), data: legacy, ...ctx });
   assert.equal(updated.status, true);
   assert.equal((await db.collection('items').findOne({ _id: item._id })).gtin, data.gtin);
@@ -103,6 +102,14 @@ test('advanced item fields from the v2 browser persist and read back', async () 
   });
   assert.equal(updated.status, true);
   const cleared = await db.collection('items').findOne({ _id: item._id });
+  assert.deepEqual(cleared.stock_locations, data.stock_locations);
+  const locationClear = await service.updateItem({
+    id: String(item._id),
+    data: { ...data, stock_locations: [] },
+    ...ctx,
+  });
+  assert.equal(locationClear.status, true);
+  assert.deepEqual((await db.collection('items').findOne({ _id: item._id })).stock_locations, []);
   assert.equal(cleared.gtin, '');
   assert.equal(cleared.gtin14, '');
 });
@@ -208,16 +215,31 @@ test('variant family stores independent prices, stock and identity', async () =>
   );
 });
 
-
 test('continuing a created item updates details without resetting stock or creating a duplicate', async () => {
-  const data = { ...fixture, name: 'Continue editing', sku_id: 'CONTINUE', barcode_id: '', barcodes: [], inventory: true, available_quantity: 8, image: [{name: '/uploads/kept.jpg', size: 123, cover: 'yes'}], cover_image: '/uploads/kept.jpg' };
+  const data = {
+    ...fixture,
+    name: 'Continue editing',
+    sku_id: 'CONTINUE',
+    barcode_id: '',
+    barcodes: [],
+    inventory: true,
+    available_quantity: 8,
+    image: [{ name: '/uploads/kept.jpg', size: 123, cover: 'yes' }],
+    cover_image: '/uploads/kept.jpg',
+  };
   const created = await service.addItem({ data, ...ctx });
   assert.equal(created.status, true, JSON.stringify(created));
-  const id = created.data.id, filter = { _id: new ObjectId(id) };
+  const id = created.data.id,
+    filter = { _id: new ObjectId(id) };
   const before = await db.collection('items').findOne(filter);
   await db.collection('items').updateOne(filter, { $set: { available_quantity: 5 } });
   const count = await db.collection('items').countDocuments();
-  const update = { ...data, sku_id: created.data.itemid, brand: 'Updated brand', description: 'More information' };
+  const update = {
+    ...data,
+    sku_id: created.data.itemid,
+    brand: 'Updated brand',
+    description: 'More information',
+  };
   delete update.available_quantity;
   const result = await service.updateItem({ id, data: update, ...ctx });
   assert.equal(result.status, true, JSON.stringify(result));
@@ -230,7 +252,11 @@ test('continuing a created item updates details without resetting stock or creat
   assert.equal(after.itemid, before.itemid);
   assert.deepEqual(after.created_date, before.created_date);
   assert.equal(await db.collection('items').countDocuments(), count);
-  const stockUpdate = await service.updateItem({ id, data: { ...update, available_quantity: 7 }, ...ctx });
+  const stockUpdate = await service.updateItem({
+    id,
+    data: { ...update, available_quantity: 7 },
+    ...ctx,
+  });
   assert.equal(stockUpdate.status, true);
   assert.equal((await db.collection('items').findOne(filter)).available_quantity, 7);
 });

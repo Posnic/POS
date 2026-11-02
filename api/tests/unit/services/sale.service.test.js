@@ -305,7 +305,61 @@ describe('SalesService', () => {
     );
   });
 
-  test('mixed selling units for one product are rejected before stock is reserved', async () => {
+  test('one full length and loose feet share one atomic base-stock reservation', async () => {
+    mockItemRepositoryInstance.findItemById.mockResolvedValue(
+      makeItemDoc({
+        unit: 'm',
+        selling_price: 100,
+        available_quantity: 20,
+        selling_units: [
+          { unit: 'ft', factor: 0.3048, price: 32 },
+          { unit: 'length', factor: 6, price: 550 },
+        ],
+      })
+    );
+    const result = await salesService.processSale(
+      makeSaleData({
+        multi_payment: { Cash: 870 },
+        items: [
+          makeItemPayload({
+            line_id: 'pipe-length',
+            item_unit: 'length',
+            item_quantity: '1',
+            item_price_total: '550',
+          }),
+          makeItemPayload({
+            line_id: 'pipe-feet',
+            item_unit: 'ft',
+            item_quantity: '10',
+            item_price_total: '32',
+          }),
+        ],
+      }),
+      '',
+      'Add',
+      makeContext()
+    );
+    expect(result.status).toBe(true);
+    expect(mockItemRepositoryInstance.deductStockIfAvailable).toHaveBeenCalledTimes(1);
+    expect(mockItemRepositoryInstance.deductStockIfAvailable.mock.calls[0][1]).toBeCloseTo(
+      9.048,
+      9
+    );
+    const lines = salesRepository.create.mock.calls[0][0].items;
+    expect(
+      lines.map((line) => [line.line_id, line.item_unit, line.unit_conversion.factor])
+    ).toEqual([
+      ['pipe-length', 'length', 6],
+      ['pipe-feet', 'ft', 0.3048],
+    ]);
+    const logs = mockStockLogsRepositoryInstance.createStockLog.mock.calls.map(([log]) => log);
+    expect(logs).toHaveLength(2);
+    expect(logs[0].opening_balance - logs[0].closing_balance).toBeCloseTo(6, 9);
+    expect(logs[1].opening_balance).toBeCloseTo(logs[0].closing_balance, 9);
+    expect(logs[1].opening_balance - logs[1].closing_balance).toBeCloseTo(3.048, 9);
+  });
+
+  test('mixed units without distinct line identities cannot reserve stock', async () => {
     const result = await salesService.processSale(
       makeSaleData({
         items: [makeItemPayload({ item_unit: 'm' }), makeItemPayload({ item_unit: 'ft' })],
@@ -315,7 +369,6 @@ describe('SalesService', () => {
       makeContext()
     );
     expect(result.status).toBe(false);
-    expect(result.message).toMatch(/one selling unit/);
     expect(mockItemRepositoryInstance.deductStockIfAvailable).not.toHaveBeenCalled();
   });
 

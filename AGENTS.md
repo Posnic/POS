@@ -104,3 +104,38 @@ as models, repositories, services and controllers.
 Apply this review using existing local checks and regression tests. This rule
 is not permission to add CI jobs, bypass branch protections, or change security
 and access controls without the authorization otherwise required above.
+
+## Private components and release distribution
+
+- A request to build, sign, publish, or send a POS installer does not authorize
+  copying or distributing private repository contents. Build success, access
+  to a private checkout, and a "separately licensed components" notice are not
+  redistribution permission.
+- Public POS installers and customer support builds must use the documented
+  public-build path. Do not copy Gateway/Intranet source, including the private
+  sync agent, into POS source, build resources, archives, or release assets.
+  Cloud components remain under the separate authenticated, signed delivery
+  mechanism managed by the private infrastructure after cloud activation.
+- Do not set SYNC_AGENT_DIR to a private checkout or rely on sibling-directory
+  auto-discovery for a public/customer build. Check for stale private files in
+  builds/sync-agent and output resources before packaging. Never resolve a
+  packaging failure by fetching or copying private code into the artifact.
+- Any exception requires explicit user authorization naming the component,
+  permitted contents, recipients, and distribution channel. Stop and clarify
+  if the approved boundary is unclear; do not infer it from packaging support.
+- Before uploading, inspect the actual installer/archive contents, including
+  unpacked resources and nested archives. Verify the absence of private source,
+  credentials, customer data, local logs, and unapproved components. Excluding
+  .env alone is not a sensitive-file audit. Record what was inspected.
+- Verify repository visibility and download audience before publishing. A
+  prerelease on a public repository is public; an unadvertised URL is not an
+  access restriction. Sharing with one customer does not authorize public
+  distribution of private materials.
+- If an unauthorized artifact is discovered, stop further distribution,
+  preserve local evidence without republishing sensitive content, and report
+  the exact release, contents, and known download count. When removal is
+  authorized, withdraw it promptly and verify that its download is unavailable.
+  Do not claim that withdrawal retracts downloaded copies or that credentials
+  were absent without inspecting the artifact.
+- Sync compatibility review does not override these distribution rules. Review
+  the separately delivered agent without embedding its private source in POS.

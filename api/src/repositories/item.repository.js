@@ -2109,6 +2109,11 @@ class ItemRepository extends BaseModel {
       if (data.purchase_unit !== undefined) {
         updateData.purchase_unit = String(data.purchase_unit || '').trim();
       }
+      if (data.stock_locations !== undefined) {
+        updateData.stock_locations = require('../helpers/stock-locations').normalize(
+          data.stock_locations
+        );
+      }
       if (data.selling_units !== undefined) {
         updateData.selling_units = require('../helpers/selling-units').normalize(
           data.selling_units,
@@ -2488,6 +2493,7 @@ class ItemRepository extends BaseModel {
       {
         $or: [
           { name: { $regex: searchPattern(query), $options: 'i' } },
+          { stock_locations: { $regex: searchPattern(query), $options: 'i' } },
           { 'translations.name': { $regex: searchPattern(query), $options: 'i' } },
           { barcode_id: query },
           { barcodes: query },
@@ -2745,6 +2751,7 @@ class ItemRepository extends BaseModel {
         conditions.push({
           $or: [
             { name: regex },
+            { stock_locations: regex },
             { 'translations.name': regex },
             { itemid: regex },
             { barcode_id: regex },
@@ -3010,6 +3017,7 @@ class ItemRepository extends BaseModel {
               itemid: 1,
               unit: 1,
               selling_units: 1,
+              stock_locations: 1,
               short_code: 1,
               item_code: 1,
               barcodes: 1,
@@ -3049,6 +3057,7 @@ class ItemRepository extends BaseModel {
         itemid: item.itemid || '',
         unit: item.unit || '',
         selling_units: item.selling_units || [],
+        stock_locations: require('../helpers/stock-locations').read(item),
         short_code: item.short_code || '',
         item_code: item.item_code || '',
         barcodes: item.barcodes || [],
@@ -3239,6 +3248,7 @@ class ItemRepository extends BaseModel {
         item_kind: item.item_kind || 'product',
         unit: item.unit || '',
         selling_units: item.selling_units || [],
+        stock_locations: require('../helpers/stock-locations').read(item),
         ...itemText.snapshot(item),
         selling_price: item.selling_price || 0,
         itemid: item.itemid || '',
@@ -3511,6 +3521,7 @@ class ItemRepository extends BaseModel {
           ? [{ barcode_id: regex }, { barcodes: regex }]
           : [
               { name: regex },
+              { stock_locations: regex },
               { 'translations.name': regex },
               { itemid: regex },
               { barcode_id: regex },
@@ -3542,6 +3553,7 @@ class ItemRepository extends BaseModel {
         item_unit: item.unit || 'qty',
         // Unit conversion (V3): the receiving screen's box->base assist.
         purchase_unit: item.purchase_unit || '',
+        stock_locations: require('../helpers/stock-locations').read(item),
         conversion_factor: Number(item.conversion_factor) || 0,
         company_price: item.company_price || 0,
         discount_amount: item.discount_amount || 0,
@@ -3628,6 +3640,7 @@ class ItemRepository extends BaseModel {
         item_code: item.itemid || '',
         item_unit: item.unit || 'qty',
         purchase_unit: item.purchase_unit || '',
+        stock_locations: require('../helpers/stock-locations').read(item),
         conversion_factor: Number(item.conversion_factor) || 0,
         company_price: item.company_price || 0,
         discount_amount: item.discount_amount || 0,
@@ -6405,6 +6418,7 @@ class ItemRepository extends BaseModel {
             ? {
                 $or: [
                   { name: regex },
+                  { stock_locations: regex },
                   { 'translations.name': regex },
                   { itemid: regex },
                   { barcode_id: regex },
@@ -6671,6 +6685,7 @@ class ItemRepository extends BaseModel {
       const literal = searchPattern(search);
       filter.$or = [
         { name: { $regex: literal, $options: 'i' } },
+        { stock_locations: { $regex: literal, $options: 'i' } },
         { itemid: { $regex: literal, $options: 'i' } },
       ];
     }
@@ -6699,6 +6714,7 @@ class ItemRepository extends BaseModel {
               itemid: 1,
               unit: 1,
               selling_units: 1,
+              stock_locations: 1,
               selling_price: 1,
               company_price: 1,
               mrp_price: 1,
@@ -7966,6 +7982,7 @@ class ItemRepository extends BaseModel {
             available_quantity: 1,
             unit: 1,
             selling_units: 1,
+            stock_locations: 1,
             sort_order: 1,
           },
         })

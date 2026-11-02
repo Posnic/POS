@@ -90,6 +90,7 @@ async function catalogue(req) {
     filter.$or = [
       { itemid: { $regex: escaped, $options: 'i' } },
       { name: { $regex: escaped, $options: 'i' } },
+      ...(kind === 'items' ? [{ stock_locations: { $regex: escaped, $options: 'i' } }] : []),
       { barcode_id: q },
       { barcodes: q },
       { plu_code: q },

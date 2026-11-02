@@ -158,6 +158,15 @@ Removed the standalone Apply to branches toolbar button. Copy catalogue to other
 ### Availability dialog context — 2026-11-01
 Explains show/hide sales availability, provides initial and empty-search guidance, and shows Review availability changes only for actual checkbox edits. Changing a checkbox invalidates an earlier confirmation preview. No availability API, persisted fields or sync write paths changed. Local UI checked with empty search, matching product, toggle and revert; no product changes saved. Tests: availability-context.test.js and catalogue-action-context.test.js passed. Packaged dashboard/script match installed files. Screenshots 51 and 52. Installer: branded-desktop-1.9.2-availability-context-2026-11-01.exe.
 
+### Final release verification — 1 November 2026
+
+The final installer includes the popup, cancellation-focus, pagination, contextual catalogue controls and three-decimal ledger fixes described above. It was installed and started against the isolated demonstration profile. Installed checks passed for retained stock and prices, branch/receipt contact details, zero-second sale redirection, day-end report access, and an Excel preview with blank optional remarks. The native desktop also confirmed damage-to-ledger navigation and rounded ledger quantities. The updated user guide includes the final installed ledger screenshot.
+
+Validation on the feature branch: 13,247 API tests passed (13 existing skips); 4,584 desktop tests passed (6 existing skips). Subsequent targeted ledger and upload-controller checks passed. Required GitHub API, database, desktop, packaging, documentation and secret checks passed. Release reconciliation preserves main's stock-location fields alongside category/SKU ordering; its 464 model/repository tests, 25 mobile inventory integration tests and 18 translation/ledger tests passed.
+
+Sync rollout: Gateway PR 48 is deployed, including the branch-scoped spoilage view lane. The installer bundles that agent. Effect journals remain local to their issuing server; balances, ledger records and the read-only spoilage view use the reviewed business-data lanes. The isolated multi-database delivery check passed; physical hardware and live two-till delivery remain site acceptance checks. The unidentified client permission toast cannot be certified without its user/branch or exact error.
+
+The installer is unsigned because the signing certificate is unavailable. The test artifact SHA256 is BC459AD961A5DEDCD8C931A2BAE49A920CE65F3FEBD0B5B8463C48C701A4BCBF. Earlier artifact hashes in this document are historical and are superseded.
 ### Spoilage detail tabs — 1 November 2026
 
 Details opens by default; audit history has a separate tab and is fetched only on first selection. Switching tabs reuses the response within that popup; reopening fetches fresh history. The audit-only read retains tenant/branch authorization, supports synced read-only records and does not publish or modify stock. The existing detail API remains compatible; the new UI requests view=details to omit history. No persisted fields, sync lanes or write semantics change.

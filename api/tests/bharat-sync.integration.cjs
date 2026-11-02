@@ -8,84 +8,259 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const { MongoClient: ApiClient, ObjectId: ApiId } = require('mongodb');
 const express = require('express');
 const gatewayRoot = process.env.POSNIC_GATEWAY_ROOT;
-test('two tills exchange unit snapshots, quotes and clear markers without replaying stock', { skip: !gatewayRoot }, async () => {
-  const { pushCollection, pullCollection } = require(path.join(gatewayRoot, 'apps/sync-agent/src/sync'));
-  const { SyncState } = require(path.join(gatewayRoot, 'apps/sync-agent/src/state'));
-  const { createSyncRouter } = require(path.join(gatewayRoot, 'apps/sync-gateway/src/routes/sync'));
-  const { MongoClient, ObjectId } = require(require.resolve('mongodb', { paths: [path.join(gatewayRoot, 'apps/sync-agent')] }));
-  const mongo = await MongoMemoryServer.create();
-  const client = await MongoClient.connect(mongo.getUri());
-  const apiClient = await ApiClient.connect(mongo.getUri());
-  let server;
-  try {
-    const cloud = client.db('cloud'), a = client.db('till_a'), b = client.db('till_b'), foreign = client.db('foreign_till');
-    const branch = new ObjectId(), otherBranch = new ObjectId(), license = new ObjectId(), itemId = new ObjectId(), saleId = new ObjectId();
-    await cloud.collection('branches').insertMany([{ _id: branch }, { _id: otherBranch }]);
-    const app = express(); app.use(express.json());
-    app.use((req, res, next) => {
-      const id = req.get('authorization')?.replace('Bearer ', '');
-      if (!['a','b','foreign'].includes(id)) return res.sendStatus(401);
-      req.device = { deviceId: id, tenantDb: 'cloud', branches: [String(id === 'foreign' ? otherBranch : branch)] }; next();
-    });
-    app.use('/v1/sync', createSyncRouter(client));
-    app.use((err, req, res, next) => res.status(500).json({ error: err.message }));
-    server = app.listen(0, '127.0.0.1'); await new Promise(resolve => server.once('listening', resolve));
-    const cfg = id => ({ deviceToken: id, gatewayUrl: 'http://127.0.0.1:' + server.address().port });
-    const sa = new SyncState(a), sb = new SyncState(b), sf = new SyncState(foreign);
-    const now = new Date();
-    // Branch presentation settings use the existing tenant-global branch lane.
-    await cloud.collection('branches').updateOne({ _id: branch }, { $set: { receipt_designs: { quoteFooter: { source: 'thirukkural', order: 'sequential', quotes: [], showQr: true, qrSizeMm: 18 }, layouts: { '80': { blocks: [{ id: 'totals', type: 'totals', taxDisplay: 'hidden' }] } } }, updated_date: now } });
-    await pullCollection(a, sa, cfg('a'), 'branches');
-    assert.equal((await a.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter.qrSizeMm, 18);
-    assert.equal((await a.collection('branches').findOne({ _id: branch })).receipt_designs.layouts['80'].blocks[0].taxDisplay, 'hidden');
-    await a.collection('branches').updateOne({ _id: branch }, { $set: { 'receipt_designs.quoteFooter.qrSizeMm': 26, updated_date: new Date(Date.now() + 1000) } });
-    await pushCollection(a, sa, cfg('a'), 'branches');
-    await pullCollection(b, sb, cfg('b'), 'branches');
-    assert.equal((await cloud.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter.qrSizeMm, 26);
-    assert.equal((await b.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter.qrSizeMm, 26);
-    assert.equal((await b.collection('branches').findOne({ _id: branch })).receipt_designs.layouts['80'].blocks[0].taxDisplay, 'hidden');
-    await sb.setPullSince('branches', null);
-    await pullCollection(b, sb, cfg('b'), 'branches');
-    assert.equal(await b.collection('branches').countDocuments({ _id: branch }), 1);
+test(
+  'two tills exchange unit snapshots, quotes and clear markers without replaying stock',
+  { skip: !gatewayRoot },
+  async () => {
+    const { pushCollection, pullCollection } = require(
+      path.join(gatewayRoot, 'apps/sync-agent/src/sync')
+    );
+    const { SyncState } = require(path.join(gatewayRoot, 'apps/sync-agent/src/state'));
+    const { createSyncRouter } = require(
+      path.join(gatewayRoot, 'apps/sync-gateway/src/routes/sync')
+    );
+    const { MongoClient, ObjectId } = require(
+      require.resolve('mongodb', { paths: [path.join(gatewayRoot, 'apps/sync-agent')] })
+    );
+    const mongo = await MongoMemoryServer.create();
+    const client = await MongoClient.connect(mongo.getUri());
+    const apiClient = await ApiClient.connect(mongo.getUri());
+    let server;
+    try {
+      const cloud = client.db('cloud'),
+        a = client.db('till_a'),
+        b = client.db('till_b'),
+        foreign = client.db('foreign_till');
+      const branch = new ObjectId(),
+        otherBranch = new ObjectId(),
+        license = new ObjectId(),
+        itemId = new ObjectId(),
+        saleId = new ObjectId();
+      await cloud.collection('branches').insertMany([{ _id: branch }, { _id: otherBranch }]);
+      const app = express();
+      app.use(express.json());
+      app.use((req, res, next) => {
+        const id = req.get('authorization')?.replace('Bearer ', '');
+        if (!['a', 'b', 'foreign'].includes(id)) return res.sendStatus(401);
+        req.device = {
+          deviceId: id,
+          tenantDb: 'cloud',
+          branches: [String(id === 'foreign' ? otherBranch : branch)],
+        };
+        next();
+      });
+      app.use('/v1/sync', createSyncRouter(client));
+      app.use((err, req, res, next) => res.status(500).json({ error: err.message }));
+      server = app.listen(0, '127.0.0.1');
+      await new Promise((resolve) => server.once('listening', resolve));
+      const cfg = (id) => ({
+        deviceToken: id,
+        gatewayUrl: 'http://127.0.0.1:' + server.address().port,
+      });
+      const sa = new SyncState(a),
+        sb = new SyncState(b),
+        sf = new SyncState(foreign);
+      const now = new Date();
+      // Branch presentation settings use the existing tenant-global branch lane.
+      await cloud
+        .collection('branches')
+        .updateOne(
+          { _id: branch },
+          {
+            $set: {
+              receipt_designs: {
+                quoteFooter: {
+                  source: 'thirukkural',
+                  order: 'sequential',
+                  quotes: [],
+                  showQr: true,
+                  qrSizeMm: 18,
+                },
+                layouts: {
+                  80: { blocks: [{ id: 'totals', type: 'totals', taxDisplay: 'hidden' }] },
+                },
+              },
+              updated_date: now,
+            },
+          }
+        );
+      await pullCollection(a, sa, cfg('a'), 'branches');
+      assert.equal(
+        (await a.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter
+          .qrSizeMm,
+        18
+      );
+      assert.equal(
+        (await a.collection('branches').findOne({ _id: branch })).receipt_designs.layouts['80']
+          .blocks[0].taxDisplay,
+        'hidden'
+      );
+      await a
+        .collection('branches')
+        .updateOne(
+          { _id: branch },
+          {
+            $set: {
+              'receipt_designs.quoteFooter.qrSizeMm': 26,
+              updated_date: new Date(Date.now() + 1000),
+            },
+          }
+        );
+      await pushCollection(a, sa, cfg('a'), 'branches');
+      await pullCollection(b, sb, cfg('b'), 'branches');
+      assert.equal(
+        (await cloud.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter
+          .qrSizeMm,
+        26
+      );
+      assert.equal(
+        (await b.collection('branches').findOne({ _id: branch })).receipt_designs.quoteFooter
+          .qrSizeMm,
+        26
+      );
+      assert.equal(
+        (await b.collection('branches').findOne({ _id: branch })).receipt_designs.layouts['80']
+          .blocks[0].taxDisplay,
+        'hidden'
+      );
+      await sb.setPullSince('branches', null);
+      await pullCollection(b, sb, cfg('b'), 'branches');
+      assert.equal(await b.collection('branches').countDocuments({ _id: branch }), 1);
 
-    const conversion = { unit: 'ft', base_unit: 'm', factor: .3048, price: 32 };
-    await a.collection('items').insertOne({ _id: itemId, license, branch_id: branch, unit: 'm', selling_units: [{ unit: 'ft', factor: .3048, price: 32 }], available_quantity: 6.952, updated_date: now });
-    await a.collection('sales').insertOne({ _id: saleId, license, branch_id: branch, sale_process: 'Hold', sales_total: 320, multi_payment: {'ROOM PENDING':320}, captain_payments:[{method:'ROOM PENDING',amount:320,reference:'234',printReference:true}], items: [{ item_id: String(itemId), item_unit: 'ft', item_quantity: 10, unit_conversion: conversion }], receipt_quote: require('../src/helpers/receipt-quote').select({source:'thirukkural',order:'sequential',showQr:true}, 'S222'), updated_date: now });
-    for (const name of ['items','sales']) {
-      assert.equal(await pushCollection(a, sa, cfg('a'), name), 1);
-      assert.equal(await pullCollection(b, sb, cfg('b'), name), 1);
-      assert.equal(await pullCollection(foreign, sf, cfg('foreign'), name), 0);
+      const conversion = { unit: 'ft', base_unit: 'm', factor: 0.3048, price: 32 };
+      await a
+        .collection('items')
+        .insertOne({
+          _id: itemId,
+          license,
+          branch_id: branch,
+          unit: 'm',
+          stock_locations: ['Rack 5 / Shelf 2'],
+          selling_units: [{ unit: 'ft', factor: 0.3048, price: 32 }],
+          available_quantity: 6.952,
+          updated_date: now,
+        });
+      await a
+        .collection('sales')
+        .insertOne({
+          _id: saleId,
+          license,
+          branch_id: branch,
+          sale_process: 'Hold',
+          sales_total: 320,
+          multi_payment: { 'ROOM PENDING': 320 },
+          captain_payments: [
+            { method: 'ROOM PENDING', amount: 320, reference: '234', printReference: true },
+          ],
+          items: [
+            {
+              item_id: String(itemId),
+              item_unit: 'ft',
+              item_quantity: 10,
+              unit_conversion: conversion,
+            },
+          ],
+          receipt_quote: require('../src/helpers/receipt-quote').select(
+            { source: 'thirukkural', order: 'sequential', showQr: true },
+            'S222'
+          ),
+          updated_date: now,
+        });
+      for (const name of ['items', 'sales']) {
+        assert.equal(await pushCollection(a, sa, cfg('a'), name), 1);
+        assert.equal(await pullCollection(b, sb, cfg('b'), name), 1);
+        assert.equal(await pullCollection(foreign, sf, cfg('foreign'), name), 0);
+      }
+      assert.deepEqual((await b.collection('items').findOne({ _id: itemId })).stock_locations, [
+        'Rack 5 / Shelf 2',
+      ]);
+      const received = await b.collection('sales').findOne({ _id: saleId });
+      assert.deepEqual(received.items[0].unit_conversion, conversion);
+      assert.equal(
+        require('../src/helpers/sale-payment-summary').receiptRows(received)[0].method,
+        'ROOM PENDING · 234'
+      );
+      assert.equal(
+        (await cloud.collection('sales').findOne({ _id: saleId })).captain_payments[0]
+          .printReference,
+        true
+      );
+      assert.equal(received.receipt_quote.url, 'https://www.posnic.com/tools/thirukural/222');
+      assert.deepEqual(
+        received.receipt_quote,
+        require('../src/helpers/receipt-quote').select(
+          { source: 'thirukkural', order: 'sequential', showQr: true },
+          'S222'
+        )
+      );
+      assert.equal(
+        (await b.collection('items').findOne({ _id: itemId })).available_quantity,
+        6.952
+      );
+      const parked = require('../src/services/parked-sales');
+      await parked.clearAll(apiClient.db('till_b'), {
+        branchId: String(branch),
+        licenseId: license,
+        userId: new ApiId(),
+      });
+      assert.equal(await pushCollection(b, sb, cfg('b'), 'settings'), 1);
+      assert.equal(await pullCollection(a, sa, cfg('a'), 'settings'), 1);
+      for (const database of [a, b, cloud]) {
+        assert.equal(await database.collection('sales').countDocuments(), 1);
+        const visible = await database
+          .collection('sales')
+          .aggregate(parked.visibilityStages())
+          .toArray();
+        assert.equal(visible.length, 0);
+        assert.equal(
+          (await database.collection('items').findOne({ _id: itemId })).available_quantity,
+          6.952
+        );
+      }
+      // Reconnect/retry from the beginning does not duplicate a sale or reapply stock.
+      await sb.setPullSince('sales', null);
+      await pullCollection(b, sb, cfg('b'), 'sales');
+      await sb.setPushSince('settings', null);
+      await pushCollection(b, sb, cfg('b'), 'settings');
+      assert.equal(await b.collection('sales').countDocuments(), 1);
+      assert.equal(
+        await cloud.collection('settings').countDocuments({ kind: 'parked_sale_clearance' }),
+        1
+      );
+      // A newer cloud item configuration travels back; old sale conversion remains unchanged.
+      await cloud
+        .collection('items')
+        .updateOne(
+          { _id: itemId },
+          {
+            $set: {
+              selling_units: [],
+              stock_locations: [],
+              updated_date: new Date(Date.now() + 1000),
+            },
+          }
+        );
+      await pullCollection(a, sa, cfg('a'), 'items');
+      assert.deepEqual((await a.collection('items').findOne({ _id: itemId })).selling_units, []);
+      assert.deepEqual((await a.collection('items').findOne({ _id: itemId })).stock_locations, []);
+      await pullCollection(b, sb, cfg('b'), 'items');
+      assert.deepEqual((await b.collection('items').findOne({ _id: itemId })).stock_locations, []);
+      assert.equal(await foreign.collection('items').countDocuments(), 0);
+      assert.deepEqual(
+        (await a.collection('sales').findOne({ _id: saleId })).items[0].unit_conversion,
+        conversion
+      );
+      assert.equal(
+        require('../src/helpers/sale-payment-summary').receiptRows(
+          await a.collection('sales').findOne({ _id: saleId })
+        )[0].method,
+        'ROOM PENDING · 234'
+      );
+    } finally {
+      if (server) await new Promise((resolve) => server.close(resolve));
+      await apiClient.close();
+      await client.close();
+      await mongo.stop();
     }
-    const received = await b.collection('sales').findOne({ _id: saleId });
-    assert.deepEqual(received.items[0].unit_conversion, conversion);
-    assert.equal(require('../src/helpers/sale-payment-summary').receiptRows(received)[0].method, 'ROOM PENDING · 234');
-    assert.equal((await cloud.collection('sales').findOne({_id:saleId})).captain_payments[0].printReference, true);
-    assert.equal(received.receipt_quote.url, 'https://www.posnic.com/tools/thirukural/222');
-    assert.deepEqual(received.receipt_quote, require('../src/helpers/receipt-quote').select({source:'thirukkural',order:'sequential',showQr:true}, 'S222'));
-    assert.equal((await b.collection('items').findOne({ _id: itemId })).available_quantity, 6.952);
-    const parked = require('../src/services/parked-sales');
-    await parked.clearAll(apiClient.db('till_b'), { branchId: String(branch), licenseId: license, userId: new ApiId() });
-    assert.equal(await pushCollection(b, sb, cfg('b'), 'settings'), 1);
-    assert.equal(await pullCollection(a, sa, cfg('a'), 'settings'), 1);
-    for (const database of [a,b,cloud]) {
-      assert.equal(await database.collection('sales').countDocuments(), 1);
-      const visible = await database.collection('sales').aggregate(parked.visibilityStages()).toArray();
-      assert.equal(visible.length, 0);
-      assert.equal((await database.collection('items').findOne({ _id: itemId })).available_quantity, 6.952);
-    }
-    // Reconnect/retry from the beginning does not duplicate a sale or reapply stock.
-    await sb.setPullSince('sales', null); await pullCollection(b, sb, cfg('b'), 'sales');
-    await sb.setPushSince('settings', null); await pushCollection(b, sb, cfg('b'), 'settings');
-    assert.equal(await b.collection('sales').countDocuments(), 1);
-    assert.equal(await cloud.collection('settings').countDocuments({ kind: 'parked_sale_clearance' }), 1);
-    // A newer cloud item configuration travels back; old sale conversion remains unchanged.
-    await cloud.collection('items').updateOne({ _id: itemId }, { $set: { selling_units: [], updated_date: new Date(Date.now() + 1000) } });
-    await pullCollection(a, sa, cfg('a'), 'items');
-    assert.deepEqual((await a.collection('items').findOne({ _id: itemId })).selling_units, []);
-    assert.deepEqual((await a.collection('sales').findOne({ _id: saleId })).items[0].unit_conversion, conversion);
-    assert.equal(require('../src/helpers/sale-payment-summary').receiptRows(await a.collection('sales').findOne({_id:saleId}))[0].method, 'ROOM PENDING · 234');
-  } finally {
-    if (server) await new Promise(resolve => server.close(resolve));
-    await apiClient.close(); await client.close(); await mongo.stop();
   }
-});
+);

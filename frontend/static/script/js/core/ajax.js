@@ -246,9 +246,9 @@ PosnicPro.request = function (params, callback, failure = null) {
                     return false;   // nothing below can help once we are leaving
                 }
             }
-            if (!isThemeSettingsMissing && !onAuthPage && (typeof (PosnicPro.local.get('username')) === "undefined" || PosnicPro.local.get('username') === null || PosnicPro.local.get('username') === "")) {
-                window.location = 'login.html';
-            }
+            // Restored desktop sessions need not have browser-local username
+            // metadata. Only the server's authentication response above can
+            // invalidate a session; a validation/provider failure must stay here.
             if (failure !== null) {
                 failure(xhr)
             } else {

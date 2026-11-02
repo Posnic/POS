@@ -18,7 +18,7 @@ function setup() {
     let receiptSaves = 0;
     w.PosnicPro = {
         local: { get: () => 'super_admin' },
-        settings: { _printDocs: { header: '', footer: '' }, _modulesRemoteBranch: () => null, tableOrderLimitValue: () => 1 },
+        settings: { _moduleToggleIds: ['module_demo_data_enable'], _printDocs: { header: '', footer: '' }, _modulesRemoteBranch: () => null, tableOrderLimitValue: () => 1 },
         receiptDesignerEditor: { save: () => { receiptSaves++; } },
         put: request => requests.push({ url: request.url, data: JSON.parse(request.data) })
     };
@@ -38,6 +38,10 @@ test('Features save sends the enabled Demo Data switch after visiting Receipt Pr
         assert.equal(h.requests.length, 1);
         assert.equal(h.requests[0].data.module_demo_data_enable, 'true');
         assert.equal(h.requests[0].data.receipt_designs, undefined);
+        assert.equal(h.requests[0].data.modules_only, true);
+        assert.equal(h.requests[0].data.default_supplier, undefined);
+        assert.equal(h.requests[0].data.default_customer, undefined);
+        assert.equal(h.requests[0].data.footer_print, undefined);
     } finally { h.dom.window.close(); }
 });
 
@@ -49,6 +53,40 @@ test('tax and payment saves are not redirected by a hidden active Receipt Print 
         }
         assert.equal(h.receiptSaves(), 0);
         assert.equal(h.requests.length, 3);
+    } finally { h.dom.window.close(); }
+});
+
+test('feature success updates local navigation state; failure preserves unsaved edits', () => {
+    const h = setup();
+    try {
+        const cache = { general_settings: JSON.stringify({ stock_management: true, first_run_done: true }) };
+        let complete, failed, refreshes = 0;
+        const p = h.w.PosnicPro;
+        p.local = { get: key => cache[key], set: (key, value) => { cache[key] = value; } };
+        p.alert = () => {};
+        p.features = { keepFirstRunFlag: (_data, key = 'first_run_done') => JSON.parse(cache.general_settings)[key] };
+        p.i18n = { t: (_key, fallback) => fallback };
+        p.applyKotVisibility = () => {};
+        p.shiftWidget = { applyEnabled() {} };
+        p.settings.applyModuleNav = () => { refreshes++; };
+        p.settings.syncDemoDataAfterSave = () => {};
+        p.settings._featuresDirty = true;
+        p.put = (_request, success, error) => { complete = success; failed = error; };
+        p.settings.saveModulesTab();
+        failed();
+        assert.equal(p.settings._featuresDirty, true);
+        assert.equal(refreshes, 0);
+        complete({ type: 'success' });
+        assert.equal(p.settings._featuresDirty, false);
+        const saved = JSON.parse(cache.general_settings);
+        assert.equal(saved.module_demo_data_enable, true);
+        assert.equal(saved.stock_management, true);
+        assert.equal(saved.first_run_done, true);
+        assert.equal(refreshes, 1);
+        p.settings._modulesRemoteBranch = () => 'other-branch';
+        p.settings.saveModulesTab();
+        complete({ type: 'success' });
+        assert.equal(refreshes, 1, 'another branch must not alter this till navigation');
     } finally { h.dom.window.close(); }
 });
 

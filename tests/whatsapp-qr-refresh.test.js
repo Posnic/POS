@@ -64,3 +64,28 @@ test('late initialization and QR callbacks cannot restore the spinner after auth
  assert.equal(w.$('#whatsapp_qr_container').css('display'),'none');
  dom.window.close();
 });
+
+test('first-time hidden device fields refresh and connect with one internal identity', () => {
+ const dom=new JSDOM('<input id="messaging_wa_device"><span id="whatsapp_status_badge">Loading...</span><button id="whatsapp_connect_btn"></button>',{runScripts:'outside-only'});
+ const w=dom.window; w.eval(fs.readFileSync('frontend/static/script/js/jquery.min.js','utf8'));
+ const gets=[],posts=[],alerts=[];
+ w.setInterval=()=>1;w.clearInterval=()=>{};
+ w.PosnicPro={local:{get:()=> 'branch-a'},i18n:{t:(k,v)=>v},alert:(type,msg)=>alerts.push(msg),get:(p,cb)=>gets.push({p,cb}),post:(p)=>posts.push(p)};
+ w.eval(fs.readFileSync('frontend/static/script/js/modules/js/whatsapp.js','utf8'));
+ const wa=w.PosnicPro.whatsapp;
+ wa.checkStatus();assert.equal(gets[0].p.data.device_id,'posnic');
+ gets[0].cb({type:'success',data:{status:'not_initialized',connected:false}});
+ assert.doesNotMatch(w.$('#whatsapp_status_badge').text(),/Loading/);
+ wa.connect();assert.equal(posts[0].data.device_id,'posnic');assert.equal(posts[0].data.branch_id,'branch-a');
+ assert.deepEqual(alerts,[]);
+ wa.setDeviceId('saved-shop-phone');wa.checkStatus(true);
+ assert.equal(gets.at(-1).p.data.device_id,'saved-shop-phone');
+ wa.setDeviceId('');assert.equal(wa.deviceId,'posnic');
+ // A restored offline login may only have the branch in its server session.
+ w.PosnicPro.local.get=()=>null;
+ wa.connect();
+ assert.equal(posts.at(-1).data.device_id,'posnic');
+ assert.equal(Object.hasOwn(posts.at(-1).data,'branch_id'),false);
+ assert.deepEqual(alerts,[]);
+ dom.window.close();
+});

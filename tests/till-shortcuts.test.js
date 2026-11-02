@@ -56,6 +56,11 @@ test('documented Ctrl+1 navigates from a focused search field', async () => {
   let route;
   w.hasher = { setHash: (value) => { route = value; } };
   w.PosnicPro = { userACL: { sales: { write: true } } };
+  // Load the real always-present account dialogs: a hidden timeout dialog
+  // must not claim to be open and suppress every navigation shortcut.
+  w.document.body.insertAdjacentHTML('beforeend', fs.readFileSync(
+    path.join(__dirname, '..', 'frontend/modals/change_password.html'), 'utf8'));
+  assert.equal(w.document.querySelector('.modal.show'), null);
   w.eval(fs.readFileSync(path.join(__dirname, '..', 'frontend/static/script/js/plugins/mousetrap.min.js'), 'utf8'));
   w.eval(source);
   w.document.dispatchEvent(new w.Event('DOMContentLoaded', { bubbles: true }));
@@ -82,6 +87,33 @@ test('documented Ctrl+1 navigates from a focused search field', async () => {
     w.document.getElementById('search').dispatchEvent(event);
     assert.equal(route, undefined, 'a dialog must suppress navigation');
   } finally { dom.window.close(); }
+});
+
+test('function keys work when desktop events expose only a key code', async () => {
+  const { JSDOM } = require('jsdom');
+  const dom = new JSDOM('<button id="holdSaleButton">Hold</button>', {
+    url: 'https://shop.example/dashboard.html#/sales/new', runScripts: 'outside-only',
+  });
+  const w = dom.window;
+  w.eval(fs.readFileSync(path.join(__dirname, '..', 'frontend/static/script/js/jquery.min.js'), 'utf8'));
+  w.eval(fs.readFileSync(path.join(__dirname, '..', 'frontend/static/script/js/plugins/mousetrap.min.js'), 'utf8'));
+  w.PosnicPro = { userACL: { sales: { write: true } } };
+  let held = 0;
+  w.$('#holdSaleButton').on('click', () => { held += 1; });
+  w.eval(source);
+  w.document.dispatchEvent(new w.Event('DOMContentLoaded', { bubbles: true }));
+  await new Promise(resolve => w.setTimeout(resolve, 10));
+  try {
+    w.$(w.document).trigger(w.$.Event('keydown', { which: 115, keyCode: 115 }));
+    assert.equal(held, 1);
+    w.PosnicPro.userACL.sales.write = false;
+    w.$(w.document).trigger(w.$.Event('keydown', { which: 115, keyCode: 115 }));
+    assert.equal(held, 1, 'fallback must not bypass permission checks');
+    w.PosnicPro.userACL.sales.write = true;
+    w.document.body.insertAdjacentHTML('beforeend', '<div class="modal show"></div>');
+    w.$(w.document).trigger(w.$.Event('keydown', { which: 115, keyCode: 115 }));
+    assert.equal(held, 1, 'fallback must not act behind a dialog');
+  } finally { w.close(); }
 });
 
 test('the till actions are function keys, not letters', () => {
