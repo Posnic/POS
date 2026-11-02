@@ -91,6 +91,34 @@
       document.querySelectorAll('.header h1, .section-title, .tabs .tab').forEach(function (el) {
         el.textContent = el.textContent.replace(/^[^\p{L}\p{N}]+/u, '');
       });
+      if (kind === 'backup') {
+        // Inline vectors remain available offline, without an icon font or emoji support.
+        var backupIcons = {
+          overview: '<path d="M4 19V9m8 10V5m8 14v-7"/>',
+          backups: '<path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/>',
+          settings: '<path d="M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6M8 15v6"/>',
+          history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+          status: '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
+          calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/>'
+        };
+        function backupIcon(key) {
+          var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('viewBox', '0 0 24 24');
+          svg.setAttribute('class', 'desktop-nav-icon');
+          svg.setAttribute('aria-hidden', 'true');
+          svg.setAttribute('focusable', 'false');
+          svg.innerHTML = backupIcons[key];
+          return svg;
+        }
+        document.querySelectorAll('.tabs .tab[data-tab]').forEach(function (button) {
+          var key = button.getAttribute('data-tab');
+          if (backupIcons[key]) button.prepend(backupIcon(key));
+        });
+        ['status', 'history', 'calendar', 'backups'].forEach(function (key, index) {
+          var target = document.querySelectorAll('.stat-card .icon')[index];
+          if (target) target.replaceChildren(backupIcon(key));
+        });
+      }
       document.querySelectorAll('.tabs').forEach(function (tabs) {
         tabs.setAttribute('role', 'tablist');
         if (kind === 'hardware') tabs.setAttribute('aria-orientation', 'vertical');
