@@ -182,7 +182,7 @@
         }
         if (key === 'cloudsync') {
             data = await api.cloud.status(); var sync = data.sync || {};
-            return card(t('sync_status', 'Sync status'), rows([[t('connection', 'Connection'), data.connected ? t('connected', 'Connected') : t('not_connected', 'Not connected')], [t('sync', 'Sync'), !data.connected ? '—' : sync.online ? t('online', 'Online') : t('offline_retry', 'Offline / retrying')], [t('last_sync', 'Last successful sync'), sync.lastSuccessAt ? new Date(sync.lastSuccessAt).toLocaleString() : '—'], [t('pending', 'Waiting to upload'), sync.pending]]) + (sync.lastError ? '<p class="text-danger">' + esc(sync.lastError) + '</p>' : '') + '<div class="desktop-actions">' + button('refresh', t('refresh', 'Refresh status')) + open('cloud', t('manage_cloud', 'Manage cloud connection')) + '</div>');
+            return card(t('sync_status', 'Sync status'), rows([[t('connection', 'Connection'), data.connected ? t('connected', 'Connected') : t('not_connected', 'Not connected')], [t('sync', 'Sync'), !data.connected ? '—' : sync.cloudPaused ? PosnicPro.i18n.t('lang_paused', 'Paused') : sync.online ? t('online', 'Online') : t('offline_retry', 'Offline / retrying')], [t('last_sync', 'Last successful sync'), sync.lastSuccessAt ? new Date(sync.lastSuccessAt).toLocaleString() : '—'], [t('pending', 'Waiting to upload'), sync.pending]]) + (sync.lastError ? '<p class="text-danger">' + esc(sync.lastError) + '</p>' : '') + '<div class="desktop-actions">' + button('refresh', t('refresh', 'Refresh status')) + open('cloud', t('manage_cloud', 'Manage cloud connection')) + '</div>');
         }
         if (key === 'systemstatus') {
             data = await api.desktop.capabilities();
