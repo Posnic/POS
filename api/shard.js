@@ -159,6 +159,7 @@ function loadRegistryFromFile() {
       subdomain: r.subdomain || r.host,
       tenantDb: r.tenantDb,
       suspended: !!r.suspended,
+      suspendedReason: r.suspendedReason,
       connection,
       db: connection.db,
       secrets,
@@ -183,7 +184,7 @@ async function loadRegistry() {
     .db(CONTROL_DB)
     .collection('tenants')
     .find(query)
-    .project({ subdomain: 1, tenantDb: 1, secrets: 1, suspended: 1, webDomain: 1, hosts: 1 })
+    .project({ subdomain: 1, tenantDb: 1, secrets: 1, suspended: 1, suspendedReason: 1, webDomain: 1, hosts: 1 })
     .toArray();
 
   const key = masterKey();
@@ -215,6 +216,7 @@ async function loadRegistry() {
       subdomain: t.subdomain,
       tenantDb: t.tenantDb,
       suspended: !!t.suspended,
+      suspendedReason: t.suspendedReason,
       connection,
       db: connection.db,
       secrets,
@@ -314,8 +316,7 @@ async function main() {
         if (tenant.suspended) {
           /* Answered here rather than by the app, which has no reason to know
              about suspension and would otherwise let a suspended shop sign in. */
-          res.writeHead(403, { 'content-type': 'text/plain' });
-          res.end('This shop is suspended.\n');
+          require('./src/utils/cloud-paused-response').sendCloudPaused(req, res, tenant);
           return;
         }
 
