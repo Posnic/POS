@@ -1285,7 +1285,7 @@
                 /* Match whatever is on screen, even if it has not been saved
                    yet - otherwise the printed schedule contradicts the form
                    directly above it. */
-                const result = await window.electronAPI.getScheduleInstructions({
+                const result = await api.getScheduleInstructions({
                     frequency: document.getElementById('setFrequency').value,
                     time: document.getElementById('setTime').value,
                 });

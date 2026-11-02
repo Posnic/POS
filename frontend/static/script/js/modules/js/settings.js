@@ -2097,6 +2097,7 @@ if ($wrapper.length) {
      */
     _featuresDirty: false,
     _moduleToggleIds: [
+        'table_options', 'hardware_weight_machine_enable',
         'staff_shifts_enable', 'staff_tips_enable', 'staff_roster_enable',
         'cash_register_enable', 'till_lock_enable',
         'module_tax_enable', 'module_credit_enable', 'module_marketing_enable',
@@ -2168,19 +2169,15 @@ if ($wrapper.length) {
     },
     saveModulesTab: function () {
         var remote = PosnicPro.settings._modulesRemoteBranch();
-        if (!remote) {
-            PosnicPro.settings.updateCommonSetting('Feature switches saved');
-            return;
-        }
-        // Toggles only + the endpoint's validation satisfiers (ignored by
-        // the server's remote path, which writes the toggle map and nothing
-        // else). NO session side effects, NO local caches, NO gating.
-        var payload = { target_branch_id: remote };
+        // Features never submits hidden Core Settings fields or receipt data.
+        var payload = { modules_only: true };
+        if (remote) payload.target_branch_id = remote;
         PosnicPro.settings._moduleToggleIds.forEach(function (key) {
             payload[key] = $('#' + key).is(':checked') ? 'true' : 'false';
         });
-        payload.sales_prefix = $('#sales_prefix').val() || 'SAL';
-        payload.receiving_prefix = $('#receiving_prefix').val() || 'REC';
+        payload.module_channels_enable = ['module_online_ordering_enable', 'module_kiosk_enable',
+            'module_captain_enable', 'module_delivery_partners_enable', 'module_webshop_enable']
+            .some(function (key) { return payload[key] === 'true'; }) ? 'true' : 'false';
         var branchLabel = $('#modules_branch_select option:selected').text();
         PosnicPro.put({
             url: 'setting/updateCommonSettings',
@@ -2188,8 +2185,23 @@ if ($wrapper.length) {
         }, function (response) {
             if (response.type === 'success') {
                 PosnicPro.settings._featuresDirty = false;
+                if (!remote) {
+                    var general = {};
+                    try { general = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* empty cache */ }
+                    PosnicPro.settings._moduleToggleIds.forEach(function (key) {
+                        general[key] = payload[key] === 'true';
+                    });
+                    PosnicPro.local.set('general_settings', JSON.stringify(general));
+                    var tableNow = general.table_options ? 'enable' : 'disable';
+                    PosnicPro.local.set('table_options', tableNow);
+                    PosnicPro.applyKotVisibility(general.table_options);
+                    PosnicPro.shiftWidget.applyEnabled();
+                    PosnicPro.settings.applyModuleNav();
+                    $('.cashRegisterModule').toggle(general.cash_register_enable);
+                    if (general.cash_register_enable) PosnicPro.local.set('branch_has_no_registers', '');
+                }
                 PosnicPro.settings.syncDemoDataAfterSave();
-                PosnicPro.alert('success', 'Features saved for ' + branchLabel);
+                PosnicPro.alert('success', remote ? 'Features saved for ' + branchLabel : 'Feature switches saved');
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
