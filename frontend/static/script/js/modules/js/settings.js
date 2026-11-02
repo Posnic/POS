@@ -661,6 +661,7 @@ PosnicPro.settings = {
                     var generalSettings = {
                         sale_redirect_seconds: PosnicPro.saleRedirectSeconds(),
                         stock_management: response.data['stock_management'] !== false,
+                        table_options: response.data['table_options'] === true,
                         hardware_weight_machine_enable: response.data['hardware_weight_machine_enable'] || false,
                         till_lock_enable: response.data['till_lock_enable'] || false,
                         till_lock_idle_minutes: response.data['till_lock_idle_minutes'] || 0,
@@ -1033,6 +1034,7 @@ PosnicPro.settings = {
                 var generalSettings = {
                     sale_redirect_seconds: data.sale_redirect_seconds,
                     stock_management: data.stock_management !== false,
+                    table_options: data.table_options === true,
                     hardware_weight_machine_enable: data.hardware_weight_machine_enable || false,
                     till_lock_enable: data.till_lock_enable || false,
                     till_lock_idle_minutes: data.till_lock_idle_minutes || 0,
@@ -2191,6 +2193,8 @@ if ($wrapper.length) {
                     PosnicPro.settings._moduleToggleIds.forEach(function (key) {
                         general[key] = payload[key] === 'true';
                     });
+                    general.first_run_done = PosnicPro.features.keepFirstRunFlag();
+                    general.first_run_decided = PosnicPro.features.keepFirstRunFlag(null, 'first_run_decided');
                     PosnicPro.local.set('general_settings', JSON.stringify(general));
                     var tableNow = general.table_options ? 'enable' : 'disable';
                     PosnicPro.local.set('table_options', tableNow);
@@ -2470,6 +2474,7 @@ if ($("#sale_quick_edit").is(":checked")) {
                 // since the toggles-only rebuild).
                 var generalSettings = {
                     stock_management: $('#stock_management').is(':checked'),
+                    table_options: $('#table_options').is(':checked'),
                     sale_redirect_seconds: Number($('#sale_redirect_seconds').val()),
                     hardware_weight_machine_enable: $('#hardware_weight_machine_enable').is(':checked'),
                     till_lock_enable: $('#till_lock_enable').is(':checked'),

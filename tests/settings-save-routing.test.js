@@ -64,6 +64,7 @@ test('feature success updates local navigation state; failure preserves unsaved 
         const p = h.w.PosnicPro;
         p.local = { get: key => cache[key], set: (key, value) => { cache[key] = value; } };
         p.alert = () => {};
+        p.features = { keepFirstRunFlag: (_data, key = 'first_run_done') => JSON.parse(cache.general_settings)[key] };
         p.i18n = { t: (_key, fallback) => fallback };
         p.applyKotVisibility = () => {};
         p.shiftWidget = { applyEnabled() {} };
