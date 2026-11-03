@@ -106,6 +106,15 @@ const SALE = {
   footer: 'Goods once sold are not returnable after 7 days.',
 };
 
+test('stock locations stay off customer receipts while selling units remain visible', () => {
+  for (const paperWidth of ['58', '80']) {
+    const payload = { ...SALE, stock_locations: ['PRIVATE-RACK-123'], items: [{ name: 'Pipe', qty: '10 ft', amount: 304.8, stock_locations: ['PRIVATE-RACK-123'] }] };
+    const text = decode(renderSale(payload, { paperWidth })).lines.join(' ');
+    assert.ok(text.includes('10 ft'));
+    assert.ok(!text.includes('PRIVATE-RACK-123'));
+  }
+});
+
 test('no line is wider than the paper, on either roll', () => {
   for (const width of ['58', '80']) {
     const { lines } = decode(renderSale(SALE, { paperWidth: width }));
