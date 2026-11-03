@@ -369,3 +369,67 @@ describe('the number a shop hands over', () => {
     expect(number).toMatch(/\d\d-\d+$/);
   });
 });
+
+describe('daily bill series', () => {
+  const period = (day) => ({ key: '2026-11-' + day, label: '2611' + day, mode: 'daily' });
+  const next = (day, more = {}) =>
+    repo.nextSalesNumberForBranch(BRANCH, LICENSE, { period: period(day), ...more });
+  test('daily boundary follows the branch time zone', () => {
+    expect(
+      repo._billPeriod(shop({ bill_number_reset: 'daily' }), new Date('2026-11-04T18:29:59Z')).key
+    ).toBe('2026-11-04');
+    expect(
+      repo._billPeriod(shop({ bill_number_reset: 'daily' }), new Date('2026-11-04T18:30:00Z')).key
+    ).toBe('2026-11-05');
+  });
+  test('late requests from yesterday cannot reset today or yesterday', async () => {
+    expect(await next('04')).toBe(1);
+    expect(await next('05')).toBe(1);
+    expect(await next('04')).toBe(2);
+    expect(await next('05')).toBe(2);
+    const got = await Promise.all(Array.from({ length: 12 }, () => next('05')));
+    expect(new Set(got).size).toBe(12);
+    expect(Math.max(...got)).toBe(14);
+  });
+  test('restoring a database seeds from this date only', async () => {
+    await db.collection('sales').insertMany([
+      { branch_id: BRANCH, license: LICENSE, sales_id: 'SB1D142611040080' },
+      { branch_id: BRANCH, license: LICENSE, sales_id: 'SB1D142611050003' },
+    ]);
+    expect(await next('05')).toBe(4);
+    expect(await next('04')).toBe(81);
+    expect(await repo.maxIssuedSalesNumber(BRANCH, LICENSE)).toBe(0);
+  });
+  test('daily numbers retain the date and till and fit the length limit', async () => {
+    await db
+      .collection('branches')
+      .updateOne({ _id: BRANCH }, { $set: { bill_number_reset: 'daily' } });
+    const a = await repo.generateSalesIdForBranch(BRANCH);
+    const b = await repo.generateSalesIdForBranch(BRANCH);
+    expect(a).toMatch(/^SB1D14\d{6}0001$/);
+    expect(b).toMatch(/^SB1D14\d{6}0002$/);
+    expect(a.length).toBe(16);
+  });
+});
+
+test('daily fallback keeps branch identity when the cloud has no Gateway code', async () => {
+  await db.collection('device_meta').deleteMany({});
+  await db.collection('device_meta').insertOne({ _id: 'device_tag', tag: '1JQR' });
+  const other = new mongoose.Types.ObjectId();
+  await db
+    .collection('branches')
+    .updateOne({ _id: BRANCH }, { $set: { sales_prefix: 'SID', bill_number_reset: 'daily' } });
+  await db
+    .collection('branches')
+    .insertOne({ ...shop(), _id: other, sales_prefix: 'SID', bill_number_reset: 'daily' });
+  const first = await repo.generateSalesIdForBranch(BRANCH, {
+    numberingContext: { db, license: LICENSE },
+  });
+  const second = await repo.generateSalesIdForBranch(other, {
+    numberingContext: { db, license: LICENSE },
+  });
+  expect(first).not.toBe(second);
+  expect(first).toMatch(/^B[12]1JQR\d{6}0001$/);
+  expect(second).toMatch(/^B[12]1JQR\d{6}0001$/);
+  expect(first.length).toBe(16);
+});

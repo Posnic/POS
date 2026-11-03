@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "Futa punguzo la hisa",
   "lang_upload_excel_csv": "Pakia Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Uzima kwa kiasi kilichoombwa",
-  "lang_you_have_read_only_access_to_product_avail": "Una upatikanaji wa kusoma tu kwa upatikanaji wa bidhaa."
+  "lang_you_have_read_only_access_to_product_avail": "Una upatikanaji wa kusoma tu kwa upatikanaji wa bidhaa.",
+  "lang_bill_number_reset_period": "Weka upya nambari ya bili",
+  "lang_start_again_each_day": "Anza tena kila siku",
+  "lang_bill_reset_daily_help": "Kila siku huanza saa 0001 usiku wa usiku katika eneo la saa ya tawi. Tarehe na msimbo wa hadi huweka nambari za bili za kipekee. Bili zilizopo huhifadhi namba zao.",
+  "lang_add_another_entry": "Ongeza ingine nyingine",
+  "lang_back_to_overview": "Rudi kwenye muhtasari",
+  "lang_check_the_quantities_below_then_confirm_to": "Angalia idadi hapa chini, kisha thibitisha kusasisha hisa.",
+  "lang_continue_counting": "Endelea kuhesabu",
+  "lang_inventory_activity": "Shughuli za hesabu",
+  "lang_made_a_mistake": "Ulifanya kosa?",
+  "lang_next_step": "Hatua inayofuata",
+  "lang_preparing_review": "Kuandaa ukaguzi...",
+  "lang_rack_5_shelf_2_box_b": "Rafu 5/Rafu 2/Sanduku B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Marekebisho ya hisa imeokowa. Endelea kuhesabu au kurudi kwenye Muhtasari.",
+  "lang_stock_updated_successfully_no_further_appr": "Hisa imesasishwa kwa ufanisi Hakuna idhini zaidi inayohitajika."
 }

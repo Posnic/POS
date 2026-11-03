@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "مشتریان با موفقیت بازیابی شدند",
   "Data Not Valid": "داده ها معتبر نیستند",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "داده ها معتبر نیستند: bill_number_fy_start_month باید یک ماه باشد، 1 تا 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "داده ها معتبر نیستند: bill_number_reset باید خاموش باشد، مالی یا تقویمی",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "داده معتبر نیست: ing_prefix باید 1-6 کاراکتر باشد",
   "Data Not Valid: sales_prefix must be 1-6 characters": "داده ها معتبر نیستند: sales_prefix باید 1-6 کاراکتر باشد",
   "Data Not Valid: unit_name required (1-20 chars)": "داده معتبر نیست: نام واحد مورد نیاز (1-20 کاراکتر)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppمرجع پیام را برنگردانده است. تحویل تایید نشده است. قبل از امتحان مجدد، چت را بررسی کنید.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppهنوز در حال اتصال مجدد است یا نیاز به یک لینک تلفن تازه دارد. هیچ پیامی فرستاده نشده است.",
   "Messaging permission required.": "مجوز پیام رسانی مورد نیاز است.",
-  "Schedule owner no longer has messaging access.": "صاحب برنامه دیگر دسترسی به پیام رسانی ندارد."
+  "Schedule owner no longer has messaging access.": "صاحب برنامه دیگر دسترسی به پیام رسانی ندارد.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "داده ها معتبر نیستند: bill_number_reset باید خاموش باشد، مالی، تقویمی یا روزانه"
 }

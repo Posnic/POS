@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Kunder hämtas framgångsrikt",
   "Data Not Valid": "Uppgifterna är inte giltiga",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Uppgifterna är inte giltiga: bill_number_fy_start_month måste vara en månad, 1 till 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Uppgifterna är inte giltiga: bill_number_reset måste vara avstängd, finansiell eller kalender",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Data är inte giltig: mottagning_prefix måste vara 1-6 tecken",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Data är inte giltig: sales_prefix måste vara 1-6 tecken",
   "Data Not Valid: unit_name required (1-20 chars)": "Data är inte giltig: enhetsnamn krävs (1-20 tecken)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppreturnerade inte en meddelandereferens. Leveransen är obekräftad; kontrollera chatten innan du försöker igen.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppansluter fortfarande igen eller behöver en ny telefonlänk. Inget meddelande skickades.",
   "Messaging permission required.": "Meddelandebehörighet krävs.",
-  "Schedule owner no longer has messaging access.": "Schemaägaren har inte längre meddelandeåtkomst."
+  "Schedule owner no longer has messaging access.": "Schemaägaren har inte längre meddelandeåtkomst.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Uppgifterna är inte giltiga: bill_number_reset måste vara avstängd, finansiell, kalender eller dagligen"
 }

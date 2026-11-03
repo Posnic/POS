@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Клиенты успешно найдены",
   "Data Not Valid": "Данные недействительны",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Неверные данные: значение bill_number_fy_start_month должно быть равно месяцу от 1 до 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Данные недействительны: файл bill_number_reset должен быть выключен, финансово или календарно",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Неверные данные: receiving_prefix должен содержать 1-6 символов",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Неверные данные: sales_prefix должен содержать 1-6 символов",
   "Data Not Valid: unit_name required (1-20 chars)": "Неверные данные: требуется unit_name (1-20 символов)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне ответил на ссылку на сообщение. Доставка не подтверждена; проверьте чат перед повторной попыткой.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppвсе еще восстанавливает соединение или нуждается в новой телефонной ссылке. Сообщение не было отправлено.",
   "Messaging permission required.": "Требуется разрешение на обмен сообщениями.",
-  "Schedule owner no longer has messaging access.": "У владельца расписания больше нет доступа к сообщениям."
+  "Schedule owner no longer has messaging access.": "У владельца расписания больше нет доступа к сообщениям.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Данные недействительны: bill_number_reset должен быть выключен, финансовый, календарный или ежедневный"
 }

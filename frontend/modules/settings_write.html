@@ -4752,9 +4752,9 @@
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
                                                         <label for="bill_number_reset" class="label-text-color">
-                                                            <lang class="lang_bill_number_year">Bill number year</lang>&nbsp;
+                                                            <lang class="lang_bill_number_reset_period">Bill number reset</lang>&nbsp;
                                                             <span data-toggle="tooltip" data-placement="top" title=""
-                                                                data-original-title="Prints the year on every bill number and starts the count again when the year turns over.">
+                                                                data-original-title="Choose when the bill sequence starts again. Daily numbering includes the date.">
                                                                 <i class="feather icon-help-circle"></i>
                                                             </span>
                                                         </label>
@@ -4763,9 +4763,9 @@
                                                             <option value=""><lang class="lang_one_run_of_numbers_no_year">One run of numbers, no year</lang></option>
                                                             <option value="financial"><lang class="lang_start_again_each_financial_year">Start again each financial year</lang></option>
                                                             <option value="calendar"><lang class="lang_start_again_each_calendar_year">Start again each calendar year</lang></option>
+                                                            <option value="daily"><lang class="lang_start_again_each_day">Start again each day</lang></option>
                                                         </select>
-                                                        <small class="form-text text-muted"><lang class="lang_turning_this_on_starts_the_numbering_again">Turning this on starts the numbering
-                                                            again at one. Best done on the first day of a year.</lang></small>
+                                                        <small class="form-text text-muted"><lang class="lang_bill_reset_daily_help">Daily starts at 0001 at midnight in the branch time zone. The date and till code keep bill numbers unique. Existing bills keep their numbers.</lang></small>
                                                     </div>
                                                     <div class="form-group col-md-6" id="bill_number_fy_start_month_row">
                                                         <label for="bill_number_fy_start_month" class="label-text-color">

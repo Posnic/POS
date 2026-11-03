@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "ഉപഭോക്താക്കൾ വിജയകരമായി വീണ്ടെടുത്തു",
   "Data Not Valid": "ഡാറ്റ സാധുതയില്ല",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "ഡാറ്റ സാധുതയില്ല: bill_number_fy_start_month ഒരു മാസമായിരിക്കണം, 1 മുതൽ 12 വരെ",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "ഡാറ്റ സാധുതയില്ല: bill_number_reset ഓഫ് ആയിരിക്കണം, സാമ്പത്തിക അല്ലെങ്കിൽ കലണ്ടർ",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "ഡാറ്റ സാധുതയില്ല: റിസീവിംഗ്_പ്രിഫിക്സ് 1-6 പ്രതീകങ്ങളായിരിക്കണം",
   "Data Not Valid: sales_prefix must be 1-6 characters": "ഡാറ്റ സാധുതയില്ല: സെയിൽസ്_പ്രിഫിക്സ് 1-6 പ്രതീകങ്ങളായിരിക്കണം",
   "Data Not Valid: unit_name required (1-20 chars)": "ഡാറ്റ സാധുതയില്ല: യൂണിറ്റ്നാമം ആവശ്യമാണ് (1-20 അക്ഷരങ്ങൾ)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppഒരു സന്ദേശം റഫറൻസ് തിരികെ നൽകിയില്ല. ഡെലിവറി സ്ഥിരീകരിച്ചിട്ടില്ല; വീണ്ടും ശ്രമിക്കുന്നതിന് മുമ്പ് ചാറ്റ് പരിശോധിക്കുക.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppഇപ്പോഴും വീണ്ടും കണക്റ്റുചെയ്യുന്നു അല്ലെങ്കിൽ ഒരു പുതിയ ഫോൺ ലിങ്ക് ആവശ്യമാണ്. ഒരു സന്ദേശവും അയച്ചിട്ടില്ല.",
   "Messaging permission required.": "സന്ദേശമയയ്ക്കൽ അനുമതി ആവശ്യമാണ്.",
-  "Schedule owner no longer has messaging access.": "ഷെഡ്യൂൾ ഉടമയ്ക്ക് ഇനി മെസേജിംഗ് ആക്സസ് ഇല്ല."
+  "Schedule owner no longer has messaging access.": "ഷെഡ്യൂൾ ഉടമയ്ക്ക് ഇനി മെസേജിംഗ് ആക്സസ് ഇല്ല.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "ഡാറ്റ സാധുതയില്ല: bill_number_reset ഓഫ് ആയിരിക്കണം, സാമ്പത്തിക, കലണ്ടർ അല്ലെങ്കിൽ ദിവസേന"
 }

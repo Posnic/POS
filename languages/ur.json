@@ -5324,5 +5324,19 @@
   "lang_undo_stock_deduction": "اسٹاک کٹوتی ختم",
   "lang_upload_excel_csv": "ایکسل/CSV اپ لوڈ کریں",
   "lang_weigh_for_a_requested_amount": "درخواست کردہ رقم کے لئے وزن کریں",
-  "lang_you_have_read_only_access_to_product_avail": "آپ کے پاس مصنوعات کی دستیابی تک صرف پڑھنے والی رسائی ہے۔"
+  "lang_you_have_read_only_access_to_product_avail": "آپ کے پاس مصنوعات کی دستیابی تک صرف پڑھنے والی رسائی ہے۔",
+  "lang_bill_number_reset_period": "بل نمبر ری سیٹ کریں",
+  "lang_start_again_each_day": "ہر دن دوبارہ شروع کریں",
+  "lang_bill_reset_daily_help": "روزانہ برانچ ٹائم زون میں آدھی رات 0001 بجے شروع ہوتا ہے۔ تاریخ اور کوڈ تک بل نمبرز کو منفرد رکھتے ہیں۔ موجودہ بل اپنے نمبر رکھتے ہیں۔",
+  "lang_add_another_entry": "ایک اور اندراج شامل کریں",
+  "lang_back_to_overview": "جائزہ پر واپس",
+  "lang_check_the_quantities_below_then_confirm_to": "ذیل میں مقدار کو چیک کریں، پھر اسٹاک کو اپ ڈیٹ کرنے کی تصدیق کریں۔",
+  "lang_continue_counting": "گنتی جاری رکھیں",
+  "lang_inventory_activity": "انوینٹری سرگرمی",
+  "lang_made_a_mistake": "غلطی ہوئی؟",
+  "lang_next_step": "اگلا مرحلہ",
+  "lang_preparing_review": "جائزہ تیار کرنا...",
+  "lang_rack_5_shelf_2_box_b": "ریک 5/شیلف 2/باکس بی",
+  "lang_stock_adjustment_saved_continue_counting_o": "اسٹاک ایڈجسٹمنٹ بچ گنتی جاری رکھیں یا مجموعی جائزہ پر واپس",
+  "lang_stock_updated_successfully_no_further_appr": "اسٹاک کامیابی کے ساتھ اپ ڈیٹ مزید منظوری کی ضرورت نہیں ہے۔"
 }

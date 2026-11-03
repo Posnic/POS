@@ -5425,5 +5425,8 @@
   "lang_next_step": "Volgende stap",
   "lang_preparing_review": "Controle voorbereiden...",
   "lang_stock_adjustment_saved_continue_counting_o": "Voorraadaanpassing opgeslagen. Ga verder met tellen of keer terug naar het overzicht.",
-  "lang_stock_updated_successfully_no_further_appr": "Voorraad bijgewerkt. Er is geen verdere goedkeuring nodig."
+  "lang_stock_updated_successfully_no_further_appr": "Voorraad bijgewerkt. Er is geen verdere goedkeuring nodig.",
+  "lang_bill_number_reset_period": "Factuurnummer opnieuw instellen",
+  "lang_start_again_each_day": "Begin elke dag opnieuw",
+  "lang_bill_reset_daily_help": "De dag begint om 0001 om middernacht in de tijdzone van het bijkantoor. De datum en kassacode houden de factuurnummers uniek. Bestaande facturen behouden hun nummer."
 }

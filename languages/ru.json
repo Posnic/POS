@@ -5324,5 +5324,19 @@
   "lang_undo_stock_deduction": "Отмените вычет запасов",
   "lang_upload_excel_csv": "Загрузите файл Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Взвесьте запрошенную сумму",
-  "lang_you_have_read_only_access_to_product_avail": "Информация о наличии продукта доступна только для чтения."
+  "lang_you_have_read_only_access_to_product_avail": "Информация о наличии продукта доступна только для чтения.",
+  "lang_bill_number_reset_period": "Сброс номера счета",
+  "lang_start_again_each_day": "Начинайте каждый день заново",
+  "lang_bill_reset_daily_help": "Каждый день начинается в 00:01 в полночь в часовом поясе филиала. Благодаря коду даты и до истечения срока действия номера счетов остаются уникальными. Существующие счета сохраняют свои номера.",
+  "lang_add_another_entry": "Добавить еще одну запись",
+  "lang_back_to_overview": "Назад к обзору",
+  "lang_check_the_quantities_below_then_confirm_to": "Проверьте количество, указанное ниже, а затем подтвердите обновление запасов.",
+  "lang_continue_counting": "Продолжайте подсчет",
+  "lang_inventory_activity": "Инвентарная активность",
+  "lang_made_a_mistake": "Допустили ошибку?",
+  "lang_next_step": "Следующий шаг",
+  "lang_preparing_review": "Подготовка отзыва...",
+  "lang_rack_5_shelf_2_box_b": "Стеллаж 5/Полка 2/Коробка B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Корректировка запасов сохранена. Продолжите подсчет или вернитесь к обзору.",
+  "lang_stock_updated_successfully_no_further_appr": "Акции успешно обновлены. Дальнейшее одобрение не требуется."
 }

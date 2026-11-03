@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Kumoa osakevähennys",
   "lang_upload_excel_csv": "Lataa Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Punnitse pyydetty määrä",
-  "lang_you_have_read_only_access_to_product_avail": "Sinulla on vain lukuoikeus tuotteen saatavuuteen."
+  "lang_you_have_read_only_access_to_product_avail": "Sinulla on vain lukuoikeus tuotteen saatavuuteen.",
+  "lang_bill_number_reset_period": "Laskun numeron nollaus",
+  "lang_start_again_each_day": "Aloita uudestaan joka päivä",
+  "lang_bill_reset_daily_help": "Päivittäinen alkaa klo 0001 keskiyöllä haaran aikavyöhykkeellä. Päivämäärä ja tilakoodi pitävät laskunumerot ainutlaatuisina. Nykyiset laskut säilyttävät numeronsa.",
+  "lang_add_another_entry": "Lisää uusi merkintä",
+  "lang_back_to_overview": "Takaisin yleiskatsaukseen",
+  "lang_check_the_quantities_below_then_confirm_to": "Tarkista alla olevat määrät ja vahvista sitten varaston päivittäminen.",
+  "lang_continue_counting": "Jatka laskemista",
+  "lang_inventory_activity": "Varastotoiminta",
+  "lang_made_a_mistake": "Teitkö virheen?",
+  "lang_next_step": "Seuraava vaihe",
+  "lang_preparing_review": "Tarkistuksen valmistelu...",
+  "lang_rack_5_shelf_2_box_b": "Teline 5/hylly 2/laatikko B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Varaston säätö tallennettu. Jatka laskemista tai palaa yleiskatsaukseen.",
+  "lang_stock_updated_successfully_no_further_appr": "Varasto päivitettiin onnistuneesti. Lisähyväksyntää ei tarvita."
 }

@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "ગ્રાહકો સફળતાપૂર્વક પુનઃપ્રાપ્ત",
   "Data Not Valid": "ડેટા માન્ય નથી",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "ડેટા માન્ય નથી: બિલ_નંબર_ફાઇ_સ્ટાર્ટ_મહિનો એક મહિનો હોવો આવશ્યક છે, 1 થી 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "ડેટા માન્ય નથી: bill_number_reset બંધ હોવું આવશ્યક છે, નાણાકીય અથવા કૅલેન્ડર",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "ડેટા માન્ય નથી: રીસીવિંગ_પ્રિફિક્સ 1-6 અક્ષરો હોવા આવશ્યક છે",
   "Data Not Valid: sales_prefix must be 1-6 characters": "ડેટા માન્ય નથી: સેલ્સ_પ્રિફિક્સ 1-6 અક્ષરો હોવા આવશ્યક છે",
   "Data Not Valid: unit_name required (1-20 chars)": "ડેટા માન્ય નથી: યુનિટનામ જરૂરી (1-20 ચર્સ)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppસંદેશ સંદર્ભ પાછો આપ્યો નથી. ડિલિવરીની પુષ્ટિ નથી; ફરીથી પ્રયાસ કરતા પહેલા ચેટ તપાસો.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppહજી પણ ફરીથી કનેક્ટ થઈ રહ્યું છે અથવા તાજા ફોન લિંકની જરૂર છે. કોઈ સંદેશ મોકલવામાં આવ્યો નથી.",
   "Messaging permission required.": "મેસેજિંગ પરવાનગી જરૂરી છે.",
-  "Schedule owner no longer has messaging access.": "શેડ્યૂલ માલિક પાસે હવે મેસેજિંગ ઍક્સેસ નથી."
+  "Schedule owner no longer has messaging access.": "શેડ્યૂલ માલિક પાસે હવે મેસેજિંગ ઍક્સેસ નથી.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "ડેટા માન્ય નથી: bill_number_reset બંધ હોવું આવશ્યક છે, નાણાકીય, કૅલેન્ડર અથવા દૈનિક"
 }

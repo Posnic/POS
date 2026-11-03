@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "ਸਟਾਕ ਕਟੌਤੀ ਨੂੰ ਅ",
   "lang_upload_excel_csv": "ਐਕਸਲ/CSV ਅਪਲੋਡ ਕਰੋ",
   "lang_weigh_for_a_requested_amount": "ਬੇਨਤੀ ਕੀਤੀ ਰਕਮ ਲਈ ਤੋਲੋ",
-  "lang_you_have_read_only_access_to_product_avail": "ਤੁਹਾਡੇ ਕੋਲ ਉਤਪਾਦ ਦੀ ਉਪਲਬਧਤਾ ਤੱਕ ਸਿਰਫ ਪੜ੍ਹਨ-ਪਹੁੰਚ ਹੈ."
+  "lang_you_have_read_only_access_to_product_avail": "ਤੁਹਾਡੇ ਕੋਲ ਉਤਪਾਦ ਦੀ ਉਪਲਬਧਤਾ ਤੱਕ ਸਿਰਫ ਪੜ੍ਹਨ-ਪਹੁੰਚ ਹੈ.",
+  "lang_bill_number_reset_period": "ਬਿੱਲ ਨੰਬਰ ਰੀਸੈਟ",
+  "lang_start_again_each_day": "ਹਰ ਦਿਨ ਦੁਬਾਰਾ ਸ਼ੁਰੂ ਕਰੋ",
+  "lang_bill_reset_daily_help": "ਰੋਜ਼ਾਨਾ ਬ੍ਰਾਂਚ ਟਾਈਮ ਜ਼ੋਨ ਵਿੱਚ ਅੱਧੀ ਰਾਤ ਨੂੰ 0001 ਵਜੇ ਸ਼ੁਰੂ ਹੁੰਦਾ ਹੈ। ਮਿਤੀ ਅਤੇ ਕੋਡ ਤੱਕ ਬਿੱਲ ਨੰਬਰਾਂ ਨੂੰ ਵਿਲੱਖਣ ਰੱਖਦਾ ਹੈ। ਮੌਜੂਦਾ ਬਿੱਲ ਉਨ੍ਹਾਂ ਦੇ ਨੰਬਰ ਰੱਖਦੇ ਹਨ.",
+  "lang_add_another_entry": "ਇੱਕ ਹੋਰ ਐਂਟਰੀ ਸ਼ਾਮਲ ਕਰੋ",
+  "lang_back_to_overview": "ਸੰਖੇਪ ਜਾਣਕਾਰੀ ਤੇ ਵਾਪਸ",
+  "lang_check_the_quantities_below_then_confirm_to": "ਹੇਠਾਂ ਦਿੱਤੀ ਮਾਤਰਾ ਦੀ ਜਾਂਚ ਕਰੋ, ਫਿਰ ਸਟਾਕ ਨੂੰ ਅਪਡੇਟ ਕਰਨ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ.",
+  "lang_continue_counting": "ਗਿਣਤੀ ਜਾਰੀ ਰੱਖੋ",
+  "lang_inventory_activity": "ਵਸਤੂ ਗਤੀਵਿਧੀ",
+  "lang_made_a_mistake": "ਕੋਈ ਗਲਤੀ ਕੀਤੀ?",
+  "lang_next_step": "ਅਗਲਾ ਕਦਮ",
+  "lang_preparing_review": "ਸਮੀਖਿਆ ਤਿਆਰ ਕਰ ਰਿਹਾ ਹੈ...",
+  "lang_rack_5_shelf_2_box_b": "ਰੈਕ 5/ਸ਼ੈਲਫ 2/ਬਾਕਸ ਬੀ",
+  "lang_stock_adjustment_saved_continue_counting_o": "ਸਟਾਕ ਸਮਾਯੋਜਨ ਸੁਰੱਖਿਅਤ ਕੀਤਾ ਗਿਆ ਗਿਣਤੀ ਜਾਰੀ ਰੱਖੋ ਜਾਂ ਸੰਖੇਪ ਜਾਣਕਾਰੀ ਤੇ ਵਾਪਸ ਜਾਓ",
+  "lang_stock_updated_successfully_no_further_appr": "ਸਟਾਕ ਨੂੰ ਸਫਲਤਾਪੂਰਵਕ ਹੋਰ ਪ੍ਰਵਾਨਗੀ ਦੀ ਲੋੜ ਨਹੀਂ ਹੈ।"
 }

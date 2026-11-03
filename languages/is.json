@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Afturkalla hlutafrádrátt",
   "lang_upload_excel_csv": "Hladdu upp Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vigt fyrir umbeðna upphæð",
-  "lang_you_have_read_only_access_to_product_avail": "Þú hefur aðeins lesaðan aðgang að vöruframboði."
+  "lang_you_have_read_only_access_to_product_avail": "Þú hefur aðeins lesaðan aðgang að vöruframboði.",
+  "lang_bill_number_reset_period": "Endurstilla reikningsnúmer",
+  "lang_start_again_each_day": "Byrjaðu aftur á hverjum degi",
+  "lang_bill_reset_daily_help": "Daglega hefst klukkan 0001 á miðnætti á tímabelti útibúsins. Dagsetning og tilgangskóðinn halda reikningsnúmerum einstök. Núverandi reikningar halda númerum sínum.",
+  "lang_add_another_entry": "Bæta við annarri færslu",
+  "lang_back_to_overview": "Aftur í yfirlit",
+  "lang_check_the_quantities_below_then_confirm_to": "Athugaðu magnið hér að neðan og staðfestu síðan að uppfæra lager.",
+  "lang_continue_counting": "Halda áfram að telja",
+  "lang_inventory_activity": "Birgðastarfsemi",
+  "lang_made_a_mistake": "Gerði mistök?",
+  "lang_next_step": "Næsta skref",
+  "lang_preparing_review": "Undirbúningur endurskoðunar...",
+  "lang_rack_5_shelf_2_box_b": "Rekki 5/hilla 2/kassi B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Lageraðlögun vistuð. Haltu áfram að telja eða fara aftur í yfirlit.",
+  "lang_stock_updated_successfully_no_further_appr": "Birgðir uppfærðir með góðum árangri. Ekki er þörf á frekari samþykki."
 }

@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "ಷೇರು ಕಡಿತ ರದ್ದುಗೊಳಿಸಿ",
   "lang_upload_excel_csv": "ಎಕ್ಸೆಲ್/CSV ಅನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಿ",
   "lang_weigh_for_a_requested_amount": "ವಿನಂತಿಸಿದ ಮೊತ್ತಕ್ಕೆ ತೂಕ ಮಾಡಿ",
-  "lang_you_have_read_only_access_to_product_avail": "ಉತ್ಪನ್ನ ಲಭ್ಯತೆಗೆ ನೀವು ಓದಲು ಮಾತ್ರ ಪ್ರವೇಶವನ್ನು ಹೊಂದಿದ್ದೀರಿ."
+  "lang_you_have_read_only_access_to_product_avail": "ಉತ್ಪನ್ನ ಲಭ್ಯತೆಗೆ ನೀವು ಓದಲು ಮಾತ್ರ ಪ್ರವೇಶವನ್ನು ಹೊಂದಿದ್ದೀರಿ.",
+  "lang_bill_number_reset_period": "ಬಿಲ್ ಸಂಖ್ಯೆ ಮರುಹೊಂದಿಸಿ",
+  "lang_start_again_each_day": "ಪ್ರತಿ ದಿನ ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ",
+  "lang_bill_reset_daily_help": "ದೈನಂದಿನ ಶಾಖೆಯ ಸಮಯ ವಲಯದಲ್ಲಿ ಮಧ್ಯರಾತ್ರಿ 0001 ಕ್ಕೆ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ. ದಿನಾಂಕ ಮತ್ತು ತನಕ ಕೋಡ್ ಬಿಲ್ ಸಂಖ್ಯೆಗಳನ್ನು ವಿಶಿಷ್ಟವಾಗಿರಿಸುತ್ತದೆ. ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಬಿಲ್ಗಳು ತಮ್ಮ ಸಂಖ್ಯೆಗಳನ್ನು ಉಳಿಸಿಕೊಳ್ಳುತ್ತವೆ",
+  "lang_add_another_entry": "ಮತ್ತೊಂದು ನಮೂದನ್ನು ಸೇರಿಸಿ",
+  "lang_back_to_overview": "ಅವಲೋಕನಕ್ಕೆ ಹಿಂತಿರುಗಿ",
+  "lang_check_the_quantities_below_then_confirm_to": "ಕೆಳಗಿನ ಪ್ರಮಾಣಗಳನ್ನು ಪರಿಶೀಲಿಸಿ, ನಂತರ ಸ್ಟಾಕ್ ಅನ್ನು ನವೀಕರಿಸಲು ದೃಢೀಕರಿಸಿ.",
+  "lang_continue_counting": "ಎಣಿಕೆಯನ್ನು ಮುಂದುವರಿಸಿ",
+  "lang_inventory_activity": "ದಾಸ್ತಾನು ಚಟುವಟಿಕೆ",
+  "lang_made_a_mistake": "ತಪ್ಪು ಮಾಡಿದ್ದೀರಾ?",
+  "lang_next_step": "ಮುಂದಿನ ಹಂತ",
+  "lang_preparing_review": "ವಿಮರ್ಶೆಯನ್ನು ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ...",
+  "lang_rack_5_shelf_2_box_b": "ರ್ಯಾಕ್ 5/ಶೆಲ್ಫ್ 2/ಬಾಕ್ಸ್ ಬಿ",
+  "lang_stock_adjustment_saved_continue_counting_o": "ಸ್ಟಾಕ್ ಹೊಂದಾಣಿಕೆ ಉಳಿಸಲಾಗಿದೆ. ಎಣಿಕೆಯನ್ನು ಮುಂದುವರಿಸಿ ಅಥವಾ ಅವಲೋಕನಕ್ಕೆ ಹಿಂತಿರುಗಿ.",
+  "lang_stock_updated_successfully_no_further_appr": "ಸ್ಟಾಕ್ ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ. ಹೆಚ್ಚಿನ ಅನುಮೋದನೆ ಅಗತ್ಯವಿಲ್ಲ."
 }

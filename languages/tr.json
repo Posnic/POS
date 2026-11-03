@@ -5324,5 +5324,19 @@
   "lang_undo_stock_deduction": "Hisse senedi kesintisini geri al",
   "lang_upload_excel_csv": "Excel/CSV yükle",
   "lang_weigh_for_a_requested_amount": "İstenen bir miktar için tartın",
-  "lang_you_have_read_only_access_to_product_avail": "Ürün kullanılabilirliğine salt okunur erişiminiz vardır."
+  "lang_you_have_read_only_access_to_product_avail": "Ürün kullanılabilirliğine salt okunur erişiminiz vardır.",
+  "lang_bill_number_reset_period": "Fatura numarası sıfırlama",
+  "lang_start_again_each_day": "Her gün yeniden başla",
+  "lang_bill_reset_daily_help": "Günlük şube saat diliminde gece yarısı 0001'de başlar. Tarih ve tarih kodu fatura numaralarını benzersiz tutar. Mevcut faturalar sayılarını koruyor.",
+  "lang_add_another_entry": "Başka bir giriş ekle",
+  "lang_back_to_overview": "Genel bakışa geri dön",
+  "lang_check_the_quantities_below_then_confirm_to": "Aşağıdaki miktarları kontrol edin, ardından stoğu güncellemek için onaylayın.",
+  "lang_continue_counting": "Saymaya devam et",
+  "lang_inventory_activity": "Envanter etkinliği",
+  "lang_made_a_mistake": "Bir hata mı yaptın?",
+  "lang_next_step": "Bir sonraki adım",
+  "lang_preparing_review": "İnceleme hazırlanıyor...",
+  "lang_rack_5_shelf_2_box_b": "Raf 5/Raf 2/Kutu B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Stok ayarı kaydedildi. Saymaya devam edin veya Genel Bakış'a dönün.",
+  "lang_stock_updated_successfully_no_further_appr": "Stok başarıyla güncellendi. Daha fazla onay gerekmez."
 }

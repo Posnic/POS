@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Részvénylevonás visszavonása",
   "lang_upload_excel_csv": "Excel/CSV feltöltése",
   "lang_weigh_for_a_requested_amount": "Mérje meg a kért összeget",
-  "lang_you_have_read_only_access_to_product_avail": "Csak olvasható hozzáféréssel rendelkezik a termék elérhetőségéhez."
+  "lang_you_have_read_only_access_to_product_avail": "Csak olvasható hozzáféréssel rendelkezik a termék elérhetőségéhez.",
+  "lang_bill_number_reset_period": "Számlaszám visszaállítása",
+  "lang_start_again_each_day": "Kezdje újra minden nap",
+  "lang_bill_reset_daily_help": "A nap 0001-kor éjfélkor kezdődik a fiók időzónájában. A dátum és a kód egyedivé teszi a számlaszámokat. A meglévő számlák megtartják számukat.",
+  "lang_add_another_entry": "Újabb bejegyzés hozzáadása",
+  "lang_back_to_overview": "Vissza az áttekintéshez",
+  "lang_check_the_quantities_below_then_confirm_to": "Ellenőrizze az alábbi mennyiségeket, majd erősítse meg a készlet frissítését.",
+  "lang_continue_counting": "Folytassa a számolást",
+  "lang_inventory_activity": "Készlettevékenység",
+  "lang_made_a_mistake": "Hibát követett el?",
+  "lang_next_step": "Következő lépés",
+  "lang_preparing_review": "Felülvizsgálat előkészítése...",
+  "lang_rack_5_shelf_2_box_b": "5. állvány/2. polc/ B doboz",
+  "lang_stock_adjustment_saved_continue_counting_o": "A készletbeállítás mentve. Folytassa a számlálást vagy térjen vissza az Áttekintés",
+  "lang_stock_updated_successfully_no_further_appr": "A készlet sikeresen frissült. Nincs szükség további jóváhagyásra."
 }

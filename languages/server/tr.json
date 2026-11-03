@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Müşteriler başarıyla alındı",
   "Data Not Valid": "Veriler Geçerli Değil",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Veriler Geçerli Değil: bill_number_fy_start_month bir ay olmalı, 1 ila 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Veriler Geçerli Değil: bill_number_reset kapalı, finansal veya takvim olmalıdır",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Veriler Geçerli Değil: ing_prefix 1-6 karakter olmalıdır",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Veriler Geçerli Değil: sales_prefix 1-6 karakter olmalıdır",
   "Data Not Valid: unit_name required (1-20 chars)": "Veri Geçerli Değil: unit_name gerekli (1-20 karakter)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppbir mesaj referansı döndürmedi. Teslimat onaylanmadı; yeniden denemeden önce sohbeti kontrol edin.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApphala yeniden bağlanıyor veya yeni bir telefon bağlantısına ihtiyaç duyuyor. Mesaj gönderilmedi.",
   "Messaging permission required.": "Mesajlaşma izni gerekli.",
-  "Schedule owner no longer has messaging access.": "Program sahibinin artık mesajlaşma erişimi yok."
+  "Schedule owner no longer has messaging access.": "Program sahibinin artık mesajlaşma erişimi yok.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Veriler Geçerli Değil: bill_number_reset kapalı, finansal, takvim veya günlük olmalıdır"
 }

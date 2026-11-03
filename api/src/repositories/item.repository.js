@@ -7961,32 +7961,35 @@ class ItemRepository extends BaseModel {
       const collection = await this.getCollection(this.collectionName);
 
       const items = await collection
-        .find(filter, {
-          projection: {
-            _id: 0,
-            name: 1,
-            itemid: 1,
-            barcode_id: 1,
-            category_name: 1,
-            supplier_name: 1,
-            discount_amount: 1,
-            discount_percentage: 1,
-            hsncode: 1,
-            hsndescription: 1,
-            tax_name: 1,
-            tax: 1,
-            tax_type: 1,
-            mrp_price: 1,
-            company_price: 1,
-            selling_price: 1,
-            available_quantity: 1,
-            unit: 1,
-            selling_units: 1,
-            stock_locations: 1,
-            sort_order: 1,
+        .aggregate([
+          { $match: filter },
+          ...require('../utils/catalogue-order').stages(),
+          {
+            $project: {
+              _id: 0,
+              name: 1,
+              itemid: 1,
+              barcode_id: 1,
+              category_name: '$_categoryName',
+              supplier_name: 1,
+              discount_amount: 1,
+              discount_percentage: 1,
+              hsncode: 1,
+              hsndescription: 1,
+              tax_name: 1,
+              tax: 1,
+              tax_type: 1,
+              mrp_price: 1,
+              company_price: 1,
+              selling_price: 1,
+              available_quantity: 1,
+              unit: 1,
+              selling_units: 1,
+              stock_locations: 1,
+              sort_order: 1,
+            },
           },
-        })
-        .sort({ _id: -1 })
+        ])
         .toArray();
 
       return {

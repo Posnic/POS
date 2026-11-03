@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "स्टॉक कटौती को पूर्ववत करें",
   "lang_upload_excel_csv": "Excel/CSV अपलोड करें",
   "lang_weigh_for_a_requested_amount": "अनुरोधित राशि के लिए तौलना",
-  "lang_you_have_read_only_access_to_product_avail": "आपके पास प्रॉडक्ट की उपलब्धता के लिए रीड-ओनली एक्सेस है।"
+  "lang_you_have_read_only_access_to_product_avail": "आपके पास प्रॉडक्ट की उपलब्धता के लिए रीड-ओनली एक्सेस है।",
+  "lang_bill_number_reset_period": "बिल नंबर रीसेट करें",
+  "lang_start_again_each_day": "हर दिन फिर से शुरू करें",
+  "lang_bill_reset_daily_help": "शाखा समय क्षेत्र में रोज़ाना आधी रात को 00:01 बजे शुरू होता है। तारीख और टिल कोड बिल नंबर को यूनीक रखते हैं। मौजूदा बिल अपने नंबर को बनाए रखते हैं।",
+  "lang_add_another_entry": "एक और प्रविष्टि जोड़ें",
+  "lang_back_to_overview": "अवलोकन पर वापस जाएं",
+  "lang_check_the_quantities_below_then_confirm_to": "नीचे दी गई मात्राओं की जांच करें, फिर स्टॉक अपडेट करने की पुष्टि करें।",
+  "lang_continue_counting": "गिनना जारी रखें",
+  "lang_inventory_activity": "इन्वेंटरी गतिविधि",
+  "lang_made_a_mistake": "ग़लती हुई?",
+  "lang_next_step": "अगला चरण",
+  "lang_preparing_review": "समीक्षा तैयार की जा रही है...",
+  "lang_rack_5_shelf_2_box_b": "रैक 5/शेल्फ 2/बॉक्स B",
+  "lang_stock_adjustment_saved_continue_counting_o": "स्टॉक एडजस्टमेंट सहेजा गया। गिनती जारी रखें या अवलोकन पर वापस लौटें।",
+  "lang_stock_updated_successfully_no_further_appr": "स्टॉक सफलतापूर्वक अपडेट किया गया। आगे किसी अनुमोदन की आवश्यकता नहीं है।"
 }

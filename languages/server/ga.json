@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Custaiméirí a fuarthas",
   "Data Not Valid": "Sonraí Níl Bailí",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Sonraí Ní Bailí: caithfidh bill_number_fy_start_month a bheith i mí, 1 go 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Sonraí Níl Bailí: caithfidh bill_number_reset a bheith as, airgeadais nó féilire",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Sonraí Níl Bailí: caithfidh go mbeadh 1-6 carachtar ag receiving_prefix",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Sonraí Níl Bailí: caithfidh sales_prefix a bheith ina 1-6 carachtar",
   "Data Not Valid: unit_name required (1-20 chars)": "Sonraí Níl Bailí: ainm aonaid ag teastáil (1-20 cars)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppníor thug sé tagairt teachtaireachta ar ais. Níl seachadadh dearbhaithe; seiceáil an comhrá sula ndéanann tú iarracht arís",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApptá sé fós ag athnascadh nó teastaíonn nasc úr teileafóin uait. Níor seoladh aon teachtaireacht.",
   "Messaging permission required.": "Teastaíonn cead teachtaireachtaí.",
-  "Schedule owner no longer has messaging access.": "Níl rochtain ag úinéir an sceideal a thuilleadh"
+  "Schedule owner no longer has messaging access.": "Níl rochtain ag úinéir an sceideal a thuilleadh",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Sonraí Níl Bailí: caithfidh bill_number_reset a bheith as, airgeadais, féilire nó laethúil"
 }

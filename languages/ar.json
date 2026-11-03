@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "التراجع عن خصم الأسهم",
   "lang_upload_excel_csv": "تحميل برنامج إكسل/ CSV",
   "lang_weigh_for_a_requested_amount": "قم بالوزن بالكمية المطلوبة",
-  "lang_you_have_read_only_access_to_product_avail": "لديك حق الوصول للقراءة فقط إلى توفر المنتج."
+  "lang_you_have_read_only_access_to_product_avail": "لديك حق الوصول للقراءة فقط إلى توفر المنتج.",
+  "lang_bill_number_reset_period": "إعادة تعيين رقم الفاتورة",
+  "lang_start_again_each_day": "ابدأ مرة أخرى كل يوم",
+  "lang_bill_reset_daily_help": "يبدأ يوميًا في الساعة 0001 عند منتصف الليل في المنطقة الزمنية للفرع. يحافظ التاريخ ورمز الانتظار على أرقام الفواتير فريدة. تحتفظ الفواتير الحالية بأرقامها.",
+  "lang_add_another_entry": "إضافة إدخال آخر",
+  "lang_back_to_overview": "عودة إلى النظرة العامة",
+  "lang_check_the_quantities_below_then_confirm_to": "تحقق من الكميات أدناه، ثم تأكد من تحديث المخزون.",
+  "lang_continue_counting": "استمر في العد",
+  "lang_inventory_activity": "نشاط المخزون",
+  "lang_made_a_mistake": "هل ارتكبت خطأ؟",
+  "lang_next_step": "الخطوة التالية",
+  "lang_preparing_review": "جاري إعداد المراجعة...",
+  "lang_rack_5_shelf_2_box_b": "الرف 5/الرف 2/الصندوق ب",
+  "lang_stock_adjustment_saved_continue_counting_o": "تم حفظ تعديل المخزون. استمر في العد أو ارجع إلى النظرة العامة.",
+  "lang_stock_updated_successfully_no_further_appr": "تم تحديث المخزون بنجاح. لا حاجة إلى مزيد من الموافقة."
 }

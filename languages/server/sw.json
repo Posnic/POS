@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Wateja walipata mafanikio",
   "Data Not Valid": "Takwimu sio halali",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Takwimu sio halali: bill_number_fy_start_month lazima iwe mwezi, 1 hadi 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Takwimu sio halali: bill_number_reset lazima iwe zimeshwa, kifedha au kalenda",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Takwimu sio halali: receiving_prefix lazima iwe na herufi 1-6",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Takwimu sio halali: sales_prefix lazima iwe na herufi 1-6",
   "Data Not Valid: unit_name required (1-20 chars)": "Takwimu sio halali: jina la kitengo inahitajika (1-20 chars)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApphakurudi kumbukumbu ya ujumbe. Uwasilishaji haujathibitishwa; angalia mazungumzo kabla ya kujaribu tena.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppbado inaunganisha tena au inahitaji kiungo kipya cha simu. Hakuna ujumbe uliotumwa.",
   "Messaging permission required.": "Ruhusa ya ujumbe unahitajika",
-  "Schedule owner no longer has messaging access.": "Mmiliki wa ratiba hana tena ufikiaji wa ujumbe."
+  "Schedule owner no longer has messaging access.": "Mmiliki wa ratiba hana tena ufikiaji wa ujumbe.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Takwimu sio halali: bill_number_reset lazima iwe zimeshwa, kifedha, kalenda au kila siku"
 }

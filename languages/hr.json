@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Poništite odbitak dionica",
   "lang_upload_excel_csv": "Prenesite Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vagati za traženi iznos",
-  "lang_you_have_read_only_access_to_product_avail": "Imate pristup dostupnosti proizvoda samo za čitanje."
+  "lang_you_have_read_only_access_to_product_avail": "Imate pristup dostupnosti proizvoda samo za čitanje.",
+  "lang_bill_number_reset_period": "Ponovno postavljanje broja računa",
+  "lang_start_again_each_day": "Počnite iznova svaki dan",
+  "lang_bill_reset_daily_help": "Dnevno počinje u 0001 u ponoć u vremenskoj zoni podružnice. Datum i kôd vremena održavaju brojeve računa jedinstvenim. Postojeći računi zadržavaju svoje brojeve.",
+  "lang_add_another_entry": "Dodaj još jedan unos",
+  "lang_back_to_overview": "Povratak na pregled",
+  "lang_check_the_quantities_below_then_confirm_to": "Provjerite količine u nastavku, a zatim potvrdite ažuriranje zaliha.",
+  "lang_continue_counting": "Nastavite brojati",
+  "lang_inventory_activity": "Aktivnost inventara",
+  "lang_made_a_mistake": "Pogriješio?",
+  "lang_next_step": "Sljedeći korak",
+  "lang_preparing_review": "Priprema pregleda...",
+  "lang_rack_5_shelf_2_box_b": "Stalak 5/polica 2/kutija B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Prilagodba zaliha spremljena. Nastavite brojati ili se vratite na Pregled.",
+  "lang_stock_updated_successfully_no_further_appr": "Zalihe su uspješno ažurirane. Nije potrebno daljnje odobrenje."
 }

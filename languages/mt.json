@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Agħmel tnaqqis tal-istokk",
   "lang_upload_excel_csv": "Ittella 'Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Iżen għal ammont mitlub",
-  "lang_you_have_read_only_access_to_product_avail": "Għandek aċċess għall-qari biss għad-disponibbiltà tal-prodott."
+  "lang_you_have_read_only_access_to_product_avail": "Għandek aċċess għall-qari biss għad-disponibbiltà tal-prodott.",
+  "lang_bill_number_reset_period": "Irrisettjar tan-numru tal-kont",
+  "lang_start_again_each_day": "Ibda mill-ġdid kuljum",
+  "lang_bill_reset_daily_help": "Kuljum jibda fil 0001 f'nofsillejl fiż-żona tal-ħin tal-fergħa. Id-data u l-kodiċi tat-tul iżommu n-numri tal-kontijiet uniċi. Kontijiet eżistenti jżommu n-numri tagħhom.",
+  "lang_add_another_entry": "Żid entrata oħra",
+  "lang_back_to_overview": "Lura għall-ħarsa ġenerali",
+  "lang_check_the_quantities_below_then_confirm_to": "Iċċekkja l-kwantitajiet hawn taħt, imbagħad ikkonferma li taġġorna l-istok",
+  "lang_continue_counting": "Kompli jgħodd",
+  "lang_inventory_activity": "Attività tal-inventarju",
+  "lang_made_a_mistake": "Għamilt żball?",
+  "lang_next_step": "Il-pass li jmiss",
+  "lang_preparing_review": "It-tħejjija tar-reviżjoni...",
+  "lang_rack_5_shelf_2_box_b": "Xtilliera 5/Blata 2/Kaxxa B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Aġġustament tal-istokk salvat. Kompli tgħodd jew terġa 'lura għal Ħarsa ġenerali.",
+  "lang_stock_updated_successfully_no_further_appr": "Ħażna aġġornata b'suċċess. M'hemmx bżonn ta' approvazzjoni ulterjuri."
 }

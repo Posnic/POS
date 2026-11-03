@@ -790,7 +790,6 @@
   "Could not read the translation. Your existing text is unchanged. Try again.": "Konnte die Übersetzung nicht lesen. Ihr vorhandener Text ist unverändert. Versuchen Sie es erneut.",
   "Could not remove that till": "Konnte das bis dahin nicht entfernen",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Daten sind nicht gültig: bill_number_fy_start_month muss ein Monat sein, 1 bis 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Daten nicht gültig: bill_number_reset muss deaktiviert sein, Finanz- oder Kalenderdaten",
   "Device access revoked. Offline authorization expires within its configured period. Signing in again restores access.": "Der Zugriff auf das Gerät wurde widerrufen. Die Offline-Autorisierung läuft innerhalb des konfigurierten Zeitraums ab. Wenn Sie sich erneut anmelden, wird der Zugriff wiederhergestellt.",
   "Device not found in your branches": "Das Gerät wurde in Ihren Filialen nicht gefunden",
   "Document extracted and saved as a draft.": "Dokument wurde extrahiert und als Entwurf gespeichert.",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApphat keine Nachrichtenreferenz zurückgegeben. Die Zustellung ist nicht bestätigt; überprüfen Sie den Chat, bevor Sie es erneut versuchen.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppstellt immer noch eine Verbindung her oder benötigt eine neue Telefonverbindung. Es wurde keine Nachricht gesendet.",
   "Messaging permission required.": "Messaging-Erlaubnis erforderlich.",
-  "Schedule owner no longer has messaging access.": "Der Besitzer des Zeitplans hat keinen Nachrichtenzugriff mehr."
+  "Schedule owner no longer has messaging access.": "Der Besitzer des Zeitplans hat keinen Nachrichtenzugriff mehr.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Daten nicht gültig: bill_number_reset muss aus, finanziell, kalender oder täglich sein"
 }

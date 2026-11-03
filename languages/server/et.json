@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Kliendid on edukalt otsitud",
   "Data Not Valid": "Andmed ei kehti",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Andmed ei kehti: bill_number_fy_start_month peab olema kuu, 1 kuni 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Andmed ei kehti: bill_number_reset peab olema väljalülitatud, rahaline või kalender",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Andmed ei kehti: receiving_prefix peab olema 1-6 tähemärki",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Andmed ei kehti: sales_prefix peab olema 1-6 tähemärki",
   "Data Not Valid: unit_name required (1-20 chars)": "Andmed ei kehti: nõutav ühikunimi (1-20 märki)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppei tagastanud sõnumi viidet. Kohaletoimetamine pole kinnitatud; kontrollige vestlust enne uuesti proovimist.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppühendab endiselt uuesti või vajab värsket telefonilinki. Ühtegi sõnumit ei saadetud.",
   "Messaging permission required.": "Vajalik sõnumside luba.",
-  "Schedule owner no longer has messaging access.": "Ajakava omanikul pole enam juurdepääsu sõnumitele."
+  "Schedule owner no longer has messaging access.": "Ajakava omanikul pole enam juurdepääsu sõnumitele.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Andmed ei kehti: bill_number_reset peab olema väljalülitatud, rahaline, kalendri või iga päev"
 }

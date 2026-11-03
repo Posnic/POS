@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "స్టాక్ మినహాయింపును రద్దు చేయండి",
   "lang_upload_excel_csv": "ఎక్సెల్/CSV అప్లోడ్ చేయండి",
   "lang_weigh_for_a_requested_amount": "అభ్యర్థించిన మొత్తానికి బరువు",
-  "lang_you_have_read_only_access_to_product_avail": "ఉత్పత్తి లభ్యతకు మీకు చదవడానికి మాత్రమే ప్రాప్యత ఉంది."
+  "lang_you_have_read_only_access_to_product_avail": "ఉత్పత్తి లభ్యతకు మీకు చదవడానికి మాత్రమే ప్రాప్యత ఉంది.",
+  "lang_bill_number_reset_period": "బిల్ సంఖ్య రీసెట్",
+  "lang_start_again_each_day": "ప్రతి రోజు మళ్ళీ ప్రారంభించండి",
+  "lang_bill_reset_daily_help": "రోజువారీ బ్రాంచ్ టైమ్ జోన్లో అర్ధరాత్రి 0001 గంటలకు ప్రారంభమవుతుంది. తేదీ మరియు కోడ్ వరకు బిల్లు సంఖ్యలను ప్రత్యేకంగా ఉంచుతాయి. ఇప్పటికే ఉన్న బిల్లులు వాటి సంఖ్యలను ఉంచుతాయి.",
+  "lang_add_another_entry": "మరొక ఎంట్రీని జోడించండి",
+  "lang_back_to_overview": "అవలోకనానికి తిరిగి",
+  "lang_check_the_quantities_below_then_confirm_to": "దిగువ పరిమాణాలను తనిఖీ చేయండి, ఆపై స్టాక్ను నవీకరించడానికి నిర్ధారించండి.",
+  "lang_continue_counting": "లెక్కింపు కొనసాగించండి",
+  "lang_inventory_activity": "ఇన్వెంటరీ కార్యాచరణ",
+  "lang_made_a_mistake": "పొరపాటు చేశారా?",
+  "lang_next_step": "తదుపరి దశ",
+  "lang_preparing_review": "సమీక్ష సిద్ధం...",
+  "lang_rack_5_shelf_2_box_b": "ర్యాక్ 5/షెల్ఫ్ 2/బాక్స్ బి",
+  "lang_stock_adjustment_saved_continue_counting_o": "స్టాక్ సర్దుబాటు సేవ్ చేయబడింది. లెక్కింపు కొనసాగించండి లేదా అవలోకనానికి తిరిగి వెళ్లండి.",
+  "lang_stock_updated_successfully_no_further_appr": "స్టాక్ విజయవంతంగా నవీకరించబడింది. తదుపరి ఆమోదం అవసరం లేదు."
 }

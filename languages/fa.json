@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "کسر سهام را لغو کنید",
   "lang_upload_excel_csv": "بارگذاری اکسل/CSV",
   "lang_weigh_for_a_requested_amount": "برای مقدار درخواستی وزن کنید",
-  "lang_you_have_read_only_access_to_product_avail": "شما فقط برای خواندن به در دسترس بودن محصول دسترسی دارید."
+  "lang_you_have_read_only_access_to_product_avail": "شما فقط برای خواندن به در دسترس بودن محصول دسترسی دارید.",
+  "lang_bill_number_reset_period": "تنظیم مجدد شماره قبض",
+  "lang_start_again_each_day": "هر روز دوباره شروع کنید",
+  "lang_bill_reset_daily_help": "روزانه از ساعت ۰۰۰۱ در نیمه شب در منطقه زمانی شعبه شروع می‌شود. کد تاریخ و تاریخ شماره صورتحساب را منحصر به فرد نگه می دارد. صورتحساب موجود اعداد خود را حفظ می کند.",
+  "lang_add_another_entry": "اضافه کردن یک ورودی دیگر",
+  "lang_back_to_overview": "بازگشت به نمای کلی",
+  "lang_check_the_quantities_below_then_confirm_to": "مقادیر زیر را بررسی کنید، سپس تأیید کنید تا سهام را به روز کنید.",
+  "lang_continue_counting": "ادامه شمارش",
+  "lang_inventory_activity": "فعالیت موجودی",
+  "lang_made_a_mistake": "اشتباه کردي؟",
+  "lang_next_step": "گام بعدی",
+  "lang_preparing_review": "آماده سازی بررسی...",
+  "lang_rack_5_shelf_2_box_b": "قفسه 5/قفسه 2/جعبه B",
+  "lang_stock_adjustment_saved_continue_counting_o": "تنظیم سهام ذخیره شد. شمارش را ادامه دهید یا به بررسی اجمالی برگردید.",
+  "lang_stock_updated_successfully_no_further_appr": "سهام با موفقیت به روز شد. هیچ تایید بیشتری لازم نیست."
 }

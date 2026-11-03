@@ -790,7 +790,6 @@
   "Could not read the translation. Your existing text is unchanged. Try again.": "No se pudo leer la traducción. El texto actual no ha cambiado. Inténtalo de nuevo.",
   "Could not remove that till": "No podría quitarlo hasta",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Datos no válidos: bill_number_fy_start_month debe ser un mes, del 1 al 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Datos no válidos: bill_number_reset debe estar desactivado, ser financiero o de calendario",
   "Device access revoked. Offline authorization expires within its configured period. Signing in again restores access.": "Acceso al dispositivo revocado. La autorización sin conexión caduca dentro del período configurado. Al volver a iniciar sesión, se restaura el acceso.",
   "Device not found in your branches": "No se encuentra el dispositivo en tus sucursales",
   "Document extracted and saved as a draft.": "Documento extraído y guardado como borrador.",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppno devolvió la referencia de un mensaje. La entrega no está confirmada; consulta el chat antes de volver a intentarlo.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppaún se está reconectando o necesita una nueva conexión telefónica. No se ha enviado ningún mensaje.",
   "Messaging permission required.": "Se requiere permiso de mensajería.",
-  "Schedule owner no longer has messaging access.": "El propietario del programa ya no tiene acceso a la mensajería."
+  "Schedule owner no longer has messaging access.": "El propietario del programa ya no tiene acceso a la mensajería.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Datos no válidos: bill_number_reset debe estar desactivado, ser financiero, de calendario o diario"
 }

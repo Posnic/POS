@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Клієнти успішно отримані",
   "Data Not Valid": "Дані недійсні",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Дані недійсні: bill_number_fy_start_month повинен становити місяць, від 1 до 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Дані недійсні: bill_number_reset має бути вимкненим, фінансовим або календарним",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Дані недійсні: префікс приймання має містити 1-6 символів",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Дані недійсні: префікс продажів повинен бути 1-6 символів",
   "Data Not Valid: unit_name required (1-20 chars)": "Дані недійсні: потрібне ім'я одиниці (1-20 символів)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне повернула посилання на повідомлення. Доставка не підтверджена; перевірте чат перед повторною спробою.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppвсе ще підключається або потребує свіжого телефонного зв'язку. Повідомлення не надіслано.",
   "Messaging permission required.": "Потрібен дозвіл на обмін повідомленнями.",
-  "Schedule owner no longer has messaging access.": "Власник розкладу більше не має доступу до обміну повідомленнями."
+  "Schedule owner no longer has messaging access.": "Власник розкладу більше не має доступу до обміну повідомленнями.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Дані недійсні: bill_number_reset має бути вимкненим, фінансовим, календарним або щоденним"
 }

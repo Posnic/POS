@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Aktsia mahaarvamine tühist",
   "lang_upload_excel_csv": "Laadi üles Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Kaaluge soovitud summa jaoks",
-  "lang_you_have_read_only_access_to_product_avail": "Teil on ainult loetav juurdepääs toote kättesaadavusele."
+  "lang_you_have_read_only_access_to_product_avail": "Teil on ainult loetav juurdepääs toote kättesaadavusele.",
+  "lang_bill_number_reset_period": "Arve numbri lähtestamine",
+  "lang_start_again_each_day": "Alustage iga päev uuesti",
+  "lang_bill_reset_daily_help": "Iga päev algab kell 0001 südaööl filiaali ajavööndis. Kuupäev ja kuni kood hoiavad arve numbrid ainulaadsed. Olemasolevad arved säilitavad oma numbrid.",
+  "lang_add_another_entry": "Lisa veel üks kirje",
+  "lang_back_to_overview": "Tagasi ülevaate juurde",
+  "lang_check_the_quantities_below_then_confirm_to": "Kontrollige allolevaid koguseid, seejärel kinnitage varu värskendamine.",
+  "lang_continue_counting": "Jätkake loendamist",
+  "lang_inventory_activity": "Varude tegevus",
+  "lang_made_a_mistake": "Tegin vea?",
+  "lang_next_step": "Järgmine samm",
+  "lang_preparing_review": "Ülevaate ettevalmistamine...",
+  "lang_rack_5_shelf_2_box_b": "Riiul 5/Riiul 2/Kast B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Varude korrigeerimine salvestatud. Jätkake loendamist või naaske Ülevaate juurde.",
+  "lang_stock_updated_successfully_no_further_appr": "Varu uuendatud edukalt. Täiendavat heakskiitu pole vaja."
 }

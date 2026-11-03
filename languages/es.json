@@ -5398,5 +5398,19 @@
   "lang_undo_stock_deduction": "Deshacer la deducción de existencias",
   "lang_upload_excel_csv": "Sube Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Pese la cantidad solicitada",
-  "lang_you_have_read_only_access_to_product_avail": "Tienes acceso de solo lectura a la disponibilidad de los productos."
+  "lang_you_have_read_only_access_to_product_avail": "Tienes acceso de solo lectura a la disponibilidad de los productos.",
+  "lang_bill_number_reset_period": "Restablecimiento del número de factura",
+  "lang_start_again_each_day": "Comience de nuevo cada día",
+  "lang_bill_reset_daily_help": "El día comienza a las 00:01 de la medianoche en la zona horaria de la sucursal. La fecha y el código de caja mantienen los números de factura únicos. Las facturas existentes mantienen sus números.",
+  "lang_add_another_entry": "Añadir otra entrada",
+  "lang_back_to_overview": "Volver a la descripción general",
+  "lang_check_the_quantities_below_then_confirm_to": "Comprueba las cantidades que aparecen a continuación y, a continuación, confirma para actualizar las existencias.",
+  "lang_continue_counting": "Continúe contando",
+  "lang_inventory_activity": "Actividad de inventario",
+  "lang_made_a_mistake": "¿Cometió un error?",
+  "lang_next_step": "¿Próximo paso",
+  "lang_preparing_review": "Preparando la revisión...",
+  "lang_rack_5_shelf_2_box_b": "Estante 5/Estante 2/Caja B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Se ha guardado el ajuste de stock. Continúe contando o regrese al resumen.",
+  "lang_stock_updated_successfully_no_further_appr": "El stock se actualizó correctamente. No se necesita ninguna otra aprobación."
 }

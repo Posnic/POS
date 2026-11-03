@@ -123,8 +123,8 @@ test('spoilage Excel preview validates branch and quantities without writing sto
   const sheet=book.worksheets[0];sheet.getCell(2,5).value=0.125;sheet.getCell(2,6).value='Handling damage';sheet.getCell(2,7).value='Damaged in transit';
   const upload=async()=>sheets.upload({...req,file:{originalname:'spoilage.xlsx',buffer:Buffer.from(await book.xlsx.writeBuffer())}});
   const result=await upload();assert.equal(result.lines.length,1);assert.equal(result.lines[0].quantity,125);assert.equal(await stock(),10);assert.equal(await db.collection('spoilage_commands').countDocuments(),0);
-  sheet.getCell(2,9).value=String(new ObjectId());await assert.rejects(upload(),/another branch/);
-  sheet.getCell(2,9).value=String(product.branch_id);sheet.getCell(2,5).value=11;await assert.rejects(upload(),/exceeds/);
+  sheet.getCell(2,10).value=String(new ObjectId());await assert.rejects(upload(),/another branch/);
+  sheet.getCell(2,10).value=String(product.branch_id);sheet.getCell(2,5).value=11;await assert.rejects(upload(),/exceeds/);
   sheet.getCell(2,5).value={formula:'1+1'};await assert.rejects(upload(),/formulas/);
 });
 
