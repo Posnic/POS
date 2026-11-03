@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Klijenti rkuprati b'suċċ",
   "Data Not Valid": "Dejta Mhux Valida",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Dejta Mhux Valida: bill_number_fy_start_month għandu jkun xahar, 1 sa 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Data Mhux Valida: bill_number_reset għandu jkun mitfi, finanzjarju jew kalendarju",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Dejta Mhux Valida: receiving_prefix għandu jkun karattri 1-6",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Dejta Mhux Valida: sales_prefix għandu jkun karattri 1-6",
   "Data Not Valid: unit_name required (1-20 chars)": "Dejta Mhux Valida: l-isem tal-unità meħtieġ (1-20 karika)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppma rritornax referenza ta' messaġġ. Il-kunsinna mhix ikkonfermata; iċċekkja ċ-chat qabel ma terġa 'tipprova.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppgħadu qed jerġa' jgħaqqad jew teħtieġ link tat-telefon frisk. Ma ntbagħat l-ebda messaġġ.",
   "Messaging permission required.": "Meħtieġ permess tal-messaġġi.",
-  "Schedule owner no longer has messaging access.": "Is-sid tal-iskeda m'għadux ikollu aċċess għall-messaġġi."
+  "Schedule owner no longer has messaging access.": "Is-sid tal-iskeda m'għadux ikollu aċċess għall-messaġġi.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Data Mhux Valida: bill_number_reset għandu jkun mitfi, finanzjarju, kalendarju jew kuljum"
 }

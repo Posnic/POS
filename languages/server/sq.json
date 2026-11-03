@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Klientët janë marrë me sukses",
   "Data Not Valid": "Të dhënat nuk janë të vlefshme",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Të dhënat nuk janë të vlefshme: bill_number_fy_start_month duhet të jetë një muaj, 1 deri në 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Të dhënat nuk janë të vlefshme: bill_number_reset duhet të jetë i fikur, financiar ose kalendarik",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Të dhënat nuk janë të vlefshme: receiving_prefix duhet të jetë 1-6 karaktere",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Të dhënat nuk janë të vlefshme: sales_prefix duhet të jetë 1-6 karaktere",
   "Data Not Valid: unit_name required (1-20 chars)": "Të dhënat nuk janë të vlefshme: kërkohet emri i njësisë (1-20 shenja)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppNuk ka kthyer një referencë mesazhi. Dorëzimi është i pakonfirmuar; kontrolloni bisedën para se të riprovoni.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppështë ende duke u rilidhur ose ka nevojë për një lidhje të re telefoni. Asnjë mesazh nuk është dërguar.",
   "Messaging permission required.": "Kërkohet leja e mesazheve",
-  "Schedule owner no longer has messaging access.": "Pronari i orarit nuk ka më qasje në mesazhe."
+  "Schedule owner no longer has messaging access.": "Pronari i orarit nuk ka më qasje në mesazhe.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Të dhënat nuk janë të vlefshme: bill_number_reset duhet të jetë i fikur, financiar, kalendarik ose ditor"
 }

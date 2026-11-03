@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Clienții recuperați cu succes",
   "Data Not Valid": "Datele nu sunt valide",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Datele nu sunt valide: bill_number_fy_start_month trebuie să fie o lună, de la 1 la 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Datele nu sunt valide: bill_number_reset trebuie să fie dezactivat, financiar sau calendaristic",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Datele nu sunt valide: prefixul_primire trebuie să fie de 1-6 caractere",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Datele nu sunt valide: sales_prefix trebuie să aibă 1-6 caractere",
   "Data Not Valid: unit_name required (1-20 chars)": "Datele nu sunt valide: numele unității este necesar (1-20 caractere)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnu a returnat o referință de mesaj. Livrarea nu este confirmată; verificați chat-ul înainte de a încerca din nou.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppîncă se reconectează sau are nevoie de o legătură telefonică nouă. Nu a fost trimis niciun mesaj.",
   "Messaging permission required.": "Este necesară permisiunea de mesagerie.",
-  "Schedule owner no longer has messaging access.": "Proprietarul programului nu mai are acces la mesagerie."
+  "Schedule owner no longer has messaging access.": "Proprietarul programului nu mai are acces la mesagerie.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Datele nu sunt valide: bill_number_reset trebuie să fie dezactivat, financiar, calendaristic sau zilnic"
 }

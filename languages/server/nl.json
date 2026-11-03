@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Klanten zijn succesvol opgehaald",
   "Data Not Valid": "Gegevens zijn niet geldig",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Gegevens niet geldig: bill_number_fy_start_month moet een maand zijn, van 1 tot 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Gegevens niet geldig: bill_number_reset moet uitgeschakeld zijn, financieel of agendagegevens",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Gegevens niet geldig: receiving_prefix moet uit 1-6 tekens bestaan",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Gegevens niet geldig: sales_prefix moet uit 1-6 tekens bestaan",
   "Data Not Valid: unit_name required (1-20 chars)": "Gegevens niet geldig: eenheidsnaam vereist (1-20 tekens)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppheeft geen berichtreferentie geretourneerd. De bezorging is niet bevestigd; controleer de chat voordat je het opnieuw probeert.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmaakt nog steeds opnieuw verbinding of heeft een nieuwe telefoonverbinding nodig. Er is geen bericht verzonden.",
   "Messaging permission required.": "Machtiging voor berichten vereist.",
-  "Schedule owner no longer has messaging access.": "De eigenaar van de planning heeft geen toegang meer tot berichten."
+  "Schedule owner no longer has messaging access.": "De eigenaar van de planning heeft geen toegang meer tot berichten.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Gegevens niet geldig: bill_number_reset moet uitgeschakeld, financieel, kalender of dagelijks zijn"
 }

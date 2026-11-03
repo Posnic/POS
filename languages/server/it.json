@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Clienti recuperati con successo",
   "Data Not Valid": "Dati non validi",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Dati non validi: bill_number_fy_start_month deve essere un mese, da 1 a 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Dati non validi: bill_number_reset deve essere disattivato, finanziario o di calendario",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Dati non validi: receiving_prefix deve contenere da 1 a 6 caratteri",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Dati non validi: sales_prefix deve contenere da 1 a 6 caratteri",
   "Data Not Valid: unit_name required (1-20 chars)": "Dati non validi: unit_name richiesto (1-20 caratteri)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnon ha restituito un riferimento al messaggio. La consegna non è confermata; controlla la chat prima di riprovare.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppsi sta ancora riconnettendo o necessita di un nuovo collegamento telefonico. Non è stato inviato alcun messaggio.",
   "Messaging permission required.": "È richiesta l'autorizzazione alla messaggistica.",
-  "Schedule owner no longer has messaging access.": "Il proprietario della pianificazione non ha più accesso alla messaggistica."
+  "Schedule owner no longer has messaging access.": "Il proprietario della pianificazione non ha più accesso alla messaggistica.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Dati non validi: bill_number_reset deve essere disattivato, finanziario, di calendario o giornaliero"
 }

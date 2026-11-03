@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Úspešne získaní zákazníkov",
   "Data Not Valid": "Údaje nie sú platné",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Údaje neplatné: bill_number_fy_start_month musí byť mesiac, 1 až 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Údaje nie sú platné: bill_number_reset musí byť vypnutý, finančný alebo kalendárny",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Údaje nie sú platné: receiving_prefix musí mať 1-6 znakov",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Údaje neplatné: sales_prefix musí mať 1-6 znakov",
   "Data Not Valid: unit_name required (1-20 chars)": "Údaje neplatné: vyžaduje sa názov jednotky (1-20 znakov)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnevrátil odkaz na správu. Dodanie nie je potvrdené; pred opätovným skúšaním skontrolujte chat.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppstále sa znova pripája alebo potrebuje nové telefónne spojenie. Nebola odoslaná žiadna správa.",
   "Messaging permission required.": "Vyžaduje sa povolenie na správu.",
-  "Schedule owner no longer has messaging access.": "Majiteľ plánu už nemá prístup k správam."
+  "Schedule owner no longer has messaging access.": "Majiteľ plánu už nemá prístup k správam.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Údaje neplatné: bill_number_reset musí byť vypnutý, finančný, kalendárny alebo denný"
 }

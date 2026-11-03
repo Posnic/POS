@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "顧客は正常に検索されました",
   "Data Not Valid": "データが無効",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "データが無効です:bill_number_fy_start_month は 1 ～ 12 の月でなければなりません",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "データが無効です:bill_number_reset はオフになっているか、財務データかカレンダーでなければなりません",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "データが無効です:受信プレフィックスは 1 ～ 6 文字でなければなりません",
   "Data Not Valid: sales_prefix must be 1-6 characters": "データが無効です:sales_prefix は 1 ～ 6 文字でなければなりません",
   "Data Not Valid: unit_name required (1-20 chars)": "データが無効です:ユニット名が必要です (1 ～ 20 文字)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppメッセージリファレンスが返されませんでした。配信は未確認です。チャットを確認してから再試行してください。",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppまだ再接続中か、新しい電話リンクが必要です。メッセージは送信されませんでした。",
   "Messaging permission required.": "メッセージング権限が必要です。",
-  "Schedule owner no longer has messaging access.": "スケジュールの所有者にはメッセージングへのアクセス権がなくなりました。"
+  "Schedule owner no longer has messaging access.": "スケジュールの所有者にはメッセージングへのアクセス権がなくなりました。",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "データが無効です:bill_number_reset はオフ、財務、カレンダー、または日次でなければなりません"
 }
