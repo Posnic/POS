@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Οι πελάτες ανακτήθηκαν με επιτυχία",
   "Data Not Valid": "Τα δεδομένα δεν είναι έγκυρα",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Τα δεδομένα δεν είναι έγκυρα: bill_number_fy_start_month πρέπει να είναι ένας μήνας, 1 έως 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Τα δεδομένα δεν είναι έγκυρα: το bill_number_reset πρέπει να είναι απενεργοποιημένο, οικονομικό ή ημερολογιακό",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Τα δεδομένα δεν είναι έγκυρα: το πρόθεμα λήψης πρέπει να είναι 1-6 χαρακτήρες",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Τα δεδομένα δεν είναι έγκυρα: το πρόθεμα πωλήσεων πρέπει να είναι 1-6 χαρακτήρες",
   "Data Not Valid: unit_name required (1-20 chars)": "Τα δεδομένα δεν είναι έγκυρα: απαιτείται όνομα μονάδας (1-20 χαρακτήρες)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppδεν επέστρεψε αναφορά μηνύματος. Η παράδοση δεν έχει επιβεβαιωθεί. Ελέγξτε τη συνομιλία πριν προσπαθήσετε ξανά.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppεξακολουθεί να επανασυνδέεται ή χρειάζεται έναν νέο σύνδεσμο τηλεφώνου. Κανένα μήνυμα δεν στάλθηκε.",
   "Messaging permission required.": "Απαιτείται άδεια ανταλλαγής μηνυμάτων.",
-  "Schedule owner no longer has messaging access.": "Ο κάτοχος προγράμματος δεν έχει πλέον πρόσβαση σε μηνύματα."
+  "Schedule owner no longer has messaging access.": "Ο κάτοχος προγράμματος δεν έχει πλέον πρόσβαση σε μηνύματα.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Τα δεδομένα δεν είναι έγκυρα: το bill_number_reset πρέπει να είναι απενεργοποιημένο, οικονομικό, ημερολογιακό ή ημερήσιο"
 }

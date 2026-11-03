@@ -5106,5 +5106,8 @@
   "lang_what_it_sells": "यसले बेच्ने वस्तुहरू",
   "lang_wording_ui_added_wording": "थपिएको शब्दावली",
   "lang_wording_ui_existing_word": "विद्यमान शब्द",
-  "lang_wording_ui_replace_words": "शब्दहरू बदल्नुहोस्"
+  "lang_wording_ui_replace_words": "शब्दहरू बदल्नुहोस्",
+  "lang_bill_number_reset_period": "बिल नम्बर पुनः सुरु गर्ने अवधि",
+  "lang_start_again_each_day": "हरेक दिन फेरि सुरु गर्नुहोस्",
+  "lang_bill_reset_daily_help": "शाखाको समय क्षेत्रअनुसार मध्यरातमा दैनिक बिल नम्बर 0001 बाट सुरु हुन्छ। मिति र बिक्री काउन्टरको कोडले बिल नम्बर दोहोरिन दिँदैन। पुराना बिलका नम्बर परिवर्तन हुँदैनन्।"
 }

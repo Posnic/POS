@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Anulați deducerea stocurilor",
   "lang_upload_excel_csv": "Încărcați Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Cântărește pentru o sumă solicitată",
-  "lang_you_have_read_only_access_to_product_avail": "Aveți acces numai la citire la disponibilitatea produsului."
+  "lang_you_have_read_only_access_to_product_avail": "Aveți acces numai la citire la disponibilitatea produsului.",
+  "lang_bill_number_reset_period": "Resetarea numărului facturii",
+  "lang_start_again_each_day": "Începeți din nou în fiecare zi",
+  "lang_bill_reset_daily_help": "Zilnic începe la 0001 la miezul nopții în fusul orar al sucursalei. Data și codul de până păstrează numerele facturilor unice. Facturile existente își păstrează numerele.",
+  "lang_add_another_entry": "Adăugați o altă intrare",
+  "lang_back_to_overview": "Înapoi la prezentare generală",
+  "lang_check_the_quantities_below_then_confirm_to": "Verificați cantitățile de mai jos, apoi confirmați pentru a actualiza stocul.",
+  "lang_continue_counting": "Continuați să numărați",
+  "lang_inventory_activity": "Activitate de inventar",
+  "lang_made_a_mistake": "A făcut o greșeală?",
+  "lang_next_step": "Următorul pas",
+  "lang_preparing_review": "Pregătirea revizuirii...",
+  "lang_rack_5_shelf_2_box_b": "Raft 5/Raft 2/Cutie B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Ajustarea stocului salvată. Continuați să numărați sau reveniți la Prezentare generală.",
+  "lang_stock_updated_successfully_no_further_appr": "Stocul a fost actualizat cu succes. Nu este necesară aprobarea suplimentară."
 }

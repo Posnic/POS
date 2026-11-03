@@ -790,7 +790,6 @@
   "Could not read the translation. Your existing text is unchanged. Try again.": "تعذرت قراءة الترجمة. النص الحالي الخاص بك لم يتغير. حاول مرة أخرى.",
   "Could not remove that till": "لا يمكن إزالة ذلك حتى",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "البيانات غير صالحة: يجب أن يكون bill_number_fy_start_month شهرًا، من 1 إلى 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "البيانات غير صالحة: يجب أن يكون bill_number_reset مغلقًا أو ماليًا أو تقويميًا",
   "Device access revoked. Offline authorization expires within its configured period. Signing in again restores access.": "تم إبطال الوصول إلى الجهاز. تنتهي صلاحية التخويل دون اتصال بالإنترنت خلال الفترة التي تم تكوينها. يؤدي تسجيل الدخول مرة أخرى إلى استعادة الوصول.",
   "Device not found in your branches": "لم يتم العثور على الجهاز في فروعك",
   "Document extracted and saved as a draft.": "تم استخراج المستند وحفظه كمسودة.",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppلم تقم بإرجاع مرجع الرسالة. التسليم غير مؤكد؛ تحقق من الدردشة قبل إعادة المحاولة.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppلا يزال يعيد الاتصال أو يحتاج إلى رابط هاتف جديد. لم يتم إرسال أي رسالة.",
   "Messaging permission required.": "إذن المراسلة مطلوب.",
-  "Schedule owner no longer has messaging access.": "لم يعد بإمكان مالك الجدول الوصول إلى المراسلة."
+  "Schedule owner no longer has messaging access.": "لم يعد بإمكان مالك الجدول الوصول إلى المراسلة.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "البيانات غير صالحة: يجب إيقاف تشغيل bill_number_reset أو ماليًا أو تقويميًا أو يوميًا"
 }
