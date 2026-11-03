@@ -532,7 +532,7 @@
     "lang_bill_date": "Bill date",
     "lang_bill_date_oldest": "Bill date: oldest",
     "lang_bill_no": "Bill no",
-    "lang_bill_number_year": "Bill number year",
+    "lang_bill_number_reset_period": "Bill number reset",
     "lang_bill_print_covers": "Covers",
     "lang_bill_print_covers_hint": "How many people were at the table.",
     "lang_bill_print_dine_type_hint": "Dine in, takeaway or delivery.",
@@ -549,6 +549,7 @@
     "lang_bill_print_table_hint": "Which table the bill belongs to.",
     "lang_bill_print_total_qty": "Total quantity",
     "lang_bill_print_total_qty_hint": "Total quantity across all items.",
+    "lang_bill_reset_daily_help": "Daily starts at 0001 at midnight in the branch time zone. The date and till code keep bill numbers unique. Existing bills keep their numbers.",
     "lang_bill_title": "BILL",
     "lang_bill_to": "Bill to",
     "lang_bill_to_2": "Bill To",
@@ -4580,6 +4581,7 @@
     "lang_start": "Start",
     "lang_start_a_table_order": "Start a table order",
     "lang_start_again_each_calendar_year": "Start again each calendar year",
+    "lang_start_again_each_day": "Start again each day",
     "lang_start_again_each_financial_year": "Start again each financial year",
     "lang_start_at_label_position": "Start at label position",
     "lang_start_clean": "Start clean",
@@ -4964,7 +4966,6 @@
     "lang_turbo_c": "Turbo C",
     "lang_turn_on_invoices_as_well": "Turn on Invoices as well?",
     "lang_turn_on_quotes_as_well": "Turn on Quotes as well?",
-    "lang_turning_this_on_starts_the_numbering_again": "Turning this on starts the numbering again at one. Best done on the first day of a year.",
     "lang_turns_worked_hours_into_a_payout_figure_in": "Turns worked hours into a payout figure in the labour report.",
     "lang_two_csv_columns_map_to_the_same_field_keep": "Two CSV columns map to the same field. Keep only one column for each field.",
     "lang_type": "Type",
@@ -5248,9 +5249,6 @@
     "lang_your_session_has_ended_please_sign_in_ag": "Your session has ended. Please sign in again.",
     "lang_your_standard_language_stays_unchanged_unt": "Your standard language stays unchanged until you save wording changes.",
     "lang_your_time_or_expertise": "Your time or expertise",
-    "lang_yourselecteddetails_title": "Selected details will be deleted",
-    "lang_bill_number_reset_period": "Bill number reset",
-    "lang_start_again_each_day": "Start again each day",
-    "lang_bill_reset_daily_help": "Daily starts at 0001 at midnight in the branch time zone. The date and till code keep bill numbers unique. Existing bills keep their numbers."
+    "lang_yourselecteddetails_title": "Selected details will be deleted"
   }
 }
