@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Khách hàng được truy xuất thành công",
   "Data Not Valid": "Dữ liệu không hợp lệ",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Dữ liệu không hợp lệ: bill_number_fy_start_month phải là một tháng, từ 1 đến 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Dữ liệu không hợp lệ: bill_number_reset phải tắt, tài chính hoặc lịch",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Dữ liệu không hợp lệ: ing_prefix phải là 1-6 ký tự",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Dữ liệu không hợp lệ: sales_prefix phải là 1-6 ký tự",
   "Data Not Valid: unit_name required (1-20 chars)": "Dữ liệu không hợp lệ: yêu cầu tên đơn vị (1-20 ký tự)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppkhông trả về một tham chiếu tin nhắn. Giao hàng chưa được xác nhận; kiểm tra cuộc trò chuyện trước khi thử lại.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppvẫn đang kết nối lại hoặc cần một liên kết điện thoại mới. Không có tin nhắn nào được gửi.",
   "Messaging permission required.": "Yêu cầu quyền nhắn tin.",
-  "Schedule owner no longer has messaging access.": "Chủ sở hữu lịch trình không còn quyền truy cập nhắn tin."
+  "Schedule owner no longer has messaging access.": "Chủ sở hữu lịch trình không còn quyền truy cập nhắn tin.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Dữ liệu không hợp lệ: bill_number_reset phải tắt, tài chính, lịch hoặc hàng ngày"
 }

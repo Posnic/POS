@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "客户已成功找回",
   "Data Not Valid": "数据无效",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "数据无效：bill_number_fy_start_month 必须为一个月，1 到 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "数据无效：bill_number_reset 必须处于关闭状态，无论是财务还是日历",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "数据无效：receiving_prefix 必须为 1-6 个字符",
   "Data Not Valid: sales_prefix must be 1-6 characters": "数据无效：sales_prefix 必须为 1-6 个字符",
   "Data Not Valid: unit_name required (1-20 chars)": "数据无效：必须填写单位名称（1-20 个字符）",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApp未返回消息引用。交付未得到确认；请在重试之前检查聊天内容。",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApp仍在重新连接或需要新的电话链接。未发送任何消息。",
   "Messaging permission required.": "需要消息权限。",
-  "Schedule owner no longer has messaging access.": "计划所有者不再具有消息访问权限。"
+  "Schedule owner no longer has messaging access.": "计划所有者不再具有消息访问权限。",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "数据无效：bill_number_reset 必须关闭、财务、日历或每日"
 }

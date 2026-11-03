@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "వినియోగదారులు విజయవంతంగా తిరిగి పొందారు",
   "Data Not Valid": "డేటా చెల్లుబాటు కాదు",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "డేటా చెల్లుబాటు కాదు: బిల్_నంబర్_FY_START_MONTH ఒక నెల ఉండాలి, 1 నుండి 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "డేటా చెల్లుబాటు కాదు: bill_number_reset ఆఫ్ ఉండాలి, ఆర్థిక లేదా క్యాలెండర్",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "డేటా చెల్లుబాటు కాదు: receiving_prefix తప్పనిసరిగా 1-6 అక్షరాలు ఉండాలి",
   "Data Not Valid: sales_prefix must be 1-6 characters": "డేటా చెల్లుబాటు కాదు: సేల్స్_prefix తప్పనిసరిగా 1-6 అక్షరాలు ఉండాలి",
   "Data Not Valid: unit_name required (1-20 chars)": "డేటా చెల్లుబాటు కాదు: యూనిట్_పేరు అవసరం (1-20 చార్లు)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppసందేశ సూచనను తిరిగి ఇవ్వలేదు. డెలివరీ ధృవీకరించబడలేదు; తిరిగి ప్రయత్నించే ముందు చాట్ను తనిఖీ చేయండి.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppఇప్పటికీ తిరిగి కనెక్ట్ అవుతోంది లేదా తాజా ఫోన్ లింక్ అవసరం. సందేశం పంపబడలేదు.",
   "Messaging permission required.": "సందేశ అనుమతి అవసరం.",
-  "Schedule owner no longer has messaging access.": "షెడ్యూల్ యజమానికి ఇకపై సందేశ ప్రాప్యత లేదు."
+  "Schedule owner no longer has messaging access.": "షెడ్యూల్ యజమానికి ఇకపై సందేశ ప్రాప్యత లేదు.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "డేటా చెల్లుబాటు కాదు: bill_number_reset ఆఫ్ ఉండాలి, ఆర్థిక, క్యాలెండర్ లేదా రోజువారీ"
 }

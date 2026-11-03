@@ -419,7 +419,6 @@
   "Could not read the translation. Your existing text is unchanged. Try again.": "மொழிபெயர்ப்பைப் படிக்க முடியவில்லை. உங்கள் தற்போதுள்ள உரை மாறாமல் உள்ளது. மீண்டும் முயற்சிக்கவும்",
   "Could not remove that till": "அதை வரை அகற்ற முடியவில்லை",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "தரவு செல்லுபடியாகும் அல்ல: bill_number_fy_start_month ஒரு மாதமாக இருக்க வேண்டும், 1 முதல் 12 வரை",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "தரவு செல்லுபடியாகும் அல்ல: bill_number_reset அணைக்கப்பட்டிருக்க வேண்டும், நிதி அல்லது காலெண்டர்",
   "Device access revoked. Offline authorization expires within its configured period. Signing in again restores access.": "சாதன அணுகல் ரத்து செய்யப்பட்டது. ஆஃப்லைன் அங்கீகாரம் அதன் கட்டமைக்கப்பட்ட காலத்திற்குள் மீண்டும் உள்நுழைவது அணுகலை மீட்ட",
   "Device not found in your branches": "உங்கள் கிளைகளில் சாதனம் காணப்படவில்லை",
   "Document extracted and saved as a draft.": "ஆவணம் பிரித்தெடுக்கப்பட்டு வரைபடமாக சேமிக்கப்பட்டது.",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppசெய்தி குறிப்பை திருப்பித் தரவில்லை. டெலிவரி உறுதிப்படுத்தப்படவில்லை; மறுமுயற்சிப்பதற்கு முன் அரட்டையைச் சரிபார",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppஇன்னும் மீண்டும் இணைக்கிறது அல்லது புதிய தொலைபேசி இணைப்பு தேவை. எந்த செய்தியும் அனுப்பப்படவில்லை.",
   "Messaging permission required.": "செய்தியிடல் அனுமதி தேவை.",
-  "Schedule owner no longer has messaging access.": "அட்டவணை உரிமையாளருக்கு இனி செய்தி அணுகல் இல்லை"
+  "Schedule owner no longer has messaging access.": "அட்டவணை உரிமையாளருக்கு இனி செய்தி அணுகல் இல்லை",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "தரவு செல்லுபடியாகும் அல்ல: bill_number_reset முடக்கப்பட்டிருக்க வேண்டும், நிதி, காலண்டர் அல்லது தினசரி"
 }

@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "කොටස් අඩුකිරීම අහෝසි කරන්න",
   "lang_upload_excel_csv": "එක්සෙල්/CSV උඩුගත කරන්න",
   "lang_weigh_for_a_requested_amount": "ඉල්ලූ මුදලකට බර කරන්න",
-  "lang_you_have_read_only_access_to_product_avail": "නිෂ්පාදන ලබා ගත හැකි බව ඔබට කියවීමට පමණක් ප්රවේශයක් ඇත."
+  "lang_you_have_read_only_access_to_product_avail": "නිෂ්පාදන ලබා ගත හැකි බව ඔබට කියවීමට පමණක් ප්රවේශයක් ඇත.",
+  "lang_bill_number_reset_period": "බිල් අංකය යළි පිහිටුවීම",
+  "lang_start_again_each_day": "සෑම දිනකම නැවත ආරම්භ කරන්න",
+  "lang_bill_reset_daily_help": "දිනපතා ශාඛා කාල කලාපයේ මධ්යම රාත්රියේ 0001 ට ආරම්භ වේ. දිනය සහ දක්වා කේතය බිල්පත් අංක අද්විතීය ලෙස තබා ගනී. පවතින බිල්පත් ඒවායේ අංක තබා ගනී.",
+  "lang_add_another_entry": "තවත් ඇතුළත් කිරීමක් එක් කරන්න",
+  "lang_back_to_overview": "දළ විශ්ලේෂණය වෙත ආපසු",
+  "lang_check_the_quantities_below_then_confirm_to": "පහත ප්රමාණ පරීක්ෂා කරන්න, ඉන්පසු තොග යාවත්කාලීන කිරීමට තහවුරු කරන්න.",
+  "lang_continue_counting": "ගණන් කිරීම දිගටම කරගෙන යන්න",
+  "lang_inventory_activity": "ඉන්වෙන්ටරි ක්රියාකාරකම්",
+  "lang_made_a_mistake": "වැරැද්දක් කළාද?",
+  "lang_next_step": "ඊළඟ පියවර",
+  "lang_preparing_review": "සමාලෝචනය සකස් කිරීම...",
+  "lang_rack_5_shelf_2_box_b": "රාක්කය 5/රාක්කය 2/පෙට්ටිය බී",
+  "lang_stock_adjustment_saved_continue_counting_o": "කොටස් ගැලපුම සුරකින ලදී. ගණන් කිරීම දිගටම කරගෙන යන්න හෝ දළ විශ්ලේෂණය වෙත ආපසු යන්න",
+  "lang_stock_updated_successfully_no_further_appr": "කොටස් සාර්ථකව යාවත්කාලීන විය. වැඩිදුර අනුමැතිය අවශ්ය නොවේ."
 }

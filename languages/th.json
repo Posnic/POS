@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "ยกเลิกการหักหุ้น",
   "lang_upload_excel_csv": "อัพโหลด Excel/CSV",
   "lang_weigh_for_a_requested_amount": "ชั่งน้ำหนักตามจำนวนที่ต้องการ",
-  "lang_you_have_read_only_access_to_product_avail": "คุณสามารถเข้าถึงความพร้อมใช้งานของผลิตภัณฑ์แบบอ่านอย่างเดียว"
+  "lang_you_have_read_only_access_to_product_avail": "คุณสามารถเข้าถึงความพร้อมใช้งานของผลิตภัณฑ์แบบอ่านอย่างเดียว",
+  "lang_bill_number_reset_period": "รีเซ็ตหมายเลขบิล",
+  "lang_start_again_each_day": "เริ่มอีกครั้งในแต่ละวัน",
+  "lang_bill_reset_daily_help": "ทุกวันเริ่มเวลา 0001 ในตอนเที่ยงคืนในเขตเวลาสาขารหัสวันที่และจนถึงจะทำให้หมายเลขบิลไม่เหมือนใครใบเรียกเก็บเงินที่มีอยู่เก็บหมายเลขไว้",
+  "lang_add_another_entry": "เพิ่มรายการอื่น",
+  "lang_back_to_overview": "กลับไปที่ภาพรวม",
+  "lang_check_the_quantities_below_then_confirm_to": "ตรวจสอบปริมาณด้านล่าง จากนั้นยืนยันการอัปเดตสต็อก",
+  "lang_continue_counting": "นับต่อไป",
+  "lang_inventory_activity": "กิจกรรมสินค้าคงคลัง",
+  "lang_made_a_mistake": "ทำผิดพลาด?",
+  "lang_next_step": "ขั้นตอนถัดไป",
+  "lang_preparing_review": "เตรียมรีวิว...",
+  "lang_rack_5_shelf_2_box_b": "ชั้นวาง 5/ชั้นวาง 2/กล่อง B",
+  "lang_stock_adjustment_saved_continue_counting_o": "บันทึกการปรับสต็อกนับต่อหรือกลับไปที่ภาพรวม",
+  "lang_stock_updated_successfully_no_further_appr": "อัพเดทสต็อกเรียบร้อยแล้วไม่จำเป็นต้องได้รับการอนุมัติเพิ่มเติม"
 }

@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "I-download ang pagbawas ng stock",
   "lang_upload_excel_csv": "Mag-upload ng Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Timbangin para sa isang hiniling na halaga",
-  "lang_you_have_read_only_access_to_product_avail": "Mayroon kang read-only access sa pagkakaroon ng produkto."
+  "lang_you_have_read_only_access_to_product_avail": "Mayroon kang read-only access sa pagkakaroon ng produkto.",
+  "lang_bill_number_reset_period": "I-reset ang numero ng bill",
+  "lang_start_again_each_day": "Magsimula muli bawat araw",
+  "lang_bill_reset_daily_help": "Ang araw-araw ay nagsisimula sa 0001 sa hatinggabi sa branch time zone. Ang petsa at hanggang code ay nagpapanatili ng natatangi ang mga numero ng bill. Pinapanatili ng mga umiiral na bayarin ang kanilang",
+  "lang_add_another_entry": "Magdagdag ng isa pang entry",
+  "lang_back_to_overview": "Balik sa pangkalahatang-ideya",
+  "lang_check_the_quantities_below_then_confirm_to": "Suriin ang dami sa ibaba, pagkatapos ay kumpirmahin upang i-update ang stock.",
+  "lang_continue_counting": "Magpatuloy sa pagbilang",
+  "lang_inventory_activity": "Aktibidad ng imbent",
+  "lang_made_a_mistake": "Nagkamali?",
+  "lang_next_step": "Susunod na hakbang",
+  "lang_preparing_review": "Paghahanda ng pagsusuri...",
+  "lang_rack_5_shelf_2_box_b": "Rack 5/Shelf 2/Kahon B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Naka-save ang pagsasaayos ng stock. Magpatuloy sa pagbilang o bumalik sa Pangkalahatang-ideya",
+  "lang_stock_updated_successfully_no_further_appr": "Matagumpay na na-update ang stock. Walang karagdagang pag-apruba ang kinakailangan."
 }

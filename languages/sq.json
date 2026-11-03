@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Heq zbritjen e aksioneve",
   "lang_upload_excel_csv": "Ngarko Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Peshojeni për një sasi të kërkuar",
-  "lang_you_have_read_only_access_to_product_avail": "Ju keni qasje vetëm për lexim në disponueshmërinë e produktit."
+  "lang_you_have_read_only_access_to_product_avail": "Ju keni qasje vetëm për lexim në disponueshmërinë e produktit.",
+  "lang_bill_number_reset_period": "Rivendosja e numrit të fat",
+  "lang_start_again_each_day": "Filloni përsëri çdo ditë",
+  "lang_bill_reset_daily_help": "Çdo ditë fillon në 0001 në mesnatë në zonën kohore të degës. Data dhe kodi i deri i mbajnë numrat e faturës unikë. Faturat ekzistuese mbajnë numrat e tyre.",
+  "lang_add_another_entry": "Shto një hyrje tjetër",
+  "lang_back_to_overview": "Kthehu në përmbledhje",
+  "lang_check_the_quantities_below_then_confirm_to": "Kontrolloni sasitë më poshtë, pastaj konfirmoni për të përditësuar stokun.",
+  "lang_continue_counting": "Vazhdoni numërimin",
+  "lang_inventory_activity": "Aktiviteti i inventarit",
+  "lang_made_a_mistake": "Bëri një gabim?",
+  "lang_next_step": "Hapi tjetër",
+  "lang_preparing_review": "Përgatitja e rishikimit...",
+  "lang_rack_5_shelf_2_box_b": "Raft 5/Raft 2/Kutia B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Rregullimi i stokut është ruajtur. Vazhdoni numërimin ose kthehuni te Përmbledh",
+  "lang_stock_updated_successfully_no_further_appr": "Stoku i përditësuar me sukses. Nuk ka nevojë për miratim të mëtejshëm."
 }

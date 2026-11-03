@@ -5406,5 +5406,19 @@
   "lang_undo_stock_deduction": "பங்கு விலக்கை ரத்து செய்யவும்",
   "lang_upload_excel_csv": "எக்செல்/CSV பதிவேற்றவும்",
   "lang_weigh_for_a_requested_amount": "கோரப்பட்ட தொகைக்கு எடைபோடுங்கள்",
-  "lang_you_have_read_only_access_to_product_avail": "தயாரிப்பு கிடைக்கும் தன்மைக்கு வாசிக்க மட்டும் அணுகல் உங்களிடம் உள்ளது."
+  "lang_you_have_read_only_access_to_product_avail": "தயாரிப்பு கிடைக்கும் தன்மைக்கு வாசிக்க மட்டும் அணுகல் உங்களிடம் உள்ளது.",
+  "lang_bill_number_reset_period": "பில் எண் மீட்டமைப்பு",
+  "lang_start_again_each_day": "ஒவ்வொரு நாளும் மீண்டும் தொடங்குங்கள்",
+  "lang_bill_reset_daily_help": "தினசரி கிளை நேர மண்டலத்தில் நள்ளிரவு 0001 மணிக்கு தொடங்குகிறது. தேதி மற்றும் குறியீடு வரை பில் எண்களை தனித்துவமாக வைத்திருக்கும். தற்போதுள்ள பில்கள் அவற்றின் எண்களை வ",
+  "lang_add_another_entry": "மற்றொரு உள்ளீட்டைச் சேர்க்கவும்",
+  "lang_back_to_overview": "கண்ணோட்டத்திற்கு திரும்பு",
+  "lang_check_the_quantities_below_then_confirm_to": "கீழே உள்ள அளவுகளைச் சரிபார்த்து, பங்கைப் புதுப்பிக்க உறுதிப்படுத்தவும்",
+  "lang_continue_counting": "எண்ணுவதைத் தொடரவும்",
+  "lang_inventory_activity": "சரக்கு செயல்பாடு",
+  "lang_made_a_mistake": "தவறு செய்தீர்களா?",
+  "lang_next_step": "அடுத்த படி",
+  "lang_preparing_review": "மதிப்பாய்வைத் தயாரித்தல்...",
+  "lang_rack_5_shelf_2_box_b": "ரேக் 5/ஷெல்ஃப் 2/பெட்டி பி",
+  "lang_stock_adjustment_saved_continue_counting_o": "பங்கு சரிசெய்தல் சேமிக்கப்பட்டது. தொடர்ந்து எண்ணுங்கள் அல்லது கண்ணோட்டத்திற்குத் திரும்பவும்.",
+  "lang_stock_updated_successfully_no_further_appr": "பங்கு வெற்றிகரமாக மேம்படுத்தப்பட்டது மேலும் ஒப்புதல் தேவையில்லை."
 }
