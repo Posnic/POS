@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "Annulla la detrazione delle scorte",
   "lang_upload_excel_csv": "Carica Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Pesate per un importo richiesto",
-  "lang_you_have_read_only_access_to_product_avail": "Hai accesso in sola lettura alla disponibilità dei prodotti."
+  "lang_you_have_read_only_access_to_product_avail": "Hai accesso in sola lettura alla disponibilità dei prodotti.",
+  "lang_bill_number_reset_period": "Reimpostazione del numero di fattura",
+  "lang_start_again_each_day": "Ricomincia ogni giorno",
+  "lang_bill_reset_daily_help": "Ogni giorno inizia alle 0001 a mezzanotte nel fuso orario della filiale. La data e il codice di cassa mantengono univoci i numeri delle fatture. Le fatture esistenti mantengono il loro numero.",
+  "lang_add_another_entry": "Aggiungi un'altra voce",
+  "lang_back_to_overview": "Torna alla panoramica",
+  "lang_check_the_quantities_below_then_confirm_to": "Controlla le quantità riportate di seguito, quindi conferma l'aggiornamento delle scorte.",
+  "lang_continue_counting": "Continua a contare",
+  "lang_inventory_activity": "Attività di inventario",
+  "lang_made_a_mistake": "Hai commesso un errore?",
+  "lang_next_step": "Fase successiva",
+  "lang_preparing_review": "Preparazione della revisione...",
+  "lang_rack_5_shelf_2_box_b": "Rack 5/Ripiano 2/Box B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Adeguamento delle scorte salvato. Continua a contare o torna alla panoramica.",
+  "lang_stock_updated_successfully_no_further_appr": "Le scorte sono state aggiornate correttamente. Non è necessaria alcuna ulteriore approvazione."
 }

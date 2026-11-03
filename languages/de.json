@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "Machen Sie den Lagerabzug rückgängig",
   "lang_upload_excel_csv": "Laden Sie Excel/CSV hoch",
   "lang_weigh_for_a_requested_amount": "Wiegen Sie für eine angeforderte Menge",
-  "lang_you_have_read_only_access_to_product_avail": "Sie haben nur Lesezugriff auf die Produktverfügbarkeit."
+  "lang_you_have_read_only_access_to_product_avail": "Sie haben nur Lesezugriff auf die Produktverfügbarkeit.",
+  "lang_bill_number_reset_period": "Rechnungsnummer zurückgesetzt",
+  "lang_start_again_each_day": "Fangen Sie jeden Tag neu an",
+  "lang_bill_reset_daily_help": "Der Tag beginnt um 00:01 Uhr um Mitternacht in der Zeitzone der Filiale. Das Datum und der Kassencode sorgen dafür, dass die Rechnungsnummern eindeutig sind. Bestehende Rechnungen behalten ihre Nummern.",
+  "lang_add_another_entry": "Einen weiteren Eintrag hinzufügen",
+  "lang_back_to_overview": "Zurück zur Übersicht",
+  "lang_check_the_quantities_below_then_confirm_to": "Überprüfen Sie die unten angegebenen Mengen und bestätigen Sie dann, um den Lagerbestand zu aktualisieren.",
+  "lang_continue_counting": "Zählen Sie weiter",
+  "lang_inventory_activity": "Inventaraktivität",
+  "lang_made_a_mistake": "Hast du einen Fehler gemacht?",
+  "lang_next_step": "Der nächste Schritt",
+  "lang_preparing_review": "Überprüfung wird vorbereitet...",
+  "lang_rack_5_shelf_2_box_b": "Rack 5//Regal 2//Box B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Die Bestandsanpassung wurde gespeichert. Zählen Sie weiter oder kehren Sie zur Übersicht zurück.",
+  "lang_stock_updated_successfully_no_further_appr": "Bestand wurde erfolgreich aktualisiert. Es ist keine weitere Genehmigung erforderlich."
 }

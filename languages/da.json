@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Fortryd aktiefradrag",
   "lang_upload_excel_csv": "Upload Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vejer for et anmodet beløb",
-  "lang_you_have_read_only_access_to_product_avail": "Du har skrivebeskyttet adgang til produkttilgængelighed."
+  "lang_you_have_read_only_access_to_product_avail": "Du har skrivebeskyttet adgang til produkttilgængelighed.",
+  "lang_bill_number_reset_period": "Nulstilling af regningsnummer",
+  "lang_start_again_each_day": "Start igen hver dag",
+  "lang_bill_reset_daily_help": "Dagligt starter kl. 0001 ved midnat i filialens tidszone. Datoen og indtil koden holder regningsnumrene unikke. Eksisterende regninger beholder deres tal.",
+  "lang_add_another_entry": "Tilføj en anden post",
+  "lang_back_to_overview": "Tilbage til oversigten",
+  "lang_check_the_quantities_below_then_confirm_to": "Kontroller mængderne nedenfor, og bekræft derefter for at opdatere lageret.",
+  "lang_continue_counting": "Fortsæt med at tælle",
+  "lang_inventory_activity": "Lageraktivitet",
+  "lang_made_a_mistake": "Lavet en fejl?",
+  "lang_next_step": "Næste skridt",
+  "lang_preparing_review": "Forberedelse af gennemgang...",
+  "lang_rack_5_shelf_2_box_b": "Reol 5/Hylde 2/Boks B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Lagerjustering gemt. Fortsæt med at tælle eller gå tilbage til Oversigt.",
+  "lang_stock_updated_successfully_no_further_appr": "Lageret opdateret med succes. Der er ikke behov for yderligere godkendelse."
 }

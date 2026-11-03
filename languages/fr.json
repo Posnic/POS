@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "Annuler la déduction boursière",
   "lang_upload_excel_csv": "Télécharger un fichier Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Pesez pour obtenir la quantité demandée",
-  "lang_you_have_read_only_access_to_product_avail": "Vous avez un accès en lecture seule à la disponibilité des produits."
+  "lang_you_have_read_only_access_to_product_avail": "Vous avez un accès en lecture seule à la disponibilité des produits.",
+  "lang_bill_number_reset_period": "Réinitialisation du numéro de facture",
+  "lang_start_again_each_day": "Recommencez chaque jour",
+  "lang_bill_reset_daily_help": "La journée commence à 0 h 01 à minuit dans le fuseau horaire de la succursale. La date et le code de caisse permettent aux numéros de facture d'être uniques. Les factures existantes conservent leur numéro.",
+  "lang_add_another_entry": "Ajouter une autre entrée",
+  "lang_back_to_overview": "Retourner à l'aperçu",
+  "lang_check_the_quantities_below_then_confirm_to": "Vérifiez les quantités ci-dessous, puis confirmez pour mettre à jour le stock.",
+  "lang_continue_counting": "Continuez à compter",
+  "lang_inventory_activity": "Activité d'inventaire",
+  "lang_made_a_mistake": "Vous avez fait une erreur ?",
+  "lang_next_step": "Étape suivante",
+  "lang_preparing_review": "Préparation de la révision...",
+  "lang_rack_5_shelf_2_box_b": "Étagère 5/Étagère 2/Boîte B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Ajustement de stock enregistré. Continuez à compter ou revenez à la vue d'ensemble.",
+  "lang_stock_updated_successfully_no_further_appr": "Stock mis à jour avec succès. Aucune autre approbation n'est requise."
 }
