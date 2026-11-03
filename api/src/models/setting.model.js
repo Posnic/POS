@@ -1453,7 +1453,7 @@ class SettingModel extends BaseModel {
          */
         ...(data.bill_number_reset !== undefined
           ? {
-              bill_number_reset: ['financial', 'calendar'].includes(
+              bill_number_reset: ['financial', 'calendar', 'daily'].includes(
                 String(data.bill_number_reset || '').trim()
               )
                 ? String(data.bill_number_reset).trim()

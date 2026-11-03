@@ -9,6 +9,7 @@ const headers = [
   'Current stock',
   'New stock',
   'Reason',
+  'Category',
   'Item ID',
   'Branch ID',
   'Revision',
@@ -63,11 +64,11 @@ async function download(req) {
   const book = new ExcelJS.Workbook();
   const sheet = book.addWorksheet('Stock count');
   sheet.addRow(headers);
-  sheet.addRows(rows);
+  sheet.addRows(rows.map((row) => [...row.slice(0, 6), order(row)?.name || '', ...row.slice(6)]));
   sheet.views = [{ state: 'frozen', ySplit: 1 }];
-  [40, 20, 12, 18, 18, 40, 28, 28, 68].forEach((width, i) => {
+  [40, 20, 12, 18, 18, 40, 24, 28, 28, 68].forEach((width, i) => {
     sheet.getColumn(i + 1).width = width;
-    if (i >= 6) sheet.getColumn(i + 1).hidden = true;
+    if (i >= 7) sheet.getColumn(i + 1).hidden = true;
   });
   sheet.getRow(1).font = { bold: true };
   sheet.getColumn(5).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F5ED' } };
@@ -77,7 +78,7 @@ async function download(req) {
     fitToWidth: 1,
     fitToHeight: 0,
     printTitlesRow: '1:1',
-    printArea: 'A1:F' + (rows.length + 1),
+    printArea: 'A1:G' + (rows.length + 1),
   };
   return {
     filename: 'stock-count.xlsx',
@@ -98,7 +99,10 @@ async function parse(file, branchId) {
   const sheet = book.worksheets[0];
   if (!sheet || sheet.rowCount > 20001) throw new Error('Sheet must contain at most 20,000 items.');
   const names = sheet.getRow(1).values.slice(1);
-  if (headers.some((h) => !names.includes(h)) || new Set(names).size !== names.length)
+  if (
+    headers.some((h) => h !== 'Category' && !names.includes(h)) ||
+    new Set(names).size !== names.length
+  )
     throw new Error('Use the downloaded stock sheet and keep its column headings.');
   const seen = new Set(),
     lines = [];

@@ -14346,6 +14346,7 @@ class SalesRepository {
     return this.buildDocNumber('S', branchId, n, {
       fallbackPrefix: prefix,
       period: period.label,
+      daily: period.mode === 'daily',
       numberingContext,
     });
   }
@@ -14451,7 +14452,7 @@ class SalesRepository {
     }
 
     const key = {
-      kind: 'sales_id',
+      kind: period?.mode === 'daily' ? 'sales_id:daily:' + period.key : 'sales_id',
       branch_key: String(branchIdRaw || ''),
       license_key: String(license || ''),
     };
@@ -14499,6 +14500,7 @@ class SalesRepository {
     if (!existing) {
       const seed = await this.maxIssuedSalesNumber(branchIdRaw, licenseRaw, {
         periodLabel: (period && period.label) || '',
+        daily: period?.mode === 'daily',
         numberingContext,
       });
       /* With the unique index, one of two concurrent seeders inserts and the
@@ -14520,6 +14522,7 @@ class SalesRepository {
     if (reseed) {
       const behind = await this.maxIssuedSalesNumber(branchIdRaw, license, {
         periodLabel: (period && period.label) || '',
+        daily: period?.mode === 'daily',
         numberingContext,
       });
       if (behind > 0) {
@@ -14634,7 +14637,7 @@ class SalesRepository {
    * kiosk/QR path can never drift apart. Falls back to the old untagged form
    * only if a till code could not be read, which must never fail a sale.
    */
-  async buildSalesId(prefix, n, { period = '', numberingContext } = {}) {
+  async buildSalesId(prefix, n, { period = '', daily = false, numberingContext } = {}) {
     const tag = await this.deviceTag(numberingContext);
     const p = (prefix || '').toString().trim();
     /*
@@ -14650,6 +14653,7 @@ class SalesRepository {
     const head = tag ? (p ? `${p}-${tag}` : tag) : p;
     const built = billNumber.compose({
       typeLetter: head,
+      daily,
       period,
       sequence: n,
       sequenceWidth: 6,
@@ -14750,7 +14754,7 @@ class SalesRepository {
     typeLetter,
     branchId,
     n,
-    { isReturn = false, fallbackPrefix = 'S', period = '', numberingContext } = {}
+    { isReturn = false, fallbackPrefix = 'S', period = '', daily = false, numberingContext } = {}
   ) {
     const [branchCode, deviceCode] = await Promise.all([
       this.branchCode(branchId, numberingContext),
@@ -14759,6 +14763,7 @@ class SalesRepository {
     if (branchCode && deviceCode) {
       const built = billNumber.compose({
         typeLetter: `${isReturn ? 'R-' : ''}${typeLetter}`,
+        daily,
         branchCode,
         deviceCode,
         period,
@@ -14770,7 +14775,21 @@ class SalesRepository {
       if (built.warning) console.warn('[bill-number]', built.warning);
       return built.number;
     }
-    return this.buildSalesId(fallbackPrefix, n, { period, numberingContext });
+    if (daily && branchCode) {
+      // Unpaired/offline tills and the cloud server have a stable local tag,
+      // rather than a Gateway D-code. Include the branch too: each branch has
+      // its own counter. Omit the decorative S to retain all identity digits.
+      const tag = await this.deviceTag(numberingContext);
+      if (!tag) throw new Error('Daily bill numbering requires a stable till identifier.');
+      return billNumber.compose({
+        typeLetter: branchCode,
+        deviceCode: tag,
+        daily: true,
+        period,
+        sequence: n,
+      }).number;
+    }
+    return this.buildSalesId(fallbackPrefix, n, { period, daily, numberingContext });
   }
 
   /*
@@ -14937,7 +14956,11 @@ class SalesRepository {
     }
   }
 
-  async maxIssuedSalesNumber(branchIdRaw, licenseRaw, { periodLabel = '', numberingContext } = {}) {
+  async maxIssuedSalesNumber(
+    branchIdRaw,
+    licenseRaw,
+    { periodLabel = '', daily = false, numberingContext } = {}
+  ) {
     const db = numberingContext?.db || (await BaseModel.getDb());
     const asObjectId = (v) =>
       v instanceof mongoose.Types.ObjectId
@@ -14972,8 +14995,18 @@ class SalesRepository {
     let max = 0;
     for (const r of rows) {
       const salesId = String((r && r.sales_id) || '');
-      if (inPeriod && !inPeriod.test(salesId)) continue;
-      const m = /(\d+)\s*$/.exec(salesId);
+      if (!daily && inPeriod && !inPeriod.test(salesId)) continue;
+      // Daily numbers end in YYMMDD + a four-digit sequence. The date must
+      // never be interpreted as part of the sequence when reset is disabled.
+      const dailyTail = /^(.*)(\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01]))(\d{4})$/.exec(
+        salesId
+      );
+      if (!daily && dailyTail) continue;
+      const m = daily
+        ? dailyTail && dailyTail[2] === String(periodLabel)
+          ? [null, dailyTail[3]]
+          : null
+        : /(\d+)\s*$/.exec(salesId);
       if (m) max = Math.max(max, parseInt(m[1], 10));
     }
     return max;

@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Отмяна на приспадане на акции",
   "lang_upload_excel_csv": "Качване на Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Претеглете за исканата сума",
-  "lang_you_have_read_only_access_to_product_avail": "Имате достъп само за четене до наличността на продукта."
+  "lang_you_have_read_only_access_to_product_avail": "Имате достъп само за четене до наличността на продукта.",
+  "lang_bill_number_reset_period": "Нулиране на номера на сметката",
+  "lang_start_again_each_day": "Започвайте отново всеки ден",
+  "lang_bill_reset_daily_help": "Ежедневно започва в 0001 в полунощ в часовата зона на клона. Датата и кодът до момента запазват номерата на сметките уникални. Съществуващите сметки запазват номера си.",
+  "lang_add_another_entry": "Добавете още един запис",
+  "lang_back_to_overview": "Обратно към преглед",
+  "lang_check_the_quantities_below_then_confirm_to": "Проверете количествата по-долу, след което потвърдете, че актуализирате запасите.",
+  "lang_continue_counting": "Продължете да броите",
+  "lang_inventory_activity": "Инвентарна дейност",
+  "lang_made_a_mistake": "Направихте грешка?",
+  "lang_next_step": "Следваща стъпка",
+  "lang_preparing_review": "Подготовка на преглед...",
+  "lang_rack_5_shelf_2_box_b": "Стелаж 5/Рафт 2/Кутия Б",
+  "lang_stock_adjustment_saved_continue_counting_o": "Запазена е корекция на запасите. Продължете да броите или се върнете към Общ преглед.",
+  "lang_stock_updated_successfully_no_further_appr": "Акциите са актуализирани успешно. Не е необходимо допълнително одобрение."
 }

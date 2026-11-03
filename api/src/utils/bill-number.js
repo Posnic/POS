@@ -23,16 +23,8 @@
  *      reference invoice is exactly sixteen - VR26-27VIR006782 - because the
  *      people who built it ran into the same wall.
  *   2. Only "-" and "/" may join the parts. No underscore, no space, no dot.
- *   3. The financial year is the unit of uniqueness, which is why the series
- *      resets with it and not with the day.
- *
- * WHY NOT PER DAY, WHICH IS THE OTHER THING PEOPLE ASK FOR
- *
- * A daily reset repeats numbers inside the year unless the date is part of the
- * number, and a date costs six to eight of the sixteen characters. It also
- * destroys the one property an auditor actually uses: a single consecutive run
- * per year has visible gaps when something is cancelled, and three hundred and
- * sixty five short runs do not.
+ *   3. Restarted series must include their period to avoid duplicate numbers.
+ *      Daily series include YYMMDD and retain the till identity.
  *
  * ELSEWHERE
  *
@@ -62,8 +54,8 @@ const MIN_SEQUENCE_WIDTH = 4;
  */
 const DEFAULT_FY_START_MONTH = 4;
 
-/** off | financial | calendar. What a shop can choose. */
-const RESET_MODES = Object.freeze(['off', 'financial', 'calendar']);
+/** off | financial | calendar | daily. What a shop can choose. */
+const RESET_MODES = Object.freeze(['off', 'financial', 'calendar', 'daily']);
 
 function int(value, fallback) {
   const n = Number(value);
@@ -84,6 +76,13 @@ function periodFor(date = new Date(), options = {}) {
   const mode = RESET_MODES.includes(options.reset) ? options.reset : 'off';
   const d = date instanceof Date ? date : new Date(date);
   if (Number.isNaN(d.getTime())) return { key: '', label: '', mode: 'off' };
+
+  if (mode === 'daily') {
+    const year = String(d.getFullYear());
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return { key: `${year}-${month}-${day}`, label: `${year.slice(-2)}${month}${day}`, mode };
+  }
 
   if (mode === 'calendar') {
     const y = d.getFullYear();
@@ -130,6 +129,22 @@ function compose(parts = {}) {
   const wanted = Math.max(MIN_SEQUENCE_WIDTH, int(parts.sequenceWidth, 6));
 
   const head = `${typeLetter}${branchCode}${deviceCode}`;
+
+  // A daily series must always retain both its date and till identity. Compact
+  // spacing leaves four sequence digits even for a six-character till prefix.
+  // Never truncate an identity or drop a date to make a daily number fit.
+  if (parts.daily) {
+    const width = Math.max(MIN_SEQUENCE_WIDTH, String(sequence).length);
+    const number = `${head}${wantPeriod}${String(sequence).padStart(width, '0')}`;
+    if (sequence > 9999)
+      throw new Error(
+        'Daily bill sequence is full (9999 bills). Choose another reset period before continuing.'
+      );
+    if (!/^\d{6}$/.test(wantPeriod) || number.length > MAX_LENGTH || !ALLOWED.test(number)) {
+      throw new Error('Daily bill number does not fit. Use a shorter prefix or till code.');
+    }
+    return { number, ok: true, width, warning: '' };
+  }
 
   /*
    * THE SEQUENCE SETS THE FLOOR, not the padding.

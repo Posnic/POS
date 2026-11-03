@@ -169,3 +169,32 @@ test('price expansion applies edited SKU to selected branches and reuses blank e
   await db.collection('items').updateOne({_id:source._id},{$set:{selling_price:55}});
   const stale=await price.expandRows(c,{branches:'all',rows:[rows[0]]});assert.equal(stale.length,1);assert.match(stale[0].invalidReason,/Source price changed/);
 });
+
+
+test('count and spoilage sheets expose categories, sort category then numeric SKU, and accept previous headings', async () => {
+  const fruit = new ObjectId(), veg = new ObjectId();
+  await db.collection('categories').insertMany([
+    { _id: fruit, license: source.license, branch_id: source.branch_id, name: 'Fruit', sort_order: 10 },
+    { _id: veg, license: source.license, branch_id: source.branch_id, name: 'Vegetables', sort_order: 20 },
+  ]);
+  await db.collection('items').deleteMany({});
+  await db.collection('items').insertMany([
+    { ...source, _id: new ObjectId(), name: 'Veg ten', itemid: '10', category_id: veg },
+    { ...source, _id: new ObjectId(), name: 'Veg two', itemid: '2', category_id: veg },
+    { ...source, _id: new ObjectId(), name: 'Fruit', itemid: '99', category_id: fruit },
+  ]);
+  for (const service of [sheets, require('../src/services/spoilage-sheet')]) {
+    const data = await service.download(req), book = new ExcelJS.Workbook();
+    await book.xlsx.load(Buffer.from(data.base64, 'base64'));
+    const sheet = book.worksheets[0], headings = sheet.getRow(1).values;
+    const categoryColumn = headings.indexOf('Category');
+    assert(categoryColumn > 0); assert(!sheet.getColumn(categoryColumn).hidden);
+    assert.deepEqual([2,3,4].map(n => sheet.getCell(n,1).value), ['Fruit','Veg two','Veg ten']);
+    assert.deepEqual([2,3,4].map(n => sheet.getCell(n,categoryColumn).value), ['Fruit','Vegetables','Vegetables']);
+    sheet.spliceColumns(categoryColumn, 1);
+    sheet.getCell(2,5).value = 1; sheet.getCell(2,6).value = service === sheets ? 'Counted again' : 'Spoilage';
+    const file = { originalname: 'legacy.xlsx', buffer: Buffer.from(await book.xlsx.writeBuffer()) };
+    if (service === sheets) assert.equal((await service.parse(file, source.branch_id)).length, 1);
+    else assert.equal((await service.upload({...req, file})).lines.length, 1);
+  }
+});

@@ -912,7 +912,7 @@ PosnicPro.settings = {
                    every shop did before this existed. The month only means
                    anything for a financial year, so it is hidden otherwise. */
                 $('#bill_number_reset').val(
-                    ['financial', 'calendar'].indexOf(String(data.bill_number_reset || '')) > -1
+                    ['financial', 'calendar', 'daily'].indexOf(String(data.bill_number_reset || '')) > -1
                         ? String(data.bill_number_reset)
                         : ''
                 );
