@@ -469,7 +469,10 @@
         (r) => {
           if (!current()) return;
           const data = r.data || {};
-          const ranked = [...(data.results || []), ...local].sort((a, b) => b.rank - a.rank);
+          const records = data.results || [];
+          const terms = words(q);
+          const navigation = terms.some((term) => ['new', 'setting', 'report', 'list'].includes(term));
+          const ranked = navigation ? local.concat(records) : records.concat(local);
           const seen = new Set();
           const items = ranked.filter((item) => {
             const key = historyKey(item) || item.name;
