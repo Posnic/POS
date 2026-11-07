@@ -132,6 +132,7 @@
       "src/cloud-activation.js",
       "src/browser-cloud-auth.js",
       "src/cloud-shop-identity.js",
+      "src/cloud-local-mongo.js",
       "src/cloud-captain-discovery.js",
       "src/cloud-local-reset.js",
       "src/cloud-reset-ui.js",
