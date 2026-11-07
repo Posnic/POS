@@ -671,7 +671,7 @@
     catalog = commands();
     render();
     PosnicPro.get(
-      { url: 'extensions', quietStatuses: [403, 404] },
+      { url: 'extensions/v1', quietStatuses: [403, 404] },
       (r) => {
         if (!opened || token !== session || scope() !== searchScope) return;
         for (const ext of r.extensions || []) {
