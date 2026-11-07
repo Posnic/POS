@@ -124,7 +124,7 @@ test('shop identity permits a fresh install and same-shop reconnect, but never m
   assertSameShop({ ...clean, savedTenant: 'shop_one', userCount: 1 });
   for (const update of [{ savedTenant: 'shop_two' }, { localBranchIds: ['b'.repeat(24)] },
     { savedTenant: 'shop_one', localBranchIds: ['b'.repeat(24)] }, { userCount: 1 }, { businessDataCount: 1 }]) {
-    assert.throws(() => assertSameShop({ ...clean, ...update }), /never merged automatically/);
+    assert.throws(() => assertSameShop({ ...clean, ...update }), { code: 'LOCAL_SHOP_CONFLICT' });
   }
   assert.throws(() => assertSameShop({ ...clean, identity: { tenantDb: '../../bad', branchIds: [] } }), /Could not verify/);
 });
