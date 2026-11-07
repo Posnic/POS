@@ -5,8 +5,9 @@ PosnicPro.receivings.view = {
     viewReceiving: function (id) {
         ($('#indian_gst').val() === 'gst_on') ? $('.indian-gstr').show() : $('.indian-gstr').remove();
         var loader = $(".loader-view-receiving");
-        $("<div class='loadingSpinner'></div>").appendTo(loader);
+        var spinner = $("<div class='loadingSpinner'></div>").appendTo(loader);
         PosnicPro.get('receivings/' + id, function (response) {
+            spinner.remove();
             if (response.type === 'success') {
                 PosnicPro.record_id = id;
                 var data = response.data;
@@ -29,10 +30,13 @@ PosnicPro.receivings.view = {
                 }
                 $('#receivingtitelText').text(PosnicPro.i18n.t('lang_action_receiving_details', 'Receiving Details') + ' (' + data.receiving_status + ')');
                 PosnicPro.receivings.view.viewReceivingData(response, id);
-                loader.find(".loadingSpinner:first").remove();
+
             } else {
                 PosnicPro.alert(response.type, response.message);
             }
+        }, function () {
+            spinner.remove();
+            PosnicPro.alert('error', 'Could not load receiving details. Please try again.');
         });
     },
     viewReceivingData: function (response, id) {
@@ -65,16 +69,16 @@ PosnicPro.receivings.view = {
         var cgst = 0;
         var itemTaxDetails = [];
         for (var i = 0; i < length; i++) {
-            var tax = data.items[i].tax;
+            var tax = Number(data.items[i].tax ?? data.items[i].tax_rate ?? 0);
             var tax_type = data.items[i].tax_type;
             if (tax_type === 'exclusive') {
-                var price = data.items[i].item_price;
+                var price = Number(data.items[i].item_price);
             } else {
                 var price = data.items[i].item_price / ((tax / 100) + 1);
             }
             var priceAmount = ((price.toFixed(2)) * data.items[i].item_quantity);
-            igst += data.items[i].igst_tax;
-            cgst += data.items[i].cgst_tax;
+            igst += Number(data.items[i].igst_tax || 0);
+            cgst += Number(data.items[i].cgst_tax || 0);
             items_subtotal += data.items[i].total_amount;
 
             var tax_percentage = '--';
@@ -93,7 +97,7 @@ PosnicPro.receivings.view = {
                     '</tr>';
 
             $('#receiving_print_view tbody').append(rowHTMLLine);
-            if (data.items[i].tax_fields.length > 0) {
+            if (Array.isArray(data.items[i].tax_fields) && data.items[i].tax_fields.length > 0) {
                 var taxItemLength = data.items[i].tax_fields.length;
                 for (var z = 0; z < taxItemLength; z++) {
                     var taxItem = data.items[i].tax_fields[z];
@@ -104,10 +108,10 @@ PosnicPro.receivings.view = {
                         "tax_value": taxAmount
                     });
                 }
-            } else if (data.items[i].tax_fields.length === 0 && data.items[i].tax > 0) {
-                var taxAmount = (priceAmount / 100) * data.items[i].tax;
-                let taxName = data.items[i].tax_name;
-                let hsn_id = taxName.slice(4);
+            } else if (tax > 0) {
+                var taxAmount = (priceAmount / 100) * tax;
+                let taxName = data.items[i].tax_name || (tax + '%');
+                let hsn_id = taxName.slice(4) || taxName;
                 itemTaxDetails.push({
                     "tax_id": hsn_id,
                     "tax_name": taxName,
@@ -161,7 +165,7 @@ PosnicPro.receivings.view = {
         }
 
         //Return Receiving details
-        var length_return = data.items_return.length;
+        var length_return = (data.items_return || []).length;
         var items_return_subtotal = 0;
         var returnigst = 0;
         var returncgst = 0;
@@ -189,16 +193,16 @@ PosnicPro.receivings.view = {
             app = app + '' + head + '';
 
             $.each(data.items_return[j].returnArray['returnValue'], function (key, val) {
-                var tax = val.tax;
+                var tax = Number(val.tax ?? val.tax_rate ?? 0);
                 var tax_type = val.tax_type;
                 if (tax_type === 'exclusive') {
-                    var price = val.item_price;
+                    var price = Number(val.item_price);
                 } else {
                     var price = val.item_price / ((tax / 100) + 1);
                 }
                 var priceAmount = ((price.toFixed(2)) * val.item_quantity);
-                returnigst += val.igst_tax;
-                returncgst += val.cgst_tax;
+                returnigst += Number(val.igst_tax || 0);
+                returncgst += Number(val.cgst_tax || 0);
                 items_return_subtotal += val.total_amount;
 
                 var tax_percentage = '--';
@@ -218,7 +222,7 @@ PosnicPro.receivings.view = {
 
                 app = app + '' + body + '';
 
-                if (val.tax_fields.length > 0) {
+                if (Array.isArray(val.tax_fields) && val.tax_fields.length > 0) {
                     var taxItemLength = val.tax_fields.length;
                     for (var y = 0; y < taxItemLength; y++) {
                         var taxItem = val.tax_fields[y];
@@ -229,10 +233,10 @@ PosnicPro.receivings.view = {
                             "tax_value": taxAmount
                         });
                     }
-                } else if (val.tax_fields.length === 0 && val.tax > 0) {
-                    var taxAmount = (priceAmount / 100) * val.tax;
-                    let taxName = val.tax_name;
-                    let hsn_id = taxName.slice(4);
+                } else if (tax > 0) {
+                    var taxAmount = (priceAmount / 100) * tax;
+                    let taxName = val.tax_name || (tax + '%');
+                    let hsn_id = taxName.slice(4) || taxName;
                     returnTaxDetails.push({
                         "tax_id": hsn_id,
                         "tax_name": taxName,
