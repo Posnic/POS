@@ -1256,6 +1256,7 @@ function getMachineId() {
 }
 
 let cloudConnectionBusy = false;
+const { cloudLocalMongoUri } = require('./cloud-local-mongo');
 let cloudResetUri = null;
 async function connectCloudDevice(activation, base) {
   if (cloudConnectionBusy) return { ok: false, error: 'A cloud connection is already in progress.' };
@@ -1274,16 +1275,7 @@ async function connectVerifiedCloudDevice(activation, base) {
 
   // Local installs enable MongoDB auth during setup; the agent must use
   // the same credentials. Fresh cloud-mode installs have no auth yet.
-  let localUri = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
-  try {
-    const credFile = path.join(app.getPath('userData'), '.mongodb-credentials.json');
-    if (fs.existsSync(credFile)) {
-      const creds = JSON.parse(fs.readFileSync(credFile, 'utf8'));
-      if (creds.uri) localUri = creds.uri;
-    }
-  } catch (credErr) {
-    console.warn('[Cloud] Could not read MongoDB credentials:', credErr.message);
-  }
+  const localUri = cloudLocalMongoUri(app);
 
   // Enrollment must never merge two shops. Staff login itself stays local;
   // this online check only runs when connecting or resuming cloud setup.
@@ -1335,7 +1327,6 @@ async function connectVerifiedCloudDevice(activation, base) {
     gatewayUrl,
     deviceToken,
     deviceId,
-    localUri,
     localDb: 'PosnicPro',
     statusPort: 5055
   }, null, 2), { mode: 0o600 });
@@ -1460,11 +1451,11 @@ async function refreshCaptainDiscovery() {
     let config;
     try { config = JSON.parse(fs.readFileSync(CLOUD_CONFIG_FILE, 'utf8')); }
     catch (error) { if (error.code === 'ENOENT') return; throw error; }
-    if (!config.gatewayUrl || !config.deviceToken || !config.localUri) return;
+    if (!config.gatewayUrl || !config.deviceToken) return;
     let savedTenant;
     try { savedTenant = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'cloud-shop-identity.json'), 'utf8')).tenantDb; }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
-    client = new (require('mongodb').MongoClient)(config.localUri, { serverSelectionTimeoutMS: 3000 });
+    client = new (require('mongodb').MongoClient)(cloudLocalMongoUri(app, config.localUri), { serverSelectionTimeoutMS: 3000 });
     await client.connect();
     await require('./cloud-captain-discovery').refresh({ config, savedTenant, db: client.db(config.localDb || 'PosnicPro') });
   } finally {
@@ -1755,21 +1746,16 @@ ipcMain.handle('cloud:create-account', async (_event, details = {}) => {
 ipcMain.handle('cloud:check-data', async () => {
   try {
     const { MongoClient } = require('mongodb');
-    let uri = `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
-    const credFile = path.join(app.getPath('userData'), '.mongodb-credentials.json');
-    if (fs.existsSync(credFile)) {
-      try {
-        const creds = JSON.parse(fs.readFileSync(credFile, 'utf8'));
-        if (creds.uri) uri = creds.uri;
-      } catch (e) { /* fall through */ }
+    const client = new MongoClient(cloudLocalMongoUri(app), { serverSelectionTimeoutMS: 3000 });
+    try {
+      await client.connect();
+      const db = client.db('PosnicPro');
+      const users = await db.collection('users').countDocuments();
+      const branches = await db.collection('branches').countDocuments();
+      return { ok: true, users, branches };
+    } finally {
+      await client.close();
     }
-    const client = new MongoClient(uri, { serverSelectionTimeoutMS: 3000 });
-    await client.connect();
-    const db = client.db('PosnicPro');
-    const users = await db.collection('users').countDocuments();
-    const branches = await db.collection('branches').countDocuments();
-    await client.close();
-    return { ok: true, users, branches };
   } catch (error) {
     return { ok: false, error: error.message };
   }
