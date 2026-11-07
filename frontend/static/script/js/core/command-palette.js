@@ -149,7 +149,7 @@
     ['tax', 'taxes'],
     ['receipt', 'receipts'],
     ['bill', 'bills', 'billing'],
-    ['view', 'show', 'open', 'find'],
+    ['view', 'show', 'open', 'find', 'list', 'browse', 'display'],
     ['edit', 'update', 'change'],
     ['feature', 'features', 'module', 'modules'],
   ];
@@ -170,13 +170,55 @@
         return word;
       });
   }
+  // Primary list destinations own the short operator wording even when a report
+  // has the same menu label. Resolve permissions from the current catalog.
+  const primaryLists = {
+    sales: ['sale', 'sales history'],
+    purchaseorders: ['purchase', 'purchase order'],
+    items: ['item'], customers: ['customer'], suppliers: ['supplier'],
+    quotes: ['quote'], invoices: ['invoice'], categories: ['category'],
+    branches: ['branch'], users: ['user'], roles: ['role'], units: ['unit'],
+    variants: ['variant'], expenses: ['expense'], stocklogs: ['stock log'],
+  };
+  const phraseKey = (text) => words(text).filter((word) => word !== 'view' && word !== 'new').join(' ');
+  function actionIndex(entries) {
+    const index = new Map();
+    function register(action, phrase, entry) {
+      const subject = phraseKey(phrase);
+      if (!subject) return;
+      const key = action + ' ' + subject;
+      if (!index.has(key)) index.set(key, new Set());
+      if (entry) index.get(key).add(entry);
+    }
+    for (const entry of entries) {
+      const action = entry.create ? 'new' : 'view';
+      const labels = [entry.name, ...(entry.phrases || [])];
+      if (entry.hash && !entry.control && !entry.extension) labels.push(entry.hash.replace(/[/_-]/g, ' '));
+      for (const label of labels) register(action, label, entry);
+    }
+    for (const [hash, labels] of Object.entries(primaryLists)) {
+      const destination = entries.find((entry) => entry.hash === hash && !entry.control);
+      for (const label of labels) {
+        const key = 'view ' + phraseKey(label);
+        index.delete(key);
+        register('view', label, destination);
+      }
+    }
+    return index;
+  }
+  function explicitAction(query) {
+    const terms = words(query);
+    const action = terms.find((term) => term === 'view' || term === 'new');
+    return action && terms.length > 1 ? actionsByPhrase.get(action + ' ' + phraseKey(query)) : undefined;
+  }
   function score(query, command) {
     const terms = words(query);
     if (!terms.length) return 0;
     const title = words(command.name);
     if (terms.includes('new') && !command.create) return 0;
-    const aliases = words(command.keywords);
-    const all = title.concat(aliases, ['view']);
+    const aliases = words([command.keywords, ...(command.phrases || [])].join(' '));
+    if (terms.includes('view') && command.create) return 0;
+    const all = title.concat(aliases, command.create ? ['new'] : ['view']);
     if (!terms.every((term) => all.some((word) => word === term || word.startsWith(term)))) return 0;
     if (title.join(' ') === terms.join(' ')) return 4;
     return terms.every((term) => title.includes(term)) ? 3 : 2;
@@ -277,6 +319,7 @@
       list.set(hash, {
         hash,
         name,
+        phrases: [old?.name, label, link.title, link.getAttribute('aria-label'), ...(link.dataset.searchAliases || '').split('|')].filter(Boolean),
         create,
         group,
         keywords: [
@@ -303,6 +346,8 @@
       list.set(hash + '@' + control.id, {
         hash,
         control: control.id,
+        phrases: [label.title, control.getAttribute('aria-label'), control.placeholder,
+          ...(control.dataset.searchAliases || '').split('|')].filter(Boolean),
         name,
         group: 'Settings',
         keywords: [page.name, 'settings', control.id.replace(/_/g, ' ')].join(' '),
@@ -334,6 +379,7 @@
     timer,
     results = [],
     catalog = [],
+    actionsByPhrase = new Map(),
     previousFocus,
     searchScope,
     historyData = { events: [], records: [] };
@@ -452,6 +498,11 @@
     const version = ++sequence;
     const q = node('cmdk-input').value.trim();
     node('cmdk-status').textContent = '';
+    const exact = explicitAction(q);
+    if (exact) {
+      renderList([...exact].filter((entry) => tab === 'All' || entry.group === tab));
+      return;
+    }
     const local = catalog
       .filter((c) => tab === 'All' || c.group === tab)
       .map((c) => ({ ...c, rank: score(q, c) }))
@@ -672,6 +723,7 @@
     node('cmdk-input').focus();
     historyData = { events: [], records: [] };
     catalog = commands();
+    actionsByPhrase = actionIndex(catalog);
     render();
     PosnicPro.get(
       { url: 'extensions/v1', quietStatuses: [403, 404] },
@@ -684,11 +736,12 @@
             catalog.push({
               hash: hash + '/find/' + page.target + '/page',
               name: page.label,
+              phrases: [page.target, ...page.keywords, ext.displayName + ' ' + page.label],
               create: page.action === 'create',
               keywords: [
                 ext.displayName,
                 ...page.keywords,
-                page.action === 'create' ? 'new' : 'settings',
+                page.action === 'create' ? 'new' : 'view',
               ].join(' '),
               group: 'Extensions',
               extension: true,
@@ -703,6 +756,7 @@
               extension: true,
             });
         }
+        actionsByPhrase = actionIndex(catalog);
         render();
       },
       () => {},
