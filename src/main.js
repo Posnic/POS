@@ -1597,6 +1597,7 @@ ipcMain.handle('cloud:status', async () => {
 });
 
 ipcMain.handle('cloud:signup', () => shell.openExternal('https://www.posnic.com/cloud'));
+ipcMain.handle('cloud:plans', () => shell.openExternal('https://www.posnic.com/pricing.html'));
 /*
  * Pairing this till with a code, instead of the shop's password.
  *

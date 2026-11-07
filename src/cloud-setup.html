@@ -75,6 +75,13 @@
             <div class="status-row"><span>Live lane (sales/stock)</span><span class="value muted" id="laneRealtime">, </span></div>
             <div class="status-row"><span>Batch lane (masters)</span><span class="value muted" id="laneBatch">, </span></div>
             <div class="error-box" id="lastErrorBox" style="display:none"></div>
+            <section id="cloudPaused" hidden aria-live="polite">
+                <h3>Cloud access is paused</h3>
+                <p id="cloudPausedHelp"></p>
+                <p>Keep your existing shop and device connection. Local changes wait on this computer until cloud access is restored. Make regular local backups.</p>
+                <button class="btn" id="plansBtn">View cloud plans</button>
+                <p>If this is an account restriction rather than an expired trial, contact info@posnic.com before buying a plan.</p>
+            </section>
         </div>
         <div class="card">
             <h3>Manage</h3>
@@ -137,6 +144,7 @@
             if (!status.connected) return;
 
             const sync = status.sync;
+            $('cloudPaused').hidden = !sync?.cloudPaused;
             $('connState').textContent = 'Activated';
             $('connState').className = 'value ok';
 
@@ -145,7 +153,7 @@
                 $('syncState').className = 'value warn';
                 return;
             }
-            $('syncState').textContent = sync.online ? 'Online, syncing' : 'Offline, retrying automatically';
+            $('syncState').textContent = sync.cloudPaused ? 'Paused — cloud access required' : sync.online ? 'Online, syncing' : 'Offline, retrying automatically';
             $('syncState').className = 'value ' + (sync.online ? 'ok' : 'bad');
             $('initialSync').textContent = sync.initialSyncComplete
                 ? 'Complete'
@@ -159,7 +167,10 @@
             $('laneRealtime').textContent = fmtLane(sync.last_realtime);
             $('laneBatch').textContent = fmtLane(sync.last_batch);
 
-            const showError = sync.lastError && !sync.online;
+            $('cloudPausedHelp').textContent = sync.initialSyncComplete
+                ? 'Continue using this downloaded shop locally in Community mode. Sales, receipts, stock and local backups remain available.'
+                : 'The initial shop download is not complete. Do not assume this computer has all your cloud data. Restore a local backup or restore cloud access to finish downloading.';
+            const showError = sync.lastError && !sync.online && !sync.cloudPaused;
             $('lastErrorBox').style.display = showError ? 'block' : 'none';
             if (showError) {
                 $('lastErrorBox').textContent =
@@ -173,6 +184,7 @@
             connectCloud(() => window.electronAPI.cloud.authorize('signup'), true);
         });
         $('viewLogBtn').addEventListener('click', () => window.electronAPI?.desktop?.open('log'));
+        $('plansBtn').addEventListener('click', () => window.electronAPI?.cloud?.plans());
         $('refreshBtn').addEventListener('click', refreshStatus);
 
         $('disconnectBtn').addEventListener('click', async () => {
