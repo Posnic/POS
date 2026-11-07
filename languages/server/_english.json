@@ -542,6 +542,9 @@
   "Could not queue the print job": [
     "src/repositories/print-job.repository.js"
   ],
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": [
+    "src/controllers/help-feedback.controller.js"
+  ],
   "Could not read branch modules": [
     "src/controllers/settings.controller.js"
   ],
@@ -1749,6 +1752,10 @@
   "Please sign in again.": [
     "src/routes/auth-utils.routes.js"
   ],
+  "Please wait a minute before sending another request.": [
+    "src/routes/base.routes.js",
+    "src/services/help-feedback.service.js"
+  ],
   "Posnic API v2 root": [
     "app.js"
   ],
@@ -2197,6 +2204,9 @@
   ],
   "Suppliers retrieved successfully": [
     "src/services/supplier.service.js"
+  ],
+  "Support could not accept the request. Your comment is kept; please retry.": [
+    "src/services/help-feedback.service.js"
   ],
   "System roles cannot be deleted": [
     "src/repositories/role.repository.js"

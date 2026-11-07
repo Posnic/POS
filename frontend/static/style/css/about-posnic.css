@@ -8,7 +8,7 @@
     color: var(--theme-text-muted);
     font-size: 12px;
 }
-.posnic-about-link {
+.posnic-about-link, .posnic-feedback-link {
     padding: 6px 0;
     border: 0;
     background: transparent;
@@ -17,8 +17,8 @@
     text-decoration: underline;
     text-underline-offset: 3px;
 }
-.posnic-about-link:hover { color: var(--theme-primary-color); }
-.posnic-about-link:focus-visible { outline: 2px solid var(--theme-primary-color); outline-offset: 4px; }
+.posnic-about-link:hover, .posnic-feedback-link:hover { color: var(--theme-primary-color); }
+.posnic-about-link:focus-visible, .posnic-feedback-link:focus-visible { outline: 2px solid var(--theme-primary-color); outline-offset: 4px; }
 .posnic-about-dialog { max-width: 480px; }
 .posnic-about-product { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
 .posnic-about-details {
@@ -36,5 +36,5 @@
     .posnic-about-dialog { margin: 12px; }
 }
 @media print {
-    .posnic-app-footer, #posnic_about_dialog { display: none !important; }
+    .posnic-app-footer, #posnic_about_dialog, #posnic_feedback_dialog { display: none !important; }
 }

@@ -202,6 +202,10 @@
       "description": "Mounted at /sales"
     },
     {
+      "name": "Search",
+      "description": "Mounted at /search"
+    },
+    {
       "name": "Settings groups",
       "description": "Mounted at /settings/group"
     },
@@ -1478,6 +1482,51 @@
         "operationId": "post_authorizations_verify_card",
         "tags": [
           "Authorizations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/base/help-feedback": {
+      "get": {
+        "summary": "getContext",
+        "operationId": "get_base_help_feedback",
+        "tags": [
+          "Base"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "submit",
+        "operationId": "post_base_help_feedback",
+        "tags": [
+          "Base"
         ],
         "responses": {
           "200": {
@@ -21207,6 +21256,120 @@
               "type": "string"
             }
           }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/search": {
+      "post": {
+        "summary": "e",
+        "operationId": "post_search",
+        "tags": [
+          "Search"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/search/resolve": {
+      "post": {
+        "summary": "e",
+        "operationId": "post_search_resolve",
+        "tags": [
+          "Search"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
+    "/search/history": {
+      "get": {
+        "summary": "e",
+        "operationId": "get_search_history",
+        "tags": [
+          "Search"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "e",
+        "operationId": "post_search_history",
+        "tags": [
+          "Search"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      },
+      "delete": {
+        "summary": "e",
+        "operationId": "delete_search_history",
+        "tags": [
+          "Search"
         ],
         "responses": {
           "200": {

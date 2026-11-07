@@ -3,9 +3,32 @@ const router = express.Router();
 const BaseController = require('../controllers/base.controller');
 const { protect, optionalProtect } = require('../middleware/auth');
 const pkg = require('../../package.json');
+const { rateLimit } = require('express-rate-limit');
+const feedbackController = require('../controllers/help-feedback.controller');
 
 const baseController = new BaseController();
 const bindController = (handler) => handler.bind(baseController);
+
+// Available to signed-in Community and Cloud users without Messaging or a
+// paid sync subscription. No business data is written or queued for sync.
+router.get('/help-feedback', protect, feedbackController.getContext);
+router.post(
+  '/help-feedback',
+  protect,
+  rateLimit({
+    windowMs: 60000,
+    limit: 3,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) =>
+      `${req.tenantContext?.licenseId || ''}:${req.user?._id || req.user?.id || ''}`,
+    handler: (_req, res) =>
+      res
+        .status(429)
+        .json({ type: 'error', message: 'Please wait a minute before sending another request.' }),
+  }),
+  feedbackController.submit
+);
 
 // Health check endpoints (no auth required)
 router.get('/', (req, res) => {

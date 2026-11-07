@@ -1,5 +1,8 @@
 <footer class="posnic-app-footer hidden-print">
     <span id="posnic_version_line" hidden></span>
+    <button type="button" class="posnic-feedback-link" data-toggle="modal" data-target="#posnic_feedback_dialog">
+        <i class="mdi mdi-message-outline" aria-hidden="true"></i> <lang class="lang_help_feedback">Help &amp; feedback</lang>
+    </button>
     <button type="button" class="posnic-about-link" data-toggle="modal" data-target="#posnic_about_dialog">
         <lang class="lang_about_posnic">About Posnic</lang>
     </button>
@@ -34,5 +37,48 @@
                 </button>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="modal fade" id="posnic_feedback_dialog" tabindex="-1" role="dialog" aria-labelledby="posnic_feedback_title">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <form class="modal-content" id="posnic_feedback_form">
+            <div class="modal-header">
+                <h5 class="modal-title" id="posnic_feedback_title"><lang class="lang_help_feedback">Help &amp; feedback</lang></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-t-aria-label="lang_close_title"><span aria-hidden="true"><lang class="lang_text">&times;</lang></span></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted"><lang class="lang_feedback_destination">Send a request to info@posnic.com. Available in Community and Cloud. Internet access is required.</lang></p>
+                <div class="form-group">
+                    <label for="posnic_feedback_category"><lang class="lang_feedback_type">Request type</lang></label>
+                    <select class="form-control" id="posnic_feedback_category" required>
+                        <option value="help" data-t="lang_feedback_help"><lang class="lang_feedback_help">Need help</lang></option>
+                        <option value="feedback" data-t="lang_feedback_feedback"><lang class="lang_feedback_feedback">Feedback</lang></option>
+                        <option value="complaint" data-t="lang_feedback_complaint"><lang class="lang_feedback_complaint">Complaint</lang></option>
+                        <option value="suggestion" data-t="lang_feedback_suggestion"><lang class="lang_feedback_suggestion">Suggestion</lang></option>
+                        <option value="other" data-t="lang_feedback_other"><lang class="lang_feedback_other">Other</lang></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="posnic_feedback_email"><lang class="lang_feedback_email">Reply email</lang> <span aria-hidden="true">*</span></label>
+                    <input class="form-control" id="posnic_feedback_email" type="email" maxlength="254" autocomplete="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="posnic_feedback_name"><lang class="lang_feedback_name">Name (optional)</lang></label>
+                    <input class="form-control" id="posnic_feedback_name" maxlength="120" autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="posnic_feedback_comment"><lang class="lang_feedback_comment">Comment</lang> <span aria-hidden="true">*</span></label>
+                    <textarea class="form-control" id="posnic_feedback_comment" rows="5" maxlength="7000" required aria-describedby="posnic_feedback_privacy"></textarea>
+                    <small class="form-text text-muted" id="posnic_feedback_privacy"><lang class="lang_feedback_privacy">Please do not include passwords, payment card details or customer records.</lang></small>
+                </div>
+                <p class="text-muted small" id="posnic_feedback_context"></p>
+                <div id="posnic_feedback_status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal"><lang class="lang_close_title">Close</lang></button>
+                <button type="submit" class="btn btn-primary" id="posnic_feedback_send"><lang class="lang_feedback_send">Send request</lang></button>
+            </div>
+        </form>
     </div>
 </div>
