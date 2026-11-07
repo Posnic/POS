@@ -60,6 +60,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // /api/install/* without one, and it is generated per installation rather
   // than shipped in the source.
   install: {
+    currentShop: () => ipcRenderer.invoke('shops:current'),
+    manageShops: () => ipcRenderer.invoke('shops:manage'),
+    shops: () => ipcRenderer.invoke('shops:list'),
+    openShop: id => ipcRenderer.invoke('shops:open', id),
     credentials: () => ipcRenderer.invoke('install:credentials'),
     state: () => ipcRenderer.invoke('install:state'),
     continueExisting: () => ipcRenderer.invoke('install:continue'),
@@ -71,7 +75,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     reopenAuthorization: () => ipcRenderer.invoke('cloud:reopen-authorization'),
     activate:   (details) => ipcRenderer.invoke('cloud:activate', details),
     resume: () => ipcRenderer.invoke('cloud:resume'),
-    resetLocalShop: () => ipcRenderer.invoke('cloud:reset-local-shop'),
+    manageShops: () => ipcRenderer.invoke('cloud:manage-shops'),
     status:     () => ipcRenderer.invoke('cloud:status'),
     signup:     () => ipcRenderer.invoke('cloud:signup'),
     /* Opening an account from inside the installer, so "I do not have one yet"

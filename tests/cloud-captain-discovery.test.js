@@ -25,7 +25,7 @@ test('verified discovery is stored against the local branch without changing the
 });
 test('a different tenant or branch cannot publish a cloud route', async () => {
   for (const identity of [{ tenantDb: 'other', branchIds: [id] }, { tenantDb: 'shop_one', branchIds: ['b'.repeat(24)] }]) {
-    const f = fixture(identity); await assert.rejects(refresh(f.args), /never merged/); assert.equal(f.writes.length, 0);
+    const f = fixture(identity); await assert.rejects(refresh(f.args), { code: 'LOCAL_SHOP_CONFLICT' }); assert.equal(f.writes.length, 0);
   }
 });
 test('old gateways and failed requests preserve cached details; explicit null clears only discovery', async () => {
