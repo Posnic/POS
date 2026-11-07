@@ -97,6 +97,7 @@ class StockLogController extends BaseController {
 
       const parsedPage = parseInt(page);
       const result = await this.service.getStockLogs(parsedFilters, {
+        movementSort: req.query.movementSort,
         page: parsedPage && parsedPage > 0 ? parsedPage : 1,
         limit: parseInt(limit) || 10,
       });

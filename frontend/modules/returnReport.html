@@ -60,6 +60,11 @@
                                 <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="return-line" role="tabpanel" aria-labelledby="return-tab-line">
+                                <div id="return-sale-facets" class="d-flex flex-wrap my-2" style="gap:.5rem">
+                                    <input type="search" class="form-control" style="max-width:20rem" aria-label="Find returned sales" placeholder="Return, sale ID or customer">
+                                    <input type="search" class="form-control" style="max-width:14rem" aria-label="Choose customer" placeholder="Choose customer">
+                                    <select class="form-control" style="width:auto" aria-label="Sort returned sales"><option value="amount">Largest refund</option><option value="new">Newest return</option></select>
+                                </div>
                                 <!-- start table -->
                                 <div class="row reportresale_header">
                                     <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">

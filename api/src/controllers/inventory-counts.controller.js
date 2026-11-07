@@ -31,7 +31,7 @@ module.exports = {
   async list(req, res) {
     if (!allowed(req, 'read'))
       return res.status(403).json({ type: 'error', message: 'Unauthorized access', data: null });
-    return send(res, await repository.list(context(req)));
+    return send(res, await repository.list(context(req), req.query));
   },
   async get(req, res) {
     if (!allowed(req, 'read'))

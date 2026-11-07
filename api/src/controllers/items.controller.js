@@ -303,6 +303,7 @@ class ItemsController extends BaseController {
         price_asc: { selling_price: 1, _id: -1 },
         cost_desc: { company_price: -1, _id: -1 },
         cost_asc: { company_price: 1, _id: -1 },
+        created_desc: { created_date: -1, _id: -1 },
         stock_asc: { available_quantity: 1, _id: -1 },
         stock_desc: { available_quantity: -1, _id: -1 },
       };

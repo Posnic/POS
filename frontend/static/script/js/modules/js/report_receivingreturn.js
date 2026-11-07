@@ -13,6 +13,16 @@ PosnicPro.returnreceivingreport = {
     showDataTablePage: function () {
         var loader = $(".loader-return-report");
         loader.find(".loadingSpinner:first").remove();
+        var pending;
+        function reload() {
+            clearTimeout(pending);
+            pending = setTimeout(function () {
+                $('#view_returnreceivingreport').data('current_page', 1);
+                PosnicPro.returnreceivingreport.returnreceivingreportTable();
+            }, 220);
+        }
+        $('#return-report-query,#return-report-sort').off('.returnFilter').on('input.returnFilter change.returnFilter', reload);
+        PosnicPro.listFilter.reportParty($('#return-report-party'), reload);
         PosnicPro.dashboard.datePicker();
         PosnicPro.HideSideBarModal();
         $(".vertical-layout").removeClass("toggle-menu");
@@ -66,13 +76,21 @@ PosnicPro.returnreceivingreport = {
                 limit: per_page,
                 starting_date: fields[0],
                 ending_date: fields[1],
+                search: $('#return-report-query').val(), supplierId: $('#return-report-party').data('partyId'),
+                sort: $('#return-report-sort').val(),
                 branch: $("#return_receiving_branch_value").val()
             };
             var params = {
                 url: 'receivings/returnReceivingReportTable',
                 data: data
             };
+            var requestTag = type === 'returnreceivingreportexport' ? 0 : (table.data('filterRequest') || 0) + 1;
+            if (requestTag) table.data('filterRequest', requestTag);
             PosnicPro.get(params, function (response) {
+                if (requestTag && table.data('filterRequest') !== requestTag) {
+                    loader.find('.loadingSpinner:first').remove();
+                    return;
+                }
                 if (response.type === 'success') {
                     (response.data.total > 0) ? $('#returnreceivingreport_exportbtn').removeAttr('disabled') : $('#returnreceivingreport_exportbtn').attr('disabled', 'disabled');
                     if (type !== 'returnreceivingreportexport') {

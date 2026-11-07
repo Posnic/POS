@@ -28,6 +28,9 @@ class StockLogsRepository extends BaseModel {
         is_deleted: { $ne: true },
       };
 
+      if (typeof query.view_item_id === 'string' && ObjectId.isValid(query.view_item_id)) {
+        query.view_item_id = new ObjectId(query.view_item_id);
+      }
       if (BaseModel.license) {
         query.license = BaseModel.license;
       }
@@ -39,6 +42,20 @@ class StockLogsRepository extends BaseModel {
       // Apply date range filters for all date fields (created_date, updated_date, etc.)
       applyDateRangeFilters(query, filters);
 
+      if (['increase', 'decrease'].includes(options.movementSort)) {
+        const number = field => ({ $convert:{input:'$' + field,to:'double',onNull:null,onError:null} });
+        const delta = { $subtract:[number('closing_balance'),number('opening_balance')] };
+        const order = options.movementSort === 'increase' ? -1 : 1;
+        const collection = await this.getCollection(this.collectionName);
+        const [result] = await collection.aggregate([
+          { $match: query }, { $set:{movementDelta:delta} },
+          { $match:{movementDelta:options.movementSort === 'increase' ? {$gt:0} : {$lt:0,$ne:null}} },
+          { $facet:{list:[{$sort:{movementDelta:order,date:-1,_id:-1}},{$skip:(page-1)*limit},{$limit:limit}],
+                    counts:[{$count:'total'}]} }
+        ]).toArray();
+        const total = result.counts[0]?.total || 0;
+        return {status:true,data:{list:result.list,total,current_page:page,per_page:limit,total_pages:Math.ceil(total/limit)}};
+      }
       // Get paginated results using BaseModel.page helper.
       // Signature: page(collectionName, limitCheck, filter, options, fields)
       const result = await this.page(

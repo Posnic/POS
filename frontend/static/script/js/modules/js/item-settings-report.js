@@ -67,6 +67,11 @@
             }, function () { if (ticket === request) { $('#expiry_report_summary').text(''); failed(); } });
         }
     };
+    var expiryDelay;
+    $(document).on('input', '#expiry_report_search,#expiry_report_days', function () {
+        clearTimeout(expiryDelay);
+        if ($('#expiry_report_days')[0].checkValidity() && $('#expiry_report_days').val() !== '') expiryDelay = setTimeout(function () { PosnicPro.expiryreport.load(1); },240);
+    }).on('change','#expiry_report_sort,#expiry_report_status',function () { clearTimeout(expiryDelay); PosnicPro.expiryreport.load(1); });
     $(document).on('submit', '#expiry_report_filters', function (e) { e.preventDefault(); PosnicPro.expiryreport.load(1); });
     $(document).on('click', '#expiry_report_previous', function () { PosnicPro.expiryreport.load(page - 1); });
     $(document).on('click', '#expiry_report_next', function () { PosnicPro.expiryreport.load(page + 1); });

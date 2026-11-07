@@ -79,7 +79,13 @@
                             <li class="nav-item">
                                 <a class="nav-link active report_tab_font" id="sale-view-tab-line" data-toggle="tab"
                                     href="#sale-view-line" role="tab" aria-controls="sale-view-line"
-                                    aria-selected="true" onClick="PosnicPro.salereport.saleTableTabClick();"><i class="feather icon-shopping-cart mr-1"></i>
+                                    aria-selected="true" onClick="PosnicPro.salereport.saleTableTabClick();">
+                                <div id="sale-report-facets" class="d-flex flex-wrap my-2" style="gap:.5rem">
+                                    <input type="search" class="form-control" aria-label="Search receipts" placeholder="Sale ID, invoice or customer" style="max-width:20rem">
+                                    <input type="search" class="form-control" aria-label="Choose customer" placeholder="Choose customer" style="max-width:14rem">
+                                    <select class="form-control" aria-label="Payment method" style="width:auto"><option value="">Payment method</option><option>Cash</option><option>Card</option><option>UPI</option></select>
+                                    <button type="button" aria-pressed="false" class="btn btn-outline-primary">My sales</button>
+                                </div><i class="feather icon-shopping-cart mr-1"></i>
                                     <lang class="lang_salereport_title"> Detailed Sales </lang>
                                 </a>
                             </li>

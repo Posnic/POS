@@ -598,7 +598,65 @@ PosnicPro = {
             $('#dropdownMenuLink').removeClass('dropdown-toggle');
             if (document.getElementById("dropdownMenuLink")) document.getElementById("dropdownMenuLink").disabled = true;
         }
+        $('.row_filter .custom_search_input').each(function () {
+            var input = $(this), bar = input.closest('.row_filter');
+            var apply = bar.find('button[onclick*="PosnicPro.search("]').first();
+            if (!apply.length || input.data('quickSearch')) return;
+            var delay;
+            input.data('quickSearch',true).parent().addClass('lf-legacy-primary');
+            bar.find('select[id$="_fields"]').parent().addClass('lf-legacy-primary');
+            function commit() {
+                var module = apply.data('id');
+                $('#view_' + module).data('current_page', 1);
+                apply.trigger('click');
+            }
+            input.on('input',function () { clearTimeout(delay); delay=setTimeout(commit,250); })
+                .on('keydown',function (e) { if(e.key==='Enter'){e.preventDefault();clearTimeout(delay);commit();} });
+            bar.find('select[id$="_fields"]').on('change',function () { if(input.val()) commit(); });
+        });
+        $('.row_filter').each(function () {
+            var bar = $(this), period = bar.find('.daterange-style').first();
+            var apply = bar.find('button').filter(function(){return $(this).text().trim()==='Apply' || $(this).find('.lang_filter_title').length && !$(this).hasClass('click-action-button');}).last();
+            if (apply.length) bar.find('.custom_report_search_input').parent().addClass('lf-legacy-primary');
+            if (!period.length || !apply.length || bar.next().hasClass('report-quick-days')) return;
+            var quick = $('<div class="report-quick-days d-flex flex-wrap my-2">').insertAfter(bar);
+            ['Yesterday','Today','Last 7 days'].forEach(function(label) {
+                $('<button type="button" class="btn btn-sm btn-outline-primary mr-1">').text(label).appendTo(quick).on('click',function(){
+                    var end=moment(), start=moment();
+                    if(label==='Yesterday'){end.subtract(1,'day');start.subtract(1,'day');}
+                    if(label==='Last 7 days') start.subtract(6,'day');
+                    start.startOf('day');end.endOf('day');
+                    var picker=period.data('daterangepicker');
+                    if(picker){picker.setStartDate(start);picker.setEndDate(end);}
+                    period.val(start.format('YYYY/MM/DD h:mm A')+' - '+end.format('YYYY/MM/DD h:mm A'));
+                    period.find('span').first().empty().append($('<span data-toggle="tooltip">').attr({'title':label,'data-original-title':label}).text(label));
+                    quick.find('button').removeClass('btn-primary').attr('aria-pressed','false');
+                    $(this).addClass('btn-primary').attr('aria-pressed','true');
+                    bar.closest('.page_loader').find('table').data('current_page',1);
+                    apply.trigger('click');
+                });
+            });
+            // Keep the active period and the report's existing selectors above the table.
+            period.parent().addClass('lf-legacy-primary');
+            var choices = bar.find('select').filter(function () { return $(this).closest('.tb_filter').length; });
+            choices.parent().addClass('lf-legacy-primary');
+            function applyChoices() {
+                window.clearTimeout(bar.data('applyTimer'));
+                bar.data('applyTimer',window.setTimeout(function () {
+                    if (!bar.is(':visible')) return;
+                    bar.closest('.page_loader').find('table').data('current_page',1);
+                    apply.trigger('click');
+                }, 0));
+            }
+            choices.on('select2:select.quickDays select2:unselect.quickDays', applyChoices);
+            choices.filter(':not(.select2)').on('change.quickDays', applyChoices);
+            period.on('apply.daterangepicker.quickDays',function(){
+                quick.find('button').removeClass('btn-primary').attr('aria-pressed','false');
+                applyChoices();
+            });
+        });
         var listBranch = AllbranchOption.concat(branchOption);
+        $('.row_filter .load-branch').closest('.tb_filter').toggleClass('single-branch-filter', allbranch.length <= 1);
         $('.load-branch').html(listBranch);
         $('.load-select-branch').html(branchOption);
         var branch_id = PosnicPro.local.get('branch_id_set');
@@ -2249,12 +2307,21 @@ PosnicPro = {
         runReport: function () {
             var from = $('#labour_report_from').val();
             var to = $('#labour_report_to').val();
+            var employee = $('#labour-report-employee').val() || '';
+            var ticket = PosnicPro.shiftWidget._reportSequence = (PosnicPro.shiftWidget._reportSequence || 0) + 1;
             PosnicPro.shiftWidget._lastRange = { from: from, to: to };
             PosnicPro.shiftWidget._lastReport = null;
             $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-muted">Loading…</td></tr>');
             $('#labour_report_foot').html('');
-            var url = 'shifts/report?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to);
+            var url = 'shifts/report?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) + '&user_id=' + encodeURIComponent(employee);
             PosnicPro.get(url, function (response) {
+                if (ticket !== PosnicPro.shiftWidget._reportSequence) return;
+                if (!employee) {
+                    var select = $('#labour-report-employee').empty().append($('<option>').val('').text('All employees'));
+                    (response.data?.rows || []).forEach(function (row) {
+                        if (row.user_id) select.append($('<option>').val(row.user_id).text(row.user_name || row.user_id));
+                    });
+                }
                 PosnicPro.shiftWidget._renderReport(response && response.data);
             }, function () {
                 $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-danger"><lang class="lang_could_not_load_the_report">Could not load the report.</lang></td></tr>');
@@ -2333,7 +2400,7 @@ PosnicPro = {
         exportTimecards: function () {
             var from = $('#labour_report_from').val();
             var to = $('#labour_report_to').val();
-            var url = 'shifts/?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) + '&limit=5000';
+            var url = 'shifts/?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) + '&limit=5000&user_id=' + encodeURIComponent($('#labour-report-employee').val() || '');
             PosnicPro.get(url, function (response) {
                 var shifts = (response && response.data) || [];
                 if (!shifts.length) {
@@ -5718,7 +5785,7 @@ $('.custom_report_search_input').on('keypress keydown.autocomplete', function ()
             var suggestions = [];
             var params = {
                 url: 'base/autoSuggestionReportTableField',
-                data: 'query=' + query + '&field=' + field_name + '&module=' + module + '&branch[]=' + branch
+                data: {query:query, field:field_name, module:module, branch:branch}
             };
             PosnicPro.get(params, function (response) {
                 $('.' + module + '_input_id').val('');
@@ -5730,7 +5797,10 @@ $('.custom_report_search_input').on('keypress keydown.autocomplete', function ()
             });
         },
         onSelect: function (suggestion) {
-            $('.' + module + '_input_id').val(suggestion.id);
+            var row = $(this.el || this).closest('.row_filter');
+            if (!row.length) row = $('.row_filter:visible').first();
+            row.find('.' + module + '_input_id').val(suggestion.id);
+            row.find('button[onclick*="viewPage"]').first().trigger('click');
         },
         autoSelectFirst: true
     });
@@ -6363,41 +6433,47 @@ PosnicPro.gstreadiness = {
         $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted"><lang class="lang_scanning">Scanning&hellip;</lang></td></tr>');
         PosnicPro.get('items/gstReadiness', function (response) {
             var d = (response && response.data) || {};
-            PosnicPro.gstreadiness._last = d;
-            var retired = d.retired || [];
-            var differs = d.differs || [];
+            function paint() {
+                var q = String($('#gst-item-query').val() || '').trim().toLowerCase();
+                function matches(r) { return [r.name,r.hsncode].some(function (v) { return String(v || '').toLowerCase().includes(q); }); }
+                var retired = (d.retired || []).filter(matches);
+                var differs = (d.differs || []).filter(matches);
+                PosnicPro.gstreadiness._last = {retired:retired,differs:differs};
 
-            $('#gstready_counts').text(
-                (retired.length + differs.length) + ' of ' + (d.examined || 0) + ' items need a look'
-            );
-            $('#gstready_notice').text(d.notice || '').toggle(!!d.notice);
+                $('#gstready_counts').text(
+                    (q ? (retired.length + differs.length) + ' matches · ' : '') + ((d.retired || []).length + (d.differs || []).length) + ' of ' + (d.examined || 0) + ' items need a look'
+                );
+                $('#gstready_notice').text(d.notice || '').toggle(!!d.notice);
 
-            if (!retired.length) {
-                $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted">'
-                    + 'Nothing on a withdrawn slab - this part is done.</td></tr>');
-            } else {
-                $('#gstready_retired').html(retired.map(function (r) {
-                    return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
-                        + '<td>' + esc(r.name) + '</td>'
-                        + '<td>' + (esc(r.hsncode) || '<span class="text-muted">not set</span>') + '</td>'
-                        + '<td class="text-right text-danger font-weight-bold">' + r.rate + '%</td>'
-                        + '<td class="text-muted">' + esc(r.reason) + '</td></tr>';
-                }).join(''));
+                if (!retired.length) {
+                    $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted">'
+                        + (q ? 'No matches.' : 'Nothing on a withdrawn slab - this part is done.') + '</td></tr>');
+                } else {
+                    $('#gstready_retired').html(retired.map(function (r) {
+                        return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
+                            + '<td>' + esc(r.name) + '</td>'
+                            + '<td>' + (esc(r.hsncode) || '<span class="text-muted">not set</span>') + '</td>'
+                            + '<td class="text-right text-danger font-weight-bold">' + r.rate + '%</td>'
+                            + '<td class="text-muted">' + esc(r.reason) + '</td></tr>';
+                    }).join(''));
+                }
+
+                if (!differs.length) {
+                    $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted">'
+                        + (q ? 'No matches.' : 'No item disagrees with a live reference rate.') + '</td></tr>');
+                } else {
+                    $('#gstready_differs').html(differs.map(function (r) {
+                        return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
+                            + '<td>' + esc(r.name) + '</td>'
+                            + '<td>' + esc(r.hsncode) + '</td>'
+                            + '<td class="text-right">' + r.rate + '%</td>'
+                            + '<td class="text-right">' + r.reference_rate + '%</td>'
+                            + '<td class="text-muted">HSN ' + esc(r.matched_on) + '</td></tr>';
+                    }).join(''));
+                }
             }
-
-            if (!differs.length) {
-                $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted">'
-                    + 'No item disagrees with a live reference rate.</td></tr>');
-            } else {
-                $('#gstready_differs').html(differs.map(function (r) {
-                    return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
-                        + '<td>' + esc(r.name) + '</td>'
-                        + '<td>' + esc(r.hsncode) + '</td>'
-                        + '<td class="text-right">' + r.rate + '%</td>'
-                        + '<td class="text-right">' + r.reference_rate + '%</td>'
-                        + '<td class="text-muted">HSN ' + esc(r.matched_on) + '</td></tr>';
-                }).join(''));
-            }
+            $('#gst-item-query').off('input.gstFilter').on('input.gstFilter',paint);
+            paint();
         }, function () {
             $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted"><lang class="lang_could_not_run_the_scan_try_again">Could not run the scan - try again.</lang></td></tr>');
             $('#gstready_differs').html('');
@@ -7008,7 +7084,16 @@ PosnicPro.roster = {
         $('#roster_view_body').html('<div class="text-center text-muted p-4"><lang class="lang_loading">Loading&hellip;</lang></div>');
         var url = 'shifts/schedule?from=' + encodeURIComponent(fmt(monday)) + '&to=' + encodeURIComponent(fmt(sunday));
         PosnicPro.get(url, function (res) {
-            PosnicPro.roster._render((res && res.data) || []);
+            if (monday !== PosnicPro.roster._monday) return;
+            var entries = (res && res.data) || [];
+            function render() {
+                var q = String($('#roster-staff-query').val() || '').trim().toLowerCase();
+                PosnicPro.roster._render(entries.filter(function (e) {
+                    return !q || [e.user_name,e.user_id].some(function (v) { return String(v || '').toLowerCase().includes(q); });
+                }));
+            }
+            $('#roster-staff-query').off('input.staffFilter').on('input.staffFilter',render);
+            render();
         }, function () {
             $('#roster_view_body').html('<div class="text-center text-danger p-4"><lang class="lang_could_not_load_the_roster">Could not load the roster.</lang></div>');
         });
@@ -7238,3 +7323,24 @@ PosnicPro.itemStockPreference = {
     document.addEventListener('pointerdown', show, true);
     document.addEventListener('keydown', show, true);
 })();
+
+// Filing reports show official totals even while an operator locates a detail row.
+$(document).on('input', '[data-filing-find] input', function () {
+    var bar = $(this).closest('[data-filing-find]'), root = bar.closest('.page_loader');
+    var query = this.value.trim().toLowerCase();
+    root.find('.filing-match').removeClass('filing-match');
+    var rows = query ? root.find('tbody tr:visible').filter(function () {
+        return this.textContent.toLowerCase().includes(query);
+    }) : $();
+    bar.data('matches',rows).data('position',-1);
+    bar.find('[role=status]').text(query ? rows.length + ' matches in this section' : '');
+    rows.addClass('filing-match');
+}).on('click','[data-next-match]',function () {
+    var bar = $(this).closest('[data-filing-find]'), input = bar.find('input'), previous = bar.data('position');
+    input.trigger('input');
+    var rows = bar.data('matches');
+    if (!rows?.length) return;
+    var index = ((previous ?? -1) + 1) % rows.length;
+    bar.data('position',index).find('[role=status]').text((index+1) + ' of ' + rows.length);
+    rows[index].scrollIntoView({block:'center'});
+});

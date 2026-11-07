@@ -50,6 +50,7 @@ PosnicPro.invoices = {
         $('.vertical-menu li a').removeClass('active');
         $('.page_loader,#osk-container').hide();
         $('.page-title-box,#invoices_new').show();
+        PosnicPro.invoices.mountFilters();
         $('#invoices_view_card,#invoices_edit_card').hide();
         $('#invoices_list_card').show();
         $('#invoices_new .contentbar').removeClass('master-detail invoices-split rail-collapsed');
@@ -1141,6 +1142,7 @@ PosnicPro.invoices.mountFilters = function () {
     if (!$('#invoices_filter_panel').length) { return; }
     PosnicPro.listFilter.mount({
         key: 'invoices',
+            partyFilter: 'customers',
             rows: '#invoices_list_rows',
             onRefresh: function () { return PosnicPro.invoices.load(true); },
         container: '#invoices_filter_panel',

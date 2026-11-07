@@ -1,5 +1,6 @@
 PosnicPro.receivingreport = {
     showDataTablePage: function () {
+        PosnicPro.listFilter.reportParty($("#purchase-report-supplier"), function () { $("#purchase-report-query").trigger("change"); });
         var loader = $(".loader-receiving-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.dashboard.datePicker();
@@ -57,13 +58,22 @@ PosnicPro.receivingreport = {
                 limit: per_page,
                 starting_date: fields[0],
                 ending_date: fields[1],
-                branch: $(".receiving_branch_value").val()
+                branch: $(".receiving_branch_value").val(),
+                search: $('#purchase-report-query').val(), supplierId: $('#purchase-report-supplier').data('partyId'),
+                supplier: $('#purchase-report-supplier').data('partyId') ? '' : $('#purchase-report-supplier').val(),
+                sort: $('#purchase-report-sort').val()
             };
             var params = {
                 url: 'receivings/receivingReportTable',
                 data: data
             };
+            var requestTag = type === 'receivingreportexport' ? 0 : (table.data('filterRequest') || 0) + 1;
+            if (requestTag) table.data('filterRequest', requestTag);
             PosnicPro.get(params, function (response) {
+                if (requestTag && table.data('filterRequest') !== requestTag) {
+                    loader.find('.loadingSpinner:first').remove();
+                    return;
+                }
                 loader.find(".loadingSpinner:first").remove();
                 if (response.type === 'success') {
                     (response.data.total > 0) ? $('#receivingreport_exportbtn').removeAttr('disabled') : $('#receivingreport_exportbtn').attr('disabled', 'disabled');
@@ -206,3 +216,15 @@ $(document).on("click", "#view_receivingreport tbody tr td .exploder", function 
         $(this).closest("tr").next("tr").children("td").slideDown(100);
     }
 });
+
+(function () {
+    var pending;
+    $(document).on('input change','#purchase-report-query,#purchase-report-supplier,#purchase-report-sort',function () {
+        clearTimeout(pending);
+        pending=setTimeout(function(){
+            if (!$('#receivingreport_new').is(':visible')) return;
+            $('#view_receivingreport').data('current_page',1);
+            PosnicPro.receivingreport.receivingreportTable();
+        },220);
+    });
+})();

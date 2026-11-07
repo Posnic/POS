@@ -3,6 +3,11 @@
     <div id="containerbar">
         <!-- Start Breadcrumbbar -->
         <div class="breadcrumbbar crumbbar_padding">
+            <div class="d-flex flex-wrap mb-2" style="gap:.5rem">
+                <input type="search" id="return-report-query" aria-label="Search purchase returns" placeholder="Purchase number or supplier" class="form-control lf-primary">
+                <input type="search" id="return-report-party" aria-label="Choose supplier" placeholder="Choose supplier" class="form-control lf-primary">
+                <select id="return-report-sort" aria-label="Sort returns" class="form-control" style="width:auto"><option value="amount">Largest return</option><option value="new">Newest first</option><option value="old">Oldest first</option></select>
+            </div>
             <div class="row align-items-center row_filter">
                 <div class="col-lg-2 col-xl-2">
                     <h4 class="page-title break_title"><lang class="lang_return_report">Return Reports</lang></h4>

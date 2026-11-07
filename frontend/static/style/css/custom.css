@@ -7787,3 +7787,20 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
   #items_new #item_translation_chips { flex-direction:row; flex-wrap:wrap; }
   #items_new #item_translation_chips button { width:auto; }
 }
+
+/* Local search remains available while the field and exact-match options collapse. */
+.lf-table-toolbar .lf-row { flex-wrap:wrap; gap:.4rem; }
+.lf-table-toolbar:not(.lf-expanded) .lf-field,.lf-table-toolbar:not(.lf-expanded) .lf-exact,
+.lf-table-toolbar .lf-mobile-search { display:none; }
+.lf-table-toolbar .lf-search { min-width:11rem; flex:1 1 14rem; }
+.lf-table-toolbar .lf-primary { width:auto; max-width:15rem; }
+.row_filter .single-branch-filter { display:none!important; }
+@media(max-width:600px){
+.lf-table-toolbar .lf-mobile-search {display:inline-block}
+.lf-table-toolbar:not(.lf-search-open):not(.lf-expanded) .lf-search {display:none}
+.lf-table-toolbar .lf-search {flex-basis:100%}
+}
+
+.row_filter .lf-legacy-primary:not(.single-branch-filter) { display:block!important; }
+
+.filing-match > td { box-shadow:inset 0 -2px #4782cc; }

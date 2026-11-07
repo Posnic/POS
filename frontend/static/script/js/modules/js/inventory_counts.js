@@ -16,8 +16,16 @@ PosnicPro.inventorycounts = {
     },
     load: function () {
         var self = this;
-        PosnicPro.get('inventory-counts', function (response) {
+        var list = $('#inventory_counts_list');
+        if (!$('#counts-filter-panel').length) list.before('<div id="counts-filter-panel"></div>');
+        PosnicPro.listFilter.mount({
+            key:'inventorycounts', container:'#counts-filter-panel', dateField:'Count date',
+            searchPlaceholder:'Count ID, item, barcode or counter', onChange:function () { self.load(); }
+        });
+        var params = PosnicPro.listFilter.params('inventorycounts');
+        PosnicPro.listFilter.request('inventorycounts', {url:'inventory-counts',data:params}, function (response) {
             var rows = response && response.data || [];
+            if (!rows.length && PosnicPro.listFilter.activeCount('inventorycounts')) return list.text('No count worksheets match these filters.');
             if (!rows.length) return $('#inventory_counts_list').html('<div class="text-center p-4"><lang class="lang_no_stock_count_drafts_yet">No stock-count drafts yet.</lang><p class="mt-3 mb-0">Saved count drafts appear here. Starting an audit or saving spoilage does not create a worksheet.</p></div>');
             $('#inventory_counts_list').html('<div class="table-responsive"><table class="table"><thead><tr><th><lang class="lang_created">Created</lang></th><th><lang class="lang_scope">Scope</lang></th><th><lang class="lang_userstatus">Status</lang></th><th></th></tr></thead><tbody>' + rows.map(function (row) { return '<tr><td>' + self.esc(moment(row.created_at).format('LLL')) + '</td><td>' + self.esc(row.scope || 'all') + '</td><td><span class="badge badge-primary-inverse">' + self.esc(row.status) + '</span></td><td class="text-right"><button class="btn btn-sm btn-primary-rgba inventory-count-open" data-id="' + self.esc(row._id) + '">Review</button></td></tr>'; }).join('') + '</tbody></table></div>');
         });
@@ -109,7 +117,7 @@ PosnicPro.inventorycounts.selectOverviewTab = function (tab) {
     if(!['all','attention','complete','cancelled','worksheets'].includes(tab))return;
     this.overviewTab=tab;
     $('#count_overview_tabs button').each(function(){var active=$(this).attr('data-view')===tab;$(this).toggleClass('active',active).attr('aria-selected',String(active));});
-    $('#inventory_counts_list,#count_worksheet_intro').toggle(tab==='worksheets');
+    $('#inventory_counts_list,#count_worksheet_intro,#counts-filter-panel').toggle(tab==='worksheets');
     $('#mobile_inventory_operations').toggle(tab!=='worksheets');
     if(tab==='worksheets'){this.mobileRequest=(this.mobileRequest||0)+1;originalInventoryLoad.call(this);}
     else this.loadMobile();

@@ -4,6 +4,11 @@
         <!-- Start Breadcrumbbar -->
         <div class="breadcrumbbar crumbbar_padding">
 
+            <div class="d-flex flex-wrap mb-2" style="gap:.5rem">
+                <input type="search" id="purchase-report-query" aria-label="Search purchases" placeholder="Purchase number or supplier" class="form-control lf-primary" style="max-width:21rem">
+                <input type="search" id="purchase-report-supplier" aria-label="Supplier" placeholder="Supplier" class="form-control lf-primary" style="max-width:15rem">
+                <select id="purchase-report-sort" aria-label="Sort purchases" class="form-control" style="width:auto"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="amount">Highest amount</option></select>
+            </div>
             <!--  filter-->   
             <div class="row align-items-center row_filter">
                 <div class="col-lg-2 col-xl-2">

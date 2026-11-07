@@ -78,7 +78,30 @@ PosnicPro.salereport = {
             var per_page = parseInt($('#view_salereport_per_page  option:selected').text());
         }
 
+        var toolbar = $('#sale-report-facets'), customer = toolbar.find('input').last();
+        if (toolbar.length && !toolbar.data('mounted')) {
+            toolbar.data('mounted',true);
+            var pending;
+            function reload() {
+                clearTimeout(pending);
+                pending=setTimeout(function () {
+                    if (!toolbar.is(':visible')) return;
+                    $('#view_salereport').data('current_page',1);
+                    PosnicPro.salereport.salereportTable();
+                },200);
+            }
+            PosnicPro.listFilter.entityPicker(customer,'customers',function (id) { customer.data('party',id); reload(); });
+            toolbar.find('input').first().on('input',reload);
+            toolbar.find('select').on('change',reload);
+            toolbar.find('button').on('click',function () {
+                var mine=$(this).attr('aria-pressed') !== 'true';
+                $(this).attr('aria-pressed',String(mine)).toggleClass('btn-primary',mine);
+                reload();
+            });
+        }
         var data = {
+            receipt:toolbar.find('input').first().val(),customerLookup:customer.data('party'),
+            tender:toolbar.find('select').val(),seller:toolbar.find('button').attr('aria-pressed') === 'true' ? 'me' : '',
             page: current_page,
             limit: per_page,
             starting_date: startDate,
@@ -89,7 +112,13 @@ PosnicPro.salereport = {
             url: 'sales/salesReports',
             data: Object.assign({}, data, { serving_period: $('#sales-report-period').val() || undefined })
         };
+        var requestTag = type === 'salereportexport' ? 0 : (table.data('filterRequest') || 0) + 1;
+        if (requestTag) table.data('filterRequest', requestTag);
         PosnicPro.get(params, function (response) {
+            if (requestTag && table.data('filterRequest') !== requestTag) {
+                loader.find('.loadingSpinner:first').remove();
+                return;
+            }
             loader.find(".loadingSpinner:first").remove();
             if (response.type === 'success') {
                     (response.data.total > 0) ? $('#salereport_exportbtn').removeAttr('disabled') : $('#salereport_exportbtn').attr('disabled', 'disabled');

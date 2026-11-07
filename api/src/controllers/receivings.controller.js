@@ -14,6 +14,22 @@ require('../utils/appError');
 const { formatDate } = require('../utils/helpers');
 const config = require('../config/config');
 
+// A report may span the outlets assigned to the signed-in operator.
+function permittedReportBranches(req) {
+  const input = req.query['branch[]'] || req.query.branch || [];
+  const ids = Array.isArray(input) ? input : [input];
+  if (!ids.length || ids.some(id => typeof id !== 'string' || !ObjectId.isValid(id))) return null;
+  const access = req.user?.branch_access;
+  if (Array.isArray(access) && access.length) {
+    const permitted = new Set(access.map(b => String(b.branch_id || b)));
+    if (ids.some(id => !permitted.has(id))) return null;
+  } else if (!['owner','admin','super_admin','superadmin'].includes(String(req.user?.usertype || req.user?.role || '').toLowerCase())) {
+    const active = req.tenantContext?.branchId || req.user?.branch_id;
+    if (ids.some(id => id !== String(active))) return null;
+  }
+  return ids;
+}
+
 const extractNumericValue = (value) => {
   if (value === null || typeof value === 'undefined') {
     return null;
@@ -923,13 +939,21 @@ class ReceivingsController extends BaseController {
       const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
       const options = { limit, page };
 
-      const branches = req.query['branch[]'] || req.query.branch || [];
+      const branches = permittedReportBranches(req);
+      if (!branches || !req.user.license) return this.error(res, 'Branch access required', 403);
       const data = {
-        branchid: Array.isArray(branches) ? branches : [branches],
+        branchid: branches, license: req.user.license,
         starting_date: req.query.starting_date || '',
         ending_date: req.query.ending_date || '',
       };
 
+      data.search = String(req.query.search || '').trim().slice(0,120);
+      data.supplier = String(req.query.supplier || '').trim().slice(0,120);
+      options.sort = req.query.sort;
+      if (req.query.supplierId) {
+        if (!ObjectId.isValid(req.query.supplierId)) return this.error(res, 'Invalid supplier ID', 400);
+        data.supplierId = new ObjectId(req.query.supplierId);
+      }
       const result = await Receiving.receivingReportPage(data, options);
       if (result.status === true) {
         const list = this.mongoDateFilter(this.mongoIDFilter(result.data?.list || []));
@@ -1013,13 +1037,20 @@ class ReceivingsController extends BaseController {
       const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
       const options = { limit, page };
 
-      const branches = req.query['branch[]'] || req.query.branch || [];
+      const branches = permittedReportBranches(req);
+      if (!branches || !req.user.license) return this.error(res, 'Branch access required', 403);
       const data = {
-        branchid: Array.isArray(branches) ? branches : [branches],
+        branchid: branches, license: req.user.license,
         starting_date: req.query.starting_date || '',
         ending_date: req.query.ending_date || '',
       };
 
+      if (req.query.supplierId) {
+        if (!ObjectId.isValid(req.query.supplierId)) return this.error(res, 'Invalid supplier ID', 400);
+        data.supplierId = new ObjectId(req.query.supplierId);
+      }
+      data.search = String(req.query.search || '').trim().slice(0,120);
+      options.sort = req.query.sort;
       const result = await Receiving.returnReceivingReportPage(data, options);
       if (result.status === true) {
         const list = this.mongoIDFilter(result.list || []);
@@ -1551,13 +1582,8 @@ class ReceivingsController extends BaseController {
       const skip = Math.max(0, (page - 1) * limit);
 
       // Get branch IDs from query
-      let branchIds = req.query.branch || req.query['branch[]'];
-      if (!branchIds) {
-        return this.error(res, 'Branch ID is required', 400);
-      }
-      if (!Array.isArray(branchIds)) {
-        branchIds = [branchIds];
-      }
+      const branchIds = permittedReportBranches(req);
+      if (!branchIds || !req.user.license) return this.error(res, 'Branch access required', 403);
 
       // Parse dates
       const startingDate = req.query.starting_date;
@@ -1608,17 +1634,15 @@ class ReceivingsController extends BaseController {
           { $match: filter },
           {
             $group: {
-              _id: {
-                supplier_id: '$supplier_id',
-                supplier_name: '$supplier_name',
-                supplier_phone: '$supplier_phone',
-              },
+              _id: '$supplier_id',
+              name: { $first:'$supplier_name' },
+              phone: { $first:'$supplier_phone' },
               receiving_avg: { $avg: '$items_total' },
               receiving_total: { $sum: '$items_total' },
               receiving_count: { $sum: 1 },
             },
           },
-          { $sort: { receiving_total: -1 } },
+          { $sort: { receiving_total: -1, _id: 1 } },
           { $skip: skip },
           { $limit: limit },
         ])
@@ -1630,11 +1654,9 @@ class ReceivingsController extends BaseController {
           { $match: filter },
           {
             $group: {
-              _id: {
-                supplier_id: '$supplier_id',
-                supplier_name: '$supplier_name',
-                supplier_phone: '$supplier_phone',
-              },
+              _id: '$supplier_id',
+              name: { $first:'$supplier_name' },
+              phone: { $first:'$supplier_phone' },
             },
           },
         ])
@@ -1644,9 +1666,9 @@ class ReceivingsController extends BaseController {
 
       // Format response
       const receivingValues = receivingList.map((item) => ({
-        supplier_name: item._id.supplier_name || '',
-        supplier_phone: item._id.supplier_phone || '',
-        supplier_id: item._id.supplier_id?.toString() || '',
+        supplier_name: item.name || '',
+        supplier_phone: item.phone || '',
+        supplier_id: item._id?.toString() || '',
         receiving_payment: Math.round(item.receiving_total * 100) / 100,
         receiving_count: item.receiving_count,
         receiving_avg: Math.round(item.receiving_avg * 100) / 100,

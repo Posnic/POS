@@ -1076,6 +1076,7 @@ const formatSaleListEntry = (saleDoc) => {
       parseSaleDate(doc.date) ||
       saleDate,
     updated_date: parseSaleDate(doc.updated_date) || parseSaleDate(doc.updatedAt) || null,
+    sold_by: doc.user_id ? doc.user_name : doc.created_by_id ? doc.created_by : undefined,
     created_by: doc.created_by || doc.user_name || undefined,
     branch_name: doc.branch_name,
     // KOT-specific fields required by frontend kot.js

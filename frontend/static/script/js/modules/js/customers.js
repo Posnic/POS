@@ -82,6 +82,7 @@ PosnicPro.customers = {
         $('#customers_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'customers',
+            typeahead: 'customer',
             rows: '#customers_list_rows',
             onRefresh: function () { return PosnicPro.customers.loadList(); },
             container: '#customers_filter_panel',

@@ -186,6 +186,22 @@ class ItemRepository extends BaseModel {
     }
 
     const clientFilters = this.assignFilterObjects({ ...filters }, LegacyItemModel.fields);
+    if (clientFilters.stockLevel) {
+      const level = clientFilters.stockLevel;
+      delete clientFilters.stockLevel;
+      const quantity = { $convert: { input:'$available_quantity', to:'double', onNull:null, onError:null } };
+      const threshold = { $convert: { input:'$low_stock', to:'double', onNull:0, onError:0 } };
+      const comparisons = { low:{$lte:[quantity,threshold]}, out:{$lte:[quantity,0]}, in:{$gt:[quantity,0]} };
+      if (!Object.hasOwn(comparisons,level)) throw new Error('Invalid stock level');
+      clientFilters.$and = [...(clientFilters.$and || []), {track_inventory:{$in:[true,'true']}},
+        {$expr:{$and:[{$ne:[quantity,null]},comparisons[level]]}}];
+    }
+    if (Object.hasOwn(clientFilters,'saleItems')) {
+      const ids=clientFilters.saleItems;
+      if (!Array.isArray(ids) || ids.some(id=>typeof id !== 'string' || !ObjectId.isValid(id))) throw new Error('Invalid item identifiers');
+      delete clientFilters.saleItems;
+      clientFilters._id={$in:ids.map(id=>new ObjectId(id))};
+    }
     // Client-supplied scope is never part of the business filter. Leaving a
     // stale branch_name/branch_id alongside the authoritative scope can turn
     // a valid live query into an empty result.

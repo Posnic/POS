@@ -10,7 +10,7 @@
   /* name, hash, acl [module, perm], keywords for matching */
   var PAGES = [
     ['New Sale', 'sales/new', ['sales', 'write'], 'bill billing pos sell tender'],
-    ['Sales History', 'sales', ['sales', 'read'], 'invoices orders list'],
+    ['Sales History', 'sales', ['sales', 'read'], 'invoices orders list my sales sold by cashier payment filter'],
     ['Sales Report', 'salereport', ['report', 'read'], 'graph analytics'],
     ['Items', 'items', ['item', 'read'], 'products stock inventory'],
     ['Add Item', 'items/new', ['item', 'write'], 'product create'],

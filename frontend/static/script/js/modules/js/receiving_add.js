@@ -1865,7 +1865,6 @@ PosnicPro.purchaseorders = {
      */
     _page: 1,
     PAGE_SIZE: 25,
-    _lastRows: [],
     _openDocKey: null,
     _status: '',
     _expected: '',
@@ -1875,6 +1874,7 @@ PosnicPro.purchaseorders = {
         $('#purchases_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'receivings',
+            partyFilter: 'suppliers',
             rows: '#po_list_rows',
             onRefresh: function () { return PosnicPro.purchaseorders.loadList(); },
             container: '#purchases_filter_panel',
@@ -1893,33 +1893,17 @@ PosnicPro.purchaseorders = {
         });
     },
     exportCsv: function () {
-        var rows = [['No', 'Kind', 'Bill date', 'Created', 'Supplier', 'Status', 'Expected', 'Total']];
-        (PosnicPro.purchaseorders._lastRows || []).forEach(function (r) {
-            rows.push([r.no, r.kind === 'po' ? 'order' : 'purchase',
-                r.date ? new Date(r.date).toISOString().slice(0, 10) : '',
-                r.created ? new Date(r.created).toISOString().slice(0, 10) : '',
-                r.supplier, r.status, r.expected || '', r.total]);
+        var criteria = Object.assign({},PosnicPro.purchaseorders._criteria);
+        PosnicPro.listExport.all({
+            url:'purchaseOrders/history', filename:'purchases.csv',
+            params:function (page,limit) { return Object.assign({},criteria,{page:page,limit:limit}); },
+            head:['No','Kind','Bill date','Created','Supplier','Status','Expected','Total'],
+            map:function (r) { return [r.no,r.kind,r.date,r.created,r.supplier,r.status,r.expected,r.total]; }
         });
-        var csv = rows.map(function (r) {
-            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
-        }).join('\n');
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'purchases.csv';
-        a.click();
-        URL.revokeObjectURL(a.href);
     },
     STATUS_PILL: { ordered: 'hold', partial: 'hold', draft: 'hold', received: 'paid', closed: 'paid', cancelled: 'unpaid' },
     STATUS_LABEL: { ordered: 'Ordered', partial: 'Partially received', draft: 'Draft', received: 'Received', closed: 'Received', cancelled: 'Cancelled' },
-    /*
-     * ONE list over two sources (orders + received purchases), merged
-     * newest-first, with real page numbers (owner: "pagination is
-     * important"). Each source is asked for the whole window up to the
-     * current page (capped at 100 a side), so the merged slice for page N
-     * is exact; past 2x100 rows the pager stops honestly and the archive
-     * link carries the deep history.
-     */
+    // The server filters and sorts orders and receipts together before paging.
     loadList: function (page) {
         PosnicPro.purchaseorders.mountPurchaseFilters();
         PosnicPro.listSort.mount('purchases', {
@@ -1936,59 +1920,23 @@ PosnicPro.purchaseorders = {
         if (page) { self._page = page; }
         var p = self._page;
         var size = self.PAGE_SIZE;
-        var fetchLimit = Math.min(p * size + 1, 100);
-        /* An active sort must rank the whole honest window, not just the
-           newest page-load - otherwise "highest amount first" only ranks
-           the latest handful. Same 2x100 cap the pager already owns. */
-        if (PosnicPro.listSort.value('purchases')) { fetchLimit = 100; }
-        var filters = PosnicPro.listFilter.legacyFilters('receivings', { dateKey: 'date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        var done = { po: null, rec: null };
-        var totals = { po: 0, rec: 0 };
-        var render = function () {
-            if (done.po === null || done.rec === null) { return; }
-            var rows = done.po.concat(done.rec);
-            var ts = function (v) { var t = new Date(v || 0).getTime(); return isNaN(t) ? 0 : t; };
-            /* Same bill date is the NORMAL case (today's purchases) - the
-               tie breaks on created time so the newest entry leads. The list
-               is a client-side merge of two doors, so Sort is client-side
-               too - no server round trip, the whole set is already here. */
-            var num = function (v) { return Number(v) || 0; };
-            var CMP = {
-                date_asc: function (a, b) { return ts(a.date) - ts(b.date) || ts(a.created) - ts(b.created); },
-                total_desc: function (a, b) { return num(b.total) - num(a.total); },
-                total_asc: function (a, b) { return num(a.total) - num(b.total); },
-                /* No expected date sinks to the bottom, not to "due first". */
-                expected_asc: function (a, b) { return (ts(a.expected) || Infinity) - (ts(b.expected) || Infinity); },
-                supplier: function (a, b) { return String(a.supplier || '').localeCompare(String(b.supplier || '')); }
-            };
-            rows.sort(CMP[PosnicPro.listSort.value('purchases')]
-                || function (a, b) { return ts(b.date) - ts(a.date) || ts(b.created) - ts(a.created); });
-            self._lastRows = rows;
-            var chip = self._status;
-            var filtered = !chip ? rows : rows.filter(function (r) {
-                if (chip === 'ordered') { return r.status === 'ordered' || r.status === 'draft'; }
-                if (chip === 'received') { return r.status === 'received' || r.status === 'closed'; }
-                return r.status === chip;
-            });
-            /* Expected-date quick chips (owner): due today, tomorrow, or in
-               the coming seven days. Calendar days, local time. */
-            var expChip = self._expected;
-            if (expChip) {
-                var today = new Date(); today.setHours(0, 0, 0, 0);
-                filtered = filtered.filter(function (r) {
-                    if (!r.expected) { return false; }
-                    var due = new Date(r.expected);
-                    if (isNaN(due.getTime())) { return false; }
-                    due.setHours(0, 0, 0, 0);
-                    var days = Math.round((due - today) / 86400000);
-                    if (expChip === 'today') { return days === 0; }
-                    if (expChip === 'tomorrow') { return days === 1; }
-                    return days >= 0 && days <= 6;
-                });
-            }
-            if (p > 1 && !filtered.slice((p - 1) * size).length) { self._page = 1; p = 1; }
-            var pageRows = filtered.slice((p - 1) * size, p * size);
+        var criteria = PosnicPro.listFilter.params('receivings');
+        var chip = self._status, expChip = self._expected;
+        criteria.status = chip || '';
+        criteria.sort = PosnicPro.listSort.value('purchases');
+        if (expChip) {
+            var start = new Date(); start.setHours(0,0,0,0);
+            if (expChip === 'tomorrow') start.setDate(start.getDate()+1);
+            var end = new Date(start);
+            end.setDate(end.getDate() + (expChip === 'today' || expChip === 'tomorrow' ? 1 : 7));
+            criteria.dueFrom = start.toISOString(); criteria.dueTo = end.toISOString();
+        }
+        self._criteria = criteria;
+        PosnicPro.listFilter.request('receivings', {url:'purchaseOrders/history', data:Object.assign({},criteria,{page:p,limit:size})}, function (response) {
+            var data = response.data || {}, pageRows = data.list || [];
+            pageRows.forEach(function (r) { r.progress = r.ordered ? r.received + '/' + r.ordered : ''; });
+            if (!pageRows.length && p > 1) { self.loadList(1); return; }
             if (!pageRows.length) {
                 var isFiltered = !!chip || !!expChip || PosnicPro.listFilter.activeCount('receivings') > 0;
                 $('#po_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
@@ -2022,45 +1970,11 @@ PosnicPro.purchaseorders = {
             });
             html += '</tbody></table></div>';
             $('#po_list_rows').html(html);
-            self.renderPager(filtered.length, chip || expChip ? null : totals.po + totals.rec);
-        };
-        PosnicPro.listFilter.request('receivings', { url: 'purchaseOrders', data: 'page=1&limit=' + fetchLimit }, function (response) {
-            var data = (response && response.data) || {};
-            totals.po = Number(data.total) || 0;
-            done.po = (data.list || []).map(function (po) {
-                return {
-                    kind: 'po', id: po.id, no: po.po_id,
-                    date: String(po.order_date || ''),
-                    created: po.created_date || po.order_date || '',
-                    supplier: po.supplier_name, status: po.status,
-                    progress: po.ordered_qty > 0 ? (po.received_qty + '/' + po.ordered_qty) : '',
-                    expected: po.expected_date || '',
-                    total: po.grand_total
-                };
-            });
-            render();
-        }, function () { done.po = []; render(); });
-        PosnicPro.get({ url: 'receivings', data: { page: 1, limit: fetchLimit, filters: JSON.stringify(filters) } }, function (response) {
-            var data = (response && response.data) || {};
-            totals.rec = Number(data.total) || 0;
-            done.rec = (data.list || []).map(function (r) {
-                return {
-                    kind: 'purchase', id: r._id, no: r.receiving_id,
-                    date: String(r.date || r.updated_date || ''),
-                    created: r.created_date || '',
-                    supplier: r.supplier_name,
-                    status: r.receiving_status === 'Open' ? 'ordered'
-                        : r.receiving_status === 'Received' ? 'received'
-                        : String(r.receiving_status || '').toLowerCase(),
-                    progress: '',
-                    expected: r.expected_date || '',
-                    total: r.total_amount,
-                    mismatch: r.invoice_total_mismatch === true,
-                    hasDoc: !!(r.image && r.image.length)
-                };
-            });
-            render();
-        }, function () { done.rec = []; render(); });
+            self.renderPager(data.total,data.total);
+        }, function () {
+            $('#po_list_rows').text('Could not load purchases. Refresh to retry.');
+            $('#po_list_paging').empty();
+        });
     },
     /*
      * Pager per LIST_PAGE_UX_STANDARD §3: numbered window when the total is

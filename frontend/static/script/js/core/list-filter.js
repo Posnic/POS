@@ -43,6 +43,7 @@ PosnicPro.listFilter = {
     PRESETS: [
         { key: 'all', label: 'All time', t: 'lang_all_time_2' },
         { key: 'today', label: 'Today', t: 'lang_this_day' },
+        { key: 'tomorrow', label: 'Tomorrow', t: 'lang_tomorrow' },
         { key: 'yesterday', label: 'Yesterday', t: 'lang_yesterday' },
         { key: 'lastweek', label: 'Last week', t: 'lang_last_week' },
         { key: 'week', label: 'This week', t: 'lang_roster_thisweek' },
@@ -65,6 +66,8 @@ PosnicPro.listFilter = {
         switch (preset) {
             case 'today':
                 return { from: s(today), to: e(today) };
+            case 'tomorrow':
+                d = new Date(today); d.setDate(d.getDate()+1); return { from:s(d), to:e(d) };
             case 'yesterday':
                 d = new Date(today); d.setDate(d.getDate() - 1);
                 return { from: s(d), to: e(d) };
@@ -185,7 +188,9 @@ PosnicPro.listFilter = {
         var out = {};
 
         var term = LF._applied(st);
-        if (term) {
+        if (st.pickedId && st._picked) {
+            out._id = st.pickedId;
+        } else if (term) {
             var value;
             if (st.exact) {
                 /* Anchored, matching what Exact promises: the whole value, not
@@ -263,7 +268,7 @@ PosnicPro.listFilter = {
  * ---------------------------------------------------------------------- */
 (function () {
     var LF = PosnicPro.listFilter;
-    var esc = function (v) { return $('<span>').text(v == null ? '' : String(v)).html(); };
+    var esc = function (v) { return $('<span>').text(v == null ? '' : String(v)).html().replace(/"/g,'&quot;'); };
 
     /* A datetime-local value, in LOCAL time. toISOString() would shift it by
        the timezone offset and show the user a different hour than they picked. */
@@ -292,6 +297,43 @@ PosnicPro.listFilter = {
      * A different container IS a different mount - that is a real re-parent,
      * not a repeat - so it resets.
      */
+    LF.entityPicker = function (input, kind, select) {
+        var groups = {customers:'Customers', suppliers:'Purchases', items:'Inventory'};
+        var selectedLabel = input.val();
+        if (typeof input.autocomplete !== 'function') { input.prop('disabled', true); return; }
+        input.autocomplete({
+            minChars:2, deferRequestBy:220, triggerSelectOnValidInput:false,
+            lookup:function (term, done) {
+                var branch = PosnicPro.local.get('branch_id_set');
+                PosnicPro.post({url:'search', data:JSON.stringify({q:term,group:groups[kind]})}, function (response) {
+                    if (branch !== PosnicPro.local.get('branch_id_set') || !input[0].isConnected) return done({suggestions:[]});
+                    var matches = (response.data?.results || []).filter(function (record) { return record.kind === kind; });
+                    done({suggestions:matches.map(function (record) {
+                        return {value:record.name,data:record.hash.split('/')[1]};
+                    })});
+                }, function () { done({suggestions:[]}); });
+            },
+            onSelect:function (choice) {
+                selectedLabel = choice.value;
+                select(choice.data, choice.value);
+            }
+        }).on('input',function () {
+            if (selectedLabel && selectedLabel !== this.value) {
+                selectedLabel = '';
+                select('','');
+            }
+        });
+    };
+
+    LF.reportParty = function (field, reload) {
+        if (!field.length || field.data('reportPicker')) return;
+        field.data('reportPicker', true);
+        field.on('input', function () { field.removeData('partyId'); });
+        LF.entityPicker(field, 'suppliers', function (id) {
+            field.data('partyId', id);
+            reload();
+        });
+    };
     LF.mount = function (cfg) {
         var key = cfg.key;
         LF.mountRefresh(cfg);
@@ -327,14 +369,19 @@ PosnicPro.listFilter = {
     // Capture the refresh token when the request starts: an older/background
     // request must never complete a newer manual refresh.
     LF.request = function (key, params, render, failure) {
+        var mount = LF._mounted[key];
+        var endpoint = params.url;
+        var requests = mount && (mount.requests || (mount.requests = {}));
+        var generation = requests ? (requests[endpoint] || 0) + 1 : 0;
+        if (requests) requests[endpoint] = generation;
         var button = document.getElementById('lf-refresh-' + key);
         var token = button && button._refreshToken;
         return PosnicPro.get(params, function (response) {
             var ok = !!response && (!response.type || response.type === 'success');
-            try { render(response); } catch (error) { ok = false; throw error; }
+            try { if (!requests || requests[endpoint] === generation) render(response); } catch (error) { ok = false; throw error; }
             finally { if (token) token.finish(ok); }
         }, function () {
-            try { if (failure) failure.apply(this, arguments); }
+            try { if (failure && (!requests || requests[endpoint] === generation)) failure.apply(this, arguments); }
             finally { if (token) token.finish(false); }
         });
     };
@@ -452,7 +499,36 @@ PosnicPro.listFilter = {
         }
         html += '</div>';
 
-        $panel.html(html).attr('data-lf', key);
+        $panel.html(html).attr('data-lf', key).addClass('lf-table-toolbar').show();
+        if (cfg.panelContainer) $panel.insertBefore(cfg.panelContainer);
+        $panel.toggleClass('lf-expanded', !!m.expanded);
+        var $row = $panel.find('.lf-row');
+        $('<button type="button" class="btn btn-light lf-mobile-search"><i class="feather icon-search"></i></button>')
+            .attr('aria-label', cfg.searchPlaceholder || 'Search').prependTo($row).on('click', function () {
+                $panel.addClass('lf-search-open').find('.lf-q').trigger('focus');
+            });
+        if (cfg.partyFilter) {
+            var party = cfg.partyFilter, fieldName = party === 'customers' ? 'customer_id' : 'supplier_id';
+            var label = party === 'customers' ? 'Customer' : 'Supplier';
+            var field = $('<input type="search" class="form-control form-control-sm lf-primary">')
+                .attr({placeholder:label,'aria-label':label}).val(st.extra[fieldName] ? st.partyLabel : '').appendTo($row);
+            LF.entityPicker(field,party,function (id,name) {
+                st.partyLabel = name;
+                LF.setExtra(key,fieldName,id);
+            });
+        }
+        if (cfg.primaryControls) cfg.primaryControls($row, m.state);
+        if (cfg.dateField && key !== 'sales') {
+            var days = ['today', 'yesterday'];
+            if (['invoices', 'quotes'].includes(key)) days.push('tomorrow');
+            days.forEach(function (day) {
+                var preset = LF.PRESETS.find(function (p) { return p.key === day; });
+                $('<button type="button" class="btn btn-sm btn-outline-primary lf-day">')
+                    .attr('data-day', day).text(PosnicPro.i18n.t(preset.t, preset.label)).appendTo($row)
+                    .on('click', function () { $panel.find('.lf-preset').val(day).trigger('change'); });
+            });
+        }
+        if (!cfg.dateField) $('<button type="button" class="btn btn-sm btn-light lf-clear">').text(PosnicPro.i18n.t('lang_clear_title','Clear')).appendTo($row);
         LF.paintButton(key);
     };
 
@@ -463,6 +539,14 @@ PosnicPro.listFilter = {
         var m = LF._mounted[key];
         if (!m) return;
         var n = LF.activeCount(key);
+        var panel = $(m.cfg.container);
+        panel.find('.lf-day').each(function () {
+            var active = this.dataset.day === m.state.preset;
+            $(this).attr('aria-pressed', String(active)).toggleClass('btn-primary', active);
+        });
+        panel.find('.lf-clear').toggle(n > 0);
+        panel.find('.lf-mobile-search').text(m.state.search || '').prepend($('<i class="feather icon-search mr-1">'));
+        panel.find('.lf-mobile-search').toggleClass('btn-primary', !!LF._applied(m.state));
         var $btn = $(m.cfg.button);
         if (!$btn.length) return;
         $btn.toggleClass('lf-btn-active', n > 0);
@@ -503,9 +587,9 @@ PosnicPro.listFilter = {
     LF.toggle = function (key) {
         var m = LF._mounted[key];
         if (!m) return;
-        var $panel = $(m.cfg.panelContainer || m.cfg.container);
-        var opening = !$panel.is(':visible');
-        $panel.slideToggle(120);
+        var opening = m.expanded = !m.expanded;
+        $(m.cfg.container).toggleClass('lf-expanded', opening);
+        if (m.cfg.panelContainer) $(m.cfg.panelContainer).toggle(opening);
         $(m.cfg.button).toggleClass('lf-btn-open', opening).attr('aria-expanded', opening ? 'true' : 'false');
     };
 
@@ -578,6 +662,7 @@ PosnicPro.listFilter = {
         LF._mounted[key].state.search = term;
         /* typing again is no longer the picked value */
         LF._mounted[key].state._picked = false;
+        delete LF._mounted[key].state.pickedId;
 
         // cached, so it can keep up with every keystroke
         LF.typeahead(key, this.value);
@@ -671,6 +756,7 @@ PosnicPro.listFilter = {
     $(document).on('click', '.lf-clear', function () {
         var key = owner(this);
         if (!key) return;
+        if (LF._mounted[key].cfg.onClear) LF._mounted[key].cfg.onClear();
         LF._mounted[key].state = {
             search: '', field: 'all', exact: false, preset: 'all', from: null, to: null, extra: {}
         };
@@ -696,7 +782,7 @@ PosnicPro.listFilter = {
  * ---------------------------------------------------------------------- */
 (function () {
     var LF = PosnicPro.listFilter;
-    var esc = function (v) { return $('<span>').text(v == null ? '' : String(v)).html(); };
+    var esc = function (v) { return $('<span>').text(v == null ? '' : String(v)).html().replace(/"/g,'&quot;'); };
 
     /*
      * Object.create(null), not {}.
@@ -793,6 +879,11 @@ PosnicPro.listFilter = {
             }
         },
         supplier: {
+            lookup: function (term, done) {
+                PosnicPro.get({url:'suppliers/getSuppliersAjaxList', data:{query:term,branch:PosnicPro.local.get('branch_id_set')}},
+                    function (r) { done((r.suggestions || []).map(function (s) { return {id:s.id,label:s.name,note:s.phone}; })); },
+                    function () { done([]); });
+            },
             title: 'Choose supplier', t: 'lang_choose_supplier',
             icon: 'icon-truck',
             rows: function () {
@@ -861,7 +952,7 @@ PosnicPro.listFilter = {
                 /* a clock means "you used this here", a plain icon means "this
                    exists" - the distinction is why recents are worth showing */
                 var ic = r.recent ? 'icon-clock' : e.icon;
-                return '<a href="javascript:void(0)" class="lf-pick-row" data-name="' + esc(r.label) + '">'
+                return '<a href="javascript:void(0)" class="lf-pick-row" data-record-id="' + esc(r.id || '') + '" data-name="' + esc(r.label) + '">'
                     + '<i class="feather ' + ic + '"></i>'
                     + '<span class="lf-pick-name">' + esc(r.label) + '</span>'
                     + (r.note ? '<span class="lf-pick-note">' + esc(r.note) + '</span>' : '')
@@ -895,6 +986,9 @@ PosnicPro.listFilter = {
         var name = String($(this).data('name'));
         m.state.search = name;
         m.state._picked = true;
+        if ((key === 'customers' || key === 'suppliers') && /^[a-f0-9]{24}$/i.test(this.dataset.recordId)) {
+            m.state.pickedId = this.dataset.recordId;
+        }
         $panel.find('.lf-q').val(name);
         $panel.find('.lf-typeahead').hide().empty();
         LF._changed(key);

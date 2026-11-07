@@ -234,9 +234,21 @@ PosnicPro.onlineorders = {
         }, 20000);
     },
 
+    paintQueue: function () {
+        var q = String($('#online-order-query').val() || '').trim().toLowerCase();
+        var method = $('#online-order-fulfilment').val();
+        var visible = (this.queue || []).filter(function (o) {
+            return (!method || o.fulfilment === method) && (!q || [o.sales_id,o.customer_name,o.customer_phone]
+                .some(function (field) { return String(field || '').toLowerCase().includes(q); }));
+        });
+        $('#onlineorders_list').html(visible.map(this.card).join(''));
+        $('#onlineorders_empty').toggle(!this.queue?.length);
+        $('#online-order-no-match').toggle(!!this.queue?.length && !visible.length);
+    },
     load: function () {
         var self = PosnicPro.onlineorders;
         self.watch();
+        $('#online-order-query,#online-order-fulfilment').off('.queueFilter').on('input.queueFilter change.queueFilter', function () { self.paintQueue(); });
         var loader = $('.loader-view-onlineorders');
         loader.find('.loadingSpinner:first').remove();
         $("<div class='loadingSpinner'></div>").appendTo(loader);
@@ -244,8 +256,8 @@ PosnicPro.onlineorders = {
         PosnicPro.get({ url: 'sales/pendingOnlineOrders', data: {} }, function (response) {
             loader.find('.loadingSpinner:first').remove();
             var list = (response && response.data) || [];
-            $('#onlineorders_list').html(list.map(self.card).join(''));
-            $('#onlineorders_empty').toggle(list.length === 0);
+            self.queue = list;
+            self.paintQueue();
 
             /*
              * An empty queue stops the alarm.

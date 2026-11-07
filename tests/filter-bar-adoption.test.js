@@ -107,7 +107,7 @@ test('the sales date-range element is kept on purpose', () => {
   );
 });
 
-test('the bar writes the blob these endpoints already took', () => {
+test('each list sends its applied criteria to the corresponding query endpoint', () => {
   /* The lists keep loading exactly as before; only where the filter comes from
      changed. Rewriting how they load at the same time would make a regression
      impossible to attribute. */
@@ -117,6 +117,13 @@ test('the bar writes the blob these endpoints already took', () => {
     const body = s.key === 'sales'
       ? s.js
       : s.js.slice(at, at + (s.idPrefix ? 12000 : 1600));
+    if (s.key === 'receivings') {
+      assert.match(body, /listFilter.params\('receivings'\)/);
+      assert.match(body, /purchaseOrders\/history/);
+      assert.match(body, /loadList\(1\)/);
+      assert.match(body, /Object.assign\(\{\},criteria,\{page:p,limit:size\}\)/);
+      continue;
+    }
     assert.match(body, /legacyFilters\(/, `${s.key}: does not translate to the filters blob`);
     if (s.idPrefix) {
       /* the purchases surface has no DataTable: the bar's onChange reloads

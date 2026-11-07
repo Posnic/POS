@@ -61,7 +61,24 @@ PosnicPro.returnreport = {
                 var current_page = table.data('current_page');
                 var per_page = parseInt($('#view_returnreport_per_page  option:selected').text());
             }
+            var toolbar = $('#return-sale-facets'), customer = toolbar.find('input').last();
+            if (toolbar.length && !toolbar.data('mounted')) {
+                toolbar.data('mounted',true);
+                var pending;
+                function reload() {
+                    clearTimeout(pending);
+                    pending=setTimeout(function () {
+                        if (!toolbar.is(':visible')) return;
+                        table.data('current_page',1);
+                        PosnicPro.returnreport.returnreportTable();
+                    },220);
+                }
+                PosnicPro.listFilter.entityPicker(customer,'customers',function (id) { customer.data('party',id); reload(); });
+                toolbar.find('input').first().on('input',reload);
+                toolbar.find('select').on('change',reload);
+            }
             var data = {
+                search:toolbar.find('input').first().val(),customerLookup:customer.data('party'),sort:toolbar.find('select').val(),
                 page: current_page,
                 limit: per_page,
                 starting_date: fields[0],
@@ -72,7 +89,13 @@ PosnicPro.returnreport = {
                 url: 'sales/returnSalesReportTable',
                 data: data
             };
+            var requestTag = type === 'returnreportexport' ? 0 : (table.data('filterRequest') || 0) + 1;
+            if (requestTag) table.data('filterRequest', requestTag);
             PosnicPro.get(params, function (response) {
+                if (requestTag && table.data('filterRequest') !== requestTag) {
+                    loader.find('.loadingSpinner:first').remove();
+                    return;
+                }
                 if (response.type === 'success') {
                     (response.data.total > 0) ? $('#returnreport_exportbtn').removeAttr('disabled') : $('#returnreport_exportbtn').attr('disabled', 'disabled');
                     if (type !== 'returnreportexport') {

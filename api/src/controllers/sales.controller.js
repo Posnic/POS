@@ -1151,6 +1151,8 @@ class SalesController extends BaseController {
         );
         filter.$and = [...(filter.$and || []), ...clauses];
       }
+      filter.$and = [...(filter.$and || []), ...require('../helpers/sales-list-criteria')(req.query,req.user)];
+      if (!filter.$and.length) delete filter.$and;
       const provenance = require('../helpers/sales-history-provenance')(req.query);
       if (provenance.length) filter.$and = [...(filter.$and || []), ...provenance];
       const result = await salesService.listSales(filter, options, { SaleModel });
@@ -3185,6 +3187,11 @@ class SalesController extends BaseController {
        * failing the report over - the defaults are the ones nearly every shop
        * would have chosen anyway.
        */
+      match.$and.push(...require('../helpers/sales-list-criteria')(req.query,req.user));
+      if (typeof req.query.receipt === 'string' && req.query.receipt.trim()) {
+        const literal = new RegExp(req.query.receipt.trim().slice(0,120).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');
+        match.$and.push({$or:[{sales_id:literal},{invoice_number:literal},{customer_name:literal}]});
+      }
       let branch = null;
       try {
         branch = await currentConnection(mongoose.connection)
@@ -4786,6 +4793,10 @@ class SalesController extends BaseController {
 
       const SaleModel = this.model || Sale;
 
+      data.license = req.user.license || req.user.licenseId;
+      data.search = typeof req.query.search === 'string' ? req.query.search.trim().slice(0,120) : '';
+      data.customer = req.query.customerLookup;
+      options.sort = req.query.sort;
       const result = await salesService.returnSalesReportPage(data, options, {
         SaleModel,
       });

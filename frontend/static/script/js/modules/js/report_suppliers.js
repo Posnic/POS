@@ -67,18 +67,24 @@ PosnicPro.supplierreport = {
                 ending_date: fields[1],
                 branch: $(".supplier_branch_value").val()
             };
-            let supplier_id = ($(".suppliers_input_id").val() !== '') ? $(".suppliers_input_id").val() : '';
+            let supplier_id = ($("#supplierreport_new .suppliers_input_id").val() !== '') ? $("#supplierreport_new .suppliers_input_id").val() : '';
             var field_input = {
-                field_input: supplier_id
+                supplier_id: supplier_id
             };
-            if ($(".suppliers_input_id").val() !== '') {
+            if ($("#supplierreport_new .suppliers_input_id").val() !== '') {
                 dataValue = Object.assign(dataValue, field_input);
             }
             var params = {
                 url: 'receivings/supplierReceivingReportTable',
                 data: dataValue
             };
+            var requestTag = type === 'supplierreportexport' ? 0 : (table.data('filterRequest') || 0) + 1;
+            if (requestTag) table.data('filterRequest', requestTag);
             PosnicPro.get(params, function (response) {
+                if (requestTag && table.data('filterRequest') !== requestTag) {
+                    loader.find('.loadingSpinner:first').remove();
+                    return;
+                }
                 loader.find(".loadingSpinner:first").remove();
                 if (response.type === 'success') {
                     (response.data.total > 0) ? $('#supplierreport_exportbtn').removeAttr('disabled') : $('#supplierreport_exportbtn').attr('disabled', 'disabled');
@@ -186,11 +192,11 @@ PosnicPro.supplierproductreport = {
                 ending_date: fields[1],
                 branch: $(".supplier_branch_value").val()
             };
-            let supplier_id = ($(".suppliers_input_id").val() !== '') ? $(".suppliers_input_id").val() : '';
+            let supplier_id = ($("#supplierreport_new .suppliers_input_id").val() !== '') ? $("#supplierreport_new .suppliers_input_id").val() : '';
             var field_input = {
                 field_input: supplier_id
             };
-            if ($(".suppliers_input_id").val() !== '') {
+            if ($("#supplierreport_new .suppliers_input_id").val() !== '') {
                 dataValue = Object.assign(dataValue, field_input);
             }
             var params = {
@@ -289,11 +295,11 @@ PosnicPro.suppliersalereport = {
                 ending_date: fields[1],
                 branch: $(".supplier_branch_value").val()
             };
-            let supplier_id = ($(".suppliers_input_id").val() !== '') ? $(".suppliers_input_id").val() : '';
+            let supplier_id = ($("#supplierreport_new .suppliers_input_id").val() !== '') ? $("#supplierreport_new .suppliers_input_id").val() : '';
             var field_input = {
                 field_input: supplier_id
             };
-            if ($(".suppliers_input_id").val() !== '') {
+            if ($("#supplierreport_new .suppliers_input_id").val() !== '') {
                 dataValue = Object.assign(dataValue, field_input);
             }
             var params = {

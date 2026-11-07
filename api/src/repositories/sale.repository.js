@@ -2440,16 +2440,13 @@ class SalesRepository {
         sale_process: { $in: ['PartialReturn', 'FullReturn'] },
       });
 
-      const dateAndLicense = {
-        updated_date: { $gte: fromDate, $lte: toDate },
-      };
-      if (BaseModel.license) {
-        dateAndLicense.license = BaseModel.license;
+      if (!mongoose.Types.ObjectId.isValid(data.license)) throw Error('Missing license');
+      andConditions.push({license:new mongoose.Types.ObjectId(String(data.license))});
+      if (data.customer) {
+        if (!mongoose.Types.ObjectId.isValid(data.customer)) throw Error('Invalid customer');
+        andConditions.push({customer_id:{$in:[String(data.customer),new mongoose.Types.ObjectId(String(data.customer))]}});
       }
-      andConditions.push(dateAndLicense);
-
       const filters = { $and: andConditions };
-
       const limit = parseInt(options.limit, 10) > 0 ? parseInt(options.limit, 10) : 5;
       const page = parseInt(options.page, 10) > 0 ? parseInt(options.page, 10) : 1;
       const skip = Math.max(0, (page - 1) * limit);
@@ -2457,61 +2454,26 @@ class SalesRepository {
       const db = await BaseModel.getDb();
       const salesCollection = db.collection('sales');
 
-      const pipeline = [
-        { $match: filters },
-        { $unwind: '$items_return' },
-        { $unwind: '$items_return.returnArray' },
-        { $unwind: '$items_return.returnArray.returnValue' },
-        {
-          $group: {
-            _id: {
-              id: '$_id',
-              date: '$updated_date',
-              sales_id: '$sales_id',
-              customer_name: '$customer_name',
-              payment_mode: '$payment_mode',
-              return_value: '$items_return_total',
-            },
-            count: { $sum: 1 },
-          },
-        },
-        { $sort: { '_id.return_value': -1 } },
-        { $skip: skip },
-        { $limit: limit },
+      const stages = [
+        {$match:filters}, {$unwind:'$items_return'}, {$unwind:'$items_return.returnArray'},
+        {$set:{event:'$items_return.returnArray'}},
+        {$set:{eventDate:{$convert:{input:{$ifNull:['$event.returnDate',{$arrayElemAt:['$event.returnValue.return_date',0]}]},to:'date',onError:null,onNull:null}}}},
+        {$match:{eventDate:{$gte:fromDate,$lte:toDate}}}
       ];
-
-      const aggResults = await salesCollection.aggregate(pipeline).toArray();
-
-      const list = (aggResults || []).map((doc) => {
-        const id = doc._id || {};
-        const rawDate = id.date;
-        const formattedDate = rawDate ? formatDate(rawDate) : null;
-        const returnTotal = typeof id.return_value === 'number' ? id.return_value : 0;
-
-        return {
-          date: formattedDate,
-          id: id.id,
-          sale_id: id.sales_id,
-          customer_name: id.customer_name,
-          payment_mode: id.payment_mode,
-          return: round(returnTotal || 0, 2),
-          count: doc.count || 0,
-        };
-      });
-
-      const countPipeline = [
-        { $match: filters },
-        {
-          $group: {
-            _id: { sales_id: '$sales_id' },
-          },
-        },
-        { $count: 'total' },
-      ];
-
-      const countDocs = await salesCollection.aggregate(countPipeline).toArray();
-      const total = (countDocs[0] && countDocs[0].total) || 0;
-
+      if (data.search) {
+        const literal = new RegExp(data.search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');
+        stages.push({$match:{$or:['sales_id','customer_name','event.returnId','event.returnValue.return_id'].map(k=>({[k]:literal}))}});
+      }
+      stages.push({$project:{sale_id:'$sales_id',customer_name:1,payment_mode:1,date:'$eventDate',
+        ref:'$event.returnId',count:{$size:{$ifNull:['$event.returnValue',[]]}},
+        amount:{$ifNull:['$event.itemsTotalAmount',{$sum:'$event.returnValue.total_amount'}]}}});
+      const sort = options.sort === 'new' ? {date:-1,_id:-1,ref:1} : {amount:-1,date:-1,_id:-1,ref:1};
+      const [result] = await salesCollection.aggregate([...stages,
+        {$facet:{list:[{$sort:sort},{$skip:skip},{$limit:limit}],counts:[{$count:'total'}]}}
+      ]).toArray();
+      const list = result.list.map(row=>({id:row._id,sale_id:row.sale_id,customer_name:row.customer_name,
+        payment_mode:row.payment_mode,date:formatDate(row.date),return:round(row.amount || 0,2),count:row.count}));
+      const total = result.counts[0]?.total || 0;
       return {
         status: true,
         list,
