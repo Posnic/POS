@@ -36,6 +36,7 @@ const PACKAGED_PAGES = new Set([
   'loading.html',
   'install-wizard.html',
   'cloud-setup.html',
+  'shop-profiles.html',
   'backup-manager.html',
   'hardware-manager.html',
   'kitchen-screen.html',

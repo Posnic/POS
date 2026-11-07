@@ -56,6 +56,18 @@ const hasSingleInstanceLock = app.requestSingleInstanceLock({
   pid: process.pid
 });
 
+const profiles = new (require('./shop-profiles').ShopProfiles)(app.getPath('userData'));
+const runningProfile = profiles.state.active;
+let nextProfile = null;
+process.env.POSNIC_MULTIPLE_SHOPS = profiles.state.shops.length > 1 ? '1' : '0';
+process.env.POSNIC_ISOLATED_SHOP = runningProfile === 'original' ? '0' : '1';
+if (runningProfile !== 'original') {
+  const directory = profiles.directory(runningProfile);
+  require('./user-data-path').configure(app, { POSNIC_USER_DATA: directory });
+  process.env.POSNIC_UPLOADS_DIR = path.join(directory, 'uploads');
+  process.env.FILE_UPLOAD_PATH = process.env.POSNIC_UPLOADS_DIR;
+}
+
 /*
  * Failing to get the lock means one of two very different things.
  *
@@ -820,13 +832,13 @@ function shutdownSteps() {
       label: 'Sync agent',
       says:  'Stopping the sync agent...',
       ms:    SHUTDOWN_TIMEOUTS.backupScheduler,
-      run:   () => { if (syncAgentManager) syncAgentManager.stop(); },
+      run:   () => nextProfile ? require('./cloud-local-reset').stopSync(syncAgentManager) : syncAgentManager?.stop(),
     },
     {
       label: 'Connectors',
       says:  'Stopping connectors...',
       ms:    SHUTDOWN_TIMEOUTS.backupScheduler,
-      run:   () => { if (connectorSupervisor) connectorSupervisor.stopAll(); },
+      run:   () => connectorSupervisor?.stopAll(),
     },
     {
       label: 'API server',
@@ -890,7 +902,11 @@ async function performGracefulShutdown(onProgress) {
     if (onProgress) {
       try { onProgress(i, steps.length, step.says); } catch (e) { /* never stop a shutdown to draw */ }
     }
-    await withTimeout(step.label, step.run, step.ms);
+    const result = await withTimeout(step.label, step.run, nextProfile && step.label === 'Sync agent' ? 5000 : step.ms);
+    if (nextProfile && result.status !== 'completed') {
+      nextProfile = null;
+      relaunchAfterQuit = false;
+    }
   }
   if (onProgress) {
     try { onProgress(steps.length, steps.length, 'Closed safely.'); } catch (e) { /* as above */ }
@@ -1222,6 +1238,7 @@ function osMachineId() {
 }
 
 function getMachineId() {
+  if (runningProfile !== 'original') return runningProfile;
   const file = path.join(app.getPath('userData'), '.machine-id');
 
   /* The system's answer wins, every time. The cached file is only consulted
@@ -1257,11 +1274,11 @@ function getMachineId() {
 
 let cloudConnectionBusy = false;
 const { cloudLocalMongoUri } = require('./cloud-local-mongo');
-let cloudResetUri = null;
+
 async function connectCloudDevice(activation, base) {
   if (cloudConnectionBusy) return { ok: false, error: 'A cloud connection is already in progress.' };
   cloudConnectionBusy = true;
-  cloudResetUri = null;
+
   try { return await connectVerifiedCloudDevice(activation, base); }
   catch (error) {
     if (error.code === 'LOCAL_SHOP_CONFLICT') return { ok: false, code: error.code, error: error.message };
@@ -1285,6 +1302,8 @@ async function connectVerifiedCloudDevice(activation, base) {
   });
   if (!identityResponse.ok) throw new Error('Could not verify which cloud shop this device belongs to. Check your connection and retry.');
   const identity = await identityResponse.json();
+  const existingProfile = profiles.findConnection(gatewayUrl, identity.tenantDb);
+  if (existingProfile) throw Object.assign(new Error('This shop is already on this computer. Open ' + existingProfile.name + ' from Shops on this computer.'), { code: 'LOCAL_SHOP_CONFLICT' });
   let savedTenant = null;
   try { savedTenant = JSON.parse(fs.readFileSync(identityFile, 'utf8')).tenantDb; }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
@@ -1298,15 +1317,10 @@ async function connectVerifiedCloudDevice(activation, base) {
     const businessCounts = await Promise.all(['items', 'sales', 'customers', 'purchases'].map(
       (name) => db.collection(name).countDocuments({}, { limit: 1 })
     ));
-    try {
-      verifiedIdentity = require('./cloud-shop-identity').assertSameShop({
-        identity, savedTenant, localBranchIds: branches.map((branch) => String(branch._id)), userCount,
-        businessDataCount: businessCounts.reduce((sum, count) => sum + count, 0),
-      });
-    } catch (error) {
-      if (error.code === 'LOCAL_SHOP_CONFLICT') cloudResetUri = localUri;
-      throw error;
-    }
+    verifiedIdentity = require('./cloud-shop-identity').assertSameShop({
+      identity, savedTenant, localBranchIds: branches.map(branch => String(branch._id)), userCount,
+      businessDataCount: businessCounts.reduce((sum, count) => sum + count, 0),
+    });
     // First-download enrollment can run before the API starts. Repair the old
     // business-wide supplier constraint before the agent pulls branch copies.
     const migrationRoot = app.isPackaged ? process.resourcesPath : path.join(__dirname, '..');
@@ -1328,7 +1342,7 @@ async function connectVerifiedCloudDevice(activation, base) {
     deviceToken,
     deviceId,
     localDb: 'PosnicPro',
-    statusPort: 5055
+    statusPort: Number(process.env.SYNC_AGENT_PORT)
   }, null, 2), { mode: 0o600 });
   fs.chmodSync(CLOUD_CONFIG_FILE, 0o600);
 
@@ -1586,7 +1600,7 @@ ipcMain.handle('cloud:status', async () => {
   const connected = fs.existsSync(CLOUD_CONFIG_FILE);
   let sync = null;
   try {
-    const response = await fetch('http://127.0.0.1:5055/status', {
+    const response = await fetch(`http://127.0.0.1:${process.env.SYNC_AGENT_PORT}/status`, {
       signal: AbortSignal.timeout(2000)
     });
     if (response.ok) sync = await response.json();
@@ -2597,6 +2611,7 @@ function createMenu() {
     {
       label: 'File',
       submenu: [
+        { label: 'Shops on this computer', click: openShopProfiles },
         { label: 'App Settings', click: () => openAppSettings('app') },
         { type: 'separator' },
         {
@@ -3721,33 +3736,12 @@ async function removeFullAccountData(resetUri) {
   console.log('[AccountReset] Full account removal finished; relaunching');
 }
 
-ipcMain.handle('cloud:reset-local-shop', async (event) => {
-  let page;
-  try { page = require('url').fileURLToPath(event.senderFrame.url); } catch { return { ok: false, error: 'Open cloud setup to reset this computer.' }; }
-  if (!['install-wizard.html', 'cloud-setup.html'].some(name => page === path.join(__dirname, name)) || !cloudResetUri || cloudConnectionBusy) {
-    return { ok: false, error: 'Try connecting to the cloud shop first.' };
+ipcMain.handle('cloud:manage-shops', event => {
+  const page = require('url').fileURLToPath(event.senderFrame.url);
+  if (event.senderFrame !== event.sender.mainFrame || !['install-wizard.html', 'cloud-setup.html'].some(name => page === path.join(__dirname, name))) {
+    throw new Error('Open cloud setup to manage shops.');
   }
-  cloudConnectionBusy = true;
-  try {
-    const uri = cloudResetUri;
-    const reset = require('./cloud-local-reset');
-    const verify = () => reset.verifyLocalDatabase({ uri, dataPath: mongoDBManager?.dataPath, MongoClient: require('mongodb').MongoClient });
-    await verify();
-    const answer = await dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender), {
-      type: 'warning', title: 'Delete existing local shop data?',
-      message: 'Delete this computer’s local shop data and restart setup?',
-      detail: 'A verified recovery copy will be saved before local data is replaced. Unsynced work stays in that copy and will not upload automatically. Hardware settings, cloud records and existing backups are kept. Setup stops if the copy cannot be verified.',
-      buttons: ['Keep existing data', 'Delete local data and restart'], defaultId: 0, cancelId: 0, noLink: true,
-    });
-    if (answer.response !== 1) return { ok: false, cancelled: true };
-    await saveAndResetLocalSetup(true, uri);
-    cloudResetUri = null;
-    relaunchAfterQuit = true;
-    app.quit();
-    return { ok: true };
-  } catch (error) {
-    return { ok: false, error: 'Could not reset local data: ' + error.message };
-  } finally { cloudConnectionBusy = false; }
+  openShopProfiles();
 });
 
 function confirmFullAccountRemoval() {
@@ -3802,7 +3796,7 @@ function assertSetupPage(event) {
 }
 ipcMain.handle('install:state', async event => {
   assertSetupPage(event);
-  return { existing: setupExistingShop, connected: fs.existsSync(CLOUD_CONFIG_FILE) };
+  return { existing: setupExistingShop, connected: fs.existsSync(CLOUD_CONFIG_FILE), addingShop: runningProfile !== 'original' && !fs.existsSync(CLOUD_CONFIG_FILE) };
 });
 ipcMain.handle('install:continue', async event => {
   assertSetupPage(event);
@@ -3826,9 +3820,14 @@ async function saveAndResetLocalSetup(keepHardware, resetUri) {
     const databaseProcess = mongoDBManager.mongoProcess;
     await mongoDBManager.stop();
     if (!databaseProcess || (databaseProcess.exitCode === null && databaseProcess.signalCode === null)) throw new Error('The database is still closing. Restart and retry.');
-    await clearRendererStorage();
     const userData = app.getPath('userData');
-    const recovery = require('./setup-recovery').resetSavedData({ userData, recoveryRoot: path.join(app.getPath('documents'), app.getName() + '-Recovery'), keepHardware: keepHardware });
+    const recovery = await require('./setup-recovery').resetSavedData({
+      userData, recoveryRoot: path.join(app.getPath('documents'), app.getName() + '-Recovery'), keepHardware,
+      verifyRestore: archive => require('./verify-shop-recovery').verifyShopRecovery({
+        archive, binary: mongoDBManager.mongoPath, uri, MongoClient: require('mongodb').MongoClient
+      })
+    });
+    await clearRendererStorage();
     fs.rmSync(path.join(userData, '.setup-review'), { force: true });
     console.log('[Setup] Recovery copy verified:', recovery);
 }
@@ -4159,7 +4158,7 @@ function startSyncBadgeWatcher() {
       return;
     }
     try {
-      const response = await fetch('http://127.0.0.1:5055/status', { signal: AbortSignal.timeout(2000) });
+      const response = await fetch(`http://127.0.0.1:${process.env.SYNC_AGENT_PORT}/status`, { signal: AbortSignal.timeout(2000) });
       const status = response.ok ? await response.json() : null;
       if (status && status.online === false) {
         mainWindow.setOverlayIcon(redDot, 'Cloud sync offline');
@@ -4284,6 +4283,51 @@ function createTray() {
 }
 
 let cloudWindow = null;
+let profilesWindow = null;
+function openShopProfiles() {
+  if (profilesWindow && !profilesWindow.isDestroyed()) return profilesWindow.focus();
+  profilesWindow = new BrowserWindow({ width: 640, height: 570, title: 'Shops on this computer', autoHideMenuBar: true,
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), sandbox: true, contextIsolation: true, nodeIntegration: false, webSecurity: true } });
+  profilesWindow.on('closed', () => { profilesWindow = null; });
+  profilesWindow.loadFile(path.join(__dirname, 'shop-profiles.html'));
+}
+function assertProfilesWindow(event) {
+  if (!profilesWindow || event.sender !== profilesWindow.webContents || event.senderFrame !== event.sender.mainFrame ||
+      require('url').fileURLToPath(event.senderFrame.url) !== path.join(__dirname, 'shop-profiles.html')) throw new Error('Open Shops on this computer.');
+}
+async function currentShopName() {
+  const db = global.mongooseConnection?.db;
+  if (db) {
+    const branch = await db.collection('branches').findOne({}, { projection: { branch_name: 1 } });
+    profiles.rename(branch?.branch_name);
+  }
+  return profiles.state.shops.find(shop => shop.id === runningProfile).name;
+}
+ipcMain.handle('shops:current', async event => {
+  if (event.sender !== mainWindow?.webContents || event.senderFrame !== event.sender.mainFrame) throw new Error('Open the main shop window.');
+  return { name: await currentShopName(), multiple: profiles.state.shops.length > 1 };
+});
+ipcMain.handle('shops:manage', event => {
+  if (event.sender !== mainWindow?.webContents || event.senderFrame !== event.sender.mainFrame) throw new Error('Open the main shop window.');
+  openShopProfiles();
+});
+ipcMain.handle('shops:list', async event => {
+  assertProfilesWindow(event);
+  await currentShopName();
+  return { ...profiles.state, connected: fs.existsSync(CLOUD_CONFIG_FILE) };
+});
+ipcMain.handle('shops:open', async (event, id) => {
+  assertProfilesWindow(event);
+  if (nextProfile || cloudConnectionBusy || id === runningProfile) throw new Error('Shop switch unavailable.');
+  if (id === 'connect') { openCloudManager(); profilesWindow.close(); return; }
+  if (id === 'add' && (mongoDBManager?.usingExternal || !mongoDBManager?.mongoProcess)) {
+    throw new Error('A separate shop requires the desktop-managed database.');
+  }
+  if (id !== 'add') profiles.directory(id);
+  nextProfile = id === 'add' ? profiles.add() : id;
+  relaunchAfterQuit = true;
+  app.quit();
+});
 function openCloudManager() {
   if (cloudWindow && !cloudWindow.isDestroyed()) {
     cloudWindow.focus();
@@ -4541,11 +4585,12 @@ app.whenReady().then(async () => {
    * only place the numbers are decided.
    */
   try {
-    const { resolveLocalPorts } = require('./local-ports');
+    const { resolveLocalPorts, resolveSyncStatusPort } = require('./local-ports');
     const ports = await resolveLocalPorts({
       appName: app.getName(),
       userDataPath: app.getPath('userData'),
     });
+    process.env.SYNC_AGENT_PORT = String(await resolveSyncStatusPort(ports));
     process.env.POSNIC_MONGO_PORT = String(ports.mongoPort);
     process.env.PORT = String(ports.apiPort);
     if (!process.env.MONGODB_URI) {
@@ -4671,7 +4716,7 @@ app.whenReady().then(async () => {
       console.error('  Failed to start bundled MongoDB:', error.message);
       console.log('Checking for a system MongoDB service...\n');
       // Fail fast with an actionable screen instead of hanging on a dead DB.
-      const systemMongoAvailable = !customUserData && await mongoDBManager.isPortOpen(2000);
+      const systemMongoAvailable = profiles.state.shops.length === 1 && !customUserData && await mongoDBManager.isPortOpen(2000);
       if (!systemMongoAvailable) {
         updateStartupStatus(
           'error',
@@ -4703,7 +4748,7 @@ app.whenReady().then(async () => {
     };
   } else {
     console.log(' Bundled MongoDB not found');
-    const systemMongoAvailable = !customUserData && await mongoDBManager.isPortOpen(2000);
+    const systemMongoAvailable = profiles.state.shops.length === 1 && !customUserData && await mongoDBManager.isPortOpen(2000);
     if (!systemMongoAvailable) {
       updateStartupStatus(
         'error',
@@ -5796,7 +5841,7 @@ app.on('before-quit', async event => {
    * the version it has and is asked again tomorrow, which is the safe
    * direction to fail in.
    */
-  const installOnQuit = updateService && updateService.shouldInstallOnQuit();
+  const installOnQuit = !nextProfile && updateService && updateService.shouldInstallOnQuit();
   const readyToInstall = installOnQuit
     ? (async () => {
         const prepared = await updateService.prepareQuitInstall();
@@ -5844,6 +5889,12 @@ app.on('before-quit', async event => {
            * second pass has nothing left to do.
            */
           if (relaunchAfterQuit) {
+              if (nextProfile) {
+                profiles.activate(nextProfile);
+                for (const name of ['MONGODB_URI', 'POSNIC_SYNC_PAIRED', 'POSNIC_EXTENSIONS_ROOT', 'POSNIC_KEY', 'POSNIC_SECRET',
+                  'JWT_SECRET', 'SESSION_SECRET', 'ENCRYPTION_KEY', 'ENCRYPTION_IV', 'KIOSK_API_KEY', 'POSNIC_BRAND_DIR', 'POSNIC_ASSET_DIR',
+                  'POSNIC_UPLOADS_DIR', 'FILE_UPLOAD_PATH']) delete process.env[name];
+              }
               console.log('[Shutdown] Restarting');
               app.relaunch();
               app.quit();

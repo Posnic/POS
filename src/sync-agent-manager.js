@@ -194,7 +194,7 @@ class SyncAgentManager {
       GATEWAY_URL: cfg.gatewayUrl,
       DEVICE_TOKEN: cfg.deviceToken,
       DEVICE_ID: cfg.deviceId,
-      STATUS_PORT: String(cfg.statusPort || 5055),
+      STATUS_PORT: String(process.env.SYNC_AGENT_PORT || cfg.statusPort || 5055),
       /*
        * Where this till keeps its uploaded images, so the agent's file lane
        * can reconcile them with the cloud. Same resolution server.js uses for

@@ -11,7 +11,7 @@ function validateIdentity(identity) {
 
 function assertSameShop({ identity, savedTenant, localBranchIds, userCount, businessDataCount = 0 }) {
   const verified = validateIdentity(identity);
-  const refusal = Object.assign(new Error('Existing local shop data cannot be linked to this cloud shop. Keep the existing data, or delete it from this computer and start again. Cloud accounts are never merged automatically.'), { code: 'LOCAL_SHOP_CONFLICT' });
+  const refusal = Object.assign(new Error('Existing local shop data cannot be linked to this cloud shop. Choose its own cloud account or open the other shop in a separate profile.'), { code: 'LOCAL_SHOP_CONFLICT' });
   if (savedTenant && savedTenant !== verified.tenantDb) throw refusal;
   if (localBranchIds.length) {
     const cloud = new Set(verified.branchIds);

@@ -60,12 +60,15 @@ const businessFiles = [
   'connector-runtime', '.install-credentials.json',
   'kot-state.json', 'kot-logs', 'windows-print-queue', 'print-ledger.json',
 ];
-function resetSavedData({ userData, recoveryRoot, keepHardware = true }) {
+function resetSavedData({ userData, recoveryRoot, keepHardware = true, verifyRestore }) {
   const names = [...businessFiles, ...hardwareFiles];
   const destination = saveRecovery({ userData, recoveryRoot, names });
-  for (const name of [...businessFiles, ...(keepHardware ? [] : hardwareFiles)]) {
+  function removeSavedData() {
+    for (const name of [...businessFiles, ...(keepHardware ? [] : hardwareFiles)]) {
     fs.rmSync(within(userData, path.join(userData, name)), { recursive: true, force: true });
+    }
+    return destination;
   }
-  return destination;
+  return verifyRestore ? Promise.resolve(verifyRestore(destination)).then(removeSavedData) : removeSavedData();
 }
 module.exports = { within, hash, saveRecovery, resetSavedData, businessFiles, hardwareFiles };

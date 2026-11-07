@@ -99,7 +99,7 @@ class MongoDBManager {
     let writableBasePath = path.join(__dirname, '..');
     try {
       const { app } = require('electron');
-      if (app.isPackaged) {
+      if (app.isPackaged || process.env.POSNIC_ISOLATED_SHOP === '1') {
         writableBasePath = app.getPath('userData');
         const userMongoDir = path.join(writableBasePath, 'mongodb');
         if (!fs.existsSync(userMongoDir)) {
@@ -305,7 +305,7 @@ class MongoDBManager {
       // silently attach to whichever shop is already open and then sync that
       // shop's records to the wrong cloud tenant. Say so loudly.
       if (!this._ownsRunningMongo()) {
-        if (process.env.POSNIC_USER_DATA) {
+        if (process.env.POSNIC_USER_DATA || process.env.POSNIC_MULTIPLE_SHOPS === '1') {
           const error = new Error('The database port belongs to another Posnic installation. No connection was made. Contact support to correct this installation\'s local ports.');
           error.code = 'MONGODB_PROFILE_MISMATCH';
           throw error;

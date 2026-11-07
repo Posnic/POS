@@ -856,13 +856,11 @@
                 <div hidden><a id="cloudServerToggle"></a><div id="cloudServerRow"></div><input id="cloudEmail"><input id="cloudPassword" type="password"><button id="cloudConnectBtn"></button></div>
                 <div id="cloudError" role="alert" style="display:none;color:#b91c1c;margin:12px 0;"></div>
                 <section id="cloudConflict" hidden style="border:1px solid #e0a889;border-radius:10px;padding:16px;margin:16px 0;">
-                    <h3 style="margin:0 0 8px;">Choose how to continue</h3>
-                    <p>Keep this computer’s existing shop data and sign in to its cloud account, or save a recovery copy and start fresh.</p>
-                    <p class="field-hint">A verified recovery copy protects unsynced changes. Cloud records and existing backups stay unchanged. After restart, sign in again or use a new pairing code.</p>
-                    <button type="button" class="btn btn-secondary" id="keepLocalShop">Keep data / use another login</button>
-                    <button type="button" class="btn btn-secondary" id="deleteLocalShop" style="color:#b91c1c;border-color:#b91c1c;">Save recovery copy &amp; restart</button>
-                    <p id="cloudResetStatus" role="status" aria-live="polite"></p>
-                </section>
+                    <h3>Different cloud shop</h3>
+                <p>To open this cloud shop separately, choose Add another shop in Shops on this computer.</p>
+                <button type="button" class="btn secondary" id="keepLocalShop">Use another login</button>
+                <button type="button" class="btn secondary" id="manageLocalShops">Shops on this computer</button>
+            </section>
                 <script src="cloud-reset-ui.js"></script>
                 <div id="cloudProgress" style="display:none;margin:14px 0;" role="status" aria-live="polite">
                     <div style="background:#eef0f7;border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px;"><div id="cloudProgBar" style="height:100%;width:2%;background:#3D85C6;transition:width .6s ease;"></div></div>
