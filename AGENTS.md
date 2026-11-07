@@ -14,6 +14,10 @@ Posnic credits people, not software tools.
   body as implementation context, not contributor attribution.
 - Run `npm run check:attribution` before opening a pull request.
 
+## Keep universal search in sync with the POS
+
+Every change that adds, renames or removes a user-facing route, feature, report, setting or extension must update universal search in the same change. Register every navigable destination in **All**, including list, detail and create flows. Use the menu's translated label, common operator terms, stable route or record resolver, module filter and the destination's own permissions and feature gates. For each setting, update its owning settings page and register a link to the exact section or control. For each installed extension, register its eligible pages, actions and record providers and remove them on disable or uninstall. Parameterized record routes must resolve authorized records in the current shop and branch. Internal API endpoints are outside the navigation catalog. Create actions such as Add Customer, New Sale and New Purchase must open the existing entry form with its write permission. Selecting the action must never submit it. Verify coverage against the router, settings pages and extension declarations, including renamed or removed links, and test discovery from All with an authorized and a restricted user. See [Universal search](docs/UNIVERSAL_SEARCH.md) for route, wording and extension examples.
+
 ## Where a setting goes
 
 The Features list is a row of switches. A shopkeeper scans it to see what is

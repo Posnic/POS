@@ -22,4 +22,9 @@ module.exports = [
     description: 'Repair untouched demo document line fields and restaurant supply purchases',
     up: require('../../services/demo-repair').repairDemoRecords,
   },
+  {
+    id: '003-universal-search-indexes',
+    description: 'Index shop record identifiers and name prefixes for header search',
+    up: require('./universal-search'),
+  },
 ];

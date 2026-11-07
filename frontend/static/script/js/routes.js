@@ -121,6 +121,10 @@ $(document).ready(function () {
             $('.kot').click();
         }
     });
+    crossroads.addRoute('extensions/{extensionId}/find/{target}/{recordId}', function (extensionId, target, recordId) {
+        if (!/^[A-Za-z][A-Za-z0-9_-]{0,63}$/.test(target) || !/^[A-Za-z0-9_-]{1,96}$/.test(recordId)) return;
+        withModule('extensions', function () { PosnicPro.extensions.showDetails(extensionId, null, {target: target, id: recordId}); });
+    });
     crossroads.addRoute('{module}/{id}', function (module, id) {
         RECORD_ID = id;
         withModule(module, function () { PosnicPro[module].showDetails(id); });

@@ -2407,25 +2407,23 @@ input:checked + .slider:before {
  * Ctrl+K command palette (S3; DOM injected by core/command-palette.js).
  * Styled on the theme tokens so it belongs to all eleven themes.
  */
-#cmdk-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 20000;
-    background: rgba(10, 14, 24, 0.45);
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 12vh;
-}
-#cmdk-box {
-    width: min(560px, 92vw);
-    background: var(--theme-card-bg, #fff);
-    color: var(--theme-text-primary, #16203a);
-    border-radius: 10px;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
-    overflow: hidden;
-    font-family: var(--theme-font-family, inherit);
-}
+#posnic-header-search { display:inline-flex; align-items:center; gap:8px; margin:6px 10px; padding:7px 12px; border:1px solid var(--theme-border-color,#d7dfef); background:var(--theme-card-bg,#fff); color:var(--theme-text-primary,#263859); border-radius:8px; }
+#posnic-header-search kbd {background:transparent;color:inherit;opacity:.7;}
+#cmdk-overlay {position:fixed;inset:auto;top:var(--cmdk-top,20px);left:var(--cmdk-left,12px);width:min(710px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - var(--cmdk-top,20px) - 10px);margin:0;padding:0;border:0;border-radius:10px;color:var(--theme-text-primary,#16203a);background:var(--theme-card-bg,#fff);box-shadow:0 0 0 2px var(--theme-primary-color,#506fe4),0 16px 48px #172a5145;}
+#cmdk-overlay::backdrop {background:rgba(20,31,56,.35);}
+#cmdk-overlay[open]{animation:cmdk-expand .24s cubic-bezier(.2,.75,.25,1);}
+#cmdk-overlay[open]::backdrop {animation:cmdk-shade .2s ease-out;}
+@keyframes cmdk-expand {from{width:var(--cmdk-start,160px);clip-path:inset(0 0 calc(100% - 38px) 0 round 8px);}to{clip-path:inset(-24px round 10px);}}
+#cmdk-overlay.cmdk-closing{animation:cmdk-shade .145s ease-in reverse both;}
+#cmdk-overlay.cmdk-closing::backdrop{animation:cmdk-shade .145s ease-in reverse both;}
+@keyframes cmdk-shade {from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#cmdk-overlay[open],#cmdk-overlay[open]::backdrop{animation:none;}}
+@media(max-width:800px){#posnic-header-search lang,#posnic-header-search kbd{display:none;}}
+.cmdk-field,#cmdk-tabs,#cmdk-hint{display:flex;align-items:center;}
+#cmdk-tabs{flex-wrap:wrap;gap:4px;padding:5px 12px;}
+#cmdk-box button{background:transparent;border:0;color:inherit;padding:5px 8px;border-radius:6px;cursor:pointer;}
+#cmdk-tabs [aria-pressed="true"]{background:var(--theme-primary-color,#506fe4);color:white;}
+#cmdk-clear{margin-left:auto;}.cmdk-section,#cmdk-status:not(:empty){padding:7px 18px;font-size:12px;}
 #cmdk-input {
     width: 100%;
     border: 0;

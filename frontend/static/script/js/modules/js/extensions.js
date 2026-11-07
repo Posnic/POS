@@ -466,7 +466,7 @@
         if (run === generation) status(error.message);
       }
     },
-    showDetails: async function (id, embedded) {
+    showDetails: async function (id, embedded, searchDestination) {
       PosnicPro.extensions.refreshMenu();
       var run;
       if (embedded) { close(); run = generation; } else run = show("Extension");
@@ -541,6 +541,7 @@
         mounted = PosnicExtensionFrame.mount({
           container: embedded ? embedded.container : document.getElementById("extensions_content"),
           extensionId: id,
+          searchDestination: searchDestination,
           title: data.displayName,
           presentation: embedded?.workspace?.presentation,
           view: data.view,

@@ -107,6 +107,7 @@ router.use('/roles', rolesRoutes);
 router.use('/authorizations', authorizationsRoutes);
 router.use('/shifts', shiftsRoutes);
 router.use('/sales', salesRoutes);
+router.use('/search', require('./search.routes'));
 // Unauthenticated by design - the errors worth hearing about happen before
 // auth works. See the route file for how the surface is held small.
 router.use('/client-errors', clientErrorsRoutes);

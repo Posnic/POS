@@ -99,6 +99,7 @@
             {
               type: "posnic-extension-connect",
               extensionId: options.extensionId,
+              ...(options.searchDestination && { searchDestination: options.searchDestination }),
             },
             "*",
             [channel.port2],

@@ -94,6 +94,7 @@ function loadVerifiedDirectory(directory, publicKey, capabilities = runtime.capa
     id: metadata.id,
     version: metadata.version,
     initialState,
+    search: require('./extension-search').contribution(metadata.contributes?.search),
     commands: metadata.commands,
     connectorOperations: require('./extension-connector').connectorOperations(
       metadata.connectorOperations

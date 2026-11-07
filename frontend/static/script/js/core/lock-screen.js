@@ -435,6 +435,7 @@
             if (!users || !users.length) { uncover(); return; }   // nobody could unlock it
             if (state.open) { uncover(); return; }
 
+            if (PosnicPro.palette) PosnicPro.palette.resetSession();
             build();
             state.open = true;
             state.mode = 'unlock';
