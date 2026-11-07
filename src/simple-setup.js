@@ -19,6 +19,7 @@ document.getElementById('setupLaterBtn')?.addEventListener('click', async () => 
   }
   try {
     const state = await api.state();
+    if (state.addingShop) { show('stepCloud'); return; }
     if (!state.existing) return;
     document.getElementById('existingConnection').textContent = state.connected ? 'Linked to cloud · sync resumes automatically' : 'Community edition · data stays on this computer';
     document.getElementById('existingSyncNote').textContent = state.connected

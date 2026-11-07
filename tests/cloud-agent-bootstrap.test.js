@@ -90,7 +90,7 @@ function connection(start, refreshCaptainDiscovery = async () => {}) {
   const manager = { stop() {}, start };
   const sandbox = { fs: { existsSync: () => false, readFileSync: () => { throw Object.assign(new Error('missing'), { code: 'ENOENT' }); }, writeFileSync() {}, chmodSync() {} }, validateActivation, path, app: { getPath: () => 'test' },
     __dirname: path.join(__dirname, '../src'), process: { env: {} }, console: { log() {}, warn() {} }, CLOUD_CONFIG_FILE: 'test.json', syncAgentManager: manager,
-    WEBSITE_API: 'https://www.posnic.com', AbortSignal,
+    WEBSITE_API: 'https://www.posnic.com', AbortSignal, profiles: { findConnection: () => null },
     fetch: async () => ({ ok: true, json: async () => ({ tenantDb: 'shop', branchIds: [] }) }),
     require: (name) => name === './cloud-local-mongo' ? { cloudLocalMongoUri: () => 'mongodb://127.0.0.1:47017' } : name.endsWith('supplier-email-index') ? { migrateSupplierEmailIndex: async () => {} } : name === 'mongodb' ? { MongoClient: class {
       async connect() {} async close() {}

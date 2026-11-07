@@ -62,6 +62,7 @@
 <body class="desktop-window" data-desktop-window="cloud">
     <h1>☁️ Posnic Cloud</h1>
     <div class="subtitle">Offline-safe sync between this shop and your cloud account.</div>
+    <button type="button" class="btn secondary" id="shopsOnComputer">Shops on this computer</button>
 
     <!-- Connected: status + management -->
     <div id="connectedView">
@@ -115,12 +116,10 @@
             <p class="subtitle" style="margin-top:14px;">An existing local shop must match the cloud shop. Connecting does not merge separate businesses.</p>
             <div class="error" id="error"></div>
             <section id="cloudConflict" hidden style="border:1px solid #e0a889;border-radius:10px;padding:16px;margin:16px 0;">
-                <h3>Choose how to continue</h3>
-                <p>Keep the existing shop data and use another login, or delete the local data and restart setup.</p>
-                <p>A verified recovery copy protects unsynced changes. Cloud records and existing backups stay unchanged. Sign in again after restart or use a new pairing code.</p>
-                <button type="button" class="btn secondary" id="keepLocalShop">Keep data / use another login</button>
-                <button type="button" class="btn secondary" id="deleteLocalShop" style="color:#b91c1c;border-color:#b91c1c;">Save recovery copy &amp; restart</button>
-                <p id="cloudResetStatus" role="status" aria-live="polite"></p>
+                <h3>Different cloud shop</h3>
+                <p>To open this cloud shop separately, choose Add another shop in Shops on this computer.</p>
+                <button type="button" class="btn secondary" id="keepLocalShop">Use another login</button>
+                <button type="button" class="btn secondary" id="manageLocalShops">Shops on this computer</button>
             </section>
             <script src="cloud-reset-ui.js"></script>
             <div class="progress" id="progress"></div>

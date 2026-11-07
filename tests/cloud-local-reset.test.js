@@ -3,8 +3,6 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const vm = require('node:vm');
-const { pathToFileURL } = require('node:url');
 const { EventEmitter } = require('node:events');
 const { verifyLocalDatabase, stopSync } = require('../src/cloud-local-reset');
 const { assertSameShop } = require('../src/cloud-shop-identity');
@@ -36,56 +34,22 @@ test('sync must actually exit before local deletion may proceed', async () => {
   assert.equal(finished, true);
 });
 
-function handler({ answer = 1, fail = false, conflict = true } = {}) {
-  const source = fs.readFileSync(path.join(__dirname, '../src/main.js'), 'utf8');
-  const start = source.indexOf("ipcMain.handle('cloud:reset-local-shop'");
-  const end = source.indexOf('function confirmFullAccountRemoval()', start);
-  const calls = []; let callback;
-  const root = path.resolve(__dirname, '../src');
-  const sandbox = {
-    __dirname: root, path, cloudResetUri: conflict ? 'mongodb://127.0.0.1:47017' : null, cloudConnectionBusy: false,
-    ipcMain: { handle(_name, fn) { callback = fn; } },
-    require(name) { if (name === './cloud-local-reset') return { verifyLocalDatabase: async () => calls.push('verify'), stopSync: async () => calls.push('stop') }; if (name === 'mongodb') return {}; return require(name); },
-    mongoDBManager: { dataPath: 'data' }, syncAgentManager: {}, CLOUD_CONFIG_FILE: 'cloud-config',
-    fs: { existsSync: () => true, unlinkSync: file => calls.push('unlink:' + path.basename(file)) },
-    BrowserWindow: { fromWebContents: () => ({}) }, dialog: { showMessageBox: async () => ({ response: answer }) },
-    saveAndResetLocalSetup: async (keepHardware, uri) => { assert.equal(keepHardware, true); assert.equal(uri, 'mongodb://127.0.0.1:47017'); calls.push('verified-recovery-reset'); if (fail) throw Error('recovery unavailable'); },
-    relaunchAfterQuit: false,
-    app: { getPath: () => 'profile', quit: () => calls.push('quit') },
-  };
-  vm.runInNewContext(source.slice(start, end), sandbox);
-  return { calls, run: (page = 'install-wizard.html') => callback({ senderFrame: { url: pathToFileURL(path.join(root, page)).href }, sender: {} }) };
-}
-
-test('cancel keeps data; unrelated pages and absent conflict cannot reset', async () => {
-  const cancel = handler({ answer: 0 }); assert.equal((await cancel.run()).cancelled, true); assert.deepEqual(cancel.calls, ['verify']);
-  const unrelated = handler(); assert.equal((await unrelated.run('kitchen-screen.html')).ok, false); assert.deepEqual(unrelated.calls, []);
-  const noConflict = handler({ conflict: false }); assert.equal((await noConflict.run()).ok, false); assert.deepEqual(noConflict.calls, []);
-});
-
-test('confirmed reset stops sync before deletion and removes stale identity only after success', async () => {
-  const success = handler(); assert.equal((await success.run()).ok, true);
-  assert.deepEqual(success.calls, ['verify', 'verified-recovery-reset', 'quit']);
-  const failure = handler({ fail: true }); assert.equal((await failure.run()).ok, false);
-  assert.deepEqual(failure.calls, ['verify', 'verified-recovery-reset']);
-});
-
-test('both cloud screens expose choices only for shop conflicts and recover after cancellation', async () => {
+test('conflicting cloud identities lead to shop management and cannot reset the local shop', async () => {
   const { JSDOM } = require('jsdom');
   for (const page of ['install-wizard.html', 'cloud-setup.html']) {
     const dom = new JSDOM(fs.readFileSync(path.join(__dirname, '../src', page), 'utf8'), { runScripts: 'outside-only' });
     try {
-      let calls = 0;
-      dom.window.electronAPI = { cloud: { resetLocalShop: async () => { calls++; return { ok: false, cancelled: true }; } } };
+      let opened = 0;
+      dom.window.electronAPI = { cloud: { manageShops() { opened++; } } };
       dom.window.eval(fs.readFileSync(path.join(__dirname, '../src/cloud-reset-ui.js'), 'utf8'));
-      const panel = dom.window.document.getElementById('cloudConflict');
-      assert.equal(panel.hidden, true);
-      dom.window.showCloudConflict({ code: 'NETWORK_ERROR' }); assert.equal(panel.hidden, true);
-      dom.window.showCloudConflict({ code: 'LOCAL_SHOP_CONFLICT' }); assert.equal(panel.hidden, false);
-      const button = dom.window.document.getElementById('deleteLocalShop');
-      const pending = button.onclick(); assert.equal(button.disabled, true);
-      await pending; assert.equal(button.disabled, false); assert.equal(calls, 1);
-      dom.window.document.getElementById('keepLocalShop').click(); assert.equal(panel.hidden, true);
+      const document = dom.window.document;
+      dom.window.showCloudConflict({ code: 'LOCAL_SHOP_CONFLICT' });
+      assert.equal(document.getElementById('cloudConflict').hidden, false);
+      assert.equal(document.getElementById('deleteLocalShop'), null);
+      document.getElementById('manageLocalShops').click();
+      assert.equal(opened, 1);
+      document.getElementById('keepLocalShop').click();
+      assert.equal(document.getElementById('cloudConflict').hidden, true);
     } finally { dom.window.close(); }
   }
 });

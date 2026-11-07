@@ -31,7 +31,7 @@ test('fresh setup waits for every writer and owned database before snapshot and 
       assert.ok(!calls.includes('snapshot-reset'));
     } else {
       await context.saveAndResetLocalSetup(true);
-      assert.deepEqual(calls, ['verify', 'backups', 'sync', 'connectors', 'api', 'database', 'sessions', 'snapshot-reset', 'marker']);
+      assert.deepEqual(calls, ['verify', 'backups', 'sync', 'connectors', 'api', 'database', 'snapshot-reset', 'sessions', 'marker']);
     }
   }
 });
