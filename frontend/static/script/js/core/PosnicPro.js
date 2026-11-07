@@ -6161,6 +6161,20 @@ $('.custom_report_search_input').on('keyup', function (event) {
          */
         var label = document.createElement('span');
         bar.appendChild(label);
+        var shopAPI = window.electronAPI && window.electronAPI.install;
+        if (shopAPI && shopAPI.currentShop) {
+            shopAPI.currentShop().then(function (shop) {
+                if (!shop.multiple) return;
+                var name = document.createElement('strong');
+                name.textContent = shop.name;
+                var switcher = document.createElement('button');
+                switcher.type = 'button';
+                switcher.textContent = 'Switch shop';
+                switcher.style.webkitAppRegion = 'no-drag';
+                switcher.onclick = function () { shopAPI.manageShops(); };
+                label.after(name, switcher);
+            }).catch(function () {});
+        }
 
         /*
          * Our own minimise, maximise and close.

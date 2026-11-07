@@ -48,3 +48,9 @@ test('recovery refuses paths outside the owned data directory', t => {
   const options = fixture(t);
   assert.throws(() => saveRecovery({ ...options, names: ['../outside'] }), /unexpected/);
 });
+test('failed restore check retains the original database and cloud binding', async t => {
+  const options = fixture(t);
+  await assert.rejects(resetSavedData({ ...options, verifyRestore: async () => { throw Error('unreadable database'); } }), /unreadable/);
+  assert.equal(fs.readFileSync(path.join(options.userData, 'mongodb/data/collection.wt'), 'utf8'), 'unsynced sale');
+  assert.ok(fs.existsSync(path.join(options.userData, 'posnic-cloud.json')));
+});

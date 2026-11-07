@@ -184,14 +184,7 @@ class SyncAgentManager {
 
     // Always prefer the CURRENT MongoDB credentials at spawn time - local
     // setup can enable DB auth after the cloud config was first written.
-    let localUri = cfg.localUri || `mongodb://127.0.0.1:${process.env.POSNIC_MONGO_PORT || 47017}`;
-    try {
-      const credFile = path.join(this.app.getPath('userData'), '.mongodb-credentials.json');
-      if (fs.existsSync(credFile)) {
-        const creds = JSON.parse(fs.readFileSync(credFile, 'utf8'));
-        if (creds.uri) localUri = creds.uri;
-      }
-    } catch (e) { /* stored value is the fallback */ }
+    const localUri = require('./cloud-local-mongo').cloudLocalMongoUri(this.app, cfg.localUri);
 
     const env = {
       ...process.env,
@@ -201,7 +194,7 @@ class SyncAgentManager {
       GATEWAY_URL: cfg.gatewayUrl,
       DEVICE_TOKEN: cfg.deviceToken,
       DEVICE_ID: cfg.deviceId,
-      STATUS_PORT: String(cfg.statusPort || 5055),
+      STATUS_PORT: String(process.env.SYNC_AGENT_PORT || cfg.statusPort || 5055),
       /*
        * Where this till keeps its uploaded images, so the agent's file lane
        * can reconcile them with the cloud. Same resolution server.js uses for

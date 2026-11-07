@@ -164,4 +164,12 @@ async function resolveLocalPorts({ appName, userDataPath }) {
   return { ...chosen, reused: false, movedFromPreferred: mongoPort !== wantMongo || apiPort !== wantApi };
 }
 
-module.exports = { resolveLocalPorts, derive, portIsFree, MONGO_BASE, API_BASE, DISCOVERY_PORT };
+async function resolveSyncStatusPort({ mongoPort, apiPort }) {
+  const port = await firstFreeFrom(51000 + (mongoPort % 1000), [mongoPort, apiPort]);
+  if (port) return port;
+  const error = new Error('Could not allocate the local sync status port.');
+  error.code = 'NO_FREE_PORT';
+  throw error;
+}
+
+module.exports = { resolveSyncStatusPort, resolveLocalPorts, derive, portIsFree, MONGO_BASE, API_BASE, DISCOVERY_PORT };

@@ -49,3 +49,21 @@ test("an explicit data profile cannot attach to another profiles database", asyn
     else process.env.POSNIC_USER_DATA = previous;
   }
 });
+
+test("two running shops cannot select the same occupied sync status port", async () => {
+  const { resolveSyncStatusPort } = require("../src/local-ports");
+  const ports = { mongoPort: 47570, apiPort: 42570 };
+  const assigned = await resolveSyncStatusPort(ports);
+  const listener = net.createServer();
+  await new Promise((resolve, reject) => {
+    listener.once("error", reject);
+    listener.listen(assigned, "127.0.0.1", resolve);
+  });
+  try {
+    const other = await resolveSyncStatusPort(ports);
+    assert.notEqual(other, assigned);
+    assert.equal(await portIsFree(other), true);
+  } finally {
+    await new Promise(resolve => listener.close(resolve));
+  }
+});
