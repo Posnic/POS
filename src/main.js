@@ -1611,6 +1611,7 @@ ipcMain.handle('cloud:status', async () => {
 });
 
 ipcMain.handle('cloud:signup', () => shell.openExternal('https://www.posnic.com/cloud'));
+ipcMain.handle('cloud:plans', () => shell.openExternal('https://www.posnic.com/pricing.html'));
 /*
  * Pairing this till with a code, instead of the shop's password.
  *
@@ -1873,7 +1874,7 @@ ipcMain.handle('desktop:open', (_event, target) => {
   }
   switch (target) {
     case 'hardware': openHardwareManager(); break;
-    case 'backup': if (!fs.existsSync(CLOUD_CONFIG_FILE)) openBackupManager(); break;
+    case 'backup': openBackupManager(); break;
     case 'update': openUpdateManager(); break;
     case 'cloud': openCloudManager(); break;
     /* The viewer rather than the file. shell.openPath handed a 40,000 line
@@ -1934,7 +1935,8 @@ ipcMain.handle('desktop:capabilities', () => ({
    * page can put the number on screen without a new round trip.
    */
   version: app.getVersion(),
-  backup: !fs.existsSync(CLOUD_CONFIG_FILE)
+  backup: true,
+  cloudConnected: fs.existsSync(CLOUD_CONFIG_FILE)
 }));
 
 // Startup is an operating-system preference, shared by Settings and the shell.
@@ -2621,15 +2623,15 @@ function createMenu() {
             openHardwareManager();
           }
         },
-        // Local file backup/export is a local-edition feature; cloud
-        // subscribers' data is backed up by Posnic Cloud.
-        ...(fs.existsSync(CLOUD_CONFIG_FILE) ? [] : [{
+        // A connected desktop still holds local data and unsent work. Backups
+        // remain available when cloud access expires or the network is down.
+        {
           label: 'Backup Manager',
           accelerator: 'CmdOrCtrl+B',
           click: () => {
             openBackupManager();
           }
-        }]),
+        },
         {
           label: getUpdateMenuLabel(),
           accelerator: 'CmdOrCtrl+U',
@@ -4063,6 +4065,12 @@ ipcMain.handle('backup:list', (event) => {
 ipcMain.handle('backup:restore', async (event, folderPath, options) => {
   requireBackupWindow(event, true);
   try {
+    // Restoring an older local snapshot while connected could upload stale
+    // records into the cloud. Make a backup freely, but detach deliberately
+    // before replacing local data. Never silently unlink or reset a device.
+    if (fs.existsSync(CLOUD_CONFIG_FILE)) {
+      return { success: false, error: 'Disconnect this device from Cloud before restoring a local backup. Restoring while connected could overwrite newer cloud data.' };
+    }
     const result = await getBackupManager().restoreBackup(folderPath, options || {});
 
     // After successful restore: full app restart for a clean state.
@@ -4258,9 +4266,7 @@ function createTray() {
         ...branchItems,
         { label: 'App Settings', click: () => openAppSettings('app') },
         { label: 'Hardware Manager', click: () => openHardwareManager() },
-        ...(fs.existsSync(CLOUD_CONFIG_FILE) ? [] : [
-          { label: 'Backup Manager', click: () => openBackupManager() }
-        ]),
+        { label: 'Backup Manager', click: () => openBackupManager() },
         { label: 'Updates & Recovery', click: () => openUpdateManager() },
         { label: 'Posnic Cloud...', click: () => openCloudManager() },
         { type: 'separator' },

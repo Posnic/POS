@@ -11872,12 +11872,31 @@ PosnicPro.sugActionRow = function (icon, cls, title, meta) {
 PosnicPro.sales.chooseSellingUnit = function (item, done) {
     var id = item.id || item.item_id;
     var rows = [{ unit: item.unit || 'qty', factor: 1, price: Number(item.selling_price) }].concat(item.selling_units || []);
-    var options = {};
+    var selectedUnit = null;
+    var escapeUnit = function (value) { return String(value).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    var buttons = [];
     rows.forEach(function (row, index) {
         var price = row.price == null ? Number(item.selling_price) * Number(row.factor) : Number(row.price);
-        options[index] = row.unit + ' — ' + price.toFixed(2);
+        buttons.push('<button type="button" class="btn btn-outline-primary" data-selling-unit="' + index + '" style="min-height:64px;min-width:110px;flex:1 1 110px;white-space:normal"><strong>' + escapeUnit(row.unit) + '</strong><br><span>' + price.toFixed(2) + '</span></button>');
     });
-    swal({ title: PosnicPro.i18n.t('lang_sell_by_which_unit', 'Sell by which unit?'), text: item.item_name || item.name || '', input: 'select', inputOptions: options, inputValue: '0', showCancelButton: true, confirmButtonText: 'Use unit' }).then(function (result) {
+    swal({ title: PosnicPro.i18n.t('lang_sell_by_which_unit', 'Sell by which unit?'),
+        html: '<p>' + escapeUnit(item.item_name || item.name || '') + '</p><div id="selling-unit-buttons" style="display:flex;gap:12px;flex-wrap:wrap">' + buttons.join('') + '</div>',
+        showCancelButton: true, showConfirmButton: false,
+        onOpen: function () {
+            var group = document.getElementById('selling-unit-buttons');
+            if (!group) return;
+            group.querySelectorAll('[data-selling-unit]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    if (selectedUnit !== null) return;
+                    selectedUnit = button.getAttribute('data-selling-unit');
+                    swal.clickConfirm();
+                });
+            });
+            var first = group.querySelector('button');
+            if (first) first.focus();
+        },
+        preConfirm: function () { return Promise.resolve(selectedUnit === null ? false : selectedUnit); }
+    }).then(function (result) {
         if (!result || result.dismiss) return;
         var choice = rows[Number(typeof result === 'string' ? result : result.value)];
         if (!choice) return;
