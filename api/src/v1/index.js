@@ -91,7 +91,9 @@ function writeBranchId(user) {
    neither skip nor repeat - the same rule the sync checkpoints use. */
 function encodeCursor(doc) {
   const ts = doc.updated_date instanceof Date ? doc.updated_date.toISOString() : '';
-  return Buffer.from(ts + '|' + String(doc._id)).toString('base64url');
+  // Retain the BSON type used for sorting when two sales share a timestamp.
+  const prefix = doc._id?._bsontype === 'ObjectId' ? 'oid:' : 'str:';
+  return Buffer.from(prefix + ts + '|' + String(doc._id)).toString('base64url');
 }
 
 function decodeCursor(raw) {
@@ -104,9 +106,15 @@ function decodeCursor(raw) {
   }
   const i = text.indexOf('|');
   if (i < 0) return null;
-  const ts = new Date(text.slice(0, i));
+  const typed = text.startsWith('oid:') || text.startsWith('str:');
+  const ts = new Date(text.slice(typed ? 4 : 0, i));
   if (isNaN(ts.getTime())) return null;
-  return { ts, id: text.slice(i + 1) };
+  const id = text.slice(i + 1);
+  if (text.startsWith('oid:')) {
+    if (!/^[0-9a-f]{24}$/.test(id)) return null;
+    return { ts, id: new (require('mongodb').ObjectId)(id) };
+  }
+  return { ts, id };
 }
 
 /*
@@ -157,7 +165,7 @@ function buildListQuery(user, cursor) {
     and.push({
       $or: [
         { updated_date: { $gt: cursor.ts } },
-        { updated_date: cursor.ts, _id: { $gt: cursor.id } },
+        { updated_date: cursor.ts, $expr: { $gt: ['$_id', { $literal: cursor.id }] } },
       ],
     });
   }

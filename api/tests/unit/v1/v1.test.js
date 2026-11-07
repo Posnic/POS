@@ -44,6 +44,16 @@ describe('acl', () => {
 });
 
 describe('cursor', () => {
+  test('preserves both BSON and string ids with the same spelling', () => {
+    const { ObjectId } = require('mongodb');
+    const updated_date = new Date();
+    const id = new ObjectId();
+    const roundTrip = (_id) => v1.decodeCursor(v1.encodeCursor({ _id, updated_date })).id;
+    expect(roundTrip(id).equals(id)).toBe(true);
+    expect(roundTrip(String(id))).toBe(String(id));
+    const legacy = Buffer.from(updated_date.toISOString() + '|old-id').toString('base64url');
+    expect(v1.decodeCursor(legacy).id).toBe('old-id');
+  });
   test('round-trips date and id', () => {
     const doc = { _id: 'abc123', updated_date: new Date('2026-08-18T10:00:00.000Z') };
     const c = v1.decodeCursor(v1.encodeCursor(doc));
