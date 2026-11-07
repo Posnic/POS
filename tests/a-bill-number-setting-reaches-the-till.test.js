@@ -62,7 +62,7 @@ test('there is a control, on the settings page and not on the Features list', ()
 
   /* The three choices, and no fourth: anything the API does not know is
      stored as off, and a control offering one would be a lie. */
-  for (const choice of ['value=""', 'value="financial"', 'value="calendar"']) {
+  for (const choice of ['value=""', 'value="financial"', 'value="calendar"', 'value="daily"']) {
     assert.ok(MARKUP.includes(choice), `the control cannot be set to ${choice}`);
   }
 });
@@ -107,7 +107,7 @@ test('the write path stores it, and refuses to invent a value', () => {
   /* Presence-gated: this endpoint also takes small partial payloads, and one
      that does not mention the year must not switch it off. */
   assert.match(WRITE, /data\.bill_number_reset !== undefined/);
-  assert.match(WRITE, /\['financial', 'calendar'\]\.includes\(/,
+  assert.match(WRITE, /\['financial', 'calendar', 'daily'\]\.includes\(/,
     'an unrecognised value is not being flattened to off');
   /* And the partial-save map, or a full save drops it on the floor. */
   assert.match(WRITE, /bill_number_reset: 'bill_number_reset'/);
@@ -115,7 +115,7 @@ test('the write path stores it, and refuses to invent a value', () => {
 });
 
 test('and a typo is refused at the door rather than corrected in silence', () => {
-  assert.match(CONTROLLER, /bill_number_reset must be off, financial or calendar/);
+  assert.match(CONTROLLER, /bill_number_reset must be off, financial, calendar or daily/);
   assert.match(CONTROLLER, /bill_number_fy_start_month must be a month, 1 to 12/);
 });
 

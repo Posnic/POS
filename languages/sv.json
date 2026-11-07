@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Ångra aktieavdrag",
   "lang_upload_excel_csv": "Ladda upp Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Väg för en begärd mängd",
-  "lang_you_have_read_only_access_to_product_avail": "Du har skrivskyddad åtkomst till produkttillgänglighet."
+  "lang_you_have_read_only_access_to_product_avail": "Du har skrivskyddad åtkomst till produkttillgänglighet.",
+  "lang_bill_number_reset_period": "Återställning av fakturanummer",
+  "lang_start_again_each_day": "Börja om varje dag",
+  "lang_bill_reset_daily_help": "Dagligen börjar kl 0001 vid midnatt i filialens tidszon. Datum- och till-koden håller fakturanumren unika. Befintliga räkningar behåller sina siffror.",
+  "lang_add_another_entry": "Lägg till en annan post",
+  "lang_back_to_overview": "Tillbaka till översikten",
+  "lang_check_the_quantities_below_then_confirm_to": "Kontrollera kvantiteterna nedan och bekräfta sedan för att uppdatera lagret.",
+  "lang_continue_counting": "Fortsätt räkna",
+  "lang_inventory_activity": "Lageraktivitet",
+  "lang_made_a_mistake": "Gjorde ett misstag?",
+  "lang_next_step": "Nästa steg",
+  "lang_preparing_review": "Förbereder granskning...",
+  "lang_rack_5_shelf_2_box_b": "Rack 5/Hylla 2/Låda B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Lagerjustering sparad. Fortsätt räkna eller återgå till översikt.",
+  "lang_stock_updated_successfully_no_further_appr": "Lagret uppdaterades framgångsrikt. Inget ytterligare godkännande behövs."
 }

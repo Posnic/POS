@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Kupci su uspešno preuzeli",
   "Data Not Valid": "Podaci nisu važeći",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Podaci nisu važeći: bill_number_fi_start_month mora biti mesec dana, 1 do 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Podaci nisu važeći: bill_number_reset mora biti isključen, finansijski ili kalendarski",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Podaci nisu važeći: receiving_prefix mora biti 1-6 znakova",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Podaci nisu važeći: sales_prefix mora biti 1-6 znakova",
   "Data Not Valid: unit_name required (1-20 chars)": "Podaci nisu važeći: potrebno ime jedinice (1-20 znakova)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnije vratio referencu poruke. Isporuka nije potvrđena; proverite ćaskanje pre ponovnog pokušaja.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppi dalje se ponovo povezuje ili mu je potrebna nova telefonska veza. Nijedna poruka nije poslata.",
   "Messaging permission required.": "Potrebna je dozvola za razmenu poruka.",
-  "Schedule owner no longer has messaging access.": "Vlasnik rasporeda više nema pristup porukama."
+  "Schedule owner no longer has messaging access.": "Vlasnik rasporeda više nema pristup porukama.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Podaci nisu važeći: bill_number_reset mora biti isključen, finansijski, kalendarski ili dnevni"
 }

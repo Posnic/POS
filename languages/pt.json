@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "Desfazer a dedução de ações",
   "lang_upload_excel_csv": "Carregar em Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Pesar para obter a quantidade solicitada",
-  "lang_you_have_read_only_access_to_product_avail": "Você tem acesso somente para leitura à disponibilidade do produto."
+  "lang_you_have_read_only_access_to_product_avail": "Você tem acesso somente para leitura à disponibilidade do produto.",
+  "lang_bill_number_reset_period": "Redefinição do número da fatura",
+  "lang_start_again_each_day": "Comece de novo todos os dias",
+  "lang_bill_reset_daily_help": "O dia começa às 00:01 à meia-noite no fuso horário da agência. A data e o código de caixa mantêm os números das contas exclusivos. As contas existentes mantêm seus números.",
+  "lang_add_another_entry": "Adicionar outra entrada",
+  "lang_back_to_overview": "Voltar à visão geral",
+  "lang_check_the_quantities_below_then_confirm_to": "Verifique as quantidades abaixo e confirme para atualizar o estoque.",
+  "lang_continue_counting": "Continue contando",
+  "lang_inventory_activity": "Atividade de inventário",
+  "lang_made_a_mistake": "Cometeu um erro?",
+  "lang_next_step": "Próxima etapa",
+  "lang_preparing_review": "Preparando a revisão...",
+  "lang_rack_5_shelf_2_box_b": "Prateleira 5/Prateleira 2/Caixa B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Ajuste de estoque salvo. Continue contando ou retorne à Visão geral.",
+  "lang_stock_updated_successfully_no_further_appr": "Estoque atualizado com sucesso. Nenhuma aprovação adicional é necessária."
 }

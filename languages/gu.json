@@ -5324,5 +5324,19 @@
   "lang_undo_stock_deduction": "સ્ટોક કપાત પૂર્વવત કરો",
   "lang_upload_excel_csv": "એક્સેલ/સીએસવી અપલોડ કરો",
   "lang_weigh_for_a_requested_amount": "વિનંતી કરેલી રકમ માટે વજન",
-  "lang_you_have_read_only_access_to_product_avail": "તમારી પાસે ઉત્પાદનની ઉપલબ્ધતા માટે ફક્ત વાંચવાની ઍક્સેસ છે."
+  "lang_you_have_read_only_access_to_product_avail": "તમારી પાસે ઉત્પાદનની ઉપલબ્ધતા માટે ફક્ત વાંચવાની ઍક્સેસ છે.",
+  "lang_bill_number_reset_period": "બિલ નંબર રીસેટ",
+  "lang_start_again_each_day": "દરરોજ ફરીથી પ્રારંભ કરો",
+  "lang_bill_reset_daily_help": "દૈનિક શાખા સમય ઝોનમાં મધરાતે 0001 વાગ્યે શરૂ થાય છે. તારીખ અને કોડ સુધીનો બિલ નંબરો અનન્ય રાખે છે. હાલના બિલ તેમની સંખ્યાઓ રાખે છે.",
+  "lang_add_another_entry": "બીજી એન્ટ્રી ઉમેરો",
+  "lang_back_to_overview": "ઝાંખી પર પાછા જાઓ",
+  "lang_check_the_quantities_below_then_confirm_to": "નીચેની માત્રાને તપાસો, પછી સ્ટોક અપડેટ કરવાની પુષ્ટિ કરો.",
+  "lang_continue_counting": "ગણતરી ચાલુ રાખો",
+  "lang_inventory_activity": "ઇન્વેન્ટરી પ્રવૃત્તિ",
+  "lang_made_a_mistake": "ભૂલ કરી?",
+  "lang_next_step": "આગળનું પગલું",
+  "lang_preparing_review": "સમીક્ષા તૈયારી કરી રહ્યા છે...",
+  "lang_rack_5_shelf_2_box_b": "રેક 5/શેલ્ફ 2/બોક્સ બી",
+  "lang_stock_adjustment_saved_continue_counting_o": "સ્ટોક ગોઠવણ સાચવવામાં આવ્યું. ગણતરી ચાલુ રાખો અથવા ઝાંખી પર પાછા આવો.",
+  "lang_stock_updated_successfully_no_further_appr": "સ્ટોક સફળતાપૂર્વક અપડેટ થયો. વધુ મંજૂરીની જરૂર નથી."
 }

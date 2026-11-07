@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "ग्राहक यशस्वीरि",
   "Data Not Valid": "डेटा वैध नाही",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "डेटा वैध नाही: बिल_नंबर_फाय_स्टार्ट_महिना एक महिना असणे आवश्यक आहे, 1 ते 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "डेटा वैध नाही: bill_number_reset बंद असणे आवश्यक आहे, आर्थिक किंवा कॅलेंडर",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "डेटा वैध नाही: प्राप्त प्राप्त 1-6 अक्षर असणे आवश्यक आहे",
   "Data Not Valid: sales_prefix must be 1-6 characters": "डेटा वैध नाही: विक्री_प्रीफिक्स 1-6 अक्षरे असणे",
   "Data Not Valid: unit_name required (1-20 chars)": "डेटा वैध नाही: युनिटनाम आवश्यक आहे (1-20 चर्स)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppसंदेश संदर्भ परत केला नाही. डिलिव्हरीची पुष्टी न झाली आहे; पुन्हा प्रयत्न करण्यापूर्वी",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppअद्याप पुन्हा कनेक्ट करत आहे किंवा नवीन फोन लिंक कोणताही संदेश पाठविला नाही.",
   "Messaging permission required.": "मेसेजिंगची परवानगी",
-  "Schedule owner no longer has messaging access.": "वेळापत्रक मालकाकडे यापुढे संदेश"
+  "Schedule owner no longer has messaging access.": "वेळापत्रक मालकाकडे यापुढे संदेश",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "डेटा वैध नाही: bill_number_reset बंद, आर्थिक, कॅलेंडर किंवा दररोज असणे आवश्यक"
 }

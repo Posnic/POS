@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Matagumpay na nakuha ang customer",
   "Data Not Valid": "Hindi Basta Data",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Hindi Basta Data: ang bill_number_fy_start_month ay dapat na isang buwan, 1 hanggang 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Hindi Basta Data: Dapat na naka-off ang bill_number_reset, pinansyal o kalendaryo",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Hindi Basta Data: Dapat na 1-6 character ang receiving_prefix",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Hindi Basta Data: Dapat na 1-6 character ang sales_prefix",
   "Data Not Valid: unit_name required (1-20 chars)": "Hindi Wasto ang Data: kinakailangan ang unit_name (1-20 karakter)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApphindi nagbabalik ng sanggunian ng mensahe. Hindi nakumpirma ang paghahatid; suriin ang chat bago muling subukan.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmuling nakakonekta pa rin o nangangailangan ng isang sariwang link sa telepono. Walang mensahe ang ipinadala.",
   "Messaging permission required.": "Kinakailangan ang pahintulot sa pagmem",
-  "Schedule owner no longer has messaging access.": "Wala nang access sa pagmemensahe ang may-ari ng iskedyul"
+  "Schedule owner no longer has messaging access.": "Wala nang access sa pagmemensahe ang may-ari ng iskedyul",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Hindi Basta Data: Dapat na naka-off ang bill_number_reset, pinansyal, kalendaryo o araw-araw"
 }

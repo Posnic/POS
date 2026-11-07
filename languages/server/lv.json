@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Klienti veiksmīgi iegūti",
   "Data Not Valid": "Dati nav derīgi",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Dati nav derīgi: bill_number_fy_start_month jābūt mēnesim no 1 līdz 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Dati nav derīgi: bill_number_reset jābūt izslēgtam, finansiālajam vai kalendāram",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Dati nav derīgi: receiving_prefix jābūt 1-6 rakstzīmēm",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Dati nav derīgi: sales_prefix jābūt 1-6 rakstzīmēm",
   "Data Not Valid: unit_name required (1-20 chars)": "Dati nav derīgi: nepieciešams vienības nosaukums (1-20 zīmes)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppneatdeva ziņojuma atsauci. Piegāde nav apstiprināta; pirms atkārtotas mēģināšanas pārbaudiet tērzēšanu.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppjoprojām atjauno savienojumu vai nepieciešama jauna tālruņa saite. Ziņojums netika nosūtīts.",
   "Messaging permission required.": "Ir nepieciešama ziņojumapmaiņas atļauja.",
-  "Schedule owner no longer has messaging access.": "Grafika īpašniekam vairs nav piekļuves ziņojumapmaiņai."
+  "Schedule owner no longer has messaging access.": "Grafika īpašniekam vairs nav piekļuves ziņojumapmaiņai.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Dati nav derīgi: bill_number_reset jābūt izslēgtam, finanšu, kalendāra vai katru dienu"
 }

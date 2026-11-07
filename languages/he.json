@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "בטל ניכוי מניות",
   "lang_upload_excel_csv": "העלה אקסל/CSV",
   "lang_weigh_for_a_requested_amount": "שקלו עבור סכום מבוקש",
-  "lang_you_have_read_only_access_to_product_avail": "יש לך גישה לקריאה בלבד לזמינות המוצר."
+  "lang_you_have_read_only_access_to_product_avail": "יש לך גישה לקריאה בלבד לזמינות המוצר.",
+  "lang_bill_number_reset_period": "איפוס מספר החשבון",
+  "lang_start_again_each_day": "התחל מחדש כל יום",
+  "lang_bill_reset_daily_help": "יומי מתחיל ב 0001 בחצות באזור הזמן של הסניף. התאריך והקוד עד שומרים על מספרי החשבונות ייחודיים. החשבונות הקיימים שומרים על מספרם.",
+  "lang_add_another_entry": "הוסף ערך נוסף",
+  "lang_back_to_overview": "חזרה לסקירה כללית",
+  "lang_check_the_quantities_below_then_confirm_to": "בדוק את הכמויות למטה, ולאחר מכן אשר לעדכן את המלאי.",
+  "lang_continue_counting": "המשך לספור",
+  "lang_inventory_activity": "פעילות מלאי",
+  "lang_made_a_mistake": "עשית טעות?",
+  "lang_next_step": "השלב הבא",
+  "lang_preparing_review": "הכנת סקירה...",
+  "lang_rack_5_shelf_2_box_b": "מתלה 5/מדף 2/תיבה B",
+  "lang_stock_adjustment_saved_continue_counting_o": "התאמת מלאי נשמרה. המשך לספור או חזור לסקירה כללית.",
+  "lang_stock_updated_successfully_no_further_appr": "המלאי עודכן בהצלחה. אין צורך באישור נוסף."
 }

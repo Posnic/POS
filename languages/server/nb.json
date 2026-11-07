@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Kunder hentet vellykket",
   "Data Not Valid": "Data er ikke gyldig",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Data ikke gyldig: bill_number_fy_start_month må være en måned, 1 til 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Data ikke gyldig: bill_number_reset må være av, finansiell eller kalender",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Data ikke gyldig: mottakerprefiks må være 1-6 tegn",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Data ikke gyldig: salgsprefiks må være 1-6 tegn",
   "Data Not Valid: unit_name required (1-20 chars)": "Data ikke gyldig: enhetsnavn kreves (1-20 tegn)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppreturnerte ikke en meldingsreferanse. Levering er ubekreftet; sjekk chatten før du prøver på nytt.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppkobler fortsatt til igjen eller trenger en ny telefonkobling. Ingen melding ble sendt.",
   "Messaging permission required.": "Meldingstillatelse kreves.",
-  "Schedule owner no longer has messaging access.": "Tidsplaneier har ikke lenger meldingstilgang."
+  "Schedule owner no longer has messaging access.": "Tidsplaneier har ikke lenger meldingstilgang.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Data ikke gyldig: bill_number_reset må være av, finansiell, kalender eller daglig"
 }

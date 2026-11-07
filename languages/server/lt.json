@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Sėkmingai atgauti klientai",
   "Data Not Valid": "Duomenys negalioja",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Duomenys Negalioja: bill_number_fy_start_month turi būti mėnuo, nuo 1 iki 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Duomenys Negalioja: bill_number_reset turi būti išjungtas, finansinis arba kalendorius",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Duomenys negalioja: “receiving_prefix” turi būti 1-6 simboliai",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Duomenys negalioja: sales_prefix turi būti 1-6 simboliai",
   "Data Not Valid: unit_name required (1-20 chars)": "Duomenys negalioja: reikalingas vieneto pavadinimas (1-20 simbolių)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnegrąžino pranešimo nuorodos. Pristatymas nepatvirtintas; prieš bandydami pakartotinai patikrinkite pokalbį.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppvis dar jungiasi iš naujo arba reikia naujos telefono nuorodos. Jokia žinutė nebuvo išsiųsta.",
   "Messaging permission required.": "Reikalingas leidimas žinučių siuntimui.",
-  "Schedule owner no longer has messaging access.": "Tvarkaraščio savininkas nebeturi prieigos prie pranešimų."
+  "Schedule owner no longer has messaging access.": "Tvarkaraščio savininkas nebeturi prieigos prie pranešimų.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Duomenys Negalioja: bill_number_reset turi būti išjungtas, finansinis, kalendorius arba kasdien"
 }

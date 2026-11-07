@@ -790,7 +790,6 @@
   "Could not read the translation. Your existing text is unchanged. Try again.": "अनुवाद पढ़ नहीं सका। आपका मौजूदा टेक्स्ट अपरिवर्तित है। फिर से कोशिश करें।",
   "Could not remove that till": "इसे तब तक हटाया नहीं जा सका",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "डेटा मान्य नहीं है: bill_number_fy_start_month एक महीना, 1 से 12 तक होना चाहिए",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "डेटा मान्य नहीं है: bill_number_reset बंद, वित्तीय या कैलेंडर होना चाहिए",
   "Device access revoked. Offline authorization expires within its configured period. Signing in again restores access.": "डिवाइस का ऐक्सेस वापस लिया गया। ऑफ़लाइन प्राधिकरण इसकी कॉन्फ़िगर की गई अवधि के भीतर समाप्त हो जाता है। फिर से साइन इन करने से ऐक्सेस बहाल हो जाता है।",
   "Device not found in your branches": "डिवाइस आपकी शाखाओं में नहीं मिला",
   "Document extracted and saved as a draft.": "दस्तावेज़ को ड्राफ़्ट के रूप में निकाला और सहेजा गया।",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppसंदेश का संदर्भ नहीं लौटाया। डिलीवरी की पुष्टि नहीं हुई है; फिर से कोशिश करने से पहले चैट की जांच करें।",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppअभी भी फिर से कनेक्ट हो रहा है या उसे नए फ़ोन लिंक की ज़रूरत है। कोई संदेश नहीं भेजा गया।",
   "Messaging permission required.": "संदेश भेजने की अनुमति आवश्यक है।",
-  "Schedule owner no longer has messaging access.": "शेड्यूल के मालिक के पास अब मैसेजिंग ऐक्सेस नहीं है।"
+  "Schedule owner no longer has messaging access.": "शेड्यूल के मालिक के पास अब मैसेजिंग ऐक्सेस नहीं है।",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "डेटा मान्य नहीं है: bill_number_reset बंद, वित्तीय, कैलेंडर या दैनिक होना चाहिए"
 }

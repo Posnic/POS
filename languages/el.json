@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Αναίρεση έκπτωσης μετοχών",
   "lang_upload_excel_csv": "Μεταφόρτωση Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Ζυγίστε για ένα ζητούμενο ποσό",
-  "lang_you_have_read_only_access_to_product_avail": "Έχετε πρόσβαση μόνο για ανάγνωση στη διαθεσιμότητα των προϊόντων."
+  "lang_you_have_read_only_access_to_product_avail": "Έχετε πρόσβαση μόνο για ανάγνωση στη διαθεσιμότητα των προϊόντων.",
+  "lang_bill_number_reset_period": "Επαναφορά αριθμού λογαριασμού",
+  "lang_start_again_each_day": "Ξεκινήστε ξανά κάθε μέρα",
+  "lang_bill_reset_daily_help": "Καθημερινά ξεκινά στις 0001 τα μεσάνυχτα στη ζώνη ώρας του υποκαταστήματος. Η ημερομηνία και ο κωδικός μέχρι διατηρούν τους αριθμούς λογαριασμών μοναδικούς. Οι υπάρχοντες λογαριασμοί διατηρούν τους αριθμούς τους.",
+  "lang_add_another_entry": "Προσθήκη άλλης καταχώρησης",
+  "lang_back_to_overview": "Επιστροφή στην επισκόπηση",
+  "lang_check_the_quantities_below_then_confirm_to": "Ελέγξτε τις παρακάτω ποσότητες και, στη συνέχεια, επιβεβαιώστε για να ενημερώσετε το απόθεμα.",
+  "lang_continue_counting": "Συνεχίστε να μετράτε",
+  "lang_inventory_activity": "Δραστηριότητα απογραφής",
+  "lang_made_a_mistake": "Έκανε λάθος;",
+  "lang_next_step": "Επόμενο βήμα",
+  "lang_preparing_review": "Προετοιμασία αναθεώρησης...",
+  "lang_rack_5_shelf_2_box_b": "Ράφι 5/Ράφι 2/Κουτί Β",
+  "lang_stock_adjustment_saved_continue_counting_o": "Η προσαρμογή αποθέματος αποθηκεύτηκε. Συνεχίστε να μετράτε ή επιστρέψτε στην Επισκόπηση.",
+  "lang_stock_updated_successfully_no_further_appr": "Το απόθεμα ενημερώθηκε με επιτυχία. Δεν απαιτείται περαιτέρω έγκριση."
 }

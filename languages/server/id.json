@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Pelanggan berhasil diambil",
   "Data Not Valid": "Data Tidak Valid",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Data Tidak Valid: bill_number_fy_start_month harus sebulan, 1 hingga 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Data Tidak Valid: bill_number_reset harus mati, keuangan atau kalender",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Data Tidak Valid: ing_prefix harus 1-6 karakter",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Data Tidak Valid: sales_prefix harus 1-6 karakter",
   "Data Not Valid: unit_name required (1-20 chars)": "Data Tidak Valid: diperlukan unit_name (1-20 karakter)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApptidak mengembalikan referensi pesan. Pengiriman belum dikonfirmasi; periksa obrolan sebelum mencoba lagi.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmasih terhubung kembali atau membutuhkan tautan telepon baru. Tidak ada pesan yang dikirim.",
   "Messaging permission required.": "Diperlukan izin pengiriman pesan.",
-  "Schedule owner no longer has messaging access.": "Pemilik jadwal tidak lagi memiliki akses pesan."
+  "Schedule owner no longer has messaging access.": "Pemilik jadwal tidak lagi memiliki akses pesan.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Data Tidak Valid: bill_number_reset harus mati, keuangan, kalender atau harian"
 }

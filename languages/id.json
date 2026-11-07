@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "Batalkan pengurangan saham",
   "lang_upload_excel_csv": "Unggah Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Timbang untuk jumlah yang diminta",
-  "lang_you_have_read_only_access_to_product_avail": "Anda memiliki akses read-only ke ketersediaan produk."
+  "lang_you_have_read_only_access_to_product_avail": "Anda memiliki akses read-only ke ketersediaan produk.",
+  "lang_bill_number_reset_period": "Setel ulang nomor tagihan",
+  "lang_start_again_each_day": "Mulai lagi setiap hari",
+  "lang_bill_reset_daily_help": "Harian dimulai pada 0001 pada tengah malam di zona waktu cabang. Kode tanggal dan sampai membuat nomor tagihan tetap unik. Tagihan yang ada menyimpan nomornya.",
+  "lang_add_another_entry": "Tambahkan entri lain",
+  "lang_back_to_overview": "Kembali ke ikhtisar",
+  "lang_check_the_quantities_below_then_confirm_to": "Periksa jumlah di bawah ini, lalu konfirmasikan untuk memperbarui stok.",
+  "lang_continue_counting": "Lanjutkan menghitung",
+  "lang_inventory_activity": "Aktivitas inventaris",
+  "lang_made_a_mistake": "Membuat kesalahan?",
+  "lang_next_step": "Langkah selanjutnya",
+  "lang_preparing_review": "Mempersiapkan ulasan...",
+  "lang_rack_5_shelf_2_box_b": "Rak 5/Rak 2/Kotak B",
+  "lang_stock_adjustment_saved_continue_counting_o": "Penyesuaian stok disimpan. Lanjutkan menghitung atau kembali ke Ikhtisar.",
+  "lang_stock_updated_successfully_no_further_appr": "Stok berhasil diperbarui. Tidak diperlukan persetujuan lebih lanjut."
 }

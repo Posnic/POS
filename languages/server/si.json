@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "ගනුදෙනුකරුවන් සාර්ථකව නැවත ලබා",
   "Data Not Valid": "දත්ත වලංගු නොවේ",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "දත්ත වලංගු නොවේ: bill_number_fy_start_month මාසයක් විය යුතුය, 1 සිට 12 දක්වා",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "දත්ත වලංගු නොවේ: bill_number_reset අක්රිය විය යුතුය, මූල්ය හෝ දින දර්ශනය",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "දත්ත වලංගු නොවේ: ලැබීම_prefix අක්ෂර 1-6 ක් විය යුතුය",
   "Data Not Valid: sales_prefix must be 1-6 characters": "දත්ත වලංගු නොවේ: sales_prefix අක්ෂර 1-6 ක් විය යුතුය",
   "Data Not Valid: unit_name required (1-20 chars)": "දත්ත වලංගු නොවේ: ඒකක_නාමය අවශ්ය වේ (1-20 සටහන්)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppපණිවිඩ යොමු කිරීමක් ආපසු ලබා දුන්නේ නැත. බෙදා හැරීම තහවුරු කර නොමැත; නැවත උත්සාහ කිරීමට පෙර චැට් පරීක්ෂා කරන්න.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppතවමත් නැවත සම්බන්ධ වෙමින් පවතී හෝ නැවුම් දුරකථන සබැඳියක් අවශ්ය වේ. පණිවිඩයක් එවලා නැහැ.",
   "Messaging permission required.": "පණිවිඩ අවසරය අවශ්යයි.",
-  "Schedule owner no longer has messaging access.": "උපලේඛන හිමිකරුට තවදුරටත් පණිවිඩ ප්රවේශය නැත."
+  "Schedule owner no longer has messaging access.": "උපලේඛන හිමිකරුට තවදුරටත් පණිවිඩ ප්රවේශය නැත.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "දත්ත වලංගු නොවේ: bill_number_reset අක්රිය විය යුතුය, මූල්ය, දින දර්ශනය හෝ දිනපතා"
 }

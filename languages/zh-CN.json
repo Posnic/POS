@@ -5324,5 +5324,19 @@
   "lang_undo_stock_deduction": "撤消股票扣除",
   "lang_upload_excel_csv": "上传 Excel/CSV",
   "lang_weigh_for_a_requested_amount": "按要求的数量进行称重",
-  "lang_you_have_read_only_access_to_product_avail": "您对产品供应情况具有只读访问权限。"
+  "lang_you_have_read_only_access_to_product_avail": "您对产品供应情况具有只读访问权限。",
+  "lang_bill_number_reset_period": "账单号码重置",
+  "lang_start_again_each_day": "每天重新开始",
+  "lang_bill_reset_daily_help": "每天从分支时区的午夜 0001 点开始。日期和截止日期代码保持账单编号的唯一性。现有账单保留了其数字。",
+  "lang_add_another_entry": "添加另一个条目",
+  "lang_back_to_overview": "返回概述",
+  "lang_check_the_quantities_below_then_confirm_to": "检查以下数量，然后确认更新库存。",
+  "lang_continue_counting": "继续计数",
+  "lang_inventory_activity": "库存活动",
+  "lang_made_a_mistake": "犯了一个错误？",
+  "lang_next_step": "下一步",
+  "lang_preparing_review": "正在准备审查...",
+  "lang_rack_5_shelf_2_box_b": "机架 5/架子 2/Box B",
+  "lang_stock_adjustment_saved_continue_counting_o": "库存调整已保存。继续计算或返回到概览。",
+  "lang_stock_updated_successfully_no_further_appr": "库存已成功更新。无需进一步批准。"
 }

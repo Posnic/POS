@@ -5324,5 +5324,19 @@
   "lang_undo_stock_deduction": "স্টক ছাড় বাতিল করুন",
   "lang_upload_excel_csv": "এক্সেল/CSV আপলোড করুন",
   "lang_weigh_for_a_requested_amount": "অনুরোধ করা পরিমাণের জন্য ওজন করুন",
-  "lang_you_have_read_only_access_to_product_avail": "পণ্যের প্রাপ্যতায় আপনার কাছে শুধুমাত্র পড়া অ্যাক্সেস রয়েছে।"
+  "lang_you_have_read_only_access_to_product_avail": "পণ্যের প্রাপ্যতায় আপনার কাছে শুধুমাত্র পড়া অ্যাক্সেস রয়েছে।",
+  "lang_bill_number_reset_period": "বিল নম্বর রিসেট",
+  "lang_start_again_each_day": "প্রতিদিন আবার শুরু করুন",
+  "lang_bill_reset_daily_help": "প্রতিদিন শাখা সময় অঞ্চলে মধ্যরাতে ০০০১ এ শুরু হয়। তারিখ এবং কোড পর্যন্ত বিল নম্বরগুলি অনন্য রাখে। বিদ্যমান বিলগুলি তাদের সংখ্যা রাখে।",
+  "lang_add_another_entry": "অন্য এন্ট্রি যোগ করুন",
+  "lang_back_to_overview": "ওভারভিউতে ফিরে যান",
+  "lang_check_the_quantities_below_then_confirm_to": "নীচের পরিমাণগুলি পরীক্ষা করুন, তারপরে স্টক আপডেট করতে নিশ্চিত করুন",
+  "lang_continue_counting": "হিসাব চালিয়ে যান",
+  "lang_inventory_activity": "ইনভেন্টরি কার্য",
+  "lang_made_a_mistake": "ভুল করেছেন?",
+  "lang_next_step": "পরবর্তী পদক্ষেপ",
+  "lang_preparing_review": "পর্যালোচনা প্রস্তুত...",
+  "lang_rack_5_shelf_2_box_b": "র্যাক 5/শেল্ফ 2/বক্স বি",
+  "lang_stock_adjustment_saved_continue_counting_o": "স্টক সমন্বয় সংরক্ষিত। গণনা চালিয়ে যান বা ওভারভিউতে ফিরুন",
+  "lang_stock_updated_successfully_no_further_appr": "স্টক সফলভাবে আপডেট। আর কোন অনুমোদনের দরকার নেই।"
 }

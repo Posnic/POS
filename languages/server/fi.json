@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Asiakkaat noudettiin onnistuneesti",
   "Data Not Valid": "Tiedot eivät kelpaa",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Tiedot eivät kelpaa: bill_number_fy_start_month on oltava kuukausi, 1-12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Tiedot eivät kelpaa: bill_number_reset on oltava pois päältä, taloudellinen tai kalenterinen",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Tiedot eivät kelpaa: Receiving_prefix on oltava 1-6 merkkiä",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Tiedot eivät kelpaa: sales_prefix on oltava 1-6 merkkiä",
   "Data Not Valid: unit_name required (1-20 chars)": "Tiedot eivät kelpaa: yksikön nimi vaaditaan (1-20 merkkiä)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppei palauttanut viestiviittausta. Toimitus ei ole vahvistettu; tarkista keskustelu ennen kuin yrität uudelleen.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmuodostaa edelleen yhteyden uudelleen tai tarvitsee uuden puhelinlinkin. Viestiä ei lähetetty.",
   "Messaging permission required.": "Viestintälupa vaaditaan.",
-  "Schedule owner no longer has messaging access.": "Aikataulun omistajalla ei ole enää viestintäoikeuksia."
+  "Schedule owner no longer has messaging access.": "Aikataulun omistajalla ei ole enää viestintäoikeuksia.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Tiedot eivät kelpaa: bill_number_reset on oltava pois päältä, taloudellinen, kalenterinen tai päivittäin"
 }

@@ -5402,5 +5402,19 @@
   "lang_undo_stock_deduction": "സ്റ്റോക്ക് കിഴിവ് റദ്ദാക്കുക",
   "lang_upload_excel_csv": "എക്സൽ/CSV അപ്ലോഡുചെയ്യുക",
   "lang_weigh_for_a_requested_amount": "ആവശ്യപ്പെട്ട തുകയ്ക്ക് തൂക്കുക",
-  "lang_you_have_read_only_access_to_product_avail": "ഉൽപ്പന്ന ലഭ്യതയിലേക്ക് നിങ്ങൾക്ക് വായിക്കാൻ മാത്രമുള്ള ആക്സസ് ഉണ്ട്."
+  "lang_you_have_read_only_access_to_product_avail": "ഉൽപ്പന്ന ലഭ്യതയിലേക്ക് നിങ്ങൾക്ക് വായിക്കാൻ മാത്രമുള്ള ആക്സസ് ഉണ്ട്.",
+  "lang_bill_number_reset_period": "ബിൽ നമ്പർ റീസെറ്റ്",
+  "lang_start_again_each_day": "ഓരോ ദിവസവും വീണ്ടും ആരംഭിക്കുക",
+  "lang_bill_reset_daily_help": "ശാഖ ടൈം സോണില് അര്ദ്ധരാത്രി 0001 ന് ആരംഭിക്കുന്ന ദിവസവും ആരംഭിക്കുന്നു. തീയതിയും കോഡും ബിൽ നമ്പറുകൾ അദ്വിതീയമായി നിലനിർത്തുന്നു. നിലവിലുള്ള ബില്ലുകൾ അവയുടെ നമ്പറുകൾ സൂക്ഷിക്കുന്നു.",
+  "lang_add_another_entry": "മറ്റൊരു എൻട്രി ചേർക്കുക",
+  "lang_back_to_overview": "അവലോകനത്തിലേക്ക് മടങ്ങുക",
+  "lang_check_the_quantities_below_then_confirm_to": "ചുവടെയുള്ള അളവുകൾ പരിശോധിക്കുക, തുടർന്ന് സ്റ്റോക്ക് അപ്ഡേറ്റ് ചെയ്യാൻ സ്ഥിരീകരിക്കുക.",
+  "lang_continue_counting": "എണ്ണൽ തുടരുക",
+  "lang_inventory_activity": "ഇൻവെന്ററി പ്രവർത്തനം",
+  "lang_made_a_mistake": "തെറ്റ് ചെയ്തോ?",
+  "lang_next_step": "അടുത്ത ഘട്ടം",
+  "lang_preparing_review": "അവലോകനം തയ്യാറാക്കുന്നു...",
+  "lang_rack_5_shelf_2_box_b": "റാക്ക് 5/ഷെൽഫ് 2/ബോക്സ് ബി",
+  "lang_stock_adjustment_saved_continue_counting_o": "സ്റ്റോക്ക് ക്രമീകരണം സംരക്ഷിച്ചു. എണ്ണൽ തുടരുക അല്ലെങ്കിൽ അവലോകനത്തിലേക്ക് മടങ്ങുക.",
+  "lang_stock_updated_successfully_no_further_appr": "സ്റ്റോക്ക് വിജയകരമായി അപ്ഡേറ്റ് ചെയ്തു. കൂടുതൽ അംഗീകാരം ആവശ്യമില്ല."
 }

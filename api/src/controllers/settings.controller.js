@@ -631,11 +631,13 @@ class SettingController extends BaseController {
       }
       if (
         data.bill_number_reset !== undefined &&
-        !['', 'off', 'financial', 'calendar'].includes(String(data.bill_number_reset).trim())
+        !['', 'off', 'financial', 'calendar', 'daily'].includes(
+          String(data.bill_number_reset).trim()
+        )
       ) {
         return res.status(400).json({
           type: 'error',
-          message: 'Data Not Valid: bill_number_reset must be off, financial or calendar',
+          message: 'Data Not Valid: bill_number_reset must be off, financial, calendar or daily',
           data: null,
         });
       }

@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "Клиентите успешно преземени",
   "Data Not Valid": "Податоците не се валидни",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "Податоците не важат: bill_number_fy_start_month мора да биде еден месец, 1 до 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "Податоците не важат: bill_number_reset мора да биде исклучен, финансиски или календарски",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "Податоците не се валидни: receiving_prefix мора да биде 1-6 знаци",
   "Data Not Valid: sales_prefix must be 1-6 characters": "Податоците не се валидни: sales_prefix мора да биде 1-6 знаци",
   "Data Not Valid: unit_name required (1-20 chars)": "Податоците не важат: потребно е име на единицата (1-20 знаци)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне вратија референца за порака. Испораката е непотврдена; проверете го разговорот пред повторно да се обидете.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppсè уште се поврзува или му треба нова телефонска врска. Ниту една порака не е испратена.",
   "Messaging permission required.": "Потребна е дозвола за пораки.",
-  "Schedule owner no longer has messaging access.": "Сопственикот на распоредот повеќе нема пристап до пораки."
+  "Schedule owner no longer has messaging access.": "Сопственикот на распоредот повеќе нема пристап до пораки.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "Податоците не важат: bill_number_reset мора да биде исклучен, финансиски, календарски или дневен"
 }

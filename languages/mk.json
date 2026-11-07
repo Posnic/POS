@@ -5321,5 +5321,19 @@
   "lang_undo_stock_deduction": "Откажете го одбивањето на акциите",
   "lang_upload_excel_csv": "Поставете Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Измерете за бараната сума",
-  "lang_you_have_read_only_access_to_product_avail": "Имате пристап само за читање до достапноста на производот."
+  "lang_you_have_read_only_access_to_product_avail": "Имате пристап само за читање до достапноста на производот.",
+  "lang_bill_number_reset_period": "Ресетирање на бројот на сметката",
+  "lang_start_again_each_day": "Започнете повторно секој ден",
+  "lang_bill_reset_daily_help": "Дневно започнува во 0001 на полноќ во временската зона на филијалата. Датумот и кодот за време ги одржуваат броевите на сметките уникатни. Постоечките сметки ги чуваат своите броеви.",
+  "lang_add_another_entry": "Додадете уште еден запис",
+  "lang_back_to_overview": "Назад на преглед",
+  "lang_check_the_quantities_below_then_confirm_to": "Проверете ги количините подолу, а потоа потврдете да ги ажурирате залихите.",
+  "lang_continue_counting": "Продолжете со броење",
+  "lang_inventory_activity": "Активност за инвентар",
+  "lang_made_a_mistake": "Направил грешка?",
+  "lang_next_step": "Следен чекор",
+  "lang_preparing_review": "Подготовка на преглед...",
+  "lang_rack_5_shelf_2_box_b": "Решетка 5/Полица 2/Кутија Б",
+  "lang_stock_adjustment_saved_continue_counting_o": "Прилагодување на акциите е зачето Продолжете со броење или вратете се на Преглед.",
+  "lang_stock_updated_successfully_no_further_appr": "Акциите се ажурираат успешно. Не е потребно дополнително одобрување."
 }

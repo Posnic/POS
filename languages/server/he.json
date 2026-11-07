@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "לקוחות הוחזרו בהצלחה",
   "Data Not Valid": "נתונים לא תקפים",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "הנתונים אינם תקפים: bill_number_fy_start_month חייב להיות חודש, 1 עד 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "הנתונים אינם תקפים: bill_number_reset חייב להיות כבוי, כספי או לוח שנה",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "נתונים לא תקפים: קבל_prefix חייב להיות 1-6 תווים",
   "Data Not Valid: sales_prefix must be 1-6 characters": "נתונים לא תקפים: sales_prefix חייב להיות 1-6 תווים",
   "Data Not Valid: unit_name required (1-20 chars)": "נתונים לא תקפים: נדרש שם יחידה (1-20 תווים)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppלא החזיר הפניה להודעה. המסירה אינה מאושרת; בדוק את הצ'אט לפני שתנסה שוב.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppעדיין מתחבר מחדש או זקוק לקישור טלפון חדש. שום הודעה לא נשלחה.",
   "Messaging permission required.": "נדרשת הרשאת העברת הודעות.",
-  "Schedule owner no longer has messaging access.": "לבעלים של לוח הזמנים אין עוד גישה להודעות."
+  "Schedule owner no longer has messaging access.": "לבעלים של לוח הזמנים אין עוד גישה להודעות.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "הנתונים אינם תקפים: bill_number_reset חייב להיות כבוי, כספי, לוח שנה או יומי"
 }

@@ -1204,7 +1204,7 @@ describe('ItemRepository', () => {
 
   describe('exportItems', () => {
     test('exports items', async () => {
-      col.find.mockReturnValue(mkChain([{ name: 'A' }]));
+      col.aggregate.mockReturnValue(mkChain([{ name: 'A' }]));
       const r = await repo.exportItems([FAKE_ID], {
         branchId: FAKE_BRANCH,
         licenseId: FAKE_LICENSE,
@@ -1222,7 +1222,7 @@ describe('ItemRepository', () => {
     });
 
     test('select-all exports every matching item, branch/licence scoped, not an id list', async () => {
-      col.find.mockReturnValue(mkChain([{ name: 'A' }, { name: 'B' }]));
+      col.aggregate.mockReturnValue(mkChain([{ name: 'A' }, { name: 'B' }]));
       const r = await repo.exportItems(
         { all: true, filters: { name: { $regex: 'a', $options: 'i' } } },
         { branchId: FAKE_BRANCH, licenseId: FAKE_LICENSE }
@@ -1230,7 +1230,7 @@ describe('ItemRepository', () => {
       expect(r.status).toBe(true);
       expect(r.data).toHaveLength(2);
 
-      const usedFilter = col.find.mock.calls[col.find.mock.calls.length - 1][0];
+      const usedFilter = col.aggregate.mock.calls[col.aggregate.mock.calls.length - 1][0][0].$match;
       // Not restricted to a set of ids - it must reach the whole matching set.
       expect(usedFilter._id).toBeUndefined();
       // Same scope the item list forces, so the export matches the list.

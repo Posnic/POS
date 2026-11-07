@@ -206,7 +206,6 @@
   "Customers retrieved successfully": "ಗ್ರಾಹಕರು ಯಶಸ್ವಿಯಾಗಿ ಮರುಪಡೆಯಲಾಗಿದೆ",
   "Data Not Valid": "ಡೇಟಾ ಮಾನ್ಯವಾಗಿಲ್ಲ",
   "Data Not Valid: bill_number_fy_start_month must be a month, 1 to 12": "ಡೇಟಾ ಮಾನ್ಯವಾಗಿಲ್ಲ: bill_number_fy_start_month ಒಂದು ತಿಂಗಳು ಇರಬೇಕು, 1 ರಿಂದ 12",
-  "Data Not Valid: bill_number_reset must be off, financial or calendar": "ಡೇಟಾ ಮಾನ್ಯವಾಗಿಲ್ಲ: bill_number_reset ಆಫ್ ಆಗಿರಬೇಕು, ಹಣಕಾಸು ಅಥವಾ ಕ್ಯಾಲೆಂಡರ್",
   "Data Not Valid: receiving_prefix must be 1-6 characters": "ಡೇಟಾ ಮಾನ್ಯವಾಗಿಲ್ಲ: ರಿಸೀವಿಂಗ್_ಪ್ರೆಫಿಕ್ಸ್ 1-6 ಅಕ್ಷರಗಳಾಗಿರಬೇಕು",
   "Data Not Valid: sales_prefix must be 1-6 characters": "ಡೇಟಾ ಮಾನ್ಯವಾಗಿಲ್ಲ: ಸೇಲ್ಸ್_ಪ್ರೆಫಿಕ್ಸ್ 1-6 ಅಕ್ಷರಗಳಾಗಿರಬೇಕು",
   "Data Not Valid: unit_name required (1-20 chars)": "ಡೇಟಾ ಮಾನ್ಯವಾಗಿಲ್ಲ: ಘಟಕ_ಹೆಸರು ಅಗತ್ಯವಿದೆ (1-20 ಚಾರ್ಸ್)",
@@ -979,5 +978,6 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppಸಂದೇಶ ಉಲ್ಲೇಖವನ್ನು ಹಿಂತಿರುಗಿಸಲಿಲ್ಲ. ವಿತರಣೆಯನ್ನು ದೃಢೀಕರಿಸಲಾಗಿಲ್ಲ; ಮರುಪ್ರಯತ್ನಿಸುವ ಮೊದಲು ಚಾಟ್ ಅನ್ನು ಪರಿಶೀಲಿಸಿ.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppಇನ್ನೂ ಮರುಸಂಪರ್ಕಿಸುತ್ತಿದೆ ಅಥವಾ ತಾಜಾ ಫೋನ್ ಲಿಂಕ್ ಅಗತ್ಯವಿದೆ. ಯಾವುದೇ ಸಂದೇಶವನ್ನು ಕಳುಹಿಸಲಾಗಿಲ್ಲ.",
   "Messaging permission required.": "ಸಂದೇಶ ಕಳುಹಿಸುವ ಅನುಮತಿ ಅಗತ್ಯವಿದೆ.",
-  "Schedule owner no longer has messaging access.": "ವೇಳಾಪಟ್ಟಿ ಮಾಲೀಕರು ಇನ್ನು ಮುಂದೆ ಸಂದೇಶ ಪ್ರವೇಶವನ್ನು ಹೊಂದಿಲ್ಲ."
+  "Schedule owner no longer has messaging access.": "ವೇಳಾಪಟ್ಟಿ ಮಾಲೀಕರು ಇನ್ನು ಮುಂದೆ ಸಂದೇಶ ಪ್ರವೇಶವನ್ನು ಹೊಂದಿಲ್ಲ.",
+  "Data Not Valid: bill_number_reset must be off, financial, calendar or daily": "ಡೇಟಾ ಮಾನ್ಯವಾಗಿಲ್ಲ: bill_number_reset ಆಫ್ ಆಗಿರಬೇಕು, ಹಣಕಾಸು, ಕ್ಯಾಲೆಂಡರ್ ಅಥವಾ ದೈನಂದಿನ"
 }

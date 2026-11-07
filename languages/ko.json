@@ -5324,5 +5324,19 @@
   "lang_undo_stock_deduction": "재고 차감 취소",
   "lang_upload_excel_csv": "엑셀/CSV 업로드",
   "lang_weigh_for_a_requested_amount": "요청된 금액에 대한 무게 측정",
-  "lang_you_have_read_only_access_to_product_avail": "제품 가용성에 대한 읽기 전용 액세스 권한이 있습니다."
+  "lang_you_have_read_only_access_to_product_avail": "제품 가용성에 대한 읽기 전용 액세스 권한이 있습니다.",
+  "lang_bill_number_reset_period": "청구서 번호 재설정",
+  "lang_start_again_each_day": "매일 다시 시작하세요",
+  "lang_bill_reset_daily_help": "일정은 지점 시간대의 자정 0:00 에 시작합니다.날짜 및 경유지 코드는 청구서 번호를 고유하게 유지합니다.기존 청구서는 번호를 유지합니다.",
+  "lang_add_another_entry": "다른 항목 추가",
+  "lang_back_to_overview": "개요로 돌아가기",
+  "lang_check_the_quantities_below_then_confirm_to": "아래에서 수량을 확인한 후 재고 업데이트를 확인하세요.",
+  "lang_continue_counting": "계속 세어보세요",
+  "lang_inventory_activity": "인벤토리 활동",
+  "lang_made_a_mistake": "실수를 했나요?",
+  "lang_next_step": "다음 단계",
+  "lang_preparing_review": "리뷰 준비 중...",
+  "lang_rack_5_shelf_2_box_b": "랙 5/선반 2/박스 B",
+  "lang_stock_adjustment_saved_continue_counting_o": "재고 조정이 저장되었습니다.계속 세거나 개요로 돌아가세요.",
+  "lang_stock_updated_successfully_no_further_appr": "재고가 성공적으로 업데이트되었습니다.추가 승인은 필요하지 않습니다."
 }
