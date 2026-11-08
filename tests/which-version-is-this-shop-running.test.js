@@ -49,7 +49,7 @@ async function run(t, opts = {}) {
   const fallbackCopies = [];
   window.document.execCommand = (command) => {
     assert.equal(command, 'copy');
-    fallbackCopies.push(window.document.querySelector('textarea').value);
+      fallbackCopies.push(window.document.querySelector('#posnic_about_dialog textarea').value);
     return opts.fallbackWorks === true;
   };
   window.eval(SRC);
@@ -113,7 +113,7 @@ test('a denied clipboard falls back inside the dialog and restores button focus'
   assert.equal(fallbackCopies.length, 1);
   assert.match(node('posnic_about_copy_status').textContent, /Details copied/);
   assert.equal(window.document.activeElement, node('posnic_about_copy'));
-  assert.equal(window.document.querySelector('textarea'), null);
+  assert.equal(window.document.querySelector('#posnic_about_dialog textarea'), null);
 });
 
 test('clipboard failure explains how to copy manually and never claims success', async (t) => {

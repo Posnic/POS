@@ -119,6 +119,7 @@ PosnicPro.request = function (params, callback, failure = null) {
             },
             contentType: params.contentType !== undefined ? params.contentType : 'application/json',
             processData: params.processData !== undefined ? params.processData : true,
+            timeout: params.timeout || 0,
             data: data
         });
 

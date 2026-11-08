@@ -36,7 +36,7 @@ PosnicPro.receivings.view = {
             }
         }, function () {
             spinner.remove();
-            PosnicPro.alert('error', 'Could not load receiving details. Please try again.');
+            PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_receiving_details_please_tr', 'Could not load receiving details. Please try again.'));
         });
     },
     viewReceivingData: function (response, id) {

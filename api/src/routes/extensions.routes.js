@@ -129,7 +129,8 @@ function createRouter({ authenticate = protect, registry = runtime, executor = e
           version: item.version,
           ...(['sales', 'inventory', 'manage'].includes(item.menu) ? { menu: item.menu } : {}),
           salesWorkspace: item.salesWorkspace || null,
-          ...(item.search?.length && !disabled.has(item.id) && {searchPages:item.search.filter(page=>!page.records)}),
+          ...(item.search?.length &&
+            !disabled.has(item.id) && { searchPages: item.search.filter((page) => !page.records) }),
           enabled: !disabled.has(item.id),
           installed: !removed.has(item.id),
         }));

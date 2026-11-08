@@ -47,9 +47,6 @@ const signToken = (id, version = 0) => {
 const createSendToken = (user, statusCode, res) => {
   const token = signToken(user._id, authVersion.version(user));
   authVersion.stampSession(res.req, user);
-  const cookieOptions = authCookieOptions({
-    expires: new Date(Date.now() + cookieDays() * 24 * 60 * 60 * 1000),
-  });
 
   // Remove password from output
   user.password = undefined;
