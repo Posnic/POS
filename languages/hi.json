@@ -5402,5 +5402,6 @@
   "lang_undo_stock_deduction": "स्टॉक कटौती को पूर्ववत करें",
   "lang_upload_excel_csv": "Excel/CSV अपलोड करें",
   "lang_weigh_for_a_requested_amount": "अनुरोधित राशि के लिए तौलना",
-  "lang_you_have_read_only_access_to_product_avail": "आपके पास प्रॉडक्ट की उपलब्धता के लिए रीड-ओनली एक्सेस है।"
+  "lang_you_have_read_only_access_to_product_avail": "आपके पास प्रॉडक्ट की उपलब्धता के लिए रीड-ओनली एक्सेस है।",
+  "lang_feedback_customization": "अनुकूलन"
 }

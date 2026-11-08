@@ -4,7 +4,14 @@ const demoMode = require('../config/demo-mode');
 // Support is an explicit user submission, never a replicated business record.
 // Keep the destination fixed: callers cannot supply a mail recipient or URL.
 const SUPPORT_URL = 'https://www.posnic.com/api/support';
-const CATEGORIES = new Set(['help', 'feedback', 'complaint', 'suggestion', 'other']);
+const CATEGORIES = new Set([
+  'help',
+  'feedback',
+  'complaint',
+  'suggestion',
+  'customization',
+  'other',
+]);
 const clean = (value, max) => (typeof value === 'string' ? value.trim().slice(0, max) : '');
 
 function context(req) {

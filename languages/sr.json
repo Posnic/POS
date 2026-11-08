@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Poništite odbitak akcija",
   "lang_upload_excel_csv": "Otpremite Ekcel/CSV",
   "lang_weigh_for_a_requested_amount": "Izmerite traženi iznos",
-  "lang_you_have_read_only_access_to_product_avail": "Imate pristup samo za čitanje dostupnosti proizvoda."
+  "lang_you_have_read_only_access_to_product_avail": "Imate pristup samo za čitanje dostupnosti proizvoda.",
+  "lang_feedback_customization": "Прилагођавање"
 }

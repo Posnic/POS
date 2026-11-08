@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Отмяна на приспадане на акции",
   "lang_upload_excel_csv": "Качване на Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Претеглете за исканата сума",
-  "lang_you_have_read_only_access_to_product_avail": "Имате достъп само за четене до наличността на продукта."
+  "lang_you_have_read_only_access_to_product_avail": "Имате достъп само за четене до наличността на продукта.",
+  "lang_feedback_customization": "Персонализиране"
 }

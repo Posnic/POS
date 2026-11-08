@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Anulați deducerea stocurilor",
   "lang_upload_excel_csv": "Încărcați Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Cântărește pentru o sumă solicitată",
-  "lang_you_have_read_only_access_to_product_avail": "Aveți acces numai la citire la disponibilitatea produsului."
+  "lang_you_have_read_only_access_to_product_avail": "Aveți acces numai la citire la disponibilitatea produsului.",
+  "lang_feedback_customization": "Personalizare"
 }

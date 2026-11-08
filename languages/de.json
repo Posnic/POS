@@ -5402,5 +5402,6 @@
   "lang_undo_stock_deduction": "Machen Sie den Lagerabzug rückgängig",
   "lang_upload_excel_csv": "Laden Sie Excel/CSV hoch",
   "lang_weigh_for_a_requested_amount": "Wiegen Sie für eine angeforderte Menge",
-  "lang_you_have_read_only_access_to_product_avail": "Sie haben nur Lesezugriff auf die Produktverfügbarkeit."
+  "lang_you_have_read_only_access_to_product_avail": "Sie haben nur Lesezugriff auf die Produktverfügbarkeit.",
+  "lang_feedback_customization": "Anpassung"
 }

@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "בטל ניכוי מניות",
   "lang_upload_excel_csv": "העלה אקסל/CSV",
   "lang_weigh_for_a_requested_amount": "שקלו עבור סכום מבוקש",
-  "lang_you_have_read_only_access_to_product_avail": "יש לך גישה לקריאה בלבד לזמינות המוצר."
+  "lang_you_have_read_only_access_to_product_avail": "יש לך גישה לקריאה בלבד לזמינות המוצר.",
+  "lang_feedback_customization": "התאמה אישית"
 }

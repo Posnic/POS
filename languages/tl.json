@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "I-download ang pagbawas ng stock",
   "lang_upload_excel_csv": "Mag-upload ng Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Timbangin para sa isang hiniling na halaga",
-  "lang_you_have_read_only_access_to_product_avail": "Mayroon kang read-only access sa pagkakaroon ng produkto."
+  "lang_you_have_read_only_access_to_product_avail": "Mayroon kang read-only access sa pagkakaroon ng produkto.",
+  "lang_feedback_customization": "Pagpapasadya"
 }

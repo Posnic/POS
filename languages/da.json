@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Fortryd aktiefradrag",
   "lang_upload_excel_csv": "Upload Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vejer for et anmodet beløb",
-  "lang_you_have_read_only_access_to_product_avail": "Du har skrivebeskyttet adgang til produkttilgængelighed."
+  "lang_you_have_read_only_access_to_product_avail": "Du har skrivebeskyttet adgang til produkttilgængelighed.",
+  "lang_feedback_customization": "Tilpasning"
 }

@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "کسر سهام را لغو کنید",
   "lang_upload_excel_csv": "بارگذاری اکسل/CSV",
   "lang_weigh_for_a_requested_amount": "برای مقدار درخواستی وزن کنید",
-  "lang_you_have_read_only_access_to_product_avail": "شما فقط برای خواندن به در دسترس بودن محصول دسترسی دارید."
+  "lang_you_have_read_only_access_to_product_avail": "شما فقط برای خواندن به در دسترس بودن محصول دسترسی دارید.",
+  "lang_feedback_customization": "سفارشی‌سازی"
 }

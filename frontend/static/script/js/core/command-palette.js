@@ -50,7 +50,7 @@
     {
       name: 'Help & feedback',
       nameKey: 'lang_help_feedback',
-      keywords: 'help feedback complaint suggestion request support contact email problem',
+      keywords: 'help feedback complaint suggestion customization customisation custom work request support contact email problem',
       visible: function () {
         return !!document.getElementById('posnic_feedback_dialog');
       },

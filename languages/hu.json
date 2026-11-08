@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Részvénylevonás visszavonása",
   "lang_upload_excel_csv": "Excel/CSV feltöltése",
   "lang_weigh_for_a_requested_amount": "Mérje meg a kért összeget",
-  "lang_you_have_read_only_access_to_product_avail": "Csak olvasható hozzáféréssel rendelkezik a termék elérhetőségéhez."
+  "lang_you_have_read_only_access_to_product_avail": "Csak olvasható hozzáféréssel rendelkezik a termék elérhetőségéhez.",
+  "lang_feedback_customization": "Testreszabás"
 }

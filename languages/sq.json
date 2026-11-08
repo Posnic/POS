@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Heq zbritjen e aksioneve",
   "lang_upload_excel_csv": "Ngarko Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Peshojeni për një sasi të kërkuar",
-  "lang_you_have_read_only_access_to_product_avail": "Ju keni qasje vetëm për lexim në disponueshmërinë e produktit."
+  "lang_you_have_read_only_access_to_product_avail": "Ju keni qasje vetëm për lexim në disponueshmërinë e produktit.",
+  "lang_feedback_customization": "Përshtatje"
 }
