@@ -104,6 +104,21 @@ test('network failure is a recoverable 503', async () => {
   expect(res.status).toBe(503);
   expect(res.body.message).toMatch(/comment is kept/);
 });
+test('public demo refuses authenticated submissions without contacting support', async () => {
+  jest.spyOn(require('../../src/config/demo-mode'), 'isDemoMode').mockReturnValue(true);
+  const originalFetch = global.fetch;
+  const outbound = jest.spyOn(global, 'fetch').mockImplementation((url, options) => {
+    if (String(url).startsWith(origin + '/')) return originalFetch(url, options);
+    throw new Error('Unexpected outbound request from public demo');
+  });
+  const res = await request(app)
+    .post('/base/help-feedback')
+    .set('Authorization', 'demo-user')
+    .send(valid);
+  expect(res.status).toBe(403);
+  expect(res.body.message).toMatch(/public demo/);
+  expect(outbound).toHaveBeenCalledTimes(1);
+});
 test('a successful response includes the central receipt', async () => {
   jest.spyOn(service, 'submit').mockResolvedValue({ status: 200, reference: 'ABC123' });
   const res = await request(app)
