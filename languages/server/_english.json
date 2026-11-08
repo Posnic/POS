@@ -581,6 +581,9 @@
   "Could not revoke token": [
     "app.js"
   ],
+  "Could not send your message. Your comment is kept; please retry.": [
+    "src/services/help-feedback.service.js"
+  ],
   "Could not sweep the print queue": [
     "src/repositories/print-job.repository.js"
   ],
@@ -1752,7 +1755,7 @@
   "Please sign in again.": [
     "src/routes/auth-utils.routes.js"
   ],
-  "Please wait a minute before sending another request.": [
+  "Please wait a minute before sending another message.": [
     "src/routes/base.routes.js",
     "src/services/help-feedback.service.js"
   ],
@@ -2204,9 +2207,6 @@
   ],
   "Suppliers retrieved successfully": [
     "src/services/supplier.service.js"
-  ],
-  "Support could not accept the request. Your comment is kept; please retry.": [
-    "src/services/help-feedback.service.js"
   ],
   "System roles cannot be deleted": [
     "src/repositories/role.repository.js"

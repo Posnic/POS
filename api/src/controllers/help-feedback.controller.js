@@ -17,7 +17,7 @@ exports.submit = async (req, res) => {
     return base.success(
       res,
       { reference: result.reference },
-      'Request received by Posnic support.'
+      'Message received by Posnic support.'
     );
   } catch (_) {
     return res.status(503).json({

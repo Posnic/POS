@@ -25,7 +25,7 @@ function payload(req) {
   if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new Error('Enter a valid reply email address.');
   }
-  if (!CATEGORIES.has(body.category)) throw new Error('Choose a request type.');
+  if (!CATEGORIES.has(body.category)) throw new Error('Choose a type.');
   if (!comment || comment.length > 7000)
     throw new Error('Enter a comment of up to 7,000 characters.');
   const details = context(req);
@@ -64,12 +64,12 @@ async function submit(req, fetchImpl = fetch) {
   });
   const result = await response.json().catch(() => ({}));
   if (response.status === 429) {
-    return { status: 429, message: 'Please wait a minute before sending another request.' };
+    return { status: 429, message: 'Please wait a minute before sending another message.' };
   }
   if (!response.ok || result.ok !== true || !/^[A-Z0-9-]{1,32}$/i.test(result.reference || '')) {
     return {
       status: 502,
-      message: 'Support could not accept the request. Your comment is kept; please retry.',
+      message: 'Could not send your message. Your comment is kept; please retry.',
     };
   }
   // A reference proves central storage, not delivery to an email inbox.

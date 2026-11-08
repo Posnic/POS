@@ -25,7 +25,7 @@ router.post(
     handler: (_req, res) =>
       res
         .status(429)
-        .json({ type: 'error', message: 'Please wait a minute before sending another request.' }),
+        .json({ type: 'error', message: 'Please wait a minute before sending another message.' }),
   }),
   feedbackController.submit
 );
