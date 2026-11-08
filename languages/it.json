@@ -5402,5 +5402,6 @@
   "lang_undo_stock_deduction": "Annulla la detrazione delle scorte",
   "lang_upload_excel_csv": "Carica Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Pesate per un importo richiesto",
-  "lang_you_have_read_only_access_to_product_avail": "Hai accesso in sola lettura alla disponibilità dei prodotti."
+  "lang_you_have_read_only_access_to_product_avail": "Hai accesso in sola lettura alla disponibilità dei prodotti.",
+  "lang_feedback_customization": "Personalizzazione"
 }

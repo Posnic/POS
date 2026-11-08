@@ -5402,5 +5402,6 @@
   "lang_undo_stock_deduction": "Desfazer a dedução de ações",
   "lang_upload_excel_csv": "Carregar em Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Pesar para obter a quantidade solicitada",
-  "lang_you_have_read_only_access_to_product_avail": "Você tem acesso somente para leitura à disponibilidade do produto."
+  "lang_you_have_read_only_access_to_product_avail": "Você tem acesso somente para leitura à disponibilidade do produto.",
+  "lang_feedback_customization": "Personalização"
 }

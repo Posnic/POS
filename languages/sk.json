@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Zrušiť odpočet zásob",
   "lang_upload_excel_csv": "Nahrať Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vážte požadovanú sumu",
-  "lang_you_have_read_only_access_to_product_avail": "K dostupnosti produktu máte prístup iba na čítanie."
+  "lang_you_have_read_only_access_to_product_avail": "K dostupnosti produktu máte prístup iba na čítanie.",
+  "lang_feedback_customization": "Prispôsobenie"
 }

@@ -5402,5 +5402,6 @@
   "lang_undo_stock_deduction": "స్టాక్ మినహాయింపును రద్దు చేయండి",
   "lang_upload_excel_csv": "ఎక్సెల్/CSV అప్లోడ్ చేయండి",
   "lang_weigh_for_a_requested_amount": "అభ్యర్థించిన మొత్తానికి బరువు",
-  "lang_you_have_read_only_access_to_product_avail": "ఉత్పత్తి లభ్యతకు మీకు చదవడానికి మాత్రమే ప్రాప్యత ఉంది."
+  "lang_you_have_read_only_access_to_product_avail": "ఉత్పత్తి లభ్యతకు మీకు చదవడానికి మాత్రమే ప్రాప్యత ఉంది.",
+  "lang_feedback_customization": "అనుకూలీకరణ"
 }

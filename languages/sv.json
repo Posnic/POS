@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Ångra aktieavdrag",
   "lang_upload_excel_csv": "Ladda upp Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Väg för en begärd mängd",
-  "lang_you_have_read_only_access_to_product_avail": "Du har skrivskyddad åtkomst till produkttillgänglighet."
+  "lang_you_have_read_only_access_to_product_avail": "Du har skrivskyddad åtkomst till produkttillgänglighet.",
+  "lang_feedback_customization": "Anpassning"
 }

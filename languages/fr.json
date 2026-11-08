@@ -5402,5 +5402,6 @@
   "lang_undo_stock_deduction": "Annuler la déduction boursière",
   "lang_upload_excel_csv": "Télécharger un fichier Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Pesez pour obtenir la quantité demandée",
-  "lang_you_have_read_only_access_to_product_avail": "Vous avez un accès en lecture seule à la disponibilité des produits."
+  "lang_you_have_read_only_access_to_product_avail": "Vous avez un accès en lecture seule à la disponibilité des produits.",
+  "lang_feedback_customization": "Personnalisation"
 }

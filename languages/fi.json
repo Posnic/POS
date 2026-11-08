@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Kumoa osakevähennys",
   "lang_upload_excel_csv": "Lataa Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Punnitse pyydetty määrä",
-  "lang_you_have_read_only_access_to_product_avail": "Sinulla on vain lukuoikeus tuotteen saatavuuteen."
+  "lang_you_have_read_only_access_to_product_avail": "Sinulla on vain lukuoikeus tuotteen saatavuuteen.",
+  "lang_feedback_customization": "Mukauttaminen"
 }

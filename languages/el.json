@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Αναίρεση έκπτωσης μετοχών",
   "lang_upload_excel_csv": "Μεταφόρτωση Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Ζυγίστε για ένα ζητούμενο ποσό",
-  "lang_you_have_read_only_access_to_product_avail": "Έχετε πρόσβαση μόνο για ανάγνωση στη διαθεσιμότητα των προϊόντων."
+  "lang_you_have_read_only_access_to_product_avail": "Έχετε πρόσβαση μόνο για ανάγνωση στη διαθεσιμότητα των προϊόντων.",
+  "lang_feedback_customization": "Προσαρμογή"
 }

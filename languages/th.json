@@ -5402,5 +5402,6 @@
   "lang_undo_stock_deduction": "ยกเลิกการหักหุ้น",
   "lang_upload_excel_csv": "อัพโหลด Excel/CSV",
   "lang_weigh_for_a_requested_amount": "ชั่งน้ำหนักตามจำนวนที่ต้องการ",
-  "lang_you_have_read_only_access_to_product_avail": "คุณสามารถเข้าถึงความพร้อมใช้งานของผลิตภัณฑ์แบบอ่านอย่างเดียว"
+  "lang_you_have_read_only_access_to_product_avail": "คุณสามารถเข้าถึงความพร้อมใช้งานของผลิตภัณฑ์แบบอ่านอย่างเดียว",
+  "lang_feedback_customization": "การปรับแต่ง"
 }

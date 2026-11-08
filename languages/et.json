@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Aktsia mahaarvamine tühist",
   "lang_upload_excel_csv": "Laadi üles Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Kaaluge soovitud summa jaoks",
-  "lang_you_have_read_only_access_to_product_avail": "Teil on ainult loetav juurdepääs toote kättesaadavusele."
+  "lang_you_have_read_only_access_to_product_avail": "Teil on ainult loetav juurdepääs toote kättesaadavusele.",
+  "lang_feedback_customization": "Kohandamine"
 }

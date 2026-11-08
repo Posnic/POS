@@ -5406,5 +5406,6 @@
   "lang_undo_stock_deduction": "பங்கு விலக்கை ரத்து செய்யவும்",
   "lang_upload_excel_csv": "எக்செல்/CSV பதிவேற்றவும்",
   "lang_weigh_for_a_requested_amount": "கோரப்பட்ட தொகைக்கு எடைபோடுங்கள்",
-  "lang_you_have_read_only_access_to_product_avail": "தயாரிப்பு கிடைக்கும் தன்மைக்கு வாசிக்க மட்டும் அணுகல் உங்களிடம் உள்ளது."
+  "lang_you_have_read_only_access_to_product_avail": "தயாரிப்பு கிடைக்கும் தன்மைக்கு வாசிக்க மட்டும் அணுகல் உங்களிடம் உள்ளது.",
+  "lang_feedback_customization": "தனிப்பயனாக்கம்"
 }

@@ -13,7 +13,7 @@ const req = (body = {}) => ({
 });
 
 test('all categories work with optional name and trusted account details', () => {
-  for (const category of ['help', 'feedback', 'complaint', 'suggestion', 'other']) {
+  for (const category of ['help', 'feedback', 'complaint', 'suggestion', 'customization', 'other']) {
     const data = service.payload(req({ category, name: '', system: { account: 'someone else' }, to: 'evil@example.com' }));
     assert.equal(data.name, '');
     assert.equal(data.kind, category);
@@ -95,7 +95,7 @@ test('All search opens support for ordinary and restricted staff without submitt
   u.w.eval(fs.readFileSync(path.join(root, 'frontend/static/script/js/core/command-palette.js'), 'utf8'));
   for (const acl of [{}, { branch: { write: true } }]) {
     u.w.PosnicPro.userACL = acl;
-    for (const query of ['help', 'complaint', 'suggestion']) {
+    for (const query of ['help', 'complaint', 'suggestion', 'customization', 'customisation']) {
       u.w.document.getElementById('posnic-header-search').click();
       const input = u.w.document.getElementById('cmdk-input');
       input.value = query;
@@ -133,11 +133,20 @@ test('public demo shows the form but disables sending and explains why', (t) => 
 });
 test('Community can submit without a name; one request while busy, receipt visible', (t) => {
   const u = ui(t);
+  const category = u.f('category');
+  const option = category.querySelector('option[value="customization"]');
+  assert.equal(option.dataset.t, 'lang_feedback_customization');
+  for (const language of require('../frontend/gulpfile.js/config').LANGUAGES) {
+    const pack = require('../languages/' + (language.code === 'en' ? '_english' : language.code) + '.json');
+    assert.ok(pack[option.dataset.t]?.trim(), language.code);
+  }
+  category.value = 'customization';
   u.f('email').value = 'shop@example.com';
   u.f('comment').value = 'A suggestion';
   u.send(); u.send();
   assert.equal(u.calls.length, 1);
   assert.equal(JSON.parse(u.calls[0].data).name, '');
+  assert.equal(JSON.parse(u.calls[0].data).category, 'customization');
   assert.equal(u.f('send').disabled, true);
   assert.equal(u.f('comment').disabled, true);
   const hide = u.$.Event('hide.bs.modal');
