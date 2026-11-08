@@ -49,7 +49,9 @@ async function lookup(req, query) {
     .list()
     .filter(
       (d) =>
-        d.view && d.search?.length && access.allowed(req.user, d.permissionModule || 'extensions', 'read'),
+        d.view &&
+        d.search?.length &&
+        access.allowed(req.user, d.permissionModule || 'extensions', 'read')
     );
   if (!descriptors.length) return [];
   const ids = descriptors.map((d) => d.id);
@@ -58,7 +60,7 @@ async function lookup(req, query) {
     .collection('extension_installations')
     .find(
       { ...scope, enabled: true, extensionId: { $in: ids } },
-      { projection: { extensionId: 1, packageDigest: 1 } },
+      { projection: { extensionId: 1, packageDigest: 1 } }
     )
     .maxTimeMS(220)
     .toArray();

@@ -48,6 +48,17 @@
 
   var ACTIONS = [
     {
+      name: 'Help & feedback',
+      nameKey: 'lang_help_feedback',
+      keywords: 'help feedback complaint suggestion request support contact email problem',
+      visible: function () {
+        return !!document.getElementById('posnic_feedback_dialog');
+      },
+      run: function () {
+        $('#posnic_feedback_dialog').modal('show');
+      },
+    },
+    {
       name: 'Clock In / Out',
       keywords: 'shift attendance tips',
       visible: function () {
@@ -291,7 +302,9 @@
     }
     for (const hash of blocked) if (!permitted.has(hash)) list.delete(hash);
     for (const action of ACTIONS)
-      if (action.visible()) list.set(action.name, { ...action, group: 'Settings' });
+      if (action.visible()) list.set(action.name, { ...action,
+        name: action.nameKey ? PosnicPro.i18n.t(action.nameKey, action.name) : action.name,
+        group: 'Settings' });
     for (const label of document.querySelectorAll('#v-pills-tabContent label[for]')) {
       const pane = label.closest('[role=tabpanel][id^="v-pills-"]');
       const control = document.getElementById(label.htmlFor);
@@ -593,7 +606,7 @@
     dialog.id = 'cmdk-overlay';
     dialog.setAttribute('aria-label', 'Search POSNIC');
     dialog.innerHTML =
-      '<div id="cmdk-box"><div class="cmdk-field"><input id="cmdk-input" type="search" maxlength="96" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-label="Search POSNIC" placeholder="Search POSNIC"><button type="button" id="cmdk-close" aria-label="Close search">×</button></div><div id="cmdk-tabs"></div><div id="cmdk-list" role="listbox"></div><div id="cmdk-status" role="status"></div><div id="cmdk-hint">↑ ↓ Select · Enter Open · Esc Close <button type="button" id="cmdk-clear">Clear history</button></div></div>';
+      '<div id="cmdk-box"><div class="cmdk-field"><input id="cmdk-input" type="search" maxlength="96" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-label="Search POSNIC" data-t-aria-label="lang_search_posnic" placeholder="Search POSNIC" data-t-placeholder="lang_search_posnic"><button type="button" id="cmdk-close" aria-label="Close search" data-t-aria-label="lang_close_search">×</button></div><div id="cmdk-tabs"></div><div id="cmdk-list" role="listbox"></div><div id="cmdk-status" role="status"></div><div id="cmdk-hint">↑ ↓ Select · Enter Open · Esc Close <button type="button" id="cmdk-clear"><lang class="lang_clear_history">Clear history</lang></button></div></div>';
     document.body.append(dialog);
     for (const name of groupNames) {
       const b = document.createElement('button');
