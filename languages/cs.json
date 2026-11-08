@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Zrušit odpočet akcií",
   "lang_upload_excel_csv": "Nahrát Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Zvažte požadovanou částku",
-  "lang_you_have_read_only_access_to_product_avail": "Máte přístup pouze pro čtení k dostupnosti produktu."
+  "lang_you_have_read_only_access_to_product_avail": "Máte přístup pouze pro čtení k dostupnosti produktu.",
+  "lang_feedback_customization": "Přizpůsobení"
 }

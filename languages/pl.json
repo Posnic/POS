@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Cofnij odliczenie zapasów",
   "lang_upload_excel_csv": "Prześlij Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Zważyć żądaną kwotę",
-  "lang_you_have_read_only_access_to_product_avail": "Masz dostęp tylko do odczytu do dostępności produktu."
+  "lang_you_have_read_only_access_to_product_avail": "Masz dostęp tylko do odczytu do dostępności produktu.",
+  "lang_feedback_customization": "Dostosowanie"
 }

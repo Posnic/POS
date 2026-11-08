@@ -5402,5 +5402,6 @@
   "lang_undo_stock_deduction": "කොටස් අඩුකිරීම අහෝසි කරන්න",
   "lang_upload_excel_csv": "එක්සෙල්/CSV උඩුගත කරන්න",
   "lang_weigh_for_a_requested_amount": "ඉල්ලූ මුදලකට බර කරන්න",
-  "lang_you_have_read_only_access_to_product_avail": "නිෂ්පාදන ලබා ගත හැකි බව ඔබට කියවීමට පමණක් ප්රවේශයක් ඇත."
+  "lang_you_have_read_only_access_to_product_avail": "නිෂ්පාදන ලබා ගත හැකි බව ඔබට කියවීමට පමණක් ප්රවේශයක් ඇත.",
+  "lang_feedback_customization": "අභිරුචිකරණය"
 }

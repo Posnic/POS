@@ -5324,5 +5324,6 @@
   "lang_undo_stock_deduction": "撤消股票扣除",
   "lang_upload_excel_csv": "上傳 Excel/CSV",
   "lang_weigh_for_a_requested_amount": "以要求的量進行稱重",
-  "lang_you_have_read_only_access_to_product_avail": "您可以對產品可用性的唯讀存取權限。"
+  "lang_you_have_read_only_access_to_product_avail": "您可以對產品可用性的唯讀存取權限。",
+  "lang_feedback_customization": "客製化"
 }

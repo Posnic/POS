@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Afturkalla hlutafrádrátt",
   "lang_upload_excel_csv": "Hladdu upp Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vigt fyrir umbeðna upphæð",
-  "lang_you_have_read_only_access_to_product_avail": "Þú hefur aðeins lesaðan aðgang að vöruframboði."
+  "lang_you_have_read_only_access_to_product_avail": "Þú hefur aðeins lesaðan aðgang að vöruframboði.",
+  "lang_feedback_customization": "Sérsnið"
 }

@@ -5324,5 +5324,6 @@
   "lang_undo_stock_deduction": "在庫控除を取り消す",
   "lang_upload_excel_csv": "エクセル/CSV をアップロード",
   "lang_weigh_for_a_requested_amount": "要求された量の重量を量る",
-  "lang_you_have_read_only_access_to_product_avail": "商品の在庫状況へのアクセスは読み取り専用です。"
+  "lang_you_have_read_only_access_to_product_avail": "商品の在庫状況へのアクセスは読み取り専用です。",
+  "lang_feedback_customization": "カスタマイズ"
 }

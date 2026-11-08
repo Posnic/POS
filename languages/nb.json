@@ -5321,5 +5321,6 @@
   "lang_undo_stock_deduction": "Angre aksjefradrag",
   "lang_upload_excel_csv": "Last opp Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vei for et forespurt beløp",
-  "lang_you_have_read_only_access_to_product_avail": "Du har skrivebeskyttet tilgang til produkttilgjengelighet."
+  "lang_you_have_read_only_access_to_product_avail": "Du har skrivebeskyttet tilgang til produkttilgjengelighet.",
+  "lang_feedback_customization": "Tilpasning"
 }

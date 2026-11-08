@@ -5324,5 +5324,6 @@
   "lang_undo_stock_deduction": "재고 차감 취소",
   "lang_upload_excel_csv": "엑셀/CSV 업로드",
   "lang_weigh_for_a_requested_amount": "요청된 금액에 대한 무게 측정",
-  "lang_you_have_read_only_access_to_product_avail": "제품 가용성에 대한 읽기 전용 액세스 권한이 있습니다."
+  "lang_you_have_read_only_access_to_product_avail": "제품 가용성에 대한 읽기 전용 액세스 권한이 있습니다.",
+  "lang_feedback_customization": "사용자 지정"
 }
