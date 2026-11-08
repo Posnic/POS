@@ -29,6 +29,18 @@ test('Community does not require a cloud account or paid messaging', () => {
   assert.equal(service.payload(request).system.account, '');
   assert.equal(service.context(request).email, 'owner@example.com');
 });
+test('public demo refuses outbound feedback before contacting the central service', async () => {
+  const previous = process.env.DEMO_MODE;
+  process.env.DEMO_MODE = 'true';
+  try {
+    assert.equal(service.context(req()).demo, true);
+    const result = await service.submit(req(), () => assert.fail('must not contact support'));
+    assert.equal(result.status, 403);
+  } finally {
+    if (previous === undefined) delete process.env.DEMO_MODE;
+    else process.env.DEMO_MODE = previous;
+  }
+});
 test('invalid, empty and oversized submissions are refused', () => {
   for (const body of [{ email: 'invalid' }, { email: 'a\r\nb@example.com' }, { category: 'arbitrary' },
     { comment: '  ' }, { comment: 'x'.repeat(7001) }, { email: ['x@example.com'] }, { website: 'https://spam.example' }]) {
@@ -107,6 +119,17 @@ test('opening loads account defaults once and preserves edits while loading', (t
   assert.equal(u.f('name').value, 'Owner');
   assert.match(u.f('context').textContent, /<script>shop/);
   assert.equal(u.f('context').querySelector('script'), null);
+});
+test('public demo shows the form but disables sending and explains why', (t) => {
+  const u = ui(t);
+  u.open();
+  u.get().ok({ data: { demo: true } });
+  assert.equal(u.f('send').disabled, true);
+  assert.match(u.f('status').textContent, /public demo/);
+  u.f('email').value = 'visitor@example.com';
+  u.f('comment').value = 'Do not email this';
+  u.send();
+  assert.equal(u.calls.length, 0);
 });
 test('Community can submit without a name; one request while busy, receipt visible', (t) => {
   const u = ui(t);

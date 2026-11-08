@@ -5449,5 +5449,6 @@
   "lang_feedback_type": "Type",
   "lang_help_feedback": "Hulp &amp; feedback",
   "lang_search_posnic": "POSNIC doorzoeken",
-  "lang_website": "Website"
+  "lang_website": "Website",
+  "lang_feedback_demo_disabled": "Dit is een openbare demo. Het verzenden van berichten is uitgeschakeld."
 }

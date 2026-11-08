@@ -1,4 +1,5 @@
 const pkg = require('../../package.json');
+const demoMode = require('../config/demo-mode');
 
 // Support is an explicit user submission, never a replicated business record.
 // Keep the destination fixed: callers cannot supply a mail recipient or URL.
@@ -15,6 +16,7 @@ function context(req) {
     branch: clean(tenant.branchName, 160),
     account: clean(String(tenant.licenseId || ''), 100),
     version: pkg.version,
+    demo: demoMode.isDemoMode(),
   };
 }
 
@@ -55,6 +57,9 @@ function payload(req) {
 }
 
 async function submit(req, fetchImpl = fetch) {
+  if (demoMode.isDemoMode()) {
+    return { status: 403, message: demoMode.DEMO_BLOCKED_MESSAGE };
+  }
   const data = payload(req);
   const response = await fetchImpl(SUPPORT_URL, {
     method: 'POST',
