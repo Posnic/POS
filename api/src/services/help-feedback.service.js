@@ -20,6 +20,7 @@ function context(req) {
 
 function payload(req) {
   const body = req.body || {};
+  if (body.website) throw new Error('Could not send your message.');
   const email = clean(body.email, 255);
   const comment = clean(body.comment, 7001);
   if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -33,7 +34,7 @@ function payload(req) {
     name: clean(body.name, 120),
     email,
     kind: body.category,
-    subject: `Posnic ${body.category} — ${comment.replace(/[\r\n]+/g, ' ').slice(0, 100)}`,
+    subject: `Posnic ${body.category}: ${comment.replace(/[\r\n]+/g, ' ').slice(0, 100)}`,
     // The existing central mailer prints detail and app version. Include the
     // shop context here as well so it reaches the inbox, not only storage.
     detail: [

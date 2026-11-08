@@ -20,9 +20,15 @@ function lookupValues(q, dial) {
     const digits = q.replace(/\D/g, '');
     values.add(digits);
     if (dial && digits.length >= 7) {
-      const national = q.startsWith('+') && digits.startsWith(dial) ? digits.slice(dial.length) : digits;
+      const national =
+        q.startsWith('+') && digits.startsWith(dial) ? digits.slice(dial.length) : digits;
       if (!q.startsWith('+') || digits.startsWith(dial)) {
-        for (const v of [national, dial + national, '+' + dial + national, '+' + dial + ' ' + national])
+        for (const v of [
+          national,
+          dial + national,
+          '+' + dial + national,
+          '+' + dial + ' ' + national,
+        ])
           values.add(v);
       }
     }
@@ -34,7 +40,9 @@ async function records(req, q, group, refs, page) {
   const { branchId, licenseId } = req.tenantContext;
   const context = { branchId, licenseId };
   const acl = resolveAccess(req.user);
-  let selected = providers.filter((p) => acl[p.acl]?.read === true && (!group || group === p.group));
+  let selected = providers.filter(
+    (p) => acl[p.acl]?.read === true && (!group || group === p.group)
+  );
   if (page) selected = selected.filter((p) => p.route === page.type);
   if (refs) selected = selected.filter((p) => refs.some((r) => r.startsWith(p.route + '/')));
   if (selected.some((p) => p.feature)) {
@@ -42,7 +50,7 @@ async function records(req, q, group, refs, page) {
     selected = selected.filter(
       (p) =>
         !p.feature ||
-        (features.status && ![false, 0, '0', 'false'].includes(features.data.values[p.feature])),
+        (features.status && ![false, 0, '0', 'false'].includes(features.data.values[p.feature]))
     );
   }
   let dial = '';
@@ -51,13 +59,18 @@ async function records(req, q, group, refs, page) {
       .collection('branches')
       .findOne(
         { _id: branchId, license: licenseId },
-        { projection: { country: 1, country_id: 1, sortname: 1 } },
+        { projection: { country: 1, country_id: 1, sortname: 1 } }
       );
     dial = dialingCodes[countryCode(branch || {})] || '';
   }
   const exact = lookupValues(q, dial);
   const ordinary = [
-    ...new Set([q, q.toLowerCase(), q.toUpperCase(), q.replace(/\b\p{L}/gu, (c) => c.toUpperCase())]),
+    ...new Set([
+      q,
+      q.toLowerCase(),
+      q.toUpperCase(),
+      q.replace(/\b\p{L}/gu, (c) => c.toUpperCase()),
+    ]),
   ];
   const results = [];
   const more = [];
@@ -82,14 +95,18 @@ async function records(req, q, group, refs, page) {
     const coll = req.db.collection(collection);
     const fetch = (match, limit, collation) =>
       coll
-        .find({ $and: [...filters, match] }, { projection: project, ...(collation && { collation }) })
+        .find(
+          { $and: [...filters, match] },
+          { projection: project, ...(collation && { collation }) }
+        )
         .sort({ _id: 1 })
         .maxTimeMS(220)
         .limit(limit)
         .toArray();
     const size = page ? 20 : 5;
     function take(rows, mode) {
-      if (!refs && rows.length > size) more.push({ type: p.route, mode, after: String(rows[size - 1]._id) });
+      if (!refs && rows.length > size)
+        more.push({ type: p.route, mode, after: String(rows[size - 1]._id) });
       return refs ? rows : rows.slice(0, size);
     }
     const raw =
@@ -104,7 +121,7 @@ async function records(req, q, group, refs, page) {
                     .map((r) => new ObjectId(r.split('/')[1])),
                 },
               },
-              20,
+              20
             )
           : await fetch(
               {
@@ -122,7 +139,7 @@ async function records(req, q, group, refs, page) {
                 })),
               },
               size + 1,
-              p.contact ? phoneCollation : undefined,
+              p.contact ? phoneCollation : undefined
             );
     const matches = take(raw, 'exact');
     function result(row, rank) {
@@ -143,10 +160,10 @@ async function records(req, q, group, refs, page) {
       const names = await fetch(
         {
           $or: p.names.flatMap((name) =>
-            ordinary.map((term) => ({ [name]: new RegExp('^' + escape(term)) })),
+            ordinary.map((term) => ({ [name]: new RegExp('^' + escape(term)) }))
           ),
         },
-        size + 1,
+        size + 1
       );
       take(names, 'name')
         .filter((row) => !matches.some((m) => String(m._id) === String(row._id)))
@@ -173,7 +190,9 @@ async function records(req, q, group, refs, page) {
       partial = true;
     }
   }
-  results.sort((a, b) => b.rank - a.rank || a.name.localeCompare(b.name) || a.hash.localeCompare(b.hash));
+  results.sort(
+    (a, b) => b.rank - a.rank || a.name.localeCompare(b.name) || a.hash.localeCompare(b.hash)
+  );
   return { results, more, partial };
 }
 
@@ -181,7 +200,7 @@ function createRouter(authenticate = protect) {
   const router = express.Router();
   router.use(
     authenticate,
-    rateLimit({ windowMs: 60000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false }),
+    rateLimit({ windowMs: 60000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false })
   );
   router.use((req, res, next) => {
     res.set('Cache-Control', 'no-store');
@@ -218,7 +237,8 @@ function createRouter(authenticate = protect) {
   router.post('/resolve', async (req, res, next) => {
     try {
       const ref = req.body?.ref;
-      if (typeof ref !== 'string' || !/^[a-z]+\/[a-f0-9]{24}$/.test(ref)) return res.sendStatus(400);
+      if (typeof ref !== 'string' || !/^[a-z]+\/[a-f0-9]{24}$/.test(ref))
+        return res.sendStatus(400);
       const data = await records(req, '', '', [ref]);
       if (data.partial) return res.sendStatus(503);
       if (!data.results.length) return res.sendStatus(404);
@@ -260,21 +280,29 @@ function createRouter(authenticate = protect) {
   router.post('/history', async (req, res, next) => {
     try {
       const hash = req.body?.hash;
-      if (typeof hash !== 'string' || !/^[a-z][\w@./-]{0,160}$/i.test(hash)) return res.sendStatus(400);
+      if (typeof hash !== 'string' || !/^[a-z][\w@./-]{0,160}$/i.test(hash))
+        return res.sendStatus(400);
       const eventId = req.body.eventId;
-      if (eventId !== undefined && (typeof eventId !== 'string' || !/^[a-f\d-]{36}$/i.test(eventId)))
+      if (
+        eventId !== undefined &&
+        (typeof eventId !== 'string' || !/^[a-f\d-]{36}$/i.test(eventId))
+      )
         return res.sendStatus(400);
       const collection = history(req),
         _id = owner(req);
       const update = {
         $set: { expiresAt: new Date(Date.now() + 30 * 86400000) },
-        $push: { events: { $each: [{ hash, at: Date.now(), ...(eventId && { eventId }) }], $slice: -80 } },
+        $push: {
+          events: { $each: [{ hash, at: Date.now(), ...(eventId && { eventId }) }], $slice: -80 },
+        },
       };
       const generation = req.body.generation ?? 0;
       if (!Number.isSafeInteger(generation) || generation < 0) return res.sendStatus(400);
       const filter = {
         _id,
-        ...(generation ? { generation } : { $or: [{ generation: 0 }, { generation: { $exists: false } }] }),
+        ...(generation
+          ? { generation }
+          : { $or: [{ generation: 0 }, { generation: { $exists: false } }] }),
         ...(eventId && { 'events.eventId': { $ne: eventId } }),
       };
       try {
@@ -292,8 +320,11 @@ function createRouter(authenticate = protect) {
     try {
       const doc = await history(req).findOneAndUpdate(
         { _id: owner(req) },
-        { $inc: { generation: 1 }, $set: { events: [], expiresAt: new Date(Date.now() + 30 * 86400000) } },
-        { upsert: true, returnDocument: 'after', includeResultMetadata: false },
+        {
+          $inc: { generation: 1 },
+          $set: { events: [], expiresAt: new Date(Date.now() + 30 * 86400000) },
+        },
+        { upsert: true, returnDocument: 'after', includeResultMetadata: false }
       );
       res.json({ type: 'success', data: { generation: doc.generation } });
     } catch (e) {

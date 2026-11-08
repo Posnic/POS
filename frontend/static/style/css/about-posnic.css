@@ -20,6 +20,7 @@
 .posnic-about-link:hover, .posnic-feedback-link:hover { color: var(--theme-primary-color); }
 .posnic-about-link:focus-visible, .posnic-feedback-link:focus-visible { outline: 2px solid var(--theme-primary-color); outline-offset: 4px; }
 .posnic-about-dialog { max-width: 480px; }
+.posnic-feedback-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 .posnic-about-product { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
 .posnic-about-details {
     display: grid;

@@ -31,7 +31,7 @@ test('Community does not require a cloud account or paid messaging', () => {
 });
 test('invalid, empty and oversized submissions are refused', () => {
   for (const body of [{ email: 'invalid' }, { email: 'a\r\nb@example.com' }, { category: 'arbitrary' },
-    { comment: '  ' }, { comment: 'x'.repeat(7001) }, { email: ['x@example.com'] }]) {
+    { comment: '  ' }, { comment: 'x'.repeat(7001) }, { email: ['x@example.com'] }, { website: 'https://spam.example' }]) {
     assert.throws(() => service.payload(req(body)));
   }
   assert.ok(service.payload(req({ comment: 'x'.repeat(7000) })).detail.length < 8000);

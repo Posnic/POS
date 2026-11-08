@@ -18,7 +18,7 @@
         field('send').disabled = value;
         ['email', 'name', 'category', 'comment'].forEach(function (name) { field(name).disabled = value; });
         field('send').textContent = value
-            ? t('lang_feedback_sending', 'Sending…') : t('lang_feedback_send', 'Send');
+            ? t('lang_feedback_sending', 'Sending...') : t('lang_feedback_send', 'Send');
         field('form').setAttribute('aria-busy', String(value));
     }
     $(document).on('show.bs.modal', '#posnic_feedback_dialog', function () {
@@ -52,7 +52,7 @@
         pending(true);
         field('status').hidden = true;
         var data = {};
-        ['email', 'name', 'category', 'comment'].forEach(function (name) { data[name] = field(name).value.trim(); });
+        ['email', 'name', 'category', 'comment', 'website'].forEach(function (name) { data[name] = field(name).value.trim(); });
         PosnicPro.request({ url: 'base/help-feedback', method: 'POST', timeout: 30000, data: JSON.stringify(data), quietStatuses: [400, 429, 502, 503] }, function (response) {
             pending(false);
             if (response.type !== 'success' || !response.data || !response.data.reference) {
