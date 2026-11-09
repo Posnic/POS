@@ -1,53 +1,62 @@
 'use strict';
 const contract = require('../../../src/services/captain-price-contract');
 const pricing = require('../../../src/services/pricing-authority');
-const product = { _id: 'dish', name: 'Paratha', selling_price: 45, tax: 5, tax_type: 'exclusive' };
-const base = {
-  product,
-  branch: {},
-  extras: 0,
-  staffOrder: true,
-  client: { app: 'captain', app_version: '1.3.32 (73a4d0e)' },
+const product = {
+  _id: 'dish',
+  name: 'Fresh Fruit Juice',
+  selling_price: 45,
+  tax: 5,
+  tax_type: 'exclusive',
 };
-const submit = (amount, overrides = {}) =>
-  contract.submittedPrice({ ...base, item: { item_price: amount }, ...overrides });
+const base = { product, branch: {}, extras: 0, staffOrder: true };
+const admit = (amount, overrides = {}) => {
+  const context = { ...base, ...overrides, item: { item_price: amount } };
+  return pricing.resolve({ ...context, submitted: contract.submittedPrice(context) });
+};
 
-test('released Captain gross amount is validated then taxed once', () => {
-  const submitted = submit(47.25);
-  expect(submitted).toBe(45);
-  expect(pricing.calculate(pricing.resolve({ product, submitted }), 2)).toMatchObject({
-    unit_price: 45,
-    total: 94.5,
-    tax_amount: 4.5,
-  });
+test.each(['1.3.31', '1.3.32', '1.3.72', undefined])(
+  'staff stale quotes do not block the kitchen (%s)',
+  (version) => {
+    const resolved = admit(47.25, { client: { app: 'captain', app_version: version } });
+    expect(resolved.selling_price).toBe(45);
+    expect(pricing.calculate(resolved, 2)).toMatchObject({
+      unit_price: 45,
+      total: 94.5,
+      tax_amount: 4.5,
+    });
+  }
+);
+
+test.each([48, 1, 99999, 'NaN'])(
+  'fixed staff lines use the catalogue instead of the submitted quote %s',
+  (amount) => {
+    expect(admit(amount).selling_price).toBe(45);
+  }
+);
+
+test('public checkout still rejects changed or forged fixed prices', () => {
+  expect(() => admit(47.25, { staffOrder: false })).toThrow(/does not match/);
+  expect(() => admit('NaN', { staffOrder: false })).toThrow(/finite/);
+  expect(admit(45, { staffOrder: false }).selling_price).toBe(45);
 });
-test('legacy stale and arbitrary prices remain errors', () => {
-  expect(() => submit(48)).toThrow(/does not match/);
-  expect(() => submit(45)).toThrow(/does not match/);
-  expect(() => submit('NaN')).toThrow(/finite/);
+
+test('inclusive prices, modifiers and discounts are calculated once on the server', () => {
+  expect(
+    pricing.calculate(
+      admit(999, { product: { ...product, selling_price: 30, tax_type: 'inclusive' } }),
+      2
+    ).total
+  ).toBe(60);
+  expect(pricing.calculate(admit(47.25, { extras: 20 }), 1).total).toBe(68.25);
+  expect(
+    pricing.calculate(admit(94.5, { product: { ...product, selling_price: 100 } }), 1, {}, 10).total
+  ).toBe(94.5);
 });
-test.each([
-  { staffOrder: false },
-  { client: {} },
-  { client: { app: 'mobile-pos', app_version: '1.3.32' } },
-  { client: { app: 'captain', app_version: '1.3.33' } },
-  { item: { item_price: 47.25, price_basis: 'selling_price' } },
-])('other contracts retain strict selling-price validation: %j', (overrides) => {
-  const submitted = submit(47.25, overrides);
-  expect(() => pricing.resolve({ product, submitted })).toThrow(/does not match/);
-});
-test('inclusive water and discounted dish use the server menu quote', () => {
-  expect(submit(30, { product: { ...product, selling_price: 30, tax_type: 'inclusive' } })).toBe(
-    30
+
+test('variable prices remain explicit and invalid variable prices still fail', () => {
+  expect(admit(850, { product: { ...product, open_price: true } }).selling_price).toBe(850);
+  expect(admit(60, { product: { ...product, item_status: 'instant' } }).selling_price).toBe(60);
+  expect(() => admit(0, { product: { ...product, open_price: true } })).toThrow(
+    /valid entered price/
   );
-  expect(submit(94.5, { product: { ...product, selling_price: 100, discount_amount: 10 } })).toBe(
-    100
-  );
-});
-test('variable and quick quotes remain entered prices', () => {
-  expect(submit(850, { product: { ...product, open_price: true } })).toBe(850);
-  expect(submit(60, { product: { ...product, item_status: 'instant' } })).toBe(60);
-});
-test('validated modifiers are applied once after legacy menu validation', () => {
-  expect(submit(47.25, { extras: 20 })).toBe(65);
 });

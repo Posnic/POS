@@ -10960,6 +10960,8 @@ class SalesRepository {
         const qty = parseFloat(item.quantity || item.item_quantity || 0);
         const submittedPrice =
           item.price ?? item.unit_price ?? item.item_base_price ?? item.item_price;
+        // Staff amendments retain the stored agreed price, even with a stale menu.
+        const assertedPrice = orderDoc.channel === 'tableside' ? undefined : submittedPrice;
         if (!Number.isFinite(qty) || qty <= 0)
           throw new Error('Quantity must be greater than zero.');
 
@@ -10972,7 +10974,7 @@ class SalesRepository {
         if (previousLine && orderDoc.captain_transfer_allocation && qty <= oldQty) {
           require('../utils/transfer-allocation').read(orderDoc, shop || {});
           pricingAuthority.assertPrice(
-            submittedPrice,
+            assertedPrice,
             Number(
               previousLine.unit_price ?? previousLine.item_base_price ?? previousLine.item_price
             ),
@@ -11024,7 +11026,7 @@ class SalesRepository {
                 'Item pricing cannot be verified. Review this legacy order before adding quantities.'
               );
             pricingAuthority.assertPrice(
-              submittedPrice,
+              assertedPrice,
               Number(
                 previousLine.unit_price ?? previousLine.item_base_price ?? previousLine.item_price
               ),
@@ -11074,7 +11076,7 @@ class SalesRepository {
               submittedPrice !== undefined &&
               roundStored(submittedPrice) === roundStored(previousLine.pricing.selling_price);
             pricingAuthority.assertPrice(
-              submittedPrice,
+              assertedPrice,
               Number(retainsSellingPrice ? previousLine.pricing.selling_price : storedUnit),
               (n) => Money.fromMinor(Money.toMinor(n, monetary), monetary),
               previousLine.item_name
@@ -11105,7 +11107,12 @@ class SalesRepository {
             pricing = pricingAuthority.resolve({
               product: itemDoc,
               branch: shop || {},
-              submitted: submittedPrice,
+              submitted: require('../services/captain-price-contract').submittedPrice({
+                item: { unit_price: submittedPrice },
+                product: itemDoc,
+                branch: shop || {},
+                staffOrder: orderDoc.channel === 'tableside',
+              }),
               extras: extras.delta,
               ...pricingContext,
               channel: orderDoc.channel || 'counter',

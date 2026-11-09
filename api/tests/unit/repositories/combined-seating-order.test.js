@@ -653,3 +653,20 @@ test('guest requirement rejects omitted or zero dine-in pax before creating a sa
   expect(await db.collection('sales').countDocuments()).toBe(0);
   expect((await submit()).status).toBe(true);
 });
+
+test('a refused guest count can be corrected with the same request key without duplicate orders', async () => {
+  await db
+    .collection('branches')
+    .updateOne({ _id: branch }, { $set: { restaurant_require_guests: true } });
+  const idempotencyKey = 'guest-recovery-request-0001';
+  expect(await submit({ person_count: 0, idempotencyKey })).toMatchObject({
+    status: false,
+    data: { code: 'GUESTS_REQUIRED' },
+  });
+  expect(await db.collection('sales').countDocuments()).toBe(0);
+  const accepted = await submit({ person_count: 4, idempotencyKey });
+  expect(accepted.status).toBe(true);
+  const replay = await submit({ person_count: 4, idempotencyKey });
+  expect(replay.status).toBe(true);
+  expect(await db.collection('sales').countDocuments()).toBe(1);
+});
