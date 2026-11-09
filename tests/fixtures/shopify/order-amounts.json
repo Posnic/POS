@@ -1,0 +1,139 @@
+{
+  "provider": "shopify",
+  "fixture_version": 1,
+  "orders": [
+    {
+      "id": "SYNTH-SHOPIFY-ORD-001",
+      "scenario": "same_currency",
+      "shop_currency": "EUR",
+      "presentment_currency": "EUR",
+      "amounts": {
+        "subtotal": {
+          "shop": "100.00",
+          "presentment": "100.00"
+        },
+        "tax": {
+          "shop": "21.00",
+          "presentment": "21.00"
+        },
+        "discount": {
+          "shop": "10.00",
+          "presentment": "10.00"
+        },
+        "shipping": {
+          "shop": "5.00",
+          "presentment": "5.00"
+        },
+        "total": {
+          "shop": "116.00",
+          "presentment": "116.00"
+        }
+      },
+      "expected": {
+        "sale_total": "116.00",
+        "reporting_currency": "EUR",
+        "review": false
+      }
+    },
+    {
+      "id": "SYNTH-SHOPIFY-ORD-002",
+      "scenario": "different_currencies",
+      "shop_currency": "EUR",
+      "presentment_currency": "USD",
+      "amounts": {
+        "subtotal": {
+          "shop": "100.00",
+          "presentment": "110.00"
+        },
+        "tax": {
+          "shop": "21.00",
+          "presentment": "23.10"
+        },
+        "discount": {
+          "shop": "10.00",
+          "presentment": "11.00"
+        },
+        "shipping": {
+          "shop": "5.00",
+          "presentment": "5.50"
+        },
+        "total": {
+          "shop": "116.00",
+          "presentment": "127.60"
+        }
+      },
+      "expected": {
+        "sale_total": "116.00",
+        "reporting_currency": "EUR",
+        "review": false
+      }
+    },
+    {
+      "id": "SYNTH-SHOPIFY-ORD-003",
+      "scenario": "rounding",
+      "shop_currency": "EUR",
+      "presentment_currency": "USD",
+      "amounts": {
+        "subtotal": {
+          "shop": "19.99",
+          "presentment": "21.87"
+        },
+        "tax": {
+          "shop": "4.20",
+          "presentment": "4.59"
+        },
+        "discount": {
+          "shop": "1.00",
+          "presentment": "1.09"
+        },
+        "shipping": {
+          "shop": "3.50",
+          "presentment": "3.83"
+        },
+        "total": {
+          "shop": "26.69",
+          "presentment": "29.20"
+        }
+      },
+      "expected": {
+        "sale_total": "26.69",
+        "reporting_currency": "EUR",
+        "review": false
+      }
+    },
+    {
+      "id": "SYNTH-SHOPIFY-ORD-004",
+      "scenario": "currency_mismatch",
+      "shop_currency": "EUR",
+      "presentment_currency": "USD",
+      "amounts": {
+        "subtotal": {
+          "shop": "100.00",
+          "presentment": "110.00"
+        },
+        "tax": {
+          "shop": "21.00",
+          "presentment": "23.10"
+        },
+        "discount": {
+          "shop": "10.00",
+          "presentment": "11.00"
+        },
+        "shipping": {
+          "shop": "5.00",
+          "presentment": "5.50"
+        },
+        "total": {
+          "shop": "116.00",
+          "presentment": null
+        }
+      },
+      "expected": {
+        "sale_total": null,
+        "reporting_currency": null,
+        "review": true,
+        "reason": "missing_presentment_total"
+      }
+    }
+  ]
+}
