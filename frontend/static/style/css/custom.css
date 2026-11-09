@@ -7967,7 +7967,7 @@ dialog.lf-options-panel header button[aria-label="Close"] {
 .report-page-header .report-group-tabs .nav-link {white-space:nowrap;}
 .report-page-header .row_filter > .purchase-report-fields {order:1; flex-basis:100%; padding:0;}
 
-.lf-actions .list-file-action-label { display:inline-block; white-space:nowrap; }
+.list-file-action-label { display:inline-block; white-space:nowrap; }
 
 /* Keep each report's views on one navigable row at narrow widths. */
 .page_loader:has(.report-page-header) .card-body > .nav-tabs {

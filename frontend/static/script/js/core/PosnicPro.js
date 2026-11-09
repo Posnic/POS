@@ -1566,7 +1566,7 @@ PosnicPro = {
             if (!host.length) { return; }
             host.addClass('report-export-host').append(
                 '<div class="report-export-bar dropdown">'
-                + '<button type="button" class="btn btn-secondary-rgba btn-sm report-export-toggle dropdown-toggle" data-toggle="dropdown" data-display="static" aria-expanded="false"><i class="feather icon-share mr-1" aria-hidden="true"></i><span data-t="lang_export">Export</span></button>'
+                + '<button type="button" class="btn btn-secondary-rgba btn-sm report-export-toggle dropdown-toggle" data-toggle="dropdown" data-display="static" aria-expanded="false"><i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export">Export</span></button>'
                 + '<div class="dropdown-menu dropdown-menu-right report-export-options">'
                 + '<button type="button" class="btn btn-danger-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'pdf\');" title="Download A4 PDF" data-t-title="lang_download_a4_pdf"><i class="fa fa-file-pdf-o mr-1"></i>PDF</button> '
                 + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'csv\');" title="Export CSV" data-t-title="lang_export_csv"><i class="fa fa-file-text-o mr-1"></i>CSV</button> '
