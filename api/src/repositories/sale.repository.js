@@ -2236,42 +2236,37 @@ class SalesRepository {
         },
         {
           $group: {
-            _id: { user_id: '$user_id', user_name: '$user_name', sale_id: '$_id' },
-            profit: {
-              $sum: {
-                $subtract: [
-                  {
-                    $subtract: ['$sales_total_num', { $add: ['$tax_num'] }],
-                  },
-                  '$company_price_total_num',
-                ],
-              },
-            },
+            _id: { user_id: '$user_id', sale_id: '$_id' },
+            user_name: { $first: '$user_name' },
+            tax: { $first: '$tax_num' },
+            cost: { $sum: '$company_price_total_num' },
             sales_total: { $first: reportSaleTotal() },
             refund_total: { $first: '$items_return_total' },
           },
         },
         {
           $group: {
-            _id: { user_id: '$_id.user_id', user_name: '$_id.user_name' },
-            profit: { $sum: '$profit' },
+            _id: { user_id: '$_id.user_id' },
+            user_name: { $last: '$user_name' },
+            profit: { $sum: { $subtract: ['$sales_total', { $add: ['$tax', '$cost'] }] } },
             sales_total: { $sum: '$sales_total' },
             sales_avg: { $avg: '$sales_total' },
             refund_total: { $sum: '$refund_total' },
             sales_count: { $sum: 1 },
           },
         },
-        { $sort: { sales_total: -1 } },
-        { $skip: skip },
-        { $limit: limit },
+        { $facet: {
+          rows: [{ $sort: { sales_total: -1, '_id.user_id': 1 } }, { $skip: skip }, { $limit: limit }],
+          totals: [{ $group: { _id: null, employees: { $sum: 1 }, sales: { $sum: '$sales_count' }, amount: { $sum: '$sales_total' } } }],
+        } },
       ];
-
-      const salesList = await salesCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
-
+      const [report] = await salesCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
+      const summary = report.totals[0] || { employees: 0, sales: 0, amount: 0 };
+      const salesList = report.rows;
       const list = salesList.map((doc) => {
         const id = doc._id || {};
         return {
-          user_name: id.user_name,
+          user_name: doc.user_name,
           user_id: id.user_id,
           sales_payment: round(doc.sales_total || 0, 2),
           refund_payment: round(doc.refund_total || 0, 2),
@@ -2281,21 +2276,12 @@ class SalesRepository {
         };
       });
 
-      const countPipeline = [
-        { $match: filters },
-        {
-          $group: {
-            _id: { user_id: '$user_id' },
-          },
-        },
-      ];
-
-      const salesCountList = await salesCollection.aggregate(countPipeline).toArray();
-      const total = salesCountList.length;
+      const total = summary.employees;
 
       return {
         status: true,
         list,
+        summary: { sales: summary.sales, amount: round(summary.amount, 2) },
         pagination: {
           page,
           limit,
@@ -2440,16 +2426,13 @@ class SalesRepository {
         sale_process: { $in: ['PartialReturn', 'FullReturn'] },
       });
 
-      const dateAndLicense = {
-        updated_date: { $gte: fromDate, $lte: toDate },
-      };
-      if (BaseModel.license) {
-        dateAndLicense.license = BaseModel.license;
+      if (!mongoose.Types.ObjectId.isValid(data.license)) throw Error('Missing license');
+      andConditions.push({license:new mongoose.Types.ObjectId(String(data.license))});
+      if (data.customer) {
+        if (!mongoose.Types.ObjectId.isValid(data.customer)) throw Error('Invalid customer');
+        andConditions.push({customer_id:{$in:[String(data.customer),new mongoose.Types.ObjectId(String(data.customer))]}});
       }
-      andConditions.push(dateAndLicense);
-
       const filters = { $and: andConditions };
-
       const limit = parseInt(options.limit, 10) > 0 ? parseInt(options.limit, 10) : 5;
       const page = parseInt(options.page, 10) > 0 ? parseInt(options.page, 10) : 1;
       const skip = Math.max(0, (page - 1) * limit);
@@ -2457,61 +2440,26 @@ class SalesRepository {
       const db = await BaseModel.getDb();
       const salesCollection = db.collection('sales');
 
-      const pipeline = [
-        { $match: filters },
-        { $unwind: '$items_return' },
-        { $unwind: '$items_return.returnArray' },
-        { $unwind: '$items_return.returnArray.returnValue' },
-        {
-          $group: {
-            _id: {
-              id: '$_id',
-              date: '$updated_date',
-              sales_id: '$sales_id',
-              customer_name: '$customer_name',
-              payment_mode: '$payment_mode',
-              return_value: '$items_return_total',
-            },
-            count: { $sum: 1 },
-          },
-        },
-        { $sort: { '_id.return_value': -1 } },
-        { $skip: skip },
-        { $limit: limit },
+      const stages = [
+        {$match:filters}, {$unwind:'$items_return'}, {$unwind:'$items_return.returnArray'},
+        {$set:{event:'$items_return.returnArray'}},
+        {$set:{eventDate:{$convert:{input:{$ifNull:['$event.returnDate',{$arrayElemAt:['$event.returnValue.return_date',0]}]},to:'date',onError:null,onNull:null}}}},
+        {$match:{eventDate:{$gte:fromDate,$lte:toDate}}}
       ];
-
-      const aggResults = await salesCollection.aggregate(pipeline).toArray();
-
-      const list = (aggResults || []).map((doc) => {
-        const id = doc._id || {};
-        const rawDate = id.date;
-        const formattedDate = rawDate ? formatDate(rawDate) : null;
-        const returnTotal = typeof id.return_value === 'number' ? id.return_value : 0;
-
-        return {
-          date: formattedDate,
-          id: id.id,
-          sale_id: id.sales_id,
-          customer_name: id.customer_name,
-          payment_mode: id.payment_mode,
-          return: round(returnTotal || 0, 2),
-          count: doc.count || 0,
-        };
-      });
-
-      const countPipeline = [
-        { $match: filters },
-        {
-          $group: {
-            _id: { sales_id: '$sales_id' },
-          },
-        },
-        { $count: 'total' },
-      ];
-
-      const countDocs = await salesCollection.aggregate(countPipeline).toArray();
-      const total = (countDocs[0] && countDocs[0].total) || 0;
-
+      if (data.search) {
+        const literal = new RegExp(data.search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');
+        stages.push({$match:{$or:['sales_id','customer_name','event.returnId','event.returnValue.return_id'].map(k=>({[k]:literal}))}});
+      }
+      stages.push({$project:{sale_id:'$sales_id',customer_name:1,payment_mode:1,date:'$eventDate',
+        ref:'$event.returnId',count:{$size:{$ifNull:['$event.returnValue',[]]}},
+        amount:{$ifNull:['$event.itemsTotalAmount',{$sum:'$event.returnValue.total_amount'}]}}});
+      const sort = options.sort === 'new' ? {date:-1,_id:-1,ref:1} : {amount:-1,date:-1,_id:-1,ref:1};
+      const [result] = await salesCollection.aggregate([...stages,
+        {$facet:{list:[{$sort:sort},{$skip:skip},{$limit:limit}],counts:[{$count:'total'}]}}
+      ]).toArray();
+      const list = result.list.map(row=>({id:row._id,sale_id:row.sale_id,customer_name:row.customer_name,
+        payment_mode:row.payment_mode,date:formatDate(row.date),return:round(row.amount || 0,2),count:row.count}));
+      const total = result.counts[0]?.total || 0;
       return {
         status: true,
         list,
@@ -2597,13 +2545,15 @@ class SalesRepository {
             },
           },
         },
-        { $sort: { total_amount: -1 } },
-        { $skip: skip },
-        { $limit: limit },
+        { $facet: {
+          rows: [{ $sort: { sales_total: -1, '_id.user_id': 1 } }, { $skip: skip }, { $limit: limit }],
+          totals: [{ $group: { _id: null, employees: { $sum: 1 }, sales: { $sum: '$sales_count' }, amount: { $sum: '$sales_total' } } }],
+        } },
       ];
 
-      const aggResults = await salesCollection.aggregate(pipeline).toArray();
-
+      const [report] = await salesCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
+      const summary = report.totals[0] || { employees: 0, sales: 0, amount: 0 };
+      const salesList = report.rows;
       const list = [];
       const customDetails = {
         sales_id: null,
@@ -2635,267 +2585,11 @@ class SalesRepository {
         }
       }
 
-      const countPipeline = [
-        { $unwind: '$items_return' },
-        { $unwind: '$items_return.returnArray' },
-        { $unwind: '$items_return.returnArray.returnValue' },
-        { $match: filters },
-        {
-          $group: {
-            _id: {
-              item_id: '$items_return.returnArray.returnValue.item_id',
-            },
-          },
-        },
-        { $count: 'total' },
-      ];
-
-      const countDocs = await salesCollection.aggregate(countPipeline).toArray();
-      const total = (countDocs[0] && countDocs[0].total) || 0;
-
-      return {
-        status: true,
-        custom_details: customDetails,
-        total,
-        current_page: page,
-        total_pages: limit ? Math.ceil(total / limit) : 0,
-        per_page: limit,
-        list,
-      };
-    } catch (error) {
-      console.error('Error in returnProductReportPage:', error);
-      return {
-        status: false,
-        data: null,
-        message: error.message,
-      };
-    }
-  }
-
-  async pendingProductReportPage(data = {}, options = {}, { SaleModel } = {}) {
-    try {
-      const rawBranch = data.branchid;
-      const branchIds = Array.isArray(rawBranch) ? rawBranch : rawBranch ? [rawBranch] : [];
-
-      const branchObjectIds = branchIds
-        .filter((id) => mongoose.Types.ObjectId.isValid(id))
-        .map((id) => new mongoose.Types.ObjectId(id));
-
-      const andConditions = [];
-      if (branchObjectIds.length) {
-        andConditions.push({ branch_id: { $in: branchObjectIds } });
-      }
-
-      if (data.sales_id && mongoose.Types.ObjectId.isValid(data.sales_id)) {
-        andConditions.push({ _id: new mongoose.Types.ObjectId(data.sales_id) });
-      }
-
-      if (BaseModel.license) {
-        andConditions.push({ license: BaseModel.license });
-      }
-
-      const filters = andConditions.length ? { $and: andConditions } : {};
-
-      const limit = parseInt(options.limit, 10) > 0 ? parseInt(options.limit, 10) : BaseModel.limit;
-      const page = parseInt(options.page, 10) > 0 ? parseInt(options.page, 10) : 1;
-      const skip = Math.max(0, (page - 1) * limit);
-
-      const db = await BaseModel.getDb();
-      const salesCollection = db.collection('sales');
-
-      const pipeline = [
-        { $unwind: '$items' },
-        { $match: filters },
-        {
-          $group: {
-            _id: {
-              sales_id: '$sales_id',
-              item_id: '$items.item_id',
-              item_name: '$items.item_name',
-              customer_name: '$customer_name',
-              customer_phone: '$customer_phone',
-              customer_email: '$customer_email',
-              customer_address: '$customer_address',
-              user_name: '$user_name',
-              branch_name: '$branch_name',
-            },
-            item_quantity: { $sum: '$items.item_quantity' },
-            total_amount: { $sum: '$items.total_amount' },
-          },
-        },
-        { $sort: { total_amount: -1 } },
-        { $skip: skip },
-        { $limit: limit },
-      ];
-
-      const aggResults = await salesCollection.aggregate(pipeline).toArray();
-
-      const list = [];
-      const customDetails = {
-        sales_id: null,
-        customer_name: null,
-        customer_phone: null,
-        customer_email: null,
-        customer_address: null,
-        user_name: null,
-        branch_name: null,
-      };
-
-      for (const doc of aggResults) {
-        const id = doc._id || {};
-        list.push({
-          _id: id.item_id ? id.item_id.toString() : '',
-          name: id.item_name || '',
-          total_amount: round(doc.total_amount || 0, 2),
-          item_quantity: round(doc.item_quantity || 0, 2),
-        });
-
-        if (!customDetails.sales_id && id.sales_id) {
-          customDetails.sales_id = id.sales_id;
-          customDetails.customer_name = id.customer_name || '';
-          customDetails.customer_phone = id.customer_phone || '';
-          customDetails.customer_email = id.customer_email || '';
-          customDetails.customer_address = id.customer_address || '';
-          customDetails.user_name = id.user_name || '';
-          customDetails.branch_name = id.branch_name || '';
-        }
-      }
-
-      const countPipeline = [
-        { $unwind: '$items' },
-        { $match: filters },
-        {
-          $group: {
-            _id: { item_id: '$items.item_id' },
-          },
-        },
-        { $count: 'total' },
-      ];
-
-      const countDocs = await salesCollection.aggregate(countPipeline).toArray();
-      const total = (countDocs[0] && countDocs[0].total) || 0;
-
-      return {
-        status: true,
-        custom_details: customDetails,
-        total,
-        current_page: page,
-        total_pages: limit ? Math.ceil(total / limit) : 0,
-        per_page: limit,
-        list,
-      };
-    } catch (error) {
-      console.error('Error in pendingProductReportPage:', error);
-      return {
-        status: false,
-        data: null,
-        message: error.message,
-      };
-    }
-  }
-
-  async productBasedReportPage(data, options, { SaleModel } = {}) {
-    try {
-      const timeZone = BaseModel.currentTimeZone || 'Asia/Kolkata';
-      const fromTs = BaseModel.startingDate
-        ? BaseModel.startingDate(data.starting_date, timeZone)
-        : Date.parse(data.starting_date || '') || 0;
-      const toTs = BaseModel.endingDate
-        ? BaseModel.endingDate(data.ending_date, timeZone)
-        : Date.parse(data.ending_date || '') || Date.now();
-
-      const fromDate = new Date(fromTs || 0);
-      const toDate = new Date(toTs || Date.now());
-
-      const branchIds = Array.isArray(data.branchid) ? data.branchid : [];
-      const branchObjectIds = branchIds
-        .filter((id) => mongoose.Types.ObjectId.isValid(id))
-        .map((id) => new mongoose.Types.ObjectId(id));
-
-      const matchFilter = {
-        branch_id: { $in: branchObjectIds },
-        sale_process: { $in: ['PartialReturn', 'FullReturn'] },
-        updated_date: { $gte: fromDate, $lte: toDate },
-      };
-
-      if (BaseModel.license) {
-        matchFilter.license = BaseModel.license;
-      }
-
-      const limit = parseInt(options.limit, 10) > 0 ? parseInt(options.limit, 10) : 5;
-      const page = parseInt(options.page, 10) > 0 ? parseInt(options.page, 10) : 1;
-      const skip = Math.max(0, (page - 1) * limit);
-
-      const db = await BaseModel.getDb();
-      const salesCollection = db.collection('sales');
-
-      const basePipeline = [
-        { $match: matchFilter },
-        { $unwind: '$items_return' },
-        { $unwind: '$items_return.returnArray' },
-        { $unwind: '$items_return.returnArray.returnValue' },
-      ];
-
-      const aggregationPipeline = [
-        ...basePipeline,
-        {
-          $group: {
-            _id: {
-              item_id: '$items_return.returnArray.returnValue.item_id',
-              item_name: '$items_return.returnArray.returnValue.item_name',
-              supplier_id: '$items_return.returnArray.returnValue.supplier_id',
-              supplier_name: '$items_return.returnArray.returnValue.supplier_name',
-              return_id: '$items_return.returnArray.returnValue.return_id',
-              return_date: '$items_return.returnArray.returnValue.return_date',
-            },
-            total_amount: {
-              $sum: '$items_return.returnArray.returnValue.total_amount',
-            },
-            item_quantity: {
-              $sum: '$items_return.returnArray.returnValue.item_quantity',
-            },
-          },
-        },
-        { $sort: { '_id.return_date': -1, total_amount: -1 } },
-        { $skip: skip },
-        { $limit: limit },
-      ];
-
-      const aggResults = await salesCollection.aggregate(aggregationPipeline).toArray();
-
-      const list = (aggResults || []).map((doc) => {
-        const id = doc._id || {};
-        return {
-          supplier_id: id.supplier_id ? id.supplier_id.toString() : '',
-          name: id.item_name || '',
-          supplier_name: id.supplier_name || '',
-          return_id: id.return_id || '',
-          return_date: id.return_date ? formatDate(id.return_date) : null,
-          total_amount: round(doc.total_amount || 0, 2),
-          item_quantity: round(doc.item_quantity || 0, 2),
-        };
-      });
-
-      const countPipeline = [
-        ...basePipeline,
-        {
-          $group: {
-            _id: {
-              item_id: '$items_return.returnArray.returnValue.item_id',
-              supplier_id: '$items_return.returnArray.returnValue.supplier_id',
-              return_id: '$items_return.returnArray.returnValue.return_id',
-            },
-          },
-        },
-        { $count: 'total' },
-      ];
-
-      const countDocs = await salesCollection.aggregate(countPipeline).toArray();
-      const total = (countDocs[0] && countDocs[0].total) || 0;
-
+      const total = summary.employees;
       return {
         status: true,
         list,
+        summary: { sales: summary.sales, amount: round(summary.amount, 2) },
         pagination: {
           page,
           limit,

@@ -14,10 +14,11 @@
                 <div class="col-auto text-right">
                     <div class="widgetbar">
                         <span id="sales_sort_host"></span>
+                        <button type="button" id="sales_export_filtered" class="btn btn-primary-rgba" aria-label="Export filtered sales to CSV" title="Export filtered sales to CSV"><i class="feather icon-download mr-1"></i><span class="list-file-action-label" data-t="lang_export">Export</span></button>
                         <button type="button" id="sales_filter_btn"
                             class="btn btn-primary-rgba lf-btn"
-                            data-toggle="tooltip" title="Filter sales" data-t-title="lang_filter_sales">
-                            <i class="feather icon-filter mr-2"></i><lang class="lang_filter">Filter</lang>
+                            aria-haspopup="dialog" aria-controls="sales_filter_dialog" title="Filter sales" data-t-title="lang_filter_sales">
+                            <i class="feather icon-filter mr-2"></i><lang class="lang_search">Search</lang> &amp; <lang class="lang_filter">Filter</lang>
                         </button>
                         <a id="sales_new_button" data-module="sales" data-access="write" href='#/sales/new'
                             class="btn btn-primary-rgba dash_sale_count" data-toggle="tooltip" title="New Sale" data-t-title="lang_addnewsale_title">
@@ -27,16 +28,13 @@
                     </div>
                 </div>
             </div>
+            <div id="sales_filter_scope">
             <div class="sales-history-topline">
-            <div id="sales_quick_dates" class="d-flex flex-wrap my-2" style="gap:8px" role="group" aria-label="Filter sales" data-t-aria-label="lang_filter_sales">
-                <button type="button" class="btn btn-outline-primary" style="min-height:44px" data-sales-date="today" aria-pressed="false"><lang class="lang_this_day">Today</lang></button>
-                <button type="button" class="btn btn-outline-primary" style="min-height:44px" data-sales-date="yesterday" aria-pressed="false"><lang class="lang_yesterday">Yesterday</lang></button>
-                <button type="button" class="btn btn-outline-primary" style="min-height:44px" data-sales-date="lastweek" aria-pressed="false"><lang class="lang_last_week">Last week</lang></button>
-                <button type="button" class="btn btn-outline-primary" style="min-height:44px" data-sales-date="all" aria-pressed="true"><lang class="lang_all_time_2">All time</lang></button>
+                <div id="sales_quick_controls" data-lf="sales"></div>
+            
             </div>
-            <div id="sales_history_summary" class="sales-history-summary" role="status" aria-live="polite"></div>
-            </div>
-            <div id="sales_filter_panel" class="sales-history-filterbar" style="display:none">
+            <dialog id="sales_filter_dialog" aria-label="Search and filter sales">
+                <div id="sales_filter_panel" class="sales-history-filterbar">
 <div id="sales_filter_search" class="lf-panel"></div>
             <div id="sales_restaurant_filters" class="flex-wrap align-items-end" style="display:none; gap:10px;">
                 <div><label for="sales_history_table" class="mb-1"><lang class="lang_table">Table</lang></label>
@@ -46,40 +44,22 @@
 
                 <small id="sales_history_period_hint" class="sr-only" aria-live="polite"></small>
             </div>
-                <form id="sales_provenance_form" class="sales-history-provenance">
-                    <label class="mb-0 sales-history-picker"><span id="sales_history_staff_label"><lang class="lang_staff">Staff</lang></span><input id="sales_history_staff" class="form-control" autocomplete="off" role="combobox" aria-autocomplete="list" type="search" maxlength="120" placeholder="Staff name or email" data-t-placeholder="lang_staff_name_or_email"><button type="button" class="sales-history-picker-toggle" data-picker="staff" aria-label="Choose staff" data-t-aria-label="lang_choose_staff">▾</button></label>
-                    <label class="mb-0 sales-history-picker"><lang class="lang_device">Device</lang><input id="sales_history_device" class="form-control" autocomplete="off" role="combobox" aria-autocomplete="list" type="search" maxlength="120" placeholder="Device name or ID" data-t-placeholder="lang_device_name_or_id"><button type="button" class="sales-history-picker-toggle" data-picker="device" aria-label="Device" data-t-aria-label="lang_device">▾</button></label>
+                <h6 class="sales-filter-section">Order details</h6>
+                <div id="sales_provenance_form" class="sales-history-provenance">
+                    <label class="mb-0 sales-history-picker"><span id="sales_history_staff_label"><lang class="lang_staff">Staff</lang></span><input id="sales_history_staff" class="form-control" autocomplete="off" role="combobox" aria-autocomplete="list" type="search" maxlength="120" placeholder="Staff name or email" data-t-placeholder="lang_staff_name_or_email"></label>
+                    <label class="mb-0 sales-history-picker"><lang class="lang_device">Device</lang><input id="sales_history_device" class="form-control" autocomplete="off" role="combobox" aria-autocomplete="list" type="search" maxlength="120" placeholder="Device name or ID" data-t-placeholder="lang_device_name_or_id"></label>
                     <label class="mb-0" id="sales_history_source_wrap"><lang class="lang_rd_order_source">Order source</lang><select id="sales_history_source" class="form-control"><option value=""><lang class="lang_all_sources">All sources</lang></option></select></label>
-                    <button type="submit" class="btn btn-primary" style="min-height:44px"><lang class="lang_filter_title">Apply</lang></button>
-                    <button type="button" id="sales_provenance_reset" class="btn btn-light" style="min-height:44px"><lang class="lang_clear_all">Clear all</lang></button>
-
-                </form>
+                </div>
+                </div>
+                <div class="sales-filter-footer">
+                    <button type="button" id="sales_provenance_reset" class="btn btn-light"><lang class="lang_clear_all">Clear all</lang></button>
+                    <button type="button" data-close-sales-filter class="btn btn-primary">Done</button>
+                </div>
+            </dialog>
             </div>
-            <div id="sales_active_filters" class="d-flex flex-wrap" style="gap:8px" aria-live="polite"></div>
-            <!--
-                KEPT DELIBERATELY, and not a filter control any more.
-
-                Twenty other modules - branches, lowstock, receiving_add and
-                every report - read THIS element to label their own empty
-                states: $('#view_sales_daterange span span[data-toggle=tooltip]')
-                .attr('data-original-title'), rendered as "No Records on <range>".
-                It became the shared date label because it carries
-                .daterange-timepicker-all, which PosnicPro.dashboard.datePicker
-                keeps in step across pages.
-
-                So deleting it with the rest of the old filter row would not have
-                broken this screen - it would have put "No Records on undefined"
-                on twenty others, none of which are being touched here. That is
-                a worse trade than keeping one hidden element, and untangling it
-                (each screen should label with its OWN range, or say nothing) is
-                its own piece of work rather than a side effect of this one.
-
-                Hidden rather than removed for exactly that reason. The bar owns
-                the date filtering on this page now; this only carries the label.
-            -->
-            <div id="view_sales_daterange"
-                 class="daterange-timepicker-all daterange-style" style="display:none;">
-                <span></span>
+            <div class="transaction-filter-summary">
+                <div id="sales_active_filters" class="d-flex flex-wrap" style="gap:8px" aria-live="polite"></div>
+                <div id="sales_history_summary" class="sales-history-summary" role="status" aria-live="polite"></div>
             </div>
             <!--
                 The "filtering by X" badges are gone with the controls that fed

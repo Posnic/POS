@@ -314,6 +314,10 @@ class QuoteRepository extends BaseModel {
       if (!wall) return { status: false, data: null, message: 'Branch ID not found' };
       /* Sample quotes go with the sample sales when the switch goes off. */
       const filter = { ...wall, ...(await demoData.filterFor('quotes', context)) };
+      if (params.customerId) {
+        if (!ObjectId.isValid(String(params.customerId))) throw new Error('Invalid customer');
+        filter.customer_id = { $in: [String(params.customerId), new ObjectId(String(params.customerId))] };
+      }
       if (params.status && STATUSES.includes(String(params.status))) {
         filter.status = String(params.status);
       }

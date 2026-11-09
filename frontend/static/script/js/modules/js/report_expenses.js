@@ -70,7 +70,7 @@ PosnicPro.expensesreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportexpenses_header').hide();                             
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportexpenses_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a

@@ -10,7 +10,7 @@
                 </div>               
                 <div class="col-md-9 col-lg-9 show-button-action"></div>                  
                 <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_item_report_daterange">
+                    <div class="form-control pull-right daterange-timepicker-all report-period daterange-style date-align view_item_report_daterange">
                         <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
                         <span></span>
                     </div>
@@ -79,45 +79,14 @@
                                 <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="item-line" role="tabpanel" aria-labelledby="item-tab-line">
+                                <button type="button" id="item-report-selected" class="btn btn-sm btn-light" hidden onclick="PosnicPro.itemreport.selectItem(null)"></button>
                                 <!-- start table -->
-                                <div class="row reportitem_header">
-                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_itemreport_per_page" data-id="itemreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View itemreport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-11 col-md-11">                                                                                       
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <!-- Family view (V1): a READING rollup, off by default; the
-                                                         table regroups, exports stay per-item always. -->
-                                                    <li class="list-inline-item email_320 mr-3">
-                                                        <div class="custom-control custom-switch d-inline-block" data-toggle="tooltip" title="One row per product family; each variant still counts separately everywhere else" data-t-title="lang_one_row_per_product_family_each_variant_st">
+                                <div class="d-flex justify-content-end mb-2">
+                                    <div class="custom-control custom-switch d-inline-block" data-toggle="tooltip" title="One row per product family; each variant still counts separately everywhere else" data-t-title="lang_one_row_per_product_family_each_variant_st">
                                                             <input type="checkbox" class="custom-control-input" id="itemreport_group_family"
                                                                 onchange="PosnicPro.itemreport.itemreportTable();">
                                                             <label class="custom-control-label" for="itemreport_group_family" style="font-size:.8rem;"><lang class="lang_group_by_family">Group by family</lang></label>
                                                         </div>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="itemreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="itemreport_exportbtn"
-                                                           data-id="itemreportexport" onclick="PosnicPro.itemreport.itemreportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                                 <div class="card-body card-box no-padding loader-item-report">
                                     <!-- Start table -->
@@ -140,7 +109,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_itemreport_per_page" data-id="itemreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View itemreport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_itemreport_page_total"></span></b>
                                                     <lang class="lang_to">to</lang> 
@@ -169,35 +144,7 @@
                             
                             <div class="tab-pane fade" id="item-expiry-date" role="tabpanel" aria-labelledby="item-expiry-line">
                                 <!-- Expired items table -->
-                                <div class="row expiryreportitem_header">
-                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_itemexpiry_per_page" data-id="itemexpiry" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View itemexpiry per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-11 col-md-11">
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="itemexpiry" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="itemexpiry_exportbtn" data-id="itemexpiryexport" onclick="PosnicPro.itemexpiry.expiredItemsReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 <div class="card-body card-box no-padding loader-item-report">
                                     <!-- Start table -->
                                     <div class="table-responsive">
@@ -223,7 +170,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_itemexpiry_per_page" data-id="itemexpiry" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View itemexpiry per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang>
                                                     <b><span id="view_itemexpiry_page_total"></span></b>
                                                     <lang class="lang_to">to</lang>
@@ -260,142 +213,62 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="item-stock-date" role="tabpanel" aria-labelledby="item-stock-line">
-                                <!-- Stock Product section -->
-                                <div class="row">
-                                    <div class="col-xs-12 col-sm-3 col-lg-3 col-md-12">
-                                        <div class="portlet light slider-portlet-vh">
-                                            <div class="portlet-body">
-                                                <div class="row">
-                                                    <div class="col-lg-12 col-xl-12">
-                                                        <div class="card bg-secondary-rgba m-b-30">
-                                                            <div class="card-body">
-                                                                <div class="row align-items-center">
-                                                                    <div class="col-12 text-center">
-                                                                        <h5 class="card-title text-primary mb-1 font-16">
-                                                                            <lang class="lang_stock_value_cost">Stock value (cost)</lang>
-                                                                        </h5>
-                                                                    </div>
-                                                                    <div class="col-12 text-center">
-                                                                        <span class="sign display-currency"></span>&nbsp;<span
-                                                                            class="item_stock_company font-18">0.00</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="card bg-secondary-rgba m-b-30">
-                                                            <div class="card-body">
-                                                                <div class="row align-items-center">
-                                                                    <div class="col-12 text-center">
-                                                                        <h5 class="card-title text-primary mb-1 font-16">
-                                                                            <lang class="lang_stock_value_selling">Stock value (selling)</lang>
-                                                                        </h5>
-                                                                    </div>
-                                                                    <div class="col-12 text-center">
-                                                                        <span class="sign display-currency"></span>&nbsp;<span
-                                                                            class="item_stock_selling font-18">0.00</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                <table class="table table-sm w-auto mb-3" data-export-title="Current stock for items created in the selected period">
+                                    <caption class="pt-0" style="caption-side:top">Current stock for items created in the selected period</caption>
+                                    <thead><tr><th>Stock value (cost)</th><th>Stock value (selling)</th></tr></thead>
+                                    <tbody><tr><td><span class="display-currency"></span> <strong class="item_stock_company">0.00</strong></td><td><span class="display-currency"></span> <strong class="item_stock_selling">0.00</strong></td></tr></tbody>
+                                </table>
+                                <div class="loader-item-report">
+                                    <!-- Start table -->
+                                    <div class="table-responsive">
+                                        <table id="view_itemstock" class="table table-borderless m-sticky-first" cellspacing="0" width="100%">
+                                            <div class="col-sm-6 col-md-12 col-lg-12" id="stockreportitem_img_hide" style="display:none;">
+                                                <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="" loading="lazy" decoding="async">
                                             </div>
-                                        </div>
+                                            <div class="stockreportitem_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
+                                            </div>
+                                            <thead class="report-thead-tfoot table-header stockreportitem_header"></thead>
+                                            <tbody class="report-thead-tfoot table-body stockreportitem_header"></tbody>
+                                        </table>
                                     </div>
-                                    <div class="col-xs-12 col-sm-9 col-md-12 col-lg-9">
-                                        <div class="portlet light slider-portlet-vh">
-                                            <div class="portlet-title margin-bottom-0">
-                                                <div class="caption caption-basic font-green-meadow">
-                                                    <span class="caption-subject bold uppercase"><lang class="lang_stock_product_history">Stock Product History</lang></span>
-                                                </div>
-                                                <div class="actions">
-                                                    <div class="inline-block text-left">
-                                                        <div class="form-md-line-input form-md-floating-label custom-select2-ui">
-
-                                                        </div>
-                                                    </div>
+                                    <!-- End table -->
+                                </div>
+                                <!-- Start pagination -->
+                                <div class="card m-b-30 stockreportitem_header">
+                                    <div class="card-body ecommerce-pagination">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_itemstock_per_page" data-id="itemstock" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View itemstock per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
+                                                    <lang class="lang_showing">Showing</lang>
+                                                    <b><span id="view_itemstock_page_total"></span></b>
+                                                    <lang class="lang_to">to</lang>
+                                                    <b><span id="view_itemstock_page_perpage_total"></span></b>
+                                                    <lang class="lang_of">of</lang>
+                                                    <b><span id="view_itemstock_total"></span></b>
+                                                    <lang class="lang_entries">entries</lang>
+                                                    <span class="showing-hide-show-itemreport" style="display:none;">&nbsp;&nbsp;&nbsp;&nbsp;
+                                                        <span class="showing-value-itemreport text-dark">0</span><lang class="lang_rows_selected">&nbsp;
+                                                        rows selected</lang>
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <div class="portlet-body padding-top-0">
-                                                <div class="row reportitem_header">
-                                                    <div class="col-lg-2 col-md-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                                        <select class="form-control select_page" id="view_itemstock_per_page" data-id="itemstock" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View itemstock per page">
-                                                            <option value="5" selected>5</option>
-                                                            <option value="10">10</option>
-                                                            <option value="25">25</option>
-                                                            <option value="50">50</option>
-                                                            <option value="100">100</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-lg-10 col-md-10">
-                                                        <div class="email-rightbar">
-                                                            <div class="card-header header_icon">
-                                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                                    <li class="list-inline-item email_320">
-                                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="itemstock" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                                        </a>
-                                                                    </li>
-                                                                    <li class="list-inline-item email_320">
-                                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="itemstock_exportbtn" data-id="itemstockexport" onclick="PosnicPro.itemstock.stockItemsReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                                            <i class="feather icon-share font-20"></i>
-                                                                        </a>
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="card-body card-box no-padding loader-item-report">
-                                                    <!-- Start table -->
-                                                    <div class="table-responsive">
-                                                        <table id="view_itemstock" class="table table-borderless m-sticky-first" cellspacing="0" width="100%">
-                                                            <div class="col-sm-6 col-md-12 col-lg-12" id="stockreportitem_img_hide" style="display:none;">
-                                                                <img src="static/images/general/nodata.svg" class="img-fluid" style="opacity: 0.6;width: 100%;height: 250px;" alt="" loading="lazy" decoding="async">
-                                                            </div>
-                                                            <div class="stockreportitem_norecord col-sm-6 col-md-12 col-lg-12" style="display:none;">
-                                                            </div>
-                                                            <thead class="report-thead-tfoot table-header stockreportitem_header"></thead>
-                                                            <tbody class="report-thead-tfoot table-body stockreportitem_header"></tbody>
-                                                        </table>
-                                                    </div>
-                                                    <!-- End table -->
-                                                </div>
-                                                <!-- Start pagination -->
-                                                <div class="card m-b-30 stockreportitem_header">
-                                                    <div class="card-body ecommerce-pagination">
-                                                        <div class="row align-items-center">
-                                                            <div class="col-8">
-                                                                <div class="hint-text">
-                                                                    <lang class="lang_showing">Showing</lang>
-                                                                    <b><span id="view_itemstock_page_total"></span></b>
-                                                                    <lang class="lang_to">to</lang>
-                                                                    <b><span id="view_itemstock_page_perpage_total"></span></b>
-                                                                    <lang class="lang_of">of</lang>
-                                                                    <b><span id="view_itemstock_total"></span></b>
-                                                                    <lang class="lang_entries">entries</lang>
-                                                                    <span class="showing-hide-show-itemreport" style="display:none;">&nbsp;&nbsp;&nbsp;&nbsp;
-                                                                        <span class="showing-value-itemreport text-dark">0</span><lang class="lang_rows_selected">&nbsp;
-                                                                        rows selected</lang>
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-4">
-                                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
-                                                                    <ul class="pagination mb-0">
-                                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="itemstock" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page">
-                                                                            <i class="fa fa-angle-left font-20"></i>
-                                                                        </button>
-                                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="itemstock" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page">
-                                                                            <i class="fa fa-angle-right font-20"></i>
-                                                                        </button>
-                                                                    </ul>
-                                                                </nav>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                            <div class="col-4">
+                                                <nav aria-label="Page navigation example" data-t-aria-label="lang_page_navigation_example">
+                                                    <ul class="pagination mb-0">
+                                                        <button class="btn previous page-item text-dark-gradient f-w-7" data-id="itemstock" onclick="PosnicPro.previousPage(this, 'Table')" aria-label="Previous page" data-t-aria-label="lang_previous_page">
+                                                            <i class="fa fa-angle-left font-20"></i>
+                                                        </button>
+                                                        <button class="btn next page-item text-dark-gradient f-w-7" data-id="itemstock" onclick="PosnicPro.nextPage(this, 'Table')" aria-label="Next page" data-t-aria-label="lang_next_page">
+                                                            <i class="fa fa-angle-right font-20"></i>
+                                                        </button>
+                                                    </ul>
+                                                </nav>
                                             </div>
                                         </div>
                                     </div>

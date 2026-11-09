@@ -1,19 +1,14 @@
 <style>
 #stocklogs .stocklogs-toolbar { gap:8px 12px; margin:0; }
-#stocklogs .stocklogs-toolbar > .col-auto,
-#stocklogs .stocklogs-toolbar > .col { padding:0; }
-#stocklogs .stocklogs-toolbar > .col { flex:1 1 600px; min-width:0; }
+#stocklogs .stocklogs-toolbar > .col-auto { padding:0; }
 #stocklogs .stocklogs-toolbar .page-title { padding:0; white-space:nowrap; }
-#stocklogs #stocklogs_quick_filters { margin:0; gap:8px; flex-wrap:nowrap!important; }
-#stocklogs #stocklogs_move_dd { height:38px; min-width:90px; }
-#stocklogs #stocklogs_filter_panel { margin:0; }
-#stocklogs #stocklogs_filter_panel .lf-row { margin:0; align-items:center; }
-#stocklogs #stocklogs_controls { display:flex; align-items:center; gap:8px; flex-wrap:nowrap; margin:0; }
-#stocklogs #stocklogs_controls .btn { margin:0; white-space:nowrap; min-height:38px; }
-@media(max-width:1399px) {
- #stocklogs .stocklogs-toolbar > .col { flex-basis:100%; order:4; }
- #stocklogs .stocklogs-toolbar > .col-auto.text-right { margin-left:auto; }
-}
+#stocklogs #stocklogs_quick_filters, #stocklogs #stocklogs_controls {display:flex; align-items:center; gap:8px; margin:0; white-space:nowrap;}
+#stocklogs #stocklogs_move_dd, #stocklogs #stocklogs_controls .btn {height:32px; min-height:32px; padding-block:0; margin:0;}
+#stocklogs .lf-toolbar-slot {flex:1 1 300px; min-width:0; padding:0;}
+#stocklogs #stocklogs_filter_panel, #stocklogs .lf-quick {margin:0;}
+#stocklogs .lf-search-bar {min-width:0; flex:1 1 160px;}
+#stocklogs .lf-applied {flex-basis:100%;}
+#stocklogs .lf-applied:empty {display:none;}
 </style>
 <div class="vertical-layout page_loader" id="stocklogs" style="display: none">
     <!-- Inventory Logs, built to LIST_PAGE_UX_STANDARD.md: the stock ledger
@@ -43,10 +38,11 @@
                     </div>
                 </div>
 </div>
-                <div class="col">
+
+                <div class="lf-toolbar-slot">
                     <div class="lf-panel" id="stocklogs_filter_panel" style="display:none;"></div>
                 </div>
-                <div class="col-auto text-right">
+                <div class="col-auto text-right ml-auto lf-actions">
                     <div class="widgetbar" id="stocklogs_controls">
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
@@ -64,6 +60,7 @@
                         </button>
                     </div>
                 </div>
+                <div id="stocklogs_applied" class="lf-applied" aria-live="polite"></div>
             </div>
         </div>
     </div>

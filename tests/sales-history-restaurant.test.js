@@ -41,8 +41,8 @@ test('first history request is today, while explicit All time survives refresh a
   assert.equal(x.w.PosnicPro.listFilter._mounted.sales.state.preset, 'today');
   assert.ok(filter.date, 'first request must include a date bound');
   assert.deepEqual(filter.date, JSON.parse(JSON.stringify(expected.date)));
-  assert.equal(x.$('#sales_quick_dates [data-sales-date=today]').attr('aria-pressed'), 'true');
-  x.$('#sales_quick_dates [data-sales-date=all]').trigger('click');
+  assert.equal(x.$('#sales_quick_controls .lf-preset').val(), 'today');
+  x.$('#sales_quick_controls .lf-preset').val('all').trigger('change');
   x.w.PosnicPro.sales.loadHistory(2);
   assert.equal(JSON.parse(x.requests.at(-1).filters).date, undefined);
   assert.equal(x.requests.at(-1).page, 2);
@@ -52,7 +52,7 @@ test('first history request is today, while explicit All time survives refresh a
 test('restaurant table column and combined filters drive the paginated request; clear resets both', () => {
  const x = setup(); const s = x.w.PosnicPro.sales; s.mountRestaurantHistory(); s.loadHistory(1);
  assert.match(x.$('#sales_list_rows thead').text(), /Table/);
- x.$('#sales_history_table').val('4'); x.$('#sales_history_period').val('lunch'); x.$('#sales_provenance_form').trigger('submit');
+ x.$('#sales_history_table').val('4'); x.$('#sales_history_period').val('lunch').trigger('change');
  assert.equal(x.requests.at(-1).table_number, '4'); assert.equal(x.requests.at(-1).serving_period, 'lunch');
  x.$('#sales_provenance_reset').trigger('click'); assert.equal(x.requests.at(-1).table_number, undefined); assert.equal(x.requests.at(-1).serving_period, undefined); x.close();
 });
@@ -68,8 +68,7 @@ test('staff/device/source filters combine and source choices follow enabled feat
  s.loadHistory(1);
  assert.equal(x.$('#sales_history_source option[value=tableside]').length,1);
  assert.equal(x.$('#sales_history_source option[value=kiosk]').length,0);
- x.$('#sales_history_staff').val('Asha');x.$('#sales_history_device').val('Samsung');x.$('#sales_history_source').val('tableside');
- x.$('#sales_provenance_form').trigger('submit');
+ x.$('#sales_history_staff').val('Asha');x.$('#sales_history_device').val('Samsung');x.$('#sales_history_source').val('tableside').trigger('change');
  assert.equal(x.requests.at(-1).ordered_by,'Asha');assert.equal(x.requests.at(-1).order_device,'Samsung');assert.equal(x.requests.at(-1).order_source,'tableside');
  x.$('#sales_provenance_reset').trigger('click');assert.equal(x.requests.at(-1).ordered_by,undefined);
  x.close();
@@ -84,7 +83,7 @@ test('sort selection sends the requested ordering and labels the time being show
  x.close();
 });
 
-test('searchable staff and device dropdowns open with choices and filter by the selected value', () => {
+test('searchable staff and device dropdowns open with choices and filter by the selected value', async () => {
  const x=setup();x.w.jQuery=x.$;
  x.w.eval(fs.readFileSync(path.join(root,'frontend/static/script/js/jQuery-Autocomplete.min.js'),'utf8'));
  const lookups=[];
@@ -95,10 +94,9 @@ test('searchable staff and device dropdowns open with choices and filter by the 
  assert.equal(lookups.at(-1).query,'');assert.equal(lookups.at(-1).field,'device');
  const picker=input.autocomplete();assert.equal(picker.suggestions[0].value,'Kitchen tablet · device-01');
  picker.select(0);
- x.$('#sales_provenance_form').trigger('submit');
  assert.equal(x.requests.at(-1).order_device,'device-01');
  input.val('counter').trigger('input');
- x.$('#sales_provenance_form').trigger('submit');assert.equal(x.requests.at(-1).order_device,'counter');
+ await new Promise(resolve => setTimeout(resolve,400));assert.equal(x.requests.at(-1).order_device,'counter');
  x.$('#sales_provenance_reset').trigger('click');assert.equal(x.requests.at(-1).order_device,undefined);
  x.close();
 });
@@ -139,7 +137,7 @@ for (const status of [
  });
 }
 
-test('retail filters share one panel and selected choices wait for Apply', () => {
+test('retail filters share one panel and selected choices immediately update the table', () => {
  const x=setup(false); x.w.jQuery=x.$;
  x.w.eval(fs.readFileSync(path.join(root,'frontend/static/script/js/jQuery-Autocomplete.min.js'),'utf8'));
  x.w.PosnicPro.get=(p,cb)=>cb({type:'success',data:[{label:'Till one',value:'till-1'}]});
@@ -149,12 +147,11 @@ test('retail filters share one panel and selected choices wait for Apply', () =>
  assert.equal(x.$('#sales_history_staff_label').text(),'Staff');
  assert.equal(x.$('#sales_restaurant_reset').length,0);
  const input=x.$('#sales_history_device');
- input.autocomplete().options.onSelect({value:'Till one',data:'till-1'});
- assert.equal(x.requests.length,0);
  input.val('Till one');
+ input.autocomplete().options.onSelect({value:'Till one',data:'till-1'});
+ assert.equal(x.requests.length,1);
  x.$('[data-picker=device]').trigger('click');
  assert.equal(input.data('filterValue'),'till-1');
- x.$('#sales_provenance_form').trigger('submit');
  assert.equal(x.requests.at(-1).order_device,'till-1');
  assert.ok(x.$('#sales_active_filters').text().includes('Till one'));
  x.close();

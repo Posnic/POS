@@ -81,33 +81,12 @@ test('the old controls are REMOVED, not merely hidden', () => {
   }
 });
 
-test('the sales date-range element is kept on purpose', () => {
-  /* Twenty other modules read THIS element to label their own empty states -
-     "No Records on <range>" - because it carries .daterange-timepicker-all.
-     Deleting it with the rest of the old filter row would not have broken
-     Sales History; it would have put "No Records on undefined" on twenty
-     screens that are not being migrated. */
+test('sales history uses the shared filter without the obsolete date label', () => {
   const sales = SCREENS.find((s) => s.key === 'sales');
-  assert.match(
-    sales.html,
-    /id="view_sales_daterange"/,
-    'removing this breaks the empty state of twenty other modules',
-  );
-  const readers = fs
-    .readdirSync(path.join(ROOT, 'frontend', 'static', 'script', 'js', 'modules', 'js'))
-    .filter((f) => f.endsWith('.js'))
-    .filter((f) =>
-      read('frontend', 'static', 'script', 'js', 'modules', 'js', f).includes(
-        '#view_sales_daterange span span'
-      )
-    );
-  assert.ok(
-    readers.length > 5,
-    'the cross-screen dependency this element serves has gone - the note above it is now wrong',
-  );
+  assert.doesNotMatch(sales.html, /id="view_sales_daterange"/);
 });
 
-test('the bar writes the blob these endpoints already took', () => {
+test('each list sends its applied criteria to the corresponding query endpoint', () => {
   /* The lists keep loading exactly as before; only where the filter comes from
      changed. Rewriting how they load at the same time would make a regression
      impossible to attribute. */
@@ -117,6 +96,13 @@ test('the bar writes the blob these endpoints already took', () => {
     const body = s.key === 'sales'
       ? s.js
       : s.js.slice(at, at + (s.idPrefix ? 12000 : 1600));
+    if (s.key === 'receivings') {
+      assert.match(body, /listFilter.params\('receivings'\)/);
+      assert.match(body, /purchaseOrders\/history/);
+      assert.match(body, /loadList\(1\)/);
+      assert.match(body, /Object.assign\(\{\},criteria,\{page:p,limit:size\}\)/);
+      continue;
+    }
     assert.match(body, /legacyFilters\(/, `${s.key}: does not translate to the filters blob`);
     if (s.idPrefix) {
       /* the purchases surface has no DataTable: the bar's onChange reloads

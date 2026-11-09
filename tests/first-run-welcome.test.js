@@ -329,7 +329,7 @@ test('sample data is selected by default and starts in the background on Next', 
     assert.match(settingsCode, /beginIntroDemoInstall: function/);
     assert.match(settingsCode, /if \(index === 0\) \{ PosnicPro\.features\.beginIntroDemoInstall\(\); \}/);
     assert.match(settingsCode, /inlineTarget: '#feature_intro_demo_bg_status'/);
-    assert.match(settingsCode, /syncDemoDataAfterSave\(true, \{/);
+    assert.match(settingsCode, /installIntroSamples\(\{/);
 });
 
 test('choosing a clean start arms the sample-data removal path', () => {

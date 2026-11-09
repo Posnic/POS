@@ -41,20 +41,37 @@
     };
     var page = 1, request = 0;
     PosnicPro.expiryreport = {
-        showDataTablePage: function () { show('expiryreport'); this.load(1); },
+        showDataTablePage: function () {
+            var host = $('#expiry-report-search');
+            PosnicPro.listFilter.reportPopup(host, $('#expiry-report-filters'), $('#expiry_report_search'), host.find('button'));
+
+            show('expiryreport');
+            this.load(1);
+        },
         load: function (next) {
             var ticket = ++request, branch = PosnicPro.local.get('branch_id_set');
             var days = Number($('#expiry_report_days').val());
-            if (!Number.isInteger(days) || days < 0 || days > 365 || $('#expiry_report_days').val() === '') { failed(); return; }
+            var period = $('#expiry_report_period').val();
+            $('#expiry_report_days').prop('disabled',period !== 'window').parent().prop('hidden',period !== 'window');
+            if (period === 'window' && (!Number.isInteger(days) || days < 0 || days > 365 || $('#expiry_report_days').val() === '')) { failed(); return; }
+            var chips = $('#expiry_applied').empty();
+            function chip(label, selector, reset) {
+                $('<button type="button" class="btn btn-sm btn-light">').text(label).append('<span class="lf-chip-remove" aria-hidden="true">×</span>').attr('aria-label','Remove '+label)
+                    .appendTo(chips).on('click',function(){ $(selector).val(reset); PosnicPro.expiryreport.load(1); });
+            }
+            if (period !== 'all') chip(period === 'window' ? 'Days ahead: '+days : $('#expiry_report_period :selected').text(),'#expiry_report_period','all');
+            if ($('#expiry_report_status').val() !== 'all') chip($('#expiry_report_status :selected').text(),'#expiry_report_status','all');
+            if ($('#expiry_report_search').val()) chip($('#expiry_report_search').val(),'#expiry_report_search','');
             $('#expiry_report_summary').text(PosnicPro.i18n.t('lang_loading', 'Loading…'));
             $('#expiry_report_paging').removeClass('d-flex').addClass('d-none');
             $('#expiry_report_previous,#expiry_report_next').prop('disabled', true);
             $('#expiry_report_rows').empty();
-            PosnicPro.get({url:'items/expiryReport', data:{ page:next, days:days, search:$('#expiry_report_search').val(), status:$('#expiry_report_status').val(), sort:$('#expiry_report_sort').val() }}, function (r) {
+            PosnicPro.get({url:'items/expiryReport', data:{ page:next, period:period, days:period === 'window' ? days : 0, search:$('#expiry_report_search').val(), status:$('#expiry_report_status').val(), sort:$('#expiry_report_sort').val() }}, function (r) {
                 if (ticket !== request || branch !== PosnicPro.local.get('branch_id_set')) return;
                 if (r.type !== 'success') { $('#expiry_report_summary').text(''); failed(); return; }
                 var d = r.data; page = d.page;
-                $('#expiry_report_summary').text(d.total + ' ' + PosnicPro.i18n.t('lang_products_due_for_expiry_review', 'products due for expiry review') + ' | ' + d.today + ' - ' + d.through + ' | ' + d.timezone);
+                $('#expiry_report_summary').text(d.total + ' ' + PosnicPro.i18n.t('lang_products_due_for_expiry_review', 'products due for expiry review'))
+                    .attr('title', [d.from || d.today,d.through,d.timezone].join(' · '));
                 d.rows.forEach(function (row) {
                     var tr = $('<tr>').appendTo('#expiry_report_rows');
                     [row.name, row.sku, row.expiryDate, row.quantity, row.daysRemaining < 0 ? PosnicPro.i18n.t('lang_expired', 'Expired') : row.daysRemaining === 0 ? PosnicPro.i18n.t('lang_expires_today', 'Expires today') : row.daysRemaining + ' ' + PosnicPro.i18n.t('lang_days_remaining', 'days remaining')].forEach(function (value) { $('<td>').text(value).appendTo(tr); });
@@ -67,6 +84,11 @@
             }, function () { if (ticket === request) { $('#expiry_report_summary').text(''); failed(); } });
         }
     };
+    var expiryDelay;
+    $(document).on('input', '#expiry_report_search,#expiry_report_days', function () {
+        clearTimeout(expiryDelay);
+        if ($('#expiry_report_days')[0].checkValidity() && $('#expiry_report_days').val() !== '') expiryDelay = setTimeout(function () { PosnicPro.expiryreport.load(1); },240);
+    }).on('change','#expiry_report_sort,#expiry_report_status,#expiry_report_period',function () { clearTimeout(expiryDelay); PosnicPro.expiryreport.load(1); });
     $(document).on('submit', '#expiry_report_filters', function (e) { e.preventDefault(); PosnicPro.expiryreport.load(1); });
     $(document).on('click', '#expiry_report_previous', function () { PosnicPro.expiryreport.load(page - 1); });
     $(document).on('click', '#expiry_report_next', function () { PosnicPro.expiryreport.load(page + 1); });

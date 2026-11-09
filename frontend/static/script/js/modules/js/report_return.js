@@ -61,7 +61,25 @@ PosnicPro.returnreport = {
                 var current_page = table.data('current_page');
                 var per_page = parseInt($('#view_returnreport_per_page  option:selected').text());
             }
+            var toolbar = $('#return-sale-facets'), customer = toolbar.find('input[type=search]').not('.lf-q');
+            if (toolbar.length && !toolbar.data('mounted')) {
+                toolbar.data('mounted',true);
+                PosnicPro.listFilter.reportPopup(toolbar, toolbar.find('dialog'), toolbar.find('.lf-q'), toolbar.find('.report-popup-toggle'));
+                var pending;
+                function reload() {
+                    clearTimeout(pending);
+                    pending=setTimeout(function () {
+                        if (!toolbar.is(':visible')) return;
+                        table.data('current_page',1);
+                        PosnicPro.returnreport.returnreportTable();
+                    },220);
+                }
+                PosnicPro.listFilter.entityPicker(customer,'customers',function (id) { customer.data('party',id); reload(); });
+                toolbar.find('.lf-q').on('input',reload);
+                toolbar.find('select').on('change',reload);
+            }
             var data = {
+                search:toolbar.find('.lf-q').val(),customerLookup:customer.data('party'),sort:toolbar.find('select').val(),
                 page: current_page,
                 limit: per_page,
                 starting_date: fields[0],
@@ -72,7 +90,13 @@ PosnicPro.returnreport = {
                 url: 'sales/returnSalesReportTable',
                 data: data
             };
+            var requestTag = type === 'returnreportexport' ? 0 : (table.data('filterRequest') || 0) + 1;
+            if (requestTag) table.data('filterRequest', requestTag);
             PosnicPro.get(params, function (response) {
+                if (requestTag && table.data('filterRequest') !== requestTag) {
+                    loader.find('.loadingSpinner:first').remove();
+                    return;
+                }
                 if (response.type === 'success') {
                     (response.data.total > 0) ? $('#returnreport_exportbtn').removeAttr('disabled') : $('#returnreport_exportbtn').attr('disabled', 'disabled');
                     if (type !== 'returnreportexport') {
@@ -85,7 +109,7 @@ PosnicPro.returnreport = {
                         $('#view_returnreport_total').text(response.data.total);
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.report-sales-details-no-records').text('No Records on ' + dateRange);
                             $('.reportresale_header').hide();
                             $('#reportresale_img_hide, .report-sales-details-no-records').show();
@@ -265,7 +289,7 @@ PosnicPro.returnproductreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportresalepro_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportreproduct_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a
@@ -338,7 +362,7 @@ PosnicPro.returnproductdetails = {
 
     returnproductdetailsTable: function () {
 
-        PosnicPro.appendReportTableBody('returndetails');
+        PosnicPro.appendReportTableBody('returndetails', '#view_returnproductdetails');
         var table = $('#view_returnproductdetails');
         var current_page = table.data('current_page');
         var per_page = table.data('per_page');

@@ -16,15 +16,13 @@
                         <li class="nav-item"><a class="nav-link" data-module="user" data-access="write" href="#/roles"><i class="feather icon-shield mr-2"></i><lang class="lang_roles_title">Roles</lang></a></li>
                     </ul>
                 </div>
-                <div class="col">
-                    <div class="lf-panel" id="users_filter_panel" style="display:none;"></div>
-                </div>
-                <div class="col-auto text-right">
+
+                <div class="col-auto text-right ml-auto lf-actions">
                     <div class="widgetbar" id="users_controls">
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false" title="Export CSV" data-t-title="lang_export_csv" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
-                            <i class="feather icon-share"></i>
+                            <i class="feather icon-share mr-1"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.users.exportCsv(); return false;"><lang class="lang_this_page_what_is_shown">This page (what is shown)</lang></a>
@@ -41,6 +39,9 @@
                             <i class="feather icon-plus mr-2"></i><lang class="lang_addvariant_title">New</lang>
                         </a>
                     </div>
+                </div>
+                <div class="col-12 lf-toolbar-slot">
+                    <div class="lf-panel" id="users_filter_panel" style="display:none;"></div>
                 </div>
             </div>
         </div>

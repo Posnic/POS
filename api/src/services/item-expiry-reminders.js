@@ -44,12 +44,19 @@ async function list(req, now = new Date(), report = false) {
   if (!Number.isInteger(days) || days < 0 || days > 365)
     fail('Choose a period between 0 and 365 days.');
   const status = report ? req.query?.status || 'all' : 'all';
+  const period = report ? req.query?.period || 'window' : 'window';
+  if (!['window', 'today', 'week', 'all'].includes(period)) fail('Invalid expiry period.');
   const sort = report ? req.query?.sort || 'asc' : 'asc';
   if (!['all', 'expired', 'upcoming'].includes(status) || !['asc', 'desc'].includes(sort))
     fail('Invalid report filter.');
   const search = report ? String(req.query?.search || '').trim() : '';
   if (search.length > 100) fail('Search must be at most 100 characters.');
   const range = windowFor(c.branch, days, now);
+  if (period === 'week') {
+    const day = moment.utc(range.today);
+    range.from = day.clone().startOf('isoWeek').format('YYYY-MM-DD');
+    range.through = day.endOf('isoWeek').format('YYYY-MM-DD');
+  }
   if (!report && !settings.enabled)
     return {
       ...settings,
@@ -87,7 +94,9 @@ async function list(req, now = new Date(), report = false) {
       $match: {
         expiryDay: {
           $regex: '^\\d{4}-\\d{2}-\\d{2}$',
-          $lte: range.through,
+          ...(period === 'today' ? { $eq: range.today } : {}),
+          ...(['week','window'].includes(period) ? { $lte: range.through } : {}),
+          ...(period === 'week' ? { $gte: range.from } : {}),
           ...(status === 'expired'
             ? { $lt: range.today }
             : status === 'upcoming'

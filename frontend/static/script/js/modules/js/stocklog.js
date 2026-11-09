@@ -1,4 +1,11 @@
 PosnicPro.stocklogs = {
+    change: function (row) {
+        var balances = [row.opening_balance,row.closing_balance];
+        if (balances.every(function (value) { return value != null && String(value).trim() && Number.isFinite(Number(value)); })) {
+            return Number((Number(row.closing_balance) - Number(row.opening_balance)).toFixed(3));
+        }
+        return null;
+    },
     quantity: function (value) {
         if (value == null || value === '') { return value; }
         var number = Number(value);
@@ -48,7 +55,7 @@ PosnicPro.stocklogs = {
     openDoc: function (logId) {
         var r = (PosnicPro.stocklogs._lastRows || []).filter(function (x) { return String(x._id) === String(logId); })[0];
         if (!r) { return; }
-        var n = Number(PosnicPro.stocklogs.quantity(r.count)) || 0;
+        var n = PosnicPro.stocklogs.change(r);
         PosnicPro.listDoc.open({
             key: 'stocklogs',
             id: r._id,
@@ -116,6 +123,15 @@ PosnicPro.stocklogs = {
     /* The item pane's door: the full ledger for ONE item, with the filter
        strip open so the date range is one click away (owner: the pane shows
        only recent - the search lives HERE, not duplicated in the pane). */
+    filterItem: function (item) {
+        this.mountFilters();
+        var state = PosnicPro.listFilter.state('stocklogs');
+        state.search = '';
+        state.itemLabel = item.name;
+        state.extra.view_item_id = item.id;
+        PosnicPro.listFilter.render('stocklogs');
+        this.loadList(1);
+    },
     openForItem: function (name) {
         hasher.setHash('stocklogs');
         setTimeout(function () {
@@ -168,6 +184,8 @@ PosnicPro.stocklogs = {
     },
     showDataTablePage: function () {
         PosnicPro.stocklogs._chrome();
+        var item = PosnicPro.palette?.takeItem('stocklogs');
+        if (item) return PosnicPro.stocklogs.filterItem(item);
         PosnicPro.stocklogs.loadList(1);
     },
     mountFilters: function (force) {
@@ -176,11 +194,28 @@ PosnicPro.stocklogs = {
         $('#stocklogs_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'stocklogs',
+            primaryControls: function(row, state) {
+                var item = $('<input type="search" class="form-control form-control-sm lf-primary" aria-label="Item" placeholder="Item name">')
+                    .val(state.extra.view_item_id ? state.itemLabel : '').appendTo(row);
+                PosnicPro.listFilter.entityPicker(item, 'items', function (id,label) {
+                    state.itemLabel = label;
+                    PosnicPro.listFilter.setExtra('stocklogs','view_item_id',id);
+                });
+                var sort = $('<select class="form-control form-control-sm lf-primary" aria-label="Sort stock movements">').appendTo(row);
+                [['','Newest first'],['decrease','Largest decrease'],['increase','Largest increase']].forEach(function(pair){
+                    sort.append($('<option>').val(pair[0]).text(pair[1]));
+                });
+                sort.val(PosnicPro.stocklogs.movementSort || '').on('change',function(){
+                    PosnicPro.stocklogs.movementSort=this.value;PosnicPro.stocklogs.loadList(1);
+                });
+            },
             rows: '#stocklogs_list_rows',
             onRefresh: function () { return PosnicPro.stocklogs.loadList(); },
             container: '#stocklogs_filter_panel',
+            appliedContainer: '#stocklogs_applied',
             button: '#stocklogs_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_item_activity_or_reference', 'Search item, activity or reference'),
+            defaultPreset: 'today',
             dateField: PosnicPro.i18n.t('lang_stock_date', 'Stock date'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
@@ -216,7 +251,7 @@ PosnicPro.stocklogs = {
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.listFilter.request('stocklogs', {
             url: 'stocklogs',
-            data: { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
+            data: { movementSort:self.movementSort, page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) }
         }, function (response) {
             var data = (response && response.data) || {};
             var list = data.list || [];
@@ -234,7 +269,7 @@ PosnicPro.stocklogs = {
                 + '<th class="text-right il-col-bal"><lang class="lang_opening_2">Opening</lang></th><th class="text-right"><lang class="lang_change">Change</lang></th>'
                 + '<th class="text-right il-col-bal"><lang class="lang_closing_2">Closing</lang></th></tr></thead><tbody>';
             list.forEach(function (r) {
-                var n = Number(PosnicPro.stocklogs.quantity(r.count)) || 0;
+                var n = PosnicPro.stocklogs.change(r);
                 var note = r.note ? '<div class="q-muted" style="font-size:11.5px; white-space:normal;">' + esc(r.note) + '</div>' : '';
                 html += '<tr class="md-row stocklogs-row highlight-select'
                     + (PosnicPro.listDoc.activeId('stocklogs') === String(r._id) ? ' is-active' : '') + '" data-id="' + esc(r._id) + '" style="cursor:pointer;">'
@@ -245,7 +280,7 @@ PosnicPro.stocklogs = {
                     + '<td class="il-col-date">' + esc(PosnicPro.convertDate(r.string_date)) + '</td>'
                     + '<td class="text-right il-col-bal q-muted">' + esc(self.quantity(r.opening_balance)) + '</td>'
                     + '<td class="text-right" style="color:' + (n < 0 ? 'var(--theme-danger-color, #c0392b)' : 'var(--theme-success-color, #1a7f37)') + ';">'
-                    + (n > 0 ? '+' : '') + n + '</td>'
+                    + (n == null ? '—' : (n > 0 ? '+' : '') + n) + '</td>'
                     + '<td class="text-right il-col-bal q-muted">' + esc(self.quantity(r.closing_balance)) + '</td>'
                     + '</tr>';
             });
@@ -289,7 +324,7 @@ PosnicPro.stocklogs = {
             head: ['Item', 'Movement', 'Note', 'Reference', 'By', 'Date', 'Opening', 'Change', 'Closing'],
             map: function (r) {
                 return [r.item_name, r.process, r.note || '', r.reference || '', r.changed_by || '',
-                    PosnicPro.convertDate(r.string_date), PosnicPro.stocklogs.quantity(r.opening_balance), PosnicPro.stocklogs.quantity(r.count), PosnicPro.stocklogs.quantity(r.closing_balance)];
+                    PosnicPro.convertDate(r.string_date), PosnicPro.stocklogs.quantity(r.opening_balance), PosnicPro.stocklogs.change(r), PosnicPro.stocklogs.quantity(r.closing_balance)];
             }
         };
     },
@@ -305,7 +340,7 @@ PosnicPro.stocklogs = {
         PosnicPro.listExport.all({
             url: 'stocklogs',
             params: function (page, limit) {
-                return { page: page, limit: limit, filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('stocklogs', { dateKey: 'date' })) };
+                return { movementSort:PosnicPro.stocklogs.movementSort, page: page, limit: limit, filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('stocklogs', { dateKey: 'date' })) };
             },
             head: spec.head,
             map: spec.map,

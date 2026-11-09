@@ -94,7 +94,9 @@ PosnicPro.lowstockitems = {
             rows: '#lowstockitems_list_rows',
             onRefresh: function () { return PosnicPro.lowstockitems.loadList(); },
             container: '#lowstockitems_filter_panel',
+            appliedContainer: '#lowstock_applied',
             button: '#lowstockitems_filter_btn',
+            dateField: PosnicPro.i18n.t('lang_created_date', 'Created date'),
             searchPlaceholder: PosnicPro.i18n.t('lang_search_item_sku_supplier_or_category', 'Search item, SKU, supplier or category'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
@@ -110,7 +112,7 @@ PosnicPro.lowstockitems = {
         PosnicPro.lowstockitems.mountFilters();
         var self = PosnicPro.lowstockitems;
         if (page) { self._page = page; }
-        var filters = PosnicPro.listFilter.legacyFilters('lowstockitems', {});
+        var filters = PosnicPro.listFilter.legacyFilters('lowstockitems', { dateKey:'created_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.listFilter.request('lowstockitems', {
             url: 'items/itemLowStockTable',
@@ -205,7 +207,7 @@ PosnicPro.lowstockitems = {
         PosnicPro.listExport.all({
             url: 'items/itemLowStockTable',
             params: function (page, limit) {
-                return { page: page, limit: limit, filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('lowstockitems', {})), notificationrange: localStorage.getItem('notificationrange') };
+                return { page: page, limit: limit, filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('lowstockitems', { dateKey:'created_date' })), notificationrange: localStorage.getItem('notificationrange') };
             },
             head: spec.head,
             map: spec.map,

@@ -45,7 +45,11 @@
                             same "an order arrived" that everybody else gets
                             from the alarm.
                         -->
-                        <div id="onlineorders_list" aria-live="polite"></div>
+                        <div class="d-flex flex-wrap mb-2" style="gap:.5rem">
+  <input type="search" id="online-order-query" aria-label="Search online orders" placeholder="Order number, customer or phone" class="form-control" style="max-width:22rem">
+  <select id="online-order-fulfilment" aria-label="Fulfilment" class="form-control" style="width:auto"><option value="">All fulfilment</option><option value="pickup">Pickup</option><option value="delivery">Delivery</option><option value="takeaway">Takeaway</option><option value="dine_in">Dine in</option></select>
+</div><p id="online-order-no-match" style="display:none">No orders match these filters.</p>
+<div id="onlineorders_list" aria-live="polite"></div>
 
                         <div id="onlineorders_empty" class="text-center text-muted py-5" style="display:none;">
                             <i class="feather icon-check-circle mb-2" style="font-size:32px;" aria-hidden="true"></i>

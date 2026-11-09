@@ -265,8 +265,10 @@ PosnicPro.users = {
             rows: '#users_list_rows',
             onRefresh: function () { return PosnicPro.users.loadList(); },
             container: '#users_filter_panel',
+            showTotal: true,
             button: '#users_filter_btn',
-            searchPlaceholder: PosnicPro.i18n.t('lang_search_name_or_email', 'Search name or email'),
+            dateField: PosnicPro.i18n.t('lang_created_date', 'Created date'),
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_employee_records', 'Search employees by name or email'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
                 { value: 'username', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
@@ -279,7 +281,7 @@ PosnicPro.users = {
         PosnicPro.users.mountFilters();
         var self = PosnicPro.users;
         if (page) { self._page = page; }
-        var filters = PosnicPro.listFilter.legacyFilters('users', {});
+        var filters = PosnicPro.listFilter.legacyFilters('users', { dateKey:'created_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.listFilter.request('users', {
             url: 'users',
@@ -288,6 +290,7 @@ PosnicPro.users = {
             var data = (response && response.data) || {};
             var list = data.list || [];
             self._lastRows = list;
+            $('#users_filter_panel .lf-result-total strong').text(Number(data.total) || list.length);
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('users') > 0;
                 $('#users_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
@@ -319,6 +322,7 @@ PosnicPro.users = {
             PosnicPro.ACLForModule('user');
             self.renderPager(Number(data.total) || list.length);
         }, function () {
+            $('#users_filter_panel .lf-result-total strong').empty();
             $('#users_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_employees_try_again">Could not load employees - try again.</lang></div>');
         });
     },
@@ -326,8 +330,6 @@ PosnicPro.users = {
         var self = PosnicPro.users;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_employee', 'employee') : PosnicPro.i18n.t('lang_employees', 'employees'));
-        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
                 + ' onclick="PosnicPro.users.goPage(' + to + ');">' + text + '</button>';
@@ -341,7 +343,7 @@ PosnicPro.users = {
                 html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
             }
         }
-        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) html += '<span class="q-pg-count">Page ' + p + ' of ' + pages + '</span>';
         if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
         $('#users_list_paging').html(html);
     },

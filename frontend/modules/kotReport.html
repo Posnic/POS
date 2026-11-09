@@ -9,7 +9,7 @@
                 <div class="col-md-9 col-lg-9 show-button-action"></div>
 
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_kot_report_daterange"
+                    <div class="form-control pull-right daterange-timepicker-all report-period daterange-style date-align view_kot_report_daterange"
                         id="view_kot_report_daterange">
                         <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
                         <span></span>
@@ -255,15 +255,7 @@
                                         <div class="row kotitemreport_header">
                                             <div
                                                 class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                                <select class="form-control select_page"
-                                                    id="view_kotitemreport_per_page" data-id="kotitemreport"
-                                                    onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View kotitemreport per page">
-                                                    <option value="5" selected>5</option>
-                                                    <option value="10">10</option>
-                                                    <option value="25">25</option>
-                                                    <option value="50">50</option>
-                                                    <option value="100">100</option>
-                                                </select>
+                                                
                                             </div>
                                         </div>
                                         <table id="view_kotitemreport" class="table table-borderless m-sticky-first" cellspacing="0"
@@ -302,7 +294,15 @@
                                             <div class="card-body ecommerce-pagination">
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
-                                                        <div class="hint-text">
+                                                        <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page"
+                                                    id="view_kotitemreport_per_page" data-id="kotitemreport"
+                                                    onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View kotitemreport per page">
+                                                    <option value="5" selected>5</option>
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select></label>
                                                             <lang class="lang_showing">Showing</lang>
                                                             <b><span id="view_kotitemreport_page_total"></span></b>
                                                             <lang class="lang_to">to</lang>
@@ -344,15 +344,7 @@
                                         <div class="row kotdiscount_header">
                                             <div
                                                 class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                                <select class="form-control select_page"
-                                                    id="view_kotdiscountreport_per_page" data-id="kotdiscountreport"
-                                                    onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View kotdiscountreport per page">
-                                                    <option value="5" selected>5</option>
-                                                    <option value="10">10</option>
-                                                    <option value="25">25</option>
-                                                    <option value="50">50</option>
-                                                    <option value="100">100</option>
-                                                </select>
+                                                
                                             </div>
                                         </div>
                                         <table id="view_kotdiscountreport" class="table table-bordered" cellspacing="0"
@@ -397,7 +389,15 @@
                                             <div class="card-body ecommerce-pagination">
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
-                                                        <div class="hint-text">
+                                                        <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page"
+                                                    id="view_kotdiscountreport_per_page" data-id="kotdiscountreport"
+                                                    onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View kotdiscountreport per page">
+                                                    <option value="5" selected>5</option>
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select></label>
                                                             <lang class="lang_showing">Showing</lang>
                                                             <b><span id="view_kotdiscountreport_page_total"></span></b>
                                                             <lang class="lang_to">to</lang>
@@ -439,15 +439,7 @@
                                         <div class="row kotcancellation_header">
                                             <div
                                                 class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                                <select class="form-control select_page"
-                                                    id="view_kotcancellation_per_page" data-id="kotcancellation"
-                                                    onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View kotcancellation per page">
-                                                    <option value="5" selected>5</option>
-                                                    <option value="10">10</option>
-                                                    <option value="25">25</option>
-                                                    <option value="50">50</option>
-                                                    <option value="100">100</option>
-                                                </select>
+                                                
                                             </div>
                                         </div>
                                         <table id="view_kotcancellation" class="table table-borderless m-sticky-first" cellspacing="0"
@@ -488,7 +480,15 @@
                                             <div class="card-body ecommerce-pagination">
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
-                                                        <div class="hint-text">
+                                                        <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page"
+                                                    id="view_kotcancellation_per_page" data-id="kotcancellation"
+                                                    onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View kotcancellation per page">
+                                                    <option value="5" selected>5</option>
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select></label>
                                                             <lang class="lang_showing">Showing</lang>
                                                             <b><span id="view_kotcancellation_page_total"></span></b>
                                                             <lang class="lang_to">to</lang>
@@ -530,15 +530,7 @@
                                         <div class="row kotopenitemreport_header">
                                             <div
                                                 class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                                <select class="form-control select_page"
-                                                    id="view_kotopenitemreport_per_page" data-id="kotopenitemreport"
-                                                    onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View kotopenitemreport per page">
-                                                    <option value="5" selected>5</option>
-                                                    <option value="10">10</option>
-                                                    <option value="25">25</option>
-                                                    <option value="50">50</option>
-                                                    <option value="100">100</option>
-                                                </select>
+                                                
                                             </div>
                                         </div>
 
@@ -579,7 +571,15 @@
                                             <div class="card-body ecommerce-pagination">
                                                 <div class="row align-items-center">
                                                     <div class="col-8">
-                                                        <div class="hint-text">
+                                                        <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page"
+                                                    id="view_kotopenitemreport_per_page" data-id="kotopenitemreport"
+                                                    onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View kotopenitemreport per page">
+                                                    <option value="5" selected>5</option>
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select></label>
                                                             <lang class="lang_showing">Showing</lang> <b><span
                                                                     id="view_kotopenitemreport_page_total"></span></b>
                                                             <lang class="lang_to">to</lang> <b><span

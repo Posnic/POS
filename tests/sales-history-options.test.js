@@ -33,6 +33,16 @@ describe('recorded history filter choices', () => {
     assert.equal((await options('device','tablet-1')).length,1);
     assert.deepEqual(await options('device','.*'),[]);
   });
+  test('seller suggestions preserve separate identities for namesakes and legacy creator IDs', async () => {
+    const first = new ObjectId(), second = new ObjectId();
+    await sales.insertMany([
+      { license: licenseId, branch_id: branchId, user_id: first, user_name: 'Ravi' },
+      { license: licenseId, branch_id: branchId, user_id: '', user_name: 'Importer', created_by_id: second, created_by: 'Ravi' },
+      { license: licenseId, branch_id: branchId, user_name: 'Ravi' },
+      { license: licenseId, branch_id: new ObjectId(), user_id: new ObjectId(), user_name: 'Ravi' },
+    ]);
+    assert.deepEqual(await options('seller','Ravi'), [first,second].map(id => ({value:String(id),label:'Ravi'})));
+  });
   test('invalid field, query objects and branch IDs are rejected', () => {
     for (const extra of [{field:'password'}, {query:{$ne:''}}, {branchId:'invalid'}])
       assert.throws(()=>pipeline({branchId,licenseId,field:'staff',...extra}));

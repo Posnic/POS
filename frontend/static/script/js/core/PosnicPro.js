@@ -332,7 +332,7 @@ PosnicPro = {
         $('.hide_date_filetr').hide();
         $('.view_' + module + '_date_filter_value').hide();
         if ($('#view_' + module + '_daterange span').html() === 'All Time') {
-            $('.daterange-timepicker-all span').html(PosnicPro.i18n.t('lang_all_time', 'All Time'));
+            $('.daterange-timepicker-all:not(.report-period) span').html(PosnicPro.i18n.t('lang_all_time', 'All Time'));
             $('#view_' + module + '_daterange').val(moment().subtract(10, 'years').startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A'));
         } else {
             let startDate = $('#view_' + module + '_daterange').data('daterangepicker').startDate._d;
@@ -374,10 +374,12 @@ PosnicPro = {
         $('.hide_value_filetr').hide();
         $('.view_' + module + '_filter_value').hide();
 
+        var period = $(index).closest('.row_filter').find('.report-period');
+        if (period.length) { period.triggerHandler('reportClear'); return; }
         $('#view_' + module + '_report_daterange').removeClass('active-date');
         $('#view_' + module + '_report_daterange').val(moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A'));
-        $('.daterange-timepicker-all span').html('<span><lang class="lang_this_month">This Month</lang></span>&nbsp;&nbsp;<span  data-toggle="tooltip" data-placement="top" data-original-title="' + moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
-        $('.daterange-timepicker-all').val(moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A'));
+        $('.daterange-timepicker-all:not(.report-period) span').html('<span><lang class="lang_this_month">This Month</lang></span>&nbsp;&nbsp;<span  data-toggle="tooltip" data-placement="top" data-original-title="' + moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
+        $('.daterange-timepicker-all:not(.report-period)').val(moment().startOf('month').startOf('day').format('YYYY/MM/DD h:mm A') + ' - ' + moment().endOf('day').format('YYYY/MM/DD h:mm A'));
         PosnicPro.dashboard.datePicker();
     },
 
@@ -598,7 +600,121 @@ PosnicPro = {
             $('#dropdownMenuLink').removeClass('dropdown-toggle');
             if (document.getElementById("dropdownMenuLink")) document.getElementById("dropdownMenuLink").disabled = true;
         }
+        $('.row_filter .custom_search_input').each(function () {
+            var input = $(this), bar = input.closest('.row_filter');
+            var apply = bar.find('button[onclick*="PosnicPro.search("]').first();
+            if (!apply.length || input.data('quickSearch')) return;
+            var delay;
+            input.data('quickSearch',true).parent().addClass('lf-legacy-primary');
+            bar.find('select[id$="_fields"]').parent().addClass('lf-legacy-primary');
+            function commit() {
+                var module = apply.data('id');
+                $('#view_' + module).data('current_page', 1);
+                apply.trigger('click');
+            }
+            input.on('input',function () { clearTimeout(delay); delay=setTimeout(commit,250); })
+                .on('keydown',function (e) { if(e.key==='Enter'){e.preventDefault();clearTimeout(delay);commit();} });
+            bar.find('select[id$="_fields"]').on('change',function () { if(input.val()) commit(); });
+        });
+        $('.row_filter').each(function () {
+            var bar = $(this), period = bar.find('.daterange-style').first();
+            var apply = bar.find('button').filter(function(){return $(this).text().trim()==='Apply' || $(this).find('.lang_filter_title').length && !$(this).hasClass('click-action-button');}).last();
+
+            if (!period.length || !apply.length || bar.data('reportChipsMounted')) return;
+            if (!period.hasClass('report-period')) return;
+            bar.data('reportChipsMounted',true);
+            var quick = $('<div class="report-quick-days lf-applied" aria-live="polite">').insertAfter(bar);
+            function paintPeriod() {
+                var label = period.data('reportPeriod');
+                quick.empty();
+                function chip(caption, clear) {
+                    $('<button type="button" class="btn btn-sm btn-light">').text(caption).append('<span class="lf-chip-remove" aria-hidden="true">×</span>')
+                        .attr('aria-label','Remove '+caption).appendTo(quick).on('click',clear);
+                }
+                if (label && label !== 'All Time') chip(label,function(){ period.triggerHandler('reportClear'); });
+                var customer = bar.find('#view_customer_report_input,#view_user_report_input,#view_supplier_report_input,#view_category_report_input');
+                if (customer.length && bar.find('.customers_input_id,.users_input_id,.suppliers_input_id,.categories_input_id').val()) {
+                    chip(customer.val(), function () { customer.val('').trigger('input'); });
+                }
+                if (bar.find('#purchase-report-search').length) {
+                    var purchaseSupplier = $('#purchase-report-supplier');
+                    if (purchaseSupplier.data('partyId')) chip(purchaseSupplier.data('partyLabel'), function () { purchaseSupplier.val('').trigger('input'); });
+                }
+                if (bar.find('#return-report-search').length) {
+                    var query = $('#return-report-query'), supplier = $('#return-report-party'), sort = $('#return-report-sort');
+                    function detailChip(caption, clear) {
+                        chip(caption, clear);
+                        quick.children().last().addClass('return-detail-chip');
+                    }
+                    if (query.val()) detailChip(query.val(), function () { query.val('').trigger('input'); });
+                    if (supplier.data('partyId')) detailChip(supplier.val(), function () { supplier.val('').trigger('input'); });
+                    if (sort.val() !== 'amount') detailChip(sort.find(':selected').text(), function () { sort.val('amount').trigger('change'); });
+                }
+                bar.find('.tb_filter select').each(function() {
+                    var field = $(this), selected = field.find('option:selected'), options = field.find('option');
+                    if (field.hasClass('load-branch')) {
+                        var branches = options.filter(function(){return this.value && !this.name;});
+                        if (branches.length < 2 || selected.length === branches.length || !selected.length) return;
+                        chip(selected.map(function(){return this.text;}).get().join(', '),function(){
+                            field.val(branches.map(function(){return this.value;}).get()).trigger('change');
+                            applyChoices();
+                        });
+                    } else {
+                        var baseline = options.filter(function(){return !this.value || this.value.toLowerCase() === 'all';}).first();
+                        if (!baseline.length || !selected.length || baseline.is(':selected')) return;
+                        chip(selected.text(),function(){field.val(baseline.val()).trigger('change'); applyChoices();});
+                    }
+                });
+
+            }
+            period.on('reportPeriodChanged',paintPeriod);
+            paintPeriod();
+            // Keep the active period and the report's existing selectors above the table.
+            period.parent().addClass('lf-legacy-primary');
+            var choices = bar.find('select').filter(function () { return $(this).closest('.tb_filter').length; });
+
+            function applyChoices() {
+                window.clearTimeout(bar.data('applyTimer'));
+                bar.data('applyTimer',window.setTimeout(function () {
+                    if (!bar.is(':visible')) return;
+                    paintPeriod();
+                    bar.closest('.page_loader').find('table').data('current_page',1);
+                    apply.trigger('click');
+                }, 0));
+            }
+            apply.on('click.reportChips', paintPeriod);
+            choices.on('change.reportChips',paintPeriod);
+            choices.on('select2:select.quickDays select2:unselect.quickDays', applyChoices);
+            choices.filter(':not(.select2)').on('change.quickDays', applyChoices);
+            period.on('apply.daterangepicker.quickDays',function(){
+                paintPeriod();
+                applyChoices();
+            });
+        });
         var listBranch = AllbranchOption.concat(branchOption);
+        $('.branch-switch-control').prop('hidden', allbranch.length <= 1);
+        $('.row_filter .load-branch, .row_filter .load-select-branch').closest('.tb_filter').toggleClass('single-branch-filter', allbranch.length <= 1);
+        $('.row_filter:has(.report-period)').each(function () {
+            var row = $(this);
+            var widget = row.find('.tb_widget').first();
+            if (!widget.length) return;
+            var options = row.find('.tb_filter').filter(function () { return $(this).find('select').length > 0; });
+            widget.prop('hidden', !options.not('.single-branch-filter').length);
+            if (!options.length || widget.find('.lf-search-bar').length) return;
+            var title = PosnicPro.i18n.t('lang_filter', 'Filter');
+            var panel = $('<dialog class="lf-dialog lf-report-dialog">').attr('aria-label', title).appendTo(row);
+            options.each(function () {
+                var group = $(this), select = group.find('select').first();
+                var label = select.attr('aria-label') || select.attr('data-placeholder') || title;
+                group.removeClass('hide-button-action').removeAttr('style').appendTo(panel);
+                var id = select.attr('id') || row.closest('.page_loader').attr('id') + '-option-' + group.index();
+                select.attr('id', id);
+                $('<label>').attr('for', id).text(label).prependTo(group);
+            });
+            var trigger = $('<button type="button">');
+            widget.empty().addClass('lf-quick report-options-trigger');
+            PosnicPro.listFilter.reportPopup(widget, panel, $(), trigger);
+        });
         $('.load-branch').html(listBranch);
         $('.load-select-branch').html(branchOption);
         var branch_id = PosnicPro.local.get('branch_id_set');
@@ -724,7 +840,7 @@ PosnicPro = {
         $('.view_' + module + '_filter_value').hide();
         $('#view_' + module + '_input').val('');
         //$('#view_' + module + '_daterange').val('');
-        let daterange = $('.daterange-timepicker-all').val();
+        let daterange = $('.daterange-timepicker-all:not(.report-period)').val();
         var daterangeTxt = $('#view_' + module + '_daterange').text();
         var fields = daterange.split('-');
         var start_date = fields[0];
@@ -955,6 +1071,7 @@ PosnicPro = {
             var out = [];
             var title = '';
             $(el).find('h1,h2,h3,h4,h5,h6,table').each(function () {
+                if ($(this).closest('.tab-pane:not(.active)').length) return;
                 if (this.tagName !== 'TABLE') {
                     var t = $.trim($(this).text()).replace(/\s+/g, ' ');
                     if (t) { title = t; }
@@ -967,9 +1084,10 @@ PosnicPro = {
                 // PDF draws its own header band.
                 if ($(this).closest('[data-export-skip]').length || $(this).is('[data-export-skip]')) { return; }
                 var rows = [];
-                $(this).find('tr').each(function () {
+                var receiptTable = this.id === 'view_receivingreport';
+                $(this).children('thead,tbody,tfoot').children('tr').not('[data-export-skip]').each(function () {
                     var cells = [];
-                    $(this).children('th,td').each(function () {
+                    $(this).children('th,td').slice(receiptTable ? 1 : 0).each(function () {
                         cells.push($.trim($(this).text()).replace(/\s+/g, ' '));
                     });
                     if (cells.join('') !== '') { rows.push({ head: $(this).children('th').length > 0, cells: cells }); }
@@ -978,7 +1096,7 @@ PosnicPro = {
                     // Reports often mark their header row with styled <td>s,
                     // not <th> - treat the first of several rows as the header.
                     if (rows.length > 1) { rows[0].head = true; }
-                    out.push({ title: title, rows: rows }); title = '';
+                    out.push({ title: $(this).attr('data-export-title') || title, rows: rows }); title = '';
                 }
             });
             return out.length ? out : null;
@@ -1244,19 +1362,31 @@ PosnicPro = {
      * screen shows - same principle as the day-end summary.
      */
     reportPages: [
+        { root: '#registerreport_new', title: 'Register Report', range: '.view_register_report_daterange', file: 'register-report',
+            full: [{ table: '#view_registerreport', per: '#view_registerreport_per_page', load: 'registerreport.registerreportTable' }] },
         { root: '#salereport_new', title: 'Sales Report', titleKey: 'lang_sales_report', range: '#view_sale_report_daterange', file: 'sales-report',
             full: [
                 { when: '#sale-view-tab-line', table: '#view_salereport', per: '#view_salereport_per_page', load: 'salereport.salereportTable' },
                 { when: '#instant-tab-line', table: '#view_instantreport', per: '#view_instantreport_per_page', load: 'instantreport.instantreportTable' }
             ] },
         { root: '#categoryreport_new', title: 'Category Report', titleKey: 'lang_category_report', range: '.view_category_report_daterange', file: 'category-report',
-            full: [{ table: '#view_categoryreport', per: '#view_categoryreport_per_page', load: 'categoryreport.categoryreportTable' }] },
+            full: [
+                { when: '#category-tab-line', table: '#view_categoryreport', per: '#view_categoryreport_per_page', load: 'categoryreport.categoryreportTable' },
+                { when: '#category-product-tab-line', table: '#view_categoryproductreport', per: '#view_categoryproductreport_per_page', load: 'categoryproductreport.categoryproductreportTable' }
+            ] },
         { root: '#customerreport_new', title: 'Customer Report', titleKey: 'lang_customer_report', range: '#view_customer_report_daterange', file: 'customer-report',
-            full: [{ table: '#view_customerreport', per: '#view_customerreport_per_page', load: 'customerreport.customerreportTable' }] },
+            full: [
+                { when: '#customer-tab-line', table: '#view_customerreport', per: '#view_customerreport_per_page', load: 'customerreport.customerreportTable' },
+                { when: '#customer-outstanding-tab-line', table: '#view_customeroutstandingreport', per: '#view_customeroutstandingreport_per_page', load: 'customeroutstandingreport.customeroutstandingreportTable' }
+            ] },
         { root: '#expensesreport_new', title: 'Expense Report', titleKey: 'lang_expense_report', range: '#view_expenses_report_daterange', file: 'expense-report',
             full: [{ table: '#view_expensesreport', per: '#view_expensesreport_per_page', load: 'expensesreport.expensesreportTable' }] },
         { root: '#itemreport_new', title: 'Item Report', titleKey: 'lang_item_report', range: '.view_item_report_daterange', file: 'item-report',
-            full: [{ table: '#view_itemreport', per: '#view_itemreport_per_page', load: 'itemreport.itemreportTable' }] },
+            full: [
+                { when: '#item-tab-line', table: '#view_itemreport', per: '#view_itemreport_per_page', load: 'itemreport.itemreportTable' },
+                { when: '#item-expiry-line', table: '#view_itemexpiry', per: '#view_itemexpiry_per_page', load: 'itemexpiry.itemexpiryTable' },
+                { when: '#item-stock-line', table: '#view_itemstock', per: '#view_itemstock_per_page', load: 'itemstock.itemstockTable' }
+            ] },
         { root: '#kioskreport_new', title: 'Kiosk Report', titleKey: 'lang_kiosk_report', range: '#view_kiosk_report_daterange', file: 'kiosk-report',
             full: [{ table: '#view_kioskreport', per: '#view_kioskreport_per_page', load: 'kioskreport.kioskreportTable' }] },
         // KOT is five reports behind one date range; the active tab decides
@@ -1272,24 +1402,46 @@ PosnicPro = {
             ] },
         { root: '#labourreport_new', title: 'Labour / Payout', titleKey: 'lang_labourreport_title', range: '', file: 'labour-report' },
         { root: '#paymentreport_new', title: 'Payment Report', titleKey: 'lang_payment_report', range: '#view_paymentransaction_transaction_daterange', file: 'payment-report',
-            full: [{ table: '#view_paymentransaction', per: '#view_paymentransaction_per_page', load: 'paymentransaction.paymentransactionTable' }] },
+            full: [
+                { when: '#payment-status-tab-line', table: '#view_paymentransaction', per: '#view_paymentransaction_per_page', load: 'paymentransaction.paymentransactionTable' },
+                { when: '#payment-return-tab-line', table: '#view_paymentreturntransaction', per: '#view_paymentreturntransaction_per_page', load: 'paymentreturntransaction.paymentreturntransactionTable' }
+            ] },
         { root: '#pendingreport_new', title: 'Pending Payments', titleKey: 'lang_pending_report', range: '.view_pending_report_daterange', file: 'pending-payments',
-            full: [{ table: '#view_pendingreport', per: '#view_pendingreport_per_page', load: 'pendingreport.pendingreportTable' }] },
+            full: [
+                { when: '#pending-tab-line', table: '#view_pendingreport', per: '#view_pendingreport_per_page', load: 'pendingreport.pendingreportTable' },
+                { when: '#pending-receiving-tab-line', table: '#view_pendingreceivingreport', per: '#view_pendingreceivingreport_per_page', load: 'pendingreceivingreport.pendingreceivingreportTable' },
+                { when: '#pending-customer-tab-line', table: '#view_pendingcustomerreport', per: '#view_pendingcustomerreport_per_page', load: 'pendingcustomerreport.pendingcustomerreportTable' },
+                { when: '#pending-supplier-tab-line', table: '#view_pendingsupplierreport', per: '#view_pendingsupplierreport_per_page', load: 'pendingsupplierreport.pendingsupplierreportTable' },
+                { when: '#pending-customercategory-tab-line', table: '#view_pendingcustomercategoryreport', per: '#view_pendingcustomercategoryreport_per_page', load: 'pendingcustomercategoryreport.pendingcustomercategoryreportTable' }
+            ] },
         { root: '#receivingreport_new', title: 'Purchase Report', titleKey: 'lang_purchase_report', range: '#view_receiving_report_daterange', file: 'purchase-report',
             full: [{ table: '#view_receivingreport', per: '#view_receivingreport_per_page', load: 'receivingreport.receivingreportTable' }] },
         { root: '#returnreport_new', title: 'Sales Return Report', titleKey: 'lang_sales_return_report', range: '.view_return_report_daterange', file: 'sales-return-report',
-            full: [{ table: '#view_returnreport', per: '#view_returnreport_per_page', load: 'returnreport.returnreportTable' }] },
+            full: [
+                { when: '#return-tab-line', table: '#view_returnreport', per: '#view_returnreport_per_page', load: 'returnreport.returnreportTable' },
+                { when: '#return-product-tab-line', table: '#view_returnproductreport', per: '#view_returnproductreport_per_page', load: 'returnproductreport.returnproductreportTable' }
+            ] },
         { root: '#returnreceivingreport_new', title: 'Purchase Return Report', titleKey: 'lang_purchase_return_report', range: '.view_return_receiving_report_daterange', file: 'purchase-return-report',
-            full: [{ table: '#view_returnreceivingreport', per: '#view_returnreceivingreport_per_page', load: 'returnreceivingreport.returnreceivingreportTable' }] },
+            full: [
+                { when: '#return-receiving-tab-line', table: '#view_returnreceivingreport', per: '#view_returnreceivingreport_per_page', load: 'returnreceivingreport.returnreceivingreportTable' },
+                { when: '#return-receiving-product-tab-line', table: '#view_returnreceivingproductreport', per: '#view_returnreceivingproductreport_per_page', load: 'returnreceivingproductreport.returnreceivingproductreportTable' }
+            ] },
         { root: '#supplierreport_new', title: 'Supplier Report', titleKey: 'lang_supplier_report', range: '.view_supplier_report_daterange', file: 'supplier-report',
-            full: [{ table: '#view_supplierreport', per: '#view_supplierreport_per_page', load: 'supplierreport.supplierreportTable' }] },
+            full: [
+                { when: '#supplier-tab-line', table: '#view_supplierreport', per: '#view_supplierreport_per_page', load: 'supplierreport.supplierreportTable' },
+                { when: '#supplier-product-tab-line', table: '#view_supplierproductreport', per: '#view_supplierproductreport_per_page', load: 'supplierproductreport.supplierproductreportTable' },
+                { when: '#supplier-sale-tab-line', table: '#view_suppliersalereport', per: '#view_suppliersalereport_per_page', load: 'suppliersalereport.suppliersalereportTable' }
+            ] },
         { root: '#taxsummaryreport_new', title: 'Tax Summary', titleKey: 'lang_taxsummary_title', range: '', file: 'tax-summary' },
         { root: '#taxpayable_new', title: 'Tax Payable', titleKey: 'lang_taxpayable_title', range: '', file: 'tax-payable' },
         // scans the whole catalogue already - no paging to expand
         { root: '#gstreadiness_new', title: 'GST 2.0 Readiness', titleKey: 'lang_gstreadiness_title', range: '', file: 'gst-readiness' },
         { root: '#taxdiscountreport_new', title: 'Tax Report', titleKey: 'lang_tax_report', range: '.view_tax_sales_report_daterange', file: 'tax-report' },
-        { root: '#userreport_new', title: 'User Report', titleKey: 'lang_user_report', range: '.view_user_report_daterange', file: 'user-report',
-            full: [{ table: '#view_userreport', per: '#view_userreport_per_page', load: 'userreport.userreportTable' }] },
+        { root: '#userreport_new', title: 'Employee Reports', titleKey: 'lang_employee_reports', range: '.view_user_report_daterange', file: 'user-report',
+            full: [
+                { when: '#user-tab-line', table: '#view_userreport', per: '#view_userreport_per_page', load: 'userreport.userreportTable' },
+                { when: '#user-status-tab-line', table: '#view_userstatusreport', per: '#view_userstatusreport_per_page', load: 'userstatusreport.userstatusreportTable' }
+            ] },
         { root: '#gstr_one', title: 'GSTR1 Report', titleKey: 'lang_gstr1_report', range: '#gst_form_one_daterange_one', file: 'gstr1' },
         { root: '#gstr_two', title: 'GSTR2 Report', titleKey: 'lang_gstr2_report', range: '#gst_form_two_daterange_one', file: 'gstr2' },
         { root: '#gstr_twob', title: 'GSTR2B Report', titleKey: 'lang_gstr2b_report', range: '#gst_form_twob_daterange_one', file: 'gstr2b' },
@@ -1314,11 +1466,14 @@ PosnicPro = {
         var $table = $(spec.table);
         var $per = $(spec.per);
         var total = parseInt($table.data('total'), 10) || 0;
-        var rowsNow = $table.children('tbody').find('tr').length;
+        var rowsNow = $table.children('tbody').children('tr').not('.explode').length;
         if (!$table.length || !$per.length || !total || total <= rowsNow) { fallback(); return; }
-        var loader = spec.load.split('.').reduce(function (o, k) { return o && o[k]; }, PosnicPro);
+        var path = spec.load.split('.');
+        var owner = PosnicPro[path[0]];
+        var loader = owner && owner[path[1]];
         if (typeof loader !== 'function') { fallback(); return; }
         var perBefore = $per.val();
+        var pageBefore = $table.data('current_page') || 1;
         // the loaders read the SELECTED OPTION'S TEXT as the page size
         var $opt = $('<option selected>' + total + '</option>');
         $per.append($opt);
@@ -1329,17 +1484,24 @@ PosnicPro = {
             restored = true;
             $opt.remove();
             $per.val(perBefore);
-            $table.data('current_page', 1);
-            loader();
+            $table.data('current_page', pageBefore);
+            loader.call(owner);
         };
         var failsafe = setTimeout(restore, 25000);
-        loader();
+        loader.call(owner);
         var waited = 0;
         var t = setInterval(function () {
             waited += 300;
             var busy = $(cfg.root).find('.loadingSpinner').length > 0;
-            var n = $table.children('tbody').find('tr').length;
-            if ((!busy && n >= total) || waited > 20000) {
+            var n = $table.children('tbody').children('tr').not('.explode').length;
+            if (waited > 20000) {
+                clearInterval(t);
+                clearTimeout(failsafe);
+                restore();
+                PosnicPro.alert('error', 'Could not load every report row for export. Please try again.');
+                return;
+            }
+            if (!busy && n >= total) {
                 clearInterval(t);
                 runAsync(function () { clearTimeout(failsafe); restore(); });
             }
@@ -1400,16 +1562,17 @@ PosnicPro = {
         PosnicPro.reportPages.forEach(function (cfg, i) {
             var $root = $(cfg.root);
             if (!$root.length || $root.find('.report-export-bar').length) { return; }
-            var host = $root.find('.contentbar').first();
-            if (!host.length) { host = $root.find('.card-body').first(); }
+            var host = $root.find('.breadcrumbbar > .row').first();
             if (!host.length) { return; }
-            host.prepend(
-                '<div class="report-export-bar text-right m-b-10">'
+            host.addClass('report-export-host').append(
+                '<div class="report-export-bar dropdown">'
+                + '<button type="button" class="btn btn-secondary-rgba btn-sm report-export-toggle dropdown-toggle" data-toggle="dropdown" data-display="static" aria-expanded="false"><i class="feather icon-share mr-1" aria-hidden="true"></i><span data-t="lang_export">Export</span></button>'
+                + '<div class="dropdown-menu dropdown-menu-right report-export-options">'
                 + '<button type="button" class="btn btn-danger-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'pdf\');" title="Download A4 PDF" data-t-title="lang_download_a4_pdf"><i class="fa fa-file-pdf-o mr-1"></i>PDF</button> '
                 + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'csv\');" title="Export CSV" data-t-title="lang_export_csv"><i class="fa fa-file-text-o mr-1"></i>CSV</button> '
                 + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'xls\');" title="Export Excel" data-t-title="lang_export_excel"><i class="fa fa-file-excel-o mr-1"></i>Excel</button> '
                 + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'email\');" title="Email this report" data-t-title="lang_email_this_report"><i class="fa fa-envelope-o mr-1"></i>Email</button>'
-                + '</div>');
+                + '</div></div>');
         });
     },
 
@@ -2249,12 +2412,21 @@ PosnicPro = {
         runReport: function () {
             var from = $('#labour_report_from').val();
             var to = $('#labour_report_to').val();
+            var employee = $('#labour-report-employee').val() || '';
+            var ticket = PosnicPro.shiftWidget._reportSequence = (PosnicPro.shiftWidget._reportSequence || 0) + 1;
             PosnicPro.shiftWidget._lastRange = { from: from, to: to };
             PosnicPro.shiftWidget._lastReport = null;
             $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-muted">Loading…</td></tr>');
             $('#labour_report_foot').html('');
-            var url = 'shifts/report?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to);
+            var url = 'shifts/report?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) + '&user_id=' + encodeURIComponent(employee);
             PosnicPro.get(url, function (response) {
+                if (ticket !== PosnicPro.shiftWidget._reportSequence) return;
+                if (!employee) {
+                    var select = $('#labour-report-employee').empty().append($('<option>').val('').text('All employees'));
+                    (response.data?.rows || []).forEach(function (row) {
+                        if (row.user_id) select.append($('<option>').val(row.user_id).text(row.user_name || row.user_id));
+                    });
+                }
                 PosnicPro.shiftWidget._renderReport(response && response.data);
             }, function () {
                 $('#labour_report_body').html('<tr><td colspan="7" class="text-center text-danger"><lang class="lang_could_not_load_the_report">Could not load the report.</lang></td></tr>');
@@ -2333,7 +2505,7 @@ PosnicPro = {
         exportTimecards: function () {
             var from = $('#labour_report_from').val();
             var to = $('#labour_report_to').val();
-            var url = 'shifts/?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) + '&limit=5000';
+            var url = 'shifts/?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to) + '&limit=5000&user_id=' + encodeURIComponent($('#labour-report-employee').val() || '');
             PosnicPro.get(url, function (response) {
                 var shifts = (response && response.data) || [];
                 if (!shifts.length) {
@@ -2834,7 +3006,7 @@ PosnicPro = {
         ] },
         { name: 'People', items: [
             { hash: 'customerreport', label: 'Customer', t: 'lang_newcustomer_title', icon: 'users' },
-            { hash: 'userreport', label: 'User', t: 'lang_newuser_title', icon: 'user-check' },
+            { hash: 'userreport', label: 'Employee', t: 'lang_employee_2', icon: 'user-check' },
             { hash: 'labourreport', label: 'Labour / Payout', t: 'lang_labourreport_title', icon: 'clock', module: 'staff_shifts_enable' },
         ] },
         { name: 'Money', items: [
@@ -2848,18 +3020,15 @@ PosnicPro = {
     ],
     injectReportGroupTabs: function () {
         var hash = window.location.hash.replace(/^#\//, '').split('/')[0];
-        $('.report-group-tabs').remove();
-        var group = null;
-        for (var g = 0; g < PosnicPro.REPORT_GROUPS.length; g++) {
-            if (PosnicPro.REPORT_GROUPS[g].items.some(function (i) { return i.hash === hash; })) {
-                group = PosnicPro.REPORT_GROUPS[g];
-                break;
-            }
-        }
+        var group = PosnicPro.reportGroupForRoute(hash);
         if (!group) { return; }
         var s = {};
         try { s = JSON.parse(PosnicPro.local.get('general_settings') || '{}'); } catch (e) { /* defaults */ }
-        var html = '<div class="col-12 report-group-tabs"><ul class="nav nav-tabs users-roles-tabs">';
+        var pageId = ({quickreport:'dailyreport_new',taxreport:'taxdiscountreport_new'})[hash] || hash+'_new';
+        var header = $('#'+pageId+' > #containerbar > .breadcrumbbar').first();
+        if (!header.length) return;
+        header.addClass('report-page-header');
+        var html = '<nav aria-label="Reports" class="report-group-tabs"><ul class="nav nav-tabs users-roles-tabs">';
         group.items.forEach(function (i) {
             if (i.module && s[i.module] === false) { return; }
             if (i.country === 'IN' && !['india', 'in', 'ind'].includes(String(PosnicPro.local.get('country_setting') || '').trim().toLowerCase())) { return; }
@@ -2869,14 +3038,14 @@ PosnicPro = {
                 (i.icon ? '<i class="feather icon-' + i.icon + ' mr-1"></i>' : '') +
                 '<lang class="' + (i.t || '') + '">' + i.label + '</lang></a></li>';
         });
-        html += '</ul></div>';
-        var $row = $('.page_loader:visible .breadcrumbbar .row').first();
-        if ($row.length) { $row.after('<div class="row">' + html + '</div>'); }
-        // The rail entry for the CURRENT group highlights like any other
-        // menu (user call): one active group at a time.
-        var entryId = 'rgrp_' + group.name.toLowerCase() + '_page';
-        $('[id^="rgrp_"][id$="_page"]').removeClass('active');
-        $('#' + entryId).addClass('active');
+        html += '</ul></nav>';
+        header.children('.report-group-tabs').remove();
+        header.append(html);
+    },
+    reportGroupForRoute: function (route) {
+        return PosnicPro.REPORT_GROUPS.find(function (group) {
+            return group.items.some(function (item) { return item.hash === route; });
+        });
     },
     /*
      * Main-sidebar entries follow Module On/Off (the Config nav already
@@ -4030,7 +4199,7 @@ PosnicPro = {
         }
     },
 
-    appendReportTableBody: function (report) {
+    appendReportTableBody: function (report, selector) {
 
         var TableBody = {
             'salesreport': '<tr><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th class="text-center"><lang class="lang_newcustomer_title">Customer</lang></th><th class="text-center"><lang class="lang_customer_phone">Customer Phone</lang></th><th class="text-center"><lang class="lang_no_of_item">No.of Item</lang></th><th class="text-right"><lang class="lang_subtotal">Subtotal</lang></th><th class="text-right"><lang class="lang_module_tax">Tax</lang></th><th class="text-right"><lang class="lang_discount_title">Discount</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th></tr>',
@@ -4038,7 +4207,7 @@ PosnicPro = {
             'receivingreport': '<tr><th></th><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newsupplier_title">Supplier</lang></th><th class="text-right"><lang class="lang_supplier_phone">Supplier Phone</lang></th><th class="text-center"><lang class="lang_total_item">Total Item</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th></tr>',
             'salesitemreport': '<tr><th></th><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th class="text-center"><lang class="lang_total_item">Total Item</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th></tr>',
             'receivingitemreport': '<tr><th>#</th><th><lang class="lang_id_title">Id</lang></th><th><lang class="lang_date_title">Date</lang></th><th><lang class="lang_newsupplier_title">Supplier</lang></th><th class="text-center"><lang class="lang_total_item">Total Item</lang></th><th class="text-right"><lang class="lang_price_title">Price</lang></th></tr>',
-            'itemreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th class="text-center"><lang class="lang_total_no_of_item_sold">Total no. of item sold</lang></th><th class="text-center"><lang class="lang_no_of_sale">No. of sale</lang></th><th class="text-right"><lang class="lang_profit">Profit</lang></th><th class="text-right"><lang class="lang_avg_sale">Avg.sale</lang></th><th class="text-right"><lang class="lang_total_sale">Total sale</lang></th></tr>',
+            'itemreport': '<tr><th>#</th><th><lang class="lang_item_name">Item name</lang></th><th class="text-center"><lang class="lang_units_sold">Units sold</lang></th><th class="text-center"><lang class="lang_sales_count">Sales count</lang></th><th class="text-right"><lang class="lang_profit">Profit</lang></th><th class="text-right"><lang class="lang_average_sale">Average sale</lang></th><th class="text-right"><lang class="lang_total_sales">Total sales</lang></th></tr>',
             'itemexpiry': '<tr><th>#</th><th><lang class="lang_itemname_title">Item Name</lang></th><th><lang class="lang_newcategory_title">Category</lang></th><th><lang class="lang_sku_title">SKU</lang></th><th><lang class="lang_expiry_date">Expiry Date</lang></th><th class="text-right"><lang class="lang_quantity">Quantity</lang></th><th class="text-right"><lang class="lang_company_price_2">Company Price</lang></th><th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th></tr>',
             'categoryreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th class="text-center"><lang class="lang_total_no_of_item_sold">Total no. of item sold</lang></th><th class="text-right"><lang class="lang_profit">Profit</lang></th><th class="text-right"><lang class="lang_avg_sale">Avg.sale</lang></th><th class="text-right"><lang class="lang_total_sale">Total sale</lang></th></tr>',
             'customerreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_phone_title">Phone</lang></th><th class="text-center"><lang class="lang_no_of_purchase">No. of purchase</lang></th><th class="text-right"><lang class="lang_return_title">Return</lang></th><th class="text-right"><lang class="lang_avg_purchase">Avg.Purchase</lang></th><th class="text-right"><lang class="lang_total_purchase_2">Total purchase</lang></th></tr>',
@@ -4062,12 +4231,11 @@ PosnicPro = {
             'staffactivity': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_login_date_time">Login Date/Time</lang></th><th><lang class="lang_outlet">Outlet</lang></th><th><lang class="lang_ip_address">IP address</lang></th><th><lang class="lang_device_type">Device type</lang></th><th><lang class="lang_os">OS</lang></th><th><lang class="lang_browser">Browser</lang></th></tr>',
             'expensesreport': '<tr><th>#</th><th><lang class="lang_amount_title">Amount</lang></th><th><lang class="lang_type_title">Type</lang></th><th> Category </th><th><lang class="lang_recipientname_title">Recipient Name</lang></th><th><lang class="lang_approvedby">Approvedby</lang></th><th><lang class="lang_description_title">Description</lang></th></tr>',
             'transactionreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th class="text-right"><lang class="lang_credit_title">Credit</lang></th><th class="text-right"><lang class="lang_debit_title">Debit</lang></th><th class="text-right"><lang class="lang_wallet_amount">Wallet Amount</lang></th><th class="text-right"><lang class="lang_sales_pending">Sales Pending</lang></th><th class="text-right"><lang class="lang_overall_due">Overall Due</lang></th></tr>',
-            'itemstock': '<tr><th>#</th><th> Name </th><th><lang class="lang_qty_title">Qty</lang></th><th class="text-right"><lang class="lang_company_price_2">Company Price</lang></th><th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th><th class="text-right"><lang class="lang_selling_price">Selling Price</lang></th><th class="text-right"><lang class="lang_total_amount">Total Amount</lang></th></tr>'
+            'itemstock': '<tr><th>#</th><th>Item name</th><th class="text-center">On hand</th><th class="text-right">Unit cost</th><th class="text-right">Stock at cost</th><th class="text-right">Selling price</th><th class="text-right">Stock at selling price</th></tr>'
         };
 
-        $(TableBody).each(function (key, val) {
-            $(".report-thead-tfoot").empty().html(val[report]);
-        });
+        var table = $(selector || '#view_' + report);
+        table.find('thead.report-thead-tfoot,tfoot.report-thead-tfoot').html(TableBody[report]);
     },
 
     appendViewDataTableBody: function (table) {
@@ -4637,7 +4805,9 @@ PosnicPro.local = {
     },
     get: function (key) {
         if (Object.prototype.hasOwnProperty.call(this.volatile, key)) return this.volatile[key];
-        return billingWindowStore ? (billingWindowStore[key] ?? null) : localStorage.getItem(key);
+        var value = billingWindowStore ? (billingWindowStore[key] ?? null) : localStorage.getItem(key);
+        if (key === 'currencySign' && (value == null || value === 'null' || value === 'undefined')) return '';
+        return value;
     },
     // Needed to put a setting back to "never chosen" rather than to an empty
     // string, which is a different thing: code here falls back on absence, and
@@ -5247,6 +5417,15 @@ if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', function () { PosnicPro.i18n.apply(); });
 }
 $(document).ready(function () {
+    var appHeader = document.querySelector('.topbar');
+    if (appHeader) {
+        function updateHeaderHeight() {
+            document.documentElement.style.setProperty('--posnic-header-height', appHeader.getBoundingClientRect().height + 'px');
+        }
+        updateHeaderHeight();
+        new ResizeObserver(updateHeaderHeight).observe(appHeader);
+    }
+
     // Printer and paper are set per machine in Hardware Manager. Pull them in
     // before the first sale so the first receipt is right, not the second.
     PosnicPro.syncPrinterPreferences();
@@ -5718,7 +5897,7 @@ $('.custom_report_search_input').on('keypress keydown.autocomplete', function ()
             var suggestions = [];
             var params = {
                 url: 'base/autoSuggestionReportTableField',
-                data: 'query=' + query + '&field=' + field_name + '&module=' + module + '&branch[]=' + branch
+                data: {query:query, field:field_name, module:module, branch:branch}
             };
             PosnicPro.get(params, function (response) {
                 $('.' + module + '_input_id').val('');
@@ -5730,7 +5909,10 @@ $('.custom_report_search_input').on('keypress keydown.autocomplete', function ()
             });
         },
         onSelect: function (suggestion) {
-            $('.' + module + '_input_id').val(suggestion.id);
+            var row = $(this.el || this).closest('.row_filter');
+            if (!row.length) row = $('.row_filter:visible').first();
+            row.find('.' + module + '_input_id').val(suggestion.id);
+            row.find('button[onclick*="viewPage"]').first().trigger('click');
         },
         autoSelectFirst: true
     });
@@ -6363,41 +6545,47 @@ PosnicPro.gstreadiness = {
         $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted"><lang class="lang_scanning">Scanning&hellip;</lang></td></tr>');
         PosnicPro.get('items/gstReadiness', function (response) {
             var d = (response && response.data) || {};
-            PosnicPro.gstreadiness._last = d;
-            var retired = d.retired || [];
-            var differs = d.differs || [];
+            function paint() {
+                var q = String($('#gst-item-query').val() || '').trim().toLowerCase();
+                function matches(r) { return [r.name,r.hsncode].some(function (v) { return String(v || '').toLowerCase().includes(q); }); }
+                var retired = (d.retired || []).filter(matches);
+                var differs = (d.differs || []).filter(matches);
+                PosnicPro.gstreadiness._last = {retired:retired,differs:differs};
 
-            $('#gstready_counts').text(
-                (retired.length + differs.length) + ' of ' + (d.examined || 0) + ' items need a look'
-            );
-            $('#gstready_notice').text(d.notice || '').toggle(!!d.notice);
+                $('#gstready_counts').text(
+                    (q ? (retired.length + differs.length) + ' matches · ' : '') + ((d.retired || []).length + (d.differs || []).length) + ' of ' + (d.examined || 0) + ' items need a look'
+                );
+                $('#gstready_notice').text(d.notice || '').toggle(!!d.notice);
 
-            if (!retired.length) {
-                $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted">'
-                    + 'Nothing on a withdrawn slab - this part is done.</td></tr>');
-            } else {
-                $('#gstready_retired').html(retired.map(function (r) {
-                    return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
-                        + '<td>' + esc(r.name) + '</td>'
-                        + '<td>' + (esc(r.hsncode) || '<span class="text-muted">not set</span>') + '</td>'
-                        + '<td class="text-right text-danger font-weight-bold">' + r.rate + '%</td>'
-                        + '<td class="text-muted">' + esc(r.reason) + '</td></tr>';
-                }).join(''));
+                if (!retired.length) {
+                    $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted">'
+                        + (q ? 'No matches.' : 'Nothing on a withdrawn slab - this part is done.') + '</td></tr>');
+                } else {
+                    $('#gstready_retired').html(retired.map(function (r) {
+                        return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
+                            + '<td>' + esc(r.name) + '</td>'
+                            + '<td>' + (esc(r.hsncode) || '<span class="text-muted">not set</span>') + '</td>'
+                            + '<td class="text-right text-danger font-weight-bold">' + r.rate + '%</td>'
+                            + '<td class="text-muted">' + esc(r.reason) + '</td></tr>';
+                    }).join(''));
+                }
+
+                if (!differs.length) {
+                    $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted">'
+                        + (q ? 'No matches.' : 'No item disagrees with a live reference rate.') + '</td></tr>');
+                } else {
+                    $('#gstready_differs').html(differs.map(function (r) {
+                        return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
+                            + '<td>' + esc(r.name) + '</td>'
+                            + '<td>' + esc(r.hsncode) + '</td>'
+                            + '<td class="text-right">' + r.rate + '%</td>'
+                            + '<td class="text-right">' + r.reference_rate + '%</td>'
+                            + '<td class="text-muted">HSN ' + esc(r.matched_on) + '</td></tr>';
+                    }).join(''));
+                }
             }
-
-            if (!differs.length) {
-                $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted">'
-                    + 'No item disagrees with a live reference rate.</td></tr>');
-            } else {
-                $('#gstready_differs').html(differs.map(function (r) {
-                    return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
-                        + '<td>' + esc(r.name) + '</td>'
-                        + '<td>' + esc(r.hsncode) + '</td>'
-                        + '<td class="text-right">' + r.rate + '%</td>'
-                        + '<td class="text-right">' + r.reference_rate + '%</td>'
-                        + '<td class="text-muted">HSN ' + esc(r.matched_on) + '</td></tr>';
-                }).join(''));
-            }
+            $('#gst-item-query').off('input.gstFilter').on('input.gstFilter',paint);
+            paint();
         }, function () {
             $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted"><lang class="lang_could_not_run_the_scan_try_again">Could not run the scan - try again.</lang></td></tr>');
             $('#gstready_differs').html('');
@@ -6706,7 +6894,7 @@ PosnicPro.taxpayable = {
     _register: null,
     _threeHead: true,
     _label: 'Tax',
-    display: function () {
+    showDataTablePage: function () {
         PosnicPro.HideSideBarModal();
         $(".vertical-layout").removeClass("toggle-menu");
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
@@ -7008,7 +7196,16 @@ PosnicPro.roster = {
         $('#roster_view_body').html('<div class="text-center text-muted p-4"><lang class="lang_loading">Loading&hellip;</lang></div>');
         var url = 'shifts/schedule?from=' + encodeURIComponent(fmt(monday)) + '&to=' + encodeURIComponent(fmt(sunday));
         PosnicPro.get(url, function (res) {
-            PosnicPro.roster._render((res && res.data) || []);
+            if (monday !== PosnicPro.roster._monday) return;
+            var entries = (res && res.data) || [];
+            function render() {
+                var q = String($('#roster-staff-query').val() || '').trim().toLowerCase();
+                PosnicPro.roster._render(entries.filter(function (e) {
+                    return !q || [e.user_name,e.user_id].some(function (v) { return String(v || '').toLowerCase().includes(q); });
+                }));
+            }
+            $('#roster-staff-query').off('input.staffFilter').on('input.staffFilter',render);
+            render();
         }, function () {
             $('#roster_view_body').html('<div class="text-center text-danger p-4"><lang class="lang_could_not_load_the_roster">Could not load the roster.</lang></div>');
         });
@@ -7108,14 +7305,7 @@ PosnicPro.workforce = {
 // One short retry covers show functions that finish a beat later.
 $(function () {
     if (window.hasher && hasher.changed) {
-        var paint = function () {
-            setTimeout(function () {
-                PosnicPro.injectReportGroupTabs();
-                if (!$('.report-group-tabs').length) {
-                    setTimeout(PosnicPro.injectReportGroupTabs, 150);
-                }
-            }, 0);
-        };
+        var paint = function () { PosnicPro.injectReportGroupTabs(); };
         hasher.changed.add(paint);
         hasher.initialized.add(paint);
         paint();
@@ -7238,3 +7428,24 @@ PosnicPro.itemStockPreference = {
     document.addEventListener('pointerdown', show, true);
     document.addEventListener('keydown', show, true);
 })();
+
+// Filing reports show official totals even while an operator locates a detail row.
+$(document).on('input', '[data-filing-find] input', function () {
+    var bar = $(this).closest('[data-filing-find]'), root = bar.closest('.page_loader');
+    var query = this.value.trim().toLowerCase();
+    root.find('.filing-match').removeClass('filing-match');
+    var rows = query ? root.find('tbody tr:visible').filter(function () {
+        return this.textContent.toLowerCase().includes(query);
+    }) : $();
+    bar.data('matches',rows).data('position',-1);
+    bar.find('[role=status]').text(query ? rows.length + ' matches in this section' : '');
+    rows.addClass('filing-match');
+}).on('click','[data-next-match]',function () {
+    var bar = $(this).closest('[data-filing-find]'), input = bar.find('input'), previous = bar.data('position');
+    input.trigger('input');
+    var rows = bar.data('matches');
+    if (!rows?.length) return;
+    var index = ((previous ?? -1) + 1) % rows.length;
+    bar.data('position',index).find('[role=status]').text((index+1) + ' of ' + rows.length);
+    rows[index].scrollIntoView({block:'center'});
+});

@@ -12,17 +12,12 @@
                     stock and the history all start here. The two buttons
                     reach the flows that used to be separate menu entries.
                 -->
-                <!-- The filter strip expands on the header line; Filter and
-                     New sit top right above the box - the owner's placement,
-                     the same as quotes (LIST_PAGE_UX_STANDARD §2). -->
-                <div class="col">
-                    <div class="lf-panel" id="purchases_filter_panel" style="display:none;"></div>
-                </div>
-                <div class="col-auto text-right">
+
+                <div class="col-auto text-right ml-auto lf-actions">
                     <div class="widgetbar" id="purchases_controls">
                         <button type="button" class="btn btn-primary-rgba" onclick="PosnicPro.purchaseorders.exportCsv();"
                             data-toggle="tooltip" title="Export the filtered rows" data-t-title="lang_export_the_filtered_rows" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
-                            <i class="feather icon-share"></i>
+                            <i class="feather icon-share mr-1"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
                         </button>
                         <span id="purchases_sort_host"></span>
                         <button type="button" class="btn btn-primary-rgba lf-btn" id="purchases_filter_btn"
@@ -33,6 +28,13 @@
                             class="btn btn-primary-rgba" data-toggle="tooltip" title="Record a purchase or an order" data-t-title="lang_record_a_purchase_or_an_order">
                             <i class="feather icon-plus mr-2"></i><lang class="lang_new_purchase">New Purchase</lang>
                         </a>
+                    </div>
+                </div>
+                <div class="col-12 lf-toolbar-slot">
+                    <div class="lf-panel" id="purchases_filter_panel" style="display:none;"></div>
+                    <div class="transaction-filter-summary">
+                        <div id="po_active_filters" class="lf-applied" aria-live="polite"></div>
+                        <div id="po_summary" class="list-metrics" role="status"></div>
                     </div>
                 </div>
             </div>
@@ -48,34 +50,6 @@
             <div id="purchases_split">
                 <div class="card m-b-30 md-rail" id="purchases_list_card">
                     <div class="card-body">
-                        <!-- Status and Expected as labeled dropdowns (owner: the
-                             chip row ran out of width in the rail - "just make as
-                             drop down same as More button"). -->
-                        <div class="m-b-10 d-flex align-items-center flex-wrap" style="gap:8px;" id="purchases_quick_filters">
-                            <span class="p-qf-label"><lang class="lang_userstatus">Status</lang></span>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false" id="purchases_status_dd"><lang class="lang_report_all">All</lang></button>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status=""><lang class="lang_report_all">All</lang></a>
-                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="ordered"><lang class="lang_po_ordered">Ordered</lang></a>
-                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="partial"><lang class="lang_partially_received">Partially received</lang></a>
-                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="received"><lang class="lang_po_received">Received</lang></a>
-                                    <a class="dropdown-item p-status-opt" href="javascript:void(0)" data-status="cancelled"><lang class="lang_cancelled">Cancelled</lang></a>
-                                </div>
-                            </div>
-                            <span class="p-qf-label"><lang class="lang_expected">Expected</lang></span>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-light dropdown-toggle" data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false" id="purchases_expected_dd"><lang class="lang_any">Any</lang></button>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected=""><lang class="lang_any">Any</lang></a>
-                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="today"><lang class="lang_this_day">Today</lang></a>
-                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="tomorrow"><lang class="lang_tomorrow">Tomorrow</lang></a>
-                                    <a class="dropdown-item p-exp-opt" href="javascript:void(0)" data-expected="week"><lang class="lang_roster_thisweek">This week</lang></a>
-                                </div>
-                            </div>
-                        </div>
                         <div id="po_list_rows" class="md-rail-rows text-muted"><lang class="lang_loading_purchases">Loading purchases ...</lang></div>
                         <div class="q-pager" id="po_list_paging"></div>
                     </div>

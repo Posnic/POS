@@ -57,6 +57,7 @@ PosnicPro.units = {
             onRefresh: function () { return PosnicPro.units.loadList(); },
             container: '#units_filter_panel',
             button: '#units_filter_btn',
+            dateField: PosnicPro.i18n.t('lang_created_date', 'Created date'),
             searchPlaceholder: PosnicPro.i18n.t('lang_search_unit_name', 'Search unit name'),
             searchFields: [
                 { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') }
@@ -89,9 +90,13 @@ PosnicPro.units = {
         var self = PosnicPro.units;
         if (page) { self._page = page; }
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        var filters = PosnicPro.listFilter.legacyFilters('units', {});
+        var filters = PosnicPro.listFilter.legacyFilters('units', { dateKey:'created_date' });
         var needle = String((filters && filters.search_value) || '').toLowerCase();
         self._filtered = self._all.filter(function (u) {
+            if (filters.created_date) {
+                var created = Date.parse(u.created_date), range = filters.created_date;
+                if (!Number.isFinite(created) || created < Date.parse(range.$gte) || created > Date.parse(range.$lte)) return false;
+            }
             return !needle || String(u.unit_name || '').toLowerCase().indexOf(needle) !== -1;
         });
         if (!self._filtered.length) {

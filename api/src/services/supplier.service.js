@@ -20,6 +20,12 @@ class SupplierService {
   async getAllSuppliers(filters = {}, options = {}) {
     try {
       const queryFilters = {};
+      if (filters._id !== undefined) {
+        if (typeof filters._id !== 'string' || !/^[a-f0-9]{24}$/i.test(filters._id)) {
+          throw new Error('Invalid supplier ID');
+        }
+        queryFilters._id = filters._id;
+      }
 
       if (filters.branch_id) {
         queryFilters.branch_id = new ObjectId(filters.branch_id);
