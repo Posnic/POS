@@ -316,7 +316,9 @@ class QuoteRepository extends BaseModel {
       const filter = { ...wall, ...(await demoData.filterFor('quotes', context)) };
       if (params.customerId) {
         if (!ObjectId.isValid(String(params.customerId))) throw new Error('Invalid customer');
-        filter.customer_id = { $in: [String(params.customerId), new ObjectId(String(params.customerId))] };
+        filter.customer_id = {
+          $in: [String(params.customerId), new ObjectId(String(params.customerId))],
+        };
       }
       if (params.status && STATUSES.includes(String(params.status))) {
         filter.status = String(params.status);

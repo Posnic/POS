@@ -58,14 +58,14 @@ module.exports = {
   },
 
   async history(req, res) {
-    if (!can(req, 'read')) return fail(res,'Unauthorized access',403);
+    if (!can(req, 'read')) return fail(res, 'Unauthorized access', 403);
     const context = contextOf(req);
-    if (!context.branchId || !context.licenseId) return fail(res,'Branch access required',403);
+    if (!context.branchId || !context.licenseId) return fail(res, 'Branch access required', 403);
     try {
-      const data = await require('../services/purchase-history')(req.db,context,req.query);
-      return ok(res,data,'Purchase history');
+      const data = await require('../services/purchase-history')(req.db, context, req.query);
+      return ok(res, data, 'Purchase history');
     } catch (error) {
-      return fail(res,error.message);
+      return fail(res, error.message);
     }
   },
 

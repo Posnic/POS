@@ -165,14 +165,14 @@ class ItemService {
         page,
         limit,
         sort,
-        ...(includeSummary ? {includeSummary} : {}),
+        ...(includeSummary ? { includeSummary } : {}),
       });
 
       return {
         status: true,
         data: {
           total: result.total,
-          ...(includeSummary ? {summary:result.summary} : {}),
+          ...(includeSummary ? { summary: result.summary } : {}),
           current_page: result.page,
           total_pages: result.totalPages,
           per_page: result.limit,

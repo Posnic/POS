@@ -60,14 +60,19 @@ class InventoryCountRepository extends BaseModel {
     const wall = this.wall(context);
     if (!wall) return { status: false, message: 'Branch ID not found', data: null };
     if (typeof criteria.search === 'string' && criteria.search.trim()) {
-      const term = criteria.search.trim().slice(0,120);
+      const term = criteria.search.trim().slice(0, 120);
       const literal = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      wall.$or = ['items.item_name','items.barcode_id','scope','created_by','status'].map(key => ({[key]:literal}));
-      if (ObjectId.isValid(term)) wall.$or.push({_id:new ObjectId(term)});
+      wall.$or = ['items.item_name', 'items.barcode_id', 'scope', 'created_by', 'status'].map(
+        (key) => ({ [key]: literal })
+      );
+      if (ObjectId.isValid(term)) wall.$or.push({ _id: new ObjectId(term) });
     }
-    for (const [key,operator] of [['from','$gte'],['to','$lte']]) {
+    for (const [key, operator] of [
+      ['from', '$gte'],
+      ['to', '$lte'],
+    ]) {
       if (typeof criteria[key] === 'string' && Number.isFinite(Date.parse(criteria[key]))) {
-        wall.created_at = {...wall.created_at,[operator]:new Date(criteria[key])};
+        wall.created_at = { ...wall.created_at, [operator]: new Date(criteria[key]) };
       }
     }
     const rows = await (

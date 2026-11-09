@@ -2109,6 +2109,29 @@ describe('SalesRepository', () => {
     });
   });
 
+  test('return product details map the paginated report rows without an undefined variable', async () => {
+    if (!collections.sales) collections.sales = mkCol();
+    collections.sales.aggregate.mockReturnValue({
+      toArray: jest.fn().mockResolvedValue([
+        {
+          rows: [
+            {
+              _id: { item_id: FAKE_ID, item_name: 'Rice', sales_id: 'TEST-RETURN' },
+              item_quantity: 2,
+              total_amount: 100,
+            },
+          ],
+          totals: [{ employees: 1, sales: 1, amount: 100 }],
+        },
+      ]),
+    });
+    const result = await salesRepository.returnProductReportPage({}, {});
+    expect(result.status).toBe(true);
+    expect(result.list).toEqual([
+      { _id: FAKE_ID, name: 'Rice', item_quantity: 2, total_amount: 100 },
+    ]);
+  });
+
   describe('itemExpiryReportPage', () => {
     test('returns paginated expiry report', async () => {
       if (!collections.items) collections.items = mkCol();

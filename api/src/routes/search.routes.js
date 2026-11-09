@@ -145,8 +145,11 @@ async function records(req, q, group, refs, page) {
             );
     const matches = take(raw, 'exact');
     function result(row, rank) {
-      const employeeName = p.route === 'users' && [row.firstname, row.lastname].filter(Boolean).join(' ');
-      const label = String(employeeName || row[p.title] || row.company_name || row.email || row._id);
+      const employeeName =
+        p.route === 'users' && [row.firstname, row.lastname].filter(Boolean).join(' ');
+      const label = String(
+        employeeName || row[p.title] || row.company_name || row.email || row._id
+      );
       const suffix =
         p.contact && row.phone ? ' · •••• ' + String(row.phone).replace(/\D/g, '').slice(-4) : '';
       results.push({
@@ -161,7 +164,7 @@ async function records(req, q, group, refs, page) {
     if (!refs && (!page || page.mode === 'name') && p.names && q.length >= 3) {
       const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const nameFilters = p.names.flatMap((name) =>
-        ordinary.map((term) => ({ [name]: new RegExp('^' + escape(term)) })),
+        ordinary.map((term) => ({ [name]: new RegExp('^' + escape(term)) }))
       );
       if (p.route === 'users') {
         const words = q.split(/\s+/);

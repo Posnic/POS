@@ -186,26 +186,37 @@ class ItemRepository extends BaseModel {
     }
 
     const clientFilters = this.assignFilterObjects({ ...filters }, LegacyItemModel.fields);
-    const quantity = { $convert:{ input:'$available_quantity', to:'double', onNull:null, onError:null } };
-    const threshold = { $convert:{ input:{ $ifNull:['$reorder_point',Number(branch.notification_range) || 0] }, to:'double', onNull:0, onError:0 } };
-    const tracked = { $and:[{ $in:['$track_inventory',[true,'true']] },{ $ne:[quantity,null] }] };
+    const quantity = {
+      $convert: { input: '$available_quantity', to: 'double', onNull: null, onError: null },
+    };
+    const threshold = {
+      $convert: {
+        input: { $ifNull: ['$reorder_point', Number(branch.notification_range) || 0] },
+        to: 'double',
+        onNull: 0,
+        onError: 0,
+      },
+    };
+    const tracked = {
+      $and: [{ $in: ['$track_inventory', [true, 'true']] }, { $ne: [quantity, null] }],
+    };
     const stock = {
-      out:{ $and:[tracked,{ $lte:[quantity,0] }] },
-      low:{ $and:[tracked,{ $gt:[quantity,0] },{ $lte:[quantity,threshold] }] },
-      in:{ $and:[tracked,{ $gt:[quantity,0] }] }
+      out: { $and: [tracked, { $lte: [quantity, 0] }] },
+      low: { $and: [tracked, { $gt: [quantity, 0] }, { $lte: [quantity, threshold] }] },
+      in: { $and: [tracked, { $gt: [quantity, 0] }] },
     };
     if (clientFilters.stockLevel) {
       const level = clientFilters.stockLevel;
       delete clientFilters.stockLevel;
-      if (!Object.hasOwn(stock,level)) throw new Error('Invalid stock level');
-      clientFilters.$and = [...(clientFilters.$and || []), { $expr:stock[level] }];
-
+      if (!Object.hasOwn(stock, level)) throw new Error('Invalid stock level');
+      clientFilters.$and = [...(clientFilters.$and || []), { $expr: stock[level] }];
     }
-    if (Object.hasOwn(clientFilters,'saleItems')) {
-      const ids=clientFilters.saleItems;
-      if (!Array.isArray(ids) || ids.some(id=>typeof id !== 'string' || !ObjectId.isValid(id))) throw new Error('Invalid item identifiers');
+    if (Object.hasOwn(clientFilters, 'saleItems')) {
+      const ids = clientFilters.saleItems;
+      if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string' || !ObjectId.isValid(id)))
+        throw new Error('Invalid item identifiers');
       delete clientFilters.saleItems;
-      clientFilters._id={$in:ids.map(id=>new ObjectId(id))};
+      clientFilters._id = { $in: ids.map((id) => new ObjectId(id)) };
     }
     // Client-supplied scope is never part of the business filter. Leaving a
     // stale branch_name/branch_id alongside the authoritative scope can turn
@@ -324,19 +335,34 @@ class ItemRepository extends BaseModel {
         .toArray();
     }
 
-    const count = includeSummary ? collection.aggregate([{ $match:filter },{ $group:{
-      _id:null, total:{ $sum:1 }, inactive:{ $sum:{ $cond:[{ $in:['$is_active',[false,0,'false','0']] },1,0] } },
-      out:{ $sum:{ $cond:[stock.out,1,0] } }, low:{ $sum:{ $cond:[stock.low,1,0] } }
-    } },{ $project:{ _id:0 } }]).next() : collection.countDocuments(filter);
+    const count = includeSummary
+      ? collection
+          .aggregate([
+            { $match: filter },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: 1 },
+                inactive: {
+                  $sum: { $cond: [{ $in: ['$is_active', [false, 0, 'false', '0']] }, 1, 0] },
+                },
+                out: { $sum: { $cond: [stock.out, 1, 0] } },
+                low: { $sum: { $cond: [stock.low, 1, 0] } },
+              },
+            },
+            { $project: { _id: 0 } },
+          ])
+          .next()
+      : collection.countDocuments(filter);
     const [stats, items] = await Promise.all([count, itemsPromise]);
-    const summary = includeSummary ? stats || { total:0, inactive:0, out:0, low:0 } : null;
+    const summary = includeSummary ? stats || { total: 0, inactive: 0, out: 0, low: 0 } : null;
     const total = includeSummary ? summary.total : stats;
 
     const list = items.map((doc) => BaseModel.simplifyFields(doc));
 
     return {
       items: list,
-      ...(includeSummary ? {summary} : {}),
+      ...(includeSummary ? { summary } : {}),
       total,
       page: effectivePage,
       limit: effectiveLimit,
@@ -2821,10 +2847,12 @@ class ItemRepository extends BaseModel {
               }
               if (Object.keys(dateCondition).length > 0) {
                 if (key === 'created_date') {
-                  conditions.push({ $or: [
-                    { created_date: dateCondition },
-                    { created_date: null, createdAt: dateCondition },
-                  ] });
+                  conditions.push({
+                    $or: [
+                      { created_date: dateCondition },
+                      { created_date: null, createdAt: dateCondition },
+                    ],
+                  });
                 } else {
                   conditions.push({ [key]: dateCondition });
                 }

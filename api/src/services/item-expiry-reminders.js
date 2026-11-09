@@ -95,7 +95,7 @@ async function list(req, now = new Date(), report = false) {
         expiryDay: {
           $regex: '^\\d{4}-\\d{2}-\\d{2}$',
           ...(period === 'today' ? { $eq: range.today } : {}),
-          ...(['week','window'].includes(period) ? { $lte: range.through } : {}),
+          ...(['week', 'window'].includes(period) ? { $lte: range.through } : {}),
           ...(period === 'week' ? { $gte: range.from } : {}),
           ...(status === 'expired'
             ? { $lt: range.today }
