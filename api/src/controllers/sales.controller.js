@@ -1151,7 +1151,10 @@ class SalesController extends BaseController {
         );
         filter.$and = [...(filter.$and || []), ...clauses];
       }
-      filter.$and = [...(filter.$and || []), ...require('../helpers/sales-list-criteria')(req.query,req.user)];
+      filter.$and = [
+        ...(filter.$and || []),
+        ...require('../helpers/sales-list-criteria')(req.query, req.user),
+      ];
       if (!filter.$and.length) delete filter.$and;
       const provenance = require('../helpers/sales-history-provenance')(req.query);
       if (provenance.length) filter.$and = [...(filter.$and || []), ...provenance];
@@ -1473,26 +1476,50 @@ class SalesController extends BaseController {
         query: req.query.query || '',
       });
       const db = currentConnection(mongoose.connection).db;
-      const recorded = await db.collection('sales').aggregate(pipeline, { maxTimeMS: 5000 }).toArray();
+      const recorded = await db
+        .collection('sales')
+        .aggregate(pipeline, { maxTimeMS: 5000 })
+        .toArray();
       let options = recorded;
       if (['staff', 'seller'].includes(req.query.field)) {
         const branch = new mongoose.Types.ObjectId(String(branchId));
-        const match = { license: new mongoose.Types.ObjectId(String(licenseId)),
-          $or: [{ branch_id: branch }, { 'branch_access.branch_id': branch }] };
+        const match = {
+          license: new mongoose.Types.ObjectId(String(licenseId)),
+          $or: [{ branch_id: branch }, { 'branch_access.branch_id': branch }],
+        };
         const term = (req.query.query || '').trim();
         if (term) {
           const pattern = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-          match.$and = [{ $or: ['username', 'email', 'name', 'firstname', 'lastname'].map(key => ({ [key]: pattern })) }];
+          match.$and = [
+            {
+              $or: ['username', 'email', 'name', 'firstname', 'lastname'].map((key) => ({
+                [key]: pattern,
+              })),
+            },
+          ];
         }
-        const employees = await db.collection('users').find(match, {
-          projection: { username: 1, email: 1, name: 1, firstname: 1, lastname: 1 }
-        }).sort({ username: 1, _id: 1 }).limit(25).toArray();
-        const roster = employees.map(user => {
-          const name = user.name || [user.firstname,user.lastname].filter(Boolean).join(' ') || user.username || user.email;
-          return { value: (req.query.field === 'staff' ? 'employee:' : '') + String(user._id),
-            label: user.email && user.email !== name ? name + ' · ' + user.email : name };
+        const employees = await db
+          .collection('users')
+          .find(match, {
+            projection: { username: 1, email: 1, name: 1, firstname: 1, lastname: 1 },
+          })
+          .sort({ username: 1, _id: 1 })
+          .limit(25)
+          .toArray();
+        const roster = employees.map((user) => {
+          const name =
+            user.name ||
+            [user.firstname, user.lastname].filter(Boolean).join(' ') ||
+            user.username ||
+            user.email;
+          return {
+            value: (req.query.field === 'staff' ? 'employee:' : '') + String(user._id),
+            label: user.email && user.email !== name ? name + ' · ' + user.email : name,
+          };
         });
-        options = roster.concat(recorded.filter(option => !roster.some(user => user.value === option.value)));
+        options = roster.concat(
+          recorded.filter((option) => !roster.some((user) => user.value === option.value))
+        );
       }
       return this.success(res, options, 'Filter options loaded');
     } catch (error) {
@@ -3205,10 +3232,18 @@ class SalesController extends BaseController {
        * failing the report over - the defaults are the ones nearly every shop
        * would have chosen anyway.
        */
-      match.$and.push(...require('../helpers/sales-list-criteria')(req.query,req.user));
+      match.$and.push(...require('../helpers/sales-list-criteria')(req.query, req.user));
       if (typeof req.query.receipt === 'string' && req.query.receipt.trim()) {
-        const literal = new RegExp(req.query.receipt.trim().slice(0,120).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');
-        match.$and.push({$or:[{sales_id:literal},{invoice_number:literal},{customer_name:literal}]});
+        const literal = new RegExp(
+          req.query.receipt
+            .trim()
+            .slice(0, 120)
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+          'i'
+        );
+        match.$and.push({
+          $or: [{ sales_id: literal }, { invoice_number: literal }, { customer_name: literal }],
+        });
       }
       let branch = null;
       try {
@@ -4817,7 +4852,8 @@ class SalesController extends BaseController {
       const SaleModel = this.model || Sale;
 
       data.license = req.user.license || req.user.licenseId;
-      data.search = typeof req.query.search === 'string' ? req.query.search.trim().slice(0,120) : '';
+      data.search =
+        typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 120) : '';
       data.customer = req.query.customerLookup;
       options.sort = req.query.sort;
       const result = await salesService.returnSalesReportPage(data, options, {

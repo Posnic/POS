@@ -107,15 +107,26 @@ module.exports = async function purchaseHistory(db, context, params) {
       {
         $facet: {
           list: [{ $sort: sort }, { $skip: (page - 1) * limit }, { $limit: limit }],
-          count: [{ $group: {
-            _id: null,
-            n: { $sum: 1 },
-            purchases: { $sum: { $cond: [receivedPurchase, 1, 0] } },
-            amount: { $sum: { $cond: [receivedPurchase, '$total', 0] } },
-          } }],
+          count: [
+            {
+              $group: {
+                _id: null,
+                n: { $sum: 1 },
+                purchases: { $sum: { $cond: [receivedPurchase, 1, 0] } },
+                amount: { $sum: { $cond: [receivedPurchase, '$total', 0] } },
+              },
+            },
+          ],
         },
       },
     ])
     .toArray();
-  return { list: result.list, purchases:result.count[0]?.purchases || 0, purchaseAmount:result.count[0]?.amount || 0, total: result.count[0]?.n || 0, current_page: page, per_page: limit };
+  return {
+    list: result.list,
+    purchases: result.count[0]?.purchases || 0,
+    purchaseAmount: result.count[0]?.amount || 0,
+    total: result.count[0]?.n || 0,
+    current_page: page,
+    per_page: limit,
+  };
 };

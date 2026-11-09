@@ -2082,6 +2082,34 @@ describe('SalesService', () => {
       });
     });
 
+    test('desktop billing a staff order retains its agreed price despite a stale inline quote', async () => {
+      const pricing = require('../../../src/services/pricing-authority');
+      const doc = {
+        channel: 'tableside',
+        items: [
+          {
+            item_id: ITEM_ID,
+            line_id: 'phone-line-1',
+            item_quantity: 1,
+            item_price: 100,
+            pricing: pricing.resolve({ product: makeItemDoc(), submitted: 100 }),
+          },
+        ],
+        changes: [],
+        set: jest.fn(),
+        sales_id: 'INV-STAFF',
+      };
+      salesRepository.getById.mockResolvedValue(doc);
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(
+        makeItemDoc({ selling_price: 150 })
+      );
+      const data = makeSaleData();
+      data.items[0].sale_inline_item_price = 999;
+      const result = await salesService.processSale(data, SALE_ID, 'Edit', makeContext());
+      expect(result.status).toBe(true);
+      expect(doc.set.mock.calls[0][0].items[0].pricing.selling_price).toBe(100);
+    });
+
     test('desktop edit cannot bypass the seating move protocol', async () => {
       const doc = {
         _id: SALE_ID,

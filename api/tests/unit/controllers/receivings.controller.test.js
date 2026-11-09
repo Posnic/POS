@@ -909,7 +909,10 @@ describe('receivingReportTable', () => {
       status: true,
       data: { list: [{ _id: VALID_ID }], total: 1, current_page: 1, per_page: 5, total_pages: 1 },
     });
-    const req = mockReq({ query: { limit: '5', page: '1' }, user: adminUser() });
+    const req = mockReq({
+      query: { limit: '5', page: '1', 'branch[]': [VALID_BRANCH] },
+      user: adminUser(),
+    });
     const res = mockRes();
     await ctrl.receivingReportTable(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
@@ -927,7 +930,7 @@ describe('receivingReportTable', () => {
       status: true,
       data: { list: [], total: 0, current_page: 1, per_page: 5, total_pages: 1 },
     });
-    const req = mockReq({ query: {}, user: adminUser() });
+    const req = mockReq({ query: { 'branch[]': [VALID_BRANCH] }, user: adminUser() });
     const res = mockRes();
     await ctrl.receivingReportTable(req, res);
     const payload = res.json.mock.calls[0][0];
@@ -936,7 +939,7 @@ describe('receivingReportTable', () => {
 
   test('returns 404 when model returns status false', async () => {
     Receiving.receivingReportPage.mockResolvedValue({ status: false });
-    const req = mockReq({ query: {}, user: adminUser() });
+    const req = mockReq({ query: { 'branch[]': [VALID_BRANCH] }, user: adminUser() });
     const res = mockRes();
     await ctrl.receivingReportTable(req, res);
     expect(res.status).toHaveBeenCalledWith(404);
@@ -957,7 +960,7 @@ describe('receivingReportTable', () => {
 
   test('returns 500 when model throws', async () => {
     Receiving.receivingReportPage.mockRejectedValue(new Error('crash'));
-    const req = mockReq({ query: {}, user: adminUser() });
+    const req = mockReq({ query: { 'branch[]': [VALID_BRANCH] }, user: adminUser() });
     const res = mockRes();
     await ctrl.receivingReportTable(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
@@ -1022,7 +1025,10 @@ describe('returnReceivingReportTable', () => {
       per_page: 5,
       total_pages: 1,
     });
-    const req = mockReq({ query: { limit: '5', page: '1' }, user: adminUser() });
+    const req = mockReq({
+      query: { limit: '5', page: '1', 'branch[]': [VALID_BRANCH] },
+      user: adminUser(),
+    });
     const res = mockRes();
     await ctrl.returnReceivingReportTable(req, res);
     expect(res.status).toHaveBeenCalledWith(200);
@@ -1039,7 +1045,7 @@ describe('returnReceivingReportTable', () => {
 
   test('returns 404 when model returns status false', async () => {
     Receiving.returnReceivingReportPage.mockResolvedValue({ status: false });
-    const req = mockReq({ query: {}, user: adminUser() });
+    const req = mockReq({ query: { 'branch[]': [VALID_BRANCH] }, user: adminUser() });
     const res = mockRes();
     await ctrl.returnReceivingReportTable(req, res);
     expect(res.status).toHaveBeenCalledWith(404);
@@ -1047,7 +1053,7 @@ describe('returnReceivingReportTable', () => {
 
   test('returns 500 when model throws', async () => {
     Receiving.returnReceivingReportPage.mockRejectedValue(new Error('crash'));
-    const req = mockReq({ query: {}, user: adminUser() });
+    const req = mockReq({ query: { 'branch[]': [VALID_BRANCH] }, user: adminUser() });
     const res = mockRes();
     await ctrl.returnReceivingReportTable(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
@@ -1380,16 +1386,16 @@ describe('supplierReceivingReportTable', () => {
     expect(payload.data.list).toHaveLength(1);
   });
 
-  test('returns 400 when branch is missing', async () => {
+  test('returns 403 when branch access is missing', async () => {
     const req = mockReq({
       query: { starting_date: '2025-01-01', ending_date: '2025-12-31' },
       user: adminUser(),
     });
     const res = mockRes();
     await ctrl.supplierReceivingReportTable(req, res);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Branch ID is required' })
+      expect.objectContaining({ message: 'Branch access required' })
     );
   });
 

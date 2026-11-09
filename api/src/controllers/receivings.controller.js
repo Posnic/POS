@@ -18,14 +18,18 @@ const config = require('../config/config');
 function permittedReportBranches(req) {
   const input = req.query['branch[]'] || req.query.branch || [];
   const ids = Array.isArray(input) ? input : [input];
-  if (!ids.length || ids.some(id => typeof id !== 'string' || !ObjectId.isValid(id))) return null;
+  if (!ids.length || ids.some((id) => typeof id !== 'string' || !ObjectId.isValid(id))) return null;
   const access = req.user?.branch_access;
   if (Array.isArray(access) && access.length) {
-    const permitted = new Set(access.map(b => String(b.branch_id || b)));
-    if (ids.some(id => !permitted.has(id))) return null;
-  } else if (!['owner','admin','super_admin','superadmin'].includes(String(req.user?.usertype || req.user?.role || '').toLowerCase())) {
+    const permitted = new Set(access.map((b) => String(b.branch_id || b)));
+    if (ids.some((id) => !permitted.has(id))) return null;
+  } else if (
+    !['owner', 'admin', 'super_admin', 'superadmin'].includes(
+      String(req.user?.usertype || req.user?.role || '').toLowerCase()
+    )
+  ) {
     const active = req.tenantContext?.branchId || req.user?.branch_id;
-    if (ids.some(id => id !== String(active))) return null;
+    if (ids.some((id) => id !== String(active))) return null;
   }
   return ids;
 }
@@ -942,16 +946,22 @@ class ReceivingsController extends BaseController {
       const branches = permittedReportBranches(req);
       if (!branches || !req.user.license) return this.error(res, 'Branch access required', 403);
       const data = {
-        branchid: branches, license: req.user.license,
+        branchid: branches,
+        license: req.user.license,
         starting_date: req.query.starting_date || '',
         ending_date: req.query.ending_date || '',
       };
 
-      data.search = String(req.query.search || '').trim().slice(0,120);
-      data.supplier = String(req.query.supplier || '').trim().slice(0,120);
+      data.search = String(req.query.search || '')
+        .trim()
+        .slice(0, 120);
+      data.supplier = String(req.query.supplier || '')
+        .trim()
+        .slice(0, 120);
       options.sort = req.query.sort;
       if (req.query.supplierId) {
-        if (!ObjectId.isValid(req.query.supplierId)) return this.error(res, 'Invalid supplier ID', 400);
+        if (!ObjectId.isValid(req.query.supplierId))
+          return this.error(res, 'Invalid supplier ID', 400);
         data.supplierId = new ObjectId(req.query.supplierId);
       }
       const result = await Receiving.receivingReportPage(data, options);
@@ -1041,16 +1051,20 @@ class ReceivingsController extends BaseController {
       const branches = permittedReportBranches(req);
       if (!branches || !req.user.license) return this.error(res, 'Branch access required', 403);
       const data = {
-        branchid: branches, license: req.user.license,
+        branchid: branches,
+        license: req.user.license,
         starting_date: req.query.starting_date || '',
         ending_date: req.query.ending_date || '',
       };
 
       if (req.query.supplierId) {
-        if (!ObjectId.isValid(req.query.supplierId)) return this.error(res, 'Invalid supplier ID', 400);
+        if (!ObjectId.isValid(req.query.supplierId))
+          return this.error(res, 'Invalid supplier ID', 400);
         data.supplierId = new ObjectId(req.query.supplierId);
       }
-      data.search = String(req.query.search || '').trim().slice(0,120);
+      data.search = String(req.query.search || '')
+        .trim()
+        .slice(0, 120);
       options.sort = req.query.sort;
       const result = await Receiving.returnReceivingReportPage(data, options);
       if (result.status === true) {
@@ -1636,8 +1650,8 @@ class ReceivingsController extends BaseController {
           {
             $group: {
               _id: '$supplier_id',
-              name: { $first:'$supplier_name' },
-              phone: { $first:'$supplier_phone' },
+              name: { $first: '$supplier_name' },
+              phone: { $first: '$supplier_phone' },
               receiving_avg: { $avg: '$items_total' },
               receiving_total: { $sum: '$items_total' },
               receiving_count: { $sum: 1 },
@@ -1656,8 +1670,8 @@ class ReceivingsController extends BaseController {
           {
             $group: {
               _id: '$supplier_id',
-              name: { $first:'$supplier_name' },
-              phone: { $first:'$supplier_phone' },
+              name: { $first: '$supplier_name' },
+              phone: { $first: '$supplier_phone' },
             },
           },
         ])

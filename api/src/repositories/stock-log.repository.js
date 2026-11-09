@@ -43,18 +43,45 @@ class StockLogsRepository extends BaseModel {
       applyDateRangeFilters(query, filters);
 
       if (['increase', 'decrease'].includes(options.movementSort)) {
-        const number = field => ({ $convert:{input:'$' + field,to:'double',onNull:null,onError:null} });
-        const delta = { $subtract:[number('closing_balance'),number('opening_balance')] };
+        const number = (field) => ({
+          $convert: { input: '$' + field, to: 'double', onNull: null, onError: null },
+        });
+        const delta = { $subtract: [number('closing_balance'), number('opening_balance')] };
         const order = options.movementSort === 'increase' ? -1 : 1;
         const collection = await this.getCollection(this.collectionName);
-        const [result] = await collection.aggregate([
-          { $match: query }, { $set:{movementDelta:delta} },
-          { $match:{movementDelta:options.movementSort === 'increase' ? {$gt:0} : {$lt:0,$ne:null}} },
-          { $facet:{list:[{$sort:{movementDelta:order,date:-1,_id:-1}},{$skip:(page-1)*limit},{$limit:limit}],
-                    counts:[{$count:'total'}]} }
-        ]).toArray();
+        const [result] = await collection
+          .aggregate([
+            { $match: query },
+            { $set: { movementDelta: delta } },
+            {
+              $match: {
+                movementDelta:
+                  options.movementSort === 'increase' ? { $gt: 0 } : { $lt: 0, $ne: null },
+              },
+            },
+            {
+              $facet: {
+                list: [
+                  { $sort: { movementDelta: order, date: -1, _id: -1 } },
+                  { $skip: (page - 1) * limit },
+                  { $limit: limit },
+                ],
+                counts: [{ $count: 'total' }],
+              },
+            },
+          ])
+          .toArray();
         const total = result.counts[0]?.total || 0;
-        return {status:true,data:{list:result.list,total,current_page:page,per_page:limit,total_pages:Math.ceil(total/limit)}};
+        return {
+          status: true,
+          data: {
+            list: result.list,
+            total,
+            current_page: page,
+            per_page: limit,
+            total_pages: Math.ceil(total / limit),
+          },
+        };
       }
       // Get paginated results using BaseModel.page helper.
       // Signature: page(collectionName, limitCheck, filter, options, fields)

@@ -29,7 +29,8 @@ class CustomerRepository extends BaseModel {
       ...(await demoData.filterCurrent('customers')),
     };
 
-    if (typeof query._id === 'string' && ObjectId.isValid(query._id)) query._id = new ObjectId(query._id);
+    if (typeof query._id === 'string' && ObjectId.isValid(query._id))
+      query._id = new ObjectId(query._id);
 
     const collection = await this.getCollection(this.collectionName);
 

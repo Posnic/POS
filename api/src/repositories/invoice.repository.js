@@ -372,7 +372,9 @@ class InvoiceRepository extends BaseModel {
       const now = new Date();
       if (params.customerId) {
         if (!ObjectId.isValid(String(params.customerId))) throw new Error('Invalid customer');
-        filter.customer_id = { $in: [String(params.customerId), new ObjectId(String(params.customerId))] };
+        filter.customer_id = {
+          $in: [String(params.customerId), new ObjectId(String(params.customerId))],
+        };
       }
       const status = String(params.status || '');
       if (STATUSES.includes(status)) {

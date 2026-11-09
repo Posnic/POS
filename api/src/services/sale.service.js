@@ -581,7 +581,15 @@ const processSale = async (
             !existingSale?.captain_payment_plan,
           roundGrossUnit: context.roundGrossUnit === true,
           previous: previousLine,
-          submitted: pricingAuthority.desktopSubmittedPrice(item),
+          submitted:
+            existingSale?.channel === 'tableside' && previousLine?.pricing
+              ? undefined
+              : require('./captain-price-contract').submittedPrice({
+                  item: { unit_price: pricingAuthority.desktopSubmittedPrice(item) },
+                  product: document,
+                  branch: pricingBranch,
+                  staffOrder: existingSale?.channel === 'tableside',
+                }),
           extras: extras.delta,
           outlet,
           priceList,
@@ -3617,10 +3625,27 @@ module.exports = {
     const pipeline = [
       { $match: match },
       { $unwind: '$items' },
-      ...(itemId ? [{ $match: { $expr: { $eq: [
-        { $convert: { input: { $ifNull: ['$items.item', '$items.item_id'] }, to: 'string', onError: '', onNull: '' } },
-        itemId,
-      ] } } }] : []),
+      ...(itemId
+        ? [
+            {
+              $match: {
+                $expr: {
+                  $eq: [
+                    {
+                      $convert: {
+                        input: { $ifNull: ['$items.item', '$items.item_id'] },
+                        to: 'string',
+                        onError: '',
+                        onNull: '',
+                      },
+                    },
+                    itemId,
+                  ],
+                },
+              },
+            },
+          ]
+        : []),
       {
         $lookup: {
           from: 'items',

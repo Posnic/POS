@@ -1,7 +1,12 @@
 'use strict';
 const { providers, phoneCollation } = require('../../services/search-providers');
-module.exports = async function ensureSearchIndexes(db, selected = providers.filter((p) => p.route !== 'users')) {
-  await db.collection('pos_search_history').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+module.exports = async function ensureSearchIndexes(
+  db,
+  selected = providers.filter((p) => p.route !== 'users')
+) {
+  await db
+    .collection('pos_search_history')
+    .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
   for (const provider of selected) {
     const collection = db.collection(provider.collection || provider.route);
     const indexes = await collection.indexes().catch((error) => {

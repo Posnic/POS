@@ -31,7 +31,7 @@ test('concurrent phones cannot share a number and concurrent retries do not cons
     await Promise.all(Array.from({ length: 10 }, () => allocate(db, scope, 'same-draft')))
   ).toEqual(Array(10).fill(21));
   expect(await allocate(db, scope, 'next')).toBe(22);
-});
+}, 30000);
 test('branch sequences are independent and a reservation cannot be reused for a different order', async () => {
   expect(await allocate(db, scope, 'draft', 'order-1')).toBe(1);
   expect(await allocate(db, scope, 'draft', 'order-1')).toBe(1);

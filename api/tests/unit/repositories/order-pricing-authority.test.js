@@ -261,3 +261,21 @@ test('branch rounding is applied once after restaurant tax and recalculated afte
   expect(sale.sales_total).toBe(47.25);
   expect(sale.round_off).toBe(0);
 });
+
+test('staff additions accept stale menu quotes and keep server totals authoritative', async () => {
+  await db.collection('sales').updateOne({ _id: order._id }, { $set: { channel: 'tableside' } });
+  expect(await save([line(47.25)])).toMatchObject({ status: true });
+  expect(await stored()).toMatchObject({ sales_sub_total: 90, tax: 4.5, sales_total: 94.5 });
+});
+
+test('staff amendments retain the agreed stored price despite a stale incoming quote', async () => {
+  await db.collection('sales').updateOne({ _id: order._id }, { $set: { channel: 'tableside' } });
+  expect((await save([line(45)])).status).toBe(true);
+  await db.collection('items').updateOne({ _id: product._id }, { $set: { selling_price: 80 } });
+  const current = (await stored()).items[0];
+  expect(await save([{ ...current, price: 999, quantity: 3 }])).toMatchObject({ status: true });
+  expect(await stored()).toMatchObject({
+    sales_total: 141.75,
+    items: [expect.objectContaining({ pricing: expect.objectContaining({ selling_price: 45 }) })],
+  });
+});

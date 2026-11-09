@@ -507,7 +507,6 @@ receivingSchema.statics.returnReceivingReportPage = async function (value = {}, 
 
     const matchFilter = {
       receiving_status: { $in: ['PartialReturn', 'FullReturn'] },
-
     };
     if (branchIds.length) matchFilter.branch_id = { $in: branchIds };
     if (licenseId) matchFilter.license = licenseId;
@@ -523,13 +522,38 @@ receivingSchema.statics.returnReceivingReportPage = async function (value = {}, 
       { $unwind: '$items_return' },
       { $unwind: '$items_return.returnArray' },
       { $unwind: '$items_return.returnArray.returnValue' },
-      { $set:{eventDate:{$convert:{input:{$ifNull:['$items_return.returnArray.returnDate','$items_return.returnArray.returnValue.return_date']},to:'date',onNull:null,onError:null}}} },
-      { $match:{eventDate:{$gte:new Date(fromDate),$lte:new Date(toDate)}} },
+      {
+        $set: {
+          eventDate: {
+            $convert: {
+              input: {
+                $ifNull: [
+                  '$items_return.returnArray.returnDate',
+                  '$items_return.returnArray.returnValue.return_date',
+                ],
+              },
+              to: 'date',
+              onNull: null,
+              onError: null,
+            },
+          },
+        },
+      },
+      { $match: { eventDate: { $gte: new Date(fromDate), $lte: new Date(toDate) } } },
     ];
 
     if (value.search) {
       const literal = new RegExp(value.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      unwindStages.push({$match:{$or:[{receiving_id:literal},{supplier_name:literal},{'items_return.returnArray.returnId':literal},{'items_return.returnArray.returnValue.return_id':literal}]}});
+      unwindStages.push({
+        $match: {
+          $or: [
+            { receiving_id: literal },
+            { supplier_name: literal },
+            { 'items_return.returnArray.returnId': literal },
+            { 'items_return.returnArray.returnValue.return_id': literal },
+          ],
+        },
+      });
     }
 
     const listPipeline = [
@@ -544,13 +568,26 @@ receivingSchema.statics.returnReceivingReportPage = async function (value = {}, 
             receiving_id: '$receiving_id',
             supplier_name: '$supplier_name',
             payment_mode: '$payment_mode',
-
           },
-          amount: {$sum:{$convert:{input:'$items_return.returnArray.returnValue.total_amount',to:'double',onError:0,onNull:0}}},
+          amount: {
+            $sum: {
+              $convert: {
+                input: '$items_return.returnArray.returnValue.total_amount',
+                to: 'double',
+                onError: 0,
+                onNull: 0,
+              },
+            },
+          },
           count: { $sum: 1 },
         },
       },
-      { $sort: options.sort === 'new' || options.sort === 'old' ? { '_id.date': options.sort === 'old' ? 1 : -1, '_id.id': -1 } : { amount: -1, '_id.id': -1 } },
+      {
+        $sort:
+          options.sort === 'new' || options.sort === 'old'
+            ? { '_id.date': options.sort === 'old' ? 1 : -1, '_id.id': -1 }
+            : { amount: -1, '_id.id': -1 },
+      },
       { $skip: skip },
       { $limit: limit },
     ];
@@ -577,7 +614,9 @@ receivingSchema.statics.returnReceivingReportPage = async function (value = {}, 
         $group: {
           _id: {
             id: '$_id',
-            receiving_id: '$receiving_id', event:'$items_return.returnArray.returnId', date:'$eventDate',
+            receiving_id: '$receiving_id',
+            event: '$items_return.returnArray.returnId',
+            date: '$eventDate',
           },
         },
       },
@@ -1269,49 +1308,78 @@ receivingSchema.statics.receivingReportPage = async function (value, options = {
     if (licenseId) {
       andConditions[1].license = licenseId;
     }
-    const literal = text => new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');
-    if (value.search) andConditions.push({$or:['receiving_id','receiving_number','supplier_name'].map(key=>({[key]:literal(value.search)}))});
-    if (value.supplierId) andConditions.push({supplier_id:{ $in: [value.supplierId, String(value.supplierId)] }});
-    else if (value.supplier) andConditions.push({supplier_name:literal(value.supplier)});
+    const literal = (text) => new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    if (value.search)
+      andConditions.push({
+        $or: ['receiving_id', 'receiving_number', 'supplier_name'].map((key) => ({
+          [key]: literal(value.search),
+        })),
+      });
+    if (value.supplierId)
+      andConditions.push({ supplier_id: { $in: [value.supplierId, String(value.supplierId)] } });
+    else if (value.supplier) andConditions.push({ supplier_name: literal(value.supplier) });
     const filters = { $and: andConditions };
 
     const limit = parseInt(options.limit) || 5;
     const page = parseInt(options.page) || 1;
     const skip = (page - 1) * limit;
     const collection = await baseModel.getCollection('receivings');
-    const numeric = input => ({ $convert: { input, to: 'double', onNull: null, onError: null } });
+    const numeric = (input) => ({ $convert: { input, to: 'double', onNull: null, onError: null } });
     const [summary = { count: 0, purchased: 0, paid: 0, outstanding: 0, unknown: 0 }] =
-      await collection.aggregate([
-        { $match: filters },
-        { $project: {
-          amount: numeric({ $ifNull: ['$items_total', { $ifNull: ['$total_amount', '$total'] }] }),
-          paid: numeric('$paid_amount'),
-          due: numeric({ $ifNull: ['$balance', '$due_amount'] }),
-          status: { $toLower: '$payment_status' },
-        } },
-        { $set: { paid: { $switch: {
-          branches: [
-            { case: { $ne: ['$paid', null] }, then: '$paid' },
-            { case: { $ne: ['$due', null] }, then: { $max: [0, { $subtract: ['$amount', '$due'] }] } },
-            { case: { $eq: ['$status', 'paid'] }, then: '$amount' },
-            { case: { $eq: ['$status', 'pending'] }, then: 0 },
-          ],
-          default: null,
-        } } } },
-        { $group: {
-          _id: null,
-          count: { $sum: 1 },
-          purchased: { $sum: '$amount' },
-          paid: { $sum: '$paid' },
-          outstanding: { $sum: { $ifNull: ['$due', { $max: [0, { $subtract: ['$amount', '$paid'] }] }] } },
-          unknown: { $sum: { $cond: [{ $eq: ['$paid', null] }, 1, 0] } },
-        } },
-        { $unset: '_id' },
-      ]).toArray();
+      await collection
+        .aggregate([
+          { $match: filters },
+          {
+            $project: {
+              amount: numeric({
+                $ifNull: ['$items_total', { $ifNull: ['$total_amount', '$total'] }],
+              }),
+              paid: numeric('$paid_amount'),
+              due: numeric({ $ifNull: ['$balance', '$due_amount'] }),
+              status: { $toLower: '$payment_status' },
+            },
+          },
+          {
+            $set: {
+              paid: {
+                $switch: {
+                  branches: [
+                    { case: { $ne: ['$paid', null] }, then: '$paid' },
+                    {
+                      case: { $ne: ['$due', null] },
+                      then: { $max: [0, { $subtract: ['$amount', '$due'] }] },
+                    },
+                    { case: { $eq: ['$status', 'paid'] }, then: '$amount' },
+                    { case: { $eq: ['$status', 'pending'] }, then: 0 },
+                  ],
+                  default: null,
+                },
+              },
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              count: { $sum: 1 },
+              purchased: { $sum: '$amount' },
+              paid: { $sum: '$paid' },
+              outstanding: {
+                $sum: { $ifNull: ['$due', { $max: [0, { $subtract: ['$amount', '$paid'] }] }] },
+              },
+              unknown: { $sum: { $cond: [{ $eq: ['$paid', null] }, 1, 0] } },
+            },
+          },
+          { $unset: '_id' },
+        ])
+        .toArray();
     const total = summary.count;
     const results = await collection
       .find(filters)
-      .sort(options.sort === 'amount' ? {items_total:-1,_id:-1} : {date:options.sort === 'old' ? 1 : -1,_id:-1})
+      .sort(
+        options.sort === 'amount'
+          ? { items_total: -1, _id: -1 }
+          : { date: options.sort === 'old' ? 1 : -1, _id: -1 }
+      )
       .skip(skip)
       .limit(limit)
       .toArray();

@@ -30,6 +30,10 @@ module.exports = [
   {
     id: '004-employee-search-indexes',
     description: 'Index employee names and sign-in details for main search',
-    up: (db) => require('./universal-search')(db, require('../../services/search-providers').providers.filter((p) => p.route === 'users')),
+    up: (db) =>
+      require('./universal-search')(
+        db,
+        require('../../services/search-providers').providers.filter((p) => p.route === 'users')
+      ),
   },
 ];
