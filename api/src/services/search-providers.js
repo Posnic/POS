@@ -2,6 +2,14 @@
 
 const providers = [
   {
+    route: 'users',
+    acl: 'user',
+    group: 'Employees',
+    title: 'username',
+    names: ['firstname', 'lastname', 'username', 'email'],
+    keys: ['username', 'email'],
+  },
+  {
     route: 'customers',
     acl: 'customer',
     group: 'Customers',

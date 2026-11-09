@@ -370,6 +370,10 @@ class InvoiceRepository extends BaseModel {
       if (!wall) return { status: false, data: null, message: 'Branch ID not found' };
       const filter = { ...wall };
       const now = new Date();
+      if (params.customerId) {
+        if (!ObjectId.isValid(String(params.customerId))) throw new Error('Invalid customer');
+        filter.customer_id = { $in: [String(params.customerId), new ObjectId(String(params.customerId))] };
+      }
       const status = String(params.status || '');
       if (STATUSES.includes(status)) {
         filter.status = status;

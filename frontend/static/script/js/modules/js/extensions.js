@@ -321,7 +321,14 @@
         search.placeholder = "Search installed extensions…";
         search.setAttribute("aria-label", "Search installed extensions");
         search.style.maxWidth = "420px";
-        if (data.extensions.length) content.append(search);
+        var state = document.createElement("select");
+        state.className = "form-control mb-3";
+        state.style.maxWidth = "180px";
+        state.setAttribute("aria-label", "Extension status");
+        [["","All statuses"],["enabled","Enabled"],["disabled","Disabled"],["removed","Removed"]].forEach(function (entry) {
+          state.add(new Option(entry[1],entry[0]));
+        });
+        if (data.extensions.length) content.append(search,state);
         var list = document.createElement("div");
         list.className = "row";
         content.append(list);
@@ -329,6 +336,8 @@
           list.replaceChildren();
           var query = search.value.trim().toLowerCase();
           var matches = data.extensions.filter(function (item) {
+            var status = item.installed === false ? "removed" : item.enabled === false ? "disabled" : "enabled";
+            if (state.value && status !== state.value) return false;
             return (item.displayName + " " + item.id + " " + item.version)
               .toLowerCase().includes(query);
           });
@@ -460,6 +469,7 @@
             list.append(empty);
           }
         }
+        state.onchange = renderInstalled;
         search.oninput = renderInstalled;
         renderInstalled();
       } catch (error) {

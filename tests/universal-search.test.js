@@ -29,9 +29,17 @@ test('header search resolves action wording, settings and role changes through t
       customer: { write: true },
       receiving: { write: true },
       branch: { write: true },
+      report: { read: true },
     },
     i18n: { t: (_, s) => s },
-    get: () => {},
+    get: (params, done) => {
+      if (params.url === 'extensions/v1') done({extensions:[{
+        id:'rewards', displayName:'Rewards', searchPages:[
+          {target:'ledger', label:'Points history', keywords:['points ledger'], action:'open'},
+          {target:'issue', label:'Issue points', keywords:['points'], action:'create'},
+        ],
+      }]});
+    },
     post: () => {},
   };
   w.eval(read('static/script/js/core/command-palette.js'));
@@ -55,6 +63,19 @@ test('header search resolves action wording, settings and role changes through t
   ]) {
     matches(q)[0].click();
     assert.equal(routes.at(-1), route);
+  }
+  for (const phrase of ['view sales','show sale','list the sales','sales view','open sales history']) {
+    const rows = matches(phrase);
+    assert.equal(rows.length,1,phrase);
+    assert.match(rows[0].textContent,/Sales History/i);
+    d.getElementById('cmdk-input').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter'}));
+    assert.equal(routes.at(-1),'sales');
+  }
+  for (const [phrase,label] of [['view sales report','Sales Report'],['view points ledger','Points history'],['add points','Issue points']]) {
+    const rows = matches(phrase);
+    assert.equal(rows.length,1,phrase);
+    assert.ok(rows[0].textContent.includes(label),phrase);
+    w.PosnicPro.palette.close();
   }
   assert.ok(matches('measurement id').some((r) => /Measurement id/i.test(r.textContent)));
   w.PosnicPro.palette.close();

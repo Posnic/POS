@@ -78,7 +78,18 @@ PosnicPro.receivings = {
         $('#show_last_created_receiving').hide();
         var loader = $(".loader-receiving");
         loader.find(".loadingSpinner:first").remove();
+        var pickedItem = PosnicPro.palette?.takeItem('receivings/new');
+        if (pickedItem) PosnicPro.receivings.addPickedItem(pickedItem.id);
         if (PosnicPro.receivings._restockDraft) PosnicPro.lowstockitems.applyPurchaseDraft();
+    },
+    addPickedItem: function (id) {
+        var branch = PosnicPro.local.get('branch_id_set');
+        PosnicPro.get({url:'items/getReceivingItemsAjaxList', data:{type:'id', query:id}}, function (response) {
+            if (location.hash !== '#/receivings/new' || branch !== PosnicPro.local.get('branch_id_set')) return;
+            var item = (response.suggestions || []).find(function (row) { return row.item_id === id; });
+            if (item) PosnicPro.receivings.addReceivingLineItems(item);
+            else PosnicPro.alert('warning', 'Item unavailable for purchase');
+        }, function () { PosnicPro.alert('warning', 'Item unavailable for purchase'); });
     },
     showEdit: function (id) {
         $('#receiving_add_date').removeClass('commonDate');
@@ -1865,21 +1876,40 @@ PosnicPro.purchaseorders = {
      */
     _page: 1,
     PAGE_SIZE: 25,
-    _lastRows: [],
     _openDocKey: null,
-    _status: '',
-    _expected: '',
     mountPurchaseFilters: function (force) {
         if (!$('#purchases_filter_panel').length) { return; }
         if (!force && $('#purchases_filter_panel').data('mounted')) { return; }
         $('#purchases_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'receivings',
+            partyFilter: 'suppliers',
+            primaryControls: function (row, state) {
+                var status = $('<select class="form-control lf-primary" aria-label="Status">').appendTo(row);
+                status.append($('<option>').val('').text(PosnicPro.i18n.t('lang_report_all', 'All')));
+                status.append($('<option>').val('ordered').text(PosnicPro.i18n.t('lang_po_ordered', 'Ordered')));
+                status.append($('<option>').val('partial').text(PosnicPro.i18n.t('lang_partially_received', 'Partially received')));
+                status.append($('<option>').val('received').text(PosnicPro.i18n.t('lang_po_received', 'Received')));
+                status.append($('<option>').val('cancelled').text(PosnicPro.i18n.t('lang_cancelled', 'Cancelled')));
+                status.val(state.extra.status || '').on('change', function () {
+                    PosnicPro.listFilter.setExtra('receivings', 'status', this.value);
+                });
+                var expected = $('<select class="form-control lf-primary" aria-label="Expected">').appendTo(row);
+                expected.append($('<option>').val('').text(PosnicPro.i18n.t('lang_any', 'Any')));
+                expected.append($('<option>').val('today').text(PosnicPro.i18n.t('lang_this_day', 'Today')));
+                expected.append($('<option>').val('tomorrow').text(PosnicPro.i18n.t('lang_tomorrow', 'Tomorrow')));
+                expected.append($('<option>').val('week').text(PosnicPro.i18n.t('lang_roster_thisweek', 'This week')));
+                expected.val(state.extra.expected || '').on('change', function () {
+                    PosnicPro.listFilter.setExtra('receivings', 'expected', this.value);
+                });
+            },
             rows: '#po_list_rows',
             onRefresh: function () { return PosnicPro.purchaseorders.loadList(); },
             container: '#purchases_filter_panel',
+            appliedContainer: '#po_active_filters',
             button: '#purchases_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_purchase_no_supplier_or_phone', 'Search purchase no, supplier or phone'),
+            defaultPreset: 'today',
             dateField: PosnicPro.i18n.t('lang_bill_date', 'Bill date'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
@@ -1893,33 +1923,17 @@ PosnicPro.purchaseorders = {
         });
     },
     exportCsv: function () {
-        var rows = [['No', 'Kind', 'Bill date', 'Created', 'Supplier', 'Status', 'Expected', 'Total']];
-        (PosnicPro.purchaseorders._lastRows || []).forEach(function (r) {
-            rows.push([r.no, r.kind === 'po' ? 'order' : 'purchase',
-                r.date ? new Date(r.date).toISOString().slice(0, 10) : '',
-                r.created ? new Date(r.created).toISOString().slice(0, 10) : '',
-                r.supplier, r.status, r.expected || '', r.total]);
+        var criteria = Object.assign({},PosnicPro.purchaseorders._criteria);
+        PosnicPro.listExport.all({
+            url:'purchaseOrders/history', filename:'purchases.csv',
+            params:function (page,limit) { return Object.assign({},criteria,{page:page,limit:limit}); },
+            head:['No','Kind','Bill date','Created','Supplier','Status','Expected','Total'],
+            map:function (r) { return [r.no,r.kind,r.date,r.created,r.supplier,r.status,r.expected,r.total]; }
         });
-        var csv = rows.map(function (r) {
-            return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
-        }).join('\n');
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'purchases.csv';
-        a.click();
-        URL.revokeObjectURL(a.href);
     },
     STATUS_PILL: { ordered: 'hold', partial: 'hold', draft: 'hold', received: 'paid', closed: 'paid', cancelled: 'unpaid' },
     STATUS_LABEL: { ordered: 'Ordered', partial: 'Partially received', draft: 'Draft', received: 'Received', closed: 'Received', cancelled: 'Cancelled' },
-    /*
-     * ONE list over two sources (orders + received purchases), merged
-     * newest-first, with real page numbers (owner: "pagination is
-     * important"). Each source is asked for the whole window up to the
-     * current page (capped at 100 a side), so the merged slice for page N
-     * is exact; past 2x100 rows the pager stops honestly and the archive
-     * link carries the deep history.
-     */
+    // The server filters and sorts orders and receipts together before paging.
     loadList: function (page) {
         PosnicPro.purchaseorders.mountPurchaseFilters();
         PosnicPro.listSort.mount('purchases', {
@@ -1936,59 +1950,30 @@ PosnicPro.purchaseorders = {
         if (page) { self._page = page; }
         var p = self._page;
         var size = self.PAGE_SIZE;
-        var fetchLimit = Math.min(p * size + 1, 100);
-        /* An active sort must rank the whole honest window, not just the
-           newest page-load - otherwise "highest amount first" only ranks
-           the latest handful. Same 2x100 cap the pager already owns. */
-        if (PosnicPro.listSort.value('purchases')) { fetchLimit = 100; }
-        var filters = PosnicPro.listFilter.legacyFilters('receivings', { dateKey: 'date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
-        var done = { po: null, rec: null };
-        var totals = { po: 0, rec: 0 };
-        var render = function () {
-            if (done.po === null || done.rec === null) { return; }
-            var rows = done.po.concat(done.rec);
-            var ts = function (v) { var t = new Date(v || 0).getTime(); return isNaN(t) ? 0 : t; };
-            /* Same bill date is the NORMAL case (today's purchases) - the
-               tie breaks on created time so the newest entry leads. The list
-               is a client-side merge of two doors, so Sort is client-side
-               too - no server round trip, the whole set is already here. */
-            var num = function (v) { return Number(v) || 0; };
-            var CMP = {
-                date_asc: function (a, b) { return ts(a.date) - ts(b.date) || ts(a.created) - ts(b.created); },
-                total_desc: function (a, b) { return num(b.total) - num(a.total); },
-                total_asc: function (a, b) { return num(a.total) - num(b.total); },
-                /* No expected date sinks to the bottom, not to "due first". */
-                expected_asc: function (a, b) { return (ts(a.expected) || Infinity) - (ts(b.expected) || Infinity); },
-                supplier: function (a, b) { return String(a.supplier || '').localeCompare(String(b.supplier || '')); }
-            };
-            rows.sort(CMP[PosnicPro.listSort.value('purchases')]
-                || function (a, b) { return ts(b.date) - ts(a.date) || ts(b.created) - ts(a.created); });
-            self._lastRows = rows;
-            var chip = self._status;
-            var filtered = !chip ? rows : rows.filter(function (r) {
-                if (chip === 'ordered') { return r.status === 'ordered' || r.status === 'draft'; }
-                if (chip === 'received') { return r.status === 'received' || r.status === 'closed'; }
-                return r.status === chip;
-            });
-            /* Expected-date quick chips (owner): due today, tomorrow, or in
-               the coming seven days. Calendar days, local time. */
-            var expChip = self._expected;
-            if (expChip) {
-                var today = new Date(); today.setHours(0, 0, 0, 0);
-                filtered = filtered.filter(function (r) {
-                    if (!r.expected) { return false; }
-                    var due = new Date(r.expected);
-                    if (isNaN(due.getTime())) { return false; }
-                    due.setHours(0, 0, 0, 0);
-                    var days = Math.round((due - today) / 86400000);
-                    if (expChip === 'today') { return days === 0; }
-                    if (expChip === 'tomorrow') { return days === 1; }
-                    return days >= 0 && days <= 6;
-                });
+        var criteria = PosnicPro.listFilter.params('receivings');
+        var chip = criteria.status, expChip = criteria.expected;
+        delete criteria.expected;
+        criteria.status = chip || '';
+        criteria.sort = PosnicPro.listSort.value('purchases');
+        if (expChip) {
+            var start = new Date(); start.setHours(0,0,0,0);
+            if (expChip === 'tomorrow') start.setDate(start.getDate()+1);
+            var end = new Date(start);
+            end.setDate(end.getDate() + (expChip === 'today' || expChip === 'tomorrow' ? 1 : 7));
+            criteria.dueFrom = start.toISOString(); criteria.dueTo = end.toISOString();
+        }
+        $('#po_summary').empty();
+        self._criteria = criteria;
+        PosnicPro.listFilter.request('receivings', {url:'purchaseOrders/history', data:Object.assign({},criteria,{page:p,limit:size})}, function (response) {
+            var data = response.data || {}, pageRows = data.list || [];
+            var summary = $('#po_summary').empty();
+            if (data.purchaseAmount != null) {
+                $('<span>').text(PosnicPro.i18n.t('lang_received','Received') + ' ').append($('<strong>').text(data.purchases)).appendTo(summary);
+                $('<span>').text(PosnicPro.i18n.t('lang_total','Total') + ' ').append($('<strong>').text((PosnicPro.local.get('currencySign') || '')+' '+Number(data.purchaseAmount).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))).appendTo(summary);
             }
-            if (p > 1 && !filtered.slice((p - 1) * size).length) { self._page = 1; p = 1; }
-            var pageRows = filtered.slice((p - 1) * size, p * size);
+            pageRows.forEach(function (r) { r.progress = r.ordered ? r.received + '/' + r.ordered : ''; });
+            if (!pageRows.length && p > 1) { self.loadList(1); return; }
             if (!pageRows.length) {
                 var isFiltered = !!chip || !!expChip || PosnicPro.listFilter.activeCount('receivings') > 0;
                 $('#po_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
@@ -2022,45 +2007,11 @@ PosnicPro.purchaseorders = {
             });
             html += '</tbody></table></div>';
             $('#po_list_rows').html(html);
-            self.renderPager(filtered.length, chip || expChip ? null : totals.po + totals.rec);
-        };
-        PosnicPro.listFilter.request('receivings', { url: 'purchaseOrders', data: 'page=1&limit=' + fetchLimit }, function (response) {
-            var data = (response && response.data) || {};
-            totals.po = Number(data.total) || 0;
-            done.po = (data.list || []).map(function (po) {
-                return {
-                    kind: 'po', id: po.id, no: po.po_id,
-                    date: String(po.order_date || ''),
-                    created: po.created_date || po.order_date || '',
-                    supplier: po.supplier_name, status: po.status,
-                    progress: po.ordered_qty > 0 ? (po.received_qty + '/' + po.ordered_qty) : '',
-                    expected: po.expected_date || '',
-                    total: po.grand_total
-                };
-            });
-            render();
-        }, function () { done.po = []; render(); });
-        PosnicPro.get({ url: 'receivings', data: { page: 1, limit: fetchLimit, filters: JSON.stringify(filters) } }, function (response) {
-            var data = (response && response.data) || {};
-            totals.rec = Number(data.total) || 0;
-            done.rec = (data.list || []).map(function (r) {
-                return {
-                    kind: 'purchase', id: r._id, no: r.receiving_id,
-                    date: String(r.date || r.updated_date || ''),
-                    created: r.created_date || '',
-                    supplier: r.supplier_name,
-                    status: r.receiving_status === 'Open' ? 'ordered'
-                        : r.receiving_status === 'Received' ? 'received'
-                        : String(r.receiving_status || '').toLowerCase(),
-                    progress: '',
-                    expected: r.expected_date || '',
-                    total: r.total_amount,
-                    mismatch: r.invoice_total_mismatch === true,
-                    hasDoc: !!(r.image && r.image.length)
-                };
-            });
-            render();
-        }, function () { done.rec = []; render(); });
+            self.renderPager(data.total,data.total);
+        }, function () {
+            $('#po_list_rows').text('Could not load purchases. Refresh to retry.');
+            $('#po_list_paging').empty();
+        });
     },
     /*
      * Pager per LIST_PAGE_UX_STANDARD §3: numbered window when the total is
@@ -2877,17 +2828,6 @@ $(document).on('click', '#po_list_rows tr.purchases-row', function () {
 $(document).on('click', '#suppliers_list_rows tr.suppliers-row', function () {
     PosnicPro.suppliers.openDoc($(this).data('id'));
 });
-$(document).on('click', '#purchases_quick_filters .p-status-opt', function () {
-    PosnicPro.purchaseorders._status = $(this).data('status') || '';
-    $('#purchases_status_dd').text($(this).text());
-    PosnicPro.purchaseorders.loadList(1);
-});
-$(document).on('click', '#purchases_quick_filters .p-exp-opt', function () {
-    PosnicPro.purchaseorders._expected = $(this).data('expected') || '';
-    $('#purchases_expected_dd').text($(this).text());
-    PosnicPro.purchaseorders.loadList(1);
-});
-
 $(document).on('focus', '#receiving_add_supplier_name, #po_supplier_name', function () {
     /* devbridge fires no lookup on plain focus, even at minChars 0 - the
        standing picker rule (frequent-on-focus) needs this nudge. A box

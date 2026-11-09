@@ -9,6 +9,9 @@ PosnicPro.supplierreport = {
         var loader = $(".loader-supplier-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.dashboard.datePicker();
+        PosnicPro.listFilter.reportPersonPicker('supplier', function (field, select) {
+            PosnicPro.listFilter.entityPicker(field, 'suppliers', select);
+        });
         PosnicPro.HideSideBarModal();
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
         $(".vertical-layout").removeClass("toggle-menu");
@@ -67,18 +70,24 @@ PosnicPro.supplierreport = {
                 ending_date: fields[1],
                 branch: $(".supplier_branch_value").val()
             };
-            let supplier_id = ($(".suppliers_input_id").val() !== '') ? $(".suppliers_input_id").val() : '';
+            let supplier_id = ($("#supplierreport_new .suppliers_input_id").val() !== '') ? $("#supplierreport_new .suppliers_input_id").val() : '';
             var field_input = {
-                field_input: supplier_id
+                supplier_id: supplier_id
             };
-            if ($(".suppliers_input_id").val() !== '') {
+            if ($("#supplierreport_new .suppliers_input_id").val() !== '') {
                 dataValue = Object.assign(dataValue, field_input);
             }
             var params = {
                 url: 'receivings/supplierReceivingReportTable',
                 data: dataValue
             };
+            var requestTag = type === 'supplierreportexport' ? 0 : (table.data('filterRequest') || 0) + 1;
+            if (requestTag) table.data('filterRequest', requestTag);
             PosnicPro.get(params, function (response) {
+                if (requestTag && table.data('filterRequest') !== requestTag) {
+                    loader.find('.loadingSpinner:first').remove();
+                    return;
+                }
                 loader.find(".loadingSpinner:first").remove();
                 if (response.type === 'success') {
                     (response.data.total > 0) ? $('#supplierreport_exportbtn').removeAttr('disabled') : $('#supplierreport_exportbtn').attr('disabled', 'disabled');
@@ -93,7 +102,7 @@ PosnicPro.supplierreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportsupplier_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportsupplier_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a
@@ -186,11 +195,11 @@ PosnicPro.supplierproductreport = {
                 ending_date: fields[1],
                 branch: $(".supplier_branch_value").val()
             };
-            let supplier_id = ($(".suppliers_input_id").val() !== '') ? $(".suppliers_input_id").val() : '';
+            let supplier_id = ($("#supplierreport_new .suppliers_input_id").val() !== '') ? $("#supplierreport_new .suppliers_input_id").val() : '';
             var field_input = {
                 field_input: supplier_id
             };
-            if ($(".suppliers_input_id").val() !== '') {
+            if ($("#supplierreport_new .suppliers_input_id").val() !== '') {
                 dataValue = Object.assign(dataValue, field_input);
             }
             var params = {
@@ -289,11 +298,11 @@ PosnicPro.suppliersalereport = {
                 ending_date: fields[1],
                 branch: $(".supplier_branch_value").val()
             };
-            let supplier_id = ($(".suppliers_input_id").val() !== '') ? $(".suppliers_input_id").val() : '';
+            let supplier_id = ($("#supplierreport_new .suppliers_input_id").val() !== '') ? $("#supplierreport_new .suppliers_input_id").val() : '';
             var field_input = {
                 field_input: supplier_id
             };
-            if ($(".suppliers_input_id").val() !== '') {
+            if ($("#supplierreport_new .suppliers_input_id").val() !== '') {
                 dataValue = Object.assign(dataValue, field_input);
             }
             var params = {
@@ -315,7 +324,7 @@ PosnicPro.suppliersalereport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportsuppliersale_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportbasesale_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a
@@ -392,7 +401,7 @@ PosnicPro.supplierproductdetails = {
 
     supplierproductdetailsTable: function (type) {
 
-        PosnicPro.appendReportTableBody('productdetails');
+        PosnicPro.appendReportTableBody('productdetails', '#view_supplierproductdetails');
         var table = $('#view_supplierproductdetails');
         var branch = $(".supplier_branch_value").val();
         var daterange = $(".view_supplier_report_daterange").val();

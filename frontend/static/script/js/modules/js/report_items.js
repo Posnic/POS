@@ -1,5 +1,18 @@
 PosnicPro.itemreport = {
+    selectItem: function (item) {
+        this.reportItem = item;
+        $('#item-report-selected').prop('hidden', !item).text(item ? item.name + ' ×' : '');
+        $('#view_itemreport').data('current_page', 1);
+        $('#item-tab-line').tab('show');
+        this.itemTableTabClick();
+    },
     showDataTablePage: function () {
+        this.reportItem = PosnicPro.palette?.takeItem('itemreport');
+        $('#item-report-selected').prop('hidden', !this.reportItem).text(this.reportItem ? this.reportItem.name + ' ×' : '');
+        if (this.reportItem) {
+            $('#view_itemreport').data('current_page', 1);
+            $('#item-tab-line').tab('show');
+        }
         var loader = $(".loader-item-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.dashboard.datePicker();
@@ -65,11 +78,14 @@ PosnicPro.itemreport = {
                 group_by_family: (type !== 'itemreportexport' && $('#itemreport_group_family').is(':checked'))
                     ? 'true' : 'false'
             };
+            if (this.reportItem) data.item_id = this.reportItem.id;
             var params = {
                 url: 'sales/itemSalesReportTable',
                 data: data
             };
+            var version = this.itemRequest = (this.itemRequest || 0) + 1;
             PosnicPro.get(params, function (response) {
+                if (version !== PosnicPro.itemreport.itemRequest) return;
                 if (response.type === 'success') {
                     loader.find(".loadingSpinner:first").remove();
                     (response.data.total > 0) ? $('#itemreport_exportbtn').removeAttr('disabled') : $('#itemreport_exportbtn').attr('disabled', 'disabled');
@@ -84,7 +100,7 @@ PosnicPro.itemreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportitem_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportitem_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a
@@ -212,7 +228,7 @@ PosnicPro.itemexpiry = {
                             $('.view_itemexpiry_header').hide();
                             $('#view_expiryitemreport').hide();
 
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.expiryreportitem_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a
@@ -317,7 +333,7 @@ PosnicPro.itemstock = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.stockreportitem_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.stockreportitem_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a

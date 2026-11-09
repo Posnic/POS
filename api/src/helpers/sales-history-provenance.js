@@ -12,7 +12,9 @@ module.exports = function historyProvenance(query = {}) {
     return query[key].trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
   const staff = literal('ordered_by');
-  if (staff) {
+  if (/^employee:[a-f0-9]{24}$/i.test(staff)) {
+    clauses.push(require('./captain-sales-owner')(staff.slice(9)));
+  } else if (staff) {
     // A Captain's original actor takes precedence over the user who later settled the sale.
     clauses.push({
       $or: [

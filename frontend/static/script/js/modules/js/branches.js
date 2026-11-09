@@ -289,7 +289,8 @@ PosnicPro.branches = {
             onRefresh: function () { return PosnicPro.branches.loadList(); },
             container: '#branches_filter_panel',
             button: '#branches_filter_btn',
-            searchPlaceholder: PosnicPro.i18n.t('lang_search_name_phone_or_email', 'Search name, phone or email'),
+            dateField: PosnicPro.i18n.t('lang_created_date', 'Created date'),
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_branch_records', 'Search branches by name, phone, email or address'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
                 { value: 'branch_name', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
@@ -304,7 +305,7 @@ PosnicPro.branches = {
         PosnicPro.branches.mountFilters();
         var self = PosnicPro.branches;
         if (page) { self._page = page; }
-        var filters = PosnicPro.listFilter.legacyFilters('branches', {});
+        var filters = PosnicPro.listFilter.legacyFilters('branches', { dateKey:'created_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.listFilter.request('branches', {
             url: 'branches',

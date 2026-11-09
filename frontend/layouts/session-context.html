@@ -1,0 +1,16 @@
+<script>
+    // The login cookie is shared by ports on the same host. The cashier and
+    // branch selected at login belong to this origin's storage.
+    function hasPosnicLoginContext() {
+        try {
+            function present(key) {
+                var value = localStorage.getItem(key);
+                return value && value.trim() && value !== 'null' && value !== 'undefined';
+            }
+            return /(?:^|;\s*)loginuser=yes(?:;|$)/.test(document.cookie) &&
+                !!present('userid') && !!present('branch_id_set');
+        } catch (error) {
+            return false;
+        }
+    }
+</script>

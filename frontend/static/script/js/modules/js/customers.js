@@ -82,19 +82,15 @@ PosnicPro.customers = {
         $('#customers_filter_panel').data('mounted', true);
         PosnicPro.listFilter.mount({
             key: 'customers',
+            typeahead: 'customer',
+            selectionOnly: true,
             rows: '#customers_list_rows',
             onRefresh: function () { return PosnicPro.customers.loadList(); },
             container: '#customers_filter_panel',
+            showTotal: true,
             button: '#customers_filter_btn',
-            searchPlaceholder: PosnicPro.i18n.t('lang_search_name_phone_or_email', 'Search name, phone or email'),
-            dateField: PosnicPro.i18n.t('lang_added', 'Added'),
-            searchFields: [
-                { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
-                { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
-                { value: 'phone', label: PosnicPro.i18n.t('lang_phone_title', 'Phone') },
-                { value: 'email', label: PosnicPro.i18n.t('lang_email_title', 'Email') },
-                { value: 'address', label: PosnicPro.i18n.t('lang_address_title', 'Address') }
-            ],
+            searchPlaceholder: PosnicPro.i18n.t('lang_choose_customer_2', 'Choose customer'),
+            dateField: PosnicPro.i18n.t('lang_created_date', 'Created date'),
             onChange: function () { PosnicPro.customers.loadList(1); }
         });
     },
@@ -117,6 +113,7 @@ PosnicPro.customers = {
             var data = (response && response.data) || {};
             var list = data.list || [];
             self._lastRows = list;
+            $('#customers_filter_panel .lf-result-total strong').text(Number(data.total) || list.length);
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('customers') > 0;
                 $('#customers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
@@ -144,6 +141,7 @@ PosnicPro.customers = {
             $('#customers_list_rows').html(html);
             self.renderPager(Number(data.total) || list.length);
         }, function () {
+            $('#customers_filter_panel .lf-result-total strong').empty();
             $('#customers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_customers_try_again">Could not load customers - try again.</lang></div>');
         });
     },
@@ -151,8 +149,6 @@ PosnicPro.customers = {
         var self = PosnicPro.customers;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_customer', 'customer') : PosnicPro.i18n.t('lang_customers', 'customers'));
-        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
                 + ' onclick="PosnicPro.customers.goPage(' + to + ');">' + text + '</button>';
@@ -166,7 +162,7 @@ PosnicPro.customers = {
                 html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
             }
         }
-        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) html += '<span class="q-pg-count">Page ' + p + ' of ' + pages + '</span>';
         if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
         $('#customers_list_paging').html(html);
     },
@@ -1061,7 +1057,7 @@ PosnicPro.transactiondetails = {
         arguments: ''
     },
     transactiondetailsTable: function (type) {
-        PosnicPro.appendReportTableBody('customertransactiondetails');
+        PosnicPro.appendReportTableBody('customertransactiondetails', '#view_transactiondetails');
         var loader = $(".loader-transactionactivity");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var table = $('#view_transactiondetails');

@@ -6645,14 +6645,10 @@ PosnicPro.features = {
             return;
         }
         PosnicPro.features._introDemoStarted = true;
-        if (PosnicPro.settings && PosnicPro.settings._demoWasOn === false) {
-            PosnicPro.settings.syncDemoDataAfterSave(true, {
-                inlineTarget: '#feature_intro_demo_bg_status',
-                title: PosnicPro.i18n.t('lang_adding_sample_data', 'Adding sample data')
-            });
-            return;
-        }
-        PosnicPro.features.markIntroDemoStatus('Sample data ready', 'Products and sample sales are ready to try.', 100, false);
+        PosnicPro.settings.installIntroSamples({
+            inlineTarget: '#feature_intro_demo_bg_status',
+            title: PosnicPro.i18n.t('lang_adding_sample_data', 'Adding sample data')
+        });
     },
 
     showIntroStep: function (step) {
@@ -7511,7 +7507,7 @@ PosnicPro.settings.featureInfo = {
            so keep dedicated page for that." */
         offNote: 'Switching off asks for confirmation, then removes the sample records. Your own work - anything edited, sold or received - is always kept.',
         tagline: 'Sample data you can remove, reset, or swap for another trade.',
-        about: 'Every new shop arrives with sample products so the till can be tried before there is any real stock in it. Once your own catalogue is in, switch this off: it asks first, then removes the samples - products, sales, quotes, customers and suppliers. Anything you edited into a real product or already sold is kept. The Reset button below installs a fresh set for the same trade, and the chooser swaps trades.',
+        about: 'Enable Demo Data, then open Manage > Demo Data to choose and install a trade. Switching it off asks for confirmation before removing samples.',
 
         benefits: [
             'One switch clears the samples out of the whole till',
@@ -8050,7 +8046,6 @@ PosnicPro.settings.demoProgress = {
 PosnicPro.settings.demoPacks = {
     _packs: [],
     _current: null,
-    _loaded: false,
 
     /*
      * Remove the samples, from the page somebody is already on.
@@ -8065,12 +8060,12 @@ PosnicPro.settings.demoPacks = {
 
     load: function () {
         var self = PosnicPro.settings.demoPacks;
-        if (self._loaded) { self.paint(); return; }
+        $('#demo_pack_choice, #demo_pack_install, #demo_pack_reset').prop('disabled', true);
         PosnicPro.get({ url: 'items/demo/packs', data: {} }, function (response) {
             var d = (response && response.data) || {};
             self._packs = d.packs || [];
             self._current = d.current || null;
-            self._loaded = true;
+            $('#demo_pack_choice').prop('disabled', false);
             self.paint();
         }, function () {
             /* Said out loud rather than left on "Loading…" forever, which
@@ -8145,9 +8140,8 @@ PosnicPro.settings.demoPacks = {
         $('#demo_pack_summary').text(
             key === self._current ? line + ' (this is what you have now)' : line
         );
-        $('#demo_pack_install').text(
-            key === self._current ? 'Reinstall these samples' : 'Install this trade\'s samples'
-        );
+        $('#demo_pack_install').toggle(key !== self._current);
+        $('#demo_pack_reset').toggle(key === self._current);
     },
 
     install: function () {
@@ -8162,7 +8156,7 @@ PosnicPro.settings.demoPacks = {
          * find its samples changed by a button it pressed to read the label.
          */
         swal({
-            title: PosnicPro.i18n.t('lang_replace_the_sample_data_with', 'Replace the sample data with ') + label + '?',
+            title: self._current ? PosnicPro.i18n.t('lang_replace_the_sample_data_with', 'Replace the sample data with ') + label + '?' : 'Install samples for ' + label + '?',
             text: 'Your own products are not touched. Samples you have edited, sold or received are kept.',
             showCancelButton: true,
             confirmButtonClass: 'btn btn-primary',
@@ -8179,6 +8173,11 @@ PosnicPro.settings.demoPacks = {
     _run: function (key) {
         var self = PosnicPro.settings.demoPacks;
         $('#demo_pack_install').prop('disabled', true);
+        if (!self._current) {
+            PosnicPro.settings.demoProgress.open('Installing sample data');
+            self._seed(key);
+            return;
+        }
         PosnicPro.settings.demoProgress.open('Changing the sample data');
         PosnicPro.settings.demoProgress.step('Removing the old samples…');
 
@@ -8218,8 +8217,7 @@ PosnicPro.settings.demoPacks = {
                 $('#fp_master').prop('checked', true);
             }
             PosnicPro.settings.demoProgress.close(response.message, response.type === 'success');
-            self.describe();
-            $('#demo_pack_install').prop('disabled', false);
+            self.paint();
             /* The item list and the sale grid are both showing the old trade. */
             if (PosnicPro.items && PosnicPro.items.itemsTable) { PosnicPro.items.itemsTable(); }
         }, function (xhr) {
@@ -8227,7 +8225,7 @@ PosnicPro.settings.demoPacks = {
             try { resp = JSON.parse(xhr.responseText); } catch (e) { /* plain */ }
             PosnicPro.settings.demoProgress.close(
                 resp.message || 'Could not add the new sample data', false);
-            $('#demo_pack_install').prop('disabled', false);
+            self.load();
         });
     }
 };
@@ -8349,14 +8347,8 @@ PosnicPro.settings.confirmDemoOff = function (checkbox, alsoRevert) {
     });
 };
 
-/*
- * After a successful features save: seed on off->on with nothing there, and
- * DELETE on on->off when the person consented. Both directions live in one
- * place because they share the same guard - only when the switch actually
- * moved, never on every save, or a tax change puts a progress bar in front
- * of somebody who asked for nothing.
- */
-PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options) {
+/* Apply a confirmed removal after the feature settings have been saved. */
+PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg) {
     var on = nowOnArg !== undefined ? !!nowOnArg : $('#module_demo_data_enable').is(':checked');
     var was = PosnicPro.settings._demoWasOn;
     PosnicPro.settings._demoWasOn = on;
@@ -8382,9 +8374,10 @@ PosnicPro.settings.syncDemoDataAfterSave = function (nowOnArg, options) {
     }
 
     PosnicPro.settings._demoPurgeArmed = false;
-    if (!on || was !== false) { return; }
+};
 
-    PosnicPro.settings.demoProgress.open(options && options.title, options);
+PosnicPro.settings.installIntroSamples = function (options) {
+    PosnicPro.settings.demoProgress.open(options.title, options);
     PosnicPro.post({ url: 'items/demo', data: JSON.stringify({}) }, function (response) {
         PosnicPro.settings.demoProgress.close(response.message, response.type === 'success');
     }, function (xhr) {
@@ -8931,7 +8924,7 @@ PosnicPro.salesChannels = {
             /* The rows below are now on screen and hold what the shop stored.
                Until this is true, collect() must not claim to speak for them -
                see the guard there. */
-            self._loaded = true;
+            $('#demo_pack_choice').prop('disabled', false);
             self.renderPartners(values.sales_channel_partners);
             self.renderVenues(values.partner_venues);
             self.renderCharges(values.channel_charges);

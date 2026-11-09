@@ -19,6 +19,12 @@ class CustomerService {
     try {
       // Build query filters
       const queryFilters = {};
+      if (filters._id !== undefined) {
+        if (typeof filters._id !== 'string' || !/^[a-f0-9]{24}$/i.test(filters._id)) {
+          throw new Error('Invalid customer ID');
+        }
+        queryFilters._id = filters._id;
+      }
 
       /* The shared filter bar's "All fields" search arrives as an $or over
          the searchable fields. Sanitised: only known fields, only regex

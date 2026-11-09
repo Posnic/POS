@@ -4271,6 +4271,7 @@ class SettingModel extends BaseModel {
 
       const units = docs.map((doc) => ({
         unit_id: doc._id?.toString?.() || doc._id,
+        created_date: doc.created_date,
         unit_name: doc.name || '',
         unit_value: doc.value || doc.unit_value || '',
       }));

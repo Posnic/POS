@@ -14,7 +14,7 @@
                 <div class="col-md-9 col-lg-9 show-button-action"></div>
 
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_sale_report_daterange"
+                    <div class="form-control pull-right daterange-timepicker-all report-period daterange-style date-align view_sale_report_daterange"
                         id="view_sale_report_daterange">
                         <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
                         <span></span>
@@ -79,7 +79,8 @@
                             <li class="nav-item">
                                 <a class="nav-link active report_tab_font" id="sale-view-tab-line" data-toggle="tab"
                                     href="#sale-view-line" role="tab" aria-controls="sale-view-line"
-                                    aria-selected="true" onClick="PosnicPro.salereport.saleTableTabClick();"><i class="feather icon-shopping-cart mr-1"></i>
+                                    aria-selected="true" onClick="PosnicPro.salereport.saleTableTabClick();">
+                                    <i class="feather icon-shopping-cart mr-1"></i>
                                     <lang class="lang_salereport_title"> Detailed Sales </lang>
                                 </a>
                             </li>
@@ -109,45 +110,21 @@
                             </div>
                             <div class="tab-pane fade show active" id="sale-view-line" role="tabpanel"
                                 aria-labelledby="sale-view-tab-line">
+                                <div id="sale-report-facets" class="lf-quick report-facet-search">
+                                    <button type="button" class="report-popup-toggle"></button>
+                                    <dialog class="lf-dialog lf-report-dialog" aria-label="Filter sales">
+                                        <div class="lf-inline-query"><label for="sale-report-facets-0">Search receipts</label><input type="search" class="form-control lf-q" id="sale-report-facets-0" aria-label="Search receipts" placeholder="Search receipts" title="Sale ID, invoice or customer"></div>
+                                        <div><label for="sale-report-facets-1">Choose customer</label><input type="search" class="form-control" id="sale-report-facets-1" aria-label="Choose customer" placeholder="Choose customer"></div>
+                                        <div><label for="sale-report-facets-2">Payment method</label><select class="form-control" id="sale-report-facets-2" aria-label="Payment method"><option value="">Payment method</option><option>Cash</option><option>Card</option><option>UPI</option></select></div>
+                                        <div><button type="button" aria-pressed="false" class="btn btn-outline-primary">My sales</button></div>
+                                    </dialog>
+                                </div>
                                 <div class="row reportsale_header">
                                     <div
                                         class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_salereport_per_page"
-                                            data-id="salereport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View salereport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
+                                        
                                     </div>
-                                    <div class="col-lg-11 col-md-11">
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report"
-                                                            data-access="read" data-id="salereport"
-                                                            onclick="PosnicPro.refreshReportDatatable(this);"
-                                                            class="add_new_tooltip" data-toggle="tooltip"
-                                                            title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report"
-                                                            data-access="read" id="salereport_exportbtn"
-                                                            data-id="salereportexport"
-                                                            onclick="PosnicPro.salereport.viewReportSaleExport(this);"
-                                                            class="sale_color dash_sale_count" data-toggle="tooltip"
-                                                            title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    
                                 </div>
                                 <div class="detailed-report-sales loader-sale-report">
                                     <div class="card-body card-box no-padding">
@@ -190,7 +167,14 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_salereport_per_page"
+                                            data-id="salereport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View salereport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang>
                                                     <b><span id="view_salereport_page_total"></span></b>
                                                     <lang class="lang_to">to</lang>
@@ -222,43 +206,8 @@
                             <div class="tab-pane fade" id="instant-line" role="tabpanel"
                                 aria-labelledby="instant-tab-line">
                                 <div class="row reportsale_instheader">
-                                    <div class="col-lg-1 col-md-1 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_instantreport_per_page"
-                                            data-id="instantreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View instantreport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-11 col-md-11">
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report"
-                                                            data-access="read" data-id="instantreport"
-                                                            onclick="PosnicPro.refreshReportDatatable(this);"
-                                                            class="add_new_tooltip" data-toggle="tooltip"
-                                                            title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report"
-                                                            data-access="read" id="instantreport_exportbtn"
-                                                            data-id="instantreportexport"
-                                                            onclick="PosnicPro.instantreport.instantreportExport(this);"
-                                                            class="sale_color dash_sale_count" data-toggle="tooltip"
-                                                            title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    
+                                    
                                 </div>
                                 <div class="detailed-report-sales loader-instant-report">
                                     <div class="card-body card-box no-padding">
@@ -296,7 +245,14 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_instantreport_per_page"
+                                            data-id="instantreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View instantreport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang>
                                                     <b><span id="view_instantreport_page_total"></span></b>
                                                     <lang class="lang_to">to</lang>
@@ -330,6 +286,9 @@
                             <div class="tab-pane fade loader-summary-report" id="sale-summary-line" role="tabpanel"
                                 aria-labelledby="sale-summary-tab-line">
 
+                                <table id="sales-summary-export" data-export-title="Sales summary" hidden>
+                                    <thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody></tbody>
+                                </table>
                                 <div class="row">
                                     <!-- Start col -->
                                     <div class="col-lg-6 col-xl-3">

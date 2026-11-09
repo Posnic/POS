@@ -3512,7 +3512,7 @@ module.exports = {
   },
 
   getItemSalesReportTableData: async (
-    { match, skip, limit, groupByFamily },
+    { match, skip, limit, groupByFamily, itemId },
     { SaleModel } = {}
   ) => {
     const Model = getModel(SaleModel);
@@ -3617,6 +3617,10 @@ module.exports = {
     const pipeline = [
       { $match: match },
       { $unwind: '$items' },
+      ...(itemId ? [{ $match: { $expr: { $eq: [
+        { $convert: { input: { $ifNull: ['$items.item', '$items.item_id'] }, to: 'string', onError: '', onNull: '' } },
+        itemId,
+      ] } } }] : []),
       {
         $lookup: {
           from: 'items',

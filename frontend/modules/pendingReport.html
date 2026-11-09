@@ -9,7 +9,7 @@
                 </div>               
                 <div class="col-md-9 col-lg-9 show-button-action"></div>                  
                 <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_pending_report_daterange">
+                    <div class="form-control pull-right daterange-timepicker-all report-period daterange-style date-align view_pending_report_daterange">
                         <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
                         <span></span>
                     </div>
@@ -70,36 +70,7 @@
                             </div>
                             <div class="tab-pane fade show active" id="pending-line" role="tabpanel" aria-labelledby="pending-tab-line">
                                 <!-- start table -->
-                                <div class="row reportpending_header">
-                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_pendingreport_per_page" data-id="pendingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingreport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-11 col-md-11">                                                                                       
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="pendingreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="pendingreport_exportbtn"
-                                                           data-id="pendingreportexport" onclick="PosnicPro.pendingreport.pendingReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 <div class="card-body card-box no-padding loader-pending-report">
                                     <!-- Start table -->
                                     <div class="table-responsive">
@@ -120,7 +91,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_pendingreport_per_page" data-id="pendingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingreport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_pendingreport_page_total"></span></b>
                                                     <lang class="lang_to">to</lang> 
@@ -149,36 +126,7 @@
 
                             <div class="tab-pane fade" id="pending-receiving-line" role="tabpanel" aria-labelledby="pending-receiving-tab-line" style="display: none;">
                                 <!-- start table -->
-                                <div class="row reportpendingrecev_header">
-                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_pendingreceivingreport_per_page" data-id="pendingreceivingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingreceivingreport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-11 col-md-11">                                                                                       
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="pendingreceivingreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="pendingreceivingreport_exportbtn"
-                                                           data-id="pendingreceivingreportexport" onclick="PosnicPro.pendingreceivingreport.pendingreceivingReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 <div class="card-body card-box no-padding loader-pending-report">
                                     <!-- Start table -->
                                     <div class="table-responsive">
@@ -199,7 +147,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_pendingreceivingreport_per_page" data-id="pendingreceivingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingreceivingreport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_pendingreceivingreport_page_total"></span></b> 
                                                     <lang class="lang_to">to</lang> 
@@ -228,36 +182,7 @@
 
                             <div class="tab-pane fade" id="pending-customer-line" role="tabpanel" aria-labelledby="pending-customer-tab-line">
                                 <!-- start table -->
-                                <div class="row reportpendingcust_header">
-                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_pendingcustomerreport_per_page" data-id="pendingcustomerreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingcustomerreport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-11 col-md-11">                                                                                       
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="pendingcustomerreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="pendingcustomerreport_exportbtn"
-                                                           data-id="pendingcustomerreportexport" onclick="PosnicPro.pendingcustomerreport.pendingcustomerReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 <div class="card-body card-box no-padding loader-pending-report">
                                     <!-- Start table -->
                                     <div class="table-responsive">
@@ -281,7 +206,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_pendingcustomerreport_per_page" data-id="pendingcustomerreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingcustomerreport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_pendingcustomerreport_page_total"></span></b> 
                                                     <lang class="lang_to">to</lang> 
@@ -311,36 +242,7 @@
 
                             <div class="tab-pane fade" id="pending-supplier-line" role="tabpanel" aria-labelledby="pending-supplier-tab-line" style="display: none;">
                                 <!-- start table -->
-                                <div class="row reportpendingsupply_header">
-                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_pendingsupplierreport_per_page" data-id="pendingsupplierreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingsupplierreport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-11 col-md-11">                                                                                       
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="pendingsupplierreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="pendingsupplierreport_exportbtn"
-                                                           data-id="pendingsupplierreportexport" onclick="PosnicPro.pendingsupplierreport.pendingsupplierReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 <div class="card-body card-box no-padding loader-pending-report">
                                     <!-- Start table -->
                                     <div class="table-responsive">
@@ -364,7 +266,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_pendingsupplierreport_per_page" data-id="pendingsupplierreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingsupplierreport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_pendingsupplierreport_page_total"></span></b> 
                                                     <lang class="lang_to">to</lang> 
@@ -393,36 +301,7 @@
                             
                             <div class="tab-pane fade" id="pending-customercategory-line" role="tabpanel" aria-labelledby="pending-customercategory-tab-line">
                                 <!-- start table -->
-                                <div class="row reportpendingcust_header">
-                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_pendingcustomercategoryreport_per_page" data-id="pendingcustomercategoryreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingcustomercategoryreport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-11 col-md-11">                                                                                       
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="pendingcustomercategoryreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="pendingcustomercategoryreport_exportbtn"
-                                                           data-id="pendingcustomercategoryreportexport" onclick="PosnicPro.pendingcustomercategoryreport.pendingcustomercategoryReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 <div class="card-body card-box no-padding loader-pending-report">
                                     <!-- Start table -->
                                     <div class="table-responsive">
@@ -446,7 +325,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_pendingcustomercategoryreport_per_page" data-id="pendingcustomercategoryreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingcustomercategoryreport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_pendingcustomercategoryreport_page_total"></span></b> 
                                                     <lang class="lang_to">to</lang> 
@@ -546,18 +431,8 @@
                             </div>
                             <div class="portlet-body padding-top-0">
                                 <div class="row">
-                                    <div class="col-lg-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_pendingproductdetails_per_page" data-id="pendingproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingproductdetails per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-10 col-md-10">                                                                                       
-
-                                    </div>
+                                    
+                                    
                                 </div>
                                 <div class="card-body card-box no-padding loader-item-report">
                                     <!-- Start table -->
@@ -574,7 +449,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_pendingproductdetails_per_page" data-id="pendingproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingproductdetails per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_pendingproductdetails_page_total"></span></b> 
                                                     <lang class="lang_to">to</lang> 
@@ -673,18 +554,8 @@
                             </div>
                             <div class="portlet-body padding-top-0">
                                 <div class="row">
-                                    <div class="col-lg-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_pendingreceivingproductdetails_per_page" data-id="pendingreceivingproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingreceivingproductdetails per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-10 col-md-10">                                                                                       
-
-                                    </div>
+                                    
+                                    
                                 </div>
                                 <div class="card-body card-box no-padding loader-item-report">
                                     <!-- Start table -->
@@ -701,7 +572,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_pendingreceivingproductdetails_per_page" data-id="pendingreceivingproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View pendingreceivingproductdetails per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_pendingreceivingproductdetails_page_total"></span></b> 
                                                     <lang class="lang_to">to</lang> 

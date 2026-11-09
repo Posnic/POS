@@ -9,7 +9,7 @@
                 </div>               
                 <div class="col-md-9 col-lg-9 show-button-action"></div>                  
                 <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_register_report_daterange">
+                    <div class="form-control pull-right daterange-timepicker-all report-period daterange-style date-align view_register_report_daterange">
                         <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
                         <span></span>
                     </div>
@@ -68,22 +68,6 @@
                             </div>
                             <div class="tab-pane fade show active" id="register-line" role="tabpanel" aria-labelledby="register-tab-line">
                                 <!-- start table -->
-                                <div class="row reportregister_header">
-                                    <div class="col-lg-1 col-md-1 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_registerreport_per_page" data-id="registerreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View registerreport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-11 col-md-11">                                                                                       
-                                        <button data-module="report" data-access="read" id="registerreport_exportbtn"
-                                                data-id="registerreportexport" onclick="PosnicPro.registerreport.registerReportExport(this);"
-                                                class="btn btn-primary-rgba pull-right dash_sale_count" disabled><lang class="lang_exportcsv_title">Export All To CSV</lang></button>
-                                    </div>
-                                </div>
                                 <div class="card-body card-box no-padding loader-register-report">
                                     <!-- Start table -->
                                     <div class="table-responsive">
@@ -105,7 +89,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_registerreport_per_page" data-id="registerreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View registerreport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_registerreport_page_total"></span></b>
                                                     <lang class="lang_to">to</lang> 

@@ -12,11 +12,10 @@ function setup(){
 test('quick dates preserve search and other filters, reset pagination, and synchronize selection',()=>{
  const h=setup();try{const lf=h.w.PosnicPro.listFilter,st=lf.state('sales');st.search='S-123';st.extra={status:'Paid'};
  for(const preset of ['today','yesterday','lastweek','all']){
- h.$('[data-sales-date="'+preset+'"]').trigger('click');assert.equal(st.preset,preset);assert.equal(st.search,'S-123');assert.equal(st.extra.status,'Paid');assert.equal(h.loads.at(-1),1);
- assert.equal(h.$('[data-sales-date="'+preset+'"]').attr('aria-pressed'),'true');assert.equal(h.$('#sales_quick_dates [aria-pressed="true"]').length,1);
+ h.$('#sales_quick_controls .lf-preset').val(preset).trigger('change');assert.equal(st.preset,preset);assert.equal(st.search,'S-123');assert.equal(st.extra.status,'Paid');assert.equal(h.loads.at(-1),1);
  }
  assert.equal(st.from,null);assert.equal(st.to,null);
- h.$('.lf-preset').val('month').trigger('change');assert.equal(h.$('#sales_quick_dates [aria-pressed="true"]').length,0);
+ h.$('.lf-preset').val('month').trigger('change');assert.equal(st.preset,'month');
  }finally{h.dom.window.close();}
 });
 test('last week covers the previous Monday through Sunday across year boundaries',()=>{

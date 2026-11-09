@@ -55,7 +55,7 @@ PosnicPro.registerreport = {
                 var per_page = table.data('total');
             } else {
                 var current_page = table.data('current_page');
-                var per_page = table.data('per_page');
+                var per_page = Number($('#view_registerreport_per_page').val()) || 5;
             }
             var registerDetail = $("#register_report_value").select2("data");
             var register_value = registerDetail[0].element.attributes['data-register-id'].value;

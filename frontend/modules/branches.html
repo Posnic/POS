@@ -10,10 +10,10 @@
                 <div class="col-auto">
                     <h4 class="page-title break_title mb-0"><lang class="lang_branchoutlet_title">Branches / Outlet</lang></h4>
                 </div>
-                <div class="col-auto text-dark">
+                <div class="col-auto text-dark branch-switch-control" hidden>
                     <lang class="lang_branchoutlet">Current Branch/Outlet</lang>
                 </div>
-                <div class="col-auto">
+                <div class="col-auto branch-switch-control" hidden>
                     <div class="single-dropdown d-inline-block align-middle">
                         <div class="dropdown">
                             <a class="btn btn-primary dropdown-toggle dropdown-cursor-pointer" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -33,15 +33,13 @@
                         <i class="feather icon-edit"></i>
                     </a>
                 </div>
-                <div class="col">
-                    <div class="lf-panel" id="branches_filter_panel" style="display:none;"></div>
-                </div>
-                <div class="col-auto text-right">
+
+                <div class="col-auto text-right ml-auto lf-actions">
                     <div class="widgetbar" id="branches_controls">
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false" title="Export CSV" data-t-title="lang_export_csv" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
-                            <i class="feather icon-share"></i>
+                            <i class="feather icon-share mr-1"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.branches.exportCsv(); return false;"><lang class="lang_this_page_what_is_shown">This page (what is shown)</lang></a>
@@ -58,6 +56,9 @@
                             <i class="feather icon-plus mr-2"></i><lang class="lang_addvariant_title">New</lang>
                         </a>
                     </div>
+                </div>
+                <div class="col-12 lf-toolbar-slot">
+                    <div class="lf-panel" id="branches_filter_panel" style="display:none;"></div>
                 </div>
             </div>
         </div>

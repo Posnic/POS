@@ -80,7 +80,7 @@ PosnicPro.paymentreport = {
                     var rowTotal = data.payment.length;
                     if (rowTotal === 0) {
                         $('.reportpayment_header').hide();
-                        let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                        let dateRange = daterange;
                 PosnicPro.renderNoRecords('.reportpayment_norecord', 'No Records on ' + dateRange);
                         $('#reportpayment_img_hide,.reportpayment_norecord').show();
 
@@ -135,7 +135,7 @@ PosnicPro.paymentransaction = {
         if (branchId !== '') {
             var loader = $(".loader-receiving-payment-report");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
-            PosnicPro.appendReportTableBody('paymenttransaction');
+            PosnicPro.appendReportTableBody('paymenttransaction', '#view_paymentransaction');
             var daterange = $(".view_payment_report_daterange").val();
             var fields = daterange.split('-');
             var table = $('#view_paymentransaction');
@@ -174,7 +174,7 @@ PosnicPro.paymentransaction = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportpaymentstatus_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                 PosnicPro.renderNoRecords('.reportpaymenttransc_norecord', 'No Records on ' + dateRange);
                             $('#reportpaymenttransc_img_hide,.reportpaymenttransc_norecord').show();
 
@@ -245,7 +245,7 @@ PosnicPro.paymentreturntransaction = {
         if (branchId !== '') {
             let loader = $(".loader-return-sales-payment-report");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
-            PosnicPro.appendReportTableBody('paymenttransaction');
+            PosnicPro.appendReportTableBody('paymenttransaction', '#view_paymentreturntransaction');
             let daterange = $(".view_payment_report_daterange").val();
             let fields = daterange.split('-');
             let table = $('#view_paymentreturntransaction');
@@ -284,7 +284,7 @@ PosnicPro.paymentreturntransaction = {
                         let rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportpaymentreturn_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                 PosnicPro.renderNoRecords('.reportpaymentreturntransction_norecord', 'No Records on ' + dateRange);
                             $('#reportpaymentreturntransction_img_hide,.reportpaymentreturntransction_norecord').show();
 

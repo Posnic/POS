@@ -18,6 +18,12 @@ Posnic credits people, not software tools.
 
 Every change that adds, renames or removes a user-facing route, feature, report, setting or extension must update universal search in the same change. Register every navigable destination in **All**, including list, detail and create flows. Use the menu's translated label, common operator terms, stable route or record resolver, module filter and the destination's own permissions and feature gates. For each setting, update its owning settings page and register a link to the exact section or control. For each installed extension, register its eligible pages, actions and record providers and remove them on disable or uninstall. Parameterized record routes must resolve authorized records in the current shop and branch. Internal API endpoints are outside the navigation catalog. Create actions such as Add Customer, New Sale and New Purchase must open the existing entry form with its write permission. Selecting the action must never submit it. Verify coverage against the router, settings pages and extension declarations, including renamed or removed links, and test discovery from All with an authorized and a restricted user. See [Universal search](docs/UNIVERSAL_SEARCH.md) for route, wording and extension examples.
 
+Use the common action phrase index in `command-palette.js` for operator wording. Register each primary list under its entity name, and each add action under its create destination. Attach alternate wording to the specific route link or settings control using pipe-separated `data-search-aliases`. Installed extension pages declare their label, action and keyword phrases in their manifest search contribution. Test both View and Add through the header, including the destination Enter opens.
+
+## Table search and filters
+
+When adding a record list, report or installed extension table, declare the row type, searchable identifiers, primary party or item filter, business date and supported sorts. Use the shared list toolbar or the report's existing query adapter. A changed selection must feed the authorized local database query, count, totals and export before pagination. Show Branch only for multiple accessible outlets. Verify the normal route, a match beyond page one, clearing filters and the narrow layout.
+
 ## Where a setting goes
 
 The Features list is a row of switches. A shopkeeper scans it to see what is

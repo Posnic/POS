@@ -160,7 +160,9 @@ PosnicPro.customercategory = {
             rows: '#customercategory_list_rows',
             onRefresh: function () { return PosnicPro.customercategory.loadList(); },
             container: '#customercategory_filter_panel',
+            showTotal: true,
             button: '#customercategory_filter_btn',
+            dateField: PosnicPro.i18n.t('lang_created_date', 'Created date'),
             searchPlaceholder: PosnicPro.i18n.t('lang_search_category_name', 'Search category name'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
@@ -174,7 +176,7 @@ PosnicPro.customercategory = {
         PosnicPro.customercategory.mountFilters();
         var self = PosnicPro.customercategory;
         if (page) { self._page = page; }
-        var filters = PosnicPro.listFilter.legacyFilters('customercategory', {});
+        var filters = PosnicPro.listFilter.legacyFilters('customercategory', { dateKey:'created_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.listFilter.request('customercategory', {
             url: 'customerCategory',
@@ -183,6 +185,7 @@ PosnicPro.customercategory = {
             var data = (response && response.data) || {};
             var list = data.list || [];
             self._lastRows = list;
+            $('#customercategory_filter_panel .lf-result-total strong').text(Number(data.total) || list.length);
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('customercategory') > 0;
                 $('#customercategory_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
@@ -204,6 +207,7 @@ PosnicPro.customercategory = {
             PosnicPro.ACLForModule('customer');
             self.renderPager(Number(data.total) || list.length);
         }, function () {
+            $('#customercategory_filter_panel .lf-result-total strong').empty();
             $('#customercategory_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_customer_categories_try_aga">Could not load customer categories - try again.</lang></div>');
         });
     },
@@ -211,8 +215,6 @@ PosnicPro.customercategory = {
         var self = PosnicPro.customercategory;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_customer_category_2', 'customer category') : PosnicPro.i18n.t('lang_customer_categories', 'customer categories'));
-        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' · ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
                 + ' onclick="PosnicPro.customercategory.goPage(' + to + ');">' + text + '</button>';
@@ -226,7 +228,7 @@ PosnicPro.customercategory = {
                 html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
             }
         }
-        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) html += '<span class="q-pg-count">Page ' + p + ' of ' + pages + '</span>';
         if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
         $('#customercategory_list_paging').html(html);
     },
@@ -258,7 +260,7 @@ PosnicPro.customercategory = {
             params: function (page, limit) {
                 return {
                     page: page, limit: limit,
-                    filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('customercategory', {}))
+                    filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('customercategory', { dateKey:'created_date' }))
                 };
             },
             head: spec.head,
@@ -492,7 +494,7 @@ $(document).ready(function () {
 PosnicPro.customercategorydetails = {
 
     customercategorydetailsTable: function (type) {
-        PosnicPro.appendReportTableBody('customerdetails');
+        PosnicPro.appendReportTableBody('customerdetails', '#view_customercategorydetails');
         var loader = $(".loader-customercategoryactivity");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var table = $('#view_customercategorydetails');

@@ -10,7 +10,7 @@
   /* name, hash, acl [module, perm], keywords for matching */
   var PAGES = [
     ['New Sale', 'sales/new', ['sales', 'write'], 'bill billing pos sell tender'],
-    ['Sales History', 'sales', ['sales', 'read'], 'invoices orders list'],
+    ['Sales History', 'sales', ['sales', 'read'], 'invoices orders list my sales sold by cashier payment filter'],
     ['Sales Report', 'salereport', ['report', 'read'], 'graph analytics'],
     ['Items', 'items', ['item', 'read'], 'products stock inventory'],
     ['Add Item', 'items/new', ['item', 'write'], 'product create'],
@@ -29,9 +29,9 @@
     ['Receiving Report', 'receivingreport', ['report', 'read'], 'purchase analytics'],
     ['Expenses', 'expenses', ['expense', 'read'], 'costs spend'],
     ['Add Expense', 'expenses/new', ['expense', 'write'], 'cost create'],
-    ['Users', 'users', ['user', 'read'], 'staff team'],
-    ['Add User', 'users/new', ['user', 'write'], 'staff create'],
-    ['Staff Report', 'userreport', ['report', 'read'], 'user analytics'],
+    ['Employees', 'users', ['user', 'read'], 'users staff team'],
+    ['Add Employee', 'users/new', ['user', 'write'], 'user staff create'],
+    ['Employee Reports', 'userreport', ['report', 'read'], 'staff user analytics'],
     ['Cash Register', 'registers', ['sales', 'read'], 'till drawer open close denomination'],
     [
       'Billing outlets',
@@ -160,7 +160,7 @@
     ['tax', 'taxes'],
     ['receipt', 'receipts'],
     ['bill', 'bills', 'billing'],
-    ['view', 'show', 'open', 'find'],
+    ['view', 'show', 'open', 'find', 'list', 'browse', 'display'],
     ['edit', 'update', 'change'],
     ['feature', 'features', 'module', 'modules'],
   ];
@@ -181,13 +181,55 @@
         return word;
       });
   }
+  // Primary list destinations own the short operator wording even when a report
+  // has the same menu label. Resolve permissions from the current catalog.
+  const primaryLists = {
+    sales: ['sale', 'sales history'],
+    purchaseorders: ['purchase', 'purchase order'],
+    items: ['item'], customers: ['customer'], suppliers: ['supplier'],
+    quotes: ['quote'], invoices: ['invoice'], categories: ['category'],
+    branches: ['branch'], users: ['user'], roles: ['role'], units: ['unit'],
+    variants: ['variant'], expenses: ['expense'], stocklogs: ['stock log'],
+  };
+  const phraseKey = (text) => words(text).filter((word) => word !== 'view' && word !== 'new').join(' ');
+  function actionIndex(entries) {
+    const index = new Map();
+    function register(action, phrase, entry) {
+      const subject = phraseKey(phrase);
+      if (!subject) return;
+      const key = action + ' ' + subject;
+      if (!index.has(key)) index.set(key, new Set());
+      if (entry) index.get(key).add(entry);
+    }
+    for (const entry of entries) {
+      const action = entry.create ? 'new' : 'view';
+      const labels = [entry.name, ...(entry.phrases || [])];
+      if (entry.hash && !entry.control && !entry.extension) labels.push(entry.hash.replace(/[/_-]/g, ' '));
+      for (const label of labels) register(action, label, entry);
+    }
+    for (const [hash, labels] of Object.entries(primaryLists)) {
+      const destination = entries.find((entry) => entry.hash === hash && !entry.control);
+      for (const label of labels) {
+        const key = 'view ' + phraseKey(label);
+        index.delete(key);
+        register('view', label, destination);
+      }
+    }
+    return index;
+  }
+  function explicitAction(query) {
+    const terms = words(query);
+    const action = terms.find((term) => term === 'view' || term === 'new');
+    return action && terms.length > 1 ? actionsByPhrase.get(action + ' ' + phraseKey(query)) : undefined;
+  }
   function score(query, command) {
     const terms = words(query);
     if (!terms.length) return 0;
     const title = words(command.name);
     if (terms.includes('new') && !command.create) return 0;
-    const aliases = words(command.keywords);
-    const all = title.concat(aliases, ['view']);
+    const aliases = words([command.keywords, ...(command.phrases || [])].join(' '));
+    if (terms.includes('view') && command.create) return 0;
+    const all = title.concat(aliases, command.create ? ['new'] : ['view']);
     if (!terms.every((term) => all.some((word) => word === term || word.startsWith(term)))) return 0;
     if (title.join(' ') === terms.join(' ')) return 4;
     return terms.every((term) => title.includes(term)) ? 3 : 2;
@@ -197,6 +239,7 @@
     Inventory: 'lang_inventory_title',
     Purchases: 'lang_po_title',
     Customers: 'lang_customer_title',
+    Employees: 'lang_user_title',
     Reports: 'lang_report_title',
     Extensions: 'lang_extensions',
     Settings: 'lang_settings_title',
@@ -205,6 +248,7 @@
   const kindLabels = {
     sales: 'Sale',
     customers: 'Customer',
+    users: 'Employee',
     items: 'Item',
     invoices: 'Invoice',
     quotes: 'Quote',
@@ -218,6 +262,7 @@
     'Inventory',
     'Purchases',
     'Customers',
+    'Employees',
     'Reports',
     'Settings',
     'Extensions',
@@ -230,6 +275,7 @@
     category: 'Inventory',
     variant: 'Inventory',
     customer: 'Customers',
+    user: 'Employees',
     supplier: 'Purchases',
     receiving: 'Purchases',
     extensions: 'Extensions',
@@ -288,6 +334,7 @@
       list.set(hash, {
         hash,
         name,
+        phrases: [old?.name, label, link.title, link.getAttribute('aria-label'), ...(link.dataset.searchAliases || '').split('|')].filter(Boolean),
         create,
         group,
         keywords: [
@@ -316,6 +363,8 @@
       list.set(hash + '@' + control.id, {
         hash,
         control: control.id,
+        phrases: [label.title, control.getAttribute('aria-label'), control.placeholder,
+          ...(control.dataset.searchAliases || '').split('|')].filter(Boolean),
         name,
         group: 'Settings',
         keywords: [page.name, 'settings', control.id.replace(/_/g, ' ')].join(' '),
@@ -347,6 +396,7 @@
     timer,
     results = [],
     catalog = [],
+    actionsByPhrase = new Map(),
     previousFocus,
     searchScope,
     historyData = { events: [], records: [] };
@@ -377,7 +427,7 @@
       const kind = document.createElement('span');
       kind.className = 'cmdk-kind';
       kind.textContent =
-        kindLabels[entry.kind] ||
+        entry.back ? '' : kindLabels[entry.kind] ||
         entry.kind ||
         (entry.create
           ? PosnicPro.i18n.t('lang_action', 'Action')
@@ -461,10 +511,16 @@
     }));
   }
   function render() {
+    if (itemMenu) return;
     clearTimeout(timer);
     const version = ++sequence;
     const q = node('cmdk-input').value.trim();
     node('cmdk-status').textContent = '';
+    const exact = explicitAction(q);
+    if (exact) {
+      renderList([...exact].filter((entry) => tab === 'All' || entry.group === tab));
+      return;
+    }
     const local = catalog
       .filter((c) => tab === 'All' || c.group === tab)
       .map((c) => ({ ...c, rank: score(q, c) }))
@@ -522,9 +578,62 @@
       field.focus({ preventScroll: true });
     }, 80);
   }
+  let itemMenu = false;
+  let pendingItem = null;
+  function takeItem(route) {
+    const item = pendingItem;
+    pendingItem = null;
+    return item && item.route === route && scope() === item.scope ? item : null;
+  }
+  window.addEventListener('hashchange', () => {
+    if (pendingItem && location.hash !== '#/' + pendingItem.route) pendingItem = null;
+  });
+  function openItemActions(entry) {
+    ++sequence;
+    itemMenu = true;
+    const id = entry.hash.split('/')[1];
+    const destinations = new Set(commands().map(command => command.hash));
+    const actions = [];
+    function action(name, route, run) {
+      if (!destinations.has(route)) return;
+      actions.push({ name, section: entry.name, create: true, run });
+    }
+    function go(route, ready) {
+      pendingItem = { id, name: entry.name, scope: scope(), route };
+      if (location.hash === '#/' + route) ready(takeItem(route));
+      else hasher.setHash(route);
+    }
+    action('Make sale', 'sales/new', () => go('sales/new', item => PosnicPro.sales.itemsMenu.addToLineItemsList(item.id)));
+    action('View item details', 'items', () => hasher.setHash(entry.hash));
+    action('Stock details', 'items', () => {
+      const context = scope();
+      PosnicPro.get('items/' + id, response => {
+        if (scope() !== context) return;
+        const item = response.data;
+        if (!item) return;
+        const tracked = item.track_inventory === true || item.track_inventory === 'true';
+        const lines = [tracked ? 'In stock: ' + (item.available_quantity ?? 0) + ' ' + (item.unit || '') : 'Stock is not tracked'];
+        if (tracked && item.low_stock != null) lines.push('Low-stock alert: ' + item.low_stock);
+        if (item.stock_locations?.length) lines.push('Locations: ' + item.stock_locations.join(', '));
+        swal({ titleText: item.name, text: lines.join(' · '), confirmButtonText: 'Done' });
+      }, () => PosnicPro.alert('warning', 'Item unavailable'));
+    });
+    action('Stock logs', 'stocklogs', () => go('stocklogs', item => PosnicPro.stocklogs.filterItem(item)));
+    action('Make purchase', 'receivings/new', () => go('receivings/new', item => PosnicPro.receivings.addPickedItem(item.id)));
+    action('Show item report', 'itemreport', () => go('itemreport', item => PosnicPro.itemreport.selectItem(item)));
+    actions.push({ name: 'Back to search results', back: true });
+    renderList(actions);
+    node('cmdk-status').textContent = '';
+  }
   function pick(entry) {
     if (searchScope !== scope()) {
       close();
+      return;
+    }
+    if (entry.back) {
+      itemMenu = false;
+      render();
+      node('cmdk-input').focus();
       return;
     }
     if (entry.page) {
@@ -572,6 +681,10 @@
         () => {},
         () => {},
       );
+      if (entry.kind === 'items' && entry.resolved) {
+        openItemActions(entry);
+        return;
+      }
       close();
       hasher.setHash(entry.hash);
       if (entry.control) focusControl(entry);
@@ -595,6 +708,7 @@
   function close() {
     node('cmdk-overlay')?.classList.remove('cmdk-closing');
     opened = false;
+    itemMenu = false;
     sequence++;
     clearTimeout(timer);
     if (node('cmdk-overlay')?.open) node('cmdk-overlay').close();
@@ -606,14 +720,16 @@
     dialog.id = 'cmdk-overlay';
     dialog.setAttribute('aria-label', 'Search POSNIC');
     dialog.innerHTML =
-      '<div id="cmdk-box"><div class="cmdk-field"><input id="cmdk-input" type="search" maxlength="96" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-label="Search POSNIC" data-t-aria-label="lang_search_posnic" placeholder="Search POSNIC" data-t-placeholder="lang_search_posnic"><button type="button" id="cmdk-close" aria-label="Close search" data-t-aria-label="lang_close_search">×</button></div><div id="cmdk-tabs"></div><div id="cmdk-list" role="listbox"></div><div id="cmdk-status" role="status"></div><div id="cmdk-hint">↑ ↓ Select · Enter Open · Esc Close <button type="button" id="cmdk-clear"><lang class="lang_clear_history">Clear history</lang></button></div></div>';
+      '<div id="cmdk-box"><div class="cmdk-field"><input id="cmdk-input" type="search" maxlength="96" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-label="Search POSNIC" data-t-aria-label="lang_search_posnic" placeholder="Search anything" data-t-placeholder="lang_search_anything"><button type="button" id="cmdk-close" aria-label="Close search" data-t-aria-label="lang_close_search" title="Close search"><i class="feather icon-x" aria-hidden="true"></i></button></div><div id="cmdk-tabs"></div><div id="cmdk-list" role="listbox"></div><div id="cmdk-status" role="status"></div><div id="cmdk-hint">↑ ↓ Select · Enter Open · Esc Close <button type="button" id="cmdk-clear"><lang class="lang_clear_history">Clear history</lang></button></div></div>';
     document.body.append(dialog);
     for (const name of groupNames) {
+      if (name === 'Employees' && !aclCan('user', 'read')) continue;
       const b = document.createElement('button');
       b.type = 'button';
       b.dataset.group = name;
       b.textContent = PosnicPro.i18n.t(groupKeys[name], name);
       b.onclick = () => {
+        itemMenu = false;
         tab = name;
         refreshTabs();
         render();
@@ -639,7 +755,7 @@
         }
       });
     };
-    node('cmdk-input').oninput = render;
+    node('cmdk-input').oninput = () => { itemMenu = false; render(); };
     node('cmdk-input').onkeydown = (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -658,15 +774,6 @@
     for (const b of node('cmdk-tabs').children)
       b.setAttribute('aria-pressed', String(tab === b.dataset.group));
   }
-  function position() {
-    const d = node('cmdk-overlay'),
-      r = node('posnic-header-search')?.getBoundingClientRect();
-    if (!d) return;
-    const width = Math.min(710, window.innerWidth - 24);
-    d.style.setProperty('--cmdk-left', Math.max(12, Math.min(r?.left || 16, innerWidth - width - 12)) + 'px');
-    d.style.setProperty('--cmdk-top', Math.max(8, r?.top || 20) + 'px');
-    d.style.setProperty('--cmdk-start', (r?.width || 140) + 'px');
-  }
   let session = 0;
   function open() {
     if (PosnicPro.lockScreen?.isOpen()) return;
@@ -679,12 +786,12 @@
     opened = true;
     tab = 'All';
     refreshTabs();
-    position();
     node('cmdk-overlay').showModal();
     node('cmdk-input').value = '';
     node('cmdk-input').focus();
     historyData = { events: [], records: [] };
     catalog = commands();
+    actionsByPhrase = actionIndex(catalog);
     render();
     PosnicPro.get(
       { url: 'extensions/v1', quietStatuses: [403, 404] },
@@ -697,11 +804,12 @@
             catalog.push({
               hash: hash + '/find/' + page.target + '/page',
               name: page.label,
+              phrases: [page.target, ...page.keywords, ext.displayName + ' ' + page.label],
               create: page.action === 'create',
               keywords: [
                 ext.displayName,
                 ...page.keywords,
-                page.action === 'create' ? 'new' : 'settings',
+                page.action === 'create' ? 'new' : 'view',
               ].join(' '),
               group: 'Extensions',
               extension: true,
@@ -716,6 +824,7 @@
               extension: true,
             });
         }
+        actionsByPhrase = actionIndex(catalog);
         render();
       },
       () => {},
@@ -730,9 +839,9 @@
       () => {},
     );
   }
-  PosnicPro.palette = { open, close, resetSession, toggle: () => (opened ? close() : open()) };
+  PosnicPro.palette = { open, close, takeItem, resetSession, toggle: () => (opened ? close() : open()) };
   document.addEventListener('click', (e) => {
-    if (e.target.closest('#posnic-header-search')) open();
+    if (e.target.closest('#posnic-header-search, #posnic-mobile-search')) open();
   });
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -740,7 +849,6 @@
       if (!e.repeat) PosnicPro.palette.toggle();
     }
   });
-  window.addEventListener('resize', position);
   window.addEventListener('hashchange', () => {
     if (opened) close();
   });

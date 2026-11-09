@@ -14,6 +14,7 @@
     },
     "files": [
         "layouts/about.html",
+        "layouts/session-context.html",
         "layouts/footer.html",
         "layouts/header.html",
         "layouts/sidebar.html",

@@ -1,13 +1,18 @@
 <div class="vertical-layout page_loader" id="inventorycounts" style="display:none">
-    <div id="containerbar"><div class="breadcrumbbar crumbbar_padding"><div class="row align-items-center row_filter"><div class="col"><h4 class="page-title break_title mb-0"><lang class="lang_stock_counts">Stock Counts</lang></h4></div><div class="col-auto">
-<button id="inventory-overview" class="btn btn-primary-rgba" onclick="PosnicPro.inventorycounts.navigate('overview');"><lang class="lang_overview">Overview</lang></button>
-<button class="btn btn-primary-rgba" data-module="item" data-access="write" onclick="PosnicPro.inventorycounts.navigate('audit');"><i class="feather icon-clipboard" aria-hidden="true"></i> <lang class="lang_start_stock_audit">Start stock audit</lang></button>
-<button class="btn btn-primary-rgba" data-module="item" data-access="read" onclick="PosnicPro.inventorycounts.navigate('damage');"><i class="feather icon-alert-triangle" aria-hidden="true"></i> <lang class="lang_spoilage_damage">Spoilage / damage</lang></button>
+    <div id="containerbar"><div class="breadcrumbbar crumbbar_padding">
+        <div class="count-title-row">
+            <h4 class="page-title mb-0"><lang class="lang_stock_counts">Stock Counts</lang></h4>
+            <div class="count-actions">
 <button class="btn btn-primary-rgba" data-module="item" data-access="write" onclick="PosnicPro.items.openBulkStock();"><lang class="lang_bulk_stock_update">Bulk stock update</lang></button>
-<a class="btn btn-primary-rgba" href="#/stocklogs" onclick="PosnicPro.inventorycounts.navigate('logs');return false;"><lang class="lang_inventory_logs">Inventory logs</lang></a>
-<a class="btn btn-primary-rgba" href="#/lowstockitems" onclick="PosnicPro.inventorycounts.navigate('lowstock');return false;"><lang class="lang_low_stock_list">Low stock list</lang></a>
-<button class="btn btn-primary-rgba" onclick="PosnicPro.inventorycounts.load();"><i class="feather icon-refresh-cw" aria-hidden="true"></i> <lang class="lang_wf_refresh">Refresh</lang></button>
-</div><div class="col-auto" data-ask-entry style="display:none"><a class="btn btn-primary-rgba" href="#/askposnic"><lang class="lang_prepare_with_ask_posnic">Prepare with Ask Posnic</lang></a></div></div></div></div>
+<button id="count-overview-refresh" class="btn btn-primary-rgba" onclick="PosnicPro.inventorycounts.load();"><i class="feather icon-refresh-cw" aria-hidden="true"></i> <lang class="lang_wf_refresh">Refresh</lang></button>
+<div class="col-auto" data-ask-entry style="display:none"><a class="btn btn-primary-rgba" href="#/askposnic"><lang class="lang_prepare_with_ask_posnic">Prepare with Ask Posnic</lang></a></div>
+</div></div>
+<nav class="count-navigation" aria-label="Stock Counts">
+<button id="inventory-overview" class="count-tab" data-count-view="overview" onclick="PosnicPro.inventorycounts.navigate('overview');"><lang class="lang_overview">Overview</lang></button>
+<button class="count-tab" data-count-view="audit" data-module="item" data-access="write" onclick="PosnicPro.inventorycounts.navigate('audit');"><i class="feather icon-clipboard" aria-hidden="true"></i> <lang class="lang_start_stock_audit">Start stock audit</lang></button>
+<button class="count-tab" data-count-view="damage" data-module="item" data-access="read" onclick="PosnicPro.inventorycounts.navigate('damage');"><i class="feather icon-alert-triangle" aria-hidden="true"></i> <lang class="lang_spoilage_damage">Spoilage / damage</lang></button>
+<a class="count-tab" data-count-view="logs" href="#/stocklogs" onclick="PosnicPro.inventorycounts.navigate('logs');return false;"><lang class="lang_inventory_logs">Inventory logs</lang></a>
+<a class="count-tab" data-count-view="lowstock" href="#/lowstockitems" onclick="PosnicPro.inventorycounts.navigate('lowstock');return false;"><lang class="lang_low_stock_list">Low stock list</lang></a></nav></div></div>
     <div class="contentbar stock-count-content"><div class="row"><div class="col-lg-12"><div class="card m-b-30 count-workspace"><div class="card-body"><h5><i class="feather icon-clipboard" aria-hidden="true"></i> <lang class="lang_saved_count_worksheets">Saved count worksheets</lang></h5><p class="text-muted"><lang class="lang_start_recount_to_review_and_apply_actual_s">Start recount to review and apply actual stock quantities. Completed adjustments appear in Inventory logs; saved draft worksheets appear below.</lang></p><div id="inventory_counts_list" class="text-muted"><lang class="lang_loading_stock_counts">Loading stock counts…</lang></div><div id="inventory_count_detail" class="mt-4" style="display:none"></div></div></div></div></div></div>
 </div>
 
@@ -67,24 +72,21 @@
 #inventorycounts.count-reviewing:not(.count-editing) .count-workspace > .card-body > :not(#mobile_inventory_detail) { display:none!important; }
 #inventorycounts.count-reviewing #mobile_inventory_detail { margin-top:0!important; background:var(--theme-card-bg,#fff); }
 #inventorycounts #mobile_inventory_detail .inventory-panel-header { flex-wrap:wrap; }
-#inventorycounts .breadcrumbbar { padding-top:24px!important; padding-bottom:20px; }
-#inventorycounts .row_filter { row-gap:12px; }
-#inventorycounts .count-workspace, #inventorycounts .count-workspace > .card-body { border:0!important; border-radius:0; box-shadow:none!important; background:transparent!important; }
-#inventorycounts .breadcrumbbar .btn { min-height:40px; display:inline-flex; align-items:center; justify-content:center; border:1px solid transparent; box-shadow:none!important; }
-#inventorycounts .breadcrumbbar .btn, #inventorycounts .breadcrumbbar .btn:focus { background:transparent!important; color:var(--theme-primary-color,#0968cb)!important; }
-#inventorycounts .breadcrumbbar .btn i { color:inherit!important; }
-#inventorycounts .breadcrumbbar .btn:hover { background:var(--theme-body-bg,#edf4fc)!important; }
-#inventorycounts .breadcrumbbar .btn:focus-visible { outline:2px solid #0968cb; outline-offset:3px; }
-#inventorycounts:not(.count-editing):not(.count-section) #inventory-overview,
-#inventorycounts[data-section="logs"] > #containerbar a[href="#/stocklogs"],
-#inventorycounts[data-section="lowstock"] > #containerbar a[href="#/lowstockitems"],
-#inventorycounts.count-editing:has(#audit_branch) .breadcrumbbar button[onclick*="audit"],
-#inventorycounts.count-editing:has(#spoilage_panel) .breadcrumbbar button[onclick*="damage"] { background:#0968cb!important; color:#fff!important; border-color:#0968cb; }
+#inventorycounts > #containerbar > .breadcrumbbar {padding-block:12px 0!important;}
+#inventorycounts .count-title-row, #inventorycounts .count-actions {display:flex; align-items:center; flex-wrap:wrap; gap:6px 12px;}
+#inventorycounts .count-title-row {justify-content:space-between;}
+#inventorycounts .count-navigation {display:flex; align-items:stretch; overflow-x:auto; border-bottom:1px solid var(--theme-border-color,#d4dce6); margin-top:6px;}
+#inventorycounts .count-tab {display:inline-flex; align-items:center; gap:6px; flex:none; white-space:nowrap; padding:9px 12px; margin:0; border:0; border-bottom:2px solid transparent; background:transparent; color:var(--theme-text-primary,#24364b);}
+#inventorycounts .count-tab[aria-current="page"] {color:var(--theme-primary-color,#0968cb); border-bottom-color:currentColor; font-weight:600;}
+#inventorycounts .count-tab:hover {background:var(--theme-body-bg,#edf4fc);}
+#inventorycounts .count-tab:focus-visible {outline:2px solid currentColor; outline-offset:-3px;}
+#inventorycounts:is(.count-section,.count-editing) #count-overview-refresh {display:none;}
+#inventorycounts > .stock-count-content {margin-top:0!important; padding-top:12px!important;}
 #inventorycounts #inventory_count_detail:has(#audit_branch) { padding:20px; border:1px solid var(--theme-border-color,#dce3ec); border-radius:12px; background:var(--theme-card-bg,#fff); }
 #inventory_section_host > .vertical-layout { margin:0!important; padding:0!important; width:100%!important; }
-#inventory_section_host .contentbar { padding:16px 0!important; }
-#inventory_section_host .breadcrumbbar { margin:0!important; padding:0 0 16px!important; }
-#inventory_section_host .page-title { font-size:18px; }
+#inventory_section_host .contentbar { padding:10px 0 0!important; }
+#inventorycounts #inventory_section_host .page_loader > #containerbar > .breadcrumbbar {margin:0!important; padding:0!important;}
+#inventory_section_host .row_filter > .col-auto:has(> .page-title), #inventory_section_host .stocklogs-toolbar .page-title {display:none;}
 #inventory_count_detail:has(#audit_branch) > .d-flex:first-child { padding-bottom:16px; border-bottom:1px solid var(--theme-border-color,#dce3ec); flex-wrap:wrap; }
 #inventory_count_detail:has(#audit_branch) .form-control, #inventory_count_detail:has(#audit_branch) .btn { min-height:40px; margin:0; }
 #inventory_count_detail:has(#audit_branch) > .table-responsive { border:1px solid var(--theme-border-color,#dce3ec); border-radius:8px; margin:16px 0; }

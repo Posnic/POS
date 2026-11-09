@@ -715,26 +715,12 @@ test('it is loaded by the build, after PosnicPro and before the modules', () => 
   assert.ok(lf < sales, 'and before the module that mounts it');
 });
 
-test('the whole bar lives on the header line, between title and buttons', () => {
+test('the quick toolbar follows the title and actions on its own header row', () => {
   const html = fs.readFileSync(path.join(ROOT, 'frontend', 'modules', 'quotes.html'), 'utf8');
   const header = html.slice(html.indexOf('<div class="breadcrumbbar">'), html.indexOf('<div class="contentbar">'));
-
-  assert.ok(header.includes('quotes_filter_btn'), 'the Filter button belongs in the header');
-  assert.ok(header.includes('quotes_filter_panel'), 'and so does the panel it opens');
-  assert.ok(header.indexOf('quotes_filter_btn') < header.indexOf('quotes/new'), 'Filter before New');
-
-  // title, then the panel, then the buttons - in that order on one line
-  assert.ok(
-    header.indexOf('lang_quotes_title') < header.indexOf('quotes_filter_panel'),
-    'the panel goes after the title',
-  );
-  assert.ok(
-    header.indexOf('quotes_filter_panel') < header.indexOf('quotes_filter_btn'),
-    'and before the buttons',
-  );
-
-  const panel = html.slice(html.indexOf('id="quotes_filter_panel"'));
-  assert.match(panel.slice(0, 120), /display:\s*none/, 'a list is for reading - it opens on request');
+  const controls = ['lang_quotes_title', 'quotes_filter_btn', 'quotes/new', 'lf-toolbar-slot', 'quotes_filter_panel'];
+  const positions = controls.map(control => header.indexOf(control));
+  assert.ok(positions.every((at, index) => at >= 0 && (!index || at > positions[index - 1])));
 });
 
 test('the bar renders as ONE row, not stacked rows', () => {
@@ -744,24 +730,10 @@ test('the bar renders as ONE row, not stacked rows', () => {
   assert.strictEqual(rows, 1, `the bar emits ${rows} rows; it must be a single strip`);
 });
 
-test('suggestions are not gated on which field is selected', () => {
-  /* Gating on field === customer was wrong twice: searching "All fields" for a
-     customer is exactly when the suggestion helps, and with All selected - the
-     default - typing hid the list that had just appeared on focus. */
-  assert.ok(
-    !/cfg\.typeahead !== 'customer'/.test(listFilterSrc),
-    'the per-field gate is what stopped typing from working',
-  );
-  assert.ok(
-    !/state\.field !== '[a-z_]+'/.test(listFilterSrc),
-    'a per-field gate is back - typing with "All fields" would hide the list again',
-  );
-  assert.match(
-    listFilterSrc,
-    /var entity = m\.cfg\.typeahead;\s+var e = entity && LF\.ENTITIES\[entity\];/,
-    'the gate must be the panel-level entity, not the selected field',
-  );
-  assert.match(listFilterSrc, /typeaheadField/, 'and picking a name narrows the field for you');
+test('suggestions respect each module’s configured search field', () => {
+  const suggest = blockAt(listFilterSrc, 'LF.typeahead = function (key, term) {');
+  assert.match(suggest, /m\.cfg\.typeaheadField && m\.state\.field !== m\.cfg\.typeaheadField/);
+  assert.match(suggest, /LF\.suggest\(entity, term\)/);
 });
 
 test('quotes takes its filter params from the shared bar, not its own inputs', () => {
@@ -917,10 +889,11 @@ test('the PDF filters the same way, and leaves no gap behind', () => {
  * thing under the cursor that can report the state it just changed.
  */
 test('the Filter button looks pressed while its panel is open', () => {
-  const toggle = blockAt(listFilterSrc, 'LF.toggle = function (key) {');
-  assert.match(toggle, /var opening = !\$panel\.is\(':visible'\)/, 'the state is read before the animation, not after');
-  assert.match(toggle, /toggleClass\('lf-btn-open', opening\)/, 'the pressed class is never wired');
-  assert.match(toggle, /attr\('aria-expanded'/, 'a screen reader is told nothing');
+  const dialog = blockAt(listFilterSrc, 'function buildFilterDialog(m, row, button) {');
+  assert.match(dialog, /LF\.openOptions\(dialog\[0\], button\)/);
+  assert.match(blockAt(listFilterSrc, 'LF.openOptions = function (dialog, button) {'), /showModal\(\)/);
+  assert.match(dialog, /addClass\('lf-btn-open'\).attr\('aria-expanded','true'\)/);
+  assert.match(dialog, /removeClass\('lf-btn-open'\).attr\('aria-expanded','false'\)/);
 
   const open = cssRule('.lf-btn-open');
   assert.ok(open, '.lf-btn-open has no styling, so the class changes nothing');
@@ -1084,21 +1057,10 @@ test('running out of room shrinks the search box rather than breaking the line',
   assert.match(search, /min-width:\s*0/, 'a floor on the search box forces the wrap it is meant to avoid');
 });
 
-test('the custom range opens under the preset instead of sitting on the line', () => {
-  /* Two datetime-local inputs are ~185px each in Chrome; with "to" between
-     them that is nearly 400px added to a strip sharing a header row. */
-  const custom = cssRule('.lf-custom', 'that is nearly 400px on a strip');
-  assert.match(custom, /position:\s*absolute/, 'inline, this is what breaks the single line');
-  assert.match(custom, /z-index/, 'a panel with no stacking order renders behind the list');
-  assert.match(custom, /background:\s*#fff\s*!important/, 'the theme paints card backgrounds !important');
-
-  const wrap = cssRule('.lf-preset-wrap');
-  assert.match(wrap, /position:\s*relative/, 'without this the panel positions against the page, not the control');
-  assert.match(
-    listFilterSrc,
-    /<div class="lf-preset-wrap">/,
-    'the markup must nest the editor with the control that opens it',
-  );
+test('custom dates share a range calendar with month and year selection', () => {
+  assert.match(listFilterSrc, /trigger\.daterangepicker\(/);
+  assert.match(listFilterSrc, /showDropdowns: true/);
+  assert.doesNotMatch(listFilterSrc, /type="datetime-local"/);
 });
 
 test('the range popover survives the dark theme', () => {
@@ -1109,7 +1071,7 @@ test('the range popover survives the dark theme', () => {
      the declaration against the rule it belongs to. */
   assert.match(
     css,
-    /\[data-theme\] \.lf-custom \{/,
+    /\[data-theme\] \.lf-range-calendar \{/,
     'the range popover is not themed at all - it would be a white card on a dark page',
   );
   const dark = cssRule('[data-theme] .lf-typeahead,', 'lf-count');
@@ -1406,40 +1368,9 @@ test('idempotence belongs to the component, not the screen', () => {
   assert.ok(fn.includes('var existing = LF._mounted[key];'), 'the component does not check itself');
 });
 
-/*
- * An inverted custom range cannot be entered.
- *
- * "To" before "from" matches nothing, and the list then says "no quotes match
- * this search" - true and useless, because the search is not what is wrong.
- * min/max on datetime-local is native: no validation UI, and the picker does
- * not offer the bad dates at all.
- */
-test('the range inputs bound each other', () => {
-  const src = stripComments(listFilterSrc);
-  const at = src.indexOf("on('change', '.lf-from,.lf-to'");
-  assert.notStrictEqual(at, -1, 'the date handler is gone');
-  const body = src.slice(at, src.indexOf('\n    });', at));
-  assert.match(body, /\$to\.attr\('min', from \|\| null\)/, 'the end can still precede the start');
-  assert.match(body, /\$from\.attr\('max', to \|\| null\)/, 'the start can still follow the end');
-});
-
-test('clearing one end releases the other', () => {
-  /* `|| null` removes the attribute rather than setting it to "". A stale bound
-     traps someone who picked the wrong end first, and the only way out would be
-     Clear. */
-  const src = stripComments(listFilterSrc);
-  const at = src.indexOf("on('change', '.lf-from,.lf-to'");
-  const body = src.slice(at, src.indexOf('\n    });', at));
-  assert.ok(!/attr\('min', from\)/.test(body), 'an empty value would be set as a bound, not removed');
-  assert.ok(!/attr\('max', to\)/.test(body), 'same for the other end');
-});
-
-test('the bound exists on the first edit, not only after a change', () => {
-  /* Selecting "Custom range" carries the previous preset's dates into the
-     inputs. Without bounds at render time, the very first edit could invert. */
-  const render = blockAt(listFilterSrc, 'LF.render = function (key) {');
-  assert.match(render, /st\.to \? ' max="' \+ forInput\(st\.to\)/, 'the start input renders unbounded');
-  assert.match(render, /st\.from \? ' min="' \+ forInput\(st\.from\)/, 'the end input renders unbounded');
+test('the range is committed as a pair only on Apply', () => {
+  const editor = blockAt(listFilterSrc,'function openRange(key, panel) {');
+  assert.match(editor,/apply\.daterangepicker[\s\S]+state\.from = picker\.startDate[\s\S]+state\.to = picker\.endDate[\s\S]+LF\._changed/);
 });
 
 test('no CSS rule styles the search input that was removed', () => {

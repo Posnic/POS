@@ -35,7 +35,7 @@ PosnicPro.taxreport = {
         if (branchId !== '') {
             var loader = $(".loader-tax-sales-report");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
-            PosnicPro.appendReportTableBody('taxsalesreport');
+            PosnicPro.appendReportTableBody('taxsalesreport', '#view_taxreport');
             var daterange = $(".view_tax_sales_report_daterange").val();
             var fields = daterange.split('-');
             var data = {
@@ -117,7 +117,7 @@ PosnicPro.taxreport = {
                             $('#taxreport_exportbtn').removeAttr('disabled');
                         } else {
                             $('.reporttax_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reporttax_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a

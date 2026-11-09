@@ -6,31 +6,18 @@
                 <div class="col-auto">
                     <h4 class="page-title break_title mb-0"> <lang class="lang_item_master_title">Item List</lang></h4>
                 </div>
-                <div class="col">
-                    <div id="items_filter_panel" class="lf-panel" style="display:none;"></div>
-                </div>
-                <!--
-                    The shared filter bar (list-filter.js) owns search, dates
-                    and fields; its button carries the active count so a
-                    narrowed list can never masquerade as an empty one. The
-                    old ids are removed rather than hidden - a selector that
-                    still reads from an input nobody can see is how the
-                    quotes search bug worked.
-                -->
-                <div class="col-auto text-right">
+
+                <div class="col-auto text-right ml-auto lf-actions">
                     <div class="widgetbar">
-                        <button type="button" class="btn btn-outline-primary" data-module="item" data-access="read" onclick="PosnicPro.items.availability();"><i class="feather icon-eye mr-2"></i><lang class="lang_product_availability">Product availability</lang></button>
-                        <button type="button" class="btn btn-outline-primary" onclick="PosnicShelfLabels.open();"><i class="feather icon-printer mr-2"></i><lang class="lang_print_shelf_labels">Print shelf / product labels</lang></button>
-                        <a class="btn btn-outline-primary" href="#/itemsettings"><i class="feather icon-settings mr-2"></i><lang class="lang_item_settings">Item settings</lang></a>
                         <a data-module="item" data-access="write" href="#/items" class="btn btn-primary-rgba"
                             onclick="PosnicPro.importTableFile('items'); return false;"
                             data-toggle="tooltip" title="Import from CSV/Excel" data-t-title="lang_import_from_csv_excel" aria-label="Import items" data-t-aria-label="lang_import_items">
-                            <i class="feather icon-download"></i>
+                            <i class="feather icon-download mr-1"></i><span class="list-file-action-label" data-t="lang_import">Import</span>
                         </a>
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false" title="Export CSV" data-t-title="lang_export_csv" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
-                            <i class="feather icon-share"></i>
+                            <i class="feather icon-share mr-1"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.exportCsv(); return false;"><lang class="lang_this_page_what_is_shown">This page (what is shown)</lang></a>
@@ -41,33 +28,36 @@
                              pages: price and stock in bulk, in one place. -->
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
-                                aria-haspopup="true" aria-expanded="false" data-module="item" data-access="write"
+                                aria-haspopup="true" aria-expanded="false"
                                 title="Catalogue tools" data-t-title="lang_catalogue_tools">
                                 <i class="feather icon-tool mr-2"></i><lang class="lang_tools">Tools</lang>
                             </button>
                             <div class="dropdown-menu dropdown-menu-right">
+                                <button type="button" class="dropdown-item" data-module="item" data-access="read" onclick="PosnicPro.items.availability();"><i class="feather icon-eye mr-2"></i><lang class="lang_product_availability">Product availability</lang></button>
+                                <button type="button" class="dropdown-item" onclick="PosnicShelfLabels.open();"><i class="feather icon-printer mr-2"></i><lang class="lang_print_shelf_labels">Print shelf / product labels</lang></button>
+                                <a class="dropdown-item" href="#/itemsettings"><i class="feather icon-settings mr-2"></i><lang class="lang_item_settings">Item settings</lang></a>
                                 <a id="items_share_catalogue" class="dropdown-item" hidden href="javascript:void(0)" data-module="item" data-access="write" onclick="PosnicPro.items.shareCatalogue(); return false;"><i class="feather icon-share-2 mr-2" aria-hidden="true"></i><lang class="lang_copy_catalogue_to_other_branches">Copy catalogue to other branches</lang></a>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkPrice(); return false;"><i class="feather icon-trending-up mr-2"></i><lang class="lang_bulk_price_update">Bulk price update</lang></a>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openStockAdjustment(); return false;"><i class="feather icon-sliders mr-2"></i><lang class="lang_stock_adjust_title">Stock adjustment</lang></a>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkStock(); return false;"><i class="feather icon-layers mr-2"></i><lang class="lang_bulk_stock_update">Bulk stock update</lang></a>
+                                <a data-module="item" data-access="write" class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkPrice(); return false;"><i class="feather icon-trending-up mr-2"></i><lang class="lang_bulk_price_update">Bulk price update</lang></a>
+                                <a data-module="item" data-access="write" class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openStockAdjustment(); return false;"><i class="feather icon-sliders mr-2"></i><lang class="lang_stock_adjust_title">Stock adjustment</lang></a>
+                                <a data-module="item" data-access="write" class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.items.openBulkStock(); return false;"><i class="feather icon-layers mr-2"></i><lang class="lang_bulk_stock_update">Bulk stock update</lang></a>
                                 <!-- Restaurant only. The tick is per dish
                                      because only the kitchen knows which ones
                                      it can cook to order, but "per dish" is
                                      not "one dish at a time": a menu of 272
                                      is a wall nobody climbs. -->
-                                <a class="dropdown-item restaurant-only" href="javascript:void(0)"
+                                <a data-module="item" data-access="write" class="dropdown-item restaurant-only" href="javascript:void(0)"
                                    onclick="PosnicPro.items.openPrepMinutes(); return false;"><i class="feather icon-clock mr-2"></i><lang class="lang_prep_tool">How long a section takes</lang></a>
-                                <a class="dropdown-item restaurant-only" href="javascript:void(0)"
+                                <a data-module="item" data-access="write" class="dropdown-item restaurant-only" href="javascript:void(0)"
                                    onclick="PosnicPro.items.openSpiceChoice(); return false;"><i class="feather icon-thermometer mr-2"></i><lang class="lang_spice_choice_tool">Who may choose how hot</lang></a>
                                 <!-- Restaurant only, and hidden again unless
                                      the shop has an AI key: it spends their
                                      own balance, one call per dish. -->
-                                <a class="dropdown-item restaurant-only" id="item_nutrition_pass_open" href="javascript:void(0)"
+                                <a data-module="item" data-access="write" class="dropdown-item restaurant-only" id="item_nutrition_pass_open" href="javascript:void(0)"
                                    onclick="PosnicPro.nutritionPass.open(); return false;"><i class="feather icon-zap mr-2"></i><lang class="lang_fill_in_nutrition">Fill in nutrition</lang></a>
                                 <!-- The other half. Estimating a menu is now
                                      cheap; publishing it still needed a
                                      person, one dish at a time. -->
-                                <a class="dropdown-item restaurant-only" id="item_nutrition_review_open" href="javascript:void(0)"
+                                <a data-module="item" data-access="write" class="dropdown-item restaurant-only" id="item_nutrition_review_open" href="javascript:void(0)"
                                    onclick="PosnicPro.nutritionPass.review(); return false;"><i class="feather icon-check-square mr-2"></i><lang class="lang_check_the_estimates">Check the estimates</lang></a>
                             </div>
                         </div>
@@ -92,6 +82,11 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                <div class="col-12 lf-toolbar-slot items-list-toolbar">
+                    <div id="items_filter_panel" class="lf-panel" style="display:none;"></div>
+                    <div id="items_stock_summary" class="list-metrics" role="status"></div>
+                    <div id="items_active_filters" class="lf-applied" aria-live="polite"></div>
                 </div>
             </div>
             <!--

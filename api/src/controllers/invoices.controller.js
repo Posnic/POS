@@ -155,6 +155,7 @@ module.exports = {
       if (!can(req, 'read')) return fail(res, 'Unauthorized access', 403);
       const r = await repository.listInvoices(
         {
+          customerId: req.query.customer_id,
           status: req.query.status,
           limit: req.query.limit,
           page: req.query.page,

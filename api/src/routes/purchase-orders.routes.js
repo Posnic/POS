@@ -10,6 +10,7 @@ router.use(protect);
 // Purchase orders (PO_LIFECYCLE_DESIGN.md) - the plan, never the stock.
 router.post('/', controller.create);
 router.get('/', controller.list);
+router.get('/history', controller.history);
 router.get('/:id', controller.getById);
 router.put('/:id', controller.update);
 router.post('/:id/transition', controller.transition);

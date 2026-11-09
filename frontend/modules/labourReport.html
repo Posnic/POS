@@ -18,13 +18,14 @@
                 <div class="card m-b-30">
                     <div class="card-body">
                         <div class="form-row align-items-end mb-3">
+                            <div class="form-group col-auto"><label for="labour-report-employee">Employee</label><select class="form-control" id="labour-report-employee" onchange="PosnicPro.shiftWidget.runReport()"><option value="">All employees</option></select></div>
                             <div class="form-group col-md-3 col-6 mb-2">
                                 <label for="labour_report_from" style="font-size:.8rem; font-weight:600;"><lang class="lang_from">From</lang></label>
-                                <input type="date" class="form-control" id="labour_report_from">
+                                <input type="date" class="form-control" id="labour_report_from" onchange="PosnicPro.shiftWidget.runReport()">
                             </div>
                             <div class="form-group col-md-3 col-6 mb-2">
                                 <label for="labour_report_to" style="font-size:.8rem; font-weight:600;"><lang class="lang_to_2">To</lang></label>
-                                <input type="date" class="form-control" id="labour_report_to">
+                                <input type="date" class="form-control" id="labour_report_to" onchange="PosnicPro.shiftWidget.runReport()">
                             </div>
                             <div class="form-group col-md-2 col-4 mb-2">
                                 <button type="button" class="btn btn-primary-rgba" id="labour_report_run"
