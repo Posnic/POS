@@ -5325,5 +5325,9 @@
   "lang_upload_excel_csv": "Excel/CSV yükle",
   "lang_weigh_for_a_requested_amount": "İstenen bir miktar için tartın",
   "lang_you_have_read_only_access_to_product_avail": "Ürün kullanılabilirliğine salt okunur erişiminiz vardır.",
-  "lang_feedback_customization": "Özelleştirme"
+  "lang_feedback_customization": "Özelleştirme",
+  "lang_help_with_page": "{page} hakkında yardım",
+  "lang_help_all_guides": "Tüm kılavuzlar",
+  "lang_help_guide_update": "Bu kılavuz güncel sürüm için güncelleniyor.",
+  "lang_help_tax_settings": "Vergi ayarları"
 }

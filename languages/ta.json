@@ -5407,5 +5407,9 @@
   "lang_upload_excel_csv": "எக்செல்/CSV பதிவேற்றவும்",
   "lang_weigh_for_a_requested_amount": "கோரப்பட்ட தொகைக்கு எடைபோடுங்கள்",
   "lang_you_have_read_only_access_to_product_avail": "தயாரிப்பு கிடைக்கும் தன்மைக்கு வாசிக்க மட்டும் அணுகல் உங்களிடம் உள்ளது.",
-  "lang_feedback_customization": "தனிப்பயனாக்கம்"
+  "lang_feedback_customization": "தனிப்பயனாக்கம்",
+  "lang_help_with_page": "{page} பற்றிய உதவி",
+  "lang_help_all_guides": "அனைத்து வழிகாட்டிகளும்",
+  "lang_help_guide_update": "தற்போதைய பதிப்பிற்காக இந்த வழிகாட்டி புதுப்பிக்கப்படுகிறது.",
+  "lang_help_tax_settings": "வரி அமைப்புகள்"
 }

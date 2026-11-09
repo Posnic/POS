@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Поставете Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Измерете за бараната сума",
   "lang_you_have_read_only_access_to_product_avail": "Имате пристап само за читање до достапноста на производот.",
-  "lang_feedback_customization": "Приспособување"
+  "lang_feedback_customization": "Приспособување",
+  "lang_help_with_page": "Помош за {page}",
+  "lang_help_all_guides": "Сите водичи",
+  "lang_help_guide_update": "Овој водич се ажурира за тековната верзија.",
+  "lang_help_tax_settings": "Даночни поставки"
 }

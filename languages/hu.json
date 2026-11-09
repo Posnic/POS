@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Excel/CSV feltöltése",
   "lang_weigh_for_a_requested_amount": "Mérje meg a kért összeget",
   "lang_you_have_read_only_access_to_product_avail": "Csak olvasható hozzáféréssel rendelkezik a termék elérhetőségéhez.",
-  "lang_feedback_customization": "Testreszabás"
+  "lang_feedback_customization": "Testreszabás",
+  "lang_help_with_page": "Súgó: {page}",
+  "lang_help_all_guides": "Összes útmutató",
+  "lang_help_guide_update": "Ez az útmutató a jelenlegi verzióhoz frissül.",
+  "lang_help_tax_settings": "Adóbeállítások"
 }

@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Μεταφόρτωση Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Ζυγίστε για ένα ζητούμενο ποσό",
   "lang_you_have_read_only_access_to_product_avail": "Έχετε πρόσβαση μόνο για ανάγνωση στη διαθεσιμότητα των προϊόντων.",
-  "lang_feedback_customization": "Προσαρμογή"
+  "lang_feedback_customization": "Προσαρμογή",
+  "lang_help_with_page": "Βοήθεια για {page}",
+  "lang_help_all_guides": "Όλοι οι οδηγοί",
+  "lang_help_guide_update": "Αυτός ο οδηγός ενημερώνεται για την τρέχουσα έκδοση.",
+  "lang_help_tax_settings": "Ρυθμίσεις φόρων"
 }

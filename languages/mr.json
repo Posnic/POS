@@ -5325,5 +5325,9 @@
   "lang_upload_excel_csv": "एक्सेल/CSV अपलोड करा",
   "lang_weigh_for_a_requested_amount": "विनंती केलेल्या रकमेसाठी वज",
   "lang_you_have_read_only_access_to_product_avail": "आपल्याकडे उत्पादनाच्या उपलब्धतेमध्ये फक्त वाचन",
-  "lang_feedback_customization": "सानुकूलन"
+  "lang_feedback_customization": "सानुकूलन",
+  "lang_help_with_page": "{page} साठी मदत",
+  "lang_help_all_guides": "सर्व मार्गदर्शिका",
+  "lang_help_guide_update": "सध्याच्या आवृत्तीसाठी ही मार्गदर्शिका अद्ययावत केली जात आहे.",
+  "lang_help_tax_settings": "कर सेटिंग्ज"
 }

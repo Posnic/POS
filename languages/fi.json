@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Lataa Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Punnitse pyydetty määrä",
   "lang_you_have_read_only_access_to_product_avail": "Sinulla on vain lukuoikeus tuotteen saatavuuteen.",
-  "lang_feedback_customization": "Mukauttaminen"
+  "lang_feedback_customization": "Mukauttaminen",
+  "lang_help_with_page": "Ohje: {page}",
+  "lang_help_all_guides": "Kaikki oppaat",
+  "lang_help_guide_update": "Tätä opasta päivitetään nykyistä versiota varten.",
+  "lang_help_tax_settings": "Veroasetukset"
 }

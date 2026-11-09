@@ -5107,5 +5107,9 @@
   "lang_wording_ui_added_wording": "थपिएको शब्दावली",
   "lang_wording_ui_existing_word": "विद्यमान शब्द",
   "lang_wording_ui_replace_words": "शब्दहरू बदल्नुहोस्",
-  "lang_feedback_customization": "अनुकूलन"
+  "lang_feedback_customization": "अनुकूलन",
+  "lang_help_with_page": "{page} सम्बन्धी सहायता",
+  "lang_help_all_guides": "सबै मार्गदर्शिकाहरू",
+  "lang_help_guide_update": "हालको संस्करणका लागि यो मार्गदर्शिका अद्यावधिक हुँदैछ।",
+  "lang_help_tax_settings": "कर सेटिङहरू"
 }

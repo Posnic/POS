@@ -5403,5 +5403,9 @@
   "lang_upload_excel_csv": "Laden Sie Excel/CSV hoch",
   "lang_weigh_for_a_requested_amount": "Wiegen Sie für eine angeforderte Menge",
   "lang_you_have_read_only_access_to_product_avail": "Sie haben nur Lesezugriff auf die Produktverfügbarkeit.",
-  "lang_feedback_customization": "Anpassung"
+  "lang_feedback_customization": "Anpassung",
+  "lang_help_with_page": "Hilfe zu {page}",
+  "lang_help_all_guides": "Alle Anleitungen",
+  "lang_help_guide_update": "Diese Anleitung wird für die aktuelle Version aktualisiert.",
+  "lang_help_tax_settings": "Steuereinstellungen"
 }

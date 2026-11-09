@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "ਐਕਸਲ/CSV ਅਪਲੋਡ ਕਰੋ",
   "lang_weigh_for_a_requested_amount": "ਬੇਨਤੀ ਕੀਤੀ ਰਕਮ ਲਈ ਤੋਲੋ",
   "lang_you_have_read_only_access_to_product_avail": "ਤੁਹਾਡੇ ਕੋਲ ਉਤਪਾਦ ਦੀ ਉਪਲਬਧਤਾ ਤੱਕ ਸਿਰਫ ਪੜ੍ਹਨ-ਪਹੁੰਚ ਹੈ.",
-  "lang_feedback_customization": "ਲੋੜ ਅਨੁਸਾਰ ਤਬਦੀਲੀ"
+  "lang_feedback_customization": "ਲੋੜ ਅਨੁਸਾਰ ਤਬਦੀਲੀ",
+  "lang_help_with_page": "{page} ਬਾਰੇ ਮਦਦ",
+  "lang_help_all_guides": "ਸਾਰੀਆਂ ਮਾਰਗਦਰਸ਼ਿਕਾਵਾਂ",
+  "lang_help_guide_update": "ਇਹ ਮਾਰਗਦਰਸ਼ਿਕਾ ਮੌਜੂਦਾ ਸੰਸਕਰਣ ਲਈ ਅੱਪਡੇਟ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ।",
+  "lang_help_tax_settings": "ਟੈਕਸ ਸੈਟਿੰਗਾਂ"
 }

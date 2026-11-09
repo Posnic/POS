@@ -7969,6 +7969,20 @@ dialog.lf-options-panel header button[aria-label="Close"] {
 
 .lf-actions .list-file-action-label { display:inline-block; white-space:nowrap; }
 
+/* One Help door on the icon rail; its popover is outside scrolling menus. */
+.posnic-help-toggle { margin:12px 10px; width:40px; min-height:40px; flex-shrink:0; border:0; border-radius:4px; background:transparent; color:#fff; font-size:25px; cursor:pointer; }
+.posnic-help-toggle:hover, .posnic-help-toggle:focus-visible { background:rgba(255,255,255,.16); outline:2px solid currentColor; outline-offset:1px; }
+.posnic-help-menu { position:fixed; left:68px; bottom:16px; z-index:1050; width:300px; max-width:calc(100vw - 84px); max-height:calc(100vh - 32px); overflow-y:auto; padding:14px; background:var(--theme-card-bg,#fff); color:var(--theme-text-primary,#1b2850); border:1px solid var(--theme-border-color,#d6deeb); border-radius:8px; box-shadow:0 8px 28px rgba(20,35,60,.18); }
+.posnic-help-menu[hidden] { display:none; }
+.posnic-help-menu h5 { font-size:16px; margin:0 8px 8px; }
+.posnic-help-menu > a, .posnic-help-menu > button { display:flex; align-items:center; gap:9px; width:100%; padding:10px 8px; text-align:start; border:0; border-radius:4px; background:transparent; color:inherit; font:inherit; cursor:pointer; white-space:normal; }
+.posnic-help-menu > a:hover, .posnic-help-menu > button:hover, .posnic-help-menu > a:focus-visible, .posnic-help-menu > button:focus-visible { background:rgba(80,111,228,.1); outline:2px solid var(--theme-primary-color,#506fe4); }
+.posnic-help-menu > a[aria-disabled="true"] { cursor:default; opacity:.65; }
+.posnic-help-menu small { display:block; margin:0 8px 8px; color:var(--theme-text-secondary,#6b7890); }
+body.posnic-help-ready .posnic-app-footer :is(.posnic-feedback-link,.posnic-about-link) { display:none; }
+[dir="rtl"] .posnic-help-menu { left:auto; right:68px; }
+@media print { .posnic-help-toggle { display:none; } }
+
 /* Keep each report's views on one navigable row at narrow widths. */
 .page_loader:has(.report-page-header) .card-body > .nav-tabs {
     flex-wrap: nowrap;

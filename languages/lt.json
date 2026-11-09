@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Įkelti “Excel”/CSV",
   "lang_weigh_for_a_requested_amount": "Pasverkite prašomą sumą",
   "lang_you_have_read_only_access_to_product_avail": "Turite tik skaitymui skirtą prieigą prie produkto prieinamumo.",
-  "lang_feedback_customization": "Pritaikymas"
+  "lang_feedback_customization": "Pritaikymas",
+  "lang_help_with_page": "Pagalba: {page}",
+  "lang_help_all_guides": "Visi vadovai",
+  "lang_help_guide_update": "Šis vadovas atnaujinamas dabartinei versijai.",
+  "lang_help_tax_settings": "Mokesčių nustatymai"
 }

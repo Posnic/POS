@@ -5399,5 +5399,9 @@
   "lang_upload_excel_csv": "Sube Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Pese la cantidad solicitada",
   "lang_you_have_read_only_access_to_product_avail": "Tienes acceso de solo lectura a la disponibilidad de los productos.",
-  "lang_feedback_customization": "Personalización"
+  "lang_feedback_customization": "Personalización",
+  "lang_help_with_page": "Ayuda con {page}",
+  "lang_help_all_guides": "Todas las guías",
+  "lang_help_guide_update": "Esta guía se está actualizando para la versión actual.",
+  "lang_help_tax_settings": "Configuración de impuestos"
 }

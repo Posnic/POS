@@ -5325,5 +5325,9 @@
   "lang_upload_excel_csv": "એક્સેલ/સીએસવી અપલોડ કરો",
   "lang_weigh_for_a_requested_amount": "વિનંતી કરેલી રકમ માટે વજન",
   "lang_you_have_read_only_access_to_product_avail": "તમારી પાસે ઉત્પાદનની ઉપલબ્ધતા માટે ફક્ત વાંચવાની ઍક્સેસ છે.",
-  "lang_feedback_customization": "જરૂરિયાત મુજબ ફેરફાર"
+  "lang_feedback_customization": "જરૂરિયાત મુજબ ફેરફાર",
+  "lang_help_with_page": "{page} માટે મદદ",
+  "lang_help_all_guides": "બધી માર્ગદર્શિકાઓ",
+  "lang_help_guide_update": "આ માર્ગદર્શિકા વર્તમાન સંસ્કરણ માટે અપડેટ કરવામાં આવી રહી છે.",
+  "lang_help_tax_settings": "કર સેટિંગ્સ"
 }

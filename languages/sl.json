@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Naložite Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Tehtajte za zahtevano količino",
   "lang_you_have_read_only_access_to_product_avail": "Imate dostop samo za branje do razpoložljivosti izdelka.",
-  "lang_feedback_customization": "Prilagajanje"
+  "lang_feedback_customization": "Prilagajanje",
+  "lang_help_with_page": "Pomoč za {page}",
+  "lang_help_all_guides": "Vsi vodniki",
+  "lang_help_guide_update": "Ta vodnik se posodablja za trenutno različico.",
+  "lang_help_tax_settings": "Davčne nastavitve"
 }

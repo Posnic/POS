@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Ladda upp Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Väg för en begärd mängd",
   "lang_you_have_read_only_access_to_product_avail": "Du har skrivskyddad åtkomst till produkttillgänglighet.",
-  "lang_feedback_customization": "Anpassning"
+  "lang_feedback_customization": "Anpassning",
+  "lang_help_with_page": "Hjälp med {page}",
+  "lang_help_all_guides": "Alla guider",
+  "lang_help_guide_update": "Den här guiden uppdateras för den aktuella versionen.",
+  "lang_help_tax_settings": "Skatteinställningar"
 }

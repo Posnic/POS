@@ -1,0 +1,1023 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "a6707ffc22c87c8185de90dc46a9abb98c866c81",
+  "guideOrigin": "https://www.posnic.com/guides/posnic-pos-complete-user-guide/",
+  "reviewPolicy": "Existing published links are needs-review until their current-version steps and screenshots are verified. Missing routes remain explicit; no guide is guessed.",
+  "routes": {
+    "askposnic": {
+      "title": "Ask Posnic",
+      "titleKey": "lang_ask_posnic",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "billingoutlets": {
+      "title": "Billing outlets",
+      "titleKey": "lang_billing_outlets",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "branches": {
+      "title": "Branches / Outlet",
+      "titleKey": "lang_branchoutlet_title",
+      "guide": "settings/branches-outlets/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "branches/:id": {
+      "title": "Branches / Outlet",
+      "titleKey": "lang_branchoutlet_title",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "branches/:id/delete": {
+      "title": "Delete Branch",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "branches/:id/edit": {
+      "title": "Edit Branch",
+      "titleKey": "lang_editbranch_title",
+      "guide": "settings/edit-branch-outlet-registers/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "branches/new": {
+      "title": "Add Branch",
+      "titleKey": null,
+      "guide": "settings/create-branch-outlet/",
+      "status": "needs-review",
+      "source": "frontend/layouts/header.html"
+    },
+    "bulkitems": {
+      "title": "Bulk Item Add",
+      "titleKey": "lang_item_bulk",
+      "guide": "items/bulk-item-add/",
+      "status": "needs-review",
+      "source": "frontend/modules/quick_items.html"
+    },
+    "categories": {
+      "title": "Categories",
+      "titleKey": "lang_itemcategory_title",
+      "guide": "items/categories/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "categories/:id": {
+      "title": "Categories",
+      "titleKey": "lang_itemcategory_title",
+      "guide": "items/categories/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "categories/:id/delete": {
+      "title": "Delete Category",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "categories/:id/edit": {
+      "title": "Edit Category",
+      "titleKey": null,
+      "guide": "items/categories/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "categories/new": {
+      "title": "Add Category",
+      "titleKey": null,
+      "guide": "items/categories/",
+      "status": "needs-review",
+      "source": "frontend/layouts/header.html"
+    },
+    "categoryreport": {
+      "title": "Category Reports",
+      "titleKey": "lang_categoryreport",
+      "guide": "reports/category-sales-performance/",
+      "status": "needs-review",
+      "source": "frontend/modules/categoryReport.html"
+    },
+    "customercategory": {
+      "title": "Customer Category",
+      "titleKey": "lang_customer_category_title",
+      "guide": "customers/customer-categories/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "customerreport": {
+      "title": "People",
+      "titleKey": "lang_rgrp_people",
+      "guide": "reports/people-customer-user-labour/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "customers": {
+      "title": "Customer List",
+      "titleKey": "lang_customerdetails_title",
+      "guide": "customers/customer-list-filter-import-export/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "customers/:id": {
+      "title": "Customer List",
+      "titleKey": "lang_customerdetails_title",
+      "guide": "customers/customer-profile-sales-history/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "customers/:id/delete": {
+      "title": "Delete Customer",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "customers/:id/edit": {
+      "title": "Edit Customer",
+      "titleKey": null,
+      "guide": "customers/edit-customer-profile/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "customers/new": {
+      "title": "Add Customer",
+      "titleKey": null,
+      "guide": "customers/create-customer-profile/",
+      "status": "needs-review",
+      "source": "frontend/layouts/header.html"
+    },
+    "dailyreport": {
+      "title": "Day-End Summary",
+      "titleKey": "lang_day_end_summary",
+      "guide": "reports/day-end-summary/",
+      "status": "needs-review",
+      "source": "frontend/modules/dailyReport.html"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "titleKey": "lang_dashboard_title",
+      "guide": "dashboard/overview/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "expenses": {
+      "title": "Posnic",
+      "titleKey": "lang_posnic",
+      "guide": "registers/cash-book-list-filter-import-export/",
+      "status": "needs-review",
+      "source": "frontend/static/script/js/routes.js"
+    },
+    "expenses/:id": {
+      "title": "Posnic",
+      "titleKey": "lang_posnic",
+      "guide": "registers/cash-book-view-edit-delete/",
+      "status": "needs-review",
+      "source": "frontend/static/script/js/routes.js"
+    },
+    "expenses/new": {
+      "title": "Add Cash Book Entry",
+      "titleKey": null,
+      "guide": "registers/cash-book-create-entry/",
+      "status": "needs-review",
+      "source": "frontend/layouts/header.html"
+    },
+    "expensesreport": {
+      "title": "Expense Reports",
+      "titleKey": "lang_expense_reports",
+      "guide": "reports/cash-book-expense-reports/",
+      "status": "needs-review",
+      "source": "frontend/modules/expensesReport.html"
+    },
+    "expiryreport": {
+      "title": "Expiry list",
+      "titleKey": "lang_expiry_report_short",
+      "guide": "reports/review-expired-products/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "extensions": {
+      "title": "Extensions",
+      "titleKey": "lang_extensions",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "gstr_one": {
+      "title": "GSTR1",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/report_gstrone.html"
+    },
+    "gstr_three": {
+      "title": "GSTR3B",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/report_gstrthree.html"
+    },
+    "gstr_two": {
+      "title": "GSTR2",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/report_gstrtwo.html"
+    },
+    "gstr_twob": {
+      "title": "GSTR2B",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/report_gstrtwob.html"
+    },
+    "gstreadiness": {
+      "title": "GST 2.0 Readiness",
+      "titleKey": "lang_gstreadiness_title",
+      "guide": "reports/gst-readiness-item-audit/",
+      "status": "needs-review",
+      "source": "frontend/modules/gstReadiness.html"
+    },
+    "gstrNine": {
+      "title": "GSTR9",
+      "titleKey": "lang_gstr9",
+      "guide": "reports/gstr3b-gstr9-reconciliation/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "gstrOne": {
+      "title": "GSTR1",
+      "titleKey": "lang_gstr1",
+      "guide": "reports/gstr1-outward-supplies/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "gstrThree": {
+      "title": "GSTR3B",
+      "titleKey": "lang_gstr3b",
+      "guide": "reports/gstr3b-gstr9-reconciliation/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "gstrTwo": {
+      "title": "GSTR2A",
+      "titleKey": "lang_gstr2a",
+      "guide": "reports/gstr2a-purchase-register/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "gstrTwob": {
+      "title": "GSTR2B",
+      "titleKey": "lang_gstr2b",
+      "guide": "reports/gstr2b-itc-reconciliation/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "inventorycounts": {
+      "title": "Stock Counts",
+      "titleKey": "lang_stock_counts",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "invoices": {
+      "title": "Invoices",
+      "titleKey": "lang_invoices_title",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "itemreport": {
+      "title": "Inventory",
+      "titleKey": "lang_rgrp_inventory",
+      "guide": "reports/inventory-item-category-reports/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "items": {
+      "title": "Items",
+      "titleKey": "lang_itemdetail_title",
+      "guide": "items/export-filtered-catalog/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "items_v2": {
+      "title": "Posnic",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/items_v2.html"
+    },
+    "items/:id": {
+      "title": "Items",
+      "titleKey": "lang_itemdetail_title",
+      "guide": "items/edit-existing-item/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "items/:id/clone": {
+      "title": "Items",
+      "titleKey": "lang_itemdetail_title",
+      "guide": "items/clone-existing-item/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "items/:id/delete": {
+      "title": "Delete Item",
+      "titleKey": "lang_delete_item",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "items/:id/edit": {
+      "title": "Edit Item",
+      "titleKey": null,
+      "guide": "items/edit-existing-item/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "items/new": {
+      "title": "Add Item",
+      "titleKey": "lang_add_item",
+      "guide": "items/create-item/",
+      "status": "needs-review",
+      "source": "frontend/layouts/header.html"
+    },
+    "itemsettings": {
+      "title": "Posnic",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/itemSettings.html"
+    },
+    "kioskreport": {
+      "title": "Kiosk and online orders",
+      "titleKey": "lang_kiosk_and_online_orders",
+      "guide": "reports/kot-kiosk-reports/",
+      "status": "needs-review",
+      "source": "frontend/modules/kioskReport.html"
+    },
+    "kot": {
+      "title": "KOT - Kitchen Order",
+      "titleKey": "lang_kot_title",
+      "guide": "sales/kot-table-orders/",
+      "status": "needs-review",
+      "source": "frontend/modules/kot.html"
+    },
+    "kot_v2": {
+      "title": "KOT - Kitchen Order",
+      "titleKey": "lang_kot_title",
+      "guide": "sales/kot-table-orders/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "kothistory": {
+      "title": "KOT History",
+      "titleKey": "lang_kothistory_title",
+      "guide": "restaurant/kot-history-actions/",
+      "status": "needs-review",
+      "source": "frontend/modules/kothistory.html"
+    },
+    "kotreport": {
+      "title": "KOT Reports",
+      "titleKey": "lang_kot_reports",
+      "guide": "restaurant/kot-reports/",
+      "status": "needs-review",
+      "source": "frontend/modules/kotReport.html"
+    },
+    "labourreport": {
+      "title": "Labour / Payout",
+      "titleKey": "lang_labourreport_title",
+      "guide": "workforce/labour-payout-exports/",
+      "status": "needs-review",
+      "source": "frontend/modules/labourReport.html"
+    },
+    "lowstock": {
+      "title": "Low Stock",
+      "titleKey": "lang_lowstockdetail_title",
+      "guide": "inventory/low-stock/",
+      "status": "needs-review",
+      "source": "frontend/modules/lowstock.html"
+    },
+    "lowstockitems": {
+      "title": "View All",
+      "titleKey": "lang_view_all",
+      "guide": "inventory/low-stock/",
+      "status": "needs-review",
+      "source": "frontend/layouts/header.html"
+    },
+    "onlineorders": {
+      "title": "Online orders",
+      "titleKey": "lang_online_orders_title",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "paymentreport": {
+      "title": "Money",
+      "titleKey": "lang_rgrp_money",
+      "guide": "reports/payment-reports/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "pendingreport": {
+      "title": "Pending Payments",
+      "titleKey": "lang_pending_report",
+      "guide": "reports/pending-payment-reports/",
+      "status": "needs-review",
+      "source": "frontend/modules/pendingReport.html"
+    },
+    "pricesettings": {
+      "title": "Price Settings",
+      "titleKey": "lang_price_settings",
+      "guide": "inventory/price-settings/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "purchaseorders": {
+      "title": "Purchases",
+      "titleKey": "lang_po_title",
+      "guide": "purchase/purchase-list-status-filters/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "purchaseorders/:id": {
+      "title": "Purchases",
+      "titleKey": "lang_po_title",
+      "guide": "purchase/manage-draft-purchase-order/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "purchaseorders/:id/delete": {
+      "title": "Delete Purchase Order",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "purchaseorders/:id/edit": {
+      "title": "Edit Purchase Order",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "purchaseorders/new": {
+      "title": "Add Purchase Order",
+      "titleKey": null,
+      "guide": "purchase/create-purchase-order/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "quickitems": {
+      "title": "Quick Item Add",
+      "titleKey": "lang_item_quick",
+      "guide": "items/quick-item-add/",
+      "status": "needs-review",
+      "source": "frontend/modules/quick_items.html"
+    },
+    "quickreport": {
+      "title": "Sales",
+      "titleKey": "lang_rgrp_sales",
+      "guide": "reports/sales-reports/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "quotes": {
+      "title": "Quotes",
+      "titleKey": "lang_quotes_title",
+      "guide": "sales/quote-list-share-status-convert/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "quotes/:id": {
+      "title": "Quotes",
+      "titleKey": "lang_quotes_title",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "quotes/:id/delete": {
+      "title": "Delete Quotation",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "quotes/:id/edit": {
+      "title": "Edit Quotation",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "quotes/new": {
+      "title": "Add Quotation",
+      "titleKey": null,
+      "guide": "sales/create-edit-quotation/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "receivingreport": {
+      "title": "Purchase",
+      "titleKey": "lang_rgrp_purchase",
+      "guide": "reports/purchase-register/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "receivings": {
+      "title": "New Purchase",
+      "titleKey": "lang_addvariant_title",
+      "guide": "purchase/purchase-list-status-filters/",
+      "status": "needs-review",
+      "source": "frontend/modules/receivings_write.html"
+    },
+    "receivings/:id": {
+      "title": "New Purchase",
+      "titleKey": "lang_addvariant_title",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/receivings_write.html"
+    },
+    "receivings/:id/delete": {
+      "title": "Delete Purchase",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/receivings_write.html"
+    },
+    "receivings/:id/edit": {
+      "title": "Edit Purchase",
+      "titleKey": null,
+      "guide": "purchase/edit-purchase/",
+      "status": "needs-review",
+      "source": "frontend/modules/receivings_write.html"
+    },
+    "receivings/new": {
+      "title": "Add Purchase",
+      "titleKey": null,
+      "guide": "purchase/receive-stock-direct-or-from-order/",
+      "status": "needs-review",
+      "source": "frontend/layouts/header.html"
+    },
+    "registerreport": {
+      "title": "Register Reports",
+      "titleKey": "lang_register_report",
+      "guide": "reports/register-session-history/",
+      "status": "needs-review",
+      "source": "frontend/modules/registerReport.html"
+    },
+    "registers": {
+      "title": "Register List",
+      "titleKey": "lang_register_history",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/registers.html"
+    },
+    "returnreceivingreport": {
+      "title": "Purchase Return Report",
+      "titleKey": "lang_purchase_return_report",
+      "guide": "reports/purchase-return-register/",
+      "status": "needs-review",
+      "source": "frontend/modules/returnreceivingReport.html"
+    },
+    "returnreport": {
+      "title": "Return Reports",
+      "titleKey": "lang_return_report",
+      "guide": "reports/return-sale-reports/",
+      "status": "needs-review",
+      "source": "frontend/modules/returnReport.html"
+    },
+    "roles_admin_detail": {
+      "title": "Employees",
+      "titleKey": "lang_user_title",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/roles_admin.html"
+    },
+    "roster": {
+      "title": "Roster",
+      "titleKey": "lang_staffroster_title",
+      "guide": "workforce/plan-manage-roster/",
+      "status": "needs-review",
+      "source": "frontend/modules/roster.html"
+    },
+    "salereport": {
+      "title": "Sales Reports",
+      "titleKey": "lang_salereport",
+      "guide": "reports/sales-reports/",
+      "status": "needs-review",
+      "source": "frontend/modules/salesReport.html"
+    },
+    "sales": {
+      "title": "Sales History",
+      "titleKey": "lang_salehistory_title",
+      "guide": "sales/find-read-sale-history/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "sales/:id": {
+      "title": "Sales History",
+      "titleKey": "lang_salehistory_title",
+      "guide": "sales/find-read-sale-history/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "sales/:id/delete": {
+      "title": "Delete Sale",
+      "titleKey": "lang_delete_sale",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "sales/:id/edit": {
+      "title": "Edit Sale",
+      "titleKey": "lang_edit_sale",
+      "guide": "sales/edit-saved-sale/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "sales/:id/return": {
+      "title": "Sales History",
+      "titleKey": "lang_salehistory_title",
+      "guide": "sales/return-exchange-sale/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "sales/new": {
+      "title": "Add Sale",
+      "titleKey": "lang_add_sale",
+      "guide": "sales/add-sale/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings": {
+      "title": "Core Settings",
+      "titleKey": "lang_generalset",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/modules/settings_write.html"
+    },
+    "settings/ai": {
+      "title": "AI settings",
+      "titleKey": "lang_ai_settings",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/app": {
+      "title": "App Settings",
+      "titleKey": "lang_desktop_app",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/backups": {
+      "title": "Backup & Recovery",
+      "titleKey": "lang_desktop_backups",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/branchpayments": {
+      "title": "Branch payments",
+      "titleKey": "lang_branch_payments",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/captainapp": {
+      "title": "Captain App",
+      "titleKey": "lang_module_captain",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/cashbook": {
+      "title": "Cash Book",
+      "titleKey": "lang_expense_title",
+      "guide": "registers/enable-cash-book-module/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/cashregister": {
+      "title": "Cash Register",
+      "titleKey": "lang_cash_register",
+      "guide": "settings/cash-register-settings/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/cloudsync": {
+      "title": "Cloud Sync",
+      "titleKey": "lang_desktop_cloudsync",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/credit": {
+      "title": "Customer Credit",
+      "titleKey": "lang_module_credit",
+      "guide": "settings/customer-credit-rules-reminders/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/deliverypartners": {
+      "title": "Delivery Partners",
+      "titleKey": "lang_module_delivery_partners",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/demodata": {
+      "title": "Demo Data",
+      "titleKey": "lang_module_demodata",
+      "guide": "settings/demo-data/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/devices": {
+      "title": "Devices",
+      "titleKey": "lang_devices",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/general": {
+      "title": "Core Settings",
+      "titleKey": "lang_generalset",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/hardware": {
+      "title": "Devices & Printing",
+      "titleKey": "lang_desktop_devices",
+      "guide": "settings/receipt-printing/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/integrations": {
+      "title": "Integrations",
+      "titleKey": "lang_integrations",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/invoices": {
+      "title": "Invoices",
+      "titleKey": "lang_invoices_title",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/kioskmachine": {
+      "title": "Kiosk Machine",
+      "titleKey": "lang_module_kiosk_machine",
+      "guide": "settings/kiosk-sales-channels/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/marketingmodule": {
+      "title": "Marketing",
+      "titleKey": "lang_module_marketing",
+      "guide": "settings/coupons-cashback-campaigns/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/messagingmodule": {
+      "title": "Messaging",
+      "titleKey": "lang_module_messaging",
+      "guide": "settings/messaging-sms-whatsapp-email/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/mobilepos": {
+      "title": "Mobile POS",
+      "titleKey": "lang_module_mobile_pos",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/modules": {
+      "title": "Features",
+      "titleKey": "lang_modules",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/onlineordering": {
+      "title": "Online Ordering",
+      "titleKey": "lang_module_online_ordering",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/quotes": {
+      "title": "Quotes",
+      "titleKey": "lang_quotes_title",
+      "guide": "settings/quote-defaults/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/recyclebin": {
+      "title": "Recycle Bin",
+      "titleKey": "lang_recycle",
+      "guide": "settings/recycle-bin-restore/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/systemstatus": {
+      "title": "System Status",
+      "titleKey": "lang_desktop_systemstatus",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/tableorder": {
+      "title": "Restaurant",
+      "titleKey": "lang_modules_restaurant",
+      "guide": "settings/restaurant-tables-modifiers/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/taxmodule": {
+      "title": "Tax Settings",
+      "titleKey": "lang_help_tax_settings",
+      "guide": "settings/tax-system-rates-groups/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/theme": {
+      "title": "Themes",
+      "titleKey": "lang_module_themes",
+      "guide": "settings/theme-appearance/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/tillpin": {
+      "title": "Till PIN Lock",
+      "titleKey": "lang_tilllock_title",
+      "guide": "settings/till-pin-lock/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/updates": {
+      "title": "Software Updates",
+      "titleKey": "lang_desktop_updates",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/webshop": {
+      "title": "Webshop",
+      "titleKey": "lang_module_webshop",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "settings/workforce": {
+      "title": "Workforce",
+      "titleKey": "lang_module_workforce",
+      "guide": "settings/workforce-shifts-roster/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "stocklogs": {
+      "title": "Inventory Logs",
+      "titleKey": "lang_invenlog_title",
+      "guide": "inventory/inventory-logs/",
+      "status": "needs-review",
+      "source": "frontend/modules/stockactivity.html"
+    },
+    "supplierreport": {
+      "title": "Supplier Reports",
+      "titleKey": "lang_supplierreport",
+      "guide": "reports/supplier-purchase-summary/",
+      "status": "needs-review",
+      "source": "frontend/modules/supplierReport.html"
+    },
+    "suppliers": {
+      "title": "Supplier List",
+      "titleKey": "lang_supply_title",
+      "guide": "purchase/supplier-list-create-edit/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "suppliers/:id": {
+      "title": "Supplier List",
+      "titleKey": "lang_supply_title",
+      "guide": "purchase/supplier-profile-history/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "suppliers/:id/delete": {
+      "title": "Delete Supplier",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "suppliers/:id/edit": {
+      "title": "Edit Supplier",
+      "titleKey": null,
+      "guide": "purchase/supplier-list-create-edit/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "suppliers/new": {
+      "title": "Add Supplier",
+      "titleKey": null,
+      "guide": "purchase/supplier-list-create-edit/",
+      "status": "needs-review",
+      "source": "frontend/layouts/header.html"
+    },
+    "taxdiscountreport": {
+      "title": "Tax Reports",
+      "titleKey": "lang_taxdis_report",
+      "guide": "reports/sales-tax-collected/",
+      "status": "needs-review",
+      "source": "frontend/modules/taxdiscountReport.html"
+    },
+    "taxpayable": {
+      "title": "Tax Payable",
+      "titleKey": "lang_taxpayable_title",
+      "guide": "reports/tax-payable-purchase-register/",
+      "status": "needs-review",
+      "source": "frontend/modules/taxPayable.html"
+    },
+    "taxsummaryreport": {
+      "title": "Tax Summary",
+      "titleKey": "lang_taxsummary_title",
+      "guide": "reports/tax-summary-output-input-credit/",
+      "status": "needs-review",
+      "source": "frontend/modules/taxSummaryReport.html"
+    },
+    "units": {
+      "title": "Units",
+      "titleKey": "lang_units_title",
+      "guide": "items/units/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "userreport": {
+      "title": "Employee Reports",
+      "titleKey": "lang_employee_reports",
+      "guide": "reports/user-sales-performance/",
+      "status": "needs-review",
+      "source": "frontend/modules/userReport.html"
+    },
+    "users": {
+      "title": "Employees",
+      "titleKey": "lang_user_title",
+      "guide": "settings/review-employee-access/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "users/:id": {
+      "title": "Employees",
+      "titleKey": "lang_user_title",
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "users/:id/delete": {
+      "title": "Delete Employee",
+      "titleKey": null,
+      "guide": null,
+      "status": "missing",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "users/:id/edit": {
+      "title": "Edit Employee",
+      "titleKey": null,
+      "guide": "settings/edit-deactivate-delete-employee/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "users/new": {
+      "title": "Add Employee",
+      "titleKey": null,
+      "guide": "settings/create-employee-user/",
+      "status": "needs-review",
+      "source": "frontend/layouts/header.html"
+    },
+    "variants": {
+      "title": "Variants",
+      "titleKey": "lang_itemvariant_title",
+      "guide": "items/variants/",
+      "status": "needs-review",
+      "source": "frontend/layouts/sidebar.html"
+    },
+    "variants/new": {
+      "title": "Variant",
+      "titleKey": "lang_newvariant_title",
+      "guide": "items/variants/",
+      "status": "needs-review",
+      "source": "frontend/layouts/header.html"
+    }
+  }
+}

@@ -5403,5 +5403,9 @@
   "lang_upload_excel_csv": "എക്സൽ/CSV അപ്ലോഡുചെയ്യുക",
   "lang_weigh_for_a_requested_amount": "ആവശ്യപ്പെട്ട തുകയ്ക്ക് തൂക്കുക",
   "lang_you_have_read_only_access_to_product_avail": "ഉൽപ്പന്ന ലഭ്യതയിലേക്ക് നിങ്ങൾക്ക് വായിക്കാൻ മാത്രമുള്ള ആക്സസ് ഉണ്ട്.",
-  "lang_feedback_customization": "ഇഷ്‌ടാനുസൃതമാക്കൽ"
+  "lang_feedback_customization": "ഇഷ്‌ടാനുസൃതമാക്കൽ",
+  "lang_help_with_page": "{page} സംബന്ധിച്ച സഹായം",
+  "lang_help_all_guides": "എല്ലാ മാർഗ്ഗനിർദ്ദേശങ്ങളും",
+  "lang_help_guide_update": "നിലവിലെ പതിപ്പിനായി ഈ മാർഗ്ഗനിർദ്ദേശം പുതുക്കുന്നു.",
+  "lang_help_tax_settings": "നികുതി ക്രമീകരണങ്ങൾ"
 }
