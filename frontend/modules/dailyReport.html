@@ -2,16 +2,12 @@
     <!-- Start Containerbar -->
     <div id="containerbar">
         <!-- Start Breadcrumbbar -->
-        <div class="breadcrumbbar crumbbar_padding">
+        <div class="breadcrumbbar">
 
-            <!--  filter-->
-            <div class="row align-items-center row_filter hide-sale-filter">
-                <div class="col-lg-2 col-xl-2">
-                    <h4 class="page-title break_title"><lang class="lang_day_end_summary">Day-End Summary</lang></h4>
-                </div>
-                <div class="col-md-9 col-lg-9 show-button-action"></div>
+            <div class="row align-items-center row_filter hide-sale-filter report-export-host">
+                <div class="col-auto"><h4 class="page-title daily-report-title"><lang class="lang_day_end_summary">Day-End Summary</lang></h4></div>
                 <div class="col-lg-2 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <div class="form-control pull-right daterange-style date-align view_dailysale_report_daterange"
+                    <div class="form-control pull-right report-period daterange-style date-align view_dailysale_report_daterange"
                         id="view_dailysale_report_daterange">
                         <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
                         <span></span>
@@ -38,11 +34,33 @@
                         </button>
                     </div>
                 </div>
+                <div class="report-export-bar dropdown">
+                    <button type="button" class="btn btn-secondary-rgba btn-sm report-export-toggle dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Export</button>
+                    <div class="dropdown-menu dropdown-menu-right report-export-options">
+                        <button type="button" disabled class="btn btn-danger-rgba btn-sm" onclick="return PosnicPro.quickreport.dailyReportPdf();"><i class="fa fa-file-pdf-o mr-1" aria-hidden="true"></i>PDF</button>
+                        <button type="button" disabled class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.quickreport.exportCsv();"><i class="fa fa-file-text-o mr-1" aria-hidden="true"></i>CSV</button>
+                        <button type="button" disabled class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.quickreport.exportXls();"><i class="fa fa-file-excel-o mr-1" aria-hidden="true"></i>Excel</button>
+                        <button type="button" disabled class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.quickreport.dailyReportEmail();"><i class="fa fa-envelope-o mr-1" aria-hidden="true"></i>Email</button>
+                        <details class="day-end-print position-relative">
+                            <summary class="btn btn-secondary-rgba btn-sm" onclick="event.stopPropagation()"><i class="fa fa-print mr-1" aria-hidden="true"></i>Print</summary>
+                            <div class="dropdown-menu dropdown-menu-right show">
+                                <button type="button" disabled class="dropdown-item" onclick="return PosnicPro.quickreport.printDailyReport();">Print report</button>
+                                <button type="button" disabled class="dropdown-item" onclick="return PosnicPro.quickreport.printDaySlip();">Day-close slip</button>
+                            </div>
+                        </details>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <style>
+        #dailyreport_new .day-end-print > .dropdown-menu { top: 100%; }
+        #dailyreport_new .day-end-print:not([open]) > .dropdown-menu { display: none; }
+        #dailyreport_new .report-export-options > .btn, #dailyreport_new .day-end-print > summary { padding-inline: 6px; }
+        @container report-header (max-width: 620px) {
+            #dailyreport_new .day-end-print[open] > .dropdown-menu { position: static; box-shadow: none; }
+        }
         #dailyreport_new .meal-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 30px 0; padding: 10px 14px; background: var(--bs-body-bg, #fff); border: 1px solid #dbe3ef; border-radius: 10px; }
         #dailyreport_new .meal-filter > strong { font-size: 13px; }
         #dailyreport_new .meal-custom { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -138,59 +156,6 @@
                                                     </div>
                                                 </div>
                                                 <div class="cart-head hide-show-dailyreport">
-
-                                                    <div class="row">
-                                                        <div class="col-lg-12">
-                                                            <!--
-                                                                On a thermal roll this prints a cash-up slip
-                                                                rather than the whole report: sales, the
-                                                                payment split, and lines to sign at handover.
-                                                                On A4 it prints the full page.
-                                                            -->
-                                                            <button class="btn btn-primary-rgba pull-right blur_val"
-                                                                onclick="return PosnicPro.quickreport.printDailyReport();"
-                                                                data-toggle="tooltip" data-placement="top"
-                                                                title="Print (A4)" data-t-title="lang_print_a4" type="button"
-                                                                style="margin-right: 5px;font-size: 20px;">
-                                                                <i class="fa fa-print"></i>
-                                                            </button>
-                                                            <button class="btn btn-success-rgba pull-right blur_val"
-                                                                onclick="return PosnicPro.quickreport.printDaySlip();"
-                                                                data-toggle="tooltip" data-placement="top"
-                                                                title="Day-close slip (thermal)" data-t-title="lang_day_close_slip_thermal" type="button"
-                                                                style="margin-right: 5px;font-size: 20px;">
-                                                                <i class="fa fa-sticky-note-o"></i>
-                                                            </button>
-                                                            <button class="btn btn-secondary-rgba pull-right blur_val"
-                                                                onclick="return PosnicPro.quickreport.exportCsv();"
-                                                                data-toggle="tooltip" data-placement="top"
-                                                                title="Export CSV" data-t-title="lang_export_csv" type="button"
-                                                                style="margin-right: 5px;font-size: 20px;">
-                                                                <i class="fa fa-file-text-o"></i>
-                                                            </button>
-                                                            <button class="btn btn-secondary-rgba pull-right blur_val"
-                                                                onclick="return PosnicPro.quickreport.exportXls();"
-                                                                data-toggle="tooltip" data-placement="top"
-                                                                title="Export Excel" data-t-title="lang_export_excel" type="button"
-                                                                style="margin-right: 5px;font-size: 20px;">
-                                                                <i class="fa fa-file-excel-o"></i>
-                                                            </button>
-                                                            <button class="btn btn-danger-rgba pull-right blur_val"
-                                                                onclick="return PosnicPro.quickreport.dailyReportPdf();"
-                                                                data-toggle="tooltip" data-placement="top"
-                                                                title="Download PDF" data-t-title="lang_download_pdf" type="button"
-                                                                style="margin-right: 5px;font-size: 20px;">
-                                                                <i class="fa fa-file-pdf-o"></i>
-                                                            </button>
-                                                            <button class="btn btn-primary-rgba pull-right blur_val"
-                                                                onclick="return PosnicPro.quickreport.dailyReportEmail();"
-                                                                data-toggle="tooltip" data-placement="top" title="Email" data-t-title="lang_email_title"
-                                                                style="margin-right: 5px;font-size: 20px;">
-                                                                <i class="fa fa-envelope-o"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
 
                                                     <div id="export_daily_report">
 <p id="daily-report-period" class="text-center"></p>

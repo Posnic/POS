@@ -526,6 +526,7 @@ PosnicPro.items = {
                 PosnicPro.get({url:'categories/getCategoryAjaxList',data:{query:''}}, function (r) {
                     (r.suggestions || []).forEach(function (c) { category.append($('<option>').val(c.id).text(c.name)); });
                     category.val(state.extra.category_id || '');
+                    PosnicPro.listFilter.paintButton('items');
                 });
                 category.on('change', function () { PosnicPro.listFilter.setExtra('items','category_id',this.value); });
                 var stock = $('<select aria-label="Stock level" class="form-control form-control-sm lf-primary">').appendTo(row);
@@ -535,7 +536,7 @@ PosnicPro.items = {
                 stock.val(state.extra.stockLevel || '').on('change', function () {
                     PosnicPro.listFilter.setExtra('items','stockLevel', this.value);
                 });
-                var saleButton = $('<button type="button" class="btn btn-sm btn-light">').appendTo(row);
+                var saleButton = $('<button type="button" class="btn btn-sm btn-light lf-sale-items">').appendTo(row);
                 function syncSale() {
                     saleButton.toggle(!!(state.saleLabel || state.search)).text(state.saleLabel ? state.saleLabel + ' ×' : 'Items in sale');
                 }
@@ -582,9 +583,10 @@ PosnicPro.items = {
             rows: '#items_list_rows',
             onRefresh: function () { return PosnicPro.items.loadList(); },
             container: '#items_filter_panel',
+            appliedContainer: '#items_active_filters',
             button: '#items_filter_btn',
-            searchPlaceholder: PosnicPro.i18n.t('lang_search_name_sku_or_barcode', 'Search name, SKU or barcode'),
-            dateField: PosnicPro.i18n.t('lang_updated', 'Updated'),
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_item_records', 'Search items by name, SKU or barcode'),
+            dateField: PosnicPro.i18n.t('lang_created_date', 'Created date'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
                 { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
@@ -624,15 +626,16 @@ PosnicPro.items = {
     },
     loadList: function (page) {
         PosnicPro.items.mountFilters();
+        $('#items_stock_summary').empty();
         PosnicPro.items.refreshCatalogueTools();
         var self = PosnicPro.items;
         if (page) { self._page = page; }
-        var filters = PosnicPro.listFilter.legacyFilters('items', { dateKey: 'updated_date' });
+        var filters = PosnicPro.listFilter.legacyFilters('items', { dateKey: 'created_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.listFilter.request('items', {
             url: 'items',
             data: (function () {
-                var d = { page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) };
+                var d = { include_summary:'true', page: self._page, limit: self.PAGE_SIZE, filters: JSON.stringify(filters) };
                 var sv = PosnicPro.listSort.value('items');
                 if (sv) { d.sort = sv; }
                 return d;
@@ -640,6 +643,11 @@ PosnicPro.items = {
         }, function (response) {
             var data = (response && response.data) || {};
             var list = data.list || [];
+            var stats = data.summary;
+            var summary = $('#items_stock_summary').empty();
+            if (stats) [['Items',stats.total],['Inactive',stats.inactive],['No stock',stats.out],['Low stock',stats.low]].forEach(function (entry) {
+                $('<span>').text(entry[0]+' ').append($('<strong>').text(entry[1])).appendTo(summary);
+            });
             self._lastRows = list;
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('items') > 0;
@@ -756,7 +764,7 @@ PosnicPro.items = {
         PosnicPro.listExport.all({
             url: 'items',
             params: function (page, limit) {
-                return (function () { var d = { page: page, limit: limit, filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('items', { dateKey: 'updated_date' })) }; var sv = PosnicPro.listSort.value('items'); if (sv) { d.sort = sv; } return d; }());
+                return (function () { var d = { page: page, limit: limit, filters: JSON.stringify(PosnicPro.listFilter.legacyFilters('items', { dateKey: 'created_date' })) }; var sv = PosnicPro.listSort.value('items'); if (sv) { d.sort = sv; } return d; }());
             },
             head: spec.head,
             map: spec.map,
@@ -4117,7 +4125,7 @@ PosnicPro.items = {
 PosnicPro.itemdetails = {
 
     itemdetailsTable: function (type) {
-        PosnicPro.appendReportTableBody('customerdetails');
+        PosnicPro.appendReportTableBody('customerdetails', '#view_itemdetails');
         var loader = $(".loader-itemactivity");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var table = $('#view_itemdetails');

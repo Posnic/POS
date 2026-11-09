@@ -174,7 +174,7 @@ test("US resale fields require the US, not just a sales-tax regime", () => {
 test("the Money report tabs do not offer Indian GST readiness abroad", () => {
   const { dom, w } = fixture();
   w.document.body.innerHTML =
-    '<div class="page_loader"><div class="breadcrumbbar"><div class="row"></div></div></div>';
+    '<div class="page_loader" id="taxdiscountreport_new"><div id="containerbar"><div class="breadcrumbbar"><div class="row"></div></div></div></div>';
   w.location.hash = "#/taxreport";
   w.jQuery.expr.pseudos.visible = () => true;
   const core = read("frontend/static/script/js/core/PosnicPro.js");

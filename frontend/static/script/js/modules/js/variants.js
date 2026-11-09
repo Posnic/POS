@@ -105,6 +105,7 @@ PosnicPro.variants = {
             onRefresh: function () { return PosnicPro.variants.loadList(); },
             container: '#variants_filter_panel',
             button: '#variants_filter_btn',
+            dateField: PosnicPro.i18n.t('lang_created_date', 'Created date'),
             searchPlaceholder: PosnicPro.i18n.t('lang_search_variant_name', 'Search variant name'),
             searchFields: [
                 { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') }
@@ -116,7 +117,7 @@ PosnicPro.variants = {
         PosnicPro.variants.mountFilters();
         var self = PosnicPro.variants;
         if (page) { self._page = page; }
-        var filters = PosnicPro.listFilter.legacyFilters('variants', {});
+        var filters = PosnicPro.listFilter.legacyFilters('variants', { dateKey:'created_date' });
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         PosnicPro.listFilter.request('variants', {
             url: 'variants',

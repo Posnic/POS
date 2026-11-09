@@ -27,6 +27,8 @@ test('combined purchases filter both collections before whole-result sorting, co
   ]);
   const result = await history(db,context,settings);
   assert.equal(result.total,101);
+  assert.equal(result.purchases,1);
+  assert.equal(result.purchaseAmount,0.5);
   assert.deepEqual(result.list.map(row=>[row.kind,row.no,row.total]),[['purchase','R-1',0.5]]);
   const completed = await history(db,context,{status:'received', supplier_id:String(supplier)});
   assert.equal(completed.total,1);

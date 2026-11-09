@@ -78,9 +78,10 @@ PosnicPro.salereport = {
             var per_page = parseInt($('#view_salereport_per_page  option:selected').text());
         }
 
-        var toolbar = $('#sale-report-facets'), customer = toolbar.find('input').last();
+        var toolbar = $('#sale-report-facets'), customer = toolbar.find('input[type=search]').not('.lf-q');
         if (toolbar.length && !toolbar.data('mounted')) {
             toolbar.data('mounted',true);
+                PosnicPro.listFilter.reportPopup(toolbar, toolbar.find('dialog'), toolbar.find('.lf-q'), toolbar.find('.report-popup-toggle'));
             var pending;
             function reload() {
                 clearTimeout(pending);
@@ -91,17 +92,17 @@ PosnicPro.salereport = {
                 },200);
             }
             PosnicPro.listFilter.entityPicker(customer,'customers',function (id) { customer.data('party',id); reload(); });
-            toolbar.find('input').first().on('input',reload);
+            toolbar.find('.lf-q').on('input',reload);
             toolbar.find('select').on('change',reload);
-            toolbar.find('button').on('click',function () {
+            toolbar.find('button[aria-pressed]').on('click',function () {
                 var mine=$(this).attr('aria-pressed') !== 'true';
                 $(this).attr('aria-pressed',String(mine)).toggleClass('btn-primary',mine);
                 reload();
             });
         }
         var data = {
-            receipt:toolbar.find('input').first().val(),customerLookup:customer.data('party'),
-            tender:toolbar.find('select').val(),seller:toolbar.find('button').attr('aria-pressed') === 'true' ? 'me' : '',
+            receipt:toolbar.find('.lf-q').val(),customerLookup:customer.data('party'),
+            tender:toolbar.find('select').val(),seller:toolbar.find('button[aria-pressed]').attr('aria-pressed') === 'true' ? 'me' : '',
             page: current_page,
             limit: per_page,
             starting_date: startDate,
@@ -133,7 +134,7 @@ PosnicPro.salereport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportsale_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                 PosnicPro.renderNoRecords('.reportsale_norecord', 'No Records on ' + dateRange);
                             $('#reportsale_img_hide,.reportsale_norecord').show();
 
@@ -318,7 +319,7 @@ PosnicPro.instantreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportsale_instheader').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                 PosnicPro.renderNoRecords('.reportinstance_norecord', 'No Records on ' + dateRange);
                             $('#reportinstance_img_hide,.reportinstance_norecord').show();
 
@@ -392,7 +393,7 @@ PosnicPro.instantreport = {
 PosnicPro.instantdetails = {
 
     instantdetailsTable: function () {
-        PosnicPro.appendReportTableBody('returndetails');
+        PosnicPro.appendReportTableBody('returndetails', '#view_instantdetails');
         var table = $('#view_instantdetails');
         var current_page = table.data('current_page');
         var per_page = table.data('per_page');
@@ -449,6 +450,10 @@ PosnicPro.instantdetails = {
 
 PosnicPro.salesummaryreport = {
     summaryreportTable: function () {
+        var exportTable = $('#sales-summary-export').removeAttr('data-export-include');
+        var exportRows = exportTable.children('tbody').empty();
+        var request = (exportTable.data('request') || 0) + 1;
+        exportTable.data('request', request);
         var BranchId = $(".sale_branch_value").val().toString();
         if (BranchId !== '') {
             var loader = $(".loader-summary-report");
@@ -466,6 +471,7 @@ PosnicPro.salesummaryreport = {
             };
             PosnicPro.get(params, function (response) {
                 loader.find(".loadingSpinner:first").remove();
+                if (exportTable.data('request') !== request) return;
                 if (response.type === 'success') {
                     var data = response.data;
                     $('#sale_summary_discounts').html(data.discounts.toFixed(2));
@@ -515,6 +521,22 @@ PosnicPro.salesummaryreport = {
                         dineInCard.hide();
                         takeAwayCard.hide();
                     }
+                    $('#sale-summary-line .card.bg-primary-rgba').each(function () {
+                        var card = $(this);
+                        if (card.css('display') === 'none') return;
+                        var metric = card.find('.kanban-tag h5').text().trim();
+                        var amount = card.find('.avatar-group h5').text().replace(/\s+/g, ' ').trim();
+                        var row = $('<tr>').appendTo(exportRows);
+                        $('<td>').text(metric).appendTo(row);
+                        $('<td>').text(amount).appendTo(row);
+                        var orders = card.find('h6 span[id]').text();
+                        if (orders) {
+                            var countRow = $('<tr>').appendTo(exportRows);
+                            $('<td>').text(metric + ' orders').appendTo(countRow);
+                            $('<td>').text(orders).appendTo(countRow);
+                        }
+                    });
+                    exportTable.attr('data-export-include', '');
                 } else {
                     PosnicPro.alert(response.type, response.message);
                 }

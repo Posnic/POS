@@ -3,6 +3,9 @@ PosnicPro.customerreport = {
         var loader = $(".loader-customer-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.dashboard.datePicker();
+        PosnicPro.listFilter.reportPersonPicker('customer', function (field, select) {
+            PosnicPro.listFilter.entityPicker(field, 'customers', select);
+        });
         PosnicPro.HideSideBarModal();
         $(".vertical-layout").removeClass("toggle-menu");
         $(".vertical-menu li a").removeClass("active");
@@ -85,7 +88,7 @@ PosnicPro.customerreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportcustomer_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                 PosnicPro.renderNoRecords('.reportcustomer_norecord', 'No Records on ' + dateRange);
                             $('#reportcustomer_img_hide,.reportcustomer_norecord').show();
 
@@ -168,6 +171,9 @@ PosnicPro.customeroutstandingreport = {
         var loader = $(".loader-customer-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.dashboard.datePicker();
+        PosnicPro.listFilter.reportPersonPicker('customer', function (field, select) {
+            PosnicPro.listFilter.entityPicker(field, 'customers', select);
+        });
         PosnicPro.HideSideBarModal();
         $(".vertical-layout").removeClass("toggle-menu");
         $(".vertical-menu li a").removeClass("active");
@@ -205,7 +211,7 @@ PosnicPro.customeroutstandingreport = {
         if (branchId !== '') {
             var loader = $(".loader-customer-report");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
-            PosnicPro.appendReportTableBody('transactionreport');
+            PosnicPro.appendReportTableBody('transactionreport', '#view_customeroutstandingreport');
             var daterange = $(".view_customer_report_daterange").val();
             var fields = daterange.split('-');
             var table = $('#view_customeroutstandingreport');
@@ -250,7 +256,7 @@ PosnicPro.customeroutstandingreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportcustomeroutstanding_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                 PosnicPro.renderNoRecords('.reportcustomeroutstanding_norecord', 'No Records on ' + dateRange);
                             $('#reportcustomeroutstanding_img_hide,.reportcustomeroutstanding_norecord').show();
 

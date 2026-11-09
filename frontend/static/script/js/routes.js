@@ -162,6 +162,8 @@ $(document).ready(function () {
             if (typeof PosnicPro[module].showDataTablePage === 'function') {
                 PosnicPro[module].showDataTablePage(module);
                 $('.' + module).click();
+                // A first visit can finish after parseHash when the reports bundle loads.
+                if (currentHash === module && PosnicPro.reportGroupForRoute(module)) markSidebar(module);
             } else {
                 console.error('Module not found or showDataTablePage not defined for:', module);
             }
@@ -218,7 +220,8 @@ $(document).ready(function () {
          * own and belongs under Restaurant.
          */
         var parts = String(hash || '').split('/');
-        var link = null;
+        var group = PosnicPro.reportGroupForRoute(parts[0]);
+        var link = group ? $menu.find('#rgrp_' + group.name.toLowerCase() + '_page') : null;
         while (parts.length && !link) {
             var candidate = $menu.find('a[href="#/' + parts.join('/') + '"]').first();
             if (candidate.length) { link = candidate; break; }

@@ -184,6 +184,8 @@ PosnicPro.sales = {
         });
 
         PosnicPro.sales.recentMenu.recentSalesTabDetails();
+        const pickedItem = PosnicPro.palette?.takeItem('sales/new');
+        if (pickedItem) PosnicPro.sales.itemsMenu.addToLineItemsList(pickedItem.id);
         $("#paymentreturnhistory").hide();
         var loader = $(".loader-sales-balance");
         loader.find(".loadingSpinner:first").remove(); 
@@ -544,50 +546,80 @@ PosnicPro.sales = {
         PosnicPro.listFilter.mount({
             key: 'sales',
             onClear: function () { PosnicPro.sales._saleFacets = {}; },
-            primaryControls: function (row) {
+            primaryControls: function (row, state, filterButton) {
                 var self = PosnicPro.sales;
                 self._saleFacets = self._saleFacets || {};
                 var scope = [PosnicPro.local.get('branch_id_set'),PosnicPro.local.get('userid')].join('/');
                 if (self._facetScope !== scope) self._saleFacets = {};
                 self._facetScope = scope;
                 var facets = self._saleFacets;
+                function group(key, label, control) {
+                    var box = $('<div class="sales-filter-field">').insertBefore(control);
+                    var id = 'sales_filter_' + key;
+                    var field = control.is('select,input') ? control : control.find('select,input').first();
+                    field.attr('id', id);
+                    $('<label>').attr('for', id).text(label).appendTo(box);
+                    return box.append(control);
+                }
+                var query = group('query', 'Search sales', row.find('.lf-search')).addClass('sales-query-group');
+                query.find('input').attr('type','search');
+                group('field', 'Search in', row.find('.lf-field'));
+                var date = group('date', 'Sale date', row.find('.lf-preset-wrap')).addClass('sales-date-group');
+                var quick = $('#sales_quick_controls').empty();
+                var dialog = document.getElementById('sales_filter_dialog');
+                var slot = PosnicPro.listFilter.searchBar(quick, filterButton, PosnicPro.i18n.t('lang_filter_sales','Filter sales'));
+                var exact = row.find('.lf-exact');
+                function placeControls() {
+                    PosnicPro.listFilter.queryHint(query.find('.lf-q'), 'sales', !dialog.open);
+                    if (dialog.open) { row.prepend(query, date); query.append(exact); }
+                    else { row.append(exact); quick.prepend(date); slot.append(query); }
+                }
+                $(dialog).off('.salesControls').on('salesOpen.salesControls close.salesControls', placeControls);
+                placeControls();
                 ['seller', 'customer'].forEach(function (key) {
                     var label = key === 'seller' ? 'Sold by' : 'Customer';
-                    var input = $('<input type="search" class="form-control form-control-sm lf-primary">')
-                        .attr({placeholder:label,'aria-label':label}).val(facets[key]?.label || '').appendTo(row);
+                    var input = $('<input type="text" autocomplete="off" class="form-control form-control-sm">')
+                        .attr('placeholder', key === 'seller' ? 'All sellers' : 'All customers')
+                        .val(facets[key]?.label || '').appendTo(row);
+                    var box = group(key, label, input);
+                    var clear = $('<button type="button" class="sales-facet-clear">&times;</button>')
+                        .attr('aria-label', 'Clear ' + label).appendTo(box).toggle(!!facets[key])
+                        .on('click', function () { input.val('').trigger('input').trigger('focus'); });
+                    if (key === 'seller') {
+                        $('<button type="button" class="sales-mine">My sales</button>').prependTo(box)
+                            .toggle(facets.seller?.id !== 'me').on('click', function () {
+                                facets.seller = {id:'me',label:'My sales'};
+                                input.val('My sales'); clear.show(); $(this).hide(); self.loadHistory(1);
+                            });
+                    }
                     if (typeof input.autocomplete !== 'function') { input.prop('disabled', true); return; }
                     input.autocomplete({
-                        minChars:0, deferRequestBy:200, triggerSelectOnValidInput:false,
+                        appendTo:box, minChars:0, deferRequestBy:200, triggerSelectOnValidInput:false,
                         lookup: function (query, done) {
                             PosnicPro.get({url:'sales/historyFilterOptions', data:{field:key, query:query}}, function(r) {
                                 done({suggestions:(r.data || []).map(function(o){return {value:o.label,data:o.value};})});
                             }, function(){done({suggestions:[]});});
                         },
                         onSelect: function(choice){
-                            facets[key] = {id:choice.data,label:choice.value};
+                            facets[key] = {id:choice.data,label:choice.value}; clear.show(); box.find('.sales-mine').show();
                             self.loadHistory(1);
                         }
                     });
                     input.on('focus',function(){input.autocomplete('getSuggestions',this.value);})
-                        .on('input',function(){if(!this.value && facets[key]) {delete facets[key];self.loadHistory(1);}});
+                        .on('input',function(){if(!this.value && facets[key]) {delete facets[key];clear.hide();box.find('.sales-mine').show();self.loadHistory(1);}});
                 });
                 var tender = $('<select aria-label="Payment method" class="form-control form-control-sm lf-primary">').appendTo(row);
-                ['', 'Cash', 'Card', 'UPI'].forEach(function(v){tender.append($('<option>').val(v).text(v || 'Payment method'));});
+                ['', 'Cash', 'Card', 'UPI'].forEach(function(v){tender.append($('<option>').val(v).text(v || 'All payment methods'));});
                 tender.val(facets.tender || '').on('change',function(){facets.tender=this.value;self.loadHistory(1);});
-                $('<button type="button" class="btn btn-sm btn-outline-primary">My sales</button>').appendTo(row)
-                    .attr('aria-pressed',String(facets.seller?.id === 'me')).on('click',function(){
-                        if(facets.seller?.id === 'me') delete facets.seller;
-                        else facets.seller={id:'me',label:'My sales'};
-                        PosnicPro.listFilter.render('sales'); self.loadHistory(1);
-                    });
+                group('tender', 'Payment method', tender);
             },
             defaultPreset: 'today',
             rows: '#sales_list_rows',
             onRefresh: function () { return PosnicPro.sales.loadHistory(); },
             container: '#sales_filter_search',
-            panelContainer: '#sales_filter_panel',
+            suggestionContainer: '#sales_filter_scope',
             button: '#sales_filter_btn',
-            searchPlaceholder: PosnicPro.i18n.t('lang_search_bill_no_customer_or_phone', 'Search bill no, customer or phone'),
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_sale_records', 'Search sales by bill number, customer or phone'),
             dateField: PosnicPro.i18n.t('lang_date_title', 'Date'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
@@ -599,9 +631,6 @@ PosnicPro.sales = {
             typeahead: 'customer',
             typeaheadField: 'customer_name',
             onChange: function () { PosnicPro.sales.loadHistory(1); }
-        });
-        $('#sales_quick_dates').off('click.quickDate').on('click.quickDate', '[data-sales-date]', function () {
-            $('#sales_filter_search .lf-preset').val($(this).attr('data-sales-date')).trigger('change');
         });
         PosnicPro.listSort.mount('sales', {
             options: [
@@ -641,7 +670,7 @@ PosnicPro.sales = {
             $('#sales_history_period_hint').text(parts.length ? '' : PosnicPro.i18n.t('lang_set_serving_periods', 'Set breakfast, lunch and dinner in Restaurant > Menu.'));
             if (prior && !period.val()) PosnicPro.sales.loadHistory(1);
         }, failed);
-        $('#sales_history_table, #sales_history_period').off('change.restaurantHistory');
+        $('#sales_history_table, #sales_history_period').off('change.restaurantHistory').on('change.restaurantHistory', function () { PosnicPro.sales.loadHistory(1); });
         $('#sales_restaurant_reset').off('click.restaurantHistory').on('click.restaurantHistory', function () { $('#sales_history_table, #sales_history_period').val(''); PosnicPro.sales.loadHistory(1); });
     },
 
@@ -665,9 +694,10 @@ PosnicPro.sales = {
             if (!sourceSearch.length) {
                 sourceSearch = $('<input type="search" id="sales_history_source_search" class="form-control" autocomplete="off" role="combobox" aria-autocomplete="list">').attr('aria-label', PosnicPro.i18n.t('lang_rd_order_source', 'Order source')).insertAfter(select);
                 select.hide();
-                $('#sales_history_source_wrap').addClass('sales-history-picker').append($('<button type="button" class="sales-history-picker-toggle" data-picker="source_search">▾</button>').attr('aria-label', PosnicPro.i18n.t('lang_rd_order_source', 'Order source')));
+                $('#sales_history_source_wrap').addClass('sales-history-picker');
             }
-            sourceSearch.attr('placeholder', PosnicPro.i18n.t('lang_all_sources', 'All sources')).val(select.val() ? select.find('option:selected').text() : '');
+            sourceSearch.attr('placeholder', PosnicPro.i18n.t('lang_all_sources', 'All sources'));
+            if (!sourceSearch.is(':focus') || select.val()) sourceSearch.val(select.val() ? select.find('option:selected').text() : '');
             ['staff', 'device', 'source_search'].forEach(function (field) {
                 var input = $('#sales_history_' + field), branch = PosnicPro.local.get('branch_id_set') || '';
                 if (input.data('historyBranch') === branch) return;
@@ -675,7 +705,7 @@ PosnicPro.sales = {
                 input.data('historyBranch', branch);
                 var request = 0;
                 input.autocomplete({
-                    minChars: 0, deferRequestBy: 180, maxHeight: 264, triggerSelectOnValidInput: false,
+                    appendTo: input.parent(), minChars: 0, deferRequestBy: 180, maxHeight: 264, triggerSelectOnValidInput: false,
                     showNoSuggestionNotice: true, noSuggestionNotice: PosnicPro.i18n.t('lang_no_records', 'No Records'),
                     lookup: function (query, done) {
                         var version = ++request;
@@ -688,7 +718,7 @@ PosnicPro.sales = {
                             if (version !== request || input.data('historyBranch') !== branch) return;
                             if (!r || r.type !== 'success') input.autocomplete('setOptions', { noSuggestionNotice: PosnicPro.i18n.t('lang_desktop_retry', 'Try again') });
                             var options = r && r.type === 'success' && Array.isArray(r.data) ? r.data : [];
-                            done({ suggestions: options.map(function (o) { return { value: o.label + (o.value !== o.label ? ' · ' + o.value : ''), data: o.value }; }) });
+                            done({ suggestions: options.map(function (o) { return { value: o.label + (field === 'device' && o.value !== o.label ? ' · ' + o.value : ''), data: o.value }; }) });
                         }, function () { if (version === request && input.data('historyBranch') === branch) { input.autocomplete('setOptions', { noSuggestionNotice: PosnicPro.i18n.t('lang_desktop_retry', 'Try again') }); done({ suggestions: [] }); } });
                     },
                     beforeRender: function (container) {
@@ -700,21 +730,27 @@ PosnicPro.sales = {
                     onSelect: function (choice) {
                         if (field === 'source_search') select.val(choice.data);
                         else input.data('filterValue', choice.data);
+                        PosnicPro.sales.loadHistory(1);
                     }
                 });
-                input.off('focus.historyPicker').on('focus.historyPicker', function () { input.autocomplete('onValueChange'); });
-                input.off('input.historyPicker').on('input.historyPicker', function () {
-                    input.removeData('filterValue');
-                    if (field === 'source_search') select.val('');
-                });
+                input.off('.historyPicker').on('focus.historyPicker click.historyPicker', function () {
+                    if (!input.autocomplete().visible) input.autocomplete('getSuggestions', this.value);
+                }).on('blur.historyPicker',function () { request++; });
             });
-            $('.sales-history-picker-toggle').off('click.historyPicker').on('click.historyPicker', function () {
-                var input = $('#sales_history_' + $(this).data('picker'));
-                input.trigger('focus');
-                input.autocomplete('getSuggestions', '');
-            });
+
         }
-        $('#sales_provenance_form').off('submit.history').on('submit.history', function (e) { e.preventDefault(); PosnicPro.sales.loadHistory(1); });
+        select.off('change.history').on('change.history', function () { PosnicPro.sales.loadHistory(1); });
+        $('#sales_history_source_search').off('input.history').on('input.history', function () {
+            if (select.val()) select.val('').trigger('change');
+        });
+        $('#sales_history_staff, #sales_history_device').off('input.history').on('input.history', function () {
+            $(this).removeData('filterValue');
+            clearTimeout(PosnicPro.sales._orderFilterTimer);
+            if (!this.value) PosnicPro.sales.loadHistory(1);
+            else PosnicPro.sales._orderFilterTimer = setTimeout(function () {
+                PosnicPro.sales.loadHistory(1);
+            }, 350);
+        });
         $('#sales_provenance_reset').off('click.history').on('click.history', function () {
             $('#sales_history_staff, #sales_history_device, #sales_history_source, #sales_history_source_search, #sales_history_table, #sales_history_period').val('').removeData('filterValue');
             var mounted = PosnicPro.listFilter._mounted && PosnicPro.listFilter._mounted.sales;
@@ -731,16 +767,23 @@ PosnicPro.sales = {
         var host = $('#sales_active_filters').empty(), count = 0;
         var add = function (label, remove) {
             count += 1;
-            $('<button type="button" class="btn btn-sm btn-light border">').text(label + ' ×').attr('aria-label', 'Remove ' + label).on('click', function () { remove(); PosnicPro.sales.loadHistory(1); }).appendTo(host);
+            $('<button type="button" class="btn btn-sm btn-light border">').text(label).append('<span class="lf-chip-remove" aria-hidden="true">×</span>').attr('aria-label', 'Remove ' + label).on('click', function () { remove(); PosnicPro.sales.loadHistory(1); }).appendTo(host);
         };
         var mounted = PosnicPro.listFilter._mounted && PosnicPro.listFilter._mounted.sales;
-        $('#sales_quick_dates [data-sales-date]').each(function () {
-            var selected = !!mounted && mounted.state.preset === $(this).attr('data-sales-date');
-            $(this).toggleClass('btn-primary', selected).toggleClass('btn-outline-primary', !selected).attr('aria-pressed', String(selected));
-        });
         if (mounted) {
-            if (mounted.state.search) add(mounted.state.search, function () { mounted.state.search = ''; PosnicPro.listFilter.render('sales'); });
-            if (mounted.state.preset !== 'all') add($('#sales_filter_search .lf-preset option:selected').text() || mounted.state.preset, function () { mounted.state.preset = 'all'; mounted.state.from = null; mounted.state.to = null; PosnicPro.listFilter.render('sales'); });
+            if (mounted.state.preset !== 'all') {
+                add(PosnicPro.listFilter.dateLabel(mounted.state), function () {
+                    Object.assign(mounted.state, {preset:'all', from:null, to:null});
+                    PosnicPro.listFilter.render('sales');
+                });
+            }
+            if (mounted.state.search) {
+                var terms = [mounted.state.search];
+                if (mounted.state.field !== 'all') terms.unshift($('#sales_filter_field option:selected').text());
+                if (mounted.state.exact) terms.push('Exact');
+                add(terms.join(' · '), function () { mounted.state.search = ''; mounted.state.field = 'all'; mounted.state.exact = false; PosnicPro.listFilter.render('sales'); });
+            }
+
         }
         var facets = PosnicPro.sales._saleFacets || {};
         Object.keys(facets).forEach(function(key) {
@@ -771,13 +814,14 @@ PosnicPro.sales = {
         chip(t('lang_salecut_title', 'Sales'), summary.count);
         (summary.currencies || []).forEach(function (group) {
             var money = function (amount) { return (group.currencyCode || group.currencySymbol || PosnicPro.local.get('currencySign') || '') + ' ' + Number(amount).toLocaleString(undefined, { minimumFractionDigits: group.currencyDigits, maximumFractionDigits: group.currencyDigits }); };
-            chip(t('lang_total_sales', 'Total sales'), money(group.total));
+            chip(t('lang_total', 'Total'), money(group.total));
             (group.payments || []).forEach(function (payment) { chip(payment.method, money(payment.amount)); });
         });
-        if (!summary.currencies.length) chip(t('lang_total_sales', 'Total sales'), (PosnicPro.local.get('currencySign') || '') + ' 0.00');
+        if (!summary.currencies.length) chip(t('lang_total', 'Total'), (PosnicPro.local.get('currencySign') || '') + ' 0.00');
         if (summary.cancelled) chip(t('lang_cancelled', 'Cancelled'), summary.cancelled);
     },
     loadHistory: function (page) {
+        clearTimeout(PosnicPro.sales._orderFilterTimer);
         PosnicPro.sales.mountHistoryFilters();
         PosnicPro.sales.mountProvenanceHistory();
         PosnicPro.sales.paintHistoryFilters();
@@ -2507,10 +2551,6 @@ PosnicPro.sales = {
             $('#payment_id').append(paymentMethod);
         }
 
-        let addMethod = '<div class="col-lg-4 col-md-2 col-xs-12">' +
-            '<button type="button" class="btn btn-payment-mode btn-block change_active" onclick="return PosnicPro.payment.triggerModules();" ><i class="feather icon-plus mr-2"></i>Add</button>' +
-            '</div>';
-        $('#payment_id').append(addMethod);
         if (!$('#payment_id .payment_mode:checked').length) {
             $('#payment_id .payment_mode').first().prop('checked', true).closest('label').addClass('active');
         }
@@ -2969,14 +3009,6 @@ PosnicPro.sales = {
             });
         }
 
-        // --- Add Button ---
-        let addButton =
-            '<div class="col-lg-6 col-md-6 mb-3">' +
-            '<button type="button" class="btn btn-outline-secondary w-100 py-2" onclick="return PosnicPro.payment.triggerModules();">' +
-            '<i class="feather icon-plus me-2"></i>Add' +
-            '</button>' +
-            '</div>';
-        $('#payment_id').append(addButton);
         // --- Click handler with complete multi-payment logic ---
         $(document).off('click', '.btn-payment-method').on('click', '.btn-payment-method', function () {
             // ✅ Don't process if already active (prevents clearing on initial click)
@@ -12420,12 +12452,15 @@ PosnicPro.quotes.mountFilters = function () {
     if (!$('#quotes_filter_panel').length) { return; }
     PosnicPro.listFilter.mount({
         key: 'quotes',
+        inlineSearchHint: 'Search quotes',
+        showStatusChip: true,
             partyFilter: 'customers',
             rows: '#quotes_list_rows',
             onRefresh: function () { return PosnicPro.quotes.load(true); },
         container: '#quotes_filter_panel',
         button: '#quotes_filter_btn',
         searchPlaceholder: PosnicPro.i18n.t('lang_search_customer_or_quote', 'Search customer or quote #'),
+        defaultPreset: 'today',
         dateField: PosnicPro.i18n.t('lang_created', 'Created'),
         searchFields: [
             { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
@@ -12465,7 +12500,15 @@ $(document).on('click', '#sales_export_filtered', function () {
 });
 $(document).on('click', '#sales_filter_btn', function () {
     PosnicPro.sales.mountHistoryFilters();
-    PosnicPro.listFilter.toggle('sales');
+    PosnicPro.listFilter.openOptions(document.getElementById('sales_filter_dialog'), $(this));
+    $('#sales_filter_dialog').triggerHandler('salesOpen');
+    $('#sales_filter_dialog').off('close.suggestions').on('close.suggestions',function(){
+        $(this).find('input').each(function(){ var ac=$(this).data('autocomplete'); if(ac) ac.hide(); });
+    });
+    $('#sales_filter_search .lf-q').trigger('focus');
+});
+$(document).on('click', '[data-close-sales-filter]', function () {
+    this.closest('dialog').close();
 });
 
 $(document).on('click', '#quotes_filter_btn', function () {

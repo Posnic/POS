@@ -1014,11 +1014,13 @@ class BaseModel {
           ? { 'branch_access.branch_id': { $in: objectIds } }
           : { branch_id: { $in: objectIds } };
 
+      const employee = collectionName === 'users';
+      const pattern = new RegExp(String(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
       const pipeline = [
         {
           $match: {
             $and: [
-              { [field]: new RegExp(query, 'i') },
+              employee ? { $or: [{ name: pattern }, { email: pattern }] } : { [field]: pattern },
               branchFilter,
               { license: BaseModel.license },
             ],
@@ -1027,7 +1029,7 @@ class BaseModel {
         { $limit: 5 },
         {
           $project: {
-            name: `$${field}`,
+            name: employee ? { $cond: [{ $gt: ['$name', ''] }, '$name', '$email'] } : `$${field}`,
             id: { $toString: '$_id' },
           },
         },

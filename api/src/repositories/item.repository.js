@@ -179,22 +179,27 @@ class ItemRepository extends BaseModel {
       _id: branchObjectId,
       license: licenseObjectId,
     })
-      .select('branch_name')
+      .select('branch_name notification_range')
       .lean();
     if (!branch) {
       throw new Error('Active branch does not belong to the current license');
     }
 
     const clientFilters = this.assignFilterObjects({ ...filters }, LegacyItemModel.fields);
+    const quantity = { $convert:{ input:'$available_quantity', to:'double', onNull:null, onError:null } };
+    const threshold = { $convert:{ input:{ $ifNull:['$reorder_point',Number(branch.notification_range) || 0] }, to:'double', onNull:0, onError:0 } };
+    const tracked = { $and:[{ $in:['$track_inventory',[true,'true']] },{ $ne:[quantity,null] }] };
+    const stock = {
+      out:{ $and:[tracked,{ $lte:[quantity,0] }] },
+      low:{ $and:[tracked,{ $gt:[quantity,0] },{ $lte:[quantity,threshold] }] },
+      in:{ $and:[tracked,{ $gt:[quantity,0] }] }
+    };
     if (clientFilters.stockLevel) {
       const level = clientFilters.stockLevel;
       delete clientFilters.stockLevel;
-      const quantity = { $convert: { input:'$available_quantity', to:'double', onNull:null, onError:null } };
-      const threshold = { $convert: { input:'$low_stock', to:'double', onNull:0, onError:0 } };
-      const comparisons = { low:{$lte:[quantity,threshold]}, out:{$lte:[quantity,0]}, in:{$gt:[quantity,0]} };
-      if (!Object.hasOwn(comparisons,level)) throw new Error('Invalid stock level');
-      clientFilters.$and = [...(clientFilters.$and || []), {track_inventory:{$in:[true,'true']}},
-        {$expr:{$and:[{$ne:[quantity,null]},comparisons[level]]}}];
+      if (!Object.hasOwn(stock,level)) throw new Error('Invalid stock level');
+      clientFilters.$and = [...(clientFilters.$and || []), { $expr:stock[level] }];
+
     }
     if (Object.hasOwn(clientFilters,'saleItems')) {
       const ids=clientFilters.saleItems;
@@ -242,7 +247,7 @@ class ItemRepository extends BaseModel {
       license: licenseObjectId,
     };
 
-    return { collection, filter };
+    return { collection, filter, stock };
   }
 
   /**
@@ -263,8 +268,9 @@ class ItemRepository extends BaseModel {
     page = 1,
     limit = 5,
     sort = { _id: -1 },
+    includeSummary = false,
   } = {}) {
-    const { collection, filter } = await this.listScope({ branchId, licenseId, filters });
+    const { collection, filter, stock } = await this.listScope({ branchId, licenseId, filters });
 
     const effectiveLimit = parseInt(limit, 10) || 5;
     const effectivePage = parseInt(page, 10) || 1;
@@ -318,12 +324,19 @@ class ItemRepository extends BaseModel {
         .toArray();
     }
 
-    const [total, items] = await Promise.all([collection.countDocuments(filter), itemsPromise]);
+    const count = includeSummary ? collection.aggregate([{ $match:filter },{ $group:{
+      _id:null, total:{ $sum:1 }, inactive:{ $sum:{ $cond:[{ $in:['$is_active',[false,0,'false','0']] },1,0] } },
+      out:{ $sum:{ $cond:[stock.out,1,0] } }, low:{ $sum:{ $cond:[stock.low,1,0] } }
+    } },{ $project:{ _id:0 } }]).next() : collection.countDocuments(filter);
+    const [stats, items] = await Promise.all([count, itemsPromise]);
+    const summary = includeSummary ? stats || { total:0, inactive:0, out:0, low:0 } : null;
+    const total = includeSummary ? summary.total : stats;
 
     const list = items.map((doc) => BaseModel.simplifyFields(doc));
 
     return {
       items: list,
+      ...(includeSummary ? {summary} : {}),
       total,
       page: effectivePage,
       limit: effectiveLimit,
@@ -2807,7 +2820,14 @@ class ItemRepository extends BaseModel {
                 }
               }
               if (Object.keys(dateCondition).length > 0) {
-                conditions.push({ [key]: dateCondition });
+                if (key === 'created_date') {
+                  conditions.push({ $or: [
+                    { created_date: dateCondition },
+                    { created_date: null, createdAt: dateCondition },
+                  ] });
+                } else {
+                  conditions.push({ [key]: dateCondition });
+                }
               }
               return;
             }
@@ -3554,9 +3574,13 @@ class ItemRepository extends BaseModel {
         whereConditions.push({ license: licenseObjectId });
       }
 
-      const filter = {
-        $and: [...(regex ? [{ $or: searchConditions }] : []), ...whereConditions],
-      };
+      if (type === 'id') {
+        if (!ObjectId.isValid(query)) return { status: false, message: 'Invalid item' };
+        whereConditions.push({ _id: new ObjectId(query) });
+      } else if (regex) {
+        whereConditions.push({ $or: searchConditions });
+      }
+      const filter = { $and: whereConditions };
 
       const items = await collection.find(filter).limit(limit).toArray();
 
@@ -6540,7 +6564,7 @@ class ItemRepository extends BaseModel {
               category_name: 1,
             },
           })
-          .sort({ available_quantity: 1 })
+          .sort({ available_quantity: 1, name: 1, _id: 1 })
           .skip(skip)
           .limit(limit)
           .toArray(),

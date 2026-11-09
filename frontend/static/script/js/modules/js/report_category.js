@@ -10,6 +10,7 @@ PosnicPro.categoryreport = {
         var loader = $(".loader-category-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.dashboard.datePicker();
+        PosnicPro.listFilter.reportLookup('category', 'categories', 'name');
         PosnicPro.HideSideBarModal();
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
         $(".vertical-layout").removeClass("toggle-menu");
@@ -90,7 +91,7 @@ PosnicPro.categoryreport = {
                         $('#view_categoryreport_total').text(response.data.total);
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.report-category-no-records').text('No Records on ' + dateRange);
                             $('.reportcategory_header').hide();
                             $('#reportcategory_img_hide, .report-category-no-records').show();
@@ -197,7 +198,7 @@ PosnicPro.categoryproductreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportcategorypro_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportcategoryproduct_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a

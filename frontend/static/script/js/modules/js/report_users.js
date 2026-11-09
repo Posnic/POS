@@ -3,6 +3,7 @@ PosnicPro.userreport = {
         var loader = $(".loader-user-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.dashboard.datePicker();
+        PosnicPro.listFilter.reportLookup('user', 'users', 'email');
         PosnicPro.HideSideBarModal();
         $(".vertical-layout").removeClass("toggle-menu");
         $(".vertical-menu li a").removeClass("active");
@@ -75,11 +76,14 @@ PosnicPro.userreport = {
                         table.data('per_page', response.data.per_page);
                         PosnicPro.paging(response.data.total_pages, response.data.current_page);
                         table.children('tbody').text('');
-                        $('#view_userreport_total').text(response.data.total);
+                        $('#view_userreport_total, #employee-sales-total').text(response.data.total);
+                        var summary = response.data.summary;
+                        $('#employee-sale-count').text(summary ? summary.sales : '—');
+                        $('#employee-sale-amount').text(summary ? PosnicPro.local.get('currencySign') + ' ' + $.number(summary.amount, 2) : '—');
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportuser_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportuser_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a
@@ -152,7 +156,7 @@ PosnicPro.userstatusreport = {
         if (branchId !== '') {
             var loader = $(".loader-user-report");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
-            PosnicPro.appendReportTableBody('staffactivity');
+            PosnicPro.appendReportTableBody('staffactivity', '#view_userstatusreport');
             var daterange = $(".view_user_report_daterange").val();
             var fields = daterange.split('-');
             var table = $('#view_userstatusreport');
@@ -186,11 +190,11 @@ PosnicPro.userstatusreport = {
                         table.data('per_page', response.data.per_page);
                         PosnicPro.paging(response.data.total_pages, response.data.current_page);
                         table.children('tbody').text('');
-                        $('#view_userstatusreport_total').text(response.data.total);
+                        $('#view_userstatusreport_total, #employee-activity-total').text(response.data.total);
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportuserstatus_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportuserstatus_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a
@@ -217,8 +221,9 @@ PosnicPro.userstatusreport = {
                             var row = response.data.list[i];
                             var row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
                             var updateDate = PosnicPro.convertDate(row.string_date);
-                            var trow = '<tr> <td scope="row">' + row_no + '</td> <td>' + row.user_name + '</td> <td>' + updateDate + '</td><td>' + row.branch_name + '</td><td>' + row.ip + '</td><td>' + row.device + '</td><td>' + row.os + '</td><<td>' + row.browser + '</td>/tr>';
-                            $('#view_userstatusreport').children('tbody').append(trow);
+                            var activity = $('<tr>').appendTo(table.children('tbody'));
+                            [row_no, row.user_name, updateDate, row.branch_name, row.ip, row.device, row.os, row.browser]
+                                .forEach(function (value) { $('<td>').text(value).appendTo(activity); });
                         }
                     } else {
                         var userstatusreport = [];

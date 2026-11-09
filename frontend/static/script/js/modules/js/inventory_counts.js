@@ -40,12 +40,18 @@ PosnicPro.inventorycounts = {
         });
     }
 };
-PosnicPro.inventorycounts.leaveSection = function () {
+PosnicPro.inventorycounts.markView = function (view) {
+    var tabs = $('#inventorycounts .count-tab').removeAttr('aria-current');
+    tabs.filter('[data-count-view="'+view+'"]').attr('aria-current','page');
+};
+PosnicPro.inventorycounts.leaveSection = function (view) {
+    this.markView(view || 'overview');
     $('#inventorycounts').removeClass('count-section').removeAttr('data-section');
     $('#inventory_section_host').hide();
     $('#inventorycounts .count-workspace').show();
 };
 PosnicPro.inventorycounts.mountSection = function (name) {
+    this.markView(name);
     var id=name==='logs'?'stocklogs':'lowstockitems';
     if(!$('#inventory_section_host').length) $('#inventorycounts > .contentbar').append('<div id="inventory_section_host"></div>');
     $('#'+id).appendTo('#inventory_section_host').show();
@@ -296,18 +302,18 @@ $(document).on('click', '.mobile-inventory-close', function () {
         render(); $('#audit_status').text('Blank = unchanged · 0 = no stock · reason required for each change');
     }
     p.startAudit = async function (options) {
-        p.leaveSection();
+        p.leaveSection('audit');
         recountIds = options && Array.isArray(options.itemIds) ? options.itemIds : null;
         p.detailRequest=(p.detailRequest||0)+1;
         $('#inventorycounts').removeClass('count-reviewing').addClass('count-editing');
         activeBranch = branch = PosnicPro.local.get('branch_id_set'); auditPageSize=25;
-        $('#inventory_count_detail').show().html('<div class="d-flex align-items-center justify-content-between mb-3" style="gap:12px"><h5 class="mb-0"><lang class="lang_stock_adjust_title">Stock adjustment</lang></h5><label class="mb-0 d-flex align-items-center" style="gap:8px">Branch <select id="audit_branch" class="form-control" style="width:170px" aria-label="Stock adjustment branch" data-t-aria-label="lang_stock_adjustment_branch"></select></label></div>' +
+        $('#inventory_count_detail').show().html('<div class="d-flex align-items-center justify-content-between mb-3" style="gap:12px"><h5 class="mb-0"><lang class="lang_stock_adjust_title">Stock adjustment</lang></h5><label class="mb-0 d-none align-items-center" style="gap:8px">Branch <select id="audit_branch" class="form-control" style="width:170px" aria-label="Stock adjustment branch" data-t-aria-label="lang_stock_adjustment_branch"></select></label></div>' +
             '<div class="d-flex flex-wrap align-items-center mb-3" style="gap:8px"><input id="audit_search" class="form-control" style="width:220px;max-width:100%" placeholder="Search product / SKU" data-t-placeholder="lang_search_product_sku" aria-label="Search products" data-t-aria-label="lang_search_products"><select id="audit_category" class="form-control" style="width:190px" aria-label="Category" data-t-aria-label="lang_newcategory_title"><option value="" data-t="lang_all_categories">All categories</option></select><span class="flex-grow-1"></span><button class="btn btn-outline-primary" id="audit_download"><lang class="lang_excel">Excel</lang></button><button class="btn btn-outline-primary" id="audit_print"><lang class="lang_printed">Print</lang></button><button class="btn btn-outline-primary" id="audit_upload"><lang class="lang_upload">Upload</lang></button><input type="file" id="audit_file" accept=".xlsx,.csv" hidden></div>' +
             '<datalist id="audit_reasons"><option value="Monthly stock count"><option value="Damaged during handling"><option value="Spoilage / expired stock"><option value="Opening stock correction"><option value="Stock entry correction"></datalist>' +
             '<div class="table-responsive"><table class="table"><thead><tr><th><lang class="lang_sku_title">SKU</lang></th><th><lang class="lang_product">Product</lang></th><th><lang class="lang_unit_title">Unit</lang></th><th><lang class="lang_current_stock">Current stock</lang></th><th><lang class="lang_new_stock">New stock</lang></th><th><lang class="lang_stock_adjust_reason">Reason</lang></th></tr></thead><tbody id="audit_rows"></tbody></table></div><div class="d-flex justify-content-between align-items-center flex-wrap my-3" style="gap:12px"><label class="mb-0 d-flex align-items-center" style="gap:8px">Rows <select id="audit_page_size" class="form-control" aria-label="Rows per page" data-t-aria-label="lang_rows_per_page" style="width:85px"><option>25</option><option>50</option><option>100</option></select></label><span id="audit_page_info" role="status"></span><div><button id="audit_prev" class="btn btn-outline-primary"><lang class="lang_previous">Previous</lang></button> <button id="audit_next" class="btn btn-outline-primary"><lang class="lang_next">Next</lang></button></div></div><div class="d-flex justify-content-between align-items-center flex-wrap" style="gap:12px"><small id="audit_status" role="status"></small><button class="btn btn-primary" id="audit_review"><lang class="lang_review_changes">Review changes</lang></button></div><div id="audit_review_panel" class="mt-3"></div>');
         try {
             branches = await api({ url: 'items/priceSheet', method: 'POST', data: JSON.stringify({ action: 'branches' }) }); check();
-            branches.forEach(function (b) { $('#audit_branch').append($('<option>').val(b.id).text(b.name)); }); $('#audit_branch').val(branch).prop('disabled', branches.length < 2);
+            branches.forEach(function (b) { $('#audit_branch').append($('<option>').val(b.id).text(b.name)); }); $('#audit_branch').val(branch).parent().toggleClass('d-none', branches.length < 2).toggleClass('d-flex', branches.length > 1);
             await load();
             if (recountIds) $('#audit_status').text('Unresolved items only. Stock refreshed; enter the actual count again. Previous quantities have not been copied. The old entry remains in history.');
         } catch (e) { fail(e); }
@@ -423,7 +429,7 @@ $(document).on('click', '.mobile-inventory-close', function () {
     function error(e){$('#sp_status').text(e.message);}
     async function run(fn){if(busy)return;busy=true;$('#spoilage_panel button').prop('disabled',true);try{await fn();}catch(e){error(e);}finally{busy=false;$('#spoilage_panel button').prop('disabled',false);$('#sp_prev').prop('disabled',historyPage===0);$('#sp_more').prop('disabled',!next);}}
     function table(headers,rows){var wrap=$('<div class="table-responsive">'),t=$('<table class="table table-sm">').appendTo(wrap),h=$('<tr>').appendTo($('<thead>').appendTo(t)),b=$('<tbody>').appendTo(t);headers.forEach(function(v){$('<th>').text(v).appendTo(h);});rows.forEach(function(row){var tr=$('<tr>').appendTo(b);row.forEach(function(v){$('<td>').text(v==null?'—':v).appendTo(tr);});});return wrap;}
-    function query(){return 'from='+encodeURIComponent($('#sp_from').val()||'')+'&to='+encodeURIComponent($('#sp_to').val()||'')+'&status='+encodeURIComponent($('#sp_state').val()||'')+'&q='+encodeURIComponent($('#sp_search').val()||'');}
+    function query(){return 'from='+encodeURIComponent($('#sp_period').data('from')||'')+'&to='+encodeURIComponent($('#sp_period').data('to')||'')+'&status='+encodeURIComponent($('#sp_state').val()||'')+'&q='+encodeURIComponent($('#sp_search').val()||'');}
     function download(r){var u=URL.createObjectURL(new Blob([Uint8Array.from(atob(r.base64),function(v){return v.charCodeAt(0);})]));var a=document.createElement('a');a.href=u;a.download=r.filename;a.click();setTimeout(function(){URL.revokeObjectURL(u);},1000);}
     async function load(direction){
         if(direction==='next'&&next){historyCursors[historyPage+1]=next;historyPage++;}
@@ -444,13 +450,41 @@ $(document).on('click', '.mobile-inventory-close', function () {
         $('#sp_more').prop('hidden',false).prop('disabled',!next);
         $('#sp_status').text(PosnicPro.i18n.t('lang_record_losses_review_saved_entries_or_expo', 'Record losses, review saved entries or export the filtered history.'));
     }
+    function mountPeriod() {
+        var trigger = $('#sp_period');
+        var today = moment().startOf('day');
+        var allTime = PosnicPro.i18n.t('lang_all_time', 'All time');
+        var ranges = {};
+        ranges[allTime] = [moment('1970-01-01'), today];
+        ranges[PosnicPro.i18n.t('lang_today', 'Today')] = [today, today];
+        var yesterday = today.clone().subtract(1, 'day');
+        ranges[PosnicPro.i18n.t('lang_yesterday', 'Yesterday')] = [yesterday, yesterday];
+        ranges[PosnicPro.i18n.t('lang_last_7_days', 'Last 7 days')] = [today.clone().subtract(6, 'days'), today];
+        ranges[PosnicPro.i18n.t('lang_this_month', 'This month')] = [today.clone().startOf('month'), today];
+        var lastMonth = today.clone().subtract(1, 'month');
+        ranges[PosnicPro.i18n.t('lang_last_month', 'Last month')] = [lastMonth.clone().startOf('month'), lastMonth.clone().endOf('month')];
+        trigger.find('span').text(allTime);
+        trigger.daterangepicker({
+            parentEl: '#spoilage_panel', startDate: ranges[allTime][0], endDate: today, maxDate: today,
+            ranges: ranges, showDropdowns: true, linkedCalendars: false, autoUpdateInput: false,
+            locale: { customRangeLabel: PosnicPro.i18n.t('lang_custom_range', 'Custom range') }
+        }).on('apply.daterangepicker', function (event, picker) {
+            var all = picker.chosenLabel === allTime;
+            trigger.data('from', all ? '' : picker.startDate.format('YYYY-MM-DD'));
+            trigger.data('to', all ? '' : picker.endDate.format('YYYY-MM-DD'));
+            trigger.find('span').text(ranges[picker.chosenLabel] ? picker.chosenLabel :
+                picker.startDate.format('D MMM YYYY') + ' – ' + picker.endDate.format('D MMM YYYY'));
+            run(function () { return load(); });
+        });
+    }
     p.openSpoilage=async function(){
-        p.leaveSection();
+        p.leaveSection('damage');
         $('#inventorycounts').addClass('count-editing');
         generation++;signedBranch=branch=PosnicPro.local.get('branch_id_set');draft=null;selected=[];
-        $('#inventory_count_detail').show().html('<section id="spoilage_panel"><div class="d-flex justify-content-between align-items-center mb-3"><h5 class="mb-0"><lang class="lang_spoilage_damage">Spoilage / damage</lang></h5><select id="sp_branch" aria-label="Spoilage branch" data-t-aria-label="lang_spoilage_branch" class="form-control" style="width:170px"></select></div><div class="d-flex flex-wrap align-items-center mb-3" style="gap:8px"><input id="sp_from" type="date" aria-label="From date" data-t-aria-label="lang_from_date" class="form-control" style="width:150px"><input id="sp_to" type="date" aria-label="To date" data-t-aria-label="lang_to_date" class="form-control" style="width:150px"><select id="sp_state" aria-label="Entry status" data-t-aria-label="lang_entry_status" class="form-control" style="width:170px"><option value="" data-t="lang_all_statuses">All statuses</option></select><input id="sp_search" aria-label="Find spoilage product" data-t-aria-label="lang_find_spoilage_product" placeholder="Product / SKU / reference" data-t-placeholder="lang_product_sku_reference" class="form-control" style="width:220px"><button id="sp_filter" class="btn btn-outline-primary"><lang class="lang_filter">Filter</lang></button><button id="sp_export" class="btn btn-outline-primary"><lang class="lang_excel">Excel</lang></button><button id="sp_new" class="btn btn-primary"><lang class="lang_new_entry_2">New entry</lang></button></div><small id="sp_status" role="status"></small><div id="sp_list" class="my-3"></div><div id="sp_paging" class="d-flex align-items-center justify-content-between"><span id="sp_page_info" role="status"></span><div><button id="sp_prev" class="btn btn-outline-primary"><lang class="lang_previous">Previous</lang></button> <button id="sp_more" class="btn btn-outline-primary"><lang class="lang_next">Next</lang></button></div></div><div id="sp_detail" class="mt-3"></div></section>');
+        $('#inventory_count_detail').show().html('<section id="spoilage_panel"><div class="d-none justify-content-between align-items-center mb-3"><label for="sp_branch" class="mb-0"><lang class="lang_branch">Branch</lang></label><select id="sp_branch" aria-label="Spoilage branch" data-t-aria-label="lang_spoilage_branch" class="form-control" style="width:170px"></select></div><div class="d-flex flex-wrap align-items-center mb-3" style="gap:8px"><button id="sp_period" type="button" class="btn btn-outline-primary dropdown-toggle" aria-label="Spoilage date range"><i class="feather icon-calendar mr-1" aria-hidden="true"></i><span></span></button><select id="sp_state" aria-label="Entry status" data-t-aria-label="lang_entry_status" class="form-control" style="width:170px"><option value="" data-t="lang_all_statuses">All statuses</option></select><input id="sp_search" aria-label="Find spoilage product" data-t-aria-label="lang_find_spoilage_product" placeholder="Product / SKU / reference" data-t-placeholder="lang_product_sku_reference" class="form-control" style="width:220px"><button id="sp_filter" class="btn btn-outline-primary"><lang class="lang_filter">Filter</lang></button><button id="sp_export" class="btn btn-outline-primary"><lang class="lang_excel">Excel</lang></button><button id="sp_new" class="btn btn-primary"><lang class="lang_new_entry_2">New entry</lang></button></div><small id="sp_status" role="status"></small><div id="sp_list" class="my-3"></div><div id="sp_paging" class="d-flex align-items-center justify-content-between"><span id="sp_page_info" role="status"></span><div><button id="sp_prev" class="btn btn-outline-primary"><lang class="lang_previous">Previous</lang></button> <button id="sp_more" class="btn btn-outline-primary"><lang class="lang_next">Next</lang></button></div></div><div id="sp_detail" class="mt-3"></div></section>');
+        mountPeriod();
         Object.keys(labels).forEach(function(k){$('#sp_state').append($('<option>').val(k).text(labels[k]));});
-        try{var branches=await request('items/priceSheet','POST',{action:'branches'});branches.forEach(function(b){$('#sp_branch').append($('<option>').val(b.id).text(b.name));});$('#sp_branch').val(branch).prop('disabled',branches.length<2);await load();}catch(e){error(e);}
+        try{var branches=await request('items/priceSheet','POST',{action:'branches'});branches.forEach(function(b){$('#sp_branch').append($('<option>').val(b.id).text(b.name));});$('#sp_branch').val(branch).parent().toggleClass('d-none', branches.length < 2).toggleClass('d-flex', branches.length > 1);await load();}catch(e){error(e);}
     };
     function collect(){
         selected.forEach(function(l){var tr=$('#sp_entry_rows tr[data-id="'+l.itemId+'"]');l.text=tr.find('.sp_qty').val();l.reason=tr.find('.sp_reason').val();l.remarks=tr.find('.sp_remarks').val();});

@@ -200,7 +200,7 @@ PosnicPro.categories = {
             container: '#categories_filter_panel',
             button: '#categories_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_category_name', 'Search category name'),
-            dateField: PosnicPro.i18n.t('lang_added', 'Added'),
+            dateField: PosnicPro.i18n.t('lang_created_date', 'Created date'),
             searchFields: [
                 { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') }
             ],
@@ -689,7 +689,7 @@ PosnicPro.categories = {
 PosnicPro.categorydetails = {
 
     categorydetailsTable: function (type) {
-        PosnicPro.appendReportTableBody('customerdetails');
+        PosnicPro.appendReportTableBody('customerdetails', '#view_categorydetails');
         var loader = $(".loader-categoryactivity");
         $("<div class='loadingSpinner'></div>").appendTo(loader);
         var table = $('#view_categorydetails');

@@ -961,6 +961,7 @@ class ReceivingsController extends BaseController {
           res,
           {
             total: result.data?.total || 0,
+            summary: result.data.summary,
             current_page: result.data?.current_page || page,
             total_pages:
               result.data?.total_pages ||

@@ -116,9 +116,9 @@ PosnicPro.dashboard = {
         let endAll = moment().endOf('day');
         let labelAll = 'All Time';
         $(".show-calendar").removeClass("gst_calender");
-        $('.daterange-timepicker-all span').html('<span>' + labelAll + '</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="top" data-original-title="' + startAll.format('YYYY/MM/DD h:mm A') + ' - ' + endAll.format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
-        $('.daterange-timepicker-all').val(startAll.format('YYYY/MM/DD h:mm A') + ' - ' + endAll.format('YYYY/MM/DD h:mm A'));
-        $('.daterange-timepicker-all').daterangepicker({
+        $('.daterange-timepicker-all:not(.report-period) span').html('<span>' + labelAll + '</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="top" data-original-title="' + startAll.format('YYYY/MM/DD h:mm A') + ' - ' + endAll.format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
+        $('.daterange-timepicker-all:not(.report-period)').val(startAll.format('YYYY/MM/DD h:mm A') + ' - ' + endAll.format('YYYY/MM/DD h:mm A'));
+        $('.daterange-timepicker-all:not(.report-period)').daterangepicker({
             showDropdowns: true,
             alwaysShowCalendars: true,
             autoApply: false,
@@ -150,15 +150,15 @@ PosnicPro.dashboard = {
             opens: 'right'
         });
 
-        $('.daterange-timepicker-all').on('apply.daterangepicker', function (ev, pickerAll) {
+        $('.daterange-timepicker-all:not(.report-period)').on('apply.daterangepicker', function (ev, pickerAll) {
             if (listAllItem !== "Custom" && !applyAllClicked) {
                 pickerAll.show();
                 applyAllClicked = false;
             } else {
                 pickerAll.hide();
                 applyAllClicked = false;
-                $('.daterange-timepicker-all span').html('<span>' + $('.ranges ul li.active').data('range-key') + '</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="bottom" data-original-title="' + pickerAll.startDate.format('YYYY/MM/DD h:mm A') + ' - ' + pickerAll.endDate.format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
-                $('.daterange-timepicker-all').val(pickerAll.startDate.format('YYYY/MM/DD h:mm A') + ' - ' + pickerAll.endDate.format('YYYY/MM/DD h:mm A'));
+                $('.daterange-timepicker-all:not(.report-period) span').html('<span>' + $('.ranges ul li.active').data('range-key') + '</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="bottom" data-original-title="' + pickerAll.startDate.format('YYYY/MM/DD h:mm A') + ' - ' + pickerAll.endDate.format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
+                $('.daterange-timepicker-all:not(.report-period)').val(pickerAll.startDate.format('YYYY/MM/DD h:mm A') + ' - ' + pickerAll.endDate.format('YYYY/MM/DD h:mm A'));
             }
 
         });
@@ -167,172 +167,41 @@ PosnicPro.dashboard = {
             applyAllClicked = true;
         });
 
-        let listAllItemreport, applyAllClickedreport = false;
-        let startAllReport = moment().startOf('day');
-        let endAllReport = moment().endOf('day');
-        let labelAllReport = 'Today';
-        $(".show-calendar").removeClass("gst_calender");
-        $('#view_sale_report_daterange span').html('<span>' + labelAllReport + '</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="top" data-original-title="' + startAllReport.format('YYYY/MM/DD h:mm A') + ' - ' + endAllReport.format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
-        $('#view_sale_report_daterange').val(startAllReport.format('YYYY/MM/DD h:mm A') + ' - ' + endAllReport.format('YYYY/MM/DD h:mm A'));
-            $('#view_sale_report_daterange').daterangepicker({
-                showDropdowns: true,
-                alwaysShowCalendars: true,
-                autoApply: false,
-                autoUpdateInput: false,
-                autoclose: false,
-                timePicker: true, 
-                applyButtonClasses: "btn-success allTimedatePickerApplyClasses",
-                locale: {
-                    format: 'YYYY/MM/DD h:mm A',
-                    applyLabel: "Choose",
-                    cancelLabel: "Close",
-                    customRangeLabel: "Custom"
-                },
-                startDate: moment().startOf('day'),
-                endDate: moment().endOf('day'),
-                maxDate: moment().endOf('day'),
-                ranges: {
-                    'Today': [moment().startOf('day'), moment().endOf('day')],
-                    'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
-                    'This Month': [moment().startOf('month').startOf('day'), moment().endOf('month').endOf('day')],
-                    'This Year': [moment().startOf('year').startOf('day'), moment().endOf('day')]
-                },
-                opens: 'right'
-            });
-        
-            $('#view_sale_report_daterange').on('apply.daterangepicker', function (ev, pickerAll) {
-                if (listAllItemreport !== "Custom" && !applyAllClickedreport) {
-                    pickerAll.show();
-                    applyAllClickedreport = false;
-                } else {
-                    pickerAll.hide();
-                    applyAllClickedreport = false;
-                    $('#view_sale_report_daterange span').html(
-                        '<span>' + $('.ranges ul li.active').data('range-key') +
-                        '</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="bottom" data-original-title="' +
-                        pickerAll.startDate.format('YYYY/MM/DD h:mm A') + ' - ' + pickerAll.endDate.format('YYYY/MM/DD h:mm A') +
-                        '"><i class="feather icon-help-circle setfeather_font"></i></span>'
-                    );
-                    $('#view_sale_report_daterange').val(
-                        pickerAll.startDate.format('YYYY/MM/DD h:mm A') + ' - ' + pickerAll.endDate.format('YYYY/MM/DD h:mm A')
-                    );
-                }
-            });
-        
-            $(".allTimedatePickerApplyClasses").click(function () {
-                applyAllClickedreport = true;
-            });
-        
-        // Daily Sale Report daterangepicker
-        let listDailyItem, applyDailyClicked = false;
-        let startDaily = moment().startOf('day');
-        let endDaily = moment().endOf('day');
-        let labelDaily = 'Today';
-        $('#view_dailysale_report_daterange span').html('<span>' + labelDaily + '</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="top" data-original-title="' + startDaily.format('YYYY/MM/DD h:mm A') + ' - ' + endDaily.format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
-        $('#view_dailysale_report_daterange').val(startDaily.format('YYYY/MM/DD h:mm A') + ' - ' + endDaily.format('YYYY/MM/DD h:mm A'));
-        $('#view_dailysale_report_daterange').daterangepicker({
-            showDropdowns: true,
-            alwaysShowCalendars: true,
-            autoApply: false,
-            autoUpdateInput: false,
-            autoclose: false,
-            timePicker: true,
-            applyButtonClasses: "btn-success dailyDatePickerApplyClasses",
-            locale: {
-                format: 'YYYY/MM/DD h:mm A',
-                applyLabel: "Choose",
-                cancelLabel: "Close",
-                customRangeLabel: "Custom"
-            },
-            startDate: moment().startOf('day'),
-            endDate: moment().endOf('day'),
-            maxDate: moment().endOf('day'),
-            ranges: {
-                'Today': [moment().startOf('day'), moment().endOf('day')],
-                'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
-                'This Month': [moment().startOf('month').startOf('day'), moment().endOf('month').endOf('day')],
-                'This Year': [moment().startOf('year').startOf('day'), moment().endOf('day')]
-            },
-            opens: 'right'
-        });
-
-        $('#view_dailysale_report_daterange').on('apply.daterangepicker', function (ev, pickerDaily) {
-            if (listDailyItem !== "Custom" && !applyDailyClicked) {
-                pickerDaily.show();
-                applyDailyClicked = false;
-            } else {
-                pickerDaily.hide();
-                applyDailyClicked = false;
-                $('#view_dailysale_report_daterange span').html(
-                    '<span>' + $('.ranges ul li.active').data('range-key') +
-                    '</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="bottom" data-original-title="' +
-                    pickerDaily.startDate.format('YYYY/MM/DD h:mm A') + ' - ' + pickerDaily.endDate.format('YYYY/MM/DD h:mm A') +
-                    '"><i class="feather icon-help-circle setfeather_font"></i></span>'
-                );
-                $('#view_dailysale_report_daterange').val(
-                    pickerDaily.startDate.format('YYYY/MM/DD h:mm A') + ' - ' + pickerDaily.endDate.format('YYYY/MM/DD h:mm A')
-                );
+        $('.report-period').each(function () {
+            var period = $(this);
+            if (period.data('daterangepicker')) return;
+            var start = moment().startOf('day'), end = moment().endOf('day');
+            var ranges = {
+                'Today':[start,end],
+                'Yesterday':[start.clone().subtract(1,'day'),end.clone().subtract(1,'day')],
+                'Last 7 Days':[start.clone().subtract(6,'days'),end],
+                'Last 90 Days':[start.clone().subtract(89,'days'),end],
+                'This Month':[start.clone().startOf('month'),end],
+                'Last Month':[start.clone().subtract(1,'month').startOf('month'),end.clone().subtract(1,'month').endOf('month')],
+                'This Year':[start.clone().startOf('year'),end],
+                'Last Year':[start.clone().subtract(1,'year').add(1,'day'),end],
+                'Last 3 years':[start.clone().subtract(3,'years').add(1,'day'),end],
+                'All Time':[moment('1970-01-01').startOf('day'),end]
+            };
+            period.daterangepicker({startDate:start,endDate:end,maxDate:end,showDropdowns:true,
+                timePicker:true,autoUpdateInput:false,opens:'right',ranges:ranges,
+                locale:{format:'YYYY/MM/DD h:mm A',customRangeLabel:'Custom range'}});
+            function paint(label, picker) {
+                var interval = picker.startDate.format('YYYY/MM/DD h:mm A')+' - '+picker.endDate.format('YYYY/MM/DD h:mm A');
+                var caption = label === 'Custom range' ? interval : label;
+                period.val(interval).data('reportPeriod',caption);
+                period.children('span').empty().append($('<span>').text(caption),
+                    $('<span data-toggle="tooltip">').attr('data-original-title',interval));
+                period.triggerHandler('reportPeriodChanged');
             }
-        });
-
-        $(".dailyDatePickerApplyClasses").click(function () {
-            applyDailyClicked = true;
-        });
-
-        // KOT Report daterangepicker
-        let listKotItem, applyKotClicked = false;
-        let startKot = moment().startOf('day');
-        let endKot = moment().endOf('day');
-        let labelKot = 'Today';
-        $('#view_kot_report_daterange span').html('<span>' + labelKot + '</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="top" data-original-title="' + startKot.format('YYYY/MM/DD h:mm A') + ' - ' + endKot.format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
-        $('#view_kot_report_daterange').val(startKot.format('YYYY/MM/DD h:mm A') + ' - ' + endKot.format('YYYY/MM/DD h:mm A'));
-        $('#view_kot_report_daterange').daterangepicker({
-            showDropdowns: true,
-            alwaysShowCalendars: true,
-            autoApply: false,
-            autoUpdateInput: false,
-            autoclose: false,
-            timePicker: true,
-            applyButtonClasses: "btn-success kotDatePickerApplyClasses",
-            locale: {
-                format: 'YYYY/MM/DD h:mm A',
-                applyLabel: "Choose",
-                cancelLabel: "Close",
-                customRangeLabel: "Custom"
-            },
-            startDate: moment().startOf('day'),
-            endDate: moment().endOf('day'),
-            maxDate: moment().endOf('day'),
-            ranges: {
-                'Today': [moment().startOf('day'), moment().endOf('day')],
-                'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
-                'This Month': [moment().startOf('month').startOf('day'), moment().endOf('month').endOf('day')],
-                'This Year': [moment().startOf('year').startOf('day'), moment().endOf('day')]
-            },
-            opens: 'right'
-        });
-
-        $('#view_kot_report_daterange').on('apply.daterangepicker', function (ev, pickerKot) {
-            if (listKotItem !== "Custom" && !applyKotClicked) {
-                pickerKot.show();
-                applyKotClicked = false;
-            } else {
-                pickerKot.hide();
-                applyKotClicked = false;
-                $('#view_kot_report_daterange span').html(
-                    '<span>' + $('.ranges ul li.active').data('range-key') +
-                    '</span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="bottom" data-original-title="' +
-                    pickerKot.startDate.format('YYYY/MM/DD h:mm A') + ' - ' + pickerKot.endDate.format('YYYY/MM/DD h:mm A') +
-                    '"><i class="feather icon-help-circle setfeather_font"></i></span>'
-                );
-                $('#view_kot_report_daterange').val(
-                    pickerKot.startDate.format('YYYY/MM/DD h:mm A') + ' - ' + pickerKot.endDate.format('YYYY/MM/DD h:mm A')
-                );
-            }
-        });
-
-        $(".kotDatePickerApplyClasses").click(function () {
-            applyKotClicked = true;
+            var picker = period.data('daterangepicker');
+            period.on('apply.daterangepicker',function(e,p) { paint(p.chosenLabel || 'Custom range',p); });
+            period.on('reportClear',function() {
+                picker.setStartDate(ranges['All Time'][0]); picker.setEndDate(ranges['All Time'][1]);
+                picker.chosenLabel = 'All Time';
+                period.trigger('apply.daterangepicker',[picker]);
+            });
+            paint('Today',picker);
         });
 
     },

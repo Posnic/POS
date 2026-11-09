@@ -123,6 +123,15 @@ PosnicPro.stocklogs = {
     /* The item pane's door: the full ledger for ONE item, with the filter
        strip open so the date range is one click away (owner: the pane shows
        only recent - the search lives HERE, not duplicated in the pane). */
+    filterItem: function (item) {
+        this.mountFilters();
+        var state = PosnicPro.listFilter.state('stocklogs');
+        state.search = '';
+        state.itemLabel = item.name;
+        state.extra.view_item_id = item.id;
+        PosnicPro.listFilter.render('stocklogs');
+        this.loadList(1);
+    },
     openForItem: function (name) {
         hasher.setHash('stocklogs');
         setTimeout(function () {
@@ -175,6 +184,8 @@ PosnicPro.stocklogs = {
     },
     showDataTablePage: function () {
         PosnicPro.stocklogs._chrome();
+        var item = PosnicPro.palette?.takeItem('stocklogs');
+        if (item) return PosnicPro.stocklogs.filterItem(item);
         PosnicPro.stocklogs.loadList(1);
     },
     mountFilters: function (force) {
@@ -201,8 +212,10 @@ PosnicPro.stocklogs = {
             rows: '#stocklogs_list_rows',
             onRefresh: function () { return PosnicPro.stocklogs.loadList(); },
             container: '#stocklogs_filter_panel',
+            appliedContainer: '#stocklogs_applied',
             button: '#stocklogs_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_item_activity_or_reference', 'Search item, activity or reference'),
+            defaultPreset: 'today',
             dateField: PosnicPro.i18n.t('lang_stock_date', 'Stock date'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },

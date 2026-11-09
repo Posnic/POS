@@ -10,6 +10,7 @@
             </div>
             <div class="mobile-togglebar">
                 <ul class="list-inline mb-0">
+                    <li class="list-inline-item"><button type="button" id="posnic-mobile-search" class="global-search-trigger" aria-label="Search anything in POSNIC" aria-haspopup="dialog"><i class="feather icon-search" aria-hidden="true"></i></button></li>
                     <li class="list-inline-item">
                         <div class="topbar-toggle-icon">
                             <a class="topbar-toggle-hamburger" href="javascript:void(0)">
@@ -65,7 +66,7 @@
                         </div>
                     </li>
                     <li>
-                        <div class="dropdown add_dropdown" style="margin-top: -30px; margin-left: 60px;">
+                        <div class="dropdown add_dropdown">
                             <button class="btn btn-rounded dropdown-toggle" type="button" id="dropdownMenuButton"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="feather icon-plus mr-2"></i>
@@ -119,9 +120,9 @@
 
                 </ul>
             </div>
-            <button type="button" id="posnic-header-search" aria-label="Search POSNIC" aria-haspopup="dialog">
-                <i class="feather icon-search" aria-hidden="true"></i> <lang class="lang_search">Search</lang> <kbd>Ctrl K</kbd>
-            </button>
+            <div class="header-search-slot">
+                <button type="button" id="posnic-header-search" class="global-search-trigger" aria-label="Search anything in POSNIC" aria-haspopup="dialog"><i class="feather icon-search" aria-hidden="true"></i><span>Search anything</span><kbd>Ctrl K</kbd></button>
+            </div>
             <div class="infobar">
                 <ul class="list-inline mb-0">
                     <li class="list-inline-item" id="header_branch_switcher" hidden>

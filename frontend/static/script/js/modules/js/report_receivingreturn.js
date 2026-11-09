@@ -13,10 +13,15 @@ PosnicPro.returnreceivingreport = {
     showDataTablePage: function () {
         var loader = $(".loader-return-report");
         loader.find(".loadingSpinner:first").remove();
+        var host = $('#return-report-search');
+        var toggle = host.find('button');
+        var panel = $('#return-report-filters');
+        PosnicPro.listFilter.reportPopup(host, panel, $('#return-report-query'), toggle);
         var pending;
         function reload() {
             clearTimeout(pending);
             pending = setTimeout(function () {
+                $('.view_return_receiving_report_daterange').triggerHandler('reportPeriodChanged');
                 $('#view_returnreceivingreport').data('current_page', 1);
                 PosnicPro.returnreceivingreport.returnreceivingreportTable();
             }, 220);
@@ -103,7 +108,7 @@ PosnicPro.returnreceivingreport = {
                         $('#view_returnreceivingreport_total').text(response.data.total);
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.report-purchase-etails-no-records').text('No Records on ' + dateRange);
                             $('.reportrepurchase_header').hide();
                             $('#reportrepurchase_img_hide').show();
@@ -276,7 +281,7 @@ PosnicPro.returnreceivingproductreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportrepurchasepro_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportreproductpurchase_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a
@@ -349,7 +354,7 @@ PosnicPro.returnreceivingproductdetails = {
 
     returnproductdetailsTable: function () {
 
-        PosnicPro.appendReportTableBody('returndetails');
+        PosnicPro.appendReportTableBody('returndetails', '#view_returnreceivingproductdetails');
         var table = $('#view_returnreceivingproductdetails');
         var current_page = table.data('current_page');
         var per_page = table.data('per_page');

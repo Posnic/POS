@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <link type='file' href='layouts/session-context.html' />
+        <script>
+            function requirePosnicLogin() {
+                if (hasPosnicLoginContext()) return;
+                document.documentElement.style.display = 'none';
+                window.location.replace('login.html');
+            }
+            requirePosnicLogin();
+            window.addEventListener('pageshow', requirePosnicLogin);
+        </script>
         <!--
             The shop's theme, before the first paint.
 
@@ -959,10 +969,7 @@
             <!-- End js -->
 
             <script type="text/javascript">
-                                                                        if (PosnicPro.users.readCookie('loginuser') === null) {
-                                        window.location = 'login.html';
-                                    }
-                                    $(document).ready(function () {
+                                                                        $(document).ready(function () {
                                         /*
                                          * Lock the till before anything else is
                                          * drawn. The app used to open straight

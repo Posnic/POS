@@ -9,6 +9,9 @@ PosnicPro.supplierreport = {
         var loader = $(".loader-supplier-report");
         loader.find(".loadingSpinner:first").remove();
         PosnicPro.dashboard.datePicker();
+        PosnicPro.listFilter.reportPersonPicker('supplier', function (field, select) {
+            PosnicPro.listFilter.entityPicker(field, 'suppliers', select);
+        });
         PosnicPro.HideSideBarModal();
         $('.nav-link-active,.tab-pane-active,.dropdown-item').removeClass('active');
         $(".vertical-layout").removeClass("toggle-menu");
@@ -99,7 +102,7 @@ PosnicPro.supplierreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportsupplier_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportsupplier_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a
@@ -321,7 +324,7 @@ PosnicPro.suppliersalereport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportsuppliersale_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.reportbasesale_norecord')
                                 .empty()
                                 /* .text() on the part that came out of the DOM: a
@@ -398,7 +401,7 @@ PosnicPro.supplierproductdetails = {
 
     supplierproductdetailsTable: function (type) {
 
-        PosnicPro.appendReportTableBody('productdetails');
+        PosnicPro.appendReportTableBody('productdetails', '#view_supplierproductdetails');
         var table = $('#view_supplierproductdetails');
         var branch = $(".supplier_branch_value").val();
         var daterange = $(".view_supplier_report_daterange").val();

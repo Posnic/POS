@@ -80,9 +80,10 @@ PosnicPro.suppliers = {
             rows: '#suppliers_list_rows',
             onRefresh: function () { return PosnicPro.suppliers.loadList(); },
             container: '#suppliers_filter_panel',
+            showTotal: true,
             button: '#suppliers_filter_btn',
-            searchPlaceholder: PosnicPro.i18n.t('lang_search_name_phone_or_email', 'Search name, phone or email'),
-            dateField: PosnicPro.i18n.t('lang_added', 'Added'),
+            searchPlaceholder: PosnicPro.i18n.t('lang_search_supplier_records', 'Search suppliers by name, email, phone or address'),
+            dateField: PosnicPro.i18n.t('lang_created_date', 'Created date'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
                 { value: 'name', label: PosnicPro.i18n.t('lang_name_title', 'Name') },
@@ -106,6 +107,7 @@ PosnicPro.suppliers = {
             var data = (response && response.data) || {};
             var list = data.list || [];
             self._lastRows = list;
+            $('#suppliers_filter_panel .lf-result-total strong').text(Number(data.total) || list.length);
             if (!list.length) {
                 var filtered = PosnicPro.listFilter.activeCount('suppliers') > 0;
                 $('#suppliers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20">'
@@ -129,6 +131,7 @@ PosnicPro.suppliers = {
             $('#suppliers_list_rows').html(html);
             self.renderPager(Number(data.total) || list.length);
         }, function () {
+            $('#suppliers_filter_panel .lf-result-total strong').empty();
             $('#suppliers_list_rows').html('<div class="text-center text-muted p-t-20 p-b-20"><lang class="lang_could_not_load_suppliers_try_again">Could not load suppliers - try again.</lang></div>');
         });
     },
@@ -136,8 +139,6 @@ PosnicPro.suppliers = {
         var self = PosnicPro.suppliers;
         var p = self._page, size = self.PAGE_SIZE;
         var pages = Math.ceil(total / size) || 1;
-        var label = total + ' ' + (total === 1 ? PosnicPro.i18n.t('lang_supplier_2', 'supplier') : PosnicPro.i18n.t('lang_suppliers', 'suppliers'));
-        if (pages > 1) { label = 'Page ' + p + ' of ' + pages + ' \u00b7 ' + label; }
         var btn = function (to, text, off, cls) {
             return '<button type="button" class="btn btn-sm ' + (cls || 'btn-secondary-rgba') + ' q-pg-btn"' + (off ? ' disabled' : '')
                 + ' onclick="PosnicPro.suppliers.goPage(' + to + ');">' + text + '</button>';
@@ -151,7 +152,7 @@ PosnicPro.suppliers = {
                 html += '<span class="q-pg-num">' + btn(n, n, false, n === p ? 'btn-primary-rgba' : 'btn-secondary-rgba') + '</span>';
             }
         }
-        html += '<span class="q-pg-count">' + label + '</span>';
+        if (pages > 1) html += '<span class="q-pg-count">Page ' + p + ' of ' + pages + '</span>';
         if (pages > 1) { html += btn(p + 1, '&raquo;', p >= pages); }
         $('#suppliers_list_paging').html(html);
     },

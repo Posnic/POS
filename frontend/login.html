@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <link type='file' href='layouts/session-context.html' />
         <script type="application/javascript" src="script/login.js"></script>
 
         <script>
@@ -294,7 +295,7 @@
             $('#rememberme').removeAttr('disabled', 'disabled');
         }
 
-        if (PosnicPro.users.readCookie('loginuser') !== null) {
+        if (hasPosnicLoginContext()) {
             window.location = 'dashboard.html#/dashboard';
         }
 

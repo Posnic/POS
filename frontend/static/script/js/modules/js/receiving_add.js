@@ -78,7 +78,18 @@ PosnicPro.receivings = {
         $('#show_last_created_receiving').hide();
         var loader = $(".loader-receiving");
         loader.find(".loadingSpinner:first").remove();
+        var pickedItem = PosnicPro.palette?.takeItem('receivings/new');
+        if (pickedItem) PosnicPro.receivings.addPickedItem(pickedItem.id);
         if (PosnicPro.receivings._restockDraft) PosnicPro.lowstockitems.applyPurchaseDraft();
+    },
+    addPickedItem: function (id) {
+        var branch = PosnicPro.local.get('branch_id_set');
+        PosnicPro.get({url:'items/getReceivingItemsAjaxList', data:{type:'id', query:id}}, function (response) {
+            if (location.hash !== '#/receivings/new' || branch !== PosnicPro.local.get('branch_id_set')) return;
+            var item = (response.suggestions || []).find(function (row) { return row.item_id === id; });
+            if (item) PosnicPro.receivings.addReceivingLineItems(item);
+            else PosnicPro.alert('warning', 'Item unavailable for purchase');
+        }, function () { PosnicPro.alert('warning', 'Item unavailable for purchase'); });
     },
     showEdit: function (id) {
         $('#receiving_add_date').removeClass('commonDate');
@@ -1866,8 +1877,6 @@ PosnicPro.purchaseorders = {
     _page: 1,
     PAGE_SIZE: 25,
     _openDocKey: null,
-    _status: '',
-    _expected: '',
     mountPurchaseFilters: function (force) {
         if (!$('#purchases_filter_panel').length) { return; }
         if (!force && $('#purchases_filter_panel').data('mounted')) { return; }
@@ -1875,11 +1884,32 @@ PosnicPro.purchaseorders = {
         PosnicPro.listFilter.mount({
             key: 'receivings',
             partyFilter: 'suppliers',
+            primaryControls: function (row, state) {
+                var status = $('<select class="form-control lf-primary" aria-label="Status">').appendTo(row);
+                status.append($('<option>').val('').text(PosnicPro.i18n.t('lang_report_all', 'All')));
+                status.append($('<option>').val('ordered').text(PosnicPro.i18n.t('lang_po_ordered', 'Ordered')));
+                status.append($('<option>').val('partial').text(PosnicPro.i18n.t('lang_partially_received', 'Partially received')));
+                status.append($('<option>').val('received').text(PosnicPro.i18n.t('lang_po_received', 'Received')));
+                status.append($('<option>').val('cancelled').text(PosnicPro.i18n.t('lang_cancelled', 'Cancelled')));
+                status.val(state.extra.status || '').on('change', function () {
+                    PosnicPro.listFilter.setExtra('receivings', 'status', this.value);
+                });
+                var expected = $('<select class="form-control lf-primary" aria-label="Expected">').appendTo(row);
+                expected.append($('<option>').val('').text(PosnicPro.i18n.t('lang_any', 'Any')));
+                expected.append($('<option>').val('today').text(PosnicPro.i18n.t('lang_this_day', 'Today')));
+                expected.append($('<option>').val('tomorrow').text(PosnicPro.i18n.t('lang_tomorrow', 'Tomorrow')));
+                expected.append($('<option>').val('week').text(PosnicPro.i18n.t('lang_roster_thisweek', 'This week')));
+                expected.val(state.extra.expected || '').on('change', function () {
+                    PosnicPro.listFilter.setExtra('receivings', 'expected', this.value);
+                });
+            },
             rows: '#po_list_rows',
             onRefresh: function () { return PosnicPro.purchaseorders.loadList(); },
             container: '#purchases_filter_panel',
+            appliedContainer: '#po_active_filters',
             button: '#purchases_filter_btn',
             searchPlaceholder: PosnicPro.i18n.t('lang_search_purchase_no_supplier_or_phone', 'Search purchase no, supplier or phone'),
+            defaultPreset: 'today',
             dateField: PosnicPro.i18n.t('lang_bill_date', 'Bill date'),
             searchFields: [
                 { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },
@@ -1922,7 +1952,8 @@ PosnicPro.purchaseorders = {
         var size = self.PAGE_SIZE;
         var esc = function (t) { return $('<span>').text(t == null ? '' : t).html(); };
         var criteria = PosnicPro.listFilter.params('receivings');
-        var chip = self._status, expChip = self._expected;
+        var chip = criteria.status, expChip = criteria.expected;
+        delete criteria.expected;
         criteria.status = chip || '';
         criteria.sort = PosnicPro.listSort.value('purchases');
         if (expChip) {
@@ -1932,9 +1963,15 @@ PosnicPro.purchaseorders = {
             end.setDate(end.getDate() + (expChip === 'today' || expChip === 'tomorrow' ? 1 : 7));
             criteria.dueFrom = start.toISOString(); criteria.dueTo = end.toISOString();
         }
+        $('#po_summary').empty();
         self._criteria = criteria;
         PosnicPro.listFilter.request('receivings', {url:'purchaseOrders/history', data:Object.assign({},criteria,{page:p,limit:size})}, function (response) {
             var data = response.data || {}, pageRows = data.list || [];
+            var summary = $('#po_summary').empty();
+            if (data.purchaseAmount != null) {
+                $('<span>').text(PosnicPro.i18n.t('lang_received','Received') + ' ').append($('<strong>').text(data.purchases)).appendTo(summary);
+                $('<span>').text(PosnicPro.i18n.t('lang_total','Total') + ' ').append($('<strong>').text((PosnicPro.local.get('currencySign') || '')+' '+Number(data.purchaseAmount).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))).appendTo(summary);
+            }
             pageRows.forEach(function (r) { r.progress = r.ordered ? r.received + '/' + r.ordered : ''; });
             if (!pageRows.length && p > 1) { self.loadList(1); return; }
             if (!pageRows.length) {
@@ -2791,17 +2828,6 @@ $(document).on('click', '#po_list_rows tr.purchases-row', function () {
 $(document).on('click', '#suppliers_list_rows tr.suppliers-row', function () {
     PosnicPro.suppliers.openDoc($(this).data('id'));
 });
-$(document).on('click', '#purchases_quick_filters .p-status-opt', function () {
-    PosnicPro.purchaseorders._status = $(this).data('status') || '';
-    $('#purchases_status_dd').text($(this).text());
-    PosnicPro.purchaseorders.loadList(1);
-});
-$(document).on('click', '#purchases_quick_filters .p-exp-opt', function () {
-    PosnicPro.purchaseorders._expected = $(this).data('expected') || '';
-    $('#purchases_expected_dd').text($(this).text());
-    PosnicPro.purchaseorders.loadList(1);
-});
-
 $(document).on('focus', '#receiving_add_supplier_name, #po_supplier_name', function () {
     /* devbridge fires no lookup on plain focus, even at minChars 0 - the
        standing picker rule (frequent-on-focus) needs this nudge. A box

@@ -1142,12 +1142,15 @@ PosnicPro.invoices.mountFilters = function () {
     if (!$('#invoices_filter_panel').length) { return; }
     PosnicPro.listFilter.mount({
         key: 'invoices',
+        inlineSearchHint: 'Search invoices',
+        showStatusChip: true,
             partyFilter: 'customers',
             rows: '#invoices_list_rows',
             onRefresh: function () { return PosnicPro.invoices.load(true); },
         container: '#invoices_filter_panel',
         button: '#invoices_filter_btn',
         searchPlaceholder: PosnicPro.i18n.t('lang_search_customer_or_invoice', 'Search customer or invoice #'),
+        defaultPreset: 'today',
         dateField: PosnicPro.i18n.t('lang_created', 'Created'),
         searchFields: [
             { value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') },

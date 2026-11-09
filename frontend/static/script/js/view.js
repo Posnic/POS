@@ -172,11 +172,13 @@ $(".allow_decimal").on("input", function (evt) {
 });
 
 $(".click-action-button").click(function () {
-    $(".show-button-action").toggle();
-    $(".hide-button-action").toggle();
-    ($(".show-button-action").css("display") === "none")
-            ? $(".click-action-button").removeClass("click-action-buttons")
-            : $(".click-action-button").addClass("click-action-buttons");
+    var row = $(this).closest('.row_filter');
+    if (!row.length) row = $(this).closest('.page_loader');
+    var expanded = $(this).attr('aria-expanded') !== 'true';
+    row.find('.show-button-action').toggle(!expanded);
+    row.find('.hide-button-action').toggle(expanded);
+    $(this).attr('aria-expanded', String(expanded)).toggleClass('click-action-buttons', expanded);
+
 });
 $('[data-toggle="tooltip"]').on('click', function () {
     $(this).tooltip('hide');

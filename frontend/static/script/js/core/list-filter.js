@@ -270,13 +270,16 @@ PosnicPro.listFilter = {
     var LF = PosnicPro.listFilter;
     var esc = function (v) { return $('<span>').text(v == null ? '' : String(v)).html().replace(/"/g,'&quot;'); };
 
-    /* A datetime-local value, in LOCAL time. toISOString() would shift it by
-       the timezone offset and show the user a different hour than they picked. */
-    var forInput = function (d) {
-        if (!d) return '';
-        var p = function (n) { return String(n).padStart(2, '0'); };
-        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
-            + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+    function rangeLabel(state) {
+        return state.from && state.to
+            ? moment(state.from).format('D MMM YYYY, HH:mm') + ' – ' + moment(state.to).format('D MMM YYYY, HH:mm')
+            : PosnicPro.i18n.t('lang_custom_range', 'Custom range');
+    }
+
+    LF.dateLabel = function (state) {
+        if (state.preset === 'custom') return rangeLabel(state);
+        var preset = LF.PRESETS.find(function (p) { return p.key === state.preset; });
+        return preset ? PosnicPro.i18n.t(preset.t, preset.label) : '';
     };
 
     /*
@@ -301,8 +304,10 @@ PosnicPro.listFilter = {
         var groups = {customers:'Customers', suppliers:'Purchases', items:'Inventory'};
         var selectedLabel = input.val();
         if (typeof input.autocomplete !== 'function') { input.prop('disabled', true); return; }
+        var host = input.closest('.lf-entity');
+        if (!host.length) host = input.closest('.lf-table-toolbar,dialog.lf-report-dialog').length ? input.wrap('<div class="lf-entity">').parent() : $('body');
         input.autocomplete({
-            minChars:2, deferRequestBy:220, triggerSelectOnValidInput:false,
+            appendTo:host, minChars:2, deferRequestBy:220, triggerSelectOnValidInput:false,
             lookup:function (term, done) {
                 var branch = PosnicPro.local.get('branch_id_set');
                 PosnicPro.post({url:'search', data:JSON.stringify({q:term,group:groups[kind]})}, function (response) {
@@ -322,6 +327,75 @@ PosnicPro.listFilter = {
                 selectedLabel = '';
                 select('','');
             }
+        });
+    };
+
+    LF.reportPopup = function (host, panel, field, button) {
+        if (host.find('.lf-search-bar').length) return;
+        var fields = $('<div class="lf-dialog-fields">').append(panel.children()).appendTo(panel);
+        var group = field.parent();
+        var wrapper = field.wrap('<div class="lf-entity">').parent();
+        var slot = LF.searchBar(host, button, panel.attr('aria-label')).append(wrapper);
+        if (!field.length) {
+            slot.text(panel.attr('aria-label')).on('click', function () { button.trigger('click'); });
+        }
+        var done = $('<button type="button" class="btn btn-primary">').text(PosnicPro.i18n.t('lang_done', 'Done'));
+        panel.append($('<footer>').append(done));
+        done.on('click', function () { panel[0].close(); });
+        panel.on('close', function () { slot.append(wrapper); });
+        button.on('click', function () {
+            LF.openOptions(panel[0], button);
+            group.append(wrapper);
+            if (field.length) field[0].focus({preventScroll:true});
+        });
+        fields.find('select.select2').each(function () {
+            var select = $(this);
+            if (select.data('select2')) select.select2('destroy');
+            select.select2({dropdownParent: panel, width: '100%'});
+        });
+    };
+
+    LF.reportPersonPicker = function (kind, bindPicker) {
+        var root = $("#" + kind + "report_new");
+        var toggle = root.find('.' + kind + '-report-toggle');
+        if (toggle.data('mounted')) return;
+        toggle.data('mounted', true);
+        var panel = $('#' + kind + '-report-filters');
+        var field = $('#view_' + kind + '_report_input');
+        var selected = panel.find('input[type=hidden]');
+        LF.reportPopup($('#' + kind + '-report-search'), panel, field, toggle);
+        bindPicker(field, function (id) {
+            selected.val(id);
+            if (id && panel[0].open) panel[0].close();
+            root.find('table').data('current_page', 1);
+            $('#change_' + kind + '_view').trigger('click');
+        });
+    };
+
+    LF.reportLookup = function (kind, collection, searchField) {
+        LF.reportPersonPicker(kind, function (field, select) {
+            var selectedLabel = '';
+            field.autocomplete({
+                appendTo: field.parent(), minChars: 0, deferRequestBy: 150, triggerSelectOnValidInput: false,
+                lookup: function (query, done) {
+                    PosnicPro.get({url: 'base/autoSuggestionReportTableField',
+                        data: {query: query, module: collection, field: searchField, branch: $('#' + kind + '_branch_value').val()}
+                    }, function (response) {
+                        done({suggestions: (response.suggestions || []).map(function (person) {
+                            return {value: person.name, data: person.id};
+                        })});
+                    }, function () { done({suggestions: []}); });
+                },
+                onSelect: function (choice) {
+                    selectedLabel = choice.value;
+                    select(choice.data);
+                }
+            }).on('input', function () {
+                if (selectedLabel && this.value !== selectedLabel) {
+                    selectedLabel = '';
+                    select('');
+                }
+            });
         });
     };
 
@@ -450,9 +524,6 @@ PosnicPro.listFilter = {
         if (!$panel.length) return;
 
         var fields = cfg.searchFields || [{ value: 'all', label: PosnicPro.i18n.t('lang_all_fields', 'All fields') }];
-        /* A single row. The bar sits in the page header between the title and
-           the buttons, so it has to read as one strip of controls - stacked
-           rows there would push the header open and misalign against both. */
         var html = ''
             + '<div class="lf-row">'
             + '  <div class="lf-search">'
@@ -472,10 +543,6 @@ PosnicPro.listFilter = {
 
         if (cfg.dateField) {
             html += ''
-                /* The preset and its range editor are wrapped together so the
-                   editor can be positioned against the control that opened it
-                   while staying out of the strip's flow - two datetime-local
-                   inputs are ~185px each and would break the single line. */
                 + '  <div class="lf-preset-wrap">'
                 + '    <select class="form-control form-control-sm lf-preset">'
                 + LF.PRESETS.map(function (p) {
@@ -484,29 +551,19 @@ PosnicPro.listFilter = {
                         + esc(p.label) + '</option>';
                 }).join('')
                 + '    </select>'
-                + '    <div class="lf-custom" style="display:' + (st.preset === 'custom' ? 'flex' : 'none') + ';">'
-                /* min/max from the current pair, so the range cannot be
-                   inverted on the FIRST edit either - the change handler keeps
-                   them in step after that. */
-                + '      <input type="datetime-local" class="form-control form-control-sm lf-from" value="' + forInput(st.from) + '"'
-                + (st.to ? ' max="' + forInput(st.to) + '"' : '') + '>'
-                + '      <span class="lf-sep">to</span>'
-                + '      <input type="datetime-local" class="form-control form-control-sm lf-to" value="' + forInput(st.to) + '"'
-                + (st.from ? ' min="' + forInput(st.from) + '"' : '') + '>'
-                + '    </div>'
+                + '    <button type="button" class="btn btn-sm btn-light border lf-range-trigger"'
+                + (st.preset === 'custom' ? '' : ' hidden') + ' aria-haspopup="dialog">'
+                + esc(st.preset === 'custom' ? rangeLabel(st) : PosnicPro.i18n.t('lang_custom_range','Custom range')) + '</button>'
                 + '  </div>'
                 + '  <button type="button" class="btn btn-sm btn-light border lf-clear"><lang class="lang_clear_title">Clear</lang></button>';
         }
         html += '</div>';
 
+        var reopen = !!$panel.find('dialog[open]').length;
+        if (reopen) $panel.find('dialog[open]')[0].close();
+        var filterButton = $(cfg.button).detach();
         $panel.html(html).attr('data-lf', key).addClass('lf-table-toolbar').show();
-        if (cfg.panelContainer) $panel.insertBefore(cfg.panelContainer);
-        $panel.toggleClass('lf-expanded', !!m.expanded);
         var $row = $panel.find('.lf-row');
-        $('<button type="button" class="btn btn-light lf-mobile-search"><i class="feather icon-search"></i></button>')
-            .attr('aria-label', cfg.searchPlaceholder || 'Search').prependTo($row).on('click', function () {
-                $panel.addClass('lf-search-open').find('.lf-q').trigger('focus');
-            });
         if (cfg.partyFilter) {
             var party = cfg.partyFilter, fieldName = party === 'customers' ? 'customer_id' : 'supplier_id';
             var label = party === 'customers' ? 'Customer' : 'Supplier';
@@ -517,20 +574,143 @@ PosnicPro.listFilter = {
                 LF.setExtra(key,fieldName,id);
             });
         }
-        if (cfg.primaryControls) cfg.primaryControls($row, m.state);
-        if (cfg.dateField && key !== 'sales') {
-            var days = ['today', 'yesterday'];
-            if (['invoices', 'quotes'].includes(key)) days.push('tomorrow');
-            days.forEach(function (day) {
-                var preset = LF.PRESETS.find(function (p) { return p.key === day; });
-                $('<button type="button" class="btn btn-sm btn-outline-primary lf-day">')
-                    .attr('data-day', day).text(PosnicPro.i18n.t(preset.t, preset.label)).appendTo($row)
-                    .on('click', function () { $panel.find('.lf-preset').val(day).trigger('change'); });
-            });
-        }
+        if (cfg.primaryControls) cfg.primaryControls($row, m.state, filterButton);
         if (!cfg.dateField) $('<button type="button" class="btn btn-sm btn-light lf-clear">').text(PosnicPro.i18n.t('lang_clear_title','Clear')).appendTo($row);
+        if (key !== 'sales') {
+            buildFilterDialog(m, $row, filterButton);
+            if (reopen) LF.toggle(key);
+        }
         LF.paintButton(key);
     };
+
+    LF.queryHint = function (input, key, inline) {
+        var shortHints = {
+            sales:'Search sales', receivings:'Search purchases', items:'Search items', stocklogs:'Search stock logs',
+            customers:'Search customers', suppliers:'Search suppliers',
+            branches:'Search branches', users:'Search employees', categories:'Search categories', customercategory:'Search categories',
+            units:'Search units', variants:'Search variants', inventorycounts:'Search counts', lowstockitems:'Search low stock'
+        };
+        var detail = LF._mounted[key].cfg.searchPlaceholder || PosnicPro.i18n.t('lang_search','Search');
+        var hint = inline && !LF._mounted[key].cfg.selectionOnly ? PosnicPro.i18n.t('lang_inline_search_'+key,LF._mounted[key].cfg.inlineSearchHint || shortHints[key] || 'Search') : detail;
+        input.attr({placeholder:hint,title:detail});
+    };
+
+    LF.searchBar = function (host, button, title) {
+        var bar = $('<div class="lf-search-bar">').appendTo(host);
+        $('<i class="feather icon-search" aria-hidden="true">').appendTo(bar);
+        var slot = $('<div class="lf-search-slot">').appendTo(bar);
+        button.addClass('lf-options').attr({'aria-label':title, 'aria-haspopup':'dialog', 'aria-expanded':'false'})
+            .empty().append('<i class="feather icon-sliders" aria-hidden="true"></i>').appendTo(bar);
+        return slot;
+    };
+
+    LF.openOptions = function (dialog, button) {
+        var bar = button.closest('.lf-search-bar')[0];
+        var query = bar.querySelector('.lf-q');
+        var date = bar.parentNode.querySelector('.lf-preset');
+        var preview;
+        if (date) {
+            preview = $('<span class="lf-date-preview" aria-hidden="true">').text(date.selectedOptions[0].text)
+                .css('width', date.getBoundingClientRect().width).insertBefore(bar);
+        }
+        var slot = bar.querySelector('.lf-search-slot');
+        if (query) slot.dataset.preview = query.value || query.placeholder;
+        function position() {
+            var rect = button.closest('.lf-search-bar')[0].getBoundingClientRect();
+            var width = Math.min(Math.max(560, rect.width), window.innerWidth - 20);
+            var top = Math.min(Math.max(10, rect.bottom + 4), Math.max(10, window.innerHeight - 320));
+            dialog.style.setProperty('--lf-width', width + 'px');
+            dialog.style.setProperty('--lf-left', Math.max(10, Math.min(rect.left, window.innerWidth - width - 10)) + 'px');
+            dialog.style.setProperty('--lf-top', top + 'px');
+        }
+        if (preview) preview.hide();
+        position();
+        if (preview) preview.show();
+        dialog.classList.add('lf-options-panel');
+        dialog.showModal();
+        button.attr('aria-expanded','true');
+        window.addEventListener('resize', position);
+        function outside(event) {
+            if (event.target !== dialog) return;
+            var rect = dialog.getBoundingClientRect();
+            if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+        }
+        function escape(event) {
+            if (event.key !== 'Escape' || !dialog.contains(event.target)) return;
+            if ($(dialog).find('.select2-container--open,.autocomplete-suggestions:visible').length) return;
+            event.preventDefault();
+            event.stopPropagation();
+            dialog.close();
+        }
+        window.addEventListener('keydown', escape, true);
+        dialog.addEventListener('click', outside);
+        dialog.addEventListener('close', function () {
+            if (preview) preview.remove();
+            delete slot.dataset.preview;
+            window.removeEventListener('resize', position);
+            window.removeEventListener('keydown', escape, true);
+            dialog.removeEventListener('click', outside);
+            button.attr('aria-expanded','false');
+            if (document.contains(button[0])) button.trigger('focus');
+        }, {once:true});
+    };
+
+    function buildFilterDialog(m, row, button) {
+        var cfg = m.cfg;
+        var title = button.attr('title') || button.attr('data-original-title') || PosnicPro.i18n.t('lang_filter', 'Filter');
+        var dialog = $('<dialog class="lf-dialog">').attr('aria-label', title);
+        var heading = $('<header>').append($('<h5>').text(title)).appendTo(dialog);
+        var close = $('<button type="button" class="btn btn-light">&times;</button>').attr('aria-label', 'Close').appendTo(heading);
+        var fields = $('<div class="lf-dialog-fields">').appendTo(dialog);
+        var footer = $('<footer>').appendTo(dialog);
+        var done = $('<button type="button" class="btn btn-primary">Done</button>').appendTo(footer);
+        row.find('.lf-clear').text(PosnicPro.i18n.t('lang_clear_all', 'Clear all')).prependTo(footer);
+        function label(control, caption) {
+            var group = $('<div class="lf-control">').insertBefore(control);
+            var input = control.is('select,input') ? control : control.find('select,input').first();
+            var id = cfg.key + '-filter-' + row.find('.lf-control').length;
+            $('<label>').attr('for', id).text(caption).appendTo(group);
+            input.attr('id', id);
+            return group.append(control);
+        }
+        var search = label(row.find('.lf-search'), PosnicPro.i18n.t('lang_search', 'Search')).addClass('lf-inline-query');
+        var date = cfg.dateField ? label(row.find('.lf-preset-wrap'), cfg.dateField).addClass('lf-inline-date') : $();
+        if (cfg.selectionOnly) row.find('.lf-field,.lf-exact').remove();
+        else label(row.find('.lf-field'), 'Search in');
+        row.children('.lf-primary,.lf-entity').each(function () {
+            var input = $(this).is('.lf-entity') ? $(this).find('input') : $(this);
+            label($(this), input.attr('aria-label'));
+        });
+        row.children().not(date).not(search).appendTo(fields);
+        var quickDate = cfg.defaultPreset ? date : $();
+        if (!quickDate.length) fields.prepend(date);
+        var quick = $('<div class="lf-quick">').append(quickDate).appendTo(row);
+        if (!button.length) {
+            button = $('<button type="button">').on('click', function () { LF.toggle(cfg.key); });
+        }
+        var slot = LF.searchBar(quick, button, title).append(search);
+        if (cfg.showTotal) {
+            $('<span class="lf-result-total" role="status">').text(PosnicPro.i18n.t('lang_total', 'Total') + ' ')
+                .append('<strong></strong>').appendTo(quick);
+        }
+        LF.queryHint(search.find('input'), cfg.key, true);
+        dialog.appendTo(row);
+        dialog.on('close', function () {
+            quick.prepend(quickDate);
+            slot.append(search);
+            LF.queryHint(search.find('input'), cfg.key, true);
+            button.removeClass('lf-btn-open').attr('aria-expanded','false');
+        });
+        close.add(done).on('click', function () { dialog[0].close(); });
+        dialog.on('lf-open', function () {
+            LF.openOptions(dialog[0], button);
+            fields.prepend(search, date);
+            LF.queryHint(search.find('input'), cfg.key, false);
+            button.addClass('lf-btn-open').attr('aria-expanded','true');
+            search.find('input').trigger('focus');
+        });
+        if (!cfg.appliedContainer) $('<div class="lf-applied" aria-live="polite">').appendTo(row);
+    }
 
     /* The Filter button lives in the page header. It carries the active count
        because a closed panel is otherwise a place filters go to hide - someone
@@ -540,13 +720,45 @@ PosnicPro.listFilter = {
         if (!m) return;
         var n = LF.activeCount(key);
         var panel = $(m.cfg.container);
-        panel.find('.lf-day').each(function () {
-            var active = this.dataset.day === m.state.preset;
-            $(this).attr('aria-pressed', String(active)).toggleClass('btn-primary', active);
-        });
-        panel.find('.lf-clear').toggle(n > 0);
-        panel.find('.lf-mobile-search').text(m.state.search || '').prepend($('<i class="feather icon-search mr-1">'));
-        panel.find('.lf-mobile-search').toggleClass('btn-primary', !!LF._applied(m.state));
+        panel.find('.lf-clear').toggle(n > 0 || m.state.exact || m.state.field !== 'all');
+        var summary = (m.cfg.appliedContainer ? $(m.cfg.appliedContainer) : panel.find('.lf-applied')).empty();
+        if (summary.length) {
+            function chip(label, remove) {
+                $('<button type="button" class="btn btn-sm btn-light">').text(label).append('<span class="lf-chip-remove" aria-hidden="true">×</span>')
+                    .attr('aria-label', 'Remove ' + label).on('click', remove).appendTo(summary);
+            }
+            if (m.state.preset !== 'all') chip(LF.dateLabel(m.state), function () {
+                panel.find('.lf-preset').val('all').trigger('change');
+            });
+            if (LF._applied(m.state)) chip(m.state.search, function () {
+                panel.find('.lf-q').val('').trigger('input');
+            });
+            panel.find('.lf-primary').each(function () {
+                if (!this.value) return;
+                var control = $(this), dropdown = control.is('select');
+                var value = dropdown ? control.find(':selected').text() : control.val();
+                chip(control.attr('aria-label') + ': ' + value, function () {
+                    control.val('').trigger(dropdown ? 'change' : 'input');
+                    LF.paintButton(key);
+                });
+            });
+            if (m.state.field !== 'all') chip(panel.find('.lf-field :selected').text(), function () {
+                panel.find('.lf-field').val('all').trigger('change');
+            });
+            if (m.state.exact) chip('Exact', function () { panel.find('.lf-exact-cb').prop('checked', false).trigger('change'); });
+            if (m.cfg.showStatusChip && m.state.extra.status) chip('Status: '+m.state.extra.status, function () {
+                LF.setExtra(key,'status','');
+            });
+            if (m.state.saleLabel) chip(m.state.saleLabel, function () { panel.find('.lf-sale-items').trigger('click'); });
+            if (m.state.extra.selling_price || m.state.extra.available_quantity) {
+                chip(panel.find('.lf-range summary').text(), function () {
+                    delete m.state.extra.selling_price;
+                    delete m.state.extra.available_quantity;
+                    LF.render(key);
+                    LF._changed(key);
+                });
+            }
+        }
         var $btn = $(m.cfg.button);
         if (!$btn.length) return;
         $btn.toggleClass('lf-btn-active', n > 0);
@@ -587,10 +799,10 @@ PosnicPro.listFilter = {
     LF.toggle = function (key) {
         var m = LF._mounted[key];
         if (!m) return;
-        var opening = m.expanded = !m.expanded;
-        $(m.cfg.container).toggleClass('lf-expanded', opening);
-        if (m.cfg.panelContainer) $(m.cfg.panelContainer).toggle(opening);
-        $(m.cfg.button).toggleClass('lf-btn-open', opening).attr('aria-expanded', opening ? 'true' : 'false');
+        var dialog = $(m.cfg.container).find('.lf-dialog');
+        if (!dialog.length) return;
+        if (dialog[0].open) dialog[0].close();
+        else dialog.triggerHandler('lf-open');
     };
 
     LF._changed = function (key) {
@@ -617,12 +829,7 @@ PosnicPro.listFilter = {
         m.state.exact = !!opts.exact;
         m.state._picked = !!opts.exact;
         var $panel = $(m.cfg.container);
-        $panel.empty();
         LF.render(key);
-        if (!$panel.is(':visible')) {
-            $panel.show();
-            $(m.cfg.button).addClass('lf-btn-open').attr('aria-expanded', 'true');
-        }
         LF._changed(key);
     };
 
@@ -659,6 +866,11 @@ PosnicPro.listFilter = {
         var key = owner(this);
         if (!key) return;
         var term = $.trim(this.value);
+        var mounted = LF._mounted[key];
+        if (mounted.cfg.selectionOnly && term) {
+            LF.typeahead(key, term);
+            return;
+        }
         LF._mounted[key].state.search = term;
         /* typing again is no longer the picked value */
         LF._mounted[key].state._picked = false;
@@ -705,51 +917,65 @@ PosnicPro.listFilter = {
         LF._changed(key);
     });
 
+    function openRange(key, panel) {
+        var state = LF._mounted[key].state;
+        var trigger = panel.find('.lf-range-trigger').prop('hidden', false);
+        if (trigger.data('daterangepicker')) return;
+        trigger.daterangepicker({
+            parentEl: trigger.closest('dialog')[0] || 'body',
+            startDate: state.from ? moment(state.from) : moment().startOf('day'),
+            endDate: state.to ? moment(state.to) : moment().endOf('day'),
+            showDropdowns: true,
+            linkedCalendars: false,
+            timePicker: true,
+            timePicker24Hour: true,
+            autoUpdateInput: false,
+            opens: 'center',
+            locale: {
+                format: 'D MMM YYYY HH:mm',
+                applyLabel: PosnicPro.i18n.t('lang_apply', 'Apply'),
+                cancelLabel: PosnicPro.i18n.t('lang_cancel', 'Cancel')
+            }
+        });
+        var picker = trigger.data('daterangepicker');
+        picker.container.addClass('lf-range-calendar').attr({role:'dialog','aria-label':'Custom date range'});
+        picker.container.find('.drp-calendar.left').prepend($('<strong>').text(PosnicPro.i18n.t('lang_from','From')));
+        picker.container.find('.drp-calendar.right').prepend($('<strong>').text(PosnicPro.i18n.t('lang_to','To')));
+        trigger.one('apply.daterangepicker', function () {
+            state.from = picker.startDate.clone().startOf('minute').toDate();
+            state.to = picker.endDate.clone().endOf('minute').toDate();
+            state.preset = 'custom';
+            trigger.text(rangeLabel(state));
+            LF._changed(key);
+        }).one('hide.daterangepicker', function () {
+            // The picker emits Apply immediately after Hide. Restore from the
+            // committed state once both events have finished.
+            setTimeout(function () {
+                picker.remove();
+                panel.find('.lf-preset').val(state.preset);
+                trigger.prop('hidden', state.preset !== 'custom');
+            }, 0);
+        });
+        picker.show();
+    }
+
+    $(document).on('click', '.lf-range-trigger', function () {
+        openRange(owner(this), $(this).closest('[data-lf]'));
+    });
     $(document).on('change', '.lf-preset', function () {
         var key = owner(this);
         if (!key) return;
-        var st = LF._mounted[key].state;
-        st.preset = this.value;
-        var $panel = $(this).closest('[data-lf]');
-        $panel.find('.lf-custom').css('display', st.preset === 'custom' ? 'flex' : 'none');
-        if (st.preset !== 'custom') {
-            var r = LF.range(st.preset);
-            st.from = r.from; st.to = r.to;
-            $panel.find('.lf-from').val(forInput(st.from));
-            $panel.find('.lf-to').val(forInput(st.to));
-            LF._changed(key);
+        var panel = $(this).closest('[data-lf]');
+        if (this.value === 'custom') {
+            openRange(key, panel);
+            return;
         }
-    });
-
-    $(document).on('change', '.lf-from,.lf-to', function () {
-        var key = owner(this);
-        if (!key) return;
-        var st = LF._mounted[key].state;
-        var $panel = $(this).closest('[data-lf]');
-        var $from = $panel.find('.lf-from');
-        var $to = $panel.find('.lf-to');
-        var from = $from.val();
-        var to = $to.val();
-
-        /*
-         * An inverted range cannot be entered, rather than being caught after.
-         *
-         * "To" before "from" matches nothing, and the list then says "no quotes
-         * match this search" - true and useless, because the search is not what
-         * is wrong. Letting the browser refuse it beats any message we could
-         * write: min/max on datetime-local is native, needs no validation UI,
-         * and the picker will not offer the bad dates in the first place.
-         *
-         * Set from the CURRENT values on every change, so widening one end
-         * releases the other rather than trapping someone who picked the wrong
-         * one first.
-         */
-        $to.attr('min', from || null);
-        $from.attr('max', to || null);
-
-        st.from = from ? new Date(from) : null;
-        st.to = to ? new Date(to) : null;
-        st.preset = 'custom';
+        var state = LF._mounted[key].state;
+        state.preset = this.value;
+        var range = LF.range(state.preset);
+        state.from = range.from;
+        state.to = range.to;
+        panel.find('.lf-range-trigger').prop('hidden', true);
         LF._changed(key);
     });
 
@@ -903,7 +1129,7 @@ PosnicPro.listFilter = {
     LF.typeahead = function (key, term) {
         var m = LF._mounted[key];
         if (!m) return;
-        var $box = $(m.cfg.container).find('.lf-typeahead');
+        var $box = $(m.cfg.suggestionContainer || m.cfg.container).find('.lf-typeahead');
         var entity = m.cfg.typeahead;
         var e = entity && LF.ENTITIES[entity];
         if (!e) { $box.hide().empty(); return; }
@@ -919,6 +1145,7 @@ PosnicPro.listFilter = {
             return;
         }
 
+        var mine = m._taSeq = (m._taSeq || 0) + 1;
         var rows = LF.suggest(entity, term);
 
         /*
@@ -930,8 +1157,6 @@ PosnicPro.listFilter = {
          * "Custom" can end with the results for "Cus" on screen.
          */
         if (e.lookup && String(term || '').trim().length >= LF.MIN_SEARCH) {
-            m._taSeq = (m._taSeq || 0) + 1;
-            var mine = m._taSeq;
             e.lookup(String(term).trim(), function (found) {
                 if (mine !== m._taSeq) return;
                 LF.paintTypeahead(key, e, uniq(rows.concat(found || [])));
@@ -946,7 +1171,8 @@ PosnicPro.listFilter = {
     LF.paintTypeahead = function (key, e, rows) {
         var m = LF._mounted[key];
         if (!m) return;
-        var $box = $(m.cfg.container).find('.lf-typeahead');
+        var $box = $(m.cfg.suggestionContainer || m.cfg.container).find('.lf-typeahead');
+        if (m.cfg.selectionOnly) rows = rows.filter(function (row) { return /^[a-f0-9]{24}$/i.test(row.id); });
         var body = rows.length
             ? rows.map(function (r) {
                 /* a clock means "you used this here", a plain icon means "this
@@ -958,6 +1184,7 @@ PosnicPro.listFilter = {
                     + (r.note ? '<span class="lf-pick-note">' + esc(r.note) + '</span>' : '')
                     + '</a>';
             }).join('')
+            : m.cfg.selectionOnly ? '<div class="lf-pick-empty">No matching customers</div>'
             : '<div class="lf-pick-empty"><lang class="lang_nothing_matches_press_enter_to_search_anyw">Nothing matches - press Enter to search anyway</lang></div>';
 
         $box.html(
@@ -983,6 +1210,7 @@ PosnicPro.listFilter = {
         var key = $panel.attr('data-lf');
         var m = LF._mounted[key];
         if (!m) return;
+        m._taSeq = (m._taSeq || 0) + 1;
         var name = String($(this).data('name'));
         m.state.search = name;
         m.state._picked = true;

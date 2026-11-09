@@ -101,6 +101,7 @@ PosnicPro.quickreport = {
       return (s || "").replace(/^\s+|\s+$/g, "");
     }
 
+    var actions = $('#dailyreport_new .report-export-options button').prop('disabled', true);
     var branchId = String($("#dailysale_branch_value").val() || "");
     if (!branchId) {
       $("#dailysale_branch_value").focus();
@@ -423,6 +424,7 @@ PosnicPro.quickreport = {
           }),
         };
 
+        actions.prop("disabled", PosnicPro.local.get("userplan") === "free" || !(productData.length || spoilageRows.length));
         var summaryCash = 0, summaryCard = 0;
         PosnicPro.quickreport.lastReport.payments.forEach(function (payment) {
           if (/^cash$/i.test(payment.label)) summaryCash += payment.amount;

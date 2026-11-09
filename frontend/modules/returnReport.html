@@ -9,7 +9,7 @@
                 </div>               
                 <div class="col-md-9 col-lg-9 show-button-action"></div>                  
                 <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_return_report_daterange">
+                    <div class="form-control pull-right daterange-timepicker-all report-period daterange-style date-align view_return_report_daterange">
                         <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
                         <span></span>
                     </div>
@@ -60,42 +60,16 @@
                                 <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="return-line" role="tabpanel" aria-labelledby="return-tab-line">
-                                <div id="return-sale-facets" class="d-flex flex-wrap my-2" style="gap:.5rem">
-                                    <input type="search" class="form-control" style="max-width:20rem" aria-label="Find returned sales" placeholder="Return, sale ID or customer">
-                                    <input type="search" class="form-control" style="max-width:14rem" aria-label="Choose customer" placeholder="Choose customer">
-                                    <select class="form-control" style="width:auto" aria-label="Sort returned sales"><option value="amount">Largest refund</option><option value="new">Newest return</option></select>
+                                <div id="return-sale-facets" class="lf-quick report-facet-search">
+                                    <button type="button" class="report-popup-toggle"></button>
+                                    <dialog class="lf-dialog lf-report-dialog" aria-label="Filter sale returns">
+                                        <div class="lf-inline-query"><label for="return-sale-facets-0">Find returned sales</label><input type="search" class="form-control lf-q" id="return-sale-facets-0" aria-label="Find returned sales" placeholder="Search returns" title="Return, sale ID or customer"></div>
+                                        <div><label for="return-sale-facets-1">Choose customer</label><input type="search" class="form-control" id="return-sale-facets-1" aria-label="Choose customer" placeholder="Choose customer"></div>
+                                        <div><label for="return-sale-facets-2">Sort returned sales</label><select class="form-control" id="return-sale-facets-2" aria-label="Sort returned sales"><option value="amount">Largest refund</option><option value="new">Newest return</option></select></div>
+                                    </dialog>
                                 </div>
                                 <!-- start table -->
-                                <div class="row reportresale_header">
-                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_returnreport_per_page" data-id="returnreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-11 col-md-11">                                                                                       
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="returnreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="returnreport_exportbtn"
-                                                           data-id="returnreportexport" onclick="PosnicPro.returnreport.returnReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 <div class="card-body card-box no-padding loader-return-report">
                                     <!-- Start table -->
                                     <div class="table-responsive">
@@ -116,7 +90,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_returnreport_per_page" data-id="returnreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_returnreport_page_total"></span></b>
                                                     <lang class="lang_to">to</lang> 
@@ -146,24 +126,12 @@
                             <div class="tab-pane fade" id="return-product-line" role="tabpanel" aria-labelledby="return-product-tab-line">
                                 <!-- start table -->
                                 <div class="row reportresalepro_header">
-                                    <div class="col-lg-1 col-md-1 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_returnproductreport_per_page" data-id="returnproductreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnproductreport per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
+                                    
                                     <div class="col-lg-11 col-md-11">                                                                                       
                                         <div class="email-rightbar">
                                             <div class="card-header header_icon">
                                                 <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="returnproductreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
+                                                    
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="returnproductreport_exportbtn"
                                                            data-id="returnproductreportexport" onclick="PosnicPro.returnproductreport.returnproductreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
@@ -198,7 +166,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_returnproductreport_per_page" data-id="returnproductreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnproductreport per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_returnproductreport_page_total"></span></b> 
                                                     <lang class="lang_to">to</lang> 
@@ -301,18 +275,8 @@
                             </div>
                             <div class="portlet-body padding-top-0">
                                 <div class="row">
-                                    <div class="col-lg-2 col-md-2 form-group mb-0 amount-spent-select selecct-align">
-                                        <select class="form-control select_page" id="view_returnproductdetails_per_page" data-id="returnproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnproductdetails per page">
-                                            <option value="5" selected>5</option>
-                                            <option value="10">10</option>
-                                            <option value="25">25</option>
-                                            <option value="50">50</option>
-                                            <option value="100">100</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-lg-10 col-md-10">                                                                                       
-
-                                    </div>
+                                    
+                                    
                                 </div>
                                 <div class="card-body card-box no-padding loader-item-report">
                                     <!-- Start table -->
@@ -329,7 +293,13 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_returnproductdetails_per_page" data-id="returnproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnproductdetails per page">
+                                            <option value="5" selected>5</option>
+                                            <option value="10">10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select></label>
                                                     <lang class="lang_showing">Showing</lang> 
                                                     <b><span id="view_returnproductdetails_page_total"></span></b> 
                                                     <lang class="lang_to">to</lang> 

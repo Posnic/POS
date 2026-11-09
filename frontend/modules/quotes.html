@@ -7,16 +7,11 @@
                     <div class="col-auto">
                         <h4 class="page-title break_title mb-0"><lang class="lang_quotes_title">Quotes</lang></h4>
                     </div>
-                    <!-- The filter bar sits on the header's own line, between the
-                         title and the buttons: one strip of controls rather than a
-                         block that pushes the list down the page. -->
-                    <div class="col">
-                        <div class="lf-panel" id="quotes_filter_panel" style="display:none;"></div>
-                    </div>
+
                     <!-- New belongs in the page header with every other list
                          screen (customers, items), not as a green block inside
                          the list itself. Same markup, same class, same place. -->
-                    <div class="col-auto text-right">
+                    <div class="col-auto text-right ml-auto lf-actions">
                         <div class="widgetbar">
                             <!-- Filter lives here, next to New: the panel stays
                                  closed until asked for, and this button carries
@@ -33,6 +28,9 @@
                                 <lang class="lang_addvariant_title">New</lang>
                             </a>
                         </div>
+                    </div>
+                    <div class="col-12 lf-toolbar-slot">
+                        <div class="lf-panel" id="quotes_filter_panel" style="display:none;"></div>
                     </div>
                 </div>
             </div>

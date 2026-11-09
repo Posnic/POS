@@ -8,16 +8,6 @@ PosnicPro.kotreport = {
 
         }
 
-        // Set KOT Reports default date range to "Today"
-
-        var startToday = moment().startOf('day');
-
-        var endToday = moment().endOf('day');
-
-        $('.view_kot_report_daterange span').html('<span><lang class="lang_this_day">Today</lang></span>&nbsp;&nbsp;<span data-toggle="tooltip" data-placement="top" data-original-title="' + startToday.format('YYYY/MM/DD h:mm A') + ' - ' + endToday.format('YYYY/MM/DD h:mm A') + '"><i class="feather icon-help-circle setfeather_font"></i></span>');
-
-        $('.view_kot_report_daterange').val(startToday.format('YYYY/MM/DD h:mm A') + ' - ' + endToday.format('YYYY/MM/DD h:mm A'));
-
         PosnicPro.HideSideBarModal();
 
         $(".vertical-layout").removeClass("toggle-menu");

@@ -1107,6 +1107,12 @@ input[type="checkbox"]:checked:after, .checkbox input[type="checkbox"]:checked:a
 .crumbbar_padding{
     margin-top: 78px !important;
 }
+@media screen {
+    .page_loader:not(.config-embedded-page) > #containerbar > .breadcrumbbar {
+        margin-top:max(78px, calc(var(--posnic-header-height, 70px) + 4px)) !important;
+    }
+}
+#dailyreport_new .daily-report-title { white-space:nowrap; margin:0 0 12px; }
 .page_padding{
     padding: 12px !important;
 }
@@ -2407,32 +2413,85 @@ input:checked + .slider:before {
  * Ctrl+K command palette (S3; DOM injected by core/command-palette.js).
  * Styled on the theme tokens so it belongs to all eleven themes.
  */
-#posnic-header-search { display:inline-flex; align-items:center; gap:8px; margin:6px 10px; padding:7px 12px; border:1px solid var(--theme-border-color,#d7dfef); background:var(--theme-card-bg,#fff); color:var(--theme-text-primary,#263859); border-radius:8px; }
-#posnic-header-search kbd {background:transparent;color:inherit;opacity:.7;}
-#cmdk-overlay {position:fixed;inset:auto;top:var(--cmdk-top,20px);left:var(--cmdk-left,12px);width:min(710px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - var(--cmdk-top,20px) - 10px);margin:0;padding:0;border:0;border-radius:10px;color:var(--theme-text-primary,#16203a);background:var(--theme-card-bg,#fff);box-shadow:0 0 0 2px var(--theme-primary-color,#506fe4),0 16px 48px #172a5145;}
+.topbar .togglebar > ul { display:flex; align-items:stretch; gap:10px; }
+.topbar .togglebar > ul > li { display:flex; align-items:center; }
+.topbar > .row > .align-self-center {
+    display: grid;
+    grid-template-columns: auto minmax(36px, 1fr) auto;
+    align-items: center;
+    column-gap: 12px;
+}
+.header-search-slot {
+    container-type: inline-size;
+    display: flex;
+    justify-content: center;
+}
+.global-search-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: min(100%, 400px);
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--theme-border-color, #c8d2e0);
+    border-radius: 8px;
+    background: var(--theme-card-bg, #fff);
+    color: var(--theme-text-primary, #263859);
+    white-space: nowrap;
+    cursor: pointer;
+}
+.global-search-trigger:hover, .global-search-trigger:focus-visible { border-color: var(--theme-primary-color, #506fe4); }
+.global-search-trigger kbd { margin-left: auto; background: transparent; color: inherit; opacity: .75; }
+@container (max-width: 200px) { .global-search-trigger kbd { display: none; } }
+@container (max-width: 135px) {
+    .global-search-trigger span { display: none; }
+    .global-search-trigger { width: 36px; padding: 0; justify-content: center; }
+}
+#posnic-mobile-search { width: 36px; padding: 0; justify-content: center; }
+#cmdk-input::placeholder { color: var(--theme-text-secondary, #53647a); opacity: 1; }
+#cmdk-overlay {position:fixed;inset:clamp(10px,6vh,56px) 0 auto;width:min(820px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - clamp(10px,6vh,56px) - 10px);margin:0 auto;padding:0;border:0;border-radius:10px;color:var(--theme-text-primary,#16203a);background:var(--theme-card-bg,#fff);box-shadow:0 0 0 2px var(--theme-primary-color,#506fe4),0 16px 48px #172a5145;}
 #cmdk-overlay::backdrop {background:rgba(20,31,56,.35);}
 #cmdk-overlay[open]{animation:cmdk-expand .24s cubic-bezier(.2,.75,.25,1);}
 #cmdk-overlay[open]::backdrop {animation:cmdk-shade .2s ease-out;}
-@keyframes cmdk-expand {from{width:var(--cmdk-start,160px);clip-path:inset(0 0 calc(100% - 38px) 0 round 8px);}to{clip-path:inset(-24px round 10px);}}
+@keyframes cmdk-expand {from{transform:translateY(-4px) scale(.98);clip-path:inset(0 0 calc(100% - 38px) 0 round 8px);}to{clip-path:inset(-24px round 10px);}}
 #cmdk-overlay.cmdk-closing{animation:cmdk-shade .145s ease-in reverse both;}
 #cmdk-overlay.cmdk-closing::backdrop{animation:cmdk-shade .145s ease-in reverse both;}
 @keyframes cmdk-shade {from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){#cmdk-overlay[open],#cmdk-overlay[open]::backdrop{animation:none;}}
-@media(max-width:800px){#posnic-header-search lang,#posnic-header-search kbd{display:none;}}
+
 .cmdk-field,#cmdk-tabs,#cmdk-hint{display:flex;align-items:center;}
 #cmdk-tabs{flex-wrap:wrap;gap:4px;padding:5px 12px;}
 #cmdk-box button{background:transparent;border:0;color:inherit;padding:5px 8px;border-radius:6px;cursor:pointer;}
 #cmdk-tabs [aria-pressed="true"]{background:var(--theme-primary-color,#506fe4);color:white;}
 #cmdk-clear{margin-left:auto;}.cmdk-section,#cmdk-status:not(:empty){padding:7px 18px;font-size:12px;}
+.cmdk-field {
+    gap: 8px;
+    padding: 6px 12px 6px 18px;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.18);
+}
+#cmdk-box #cmdk-close {
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(127, 127, 127, 0.12);
+    color: inherit;
+    font-size: 24px;
+    line-height: 1;
+}
+#cmdk-box #cmdk-close:hover {background: rgba(127, 127, 127, 0.22);}
+#cmdk-close:focus-visible {outline: 2px solid var(--theme-primary-color, #506fe4);}
 #cmdk-input {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     border: 0;
     outline: 0;
-    padding: 16px 18px;
+    padding: 8px 0;
     font-size: 16px;
     background: transparent;
     color: inherit;
-    border-bottom: 1px solid rgba(127, 127, 127, 0.18);
 }
 #cmdk-list {
     max-height: 46vh;
@@ -4190,15 +4249,6 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
  * only the slack that is left.
  */
 .lf-panel { padding: 0; }
-/* One strip, on the header's own line. It only wraps when the window genuinely
-   cannot hold it - wrapping by default is what made this look misaligned
-   against the title on one side and the buttons on the other. */
-/* ONE line, always (owner: "can we make in same line of filter row itself").
-   nowrap rather than wrap: wrapping puts a second row inside the page header,
-   which pushes the header open and misaligns the strip against both the title
-   and the buttons - the thing that was reported. The search box carries
-   min-width:0 so a narrow header shrinks IT rather than breaking the line,
-   which is the least harmful way to run out of room. */
 .lf-row {
     display: flex;
     align-items: center;
@@ -4210,28 +4260,12 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 .lf-search .lf-q { width: 100%; }
 .lf-field { flex: 0 0 auto; width: auto; min-width: 108px; }
 .lf-preset { flex: 0 0 auto; width: auto; min-width: 132px; }
-/* The custom range is the one control that cannot fit on the line: two
-   datetime-local inputs are ~185px each in Chrome, and with "to" between them
-   that is nearly 400px on a strip that has to share a header row. So it drops
-   out of flow and opens under the preset that asked for it - the strip stays
-   one line whatever is selected, and the range editor gets the room it needs. */
-.lf-custom {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    z-index: 1050;
-    align-items: center;
-    gap: 6px;
-    padding: 8px;
-    background: #fff !important;
-    border: 1px solid #d0d7de !important;
-    border-radius: 6px;
-    box-shadow: 0 8px 24px rgba(31, 35, 40, 0.16);
-    white-space: nowrap;
+.lf-preset-wrap { display:flex; align-items:center; flex-wrap:wrap; gap:.35rem; }
+.lf-range-calendar .drp-calendar > strong { display:block; padding:4px 6px; }
+.lf-range-calendar { max-width:calc(100vw - 12px); max-height:80vh; overflow:auto; }
+@media (max-width:600px) {
+  .lf-range-calendar { position:fixed!important; top:8vh!important; left:3vw!important; width:94vw; }
 }
-.lf-preset-wrap { position: relative; flex: 0 0 auto; }
-.lf-custom input { width: auto; min-width: 168px; }
-.lf-sep { font-size: 12px; color: #57606a; }
 .lf-exact {
     display: flex;
     align-items: center;
@@ -4340,7 +4374,7 @@ td.payable-total, td.pay_amount_total, td.discount-percentage-line-heigth { padd
 /* The range editor is a popover like the picker, so it needs the same
    treatment: its light rule carries !important to beat the theme's own card
    background, which means the dark theme has to say so with !important too. */
-[data-theme] .lf-custom {
+[data-theme] .lf-range-calendar {
     background: var(--theme-card-bg) !important;
     border-color: var(--theme-border-color) !important;
 }
@@ -7788,19 +7822,242 @@ tr.s-doc-purchase-row:hover td { background: rgba(9, 105, 218, 0.05); }
   #items_new #item_translation_chips button { width:auto; }
 }
 
-/* Local search remains available while the field and exact-match options collapse. */
-.lf-table-toolbar .lf-row { flex-wrap:wrap; gap:.4rem; }
-.lf-table-toolbar:not(.lf-expanded) .lf-field,.lf-table-toolbar:not(.lf-expanded) .lf-exact,
-.lf-table-toolbar .lf-mobile-search { display:none; }
-.lf-table-toolbar .lf-search { min-width:11rem; flex:1 1 14rem; }
-.lf-table-toolbar .lf-primary { width:auto; max-width:15rem; }
-.row_filter .single-branch-filter { display:none!important; }
-@media(max-width:600px){
-.lf-table-toolbar .lf-mobile-search {display:inline-block}
-.lf-table-toolbar:not(.lf-search-open):not(.lf-expanded) .lf-search {display:none}
-.lf-table-toolbar .lf-search {flex-basis:100%}
+.row_filter .single-branch-filter {display:none!important;}
+.lf-actions { max-width:100%; }
+.lf-actions .widgetbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:2px; }
+.lf-toolbar-slot { min-width:0; }
+.lf-table-toolbar .lf-row:has(.lf-quick) { display:block; }
+.lf-quick { display:flex; align-items:flex-start; gap:8px; margin:5px 0; }
+.lf-control { min-width:0; }
+.lf-control > label { display:block; margin:0 0 5px; font-size:14px; font-weight:500; }
+.lf-quick .lf-control > label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+.lf-quick .lf-inline-date { flex:0 1 148px; }
+.lf-quick .lf-inline-query { flex:1 1 260px; max-width:420px; }
+.lf-control .form-control { width:100%; min-width:0; height:40px; border-radius:7px; }
+.lf-control .lf-search { width:100%; min-width:0; }
+.lf-inline-date .lf-range-trigger { white-space:normal; }
+.lf-dialog { width:min(760px,calc(100% - 24px)); max-height:90vh; overflow:auto; padding:clamp(16px,3vw,28px);
+    border:1px solid var(--theme-border-color,#ccd3df); border-radius:14px; background:var(--theme-card-bg,white); color:var(--theme-text-primary); box-shadow:0 16px 64px #13243c30; }
+.lf-dialog::backdrop { background:rgba(23,34,50,.4); }
+.lf-dialog > header, .lf-dialog > footer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.lf-dialog h5 { margin:0; font-size:1.35rem; }
+.lf-dialog-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:end; gap:16px 22px;
+    padding:18px 0; margin:16px 0; border-block:1px solid var(--theme-border-color,#dbe2ec); }
+.lf-dialog-fields .lf-inline-query,.lf-dialog-fields details { grid-column:1 / -1; }
+.lf-dialog-fields .form-control { height:44px; }
+.lf-dialog footer .btn-primary { margin-left:auto; }
+.lf-entity { position:relative; }
+.lf-entity .autocomplete-suggestions { top:100%; left:0; }
+.lf-applied { display:flex; flex-wrap:wrap; gap:5px; }
+.lf-applied .btn { padding:3px 8px; border:1px solid var(--theme-border-color,#ccd3df); border-radius:6px; font-size:13px; }
+@media(max-width:600px) {
+    .lf-quick .lf-inline-date { flex-basis:110px; }
+    .lf-dialog-fields { grid-template-columns:minmax(0,1fr); }
 }
-
 .row_filter .lf-legacy-primary:not(.single-branch-filter) { display:block!important; }
 
 .filing-match > td { box-shadow:inset 0 -2px #4782cc; }
+
+/* Table search keeps the date shortcut beside a single query and options bar. */
+.lf-search-bar {
+    display:flex; align-items:center; gap:8px; min-width:0; height:36px;
+    flex:1 1 320px; max-width:360px; padding:0 4px 0 12px;
+    border:1px solid var(--theme-border-color,#c8d2e0); border-radius:8px;
+    background:var(--theme-card-bg,#fff); color:var(--theme-text-primary,#23334c);
+}
+.lf-search-bar:focus-within { border-color:var(--theme-primary-color,#1769dc); }
+.lf-search-slot { flex:1; min-width:0; }
+.lf-search-slot .lf-inline-query, #sales_quick_controls .lf-search-slot .sales-query-group { max-width:none; }
+.lf-search-slot .lf-search { width:100%; min-width:0; }
+.lf-search-bar .lf-search input.lf-q, #sales_quick_controls .lf-search-bar input.lf-q {
+    margin:0; padding:0; height:38px; width:100%; min-width:0; border:0;
+    background:transparent; color:inherit; box-shadow:none;
+}
+.lf-search-slot .lf-q::placeholder { color:var(--theme-text-secondary,#536579); opacity:1; }
+.lf-search-bar button.lf-options {
+    display:inline-flex; align-items:center; justify-content:center; gap:3px;
+    flex:none; height:34px; min-width:34px; padding:0 8px; margin:0;
+    border:0; border-radius:18px; background:transparent; color:inherit;
+}
+.lf-search-bar button.lf-options:is(:hover,:focus-visible,[aria-expanded=true],.lf-btn-active) {
+    color:var(--theme-primary-color,#0968d7); background:var(--theme-card-bg,#fff);
+}
+dialog.lf-options-panel, #sales_filter_dialog.lf-options-panel {
+    position:fixed; inset:var(--lf-top) auto auto var(--lf-left); margin:0;
+    width:var(--lf-width); max-width:calc(100vw - 20px); max-height:calc(100dvh - var(--lf-top) - 10px);
+    overflow:auto; overscroll-behavior:contain; padding:18px; border-radius:14px;
+    box-shadow:0 6px 22px rgba(31,45,65,.18);
+}
+dialog.lf-options-panel::backdrop, #sales_filter_dialog.lf-options-panel::backdrop { background:transparent; }
+.lf-options-panel footer .btn, #sales_filter_dialog .sales-filter-footer .btn { border-radius:20px; }
+@media(max-width:600px) {
+    .lf-search-bar { padding-left:10px; gap:4px; }
+    dialog.lf-options-panel, #sales_filter_dialog.lf-options-panel { padding:14px; }
+}
+.lf-date-preview { flex:none; max-width:35%; height:32px; padding:4px 8px; overflow:hidden; white-space:nowrap; border:1px solid var(--theme-border-color,#ccd3df); border-radius:7px; background:var(--theme-card-bg,#fff); }
+.lf-search-slot:empty::before { content:attr(data-preview); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.lf-search-slot input.form-control.lf-q, #sales_quick_controls .lf-search-slot input.form-control.lf-q {
+    height:32px; padding:0!important; border:0!important; background:transparent!important; box-shadow:none!important;
+}
+.lf-search-slot input.lf-q::placeholder {color:var(--theme-text-secondary,#536579)!important; opacity:1;}
+.lf-search-bar button.lf-options {height:30px; border-radius:6px; box-shadow:none;}
+#sales_quick_controls {flex:0 1 500px; min-width:0; align-items:flex-start;}
+#sales_quick_controls .lf-preset {height:36px;}
+.sales-history-topline .sales-history-summary {margin-left:0;}
+#sales_filter_dialog .sales-query-group {display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:4px 12px;}
+#sales_filter_dialog .sales-query-group > label:first-child {grid-column:1 / -1;}
+#sales_filter_dialog .sales-query-group > .lf-exact {grid-column:2; margin:0;}
+dialog.lf-options-panel header button[aria-label="Close"] {
+    font-size:24px; line-height:1; padding:0; min-width:36px; height:36px; border-radius:8px;
+}
+#sales_filter_dialog .autocomplete-suggestions {max-height:min(200px,30vh)!important; overflow-y:auto; overscroll-behavior:contain;}
+#sales_filter_dialog .sales-history-picker input {padding-right:12px;}
+.purchase-report-fields {flex:1 0 100%; padding:4px 15px;}
+.purchase-report-fields .form-control {display:inline-block; margin:3px 4px 3px 0;}
+#handsets_detail .device-actions {display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:14px 0;}
+#handsets_detail .device-actions label {margin:0;}
+#handsets_detail #devices_app_filter {width:clamp(120px,15vw,180px); min-width:0; flex:none; height:36px;}
+#handsets_detail .device-actions .btn {margin:0; min-height:36px; display:inline-flex; align-items:center;}
+
+/* Align the visible list controls and their removable filter chips. */
+:is(.lf-quick,#sales_quick_controls) .lf-search-bar,
+:is(.lf-quick,#sales_quick_controls) select.lf-preset,
+#sales_filter_dialog .form-control,
+:is(.lf-applied,#sales_active_filters) button.btn {
+    box-sizing:border-box; height:32px!important; min-height:32px!important;
+}
+.lf-quick .lf-inline-date, #sales_quick_controls .sales-date-group {flex:0 0 110px; min-width:0;}
+:is(.lf-quick,#sales_quick_controls) select.lf-preset {
+    width:100%; min-width:0; padding-block:0!important; font-size:14px;
+}
+.lf-search-bar button.lf-options {height:26px; min-height:26px;}
+.lf-search-slot input.form-control.lf-q, #sales_quick_controls .lf-search-slot input.form-control.lf-q {height:28px; min-height:0;}
+:is(.lf-applied,#sales_active_filters) button.btn {
+    display:inline-flex; align-items:center; gap:8px; padding:0 9px!important; min-width:0; line-height:1.2; font-size:13px;
+}
+.lf-chip-remove {font-size:15px; line-height:1;}
+@media(max-width:600px) {
+    .lf-quick, #sales_quick_controls {flex-wrap:wrap;}
+    :is(.lf-quick,#sales_quick_controls) .lf-search-bar {flex:1 1 240px; min-width:min(100%,240px);}
+}
+
+.list-metrics,.expiry-summary,.expiry-toolbar {display:flex; align-items:center; flex-wrap:wrap; gap:8px 18px;}
+.list-metrics:not(:empty),.expiry-summary {margin:8px 0;}
+.list-metrics strong {margin-left:3px;}
+.expiry-toolbar {align-items:flex-end; gap:8px 12px;}
+.expiry-field {max-width:100%;}
+.expiry-field label {display:block; margin-bottom:4px; font-size:13px;}
+#expiryreport .expiry-field .form-control {min-height:32px; height:32px; padding-block:2px;}
+#expiryreport .expiry-summary {font-size:14px;}
+
+/* Reports share one header, with the active filters directly above its navigation. */
+.report-page-header > .row_filter {
+    display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin-inline:0;
+}
+.report-page-header > .row_filter > [class*="col-"] {flex:0 1 auto; width:auto; max-width:100%; padding:0;}
+.report-page-header > .row_filter > .show-button-action:empty {display:none!important;}
+.report-page-header .row_filter .page-title, #dailyreport_new .report-page-header .daily-report-title {
+    white-space:nowrap; word-break:normal; width:auto; margin:0; padding:0;
+}
+.report-page-header .row_filter .report-period {float:none; margin:0; width:auto; min-width:118px;}
+.report-page-header > .report-quick-days:not(:empty) {margin:10px 0 0;}
+.report-page-header > .report-group-tabs {margin-top:12px;}
+.report-page-header .report-group-tabs .nav {flex-wrap:nowrap; overflow-x:auto; margin:0;}
+.report-page-header .report-group-tabs .nav-link {white-space:nowrap;}
+.report-page-header .row_filter > .purchase-report-fields {order:1; flex-basis:100%; padding:0;}
+
+.lf-actions .list-file-action-label { display:inline-block; white-space:nowrap; }
+
+/* Keep each report's views on one navigable row at narrow widths. */
+.page_loader:has(.report-page-header) .card-body > .nav-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+.page_loader:has(.report-page-header) .card-body > .nav-tabs > li {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+.breadcrumbbar:has(.report-export-host) { container: report-header / inline-size; }
+.report-page-header .report-export-host > :is(:has(> .page-title), :has(> .report-period)) { order: -2; }
+.report-page-header .report-export-host > .report-export-bar { order: -1; }
+.report-export-bar { margin-inline-start: auto; }
+.report-export-bar .report-export-toggle { display: none; }
+.report-export-bar .report-export-options {
+    position: static !important;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+.report-export-bar .btn { white-space: nowrap; }
+@container report-header (max-width: 620px) {
+    .report-export-bar .report-export-toggle { display: inline-flex; align-items: center; }
+    .report-export-bar .report-export-options {
+        position: absolute !important;
+        display: none;
+        top: 100%;
+        right: 0;
+        left: auto;
+        padding: 4px;
+        background: var(--bs-body-bg, white);
+        border: 1px solid #d0d8e3;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px #17243a20;
+    }
+    .report-export-bar .report-export-options.show { display: grid; z-index: 1010; }
+    .report-export-options .btn { text-align: start; }
+}
+.page_loader:has(.report-page-header) img[src$="/nodata.svg"] { height: 100px !important; object-fit: contain; }
+@container report-header (max-width: 420px) {
+    .report-page-header .report-export-host { column-gap: 8px; }
+    .report-page-header .report-export-host .report-period { min-width: 92px; }
+    .report-export-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+}
+.report-page-header:has(.report-export-bar) > .report-group-tabs { margin-bottom: 8px; }
+:is(#customer-report-search,#user-report-search,#supplier-report-search,#return-report-search,#purchase-report-search,#category-report-search) {order:-2; flex:1 1 200px; min-width:0; max-width:360px; margin:0;}
+.lf-quick:has(.lf-result-total) {align-items:center;}
+.lf-result-total {margin-inline-start:auto; white-space:nowrap;}
+.lf-result-total:has(strong:empty) {visibility:hidden;}
+.report-facet-search {max-width:360px; margin:0 0 12px;}
+.lf-report-dialog .lf-dialog-fields > div {min-width:0;}
+.lf-report-dialog label {display:block; margin-bottom:4px;}
+.lf-search-slot > .lf-entity {width:100%;}
+.lf-search-slot:empty::before {white-space:nowrap; text-overflow:ellipsis;}
+.report-options-trigger .lf-search-slot {cursor:pointer;}
+.report-options-trigger[hidden] {display:none!important;}
+.lf-report-dialog .lf-dialog-fields > .tb_filter {max-width:none; padding:0;}
+.lf-report-dialog .lf-entity .autocomplete-suggestions {position:static!important; width:100%!important; max-height:160px!important; overflow-y:auto;}
+.lf-report-dialog .lf-dialog-fields > :only-child,
+.lf-report-dialog .lf-dialog-fields:has(.single-branch-filter) > :first-child {grid-column:1/-1;}
+@container report-header (max-width: 420px) {
+    :is(#customerreport_new,#userreport_new,#supplierreport_new,#returnreceivingreport_new) .report-export-host > :has(> .page-title) {flex-basis:100%;}
+}
+.report-export-bar .report-export-options .btn {padding-inline:9px;}
+.transaction-filter-summary {display:flex; flex-wrap:wrap; align-items:center; gap:6px 16px; margin-block:6px;}
+.transaction-filter-summary > :is(.list-metrics,.sales-history-summary) {width:auto; max-width:100%; margin:0 0 0 auto; padding:0; justify-content:flex-end;}
+.transaction-filter-summary #sales_active_filters {margin:0;}
+.transaction-filter-summary > :empty {display:none!important;}
+.items-list-toolbar {display:flex; flex-wrap:wrap; align-items:center; gap:0 16px;}
+.items-list-toolbar #items_filter_panel {flex:1 1 220px; min-width:0;}
+.items-list-toolbar #items_stock_summary {margin:0 0 0 auto; justify-content:flex-end;}
+.items-list-toolbar #items_stock_summary span {white-space:nowrap;}
+.items-list-toolbar > .lf-applied {flex-basis:100%;}
+.items-list-toolbar #items_filter_panel {margin-block:0;}
+#lowstockitems .row_filter {gap:6px 12px; margin-inline:0;}
+#lowstockitems .row_filter > .col-auto {padding-inline:0;}
+#lowstockitems .lf-toolbar-slot {flex:1 1 200px; min-width:0;}
+#lowstockitems #lowstockitems_filter_panel, #lowstockitems .lf-quick {margin:0;}
+#lowstockitems_controls {display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:4px;}
+#lowstockitems_controls .btn {margin:0; min-height:32px; padding-block:0; white-space:nowrap;}
+#lowstock_applied {flex-basis:100%;}
+#lowstock_applied:empty {display:none;}
+@media (max-width:600px) { #lowstockitems_controls .btn {padding-inline:8px; min-width:0;} }
+
+
+#returnreceivingreport_new:has(#return-receiving-product-tab-line.active) :is(#return-report-search,#return-report-filters,.return-detail-chip) {display:none;}

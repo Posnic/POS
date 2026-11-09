@@ -9,7 +9,7 @@
                 </div>               
                 <div class="col-md-9 col-lg-9 show-button-action"></div>                  
                 <div class="col-lg-3 col-xl-2 hide-button-action tb_filter" style="display:none;">
-                    <div class="form-control pull-right daterange-timepicker-all daterange-style date-align view_tax_sales_report_daterange">
+                    <div class="form-control pull-right daterange-timepicker-all report-period daterange-style date-align view_tax_sales_report_daterange">
                         <i class="feather icon-calendarfeather icon-calendar"></i>&nbsp;
                         <span></span>
                     </div>
@@ -59,27 +59,9 @@
                             <div class="tab-pane fade show active" id="tax-line" role="tabpanel" aria-labelledby="tax-tab-line">
                                 <!-- start table -->
                                 <div class="row reporttax_header">
-                                    <div class="col-lg-1 col-xl-1 form-group mb-0 amount-spent-select selecct-align">
-
-                                    </div>
+                                    
                                     <div class="col-lg-11 col-xl-11">                                                                                       
-                                        <div class="email-rightbar">
-                                            <div class="card-header header_icon">
-                                                <ul class="list-inline mb-0 pl-0 float-right">
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" data-id="taxreport" onclick="PosnicPro.refreshReportDatatable(this);" class="add_new_tooltip" data-toggle="tooltip" title="Refresh" data-t-title="lang_wf_refresh">
-                                                            <i class="feather icon-refresh-cw font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                    <li class="list-inline-item email_320">
-                                                        <a href="javascript:void(0);" data-module="report" data-access="read" id="taxreport_exportbtn"
-                                                           data-id="taxreportexport" onclick="PosnicPro.taxreport.taxSalesReportExport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-share font-20"></i>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
+                                        
                                     </div>
                                 </div>
                                 <div class="card-body card-box no-padding loader-tax-sales-report">

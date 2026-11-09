@@ -85,6 +85,9 @@ module.exports = async function purchaseHistory(db, context, params) {
   };
   const limit = Math.min(100, Math.max(1, parseInt(params.limit) || 10)),
     page = Math.max(1, parseInt(params.page) || 1);
+  const receivedPurchase = {
+    $and: [{ $eq: ['$kind', 'purchase'] }, { $in: ['$status', ['received', 'closed']] }],
+  };
   const [result] = await db
     .collection('purchase_orders')
     .aggregate([
@@ -104,10 +107,15 @@ module.exports = async function purchaseHistory(db, context, params) {
       {
         $facet: {
           list: [{ $sort: sort }, { $skip: (page - 1) * limit }, { $limit: limit }],
-          count: [{ $count: 'n' }],
+          count: [{ $group: {
+            _id: null,
+            n: { $sum: 1 },
+            purchases: { $sum: { $cond: [receivedPurchase, 1, 0] } },
+            amount: { $sum: { $cond: [receivedPurchase, '$total', 0] } },
+          } }],
         },
       },
     ])
     .toArray();
-  return { list: result.list, total: result.count[0]?.n || 0, current_page: page, per_page: limit };
+  return { list: result.list, purchases:result.count[0]?.purchases || 0, purchaseAmount:result.count[0]?.amount || 0, total: result.count[0]?.n || 0, current_page: page, per_page: limit };
 };

@@ -1271,7 +1271,7 @@ receivingSchema.statics.receivingReportPage = async function (value, options = {
     }
     const literal = text => new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');
     if (value.search) andConditions.push({$or:['receiving_id','receiving_number','supplier_name'].map(key=>({[key]:literal(value.search)}))});
-    if (value.supplierId) andConditions.push({supplier_id:value.supplierId});
+    if (value.supplierId) andConditions.push({supplier_id:{ $in: [value.supplierId, String(value.supplierId)] }});
     else if (value.supplier) andConditions.push({supplier_name:literal(value.supplier)});
     const filters = { $and: andConditions };
 
@@ -1279,7 +1279,36 @@ receivingSchema.statics.receivingReportPage = async function (value, options = {
     const page = parseInt(options.page) || 1;
     const skip = (page - 1) * limit;
     const collection = await baseModel.getCollection('receivings');
-    const total = await collection.countDocuments(filters);
+    const numeric = input => ({ $convert: { input, to: 'double', onNull: null, onError: null } });
+    const [summary = { count: 0, purchased: 0, paid: 0, outstanding: 0, unknown: 0 }] =
+      await collection.aggregate([
+        { $match: filters },
+        { $project: {
+          amount: numeric({ $ifNull: ['$items_total', { $ifNull: ['$total_amount', '$total'] }] }),
+          paid: numeric('$paid_amount'),
+          due: numeric({ $ifNull: ['$balance', '$due_amount'] }),
+          status: { $toLower: '$payment_status' },
+        } },
+        { $set: { paid: { $switch: {
+          branches: [
+            { case: { $ne: ['$paid', null] }, then: '$paid' },
+            { case: { $ne: ['$due', null] }, then: { $max: [0, { $subtract: ['$amount', '$due'] }] } },
+            { case: { $eq: ['$status', 'paid'] }, then: '$amount' },
+            { case: { $eq: ['$status', 'pending'] }, then: 0 },
+          ],
+          default: null,
+        } } } },
+        { $group: {
+          _id: null,
+          count: { $sum: 1 },
+          purchased: { $sum: '$amount' },
+          paid: { $sum: '$paid' },
+          outstanding: { $sum: { $ifNull: ['$due', { $max: [0, { $subtract: ['$amount', '$paid'] }] }] } },
+          unknown: { $sum: { $cond: [{ $eq: ['$paid', null] }, 1, 0] } },
+        } },
+        { $unset: '_id' },
+      ]).toArray();
+    const total = summary.count;
     const results = await collection
       .find(filters)
       .sort(options.sort === 'amount' ? {items_total:-1,_id:-1} : {date:options.sort === 'old' ? 1 : -1,_id:-1})
@@ -1292,6 +1321,7 @@ receivingSchema.statics.receivingReportPage = async function (value, options = {
       message: 'success',
       data: {
         total,
+        summary,
         current_page: page,
         total_pages: Math.ceil(total / limit),
         per_page: limit,

@@ -318,6 +318,7 @@ class ItemsController extends BaseController {
         licenseId,
         filters,
         options,
+        includeSummary: req.query.include_summary === 'true',
         labelPricing: req.query.label_pricing === 'true',
       });
 

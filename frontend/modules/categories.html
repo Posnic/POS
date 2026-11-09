@@ -10,20 +10,18 @@
                 <div class="col-auto">
                     <h4 class="page-title break_title mb-0"><lang class="lang_itemcategory_title">Categories</lang></h4>
                 </div>
-                <div class="col">
-                    <div class="lf-panel" id="categories_filter_panel" style="display:none;"></div>
-                </div>
-                <div class="col-auto text-right">
+
+                <div class="col-auto text-right ml-auto lf-actions">
                     <div class="widgetbar" id="categories_controls">
                         <a data-module="category" data-access="write" href="#/categories" class="btn btn-primary-rgba"
                             onclick="PosnicPro.importTableFile('categories'); return false;"
                             data-toggle="tooltip" title="Import from CSV/Excel" data-t-title="lang_import_from_csv_excel" aria-label="Import categories" data-t-aria-label="lang_import_categories">
-                            <i class="feather icon-download"></i>
+                            <i class="feather icon-download mr-1"></i><span class="list-file-action-label" data-t="lang_import">Import</span>
                         </a>
                         <div class="btn-group">
                         <button type="button" class="btn btn-primary-rgba dropdown-toggle" data-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false" title="Export CSV" data-t-title="lang_export_csv" aria-label="Export CSV" data-t-aria-label="lang_export_csv">
-                            <i class="feather icon-share"></i>
+                            <i class="feather icon-share mr-1"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="javascript:void(0)" onclick="PosnicPro.categories.exportCsv(); return false;"><lang class="lang_this_page_what_is_shown">This page (what is shown)</lang></a>
@@ -40,6 +38,9 @@
                             <i class="feather icon-plus mr-2"></i><lang class="lang_addvariant_title">New</lang>
                         </a>
                     </div>
+                </div>
+                <div class="col-12 lf-toolbar-slot">
+                    <div class="lf-panel" id="categories_filter_panel" style="display:none;"></div>
                 </div>
             </div>
         </div>

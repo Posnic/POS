@@ -92,7 +92,7 @@ PosnicPro.pendingreport = {
                         $('#view_pendingreport_total').text(response.data.total);
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                             $('.report-partialy-paid-sales-details-no-records').text('No Records on ' + dateRange);
                             $('.reportpending_header').hide();
                             $('#reportpending_img_hide, .report-partialy-paid-sales-details-no-records').show();
@@ -158,7 +158,7 @@ PosnicPro.pendingproductdetails = {
 
     pendingproductdetailsTable: function () {
 
-        PosnicPro.appendReportTableBody('returndetails');
+        PosnicPro.appendReportTableBody('returndetails', '#view_pendingproductdetails');
         var table = $('#view_pendingproductdetails');
         var current_page = table.data('current_page');
         var per_page = table.data('per_page');
@@ -230,7 +230,7 @@ PosnicPro.pendingreceivingreport = {
         if (branchId !== '') {
             var loader = $(".loader-pending-report");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
-            PosnicPro.appendReportTableBody('pendingreport');
+            PosnicPro.appendReportTableBody('pendingreport', '#view_pendingreceivingreport');
             var daterange = $(".view_pending_report_daterange").val();
             var fields = daterange.split('-');
             var table = $('#view_pendingreceivingreport');
@@ -324,7 +324,7 @@ PosnicPro.pendingreceivingproductdetails = {
 
     pendingreceivingproductdetailsTable: function () {
 
-        PosnicPro.appendReportTableBody('returndetails');
+        PosnicPro.appendReportTableBody('returndetails', '#view_pendingreceivingproductdetails');
         var table = $('#view_pendingreceivingproductdetails');
         var current_page = table.data('current_page');
         var per_page = table.data('per_page');
@@ -431,7 +431,7 @@ PosnicPro.pendingcustomerreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportpendingcust_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                 PosnicPro.renderNoRecords('.reportpendcustomer_norecord', 'No Records on ' + dateRange);
                             $('#reportpendcustomer_img_hide,.reportpendcustomer_norecord').show();
 
@@ -641,7 +641,7 @@ PosnicPro.pendingcustomercategoryreport = {
                         var rowTotal = response.data.total;
                         if (rowTotal === 0) {
                             $('.reportpendingcust_header').hide();
-                            let dateRange = $('#view_sales_daterange span span[data-toggle="tooltip"]').attr('data-original-title');
+                            let dateRange = daterange;
                 PosnicPro.renderNoRecords('.reportpendcustomercategory_norecord', 'No Records on ' + dateRange);
                             $('#reportpendcustomercategory_img_hide,.reportpendcustomercategory_norecord').show();
 

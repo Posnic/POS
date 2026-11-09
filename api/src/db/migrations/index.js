@@ -27,4 +27,9 @@ module.exports = [
     description: 'Index shop record identifiers and name prefixes for header search',
     up: require('./universal-search'),
   },
+  {
+    id: '004-employee-search-indexes',
+    description: 'Index employee names and sign-in details for main search',
+    up: (db) => require('./universal-search')(db, require('../../services/search-providers').providers.filter((p) => p.route === 'users')),
+  },
 ];

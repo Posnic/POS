@@ -70,11 +70,13 @@ async function records(req, q, group, refs, page) {
     ];
     if (p.contact)
       filters.push(withBranchScope({}, await sharing.scopeBranch(collection, branchId, context)));
+    else if (p.route === 'users') filters.push({ 'branch_access.branch_id': branchId });
     else if (p.route === 'items')
       filters.push({ 'branch_access.branch_id': branchId, item_status: { $ne: 'instant' } });
     else filters.push({ branch_id: branchId });
     if (page) filters.push({ _id: { $gt: new ObjectId(page.after) } });
     const project = { [p.title]: 1 };
+    if (p.route === 'users') Object.assign(project, { firstname: 1, lastname: 1, email: 1 });
     if (p.contact) {
       project.phone = 1;
       project.company_name = 1;
@@ -126,7 +128,8 @@ async function records(req, q, group, refs, page) {
             );
     const matches = take(raw, 'exact');
     function result(row, rank) {
-      const label = String(row[p.title] || row.company_name || row._id);
+      const employeeName = p.route === 'users' && [row.firstname, row.lastname].filter(Boolean).join(' ');
+      const label = String(employeeName || row[p.title] || row.company_name || row.email || row._id);
       const suffix =
         p.contact && row.phone ? ' · •••• ' + String(row.phone).replace(/\D/g, '').slice(-4) : '';
       results.push({
@@ -140,14 +143,19 @@ async function records(req, q, group, refs, page) {
     matches.forEach((row) => result(row, 5));
     if (!refs && (!page || page.mode === 'name') && p.names && q.length >= 3) {
       const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const names = await fetch(
-        {
-          $or: p.names.flatMap((name) =>
-            ordinary.map((term) => ({ [name]: new RegExp('^' + escape(term)) })),
-          ),
-        },
-        size + 1,
+      const nameFilters = p.names.flatMap((name) =>
+        ordinary.map((term) => ({ [name]: new RegExp('^' + escape(term)) })),
       );
+      if (p.route === 'users') {
+        const words = q.split(/\s+/);
+        for (let split = 1; split < words.length; split++) {
+          nameFilters.push({
+            firstname: new RegExp('^' + escape(words.slice(0, split).join(' ')) + '$', 'i'),
+            lastname: new RegExp('^' + escape(words.slice(split).join(' ')), 'i'),
+          });
+        }
+      }
+      const names = await fetch({ $or: nameFilters }, size + 1);
       take(names, 'name')
         .filter((row) => !matches.some((m) => String(m._id) === String(row._id)))
         .forEach((row) => result(row, 1));
