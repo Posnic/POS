@@ -1017,8 +1017,7 @@ PosnicPro.sales.view = {
 
                 var contents = $(".print-modal-body").html();
                 var contentone = $(".print-modal-a4-body").html();
-                var canvas = document.getElementById("canvasTarget");
-                var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
+                var img = data.receipt_barcode === true ? PosnicPro.printBarcode(data.sales_id) : '';
 
                 PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
                 // one print only - the next follows the shop setting again
@@ -1473,7 +1472,6 @@ PosnicPro.sales.view = {
                     $('.heading-tax-name').hide();
                     $('.tax_print_hide').hide();
                 }
-                if (!root) { PosnicPro.printBarcode(); }
                 var length = data.items.length;
                 var length_return = data.items_return.length;
                 var itemTotalQty = 0;
@@ -2086,7 +2084,6 @@ PosnicPro.sales.view = {
                     $('.print-email').html(data.customer_email);
                     $('.print-address').html(data.customer_address);
                 }
-                PosnicPro.printBarcode();
                 $('.print-invoice-a4-table-content tbody').children("tr").remove();
                 $('#tax_print_hide tbody').children("tr").remove();
                 $('.print-invoice-table-content').html('');
@@ -2380,8 +2377,7 @@ PosnicPro.sales.view = {
                 $('span.number').number(true, 2);
                 var contents = $(".print-modal-body").html();
                 var contentone = $(".print-modal-a4-body").html();
-                var canvas = document.getElementById("canvasTarget");
-                var img = data.receipt_barcode === true ? canvas.toDataURL("image/png") : '';
+                var img = data.receipt_barcode === true ? PosnicPro.printBarcode(data.sales_id) : '';
                 PosnicPro.printView(PosnicPro.sales.view._isA4() ? contentone : contents, img);
                 $('.invoice-table-content div').empty();
 

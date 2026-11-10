@@ -3894,30 +3894,34 @@ PosnicPro = {
         }
 
     },
-    printBarcode: function () {
-        var value = $("#barcodeValue").val();
-        var btype = "code128";
-        var renderer = "canvas";
-        var settings = {
-            output: renderer,
-            barWidth: $("#barWidth").val(),
-            barHeight: $("#barHeight").val()
-        };
-        if (renderer === 'canvas') {
-            clearCanvas();
-            $("#barcodeTarget").hide();
-            $("#canvasTarget").show().barcode(value, btype, settings);
-        } else {
-            $("#canvasTarget").hide();
-            $("#barcodeTarget").html("").show().barcode(value, btype, settings);
-        }
-
-        function clearCanvas() {
-            var canvas = $('#canvasTarget').get(0);
-            var ctx = canvas.getContext('2d');
+    printBarcode: function (value) {
+        // Legacy pages still read the visible canvas. Receipt printing passes
+        // the current sale ID and uses the returned image, so it also works
+        // before a template (and its canvas/input) has been mounted.
+        if (!arguments.length) { value = $("#barcodeValue").val(); }
+        var canvas = document.getElementById('canvasTarget') || document.createElement('canvas');
+        try {
+            var ctx = typeof canvas.getContext === 'function' && canvas.getContext('2d');
+            if (!ctx) { return ''; }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // This plugin supports printable ASCII (Code 128 B/C) only. It returns
+            // an unchanged jQuery object for unsupported input, not an error.
+            if (value == null || !/^[\x20-\x7e]+$/.test(String(value)) || typeof $.fn.barcode !== 'function') { return ''; }
+            var rendered = $(canvas).show().barcode(String(value), 'code128', {
+                output: 'canvas',
+                barWidth: $("#barWidth").val(),
+                barHeight: $("#barHeight").val()
+            });
+            $("#barcodeTarget").hide();
+            return rendered === false ? '' : canvas.toDataURL('image/png');
+        } catch (error) {
+            // An optional barcode must not prevent the receipt from printing.
+            // Do not reuse an image from a previous sale after a failed render.
+            console.warn('[print] Could not render receipt barcode');
+            return '';
         }
     },
+
     /*
      * The shop's timezone, never null.
      *
