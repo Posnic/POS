@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Otpremite Ekcel/CSV",
   "lang_weigh_for_a_requested_amount": "Izmerite traženi iznos",
   "lang_you_have_read_only_access_to_product_avail": "Imate pristup samo za čitanje dostupnosti proizvoda.",
-  "lang_feedback_customization": "Прилагођавање"
+  "lang_feedback_customization": "Прилагођавање",
+  "lang_help_with_page": "Помоћ за {page}",
+  "lang_help_all_guides": "Сви водичи",
+  "lang_help_guide_update": "Овај водич се ажурира за тренутну верзију.",
+  "lang_help_tax_settings": "Пореска подешавања"
 }

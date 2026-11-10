@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Încărcați Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Cântărește pentru o sumă solicitată",
   "lang_you_have_read_only_access_to_product_avail": "Aveți acces numai la citire la disponibilitatea produsului.",
-  "lang_feedback_customization": "Personalizare"
+  "lang_feedback_customization": "Personalizare",
+  "lang_help_with_page": "Ajutor pentru {page}",
+  "lang_help_all_guides": "Toate ghidurile",
+  "lang_help_guide_update": "Acest ghid este actualizat pentru versiunea curentă.",
+  "lang_help_tax_settings": "Setări fiscale"
 }

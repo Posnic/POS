@@ -48,6 +48,24 @@
 
   var ACTIONS = [
     {
+      name: 'Help',
+      nameKey: 'lang_help',
+      keywords: 'page guide manual documentation instructions tutorial F1',
+      visible: function () {
+        return !!(PosnicPro.pageHelp && document.getElementById('posnic_help_toggle'));
+      },
+      run: function () { PosnicPro.pageHelp.open(); },
+    },
+    {
+      name: 'All guides',
+      nameKey: 'lang_help_all_guides',
+      keywords: 'manual user guide documentation training tutorials instructions',
+      visible: function () {
+        return !!PosnicPro.pageHelp;
+      },
+      run: function () { window.open('https://www.posnic.com/guides/posnic-pos-complete-user-guide/', '_blank', 'noopener,noreferrer'); },
+    },
+    {
       name: 'Help & feedback',
       nameKey: 'lang_help_feedback',
       keywords: 'help feedback complaint suggestion customization customisation custom work request support contact email problem',

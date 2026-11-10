@@ -5403,5 +5403,9 @@
   "lang_upload_excel_csv": "Excel/CSV अपलोड करें",
   "lang_weigh_for_a_requested_amount": "अनुरोधित राशि के लिए तौलना",
   "lang_you_have_read_only_access_to_product_avail": "आपके पास प्रॉडक्ट की उपलब्धता के लिए रीड-ओनली एक्सेस है।",
-  "lang_feedback_customization": "अनुकूलन"
+  "lang_feedback_customization": "अनुकूलन",
+  "lang_help_with_page": "{page} के लिए सहायता",
+  "lang_help_all_guides": "सभी मार्गदर्शिकाएँ",
+  "lang_help_guide_update": "इस मार्गदर्शिका को वर्तमान संस्करण के लिए अपडेट किया जा रहा है।",
+  "lang_help_tax_settings": "कर सेटिंग्स"
 }

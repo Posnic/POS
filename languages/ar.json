@@ -5403,5 +5403,9 @@
   "lang_upload_excel_csv": "تحميل برنامج إكسل/ CSV",
   "lang_weigh_for_a_requested_amount": "قم بالوزن بالكمية المطلوبة",
   "lang_you_have_read_only_access_to_product_avail": "لديك حق الوصول للقراءة فقط إلى توفر المنتج.",
-  "lang_feedback_customization": "التخصيص"
+  "lang_feedback_customization": "التخصيص",
+  "lang_help_with_page": "مساعدة بشأن {page}",
+  "lang_help_all_guides": "جميع الأدلة",
+  "lang_help_guide_update": "يجري تحديث هذا الدليل للإصدار الحالي.",
+  "lang_help_tax_settings": "إعدادات الضرائب"
 }

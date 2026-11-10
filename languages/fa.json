@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "بارگذاری اکسل/CSV",
   "lang_weigh_for_a_requested_amount": "برای مقدار درخواستی وزن کنید",
   "lang_you_have_read_only_access_to_product_avail": "شما فقط برای خواندن به در دسترس بودن محصول دسترسی دارید.",
-  "lang_feedback_customization": "سفارشی‌سازی"
+  "lang_feedback_customization": "سفارشی‌سازی",
+  "lang_help_with_page": "راهنمای {page}",
+  "lang_help_all_guides": "همه راهنماها",
+  "lang_help_guide_update": "این راهنما برای نسخه فعلی در حال به‌روزرسانی است.",
+  "lang_help_tax_settings": "تنظیمات مالیات"
 }

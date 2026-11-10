@@ -5325,5 +5325,9 @@
   "lang_upload_excel_csv": "এক্সেল/CSV আপলোড করুন",
   "lang_weigh_for_a_requested_amount": "অনুরোধ করা পরিমাণের জন্য ওজন করুন",
   "lang_you_have_read_only_access_to_product_avail": "পণ্যের প্রাপ্যতায় আপনার কাছে শুধুমাত্র পড়া অ্যাক্সেস রয়েছে।",
-  "lang_feedback_customization": "কাস্টমাইজেশন"
+  "lang_feedback_customization": "কাস্টমাইজেশন",
+  "lang_help_with_page": "{page} সম্পর্কে সহায়তা",
+  "lang_help_all_guides": "সব নির্দেশিকা",
+  "lang_help_guide_update": "বর্তমান সংস্করণের জন্য এই নির্দেশিকাটি হালনাগাদ করা হচ্ছে।",
+  "lang_help_tax_settings": "কর সেটিংস"
 }

@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Prześlij Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Zważyć żądaną kwotę",
   "lang_you_have_read_only_access_to_product_avail": "Masz dostęp tylko do odczytu do dostępności produktu.",
-  "lang_feedback_customization": "Dostosowanie"
+  "lang_feedback_customization": "Dostosowanie",
+  "lang_help_with_page": "Pomoc dotycząca {page}",
+  "lang_help_all_guides": "Wszystkie poradniki",
+  "lang_help_guide_update": "Ten poradnik jest aktualizowany do bieżącej wersji.",
+  "lang_help_tax_settings": "Ustawienia podatków"
 }

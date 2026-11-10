@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Upload Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vejer for et anmodet beløb",
   "lang_you_have_read_only_access_to_product_avail": "Du har skrivebeskyttet adgang til produkttilgængelighed.",
-  "lang_feedback_customization": "Tilpasning"
+  "lang_feedback_customization": "Tilpasning",
+  "lang_help_with_page": "Hjælp til {page}",
+  "lang_help_all_guides": "Alle vejledninger",
+  "lang_help_guide_update": "Denne vejledning opdateres til den aktuelle version.",
+  "lang_help_tax_settings": "Skatteindstillinger"
 }

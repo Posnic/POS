@@ -5325,5 +5325,9 @@
   "lang_upload_excel_csv": "エクセル/CSV をアップロード",
   "lang_weigh_for_a_requested_amount": "要求された量の重量を量る",
   "lang_you_have_read_only_access_to_product_avail": "商品の在庫状況へのアクセスは読み取り専用です。",
-  "lang_feedback_customization": "カスタマイズ"
+  "lang_feedback_customization": "カスタマイズ",
+  "lang_help_with_page": "{page}のヘルプ",
+  "lang_help_all_guides": "すべてのガイド",
+  "lang_help_guide_update": "このガイドは現在のバージョンに合わせて更新中です。",
+  "lang_help_tax_settings": "税設定"
 }

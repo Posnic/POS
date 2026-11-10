@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Ngarko Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Peshojeni për një sasi të kërkuar",
   "lang_you_have_read_only_access_to_product_avail": "Ju keni qasje vetëm për lexim në disponueshmërinë e produktit.",
-  "lang_feedback_customization": "Përshtatje"
+  "lang_feedback_customization": "Përshtatje",
+  "lang_help_with_page": "Ndihmë për {page}",
+  "lang_help_all_guides": "Të gjithë udhëzuesit",
+  "lang_help_guide_update": "Ky udhëzues po përditësohet për versionin aktual.",
+  "lang_help_tax_settings": "Cilësimet e taksave"
 }

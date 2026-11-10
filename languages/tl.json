@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Mag-upload ng Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Timbangin para sa isang hiniling na halaga",
   "lang_you_have_read_only_access_to_product_avail": "Mayroon kang read-only access sa pagkakaroon ng produkto.",
-  "lang_feedback_customization": "Pagpapasadya"
+  "lang_feedback_customization": "Pagpapasadya",
+  "lang_help_with_page": "Tulong sa {page}",
+  "lang_help_all_guides": "Lahat ng gabay",
+  "lang_help_guide_update": "Ina-update ang gabay na ito para sa kasalukuyang bersyon.",
+  "lang_help_tax_settings": "Mga setting ng buwis"
 }

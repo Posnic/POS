@@ -5451,5 +5451,9 @@
   "lang_search_posnic": "POSNIC doorzoeken",
   "lang_website": "Website",
   "lang_feedback_demo_disabled": "Dit is een openbare demo. Het verzenden van berichten is uitgeschakeld.",
-  "lang_feedback_customization": "Maatwerk"
+  "lang_feedback_customization": "Maatwerk",
+  "lang_help_with_page": "Hulp bij {page}",
+  "lang_help_all_guides": "Alle handleidingen",
+  "lang_help_guide_update": "Deze handleiding wordt bijgewerkt voor de huidige versie.",
+  "lang_help_tax_settings": "Belastinginstellingen"
 }

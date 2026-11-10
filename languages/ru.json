@@ -5325,5 +5325,9 @@
   "lang_upload_excel_csv": "Загрузите файл Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Взвесьте запрошенную сумму",
   "lang_you_have_read_only_access_to_product_avail": "Информация о наличии продукта доступна только для чтения.",
-  "lang_feedback_customization": "Индивидуальная настройка"
+  "lang_feedback_customization": "Индивидуальная настройка",
+  "lang_help_with_page": "Помощь по {page}",
+  "lang_help_all_guides": "Все руководства",
+  "lang_help_guide_update": "Это руководство обновляется для текущей версии.",
+  "lang_help_tax_settings": "Настройки налогов"
 }

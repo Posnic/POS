@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Ittella 'Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Iżen għal ammont mitlub",
   "lang_you_have_read_only_access_to_product_avail": "Għandek aċċess għall-qari biss għad-disponibbiltà tal-prodott.",
-  "lang_feedback_customization": "Personalizzazzjoni"
+  "lang_feedback_customization": "Personalizzazzjoni",
+  "lang_help_with_page": "Għajnuna dwar {page}",
+  "lang_help_all_guides": "Il-gwidi kollha",
+  "lang_help_guide_update": "Din il-gwida qed tiġi aġġornata għall-verżjoni attwali.",
+  "lang_help_tax_settings": "Settings tat-taxxa"
 }

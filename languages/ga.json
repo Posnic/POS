@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Uaslódáil Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Meá le haghaidh méid iarrtha",
   "lang_you_have_read_only_access_to_product_avail": "Tá rochtain léite amháin agat ar infhaighteacht táirgí.",
-  "lang_feedback_customization": "Saincheapadh"
+  "lang_feedback_customization": "Saincheapadh",
+  "lang_help_with_page": "Cabhair le {page}",
+  "lang_help_all_guides": "Gach treoir",
+  "lang_help_guide_update": "Tá an treoir seo á nuashonrú don leagan reatha.",
+  "lang_help_tax_settings": "Socruithe cánach"
 }

@@ -5325,5 +5325,9 @@
   "lang_upload_excel_csv": "Muat naik Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Timbang untuk jumlah yang diminta",
   "lang_you_have_read_only_access_to_product_avail": "Anda mempunyai akses baca sahaja kepada ketersediaan produk.",
-  "lang_feedback_customization": "Penyesuaian"
+  "lang_feedback_customization": "Penyesuaian",
+  "lang_help_with_page": "Bantuan untuk {page}",
+  "lang_help_all_guides": "Semua panduan",
+  "lang_help_guide_update": "Panduan ini sedang dikemas kini untuk versi semasa.",
+  "lang_help_tax_settings": "Tetapan cukai"
 }

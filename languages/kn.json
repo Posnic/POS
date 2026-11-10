@@ -5403,5 +5403,9 @@
   "lang_upload_excel_csv": "ಎಕ್ಸೆಲ್/CSV ಅನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಿ",
   "lang_weigh_for_a_requested_amount": "ವಿನಂತಿಸಿದ ಮೊತ್ತಕ್ಕೆ ತೂಕ ಮಾಡಿ",
   "lang_you_have_read_only_access_to_product_avail": "ಉತ್ಪನ್ನ ಲಭ್ಯತೆಗೆ ನೀವು ಓದಲು ಮಾತ್ರ ಪ್ರವೇಶವನ್ನು ಹೊಂದಿದ್ದೀರಿ.",
-  "lang_feedback_customization": "ಅಗತ್ಯಕ್ಕೆ ತಕ್ಕ ಬದಲಾವಣೆ"
+  "lang_feedback_customization": "ಅಗತ್ಯಕ್ಕೆ ತಕ್ಕ ಬದಲಾವಣೆ",
+  "lang_help_with_page": "{page} ಕುರಿತು ಸಹಾಯ",
+  "lang_help_all_guides": "ಎಲ್ಲಾ ಮಾರ್ಗದರ್ಶಿಗಳು",
+  "lang_help_guide_update": "ಪ್ರಸ್ತುತ ಆವೃತ್ತಿಗಾಗಿ ಈ ಮಾರ್ಗದರ್ಶಿಯನ್ನು ನವೀಕರಿಸಲಾಗುತ್ತಿದೆ.",
+  "lang_help_tax_settings": "ತೆರಿಗೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳು"
 }

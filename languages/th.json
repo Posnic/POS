@@ -5403,5 +5403,9 @@
   "lang_upload_excel_csv": "อัพโหลด Excel/CSV",
   "lang_weigh_for_a_requested_amount": "ชั่งน้ำหนักตามจำนวนที่ต้องการ",
   "lang_you_have_read_only_access_to_product_avail": "คุณสามารถเข้าถึงความพร้อมใช้งานของผลิตภัณฑ์แบบอ่านอย่างเดียว",
-  "lang_feedback_customization": "การปรับแต่ง"
+  "lang_feedback_customization": "การปรับแต่ง",
+  "lang_help_with_page": "ความช่วยเหลือเกี่ยวกับ {page}",
+  "lang_help_all_guides": "คู่มือทั้งหมด",
+  "lang_help_guide_update": "กำลังอัปเดตคู่มือนี้สำหรับเวอร์ชันปัจจุบัน",
+  "lang_help_tax_settings": "การตั้งค่าภาษี"
 }

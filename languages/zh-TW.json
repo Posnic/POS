@@ -5325,5 +5325,9 @@
   "lang_upload_excel_csv": "上傳 Excel/CSV",
   "lang_weigh_for_a_requested_amount": "以要求的量進行稱重",
   "lang_you_have_read_only_access_to_product_avail": "您可以對產品可用性的唯讀存取權限。",
-  "lang_feedback_customization": "客製化"
+  "lang_feedback_customization": "客製化",
+  "lang_help_with_page": "{page}說明",
+  "lang_help_all_guides": "所有指南",
+  "lang_help_guide_update": "本指南正在針對目前版本進行更新。",
+  "lang_help_tax_settings": "稅務設定"
 }

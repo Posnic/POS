@@ -5322,5 +5322,9 @@
   "lang_upload_excel_csv": "Nahrať Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vážte požadovanú sumu",
   "lang_you_have_read_only_access_to_product_avail": "K dostupnosti produktu máte prístup iba na čítanie.",
-  "lang_feedback_customization": "Prispôsobenie"
+  "lang_feedback_customization": "Prispôsobenie",
+  "lang_help_with_page": "Pomoc pre {page}",
+  "lang_help_all_guides": "Všetky návody",
+  "lang_help_guide_update": "Tento návod sa aktualizuje pre aktuálnu verziu.",
+  "lang_help_tax_settings": "Nastavenia daní"
 }
