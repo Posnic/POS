@@ -13,7 +13,12 @@ const projection = {
   sales_round_off: 1, round_off: 1, return_round_off: 1,
   paid_amount: 1, balance: 1, payment_mode: 1, payment_pending: 1,
   partial_check: 1, partial_balance: 1, tax: 1, return_tax: 1,
-  discount: 1, return_discount: 1, source_invoice_id: 1
+  discount: 1, return_discount: 1, source_invoice_id: 1,
+  'items.item_id': 1, 'items.item_quantity': 1, 'items.total_amount': 1,
+  'items.tax': 1, 'items.tax_type': 1, 'items.tax_amount': 1,
+  'items.pricing.version': 1,
+  'items.pricing.currency.currencyCode': 1,
+  'items.pricing.currency.currencyDigits': 1
 };
 
 function canonical(value) {
