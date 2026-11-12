@@ -44,6 +44,24 @@ Accepted recovery verifies sale, customer money/allocation/balance and original 
 
 This coordinator is still internal. Its checks cannot serialize unfenced legacy writers or incoming sync; those paths, installation identity/opt-in, authenticated routes, normal bilingual recovery UI, immutable Books receipt evidence and installed paired acceptance remain mandatory before activation. The journal primitive's projection acknowledgement is not a public completion API.
 
+## Existing writer protection — invoice boundary
+
+The existing invoice repository now uses atomic no-reservation/no-receipt predicates for financial updates, payment-note append, draft edit/delete and cancellation. Sale mirroring additionally compares the exact document read, checks `matchedCount`, and refuses to overwrite a coordinated receipt. Sharing metadata is held during a reservation but remains available after completed receipt effects. Cancellation also requires the invoice still be a draft at write time. The legacy `invoice-sync.recordPayment` refuses an already reserved/owned sale before inserting money; that early check alone does **not** serialize a reservation arriving later during the legacy multi-document operation.
+
+Real standalone-Mongo tests execute the actual repository/service source with only the connection provider substituted. They insert a reservation between mirror read and write, attempt note/share writes during recovery, check completed receipt protection, preserve ordinary note/share behaviour, issue an invoice between cancellation read and write, and confirm an already reserved legacy payment writes no ledger entries. All pass. The expanded regression covers 86 tests including the existing invoice repository suite. Lint has zero errors; twelve existing console warnings remain in the legacy invoice files.
+
+Remaining audited write surfaces before activation:
+
+| Surface | Current evidence / remaining protection |
+| --- | --- |
+| `invoice.repository.js` | Atomic invoice-document predicates verified; does not protect preceding sale/customer side effects. |
+| `invoice-sync.recordPayment` | Early ownership rejection verified; full legacy multi-write serialization still required. |
+| `sale.repository.js`: `deleteSales`, `returnSalesOrder`, `salesPaymentCloseModel` | Delete/return/wallet settlement identified; must reserve before any stock, money or customer effects, not merely filter the final sale update. |
+| `customer.repository.js`: update, delete/bulk delete, `updateTotalsAfterSale` | Customer mutations identified; checkout/customer-ledger operations need coordinated admission before side effects. |
+| `setting.model.js` restore writes | Generic replacement can overwrite ownership; restore policy must protect incomplete financial operations. |
+| `BaseModel.getCollection/getDb/getDB` | Raw collection handles reach many writers. A check at one controller is not complete fencing. |
+| Gateway and bundled sync agent (`src/sync-agent-manager.js`) | Separate incoming-write authority; sale/customer ownership and local command non-replay must be enforced on both ends. |
+
 ## Required coordinator and normal-entry work
 
 1. Add an explicit opt-in in the Books connector's own Integrations page. Unset/off keeps the existing POS workflow. Bind the active receiver to protected installation identity, not a browser-supplied authority or a copied database setting. Define how a customer finds the receiver from another authorized installation.

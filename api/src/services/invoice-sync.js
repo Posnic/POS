@@ -166,6 +166,12 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   if (!sale)
     return { status: false, data: null, message: 'The sale behind this invoice was not found' };
 
+  // Refuse known receipt ownership before any legacy ledger side effect.
+  // Atomic coordination with every competing writer remains an activation gate.
+  try { require('./books-receipt-sale').mutable(sale); } catch (error) {
+    return { status: false, data: null, message: error.message };
+  }
+
   const before = snapshotFromSale(sale);
   if (!before) return { status: false, data: null, message: 'A parked cart cannot be paid' };
   if (before.balance <= 0) {

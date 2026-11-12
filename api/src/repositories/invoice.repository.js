@@ -37,6 +37,9 @@ const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const docMath = require('../services/document-math');
+// Receipt-owned financial mirrors may only be changed by their coordinator.
+const receiptWritable = () => ({ books_receipt_lock: { $exists: false }, 'books_receipt_effects.0': { $exists: false } });
+const receiptHold = () => ({ status: false, data: null, message: 'Recover this invoice payment through its original Books payment request' });
 
 const STATUSES = Object.freeze(['draft', 'unpaid', 'partial', 'paid', 'cancelled']);
 /* Still authoring: the numbers may change. Once the sale exists they may not -
@@ -244,7 +247,7 @@ class InvoiceRepository extends BaseModel {
         doc.balance = money.total;
         doc.paid_amount = 0;
         const result = await collection.updateOne(
-          { _id: new ObjectId(String(id)), ...wall, status: { $in: EDITABLE } },
+          { _id: new ObjectId(String(id)), ...wall, ...receiptWritable(), status: { $in: EDITABLE } },
           { $set: doc }
         );
         if (!result.matchedCount) {
@@ -595,7 +598,8 @@ class InvoiceRepository extends BaseModel {
       if (!doc.sale_id) set.issued_date = now;
       if (status === 'paid' && !doc.paid_date) set.paid_date = now;
       if (status !== 'paid' && doc.paid_date) set.paid_date = null;
-      await collection.updateOne({ _id: doc._id }, { $set: set });
+      const mirrored = await collection.updateOne({ _id: doc._id, ...wall, ...receiptWritable(), $expr: { $eq: ['$$ROOT', { $literal: doc }] } }, { $set: set });
+      if (!mirrored.matchedCount) return receiptHold();
       return {
         status: true,
         data: { id: String(doc._id), status, paid_amount: paid, balance },
@@ -638,8 +642,8 @@ class InvoiceRepository extends BaseModel {
               ' instead',
           };
         }
-        await collection.updateOne(
-          { _id: doc._id },
+        const cancelled = await collection.updateOne(
+          { _id: doc._id, ...wall, ...receiptWritable(), status: 'draft' },
           {
             $set: {
               status: 'cancelled',
@@ -651,6 +655,7 @@ class InvoiceRepository extends BaseModel {
             },
           }
         );
+        if (!cancelled.matchedCount) return { status: false, data: null, message: 'Invoice changed; reopen it before cancelling' };
         return { status: true, data: { id: String(doc._id) }, message: 'Invoice cancelled' };
       }
 
@@ -679,7 +684,7 @@ class InvoiceRepository extends BaseModel {
       }
       const collection = await this.getCollection(this.collectionName);
       const result = await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall },
+        { _id: new ObjectId(String(id)), ...wall, ...receiptWritable() },
         {
           $push: {
             payments: {
@@ -694,7 +699,7 @@ class InvoiceRepository extends BaseModel {
           $set: { updated_date: new Date() },
         }
       );
-      if (!result.matchedCount) return { status: false, data: null, message: 'Invoice not found' };
+      if (!result.matchedCount) return receiptHold();
       return { status: true, data: { id: String(id) }, message: 'Payment noted' };
     } catch (error) {
       console.error('Error in InvoiceRepository.recordPayment:', error);
@@ -715,7 +720,7 @@ class InvoiceRepository extends BaseModel {
       }
       const collection = await this.getCollection(this.collectionName);
       const result = await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall },
+        { _id: new ObjectId(String(id)), ...wall, books_receipt_lock: { $exists: false } },
         {
           $set: {
             share: {
@@ -730,7 +735,7 @@ class InvoiceRepository extends BaseModel {
       );
       if (!result.matchedCount) return { status: false, data: null, message: 'Invoice not found' };
       await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall, sent_date: { $exists: false } },
+        { _id: new ObjectId(String(id)), ...wall, books_receipt_lock: { $exists: false }, sent_date: { $exists: false } },
         { $set: { sent_date: new Date() } }
       );
       return { status: true, data: { rev: Number(share.rev) || 1 }, message: 'Share recorded' };
@@ -752,6 +757,7 @@ class InvoiceRepository extends BaseModel {
       const result = await collection.deleteOne({
         _id: new ObjectId(String(id)),
         ...wall,
+        ...receiptWritable(),
         status: { $in: EDITABLE },
       });
       if (!result.deletedCount) {
