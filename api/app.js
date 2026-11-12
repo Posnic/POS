@@ -1232,6 +1232,7 @@ const requireBranchWrite = (req, res, next) => {
   if (u && u.access && u.access.branch && u.access.branch.write === true) return next();
   return res.status(403).json({ type: 'error', message: 'Unauthorized' });
 };
+require('./src/routes/books-connector.routes').register({ app, protect: sseProtect });
 app.get(['/webhooks', '/api/webhooks'], sseProtect, requireBranchWrite, async (req, res) => {
   try {
     const rows = await webhookInfra.listSubscriptions(req.db);
