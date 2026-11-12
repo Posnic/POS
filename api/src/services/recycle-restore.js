@@ -1,6 +1,6 @@
 'use strict';
 const {isDeepStrictEqual:equal}=require('node:util');
-const prefixes=['books_receipt_','legacy_invoice_payment_','legacy_wallet_settlement_'];
+const prefixes=['books_receipt_','legacy_invoice_payment_','legacy_wallet_settlement_','customer_ledger_'];
 const protectedDocument=doc=>doc&&Object.keys(doc).some(key=>prefixes.some(prefix=>key.startsWith(prefix)));
 const fail=message=>{throw new Error(message);};
 async function restoreRecord({getCollection,backupCollection,backupName,doc,license}){

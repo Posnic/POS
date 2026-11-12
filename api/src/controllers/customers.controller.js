@@ -1090,16 +1090,14 @@ class CustomerController extends BaseController {
 
       // Set BaseModel context
       const BaseModel = require('../models/base.model');
-      if (req.user && req.user.license) {
-        BaseModel.license = req.user.license;
-      }
+      const license = req.tenantContext?.licenseId || req.license || req.user?.license || BaseModel.license;
 
       // Get customer details
       const customerCollection = await new BaseModel('customers').getCollection('customers');
 
       const customer = await customerCollection.findOne({
         _id: new ObjectId(id),
-        license: BaseModel.license,
+        license,
       });
 
       if (!customer) {
@@ -1118,7 +1116,7 @@ class CustomerController extends BaseController {
 
       // Fetch branch_name from DB if empty
       let branch_name = req.user?.branch_name || '';
-      const userBranchId = req.user?.branch_id;
+      const userBranchId = req.tenantContext?.branchId || req.user?.branch_id;
       if (userBranchId && !branch_name) {
         try {
           const branch = await (
@@ -1141,9 +1139,9 @@ class CustomerController extends BaseController {
         customer_id: new ObjectId(id),
         customer_name: customer.name || '',
         customer_phone: customer.phone || '',
-        branch_id: req.user?.branch_id ? new ObjectId(req.user.branch_id) : null,
+        branch_id: userBranchId ? new ObjectId(userBranchId) : null,
         branch_name: branch_name,
-        amount: parseFloat(amount),
+        amount: Number(amount),
         type: type || 'in',
         pending: 0,
         description: description || 'Add transaction',
@@ -1151,47 +1149,13 @@ class CustomerController extends BaseController {
         date: transactionDate,
         created_date: new Date(),
         updated_date: new Date(),
-        license: BaseModel.license,
+        license,
       };
 
-      // Insert transaction
-      await transactionCollection.insertOne(transactionDoc);
-
-      // Recalculate customer balance from all transactions
-      const aggregateResult = await transactionCollection
-        .aggregate([
-          {
-            $match: {
-              customer_id: new ObjectId(id),
-              license: BaseModel.license,
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              totalIn: {
-                $sum: { $cond: [{ $eq: ['$type', 'in'] }, '$amount', 0] },
-              },
-              totalOut: {
-                $sum: { $cond: [{ $eq: ['$type', 'out'] }, '$amount', 0] },
-              },
-            },
-          },
-          {
-            $addFields: {
-              balance: { $subtract: ['$totalIn', '$totalOut'] },
-            },
-          },
-        ])
-        .toArray();
-
-      const newBalance = aggregateResult.length > 0 ? aggregateResult[0].balance : 0;
-
-      // Update customer balance
-      await customerCollection.updateOne(
-        { _id: new ObjectId(id), license: BaseModel.license },
-        { $set: { balance: newBalance, updated_date: new Date() } }
-      );
+      const newBalance = await require('../services/customer-ledger-command').change({
+        customers: customerCollection, transactions: transactionCollection, customer,
+        record: transactionDoc, actor: req.user?.name || '',
+      });
 
       return res.status(200).json({
         type: 'success',
@@ -1200,7 +1164,7 @@ class CustomerController extends BaseController {
       });
     } catch (error) {
       console.error('Error in transaction:', error);
-      return res.status(500).json({
+      return res.status(error.status === 409 ? 409 : 500).json({
         type: 'error',
         message: error.message,
         data: null,
@@ -1210,27 +1174,12 @@ class CustomerController extends BaseController {
 
   /**
    * DELETE /customers/deleteTransaction
-   *
-   * The route for this has been live and calling a method that was never
-   * written, so the trash icon on a customer's transaction list returned 500
-   * every time. Express did not catch it at startup because the route wraps
-   * the call in an arrow function - the wrapper IS a function, so the server
-   * boots clean and the TypeError waits for someone to press delete.
-   *
-   * WHY THIS IS SAFE TO WRITE, when reversing a money record usually is not:
-   * the balance here is DERIVED, not maintained. `transaction` above computes
-   * it as sum(in) - sum(out) over every transaction for the customer and $sets
-   * the result. So a delete does not need bespoke reversal arithmetic that
-   * could drift from the original - it removes the row and re-runs the exact
-   * same derivation. The aggregate below is a copy of that one deliberately;
-   * if the definition of balance ever changes, both must change together.
-   *
-   * A transaction that belongs to a SALE is refused. The UI already shows a
-   * link icon rather than a trash for those, but the server must not trust
-   * that: deleting one would leave the sale believing it had been paid while
-   * the customer's ledger says otherwise, and nothing would flag the gap.
+   * Reserve the exact customer ledger before deleting an independent wallet row.
+   * Sale/invoice receipts and already-consumed credit require their original workflow.
    */
   deleteTransaction = asyncHandler(async (req, res) => {
+    this.setRequestContext(req);
+    const license = req.tenantContext?.licenseId || req.license || req.user?.license || BaseModel.license;
     try {
       const { id, customer_id } = req.body || {};
       if (!id || !customer_id) {
@@ -1248,7 +1197,7 @@ class CustomerController extends BaseController {
       const scope = {
         _id: new ObjectId(id),
         customer_id: new ObjectId(customer_id),
-        license: BaseModel.license,
+        license,
       };
 
       const existing = await transactionCollection.findOne(scope);
@@ -1268,44 +1217,12 @@ class CustomerController extends BaseController {
         });
       }
 
-      await transactionCollection.deleteOne(scope);
-
-      // Recalculate customer balance from all transactions - the same
-      // derivation the add path uses, so the two can never disagree.
-      const aggregateResult = await transactionCollection
-        .aggregate([
-          {
-            $match: {
-              customer_id: new ObjectId(customer_id),
-              license: BaseModel.license,
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              totalIn: {
-                $sum: { $cond: [{ $eq: ['$type', 'in'] }, '$amount', 0] },
-              },
-              totalOut: {
-                $sum: { $cond: [{ $eq: ['$type', 'out'] }, '$amount', 0] },
-              },
-            },
-          },
-          {
-            $addFields: {
-              balance: { $subtract: ['$totalIn', '$totalOut'] },
-            },
-          },
-        ])
-        .toArray();
-
-      const newBalance = aggregateResult.length > 0 ? aggregateResult[0].balance : 0;
-
       const customerCollection = await new BaseModel('customers').getCollection('customers');
-      await customerCollection.updateOne(
-        { _id: new ObjectId(customer_id), license: BaseModel.license },
-        { $set: { balance: newBalance, updated_date: new Date() } }
-      );
+      const customer = await customerCollection.findOne({ _id: new ObjectId(customer_id), license });
+      const newBalance = await require('../services/customer-ledger-command').change({
+        customers: customerCollection, transactions: transactionCollection, customer,
+        existing, actor: req.user?.name || '',
+      });
 
       return res.status(200).json({
         type: 'success',
@@ -1314,7 +1231,7 @@ class CustomerController extends BaseController {
       });
     } catch (error) {
       console.error('Error in deleteTransaction:', error);
-      return res.status(500).json({
+      return res.status(error.status === 409 ? 409 : 500).json({
         type: 'error',
         message: error.message,
         data: null,

@@ -21,6 +21,9 @@
 
 // ─── Module mocks (must be before any require) ────────────────────────────────
 
+jest.mock('../../../src/services/customer-ledger-command', () => ({ change: jest.fn() }));
+const ledgerCommand = require('../../../src/services/customer-ledger-command');
+
 jest.mock('express-async-handler', () => (fn) => fn);
 jest.mock('../../../src/services/customer.service');
 jest.mock('../../../src/services/sale-customer', () => ({
@@ -117,6 +120,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  ledgerCommand.change.mockReset().mockResolvedValue(0);
   jest.spyOn(console, 'error').mockImplementation(() => {});
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -1626,7 +1630,8 @@ describe('CustomerController — importCustomers branch fetch error', () => {
 // ─── Additional coverage: transaction success (lines 1096-1173) ───────────────
 
 describe('CustomerController — transaction success path', () => {
-  it('inserts transaction and returns updated balance', async () => {
+  it('passes the scoped transaction to the ledger command and returns its balance', async () => {
+    ledgerCommand.change.mockResolvedValueOnce(500);
     const mockCustomerCol = {
       findOne: jest.fn().mockResolvedValue({ _id: VALID_ID, name: 'Alice', phone: '123' }),
       updateOne: jest.fn().mockResolvedValue({}),
@@ -1655,7 +1660,7 @@ describe('CustomerController — transaction success path', () => {
     );
   });
 
-  it('defaults balance to 0 when aggregate returns empty array', async () => {
+  it('returns the verified zero balance from the ledger command', async () => {
     const mockCustomerCol = {
       findOne: jest.fn().mockResolvedValue({ name: 'Alice' }),
       updateOne: jest.fn().mockResolvedValue({}),
@@ -1863,7 +1868,8 @@ describe('CustomerController — deleteTransaction', () => {
         toArray: jest.fn().mockResolvedValue(balance === null ? [] : [{ balance }]),
       }),
     };
-    const customers = { updateOne: jest.fn().mockResolvedValue({}) };
+    const customers = { findOne: jest.fn().mockResolvedValue({ _id: CUST }), updateOne: jest.fn().mockResolvedValue({}) };
+    ledgerCommand.change.mockResolvedValue(balance ?? 0);
     mockGetCollection.mockReset();
     mockGetCollection.mockResolvedValueOnce(txn).mockResolvedValueOnce(customers);
     return { txn, customers };
@@ -1886,8 +1892,8 @@ describe('CustomerController — deleteTransaction', () => {
     const scope = txn.findOne.mock.calls[0][0];
     expect(scope).toHaveProperty('customer_id');
     expect(scope).toHaveProperty('license');
-    // and the delete uses the same scope, not a looser one
-    expect(txn.deleteOne.mock.calls[0][0]).toEqual(scope);
+    expect(ledgerCommand.change).toHaveBeenCalledWith(expect.objectContaining({ transactions: txn, existing: { _id: OID, amount: 50, type: 'in' } }));
+    expect(txn.deleteOne).not.toHaveBeenCalled();
   });
 
   test('a transaction belonging to a sale is refused, not deleted', async () => {
@@ -1918,19 +1924,15 @@ describe('CustomerController — deleteTransaction', () => {
     const res = mkRes();
     await ctrl.deleteTransaction({ body: { id: OID, customer_id: CUST } }, res);
 
-    // it re-runs the same sum(in) - sum(out) aggregate the add path uses
-    const pipeline = txn.aggregate.mock.calls[0][0];
-    const group = pipeline.find((s) => s.$group);
-    expect(group.$group.totalIn).toBeDefined();
-    expect(group.$group.totalOut).toBeDefined();
-
-    expect(customers.updateOne.mock.calls[0][1].$set.balance).toBe(70);
+    expect(ledgerCommand.change).toHaveBeenCalledWith(expect.objectContaining({ customers, transactions: txn, existing: { _id: OID, amount: 50, type: 'in' } }));
     expect(res.json.mock.calls[0][0].data).toBe(70);
   });
 
   test('deleting the last transaction leaves a balance of zero, not undefined', async () => {
     const { customers } = wire({ _id: OID, amount: 50, type: 'in' }, null);
-    await ctrl.deleteTransaction({ body: { id: OID, customer_id: CUST } }, mkRes());
-    expect(customers.updateOne.mock.calls[0][1].$set.balance).toBe(0);
+    const res = mkRes();
+    await ctrl.deleteTransaction({ body: { id: OID, customer_id: CUST } }, res);
+    expect(res.json.mock.calls[0][0].data).toBe(0);
+    expect(customers.updateOne).not.toHaveBeenCalled();
   });
 });

@@ -231,7 +231,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
     const customerQuery = { _id: customerId, license: sale.license, branch_id: sale.branch_id || null };
     const customer = await customers.findOne(customerQuery);
     const claimed = customer && await customers.updateOne(
-      { ...customerQuery, books_receipt_lock: { $exists: false }, legacy_wallet_settlement_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false },
+      { ...customerQuery, books_receipt_lock: { $exists: false }, customer_ledger_lock: { $exists: false }, legacy_wallet_settlement_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false },
         $expr: { $eq: ['$$ROOT', { $literal: customer }] } },
       { $set: { legacy_invoice_payment_lock: reservation } }, { writeConcern: { w: 1, j: true } }
     );
