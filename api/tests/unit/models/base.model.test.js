@@ -18,6 +18,9 @@
 // ─── Mocks ─────────────────────────────────────────────────────────────────────
 
 jest.mock('dotenv', () => ({ config: jest.fn() }));
+// This native-driver suite mocks mongodb; only Mongoose's ObjectId utility
+// is used by retention checks, so do not load its driver against that mock.
+jest.mock('mongoose', () => ({ Types: { ObjectId: jest.requireActual('bson').ObjectId } }));
 
 jest.mock('../../../src/utils/helpers', () => ({
   formatDate: jest.fn((d) => (d instanceof Date ? '2024-01-01' : String(d))),
@@ -991,6 +994,17 @@ describe('changeLog', () => {
 // deletedDocumentBackup (static and instance)
 // ═══════════════════════════════════════════════════════════════════════════════
 describe('deletedDocumentBackup', () => {
+  test('minimal tombstones retain pending deletion evidence without the source body', async () => {
+    BaseModel.currentBranch = 'branch001';
+    _mockCollection.findOne.mockResolvedValue({ module_recyclebin_enable: false });
+    const evidence = { version: 1, commandId: 'fixture-command', state: 'pending' };
+    const result = await BaseModel.deletedDocumentBackup('sales', { _id: 'sale001', sales_total: 100, sale_delete_evidence: evidence });
+    expect(result.status).toBe(true);
+    const saved = _mockCollection.insertOne.mock.calls[0][0];
+    expect(saved.sale_delete_evidence).toEqual(evidence);
+    expect(saved.body_discarded).toBe(true);
+    expect(saved.sales_total).toBeUndefined();
+  });
   test('required retention fails closed when Recycle Bin is off', async () => {
     BaseModel.currentBranch = 'branch001';
     _mockCollection.findOne.mockResolvedValue({ module_recyclebin_enable: false });

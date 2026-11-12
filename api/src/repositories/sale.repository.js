@@ -1788,7 +1788,7 @@ class SalesRepository {
           delete retained.sale_delete_lock;
           delete retained.captain_edit_token;
           delete retained.captain_edit_until;
-          const backup = await BaseModel.deletedDocumentBackup('sales', retained, {
+          const backup = await BaseModel.deletedDocumentBackup('sales', saleAdmission.backupData('sales', retained), {
             requireRetention: true,
           });
           if (!backup || backup.status !== true) {
@@ -1855,7 +1855,7 @@ class SalesRepository {
             for (const tx of txDocs) {
               if (Object.keys(tx).some(key => key.startsWith('books_receipt_')))
                 throw new Error('This ledger contains a recorded Books receipt. Use its original correction workflow.');
-              const retained = await BaseModel.deletedDocumentBackup('transaction', tx, {
+              const retained = await BaseModel.deletedDocumentBackup('transaction', saleAdmission.backupData('transaction', tx), {
                 requireRetention: requireRecycleBackup,
               });
               if (!retained || retained.status !== true)
@@ -1945,10 +1945,11 @@ class SalesRepository {
         try {
           if (!requireRecycleBackup) {
             const retained = { ...doc }; delete retained.sale_delete_lock;
-            await BaseModel.deletedDocumentBackup('sales', retained);
+            const backup = await BaseModel.deletedDocumentBackup('sales', saleAdmission.backupData('sales', retained));
+            if (backup?.status !== true) throw new Error('The sale backup could not be saved.');
           }
         } catch (e) {
-          console.error('Error backing up deleted sale document:', e);
+          throw e;
         }
 
         // Restore stock quantities and write stock logs (skip Hold sales)

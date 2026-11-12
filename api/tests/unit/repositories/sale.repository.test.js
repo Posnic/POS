@@ -1161,6 +1161,12 @@ describe('SalesRepository', () => {
   });
 
   describe('deleteSales', () => {
+    beforeEach(() => {
+      BaseModel.deletedDocumentBackup.mockResolvedValue({ status: true });
+      jest.spyOn(require('../../../src/services/sale-delete-admission'), 'begin').mockResolvedValue({
+        id: 'fixture-deletion', backupData: (_name, doc) => doc, finish: jest.fn().mockResolvedValue(),
+      });
+    });
     test('does not delete or adjust records when the required backup fails', async () => {
       const saleDoc = { _id: FAKE_ID, items: [], partial_check: false };
       if (!collections.sales) collections.sales = mkCol();

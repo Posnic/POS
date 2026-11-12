@@ -881,6 +881,7 @@ class BaseModel {
                   'document_backup_date',
                   'updated_date',
                   'original_updated_date',
+                  'sale_delete_evidence',
                   'branch_id',
                   'branch_name',
                   'license',
