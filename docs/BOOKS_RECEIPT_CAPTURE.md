@@ -56,7 +56,7 @@ Remaining audited write surfaces before activation:
 | --- | --- |
 | `invoice.repository.js` | Atomic invoice-document predicates verified; does not protect preceding sale/customer side effects. |
 | `invoice-sync.recordPayment` | Exact-sale admission competes atomically with Books reservation. Invoice payments on different sales also reserve the shared customer; other legacy writers still need shared admission. |
-| `sale.repository.js`: `deleteSales`, `returnSalesOrder`, `salesPaymentCloseModel` | Delete/return/wallet settlement identified; must reserve before any stock, money or customer effects, not merely filter the final sale update. |
+| `sale.repository.js`: `deleteSales`, `returnSalesOrder`, `salesPaymentCloseModel` | Wallet settlement now reserves customer and every selected sale before money changes. Delete/return must still reserve before stock, money or customer effects. |
 | `customer.repository.js`: update, delete/bulk delete, `updateTotalsAfterSale` | Customer mutations identified; checkout/customer-ledger operations need coordinated admission before side effects. |
 | `setting.model.js` restore writes | Generic replacement can overwrite ownership; restore policy must protect incomplete financial operations. |
 | `BaseModel.getCollection/getDb/getDB` | Raw collection handles reach many writers. A check at one controller is not complete fencing. |
@@ -79,6 +79,18 @@ The journal accepts an actual server-owned ObjectId shop identity, or its canoni
 The legacy invoice-payment path additionally acquires a journalled exact-document customer reservation before ledger writes. Both paths check each other's customer reservation. If another payment owns the customer, the legacy path releases its untouched sale reservation and writes no money. Success releases customer before sale; an interrupted operation retains both. This closes cross-sale contention specifically between Books and legacy invoice-payment. It does not cover customer-page wallet transactions, checkout, returns or incoming sync yet.
 
 Real-Mongo tests now continue a native-ID legacy customer payment through the coordinator to full settlement, preserving native ledger shop/branch IDs and refusing the same-spelling string shop on recovery. Another test injects a Books customer reservation just before a legacy claim on a different sale: no legacy money is written and its sale reservation is released. Conversely, an interrupted legacy payment blocks both another legacy sale payment and a new Books receipt before acceptance. These checks use actual service/repository source with substituted connection plumbing, not installed software.
+
+## Customer-page wallet settlement
+
+The existing `salesPaymentCloseModel` entry delegates to `wallet-settlement.js`. It still applies previously received customer credit and creates no money-in receipt. Before any financial write, the server checks customer/branch ownership, unique selected sales, saved due/paid totals, requested amounts, compatible currencies, original allocation, actual ledger sum and sufficient cached credit. It reserves the customer and all selected sales using exact-document predicates that exclude Books, legacy invoice-payment and another wallet operation. An admission failure releases only this operation's untouched reservations; an interruption after writing starts retains them.
+
+The old partial-sale allocation overwrote the earlier wallet allocation with only the newly applied amount. The new path preserves the cumulative amount: 40 already allocated plus 65 applied now becomes 105 out, reducing a 100 wallet to 35 without any new money-in. Unpaid sales without an allocation get one scoped out row. Invoice mirrors update only after the sale/ledger effects; successful completion releases customer then sales. Unknown outcomes never expire into permission to settle again. A recovery UI for interrupted wallet operations remains a release requirement.
+
+Real standalone fixtures pass the partial-sale example, two selected sales including a missing original allocation, all-sales preflight before writes, stale client amounts, insufficient credit, a Books reservation arriving during admission with cleanup of the untouched customer lock, and an interrupted invoice mirror retaining reservations. POS/Books invoice-payment admission now respects wallet reservations too. The normal customer page already supplies customer identity; no-customer requests to this wallet endpoint now require a customer instead of marking sales paid without customer credit. Ordinary walk-in receipts continue through the invoice-payment path.
+
+The expanded 226 existing POS regressions, including the sales repository, pass. Changed-file lint has zero errors and 102 warnings in the broader legacy files. Two tooling attempts failed to load newly required Mongoose/moment-timezone dependencies; both roots were removed, the disposable tooling was corrected, and the final run passed.
+
+Current bounds are 100 selected sales and 10,000 customer ledger rows; larger selections/ledgers are held for review, with scalable handling still in scope. Other checkout/return/delete/direct-transaction/customer/restore and incoming sync writers remain activation gates. Captain payment guards are retained; complete cross-writer serialization is not established by these tests.
 
 ## Required coordinator and normal-entry work
 

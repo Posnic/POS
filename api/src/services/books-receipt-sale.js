@@ -6,8 +6,8 @@ const hash=s=>createHash('sha256').update(s).digest('hex');
 const fail=m=>{throw Object.assign(new Error(m),{status:409});};
 const equal=require('node:util').isDeepStrictEqual;
 const writeConcern={w:1,j:true};
-function unreserved(){return {books_receipt_lock:{$exists:false},books_receipt_owner:{$exists:false},legacy_invoice_payment_lock:{$exists:false}};}
-function mutable(sale){if(sale&&Object.hasOwn(sale,'legacy_invoice_payment_lock'))fail('Check the unfinished POS invoice payment before collecting again.');if(sale&&(Object.hasOwn(sale,'books_receipt_lock')||Object.hasOwn(sale,'books_receipt_owner')))fail('This sale has a Books payment operation. Recover its original payment before changing it.');}
+function unreserved(){return {books_receipt_lock:{$exists:false},books_receipt_owner:{$exists:false},legacy_invoice_payment_lock:{$exists:false},legacy_wallet_settlement_lock:{$exists:false}};}
+function mutable(sale){if(sale&&Object.hasOwn(sale,'legacy_wallet_settlement_lock'))fail('Check the unfinished wallet settlement before changing this sale.');if(sale&&Object.hasOwn(sale,'legacy_invoice_payment_lock'))fail('Check the unfinished POS invoice payment before collecting again.');if(sale&&(Object.hasOwn(sale,'books_receipt_lock')||Object.hasOwn(sale,'books_receipt_owner')))fail('This sale has a Books payment operation. Recover its original payment before changing it.');}
 function invoiceIdentity(value){if(value?._bsontype==='ObjectId')return {kind:'objectId',value:String(value)};if(typeof value==='string')return {kind:'string',value};fail('Original invoice identity is unavailable');}
 function checkedBasis(original,invoiceId,identity){
  const v=original.values,currency={currencyCode:v.currencyCode,currencyDigits:v.currencyDigits};
@@ -35,6 +35,7 @@ function create({db,now=()=>new Date()}){
   async stop(context,id,cmd,reviewHash){const outcome=await commands.stop(context,id,cmd,reviewHash);await service.releaseStopped(context,id,cmd);return outcome;},
   async reserve(context,id,cmd,attempt=0){
    const {c,b,query,sale}=await read(context,id,cmd);
+   if(Object.hasOwn(sale,'legacy_wallet_settlement_lock'))fail('Check the unfinished wallet settlement before continuing');
    if(Object.hasOwn(sale,'legacy_invoice_payment_lock'))fail('Check the unfinished POS invoice payment before continuing');
    if(sale.books_receipt_lock){if(!owned(sale.books_receipt_lock,context,id,c))fail('Another payment owns this sale');if(c.state==='prepared'){const current=await sales.findOne({...query,$expr:{$eq:['$$ROOT',{$literal:sale}]}},{projection:source.projection});if(!current||source.exportSale(current).revision!==b.revision)fail('The reserved source changed');}return sale.books_receipt_lock;}
    if(c.state!=='prepared')fail('Recover the accepted receipt on its original reserved sale');
