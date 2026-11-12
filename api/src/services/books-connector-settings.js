@@ -22,6 +22,7 @@ function create({db}){
   return doc;
  }
  return {
+  scopeId:context=>createHash('sha256').update(key(scopeOf(context))+':'+context.actorId).digest('hex'),
   read:async context=>view(await load(scopeOf(context))),
   async outcome(context,requestId){if(!uuid(requestId))fail('books_connection_request_invalid');const doc=await load(scopeOf(context));return {current:view(doc),request:doc?.history.find(item=>item.id===requestId)||null};},
   async change(context,input){

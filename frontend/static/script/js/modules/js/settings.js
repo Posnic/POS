@@ -10467,3 +10467,62 @@ $(document).on('click', '#save_restaurant_requirements', function() {
         button.prop('disabled',false);$('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_saved', 'Saved.'));
     },function(){button.prop('disabled',false);$('#restaurant_requirements_message').text(PosnicPro.i18n.t('lang_could_not_save_settings_please_retry', 'Could not save settings. Please retry.'));});
 });
+
+// Books connection management: original request survives view closure/reload.
+PosnicPro.booksConnection = (function () {
+    var generation = 0;
+    function text(key, fallback) { return PosnicPro.i18n.t('lang_books_connection_' + key, fallback); }
+    function request(method, suffix, body) {
+        return new Promise(function (resolve, reject) {
+            PosnicPro[method]({url:'books-connector' + suffix,data:method==='post'?JSON.stringify(body):{}}, function (response) {
+                if (response && response.type === 'success') resolve(response.data); else reject(response || {});
+            }, function (xhr) { var error=xhr.responseJSON;try{if(!error&&xhr.responseText)error=JSON.parse(xhr.responseText);}catch(ignore){}reject(error||{}); });
+        });
+    }
+    function node(tag, value, className) { var element=document.createElement(tag);element.textContent=value||'';if(className)element.className=className;return element; }
+    async function load() {
+        var root=document.getElementById('books_connection_panel'),version=++generation;
+        if(!root)return;
+        var live=function(){return root.isConnected && generation===version;};
+        root.replaceChildren(node('p',text('loading','Checking this POS connection…')));
+        var saved,key,pending,retry=false,busy=false;
+        function readPending(){var value=localStorage.getItem(key);if(!value)return null;var item=JSON.parse(value);
+            if(!item||item.scopeId!==saved.scopeId||typeof item.requestId!=='string'||!/^[a-f0-9-]{36}$/.test(item.requestId)||typeof item.enabled!=='boolean'||!Number.isSafeInteger(item.expectedRevision)||item.confirmed!==true)throw Error('Saved request needs review');return item;}
+        function clearPending(){var existing=readPending();if(existing&&existing.requestId===pending.requestId)localStorage.removeItem(key);pending=null;}
+        function button(label, action, primary){var button=node('button',label,primary?'btn btn-primary':'btn btn-outline-primary');button.type='button';button.disabled=busy;button.onclick=action;return button;}
+        function errorScreen(error){if(!live())return;busy=false;root.replaceChildren(node('h4',text('unavailable','This connection needs attention')),node('p',error&&error.code==='books_authority_restart_required'?text('restart','Close and reopen POS normally, then check again.'):text('restore','We cannot verify this installation. Use the original POS or ask support to help restore it.')),button(text('recheck','Check again'),load));}
+        function render(){if(!live())return;root.replaceChildren(node('h4',text('title','Books connection')));
+            var status=node('p','');status.setAttribute('role','status');root.append(status);
+            root.append(node('p',text('preview','Connection preferences can be saved. Receipt recording is not yet available in this build.'),'text-muted'));
+            if(pending){status.textContent=text('unknown','Check the original saved result before making another change.');root.append(button(text('check','Check saved status'),check));if(retry)root.append(button(text('retry','Retry the unchanged request'),function(){send(pending);}));return;}
+            status.textContent=saved.enabled?text('on','Connection preference: on'):text('off','Connection preference: off');
+            root.append(node('p',saved.enabled?text('retain','Turning off new receipts keeps original receipt records and recovery available.'):text('confirm','Choose whether this POS should use the Books receipt connection. No payment is recorded by this setting.')));
+            var label=node('label','', 'd-block my-3'),consent=node('input');consent.type='checkbox';consent.className='mr-2';label.append(consent,document.createTextNode(saved.enabled?text('disableConsent','Turn off new Books receipts on this POS.'):text('enableConsent','Enable the Books connection preference on this POS.')));root.append(label);
+            var submit=button(saved.enabled?text('disable','Save turned off'):text('enable','Save turned on'),async function(){
+                if(!consent.checked||busy)return;
+                if(!navigator.locks||!crypto.randomUUID){errorScreen();return;}
+                busy=true;submit.disabled=true;var failed=false;
+                try{await navigator.locks.request('books-connection:'+saved.scopeId,async function(){
+                    pending=readPending();if(pending){retry=false;render();return;}
+                    var candidate={requestId:crypto.randomUUID(),expectedRevision:saved.revision,enabled:!saved.enabled,confirmed:true,scopeId:saved.scopeId};
+                    localStorage.setItem(key,JSON.stringify(candidate));pending=candidate;await send(pending);
+                });}catch(error){failed=true;errorScreen(error);}finally{busy=false;if(live()&&!failed)render();}
+            },true);submit.disabled=true;consent.onchange=function(){submit.disabled=busy||!consent.checked;};root.append(submit);
+            root.append(node('p',text('support','Setup and support are online, including guided remote-desktop help.'),'text-muted mt-3'));
+        }
+        async function send(original){busy=true;retry=false;render();try{
+            var result=await request('post','/changes',original);
+            if(result.scopeId!==saved.scopeId||!result.request||result.request.id!==original.requestId||result.request.enabled!==original.enabled)throw Error('Result does not match');
+            clearPending();saved=Object.assign({},result.current,{scopeId:saved.scopeId});
+        }catch(error){retry=false;}finally{busy=false;render();}}
+        async function check(){busy=true;render();try{
+            var result=await request('get','/changes/'+pending.requestId);
+            if(result.scopeId!==saved.scopeId)throw Error('Connection scope changed');
+            if(result.request){if(result.request.id!==pending.requestId||result.request.enabled!==pending.enabled||result.request.expectedRevision!==pending.expectedRevision)throw Error('Result changed');clearPending();saved=Object.assign({},result.current,{scopeId:saved.scopeId});retry=false;}
+            else if(result.current.revision>pending.expectedRevision){clearPending();saved=Object.assign({},result.current,{scopeId:saved.scopeId});retry=false;}
+            else retry=result.current.revision===pending.expectedRevision;
+        }catch(error){retry=false;}finally{busy=false;render();}}
+        try{saved=await request('get','');if(!live())return;if(!saved||!/^[a-f0-9]{64}$/.test(saved.scopeId)||typeof saved.enabled!=='boolean'||!Number.isSafeInteger(saved.revision))throw Error('Invalid status');key='posnic-books-connection:'+saved.scopeId;pending=readPending();render();}catch(error){errorScreen(error);}
+    }
+    return {load:load};
+})();
