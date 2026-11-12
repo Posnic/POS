@@ -4747,55 +4747,25 @@ class SettingModel extends BaseModel {
         };
       }
 
-      // Restore each document to its original collection
       let restoredCount = 0;
       const errors = [];
-
       for (const doc of restoreDocs) {
-        const collectionName = doc.document_name;
-        if (!collectionName) continue;
-
         try {
-          const targetCollection = await this.getCollection(collectionName);
-          const backupData = { ...doc };
-          delete backupData.document_name;
-          delete backupData.document_backup_date;
-
-          // Check if document with this _id already exists
-          const existingDoc = await targetCollection.findOne({ _id: backupData._id });
-
-          if (existingDoc) {
-            // Document exists, replace it
-            await targetCollection.replaceOne({ _id: backupData._id }, backupData);
-          } else {
-            // Document doesn't exist, insert it
-            // Remove _id to let MongoDB generate a new one to avoid conflicts
-            const insertData = { ...backupData };
-            delete insertData._id;
-
-            const result = await targetCollection.insertOne(insertData);
-          }
+          await require('../services/recycle-restore').restoreRecord({
+            getCollection: name => this.getCollection(name), backupCollection: collection,
+            backupName: this.backupCollection, doc, license: this.normalizeId(this.licenseId),
+          });
           restoredCount++;
-        } catch (docError) {
-          console.error(
-            `❌ Error restoring document ${doc._id} to ${collectionName}:`,
-            docError.message
-          );
-          errors.push({ id: doc._id, collection: collectionName, error: docError.message });
+        } catch (error) {
+          errors.push({ id: doc._id, collection: doc.document_name, error: error.message });
         }
       }
-
-      console.log(
-        `📊 Restore summary: ${restoredCount} documents restored, ${errors.length} errors`
-      );
-
-      // Delete from backup collection
-      await collection.deleteMany(condition);
-
       return {
-        status: true,
-        data: null,
-        message: 'Document Restored successfully',
+        status: errors.length === 0,
+        data: { restoredCount, failedCount: errors.length, errors },
+        message: errors.length
+          ? `Restored: ${restoredCount}. Not restored: ${errors.length}. Unresolved backups were retained.`
+          : 'Document Restored successfully',
       };
     } catch (error) {
       console.error('Error in restoreBackup:', error);

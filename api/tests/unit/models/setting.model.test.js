@@ -2140,7 +2140,7 @@ describe('restoreBackup', () => {
       toArray: jest
         .fn()
         .mockResolvedValue([
-          { _id: new MockObjectId(BRANCH_ID), document_name: 'sales', branch_id: BRANCH_ID },
+          { _id: new MockObjectId(BRANCH_ID), document_name: 'sales', branch_id: BRANCH_ID, license: new MockObjectId(LICENSE_ID) },
         ]),
     });
     col.findOne.mockResolvedValue(null);
@@ -2154,10 +2154,11 @@ describe('restoreBackup', () => {
       toArray: jest
         .fn()
         .mockResolvedValue([
-          { _id: new MockObjectId(BRANCH_ID), document_name: 'sales', branch_id: BRANCH_ID },
+          { _id: new MockObjectId(BRANCH_ID), document_name: 'sales', branch_id: BRANCH_ID, license: new MockObjectId(LICENSE_ID) },
         ]),
     });
-    col.findOne.mockResolvedValue({ _id: new MockObjectId(BRANCH_ID) }); // exists in target
+    col.findOne.mockResolvedValue({ _id: new MockObjectId(BRANCH_ID), license: new MockObjectId(LICENSE_ID) });
+    col.replaceOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 }); // exists in target
     const r = await m.restoreBackup([BRANCH_ID]);
     expect(r.status).toBe(true);
     expect(col.replaceOne).toHaveBeenCalled();
