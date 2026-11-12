@@ -69,7 +69,7 @@ const sale = (extra = {}) => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
-  collections.sales = { findOne: jest.fn(), updateOne: jest.fn().mockResolvedValue({}) };
+  collections.sales = { findOne: jest.fn(), updateOne: jest.fn().mockResolvedValue({ matchedCount: 1 }) };
   collections.transaction = {
     findOne: jest.fn().mockResolvedValue(null),
     insertOne: jest.fn().mockResolvedValue({}),
@@ -183,7 +183,7 @@ describe('recordPayment', () => {
     expect(rowUpdate.$inc).toEqual({ amount: 200 });
     expect(rowUpdate.$set.pending).toBe(0);
     /* the sale's PHP-era fields move exactly as the customer page moves them */
-    const saleUpdate = collections.sales.updateOne.mock.calls[0][1];
+    const saleUpdate = collections.sales.updateOne.mock.calls.find(call => call[1].$set?.payment_status)[1];
     expect(saleUpdate.$set).toMatchObject({
       payment_status: 'Paid',
       payment_pending: 0,
@@ -214,7 +214,7 @@ describe('recordPayment', () => {
     const rowUpdate = collections.transaction.updateOne.mock.calls[0][1];
     expect(rowUpdate.$inc).toEqual({ amount: 75 });
     expect(rowUpdate.$set.pending).toBe(125);
-    const saleUpdate = collections.sales.updateOne.mock.calls[0][1];
+    const saleUpdate = collections.sales.updateOne.mock.calls.find(call => call[1].$set?.payment_status)[1];
     expect(saleUpdate.$set).toMatchObject({
       payment_status: 'Partialy Paid',
       payment_pending: 125,
@@ -233,7 +233,7 @@ describe('recordPayment', () => {
     );
     const r = await sync.recordPayment(invoice(), { amount: 125 }, {});
     expect(r.status).toBe(true);
-    const saleUpdate = collections.sales.updateOne.mock.calls[0][1];
+    const saleUpdate = collections.sales.updateOne.mock.calls.find(call => call[1].$set?.payment_status)[1];
     expect(saleUpdate.$set).toMatchObject({
       payment_status: 'Paid',
       payment_pending: 0,
@@ -247,7 +247,7 @@ describe('recordPayment', () => {
     expect(r.status).toBe(true);
     expect(collections.transaction.insertOne).not.toHaveBeenCalled();
     expect(collections.customers.updateOne).not.toHaveBeenCalled();
-    const set = collections.sales.updateOne.mock.calls[0][1].$set;
+    const set = collections.sales.updateOne.mock.calls.find(call => call[1].$set?.payment_status)[1].$set;
     expect(set).toMatchObject({ payment_status: 'Paid', payment_pending: 0, partial_balance: 200 });
   });
 

@@ -46,7 +46,7 @@ This coordinator is still internal. Its checks cannot serialize unfenced legacy 
 
 ## Existing writer protection — invoice boundary
 
-The existing invoice repository now uses atomic no-reservation/no-receipt predicates for financial updates, payment-note append, draft edit/delete and cancellation. Sale mirroring additionally compares the exact document read, checks `matchedCount`, and refuses to overwrite a coordinated receipt. Sharing metadata is held during a reservation but remains available after completed receipt effects. Cancellation also requires the invoice still be a draft at write time. The legacy `invoice-sync.recordPayment` refuses an already reserved/owned sale before inserting money; that early check alone does **not** serialize a reservation arriving later during the legacy multi-document operation.
+The existing invoice repository now uses atomic no-reservation/no-receipt predicates for financial updates, payment-note append, draft edit/delete and cancellation. Sale mirroring additionally compares the exact document read, checks `matchedCount`, and refuses to overwrite a coordinated receipt. Sharing metadata is held during a reservation but remains available after completed receipt effects. Cancellation also requires the invoice still be a draft at write time. The legacy `invoice-sync.recordPayment` now also acquires an exact-document sale reservation before any payment side effect, described below.
 
 Real standalone-Mongo tests execute the actual repository/service source with only the connection provider substituted. They insert a reservation between mirror read and write, attempt note/share writes during recovery, check completed receipt protection, preserve ordinary note/share behaviour, issue an invoice between cancellation read and write, and confirm an already reserved legacy payment writes no ledger entries. All pass. The expanded regression covers 86 tests including the existing invoice repository suite. Lint has zero errors; twelve existing console warnings remain in the legacy invoice files.
 
@@ -55,12 +55,22 @@ Remaining audited write surfaces before activation:
 | Surface | Current evidence / remaining protection |
 | --- | --- |
 | `invoice.repository.js` | Atomic invoice-document predicates verified; does not protect preceding sale/customer side effects. |
-| `invoice-sync.recordPayment` | Early ownership rejection verified; full legacy multi-write serialization still required. |
+| `invoice-sync.recordPayment` | Exact-sale admission competes atomically with Books reservation. Same-customer operations on different sales and other legacy writers still need shared admission. |
 | `sale.repository.js`: `deleteSales`, `returnSalesOrder`, `salesPaymentCloseModel` | Delete/return/wallet settlement identified; must reserve before any stock, money or customer effects, not merely filter the final sale update. |
 | `customer.repository.js`: update, delete/bulk delete, `updateTotalsAfterSale` | Customer mutations identified; checkout/customer-ledger operations need coordinated admission before side effects. |
 | `setting.model.js` restore writes | Generic replacement can overwrite ownership; restore policy must protect incomplete financial operations. |
 | `BaseModel.getCollection/getDb/getDB` | Raw collection handles reach many writers. A check at one controller is not complete fencing. |
 | Gateway and bundled sync agent (`src/sync-agent-manager.js`) | Separate incoming-write authority; sale/customer ownership and local command non-replay must be enforced on both ends. |
+
+## Legacy invoice-payment admission
+
+The normal legacy invoice-payment service now journals `legacy_invoice_payment_lock` on the exact sale it read before inserting money or changing balances. Its predicate excludes Books ownership/reservation and another legacy payment. Books reservation likewise refuses this marker. The two paths compete on the same document, closing the previously open interval between a read-only check and the first money write. Ordinary amount validation still occurs before reservation.
+
+Successful completion requires the sale update, invoice note and mirror to succeed, then atomically stores a last-result summary and releases the lock. Exceptions or unknown outcomes retain the reservation and original amount, actor, method/reference and before/after balances. A retry or Books reservation is held, never admitted through an expired lease. This summary is **not** an immutable Books receipt feed and does not make legacy partial writes automatically recoverable. A normal-entry recovery/review flow for interrupted legacy operations remains required before releasing these changes; never clear an unknown reservation to retry collection.
+
+Actual service/repository source against standalone Mongo passes normal walk-in and customer partial payments, unchanged net customer wallet, a Books reservation injected just before legacy admission (no legacy money changes), and interrupted invoice-note recovery holding the changed sale against duplicate collection. Existing 86 regressions still pass. The test repository connection provider is substituted; this is not installed POS acceptance. All scratch roots were independently absent.
+
+This lock is on the synced sales document, so the incoming Gateway/agent policy must preserve authority and prevent copied commands from running. Customer operations on different sales, returns, deletion, checkout, direct transaction writers and restore remain unfenced. Normal-entry context mapping must also preserve legacy ObjectId shop/branch identities: the real legacy tests use native IDs while the internal journal fixtures use string shop scope. That mapping and complete installed acceptance are not established by these tests.
 
 ## Required coordinator and normal-entry work
 

@@ -23,6 +23,7 @@
  */
 
 const { ObjectId } = require('mongodb');
+const { randomUUID } = require('node:crypto');
 const BaseModel = require('../models/base.model');
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
@@ -167,7 +168,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
     return { status: false, data: null, message: 'The sale behind this invoice was not found' };
 
   // Refuse known receipt ownership before any legacy ledger side effect.
-  // Atomic coordination with every competing writer remains an activation gate.
+  // The exact-source reservation below also closes the read/write race.
   try { require('./books-receipt-sale').mutable(sale); } catch (error) {
     return { status: false, data: null, message: error.message };
   }
@@ -209,6 +210,19 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   const userName = String(context.userName || '');
   const db = await BaseModel.getDb();
   const sales = db.collection('sales');
+
+  // Competes on the SAME sale document as Books reservation. No lease expiry:
+  // an interrupted multi-write payment must not silently admit another payment.
+  const reservation = { version: 1, id: randomUUID(), invoiceId: String(invoice._id),
+    amount, method, reference, actor: userName, at: now, paidBefore: before.paid_amount,
+    pendingBefore: before.balance, paidAfter, pendingAfter };
+  const reserved = await sales.updateOne(
+    { _id: sale._id, ...require('./books-receipt-sale').unreserved(),
+      $expr: { $eq: ['$$ROOT', { $literal: sale }] } },
+    { $set: { legacy_invoice_payment_lock: reservation } }, { writeConcern: { w: 1, j: true } }
+  );
+  if (!reserved.matchedCount) return { status: false, data: null,
+    message: 'The sale changed or another payment is in progress. Check its saved result before collecting again.' };
 
   const saleSet = {
     partial_balance: paidAfter,
@@ -275,7 +289,8 @@ async function recordPayment(invoice, payment = {}, context = {}) {
         $set: { pending: pendingAfter, type: 'out', updated_date: now },
       }
     );
-    await sales.updateOne({ _id: sale._id }, { $set: saleSet, $inc: { wallet_amount: amount } });
+    const updatedSale = await sales.updateOne({ _id: sale._id, legacy_invoice_payment_lock: reservation }, { $set: saleSet, $inc: { wallet_amount: amount } });
+    if (!updatedSale.matchedCount) throw new Error('Payment reservation changed; check the saved payment before collecting again');
     /* customer balance = money in - money out, the same sum the customer
        page and the transaction endpoint compute */
     const filter = { customer_id: customerId, license: sale.license };
@@ -297,17 +312,26 @@ async function recordPayment(invoice, payment = {}, context = {}) {
       .collection('customers')
       .updateOne({ _id: customerId }, { $set: { balance, updated_date: now } });
   } else {
-    await sales.updateOne({ _id: sale._id }, { $set: saleSet });
+    const updatedSale = await sales.updateOne({ _id: sale._id, legacy_invoice_payment_lock: reservation }, { $set: saleSet });
+    if (!updatedSale.matchedCount) throw new Error('Payment reservation changed; check the saved payment before collecting again');
   }
 
   const InvoiceRepository = require('../repositories/invoice.repository');
   const repo = new InvoiceRepository();
-  await repo.recordPayment(
+  const noted = await repo.recordPayment(
     String(invoice._id),
     { amount, method, reference, note, date: now, by: userName },
     context
   );
+  if (!noted.status) throw new Error('Payment was saved but its invoice note needs recovery: ' + noted.message);
   const synced = await syncSale(sale._id, { invoiceId: String(invoice._id) });
+  if (!synced.synced) throw new Error('Payment was saved but its invoice mirror needs recovery: ' + synced.message);
+  const completed = await sales.updateOne(
+    { _id: sale._id, legacy_invoice_payment_lock: reservation },
+    { $unset: { legacy_invoice_payment_lock: '' }, $set: { legacy_invoice_payment_result: { ...reservation, state: 'completed' } } },
+    { writeConcern: { w: 1, j: true } }
+  );
+  if (!completed.matchedCount) throw new Error('Payment completion needs recovery; check its original saved result');
   /* the word comes from what was just written, not from the mirror's reply -
      the reply is the same truth a moment later, but the message must not
      depend on a round trip */
