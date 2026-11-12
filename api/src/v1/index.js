@@ -27,7 +27,17 @@ const MAX_LIMIT = 200;
 const DEFAULT_LIMIT = 50;
 
 /* Fields that are ours, not the caller's. */
-const INTERNAL_FIELDS = { _syncMeta: 0, password: 0, token_hash: 0 };
+// Recovery snapshots and execution ownership are local implementation details.
+// A scoped integration read must not receive an actor's original command/body.
+const INTERNAL_FIELDS = {
+  _syncMeta: 0, password: 0, token_hash: 0,
+  books_receipt_lock: 0, books_receipt_owner: 0, books_receipt_projection: 0,
+  books_receipt_effect: 0, books_receipt_effects: 0,
+  legacy_invoice_payment_lock: 0, legacy_invoice_payment_result: 0,
+  legacy_wallet_settlement_lock: 0, legacy_wallet_settlement_result: 0,
+  customer_ledger_lock: 0, customer_ledger_result: 0,
+  sale_delete_lock: 0, sale_delete_result: 0, sale_delete_evidence: 0,
+};
 
 function canRead(user, aclModule) {
   return !!(user && user.access && user.access[aclModule] && user.access[aclModule].read === true);

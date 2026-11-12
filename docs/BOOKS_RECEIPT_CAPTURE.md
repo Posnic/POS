@@ -148,6 +148,12 @@ Rollout is blocked pending compatible Gateway and every participating private ag
 
 The original sale and customer fields already use generic sync lanes. This command ownership must not be replayed on other tills: Gateway/agent filtering, authoritative recovery and cross-installation visibility are still release requirements. No lane changes or live sync acceptance are claimed; private consumer source changes are described above. Remaining gaps include normal recovery of interrupted stock/register/wallet cleanup, complete linked transaction-backup/restore acceptance, checkout/return customer ownership, scalable batches and installed tests. This implementation must remain unmerged/uninstalled until those gates are closed.
 
+## Integration API boundary
+
+The general v1 integration API now excludes local Books/legacy payment locks, projections, command results and deletion recovery evidence from list, detail and contact-edit responses. Real HTTP/Mongo checks verify normal contact/balance fields remain readable, contact correction remains available, spoofed result fields are ignored and stored original recovery evidence remains unchanged. Authentication is injected fixture context; this is not installed token/enrolment acceptance. Dedicated authenticated recovery/status routes remain pending; exposing raw command snapshots through ordinary sales/customer reads is not that interface.
+
+Identity inspection found the paired agent advertisement in `business-decision-outbox.js` and desktop activation validation in `src/cloud-activation.js`. Neither is wired into Books receipt authority. The Community database-generated identifier is not clone-resistant and must not be reused as proof of original payment ownership. Protected local identity and authenticated paired-device binding remain implementation work.
+
 ## Required coordinator and normal-entry work
 
 1. Add an explicit opt-in in the Books connector's own Integrations page. Unset/off keeps the existing POS workflow. Bind the active receiver to protected installation identity, not a browser-supplied authority or a copied database setting. Define how a customer finds the receiver from another authorized installation.
