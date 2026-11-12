@@ -5275,6 +5275,10 @@ function getLocalSecrets() {
   return secrets;
 }
 
+const booksPaymentAuthority = () => require('./books-installation-authority').load({
+  directory: app.getPath('userData'), safeStorage: electron.safeStorage
+});
+
 function startServer() {
   // process.env.PORT already holds the port resolveLocalPorts derived and wrote
   // to .ports.json. It used to be overwritten here with a constant captured at
@@ -5422,6 +5426,7 @@ function startServer() {
   // Server startup is now async due to MongoDB setup
   const startServerFn = require(serverPath);
   startServerFn({
+    booksPaymentAuthority,
     onProgress: ({ stage, text, details, progress }) => {
       if (stage === 'timing' && details) {
         if (details.name === 'apiModulesLoaded') {

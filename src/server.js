@@ -292,6 +292,9 @@ module.exports = async function startServer(options = {}) {
     // Load mongoose and app from api's node_modules
     const mongoose = require(path.join(apiNodeModules, 'mongoose'));
     const app = require(path.join(apiPath, 'app.js'));
+    if (typeof options.booksPaymentAuthority === 'function') {
+      require(path.join(apiPath, 'src/services/books-receipt-runtime')).attach(app, options.booksPaymentAuthority);
+    }
     reportProgress({
       stage: 'timing',
       details: {
