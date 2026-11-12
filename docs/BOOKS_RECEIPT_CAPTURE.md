@@ -57,7 +57,7 @@ Remaining audited write surfaces before activation:
 | `invoice.repository.js` | Atomic invoice-document predicates verified; does not protect preceding sale/customer side effects. |
 | `invoice-sync.recordPayment` | Exact-sale admission competes atomically with Books reservation. Invoice payments on different sales also reserve the shared customer; other legacy writers still need shared admission. |
 | `sale.repository.js`: `deleteSales`, `returnSalesOrder`, `salesPaymentCloseModel` | Wallet settlement now reserves customer and every selected sale before money changes. Delete/return must still reserve before stock, money or customer effects. |
-| `customer.repository.js`: update, delete/bulk delete, `updateTotalsAfterSale` | Customer mutations identified; checkout/customer-ledger operations need coordinated admission before side effects. |
+| `customer.repository.js`: update, delete/bulk delete, `updateTotalsAfterSale` | Financial edits/deletion now have atomic reservation predicates; contact corrections remain allowed. Checkout/customer-ledger/loyalty/counter/import operations still need complete coordinated admission. |
 | `setting.model.js` restore writes | Generic replacement can overwrite ownership; restore policy must protect incomplete financial operations. |
 | `BaseModel.getCollection/getDb/getDB` | Raw collection handles reach many writers. A check at one controller is not complete fencing. |
 | Gateway and bundled sync agent (`src/sync-agent-manager.js`) | Separate incoming-write authority; sale/customer ownership and local command non-replay must be enforced on both ends. |
@@ -91,6 +91,14 @@ Real standalone fixtures pass the partial-sale example, two selected sales inclu
 The expanded 226 existing POS regressions, including the sales repository, pass. Changed-file lint has zero errors and 102 warnings in the broader legacy files. Two tooling attempts failed to load newly required Mongoose/moment-timezone dependencies; both roots were removed, the disposable tooling was corrected, and the final run passed.
 
 Current bounds are 100 selected sales and 10,000 customer ledger rows; larger selections/ledgers are held for review, with scalable handling still in scope. Other checkout/return/delete/direct-transaction/customer/restore and incoming sync writers remain activation gates. Captain payment guards are retained; complete cross-writer serialization is not established by these tests.
+
+## Customer financial edits and deletion
+
+Customer repository updates now guard balance, shop/branch identity and deletion-state changes against active Books, legacy invoice-payment and wallet reservations. Generic customer editing cannot overwrite recovery metadata. Contact corrections (name/email) remain available because they do not change the reserved ledger or balance. A guarded update that matches no customer raises an error rather than letting the service announce success after a rejected write.
+
+Single and bulk deletion check reservations before creating backups, then use exact-document plus no-reservation predicates for the actual delete. A reservation or other change arriving between backup and delete leaves that customer intact. Mixed bulk deletion returns both deleted and skipped counts; the service tells the user which count still needs review. These operations are not atomic across a whole batch, and no all-or-nothing claim is made.
+
+Real standalone tests exercise held financial edits, allowed contact correction, protected recovery metadata, initial deletion refusal without backup, an intervening payment before single delete, mixed bulk contention with exact counts, and ordinary backup/delete success. A dedicated customer-service test pins the mixed-result message. After a confirmed refusal, the repository removes only its exact newly created recycle snapshot while the live customer is still present, so a later valid deletion is not blocked by a duplicate backup ID. A successful-delete backup is preserved. Unknown outcomes or interrupted cleanup can still retain a snapshot; its presence alone is not proof that the customer was deleted. Restore must check the current live record and recovery state before replacing it. Customer ledger/loyalty/counter/import writers and generic restore are still separate protection gates.
 
 ## Required coordinator and normal-entry work
 

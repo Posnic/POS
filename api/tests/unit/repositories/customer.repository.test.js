@@ -175,6 +175,7 @@ describe('CustomerRepository (class, extends BaseModel)', () => {
     };
 
     mockRecycleCollection = {
+      deleteOne: jest.fn().mockResolvedValue({ deletedCount: 1 }),
       insertOne: jest.fn().mockResolvedValue({ insertedId: 'recycle_123' }),
       insertMany: jest.fn().mockResolvedValue({ insertedIds: {} }),
     };

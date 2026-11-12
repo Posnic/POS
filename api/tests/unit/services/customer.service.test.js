@@ -784,6 +784,13 @@ describe('CustomerService', () => {
       });
     });
 
+    test('reports a mixed deletion result without claiming every customer was removed', async () => {
+      repo.bulkSoftDelete.mockResolvedValue({ deletedCount: 1, modifiedCount: 1, skippedCount: 2 });
+      const result = await service.bulkDeleteCustomers(['id1', 'id2', 'id3']);
+      expect(result.data).toEqual({ deletedCount: 1, skippedCount: 2 });
+      expect(result.message).toContain('Deleted: 1. Not deleted: 2.');
+    });
+
     test('returns error shape on repository throw', async () => {
       repo.bulkSoftDelete.mockRejectedValue(new Error('bulk fail'));
       const result = await service.bulkDeleteCustomers(['id1']);

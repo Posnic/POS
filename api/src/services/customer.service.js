@@ -382,9 +382,11 @@ class CustomerService {
 
       return {
         status: true,
-        data: { deletedCount: result.modifiedCount },
+        data: { deletedCount: result.modifiedCount || 0, ...(result.skippedCount ? { skippedCount: result.skippedCount } : {}) },
         // Match legacy PHP wording used by the customers controller
-        message: 'Customer deleted successfully',
+        message: result.skippedCount
+          ? `Deleted: ${result.deletedCount}. Not deleted: ${result.skippedCount}. Some customers changed or have unfinished payments; reopen them before retrying.`
+          : 'Customer deleted successfully',
       };
     } catch (error) {
       console.error('Error in CustomerService.bulkDeleteCustomers:', error);

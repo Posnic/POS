@@ -5,6 +5,14 @@ const demoData = require('../services/demo-data');
 const { ObjectId } = require('mongodb');
 const { withBranchScope } = require('../services/branch-scope');
 const dataSharing = require('../services/data-sharing');
+const paymentWritable = () => ({ books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false }, legacy_wallet_settlement_lock: { $exists: false } });
+const paymentFields = ['books_receipt_', 'legacy_invoice_payment_', 'legacy_wallet_settlement_'];
+function assertPaymentMutable(customer) {
+  if (Object.keys(paymentWritable()).some(key => Object.hasOwn(customer, key))) {
+    throw new Error('Finish the customer payment recovery before deleting or changing its financial details');
+  }
+}
+
 
 /**
  * Customer Repository
@@ -204,6 +212,11 @@ class CustomerRepository extends BaseModel {
   async update(id, updateData) {
     const collection = await this.getCollection(this.collectionName);
     const normalizedData = { ...updateData };
+    const keys = Object.keys(normalizedData);
+    if (keys.some(key => paymentFields.some(prefix => key.startsWith(prefix)))) {
+      throw new Error('Payment recovery records cannot be changed through customer editing');
+    }
+    const financial = keys.some(key => ['balance', 'license', 'branch_id', 'is_deleted', '_id'].includes(key.split('.')[0]));
     const unsetEmail =
       Object.prototype.hasOwnProperty.call(normalizedData, 'email') &&
       (typeof normalizedData.email !== 'string' || !normalizedData.email.trim());
@@ -218,11 +231,13 @@ class CustomerRepository extends BaseModel {
         _id: new ObjectId(id),
         license: BaseModel.license,
         is_deleted: { $ne: true },
+        ...(financial ? paymentWritable() : {}),
       },
       updateOperation,
       { returnDocument: 'after' }
     );
 
+    if (!result) throw new Error('Customer changed or has an unfinished payment; reopen the customer');
     return result;
   }
 
@@ -242,19 +257,32 @@ class CustomerRepository extends BaseModel {
       throw new Error('Customer not found');
     }
 
+    assertPaymentMutable(customer);
+
     // Backup to recycle bin collection
     const recycleCollection = await this.getCollection(this.collectionName + '_recycle_bin');
-    await recycleCollection.insertOne({
+    const backup = {
       ...customer,
       deleted_date: new Date(),
       deleted_by: BaseModel.loggedUser || 'system',
-    });
+    };
+    await recycleCollection.insertOne(backup);
 
     // Hard delete from main collection
     const result = await collection.deleteOne({
       _id: new ObjectId(id),
       license: BaseModel.license,
+      ...paymentWritable(),
+      $expr: { $eq: ['$$ROOT', { $literal: customer }] },
     });
+    if (!result.deletedCount) {
+      // This confirmed refusal did not delete the live record. Remove only our
+      // exact snapshot so a later legitimate retry is not blocked by its _id.
+      if (await collection.findOne({ _id: customer._id, license: BaseModel.license })) {
+        await recycleCollection.deleteOne({ _id: customer._id, $expr: { $eq: ['$$ROOT', { $literal: backup }] } });
+      }
+      throw new Error('Customer changed or has an unfinished payment; deletion was not completed');
+    }
 
     return customer;
   }
@@ -278,6 +306,8 @@ class CustomerRepository extends BaseModel {
       return { deletedCount: 0 };
     }
 
+    customers.forEach(assertPaymentMutable);
+
     // Backup to recycle bin collection
     const recycleCollection = await this.getCollection(this.collectionName + '_recycle_bin');
     const backupDocs = customers.map((customer) => ({
@@ -291,9 +321,18 @@ class CustomerRepository extends BaseModel {
     const result = await collection.deleteMany({
       _id: { $in: objectIds },
       license: BaseModel.license,
+      ...paymentWritable(),
+      $or: customers.map(customer => ({ _id: customer._id, $expr: { $eq: ['$$ROOT', { $literal: customer }] } })),
     });
-
-    return { deletedCount: result.deletedCount, modifiedCount: result.deletedCount };
+    const skippedCount = customers.length - result.deletedCount;
+    if (skippedCount) {
+      const remaining = await collection.find({ _id: { $in: objectIds }, license: BaseModel.license }).toArray();
+      for (const live of remaining) {
+        const backup = backupDocs.find(row => String(row._id) === String(live._id));
+        if (backup) await recycleCollection.deleteOne({ _id: backup._id, $expr: { $eq: ['$$ROOT', { $literal: backup }] } });
+      }
+    }
+    return { deletedCount: result.deletedCount, modifiedCount: result.deletedCount, ...(skippedCount ? { skippedCount } : {}) };
   }
 
   /**
