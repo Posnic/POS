@@ -42,6 +42,7 @@
     "modifier_groups": "branch"
   },
   "local_only": {
+    "books_receipt_journals": "Payment command acceptance and recovery belong to the explicitly authorized installation. Never replay or last-writer-wins replicate these commands. The Books receipt coordinator is not activated yet; authenticated shared receipt evidence and cross-installation ownership remain rollout gates.",
     "spoilage_commands": "Authoritative approval/rejection and stock execution journal belongs to the originating installation. Read-only spoilage_entries snapshots sync for reports; another till must never execute their commands. Review actions direct users to the originating cloud or till.",
     "app_brand": "White-label branding is provisioned by the tenant/build configuration, not by catalogue replication between installations.",
     "price_sheet_jobs": "Price update staging, execution leases and recovery jobs belong to the installation applying them. Updated item prices sync normally; jobs must never replay on another installation.",
