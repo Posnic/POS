@@ -228,6 +228,21 @@ function openapiSpec() {
     },
     security: [{ token: [] }],
     paths: {
+      '/accounting/sales/{kind}/{id}': {
+        get: {
+          summary: 'Read one saved sale using its BSON or legacy string identity',
+          parameters: [
+            { name: 'kind', in: 'path', required: true, schema: { type: 'string', enum: ['objectId', 'string'] } },
+            { name: 'id', in: 'path', required: true, schema: { type: 'string', maxLength: 256 } },
+          ],
+          responses: {
+            200: { description: 'posnic.sale-source-item.v1 with one versioned source record in data' },
+            400: { description: 'Invalid typed source identity' },
+            403: { description: 'Sales read access is required' },
+            404: { description: 'Source absent or outside the caller scope' },
+          },
+        },
+      },
       '/accounting/sales': {
         get: {
           summary: 'Read versioned saved sale values for accounting review',
@@ -354,6 +369,27 @@ function registerV1({ app, protect }) {
       );
     }
     next();
+  });
+
+  router.get('/accounting/sales/:kind/:id', async (req, res) => {
+    if (!canRead(req.user, 'sales')) return err(res, 403, 'forbidden', 'Sales read access is required.');
+    if (!req.db) return err(res, 503, 'no_tenant', 'Tenant context unavailable.');
+    const { kind, id } = req.params;
+    if (!['string', 'objectId'].includes(kind) || !id || id.length > 256 ||
+        (kind === 'objectId' && !/^[a-f0-9]{24}$/.test(id)))
+      return err(res, 400, 'bad_source_id', 'A typed source identity is required.');
+    try {
+      const { projection, exportSale } = require('./accounting-source');
+      const _id = kind === 'objectId' ? new (require('mongodb').ObjectId)(id) : id;
+      const doc = await req.db.collection('sales').findOne(
+        { $and: [buildListQuery(req.user, null), { _id }] }, { projection }
+      );
+      if (!doc) return err(res, 404, 'not_found', 'Source sale not found.');
+      res.set('Cache-Control', 'no-store');
+      return res.json({ schema: 'posnic.sale-source-item.v1', data: exportSale(doc) });
+    } catch {
+      return err(res, 500, 'internal', 'Could not read accounting source record.');
+    }
   });
 
   router.get('/accounting/sales', async (req, res) => {
