@@ -1696,6 +1696,7 @@ class SalesRepository {
 
   async deleteSales(ids, { SaleModel, requireRecycleBackup = false } = {}) {
     const captainEdits = [];
+    let saleAdmission;
     let deletionStarted = false;
     let deletionCompleted = false;
     try {
@@ -1736,6 +1737,9 @@ class SalesRepository {
           ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
         })
         .toArray();
+      if (paymentCandidates.length !== new Set(objectIds.map(String)).size)
+        throw Object.assign(new Error('Some selected sales are unavailable. Refresh before deleting.'), { status: 409 });
+      saleAdmission = await require('../services/sale-delete-admission').begin(db, paymentCandidates, { actor: BaseModel.loggedUserName });
       for (const sale of paymentCandidates) {
         if (sale.captain_payment_plan && sale.payment_status === 'Paid' && objectIds.length !== 1)
           throw Object.assign(
@@ -1765,6 +1769,7 @@ class SalesRepository {
       const licenseFilter = BaseModel.license ? { license: BaseModel.license } : {};
 
       const salesFilter = {
+        'sale_delete_lock.id': saleAdmission.id,
         _id: { $in: objectIds },
         ...licenseFilter,
         $or: [
@@ -1775,9 +1780,12 @@ class SalesRepository {
       };
 
       const salesDocs = await salesCollection.find(salesFilter).toArray();
+      if (salesDocs.length !== paymentCandidates.length)
+        throw new Error('A sale deletion reservation changed before cleanup.');
       if (requireRecycleBackup) {
         for (const doc of salesDocs) {
           const retained = { ...doc };
+          delete retained.sale_delete_lock;
           delete retained.captain_edit_token;
           delete retained.captain_edit_until;
           const backup = await BaseModel.deletedDocumentBackup('sales', retained, {
@@ -1811,7 +1819,7 @@ class SalesRepository {
           }
         );
       } catch (e) {
-        if (captainEdits.some((entry) => entry.filter)) throw e;
+        if (saleAdmission || captainEdits.some((entry) => entry.filter)) throw e;
         // Do not block delete flow on register cleanup issues
         console.error('Error cleaning cashregister for deleted sales:', e);
       }
@@ -1898,6 +1906,7 @@ class SalesRepository {
 
             const customerFilter = {
               _id: customerId,
+              'sale_delete_lock.id': saleAdmission.id,
             };
             if (branchId) {
               customerFilter.branch_id = branchId;
@@ -1906,18 +1915,22 @@ class SalesRepository {
               customerFilter.license = licenseId;
             }
 
-            await customersCollection.updateOne(customerFilter, {
+            const walletUpdated = await customersCollection.updateOne(customerFilter, {
               $set: { balance: totalWalletAmount },
             });
+            if (!walletUpdated.matchedCount) throw new Error('Customer deletion reservation changed; check its original result.');
           } catch (e) {
-            if (captainEdits.some((entry) => entry.filter)) throw e;
+            if (saleAdmission || captainEdits.some((entry) => entry.filter)) throw e;
             console.error('Error updating customer wallet during sale delete:', e);
           }
         }
 
         // Backup sales document to recycle_bin
         try {
-          if (!requireRecycleBackup) await BaseModel.deletedDocumentBackup('sales', doc);
+          if (!requireRecycleBackup) {
+            const retained = { ...doc }; delete retained.sale_delete_lock;
+            await BaseModel.deletedDocumentBackup('sales', retained);
+          }
         } catch (e) {
           console.error('Error backing up deleted sale document:', e);
         }
@@ -1943,7 +1956,7 @@ class SalesRepository {
               _id: normalizedBranchId,
             });
           } catch (e) {
-            if (captainEdits.some((entry) => entry.filter)) throw e;
+            if (saleAdmission || captainEdits.some((entry) => entry.filter)) throw e;
             console.error('Error loading branch settings for sale delete stock log:', e);
           }
         }
@@ -2019,11 +2032,11 @@ class SalesRepository {
                 changed_by_userid: BaseModel.loggedUser,
                 changed_by: BaseModel.loggedUserName || 'System',
               });
-              if (captainEdits.some((entry) => entry.filter) && stockLog?.status === false)
+              if ((saleAdmission || captainEdits.some((entry) => entry.filter)) && stockLog?.status === false)
                 throw new Error('Stock log could not be saved during deletion.');
             }
           } catch (e) {
-            if (captainEdits.some((entry) => entry.filter)) throw e;
+            if (saleAdmission || captainEdits.some((entry) => entry.filter)) throw e;
             console.error('Error restoring stock for deleted sale item:', e);
           }
         }
@@ -2041,7 +2054,7 @@ class SalesRepository {
       };
     } catch (error) {
       console.error('Error in deleteSaleCollectionData:', error);
-      const needsReview = deletionStarted && captainEdits.some((entry) => entry.filter);
+      const needsReview = deletionStarted && Boolean(saleAdmission || captainEdits.some((entry) => entry.filter));
       return {
         status: false,
         statusCode: needsReview ? 409 : error.statusCode || error.status || 500,
@@ -2051,6 +2064,7 @@ class SalesRepository {
           : error.message,
       };
     } finally {
+      if (saleAdmission) await saleAdmission.finish({ completed: deletionCompleted, started: deletionStarted });
       for (const deletion of captainEdits)
         await deletion.finish({ completed: deletionCompleted, started: deletionStarted });
     }

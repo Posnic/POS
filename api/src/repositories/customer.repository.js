@@ -5,8 +5,8 @@ const demoData = require('../services/demo-data');
 const { ObjectId } = require('mongodb');
 const { withBranchScope } = require('../services/branch-scope');
 const dataSharing = require('../services/data-sharing');
-const paymentWritable = () => ({ books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false }, legacy_wallet_settlement_lock: { $exists: false }, customer_ledger_lock: { $exists: false } });
-const paymentFields = ['books_receipt_', 'legacy_invoice_payment_', 'legacy_wallet_settlement_', 'customer_ledger_'];
+const paymentWritable = () => ({ sale_delete_lock: { $exists: false }, books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false }, legacy_wallet_settlement_lock: { $exists: false }, customer_ledger_lock: { $exists: false } });
+const paymentFields = ['books_receipt_', 'legacy_invoice_payment_', 'legacy_wallet_settlement_', 'customer_ledger_', 'sale_delete_'];
 function assertPaymentMutable(customer) {
   if (Object.keys(paymentWritable()).some(key => Object.hasOwn(customer, key))) {
     throw new Error('Finish the customer payment recovery before deleting or changing its financial details');

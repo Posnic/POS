@@ -2,7 +2,7 @@
 const {ObjectId}=require('mongodb'),{randomUUID}=require('node:crypto');
 const Money=require('../utils/currency');
 const fail=message=>{throw new Error(message);},wc={w:1,j:true};
-const available=()=>({books_receipt_lock:{$exists:false},books_receipt_owner:{$exists:false},legacy_invoice_payment_lock:{$exists:false},legacy_wallet_settlement_lock:{$exists:false},customer_ledger_lock:{$exists:false}});
+const available=()=>({sale_delete_lock:{$exists:false},books_receipt_lock:{$exists:false},books_receipt_owner:{$exists:false},legacy_invoice_payment_lock:{$exists:false},legacy_wallet_settlement_lock:{$exists:false},customer_ledger_lock:{$exists:false}});
 const exact=(value,policy)=>{if(!['string','number'].includes(typeof value)||String(value).trim()==='')fail('Reopen the customer wallet to review the amounts');const n=Money.toMinor(value,policy);if(!Number.isSafeInteger(n)||n<0||Money.fromMinor(n,policy)!==Number(value))fail('Reopen the customer wallet to review the amounts');return n;};
 async function settle(db,data,{guard,mirror}){
  const sales=db.collection('sales'),customers=db.collection('customers'),transactions=db.collection('transaction');

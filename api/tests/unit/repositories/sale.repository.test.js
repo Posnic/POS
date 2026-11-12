@@ -1239,6 +1239,8 @@ describe('SalesRepository', () => {
         available_quantity: 10,
         track_inventory: false,
       });
+      if (!collections.customers) collections.customers = mkCol();
+      collections.customers.findOne.mockResolvedValue({ _id: FAKE_CUSTOMER, balance: 0 });
       const r = await salesRepository.deleteSales([FAKE_ID]);
       expect(r.status).toBe(true);
       expect(collections.items.updateOne).not.toHaveBeenCalled();

@@ -1,7 +1,7 @@
 'use strict';
 const {ObjectId,BSON}=require('mongodb'),{randomUUID,createHash}=require('node:crypto'),Money=require('../utils/currency'),equal=require('node:util').isDeepStrictEqual;
 const fail=message=>{throw Object.assign(new Error(message),{status:409});};
-const available=()=>({books_receipt_lock:{$exists:false},legacy_invoice_payment_lock:{$exists:false},legacy_wallet_settlement_lock:{$exists:false},customer_ledger_lock:{$exists:false}});
+const available=()=>({sale_delete_lock:{$exists:false},books_receipt_lock:{$exists:false},legacy_invoice_payment_lock:{$exists:false},legacy_wallet_settlement_lock:{$exists:false},customer_ledger_lock:{$exists:false}});
 const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
 const encode=value=>JSON.stringify(canonical(BSON.EJSON.serialize(value,{relaxed:false})));
 const fingerprint=rows=>createHash('sha256').update(encode([...rows].sort((a,b)=>encode(a._id).localeCompare(encode(b._id))))).digest('hex');

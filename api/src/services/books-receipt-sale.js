@@ -6,8 +6,8 @@ const hash=s=>createHash('sha256').update(s).digest('hex');
 const fail=m=>{throw Object.assign(new Error(m),{status:409});};
 const equal=require('node:util').isDeepStrictEqual;
 const writeConcern={w:1,j:true};
-function unreserved(){return {books_receipt_lock:{$exists:false},books_receipt_owner:{$exists:false},legacy_invoice_payment_lock:{$exists:false},legacy_wallet_settlement_lock:{$exists:false}};}
-function mutable(sale){if(sale&&Object.hasOwn(sale,'legacy_wallet_settlement_lock'))fail('Check the unfinished wallet settlement before changing this sale.');if(sale&&Object.hasOwn(sale,'legacy_invoice_payment_lock'))fail('Check the unfinished POS invoice payment before collecting again.');if(sale&&(Object.hasOwn(sale,'books_receipt_lock')||Object.hasOwn(sale,'books_receipt_owner')))fail('This sale has a Books payment operation. Recover its original payment before changing it.');}
+function unreserved(){return {sale_delete_lock:{$exists:false},books_receipt_lock:{$exists:false},books_receipt_owner:{$exists:false},legacy_invoice_payment_lock:{$exists:false},legacy_wallet_settlement_lock:{$exists:false}};}
+function mutable(sale){if(sale&&Object.hasOwn(sale,'sale_delete_lock'))fail('This sale has an unfinished deletion. Check its original result before changing it.');if(sale&&Object.hasOwn(sale,'legacy_wallet_settlement_lock'))fail('Check the unfinished wallet settlement before changing this sale.');if(sale&&Object.hasOwn(sale,'legacy_invoice_payment_lock'))fail('Check the unfinished POS invoice payment before collecting again.');if(sale&&(Object.hasOwn(sale,'books_receipt_lock')||Object.hasOwn(sale,'books_receipt_owner')))fail('This sale has a Books payment operation. Recover its original payment before changing it.');}
 function invoiceIdentity(value){if(value?._bsontype==='ObjectId')return {kind:'objectId',value:String(value)};if(typeof value==='string')return {kind:'string',value};fail('Original invoice identity is unavailable');}
 function checkedBasis(original,invoiceId,identity){
  const v=original.values,currency={currencyCode:v.currencyCode,currencyDigits:v.currencyDigits};
