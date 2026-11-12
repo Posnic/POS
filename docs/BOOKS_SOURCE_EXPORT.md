@@ -27,3 +27,13 @@ When either original customer field exists, `sourceJson` includes additive `cust
 This reads existing sales-lane fields and introduces no writes, collections or synchronization configuration. The connected server may lag an offline till. Full credit/customer payment history, cross-till convergence and installed export rollout remain open. Books must not infer a receipt from the paid/pending scalar or treat a current mutable wallet transaction as immutable payment history.
 
 Validation for typed references: 52 focused v1/tax/header/charge checks and changed-file ESLint pass. Actual token/router/MongoDB tests confirm scope boundaries, typed reference conflicts, nested-contact exclusion and unchanged stored sale documents. An initial lint failure on a control-character regex was corrected with equivalent character-code checks and rerun. No full checkout, cross-till or installed-export acceptance is claimed.
+
+## Settlement evidence boundary
+
+The read-only projection now includes saved `wallet_amount` and only `payments.amount`, `payments.method` and `payments.date`. Payment references, notes, origin and photos remain excluded. Missing fields retain their earlier source bytes; new saved evidence changes the revision. No POS persistence, checkout or payment write changes are introduced.
+
+Customer-page `salesPaymentCloseModel` consumes existing wallet credit. It must not be exported as another receipt. The ordinary payments array has `_id: false`, so position/date/amount cannot establish replay-safe event identity. Invoice `invoice-sync.recordPayment` separately writes money-in, sale allocation and invoice notes; its multi-write path needs an atomic command contract before Books can treat it as complete payment evidence. The `payment` collection also contains provider QR intent/status rows, not a generic immutable customer receipt ledger.
+
+Synchronization remains the existing branch-scoped sales projection: POS, Gateway and agent all declare sales; no new lane or business write is added. Gateway main manifests were read for this audit. Transaction/payment lanes remain absent/undecided and no cross-till payment guarantee is claimed. Actual POS router/MongoDB checks verify the new fields, private-note exclusion and unchanged source data; installed optional export rollout remains pending.
+
+Settlement projection validation: 53 focused v1/tax/header/charge tests and changed-file ESLint pass; seven Books source/credit/actual-router integration tests pass. No checkout write path was changed. Full installed optional-export and cross-till payment acceptance remain pending.

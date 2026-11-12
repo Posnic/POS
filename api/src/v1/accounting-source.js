@@ -13,6 +13,7 @@ const projection = {
   items_subtotal: 1, items_return_total: 1, items_return_subtotal: 1,
   sales_round_off: 1, round_off: 1, return_round_off: 1,
   paid_amount: 1, balance: 1, payment_mode: 1, payment_pending: 1,
+  wallet_amount: 1, 'payments.amount': 1, 'payments.method': 1, 'payments.date': 1,
   partial_check: 1, partial_balance: 1, tax: 1, return_tax: 1,
   discount: 1, return_discount: 1, source_invoice_id: 1,
   sale_extra_discount: 1, coupon_discount_value: 1, loyalty_redeem_value: 1,

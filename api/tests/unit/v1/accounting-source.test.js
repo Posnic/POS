@@ -39,3 +39,11 @@ test('exports typed customer references without embedding customer objects or ch
  const unsafe=exportSale({_id:'sale',customer_id:{email:'private@example.test'},customer:null});expect(unsafe.sourceJson).not.toContain('private');expect(JSON.parse(unsafe.sourceJson).customerReferences.customerId).toEqual({kind:'unsupported'});
  expect(JSON.parse(exportSale({_id:'sale'}).sourceJson)).not.toHaveProperty('customerReferences');
 });
+
+test('settlement projection distinguishes wallet usage and legacy payments without exposing their notes',()=>{
+ for(const field of ['wallet_amount','payments.amount','payments.method','payments.date'])expect(projection[field]).toBe(1);
+ for(const field of ['payments','payments.reference','payments.notes','payments.origin','payments.order_photos'])expect(projection).not.toHaveProperty(field);
+ const original={_id:'wallet-sale',wallet_amount:40,payments:[{amount:40,method:'card',date:'2026-11-12T10:00:00.000Z'}]},before=JSON.stringify(original),value=exportSale(original);
+ expect(JSON.stringify(original)).toBe(before);expect(JSON.parse(value.sourceJson).values.wallet_amount).toBe(40);expect(JSON.parse(value.sourceJson).values.payments).toEqual(original.payments);
+ expect(exportSale({...original,wallet_amount:0}).revision).not.toBe(value.revision);
+});
