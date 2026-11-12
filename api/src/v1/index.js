@@ -228,6 +228,22 @@ function openapiSpec() {
     },
     security: [{ token: [] }],
     paths: {
+      '/accounting/sales': {
+        get: {
+          summary: 'Read versioned saved sale values for accounting review',
+          description: 'Read-only current snapshots, not payment events or a complete accounting ledger. Requires sales read scope. No checkout or synchronization writes.',
+          parameters: [
+            { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: MAX_LIMIT, default: DEFAULT_LIMIT } },
+            { name: 'cursor', in: 'query', schema: { type: 'string' } },
+          ],
+          responses: {
+            200: { description: 'posnic.sale-source-page.v1: data contains typed sourceId, exact sourceJson and its SHA-256 revision; meta contains count and next_cursor.' },
+            400: { description: 'Invalid limit or cursor' },
+            403: { description: 'Sales read access is required' },
+            429: { description: 'Request rate limit exceeded' },
+          },
+        },
+      },
       '/{entity}': {
         get: {
           summary: 'List records, oldest change first',
@@ -338,6 +354,27 @@ function registerV1({ app, protect }) {
       );
     }
     next();
+  });
+
+  router.get('/accounting/sales', async (req, res) => {
+    if (!canRead(req.user, 'sales')) return err(res, 403, 'forbidden', 'Sales read access is required.');
+    if (!req.db) return err(res, 503, 'no_tenant', 'Tenant context unavailable.');
+    const cursor = decodeCursor(req.query.cursor);
+    if (req.query.cursor && !cursor) return err(res, 400, 'bad_cursor', 'The cursor is not one this API issued.');
+    if (req.query.limit !== undefined && !/^[1-9][0-9]*$/.test(req.query.limit))
+      return err(res, 400, 'bad_limit', 'Limit must be a positive integer.');
+    try {
+      const { projection, exportSale } = require('./accounting-source');
+      const limit = Math.min(parseInt(req.query.limit, 10) || DEFAULT_LIMIT, MAX_LIMIT);
+      const docs = await req.db.collection('sales')
+        .find(buildListQuery(req.user, cursor), { projection })
+        .sort({ updated_date: 1, _id: 1 }).limit(limit + 1).toArray();
+      const page = envelope(docs, limit);
+      res.set('Cache-Control', 'no-store');
+      return res.json({ schema: 'posnic.sale-source-page.v1', data: page.data.map(exportSale), meta: page.meta });
+    } catch {
+      return err(res, 500, 'internal', 'Could not read accounting source records.');
+    }
   });
 
   router.get('/:entity', async (req, res) => {
