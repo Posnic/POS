@@ -5186,5 +5186,6 @@
   "lang_your_session_has_ended_please_sign_in_ag": "Your session has ended. Please sign in again.",
   "lang_your_standard_language_stays_unchanged_unt": "Your standard language stays unchanged until you save wording changes.",
   "lang_your_time_or_expertise": "Your time or expertise",
-  "lang_yourselecteddetails_title": "Selected details will be deleted"
+  "lang_yourselecteddetails_title": "Selected details will be deleted",
+  "lang_delete_result_unknown": "The deletion result could not be confirmed. Review the selected records before trying again."
 }

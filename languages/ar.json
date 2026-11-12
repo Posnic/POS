@@ -5402,5 +5402,6 @@
   "lang_undo_stock_deduction": "التراجع عن خصم الأسهم",
   "lang_upload_excel_csv": "تحميل برنامج إكسل/ CSV",
   "lang_weigh_for_a_requested_amount": "قم بالوزن بالكمية المطلوبة",
-  "lang_you_have_read_only_access_to_product_avail": "لديك حق الوصول للقراءة فقط إلى توفر المنتج."
+  "lang_you_have_read_only_access_to_product_avail": "لديك حق الوصول للقراءة فقط إلى توفر المنتج.",
+  "lang_delete_result_unknown": "تعذر تأكيد نتيجة الحذف. راجع السجلات المحددة قبل المحاولة مرة أخرى."
 }

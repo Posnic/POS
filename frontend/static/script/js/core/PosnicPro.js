@@ -1948,6 +1948,8 @@ PosnicPro = {
         (PosnicPro.record_url === 'sales') ? $('.removetransactiontext').show() : $('.removetransactiontext').hide();
         $('.removeText').text('selected details will be deleted');
         if (PosnicPro.deleteConfirmation) {
+            PosnicPro.deleteConfirmation = false; // consume before dispatch, including network failure
+            var requestedTable = PosnicPro.record_url;
             PosnicPro.callbackRegistry = {};
             var arr = [];
             var obj = {};
@@ -1956,13 +1958,13 @@ PosnicPro = {
                 arr.push(obj);
             });
             var params = {
-                url: '' + PosnicPro.record_url + '/delete',
+                url: '' + requestedTable + '/delete',
                 data: JSON.stringify({ data: arr, approval_token: PosnicPro._approvalToken || undefined })
             };
             PosnicPro._approvalToken = null; // single-use
             PosnicPro.delete(params, function (response) {
                 if (response.type === 'success') {
-                    let actionUrl = (PosnicPro.record_url === 'customerCategory') ? PosnicPro.record_url.toLowerCase() : PosnicPro.record_url;
+                    let actionUrl = (requestedTable === 'customerCategory') ? requestedTable.toLowerCase() : requestedTable;
                     $('.showing-hide-show-' + actionUrl).hide();
                     $("#" + actionUrl + "_deletebtn").addClass("disabled");
                     $("#" + actionUrl + "_exportbtn").addClass("disabled");
@@ -1984,7 +1986,15 @@ PosnicPro = {
                     PosnicPro[actionUrl][actionUrl + "Table"](actionUrl);
                 }
                 PosnicPro.alert(response.type, response.message);
-                PosnicPro.deleteConfirmation = false;
+            }, function (xhr) {
+                var response = xhr && xhr.responseJSON;
+                if (!response && xhr && xhr.responseText) {
+                    try { response = JSON.parse(xhr.responseText); } catch (_) { /* retain unknown result */ }
+                }
+                var known = xhr && [400, 403, 404, 409, 422].indexOf(xhr.status) !== -1;
+                var message = known && response && typeof response.message === 'string' ? response.message :
+                    PosnicPro.i18n.t('lang_delete_result_unknown', 'The deletion result could not be confirmed. Review the selected records before trying again.');
+                PosnicPro.alert('error', message);
             });
         } else {
             PosnicPro.record_url = '';

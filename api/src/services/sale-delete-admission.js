@@ -13,8 +13,14 @@ async function begin(db,originals,{actor=''}={}){
   if(completed)for(const sale of originals)if(await sales.findOne({_id:sale._id,license:sale.license},{projection:{_id:1}}))fail('Sale deletion completion needs review');
   for(const scope of customerScopes){
    const update=completed?{$set:{sale_delete_result:{...operation,state:'completed'}},$unset:{sale_delete_lock:''}}:{$unset:{sale_delete_lock:''}};
-   const result=await customers.updateOne({...scope,'sale_delete_lock.id':operation.id},update,{writeConcern:wc});
-   if(completed&&!result.matchedCount)fail('Customer deletion completion needs review');
+   let result,error;
+   try{result=await customers.updateOne({...scope,'sale_delete_lock.id':operation.id},update,{writeConcern:wc});}catch(cause){error=cause;}
+   if(completed&&(error||!result?.matchedCount)){
+    // A committed acknowledgement can lose its reply. Read its original
+    // result without clearing a newer operation or recomputing wallet money.
+    const saved=await customers.findOne(scope);
+    if(!equal(saved?.sale_delete_result,{...operation,state:'completed'}))throw error||Object.assign(new Error('Customer deletion completion needs review'),{status:409});
+   }else if(error)throw error;
   }
   for(const sale of originals)await sales.updateOne({_id:sale._id,license:sale.license,'sale_delete_lock.id':operation.id},{$unset:{sale_delete_lock:''}},{writeConcern:wc});
  };

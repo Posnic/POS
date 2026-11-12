@@ -1850,12 +1850,28 @@ class SalesRepository {
               txFilter.license = licenseId;
             }
 
-            const txDocs = await transactionCollection.find(txFilter).toArray();
+            const txDocs = await transactionCollection.find(txFilter).limit(10001).toArray();
+            if (txDocs.length > 10000) throw new Error('This sale ledger needs a paged deletion review.');
             for (const tx of txDocs) {
-              await BaseModel.deletedDocumentBackup('transaction', tx);
+              if (Object.keys(tx).some(key => key.startsWith('books_receipt_')))
+                throw new Error('This ledger contains a recorded Books receipt. Use its original correction workflow.');
+              const retained = await BaseModel.deletedDocumentBackup('transaction', tx, {
+                requireRetention: requireRecycleBackup,
+              });
+              if (!retained || retained.status !== true)
+                throw new Error('The wallet transaction backup could not be saved. This sale ledger was not removed.');
             }
 
-            await transactionCollection.deleteMany(txFilter);
+            if (txDocs.length) {
+              const removed = await transactionCollection.deleteMany({
+                ...txFilter,
+                $or: txDocs.map(tx => ({ _id: tx._id, $expr: { $eq: ['$$ROOT', { $literal: tx }] } })),
+              });
+              if (removed.deletedCount !== txDocs.length)
+                throw new Error('The original sale ledger changed during deletion; check its saved result.');
+            }
+            if (await transactionCollection.countDocuments(txFilter))
+              throw new Error('New ledger rows appeared during deletion; check its saved result.');
 
             const customerMatchAnd = [{ customer_id: customerId }];
             if (branchId) {
