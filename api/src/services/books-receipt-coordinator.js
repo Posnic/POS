@@ -5,7 +5,7 @@ const {ObjectId}=require('mongodb'),journal=require('./books-receipt-journal'),s
 const fail=m=>{throw Object.assign(new Error(m),{status:409});};
 function create({db}){
  const commands=journal.create({db}),sales=saleModule.create({db}),invoices=invoiceModule.create({db}),customers=customerModule.create({db});
- const query=(context,b)=>({_id:b.sourceId.kind==='objectId'?new ObjectId(b.sourceId.value):b.sourceId.value,license:context.license});
+ const query=(context,b)=>({_id:b.sourceId.kind==='objectId'?new ObjectId(b.sourceId.value):b.sourceId.value,license:journal.licenseValue(context)});
  async function release(context,id,cmd,c){await customers.release(context,id,cmd);await invoices.release(context,id,cmd);if(c.state==='stopped')await sales.releaseStopped(context,id,cmd);else await sales.finalize(context,id,cmd);return c;}
  const service={
   async prepare(context,sourceId,invoiceId,input){

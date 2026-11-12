@@ -78,7 +78,7 @@ beforeEach(() => {
       .fn()
       .mockReturnValue({ toArray: async () => [{ totalIn: 200, totalOut: 200 }] }),
   };
-  collections.customers = { updateOne: jest.fn().mockResolvedValue({}) };
+  collections.customers = { findOne: jest.fn().mockResolvedValue({ _id: new ObjectId(CUSTOMER), balance: 0 }), updateOne: jest.fn().mockResolvedValue({ matchedCount: 1 }) };
   mockApply.mockResolvedValue({ status: true, data: { status: 'paid' }, message: 'Invoice paid' });
   mockGetInvoice.mockResolvedValue({ status: true, data: { _id: new ObjectId(INVOICE) } });
   mockRecordPayment.mockResolvedValue({ status: true });
@@ -192,7 +192,7 @@ describe('recordPayment', () => {
     expect(saleUpdate.$inc).toEqual({ wallet_amount: 200 });
     /* customer balance recomputed from the ledger */
     expect(collections.customers.updateOne).toHaveBeenCalled();
-    expect(collections.customers.updateOne.mock.calls[0][1].$set.balance).toBe(0);
+    expect(collections.customers.updateOne.mock.calls.find(call => call[1].$set?.balance !== undefined)[1].$set.balance).toBe(0);
     /* the invoice gets a note, and then the mirror - never a balance of its own */
     expect(mockRecordPayment.mock.calls[0][1]).toMatchObject({
       amount: 200,

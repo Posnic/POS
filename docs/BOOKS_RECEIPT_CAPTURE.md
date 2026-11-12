@@ -55,7 +55,7 @@ Remaining audited write surfaces before activation:
 | Surface | Current evidence / remaining protection |
 | --- | --- |
 | `invoice.repository.js` | Atomic invoice-document predicates verified; does not protect preceding sale/customer side effects. |
-| `invoice-sync.recordPayment` | Exact-sale admission competes atomically with Books reservation. Same-customer operations on different sales and other legacy writers still need shared admission. |
+| `invoice-sync.recordPayment` | Exact-sale admission competes atomically with Books reservation. Invoice payments on different sales also reserve the shared customer; other legacy writers still need shared admission. |
 | `sale.repository.js`: `deleteSales`, `returnSalesOrder`, `salesPaymentCloseModel` | Delete/return/wallet settlement identified; must reserve before any stock, money or customer effects, not merely filter the final sale update. |
 | `customer.repository.js`: update, delete/bulk delete, `updateTotalsAfterSale` | Customer mutations identified; checkout/customer-ledger operations need coordinated admission before side effects. |
 | `setting.model.js` restore writes | Generic replacement can overwrite ownership; restore policy must protect incomplete financial operations. |
@@ -70,7 +70,15 @@ Successful completion requires the sale update, invoice note and mirror to succe
 
 Actual service/repository source against standalone Mongo passes normal walk-in and customer partial payments, unchanged net customer wallet, a Books reservation injected just before legacy admission (no legacy money changes), and interrupted invoice-note recovery holding the changed sale against duplicate collection. Existing 86 regressions still pass. The test repository connection provider is substituted; this is not installed POS acceptance. All scratch roots were independently absent.
 
-This lock is on the synced sales document, so the incoming Gateway/agent policy must preserve authority and prevent copied commands from running. Customer operations on different sales, returns, deletion, checkout, direct transaction writers and restore remain unfenced. Normal-entry context mapping must also preserve legacy ObjectId shop/branch identities: the real legacy tests use native IDs while the internal journal fixtures use string shop scope. That mapping and complete installed acceptance are not established by these tests.
+This lock is on the synced sales document, so the incoming Gateway/agent policy must preserve authority and prevent copied commands from running. Other customer operations, returns, deletion, checkout, direct transaction writers and restore remain unfenced. Native shop context and invoice-payment customer admission are now covered below; authenticated normal-entry binding and installed acceptance remain open.
+
+## Native shop scope and shared customer admission
+
+The journal accepts an actual server-owned ObjectId shop identity, or its canonical string with `licenseKind: objectId`. It stores the explicit type in review scope and separates journal identity from a plain string shop of the same spelling. Reads and every sale/invoice/customer/transaction predicate use the typed value. Existing string-scope histories retain their original identity. Conflicting or invalid type declarations are rejected. Authentication adapters must construct this context from the resolved shop, never trust request-supplied type/authority values.
+
+The legacy invoice-payment path additionally acquires a journalled exact-document customer reservation before ledger writes. Both paths check each other's customer reservation. If another payment owns the customer, the legacy path releases its untouched sale reservation and writes no money. Success releases customer before sale; an interrupted operation retains both. This closes cross-sale contention specifically between Books and legacy invoice-payment. It does not cover customer-page wallet transactions, checkout, returns or incoming sync yet.
+
+Real-Mongo tests now continue a native-ID legacy customer payment through the coordinator to full settlement, preserving native ledger shop/branch IDs and refusing the same-spelling string shop on recovery. Another test injects a Books customer reservation just before a legacy claim on a different sale: no legacy money is written and its sale reservation is released. Conversely, an interrupted legacy payment blocks both another legacy sale payment and a new Books receipt before acceptance. These checks use actual service/repository source with substituted connection plumbing, not installed software.
 
 ## Required coordinator and normal-entry work
 

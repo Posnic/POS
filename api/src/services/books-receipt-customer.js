@@ -11,20 +11,20 @@ function create({db}){
  async function execute(context,id,cmd,reserveOnly=false){
   const c=await commands.outcome(context,id,cmd);if(!c||!(reserveOnly?['prepared']:['accepted','projected']).includes(c.state))fail('Recover the original receipt first');if(reserveOnly)await sales.reserve(context,id,cmd);else await sales.apply(context,id,cmd);
   const b=c.review.values.basis,r=c.receipt||{id:createHash('sha256').update(JSON.stringify([context.authority,id,cmd])).digest('hex')},currency={currencyCode:b.currencyCode,currencyDigits:b.currencyDigits};
-  const sale=await db.collection('sales').findOne({_id:b.sourceId.kind==='objectId'?new ObjectId(b.sourceId.value):b.sourceId.value,license:context.license});
+  const sale=await db.collection('sales').findOne({_id:b.sourceId.kind==='objectId'?new ObjectId(b.sourceId.value):b.sourceId.value,license:journal.licenseValue(context)});
   if(!sale||sale.books_receipt_lock?.commandId!==cmd||sale.books_receipt_lock?.authority!==context.authority)fail('Original sale is not reserved');
   const original=JSON.parse(sale.books_receipt_lock.sourceJson),ref=original.customerReferences?.customerId;
   if(!ref){if(original.customerReferences?.legacyCustomer)fail('Legacy customer identity needs review');return {receiptId:r.id,required:false};}
   if(!['objectId','string'].includes(ref.kind)||!ObjectId.isValid(ref.value))fail('Original customer identity needs review');
-  const customerId=new ObjectId(ref.value),scope={customer_id:customerId,license:context.license,branch_id:sale.branch_id},customerQuery={_id:customerId,license:context.license,branch_id:sale.branch_id};
+  const customerId=new ObjectId(ref.value),scope={customer_id:customerId,license:journal.licenseValue(context),branch_id:sale.branch_id},customerQuery={_id:customerId,license:journal.licenseValue(context),branch_id:sale.branch_id};
   const identity={version:1,journalId:id,commandId:cmd,receiptId:r.id,authority:context.authority,reviewHash:c.review.reviewHash};
 
   const rows=async()=>{const result=await transactions.find(scope).limit(10001).toArray();if(result.length>10000)fail('Customer ledger needs a paged review');return result;};
   const balance=entries=>{let n=0n;for(const row of entries){if(!['in','out'].includes(row.type))fail('Customer ledger direction needs review');const amount=exact(row.amount,currency);if(amount<0)fail('Customer ledger amount needs review');n+=BigInt(amount)*(row.type==='in'?1n:-1n);}if(n>BigInt(Number.MAX_SAFE_INTEGER)||n<BigInt(Number.MIN_SAFE_INTEGER))fail('Customer balance is too large');return Money.fromMinor(Number(n),currency);};
   for(let attempt=0;attempt<12;attempt++){
-   const customer=await customers.findOne(customerQuery);if(!customer)fail('Original customer is unavailable');let lock=customer.books_receipt_lock;
+   const customer=await customers.findOne(customerQuery);if(!customer)fail('Original customer is unavailable');if(Object.hasOwn(customer,'legacy_invoice_payment_lock'))fail('Check the unfinished POS customer payment before continuing');let lock=customer.books_receipt_lock;
    if(!lock){
-    const before=await rows(),own=await transactions.find({sale_id:sale._id,license:context.license}).limit(2).toArray();if(own.length>1||own.some(row=>!equal(row.customer_id,customerId)||!equal(row.branch_id,sale.branch_id)))fail('Sale allocation is ambiguous');
+    const before=await rows(),own=await transactions.find({sale_id:sale._id,license:journal.licenseValue(context)}).limit(2).toArray();if(own.length>1||own.some(row=>!equal(row.customer_id,customerId)||!equal(row.branch_id,sale.branch_id)))fail('Sale allocation is ambiguous');
     const wallet=exact(original.values.wallet_amount??0,currency);
     if(own.length&&(own[0].type!=='out'||exact(own[0].amount,currency)!==wallet||exact(own[0].pending,currency)!==Number(b.pendingMinor)))fail('Original sale allocation differs');
     if(!own.length&&wallet!==0)fail('Original wallet allocation is missing');
@@ -43,7 +43,7 @@ function create({db}){
 
   const received={_id:'books-receipt:'+r.id,...scope,sale_id:'',customer_name:String(sale.customer_name||''),customer_phone:String(sale.customer_phone||''),branch_name:String(sale.branch_name||''),amount:Money.fromMinor(Number(r.amountMinor),currency),type:'in',pending:0,description:'Invoice payment'+(r.method?' - '+r.method:''),transaction_image:'',date:new Date(r.at),created_date:new Date(r.at),updated_date:new Date(r.at),invoice_id:sale.source_invoice_id,books_receipt_effect:identity};
    const allocation={...(lock.own||{_id:'books-allocation:'+id,...scope,sale_id:sale._id,customer_name:String(sale.customer_name||''),transaction_image:'category.svg',sale_total:Money.fromMinor(Number(b.totalMinor),currency),description:'Add sale',date:new Date(r.at),created_date:new Date(r.at)}),amount:Money.fromMinor(exact(original.values.wallet_amount??0,currency)+Number(r.amountMinor),currency),pending:Money.fromMinor(Number(r.pendingMinor),currency),type:'out',updated_date:new Date(r.at),books_receipt_effect:identity};
-   const allocations=await transactions.find({sale_id:sale._id,license:context.license}).limit(2).toArray();if(allocations.length>1||allocations.some(row=>!equal(row._id,allocation._id)||!equal(row.customer_id,customerId)||!equal(row.branch_id,sale.branch_id)))fail('Sale allocation is ambiguous');
+   const allocations=await transactions.find({sale_id:sale._id,license:journal.licenseValue(context)}).limit(2).toArray();if(allocations.length>1||allocations.some(row=>!equal(row._id,allocation._id)||!equal(row.customer_id,customerId)||!equal(row.branch_id,sale.branch_id)))fail('Sale allocation is ambiguous');
    const current=await rows(),money=current.find(row=>equal(row._id,received._id)),own=current.find(row=>equal(row._id,allocation._id));
    if(money&&!equal(money,received))fail('Received money differs from its original');
    if(own&&!equal(own,lock.own)&&!equal(own,allocation))fail('Sale allocation differs from its original');
@@ -65,7 +65,7 @@ function create({db}){
  }
  return {reserve:(context,id,cmd)=>execute(context,id,cmd,true),apply:(context,id,cmd)=>execute(context,id,cmd),async release(context,id,cmd){
   const c=await commands.outcome(context,id,cmd);if(!c||!['stopped','projected'].includes(c.state))fail('Finish or stop the original receipt first');
-  const query={license:context.license,'books_receipt_lock.identity.journalId':id,'books_receipt_lock.identity.commandId':cmd,'books_receipt_lock.identity.authority':context.authority};
+  const query={license:journal.licenseValue(context),'books_receipt_lock.identity.journalId':id,'books_receipt_lock.identity.commandId':cmd,'books_receipt_lock.identity.authority':context.authority};
   const found=await customers.find(query).limit(2).toArray();if(found.length>1)fail('Customer reservation is ambiguous');if(!found.length)return;
   const customer=found[0],lock=customer.books_receipt_lock;if(String(customer.branch_id)!==context.branchId||lock.identity.reviewHash!==c.review.reviewHash)fail('Customer reservation changed');
   if(c.state==='projected'&&(customer.books_receipt_effect?.receiptId!==c.receipt.id||customer.books_receipt_effect?.reviewHash!==c.review.reviewHash||customer.balance!==customer.books_receipt_effect.balance))fail('Customer receipt is incomplete');

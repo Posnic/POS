@@ -3,13 +3,21 @@
 // authenticated installation authority, source snapshot and payment permission.
 // One document owns receipt acceptance; ledger/invoice projection is a separate,
 // recoverable step. It is deliberately not enabled by the existing payment route.
-const {createHash}=require('node:crypto');
+const {createHash}=require('node:crypto'),{ObjectId}=require('mongodb');
 const hash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const fail=message=>{throw Object.assign(new Error(message),{status:409});};
 const text=(v,name,max=128)=>{if(typeof v!=='string'||!v||v.length>max||v!==v.trim()||[...v].some(c=>c.charCodeAt(0)<32||c.charCodeAt(0)===127))fail('Invalid '+name);return v;};
 const minor=v=>{if(typeof v!=='string'||!/^(0|[1-9][0-9]*)$/.test(v)||BigInt(v)>BigInt(Number.MAX_SAFE_INTEGER))fail('Invalid payment amount');return BigInt(v);};
 const fingerprint=v=>{if(typeof v!=='string'||!/^[a-f0-9]{64}$/.test(v))fail('Invalid source revision');return v;};
-function scope(v){return {license:text(v.license,'shop'),branchId:text(v.branchId,'branch'),authority:text(v.authority,'payment authority')};}
+function scope(v){
+ if(v.licenseKind!==undefined&&!['objectId','string'].includes(v.licenseKind))fail('Invalid shop identity type');
+ const native=v.license instanceof ObjectId||v.licenseKind==='objectId';
+ if(v.license instanceof ObjectId&&v.licenseKind==='string')fail('Shop identity type conflicts');
+ const license=text(v.license instanceof ObjectId?String(v.license):v.license,'shop');
+ if(native&&!/^[a-f0-9]{24}$/.test(license))fail('Invalid native shop identity');
+ return {license,branchId:text(v.branchId,'branch'),authority:text(v.authority,'payment authority'),...(native?{licenseKind:'objectId'}:{})};
+}
+function licenseValue(context){const s=scope(context);return s.licenseKind==='objectId'?new ObjectId(s.license):s.license;}
 function basis(v){
  const sourceId={kind:v.sourceId?.kind,value:text(v.sourceId?.value,'sale identity')};if(!['objectId','string'].includes(sourceId.kind)||(sourceId.kind==='objectId'&&!/^[a-f0-9]{24}$/.test(sourceId.value)))fail('Invalid sale identity');
  if(!/^[A-Z]{3}$/.test(v.currencyCode)||!Number.isInteger(v.currencyDigits)||v.currencyDigits<0||v.currencyDigits>4)fail('Saved currency is required');
@@ -17,7 +25,7 @@ function basis(v){
  if(v.invoiceIdentity&&(!['objectId','string'].includes(v.invoiceIdentity.kind)||v.invoiceIdentity.value!==v.invoiceId||(v.invoiceIdentity.kind==='objectId'&&!/^[a-f0-9]{24}$/.test(v.invoiceIdentity.value))))fail('Invalid original invoice identity');
  return {sourceId,invoiceId:text(v.invoiceId,'invoice'),...(v.invoiceIdentity?{invoiceIdentity:{kind:v.invoiceIdentity.kind,value:v.invoiceIdentity.value}}:{}),revision:fingerprint(v.revision),currencyCode:v.currencyCode,currencyDigits:v.currencyDigits,totalMinor:v.totalMinor,paidMinor:v.paidMinor,pendingMinor:v.pendingMinor};
 }
-const identity=(s,b)=>hash([s.license,b.sourceId.kind,b.sourceId.value]);
+const identity=(s,b)=>hash(s.licenseKind==='objectId'?['objectId',s.license,b.sourceId.kind,b.sourceId.value]:[s.license,b.sourceId.kind,b.sourceId.value]);
 function validate(doc){
  if(!doc||doc.version!==1||doc._id!==identity(scope(doc.scope),basis(doc.baseline))||!Number.isSafeInteger(doc.revision)||doc.revision<0||!Array.isArray(doc.commands)||doc.commands.length>1000)fail('Receipt history is unavailable');
  let paid=minor(doc.baseline.paidMinor),pending=null,sourceRevision=doc.baseline.revision,revision=0;const seen=new Set();
@@ -39,7 +47,7 @@ function validate(doc){
 }
 function create({db,now=()=>new Date()}){
  const collection=db.collection('books_receipt_journals');
- const read=async(s,id)=>{const doc=await collection.findOne({_id:id,'scope.license':s.license,'scope.branchId':s.branchId,'scope.authority':s.authority});if(!doc)fail('Payment request not found on this installation');return validate(doc);};
+ const read=async(s,id)=>{const doc=await collection.findOne({_id:id,'scope.license':s.license,'scope.licenseKind':s.licenseKind||{$exists:false},'scope.branchId':s.branchId,'scope.authority':s.authority});if(!doc)fail('Payment request not found on this installation');return validate(doc);};
  const result=c=>structuredClone(c);
  async function mutate(s,id,cmd,work){for(let attempt=0;attempt<20;attempt++){const doc=await read(s,id),c=doc.commands.find(c=>c.commandId===cmd);if(!c)fail('Payment request not found');const copy=structuredClone(doc),changed=work(copy,copy.commands.find(c=>c.commandId===cmd));if(!changed)return result(c);copy.revision++;validate(copy);const saved=await collection.replaceOne({_id:id,revision:doc.revision},copy,{writeConcern:{w:1,j:true}});if(saved.matchedCount)return result(copy.commands.find(c=>c.commandId===cmd));}fail('Payment changed; check the original result');}
  return {
@@ -61,4 +69,4 @@ function create({db,now=()=>new Date()}){
   async projected(context,id,cmd,evidence){return mutate(scope(context),id,cmd,(doc,c)=>{if(!['accepted','projected'].includes(c.state)||evidence.receiptId!==c.receipt.id||evidence.paidMinor!==c.receipt.paidMinor||evidence.pendingMinor!==c.receipt.pendingMinor)fail('Payment projection differs from the receipt');fingerprint(evidence.revision);if(c.state==='projected'){if(c.projectedRevision!==evidence.revision)fail('Projection evidence changed');return false;}c.state='projected';c.projectedRevision=evidence.revision;doc.active=null;return true;});}
  };
 }
-module.exports={create,validate,basis};
+module.exports={create,validate,basis,licenseValue};

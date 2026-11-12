@@ -20,7 +20,7 @@ function checkedBasis(original,invoiceId,identity){
 }
 function create({db,now=()=>new Date()}){
  const sales=db.collection('sales'),commands=journal.create({db,now});
- const filter=(context,b)=>({_id:b.sourceId.kind==='objectId'?new ObjectId(b.sourceId.value):b.sourceId.value,license:context.license,branch_id:/^[a-f0-9]{24}$/.test(context.branchId)?new ObjectId(context.branchId):context.branchId});
+ const filter=(context,b)=>({_id:b.sourceId.kind==='objectId'?new ObjectId(b.sourceId.value):b.sourceId.value,license:journal.licenseValue(context),branch_id:/^[a-f0-9]{24}$/.test(context.branchId)?new ObjectId(context.branchId):context.branchId});
  const lockOf=(context,id,c,original)=>({version:1,journalId:id,commandId:c.commandId,authority:context.authority,reviewHash:c.review.reviewHash,sourceJson:original.sourceJson,sourceRevision:original.revision});
  const owned=(lock,context,id,c)=>lock?.version===1&&lock.journalId===id&&lock.commandId===c.commandId&&lock.authority===context.authority&&lock.reviewHash===c.review.reviewHash&&lock.sourceRevision===c.review.values.basis.revision&&typeof lock.sourceJson==='string'&&hash(lock.sourceJson)===lock.sourceRevision;
  async function read(context,id,cmd){const c=await commands.outcome(context,id,cmd);if(!c)fail('Original payment request is missing');const b=c.review.values.basis,query=filter(context,b),sale=await sales.findOne(query);if(!sale||String(sale.source_invoice_id)!==b.invoiceId||(b.invoiceIdentity&&!equal(invoiceIdentity(sale.source_invoice_id),b.invoiceIdentity)))fail('Original invoice sale is unavailable');return {c,b,query,sale};}

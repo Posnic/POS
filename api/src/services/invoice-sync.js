@@ -224,6 +224,25 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   if (!reserved.matchedCount) return { status: false, data: null,
     message: 'The sale changed or another payment is in progress. Check its saved result before collecting again.' };
 
+  let reservedCustomer = null;
+  if (sale.customer_id && ObjectId.isValid(String(sale.customer_id))) {
+    const customerId = new ObjectId(String(sale.customer_id));
+    const customers = db.collection('customers');
+    const customerQuery = { _id: customerId, license: sale.license, branch_id: sale.branch_id || null };
+    const customer = await customers.findOne(customerQuery);
+    const claimed = customer && await customers.updateOne(
+      { ...customerQuery, books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false },
+        $expr: { $eq: ['$$ROOT', { $literal: customer }] } },
+      { $set: { legacy_invoice_payment_lock: reservation } }, { writeConcern: { w: 1, j: true } }
+    );
+    if (!claimed?.matchedCount) {
+      await sales.updateOne({ _id: sale._id, legacy_invoice_payment_lock: reservation },
+        { $unset: { legacy_invoice_payment_lock: '' } }, { writeConcern: { w: 1, j: true } });
+      return { status: false, data: null, message: 'Check the customer and any unfinished payment before collecting again.' };
+    }
+    reservedCustomer = customerQuery;
+  }
+
   const saleSet = {
     partial_balance: paidAfter,
     payment_pending: pendingAfter,
@@ -308,9 +327,10 @@ async function recordPayment(invoice, payment = {}, context = {}) {
       ])
       .toArray();
     const balance = agg.length ? round2((agg[0].totalIn || 0) - (agg[0].totalOut || 0)) : 0;
-    await db
+    const customerUpdated = await db
       .collection('customers')
-      .updateOne({ _id: customerId }, { $set: { balance, updated_date: now } });
+      .updateOne({ ...reservedCustomer, legacy_invoice_payment_lock: reservation }, { $set: { balance, updated_date: now } });
+    if (!customerUpdated.matchedCount) throw new Error('Customer payment reservation changed; recover its original payment');
   } else {
     const updatedSale = await sales.updateOne({ _id: sale._id, legacy_invoice_payment_lock: reservation }, { $set: saleSet });
     if (!updatedSale.matchedCount) throw new Error('Payment reservation changed; check the saved payment before collecting again');
@@ -326,6 +346,13 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   if (!noted.status) throw new Error('Payment was saved but its invoice note needs recovery: ' + noted.message);
   const synced = await syncSale(sale._id, { invoiceId: String(invoice._id) });
   if (!synced.synced) throw new Error('Payment was saved but its invoice mirror needs recovery: ' + synced.message);
+  if (reservedCustomer) {
+    const released = await db.collection('customers').updateOne(
+      { ...reservedCustomer, legacy_invoice_payment_lock: reservation },
+      { $unset: { legacy_invoice_payment_lock: '' } }, { writeConcern: { w: 1, j: true } }
+    );
+    if (!released.matchedCount) throw new Error('Customer payment completion needs recovery');
+  }
   const completed = await sales.updateOne(
     { _id: sale._id, legacy_invoice_payment_lock: reservation },
     { $unset: { legacy_invoice_payment_lock: '' }, $set: { legacy_invoice_payment_result: { ...reservation, state: 'completed' } } },
