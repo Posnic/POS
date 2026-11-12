@@ -42,6 +42,8 @@
     "modifier_groups": "branch"
   },
   "local_only": {
+    "invoices": "Draft versions, issuance/payment reservations and original receipt notes belong to the issuing API. Generic last-writer-wins replication must not copy execution locks or overwrite issued originals. Other clients must use the authenticated original API; cross-installation shared invoice evidence and offline access remain required rollout work, not supplied by this local-only decision.",
+    "books_connector_local": "Opt-in revisions and original request results belong to this protected payment installation. Never activate another till by syncing this setting. Other devices must read status from the authenticated owning API; shared status routing remains pending.",
     "books_receipt_journals": "Payment command acceptance and recovery belong to the explicitly authorized installation. Never replay or last-writer-wins replicate these commands. The Books receipt coordinator is not activated yet; authenticated shared receipt evidence and cross-installation ownership remain rollout gates.",
     "spoilage_commands": "Authoritative approval/rejection and stock execution journal belongs to the originating installation. Read-only spoilage_entries snapshots sync for reports; another till must never execute their commands. Review actions direct users to the originating cloud or till.",
     "app_brand": "White-label branding is provisioned by the tenant/build configuration, not by catalogue replication between installations.",
