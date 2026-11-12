@@ -4,6 +4,8 @@ const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { hasRealKeystore } = require('./local-crypto');
 const FILE = '.books-payment-authority.json';
+const MARKER = '.books-payment-authority.created';
+const preparations = new Map();
 const createdThisProcess = new Set();
 function fail() {
   throw Object.assign(new Error('Original Books payment installation identity is unavailable. Restore or review the original installation; do not create a replacement for existing payments.'), { code: 'BOOKS_AUTHORITY_UNAVAILABLE' });
@@ -17,6 +19,20 @@ function load({ directory, safeStorage, allowCreate = false }) {
   try { canonical = fs.realpathSync(directory); } catch { fail(); }
   const binding = process.platform === 'win32' ? canonical.toLowerCase() : canonical;
   const file = path.join(canonical, FILE);
+  const marker = path.join(canonical, MARKER);
+  function markCreated(exclusive = false) {
+    let markerFd;
+    try {
+      markerFd = fs.openSync(marker, 'wx', 0o600);
+      fs.writeFileSync(markerFd, JSON.stringify({version:1,createdAt:new Date().toISOString()}));
+      fs.fsyncSync(markerFd);
+    } catch (error) {
+      if (error.code !== 'EEXIST' || exclusive) fail();
+      const stat = fs.lstatSync(marker);
+      if (!stat.isFile() || stat.isSymbolicLink()) fail();
+    } finally { if (markerFd !== undefined) fs.closeSync(markerFd); }
+  }
+
   function read() {
     try {
       const stat = fs.lstatSync(file);
@@ -30,9 +46,10 @@ function load({ directory, safeStorage, allowCreate = false }) {
       return Object.freeze({ version: 1, authority: value.authority, requiresRestart: createdThisProcess.has(file) });
     } catch { fail(); }
   }
-  try { fs.lstatSync(file); return read(); } catch (error) {
+  try { fs.lstatSync(file); const original=read(); markCreated(); return original; } catch (error) {
     if (error.code !== 'ENOENT' || allowCreate !== true) fail();
   }
+  try { fs.lstatSync(marker); fail(); } catch (error) { if (error.code !== 'ENOENT') fail(); }
   let encrypted;
   try {
     encrypted = safeStorage.encryptString(JSON.stringify({ version: 1, authority: 'books-' + randomUUID(), directory: binding }));
@@ -40,6 +57,7 @@ function load({ directory, safeStorage, allowCreate = false }) {
   } catch { fail(); }
   let fd;
   try {
+    markCreated(true);
     fd = fs.openSync(file, 'wx', 0o600);
     // Electron may persist its OS encryption key only during normal shutdown.
     // Payment activation must wait for a fresh process to reopen this identity.
@@ -53,4 +71,19 @@ function load({ directory, safeStorage, allowCreate = false }) {
   } finally { if (fd !== undefined) fs.closeSync(fd); }
   return read();
 }
-module.exports = { load, FILE };
+async function prepare({directory,safeStorage,assertUnused}) {
+  const canonical=fs.realpathSync(directory);
+  const key=process.platform==='win32'?canonical.toLowerCase():canonical;
+  if(preparations.has(key))return preparations.get(key);
+  const pending=(async()=>{
+    try { fs.lstatSync(path.join(canonical,FILE)); return load({directory:canonical,safeStorage}); }
+    catch(error){if(error.code!=='ENOENT')throw error;}
+    try { fs.lstatSync(path.join(canonical,MARKER)); fail(); } catch(error){if(error.code!=='ENOENT')fail();}
+    if(typeof assertUnused!=='function')fail();
+    if(await assertUnused()!==true)fail();
+    return load({directory:canonical,safeStorage,allowCreate:true});
+  })();
+  preparations.set(key,pending);
+  try{return await pending;}finally{if(preparations.get(key)===pending)preparations.delete(key);}
+}
+module.exports = { load, prepare, FILE, MARKER };
