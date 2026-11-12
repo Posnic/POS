@@ -154,6 +154,12 @@ The general v1 integration API now excludes local Books/legacy payment locks, pr
 
 Identity inspection found the paired agent advertisement in `business-decision-outbox.js` and desktop activation validation in `src/cloud-activation.js`. Neither is wired into Books receipt authority. The Community database-generated identifier is not clone-resistant and must not be reused as proof of original payment ownership. Protected local identity and authenticated paired-device binding remain implementation work.
 
+## Protected desktop authority primitive
+
+A desktop-only protected authority store now requires real OS encryption, explicit first creation and the original canonical data-directory binding. It never rotates missing/corrupt/unreadable originals automatically and never falls back to plaintext. New identities report requiresRestart until a fresh process can decrypt them. Actual Windows Electron creation, normal shutdown and fresh-process reopen pass, along with copied-directory refusal and corrupt-original retention; unavailable/wrong-account keystores are injected tests. A forced-exit test exposed unflushed Electron encryption-key initialization, so normal shutdown/reopen is an activation prerequisite. Every failed and successful scratch root was removed. This primitive is not yet wired to connector opt-in/admission, paired-device authentication or recovery UI. A full machine/profile clone and historical database provenance remain unresolved; it is not proof against a deliberately cloned OS identity.
+
+`src/books-installation-authority.js` belongs to the desktop shell. Callers must provide the shell-owned data directory, never a browser path; allowCreate is only for first opt-in after checking for existing receipt ownership. A requiresRestart result must not authorize payment acceptance. Identity files are local-only and must not enter MongoDB backup/sync lanes. No shell startup or payment route is activated by this module. Native validation uses Books `node scripts/run-node-tests.js scripts/verify-pos-authority-restart.js`, which runs and closes each isolated Electron process sequentially.
+
 ## Required coordinator and normal-entry work
 
 1. Add an explicit opt-in in the Books connector's own Integrations page. Unset/off keeps the existing POS workflow. Bind the active receiver to protected installation identity, not a browser-supplied authority or a copied database setting. Define how a customer finds the receiver from another authorized installation.
