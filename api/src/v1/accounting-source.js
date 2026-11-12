@@ -18,7 +18,16 @@ const projection = {
   'items.tax': 1, 'items.tax_type': 1, 'items.tax_amount': 1,
   'items.pricing.version': 1,
   'items.pricing.currency.currencyCode': 1,
-  'items.pricing.currency.currencyDigits': 1
+  'items.pricing.currency.currencyDigits': 1,
+  'captain_payments.id': 1, 'captain_payments.method': 1,
+  'captain_payments.amount': 1, 'captain_payments.at': 1,
+  'captain_payments.tenders.method': 1, 'captain_payments.tenders.amount': 1,
+  'payment_corrections.id': 1, 'payment_corrections.at': 1,
+  'payment_corrections.before.method': 1, 'payment_corrections.before.amount': 1,
+  'payment_corrections.after.method': 1, 'payment_corrections.after.amount': 1,
+  'return_refund_transactions.return_obj_id': 1,
+  'return_refund_transactions.return_id': 1,
+  'return_refund_transactions.amount': 1, 'return_refund_transactions.created_at': 1
 };
 
 function canonical(value) {
