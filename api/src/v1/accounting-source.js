@@ -6,6 +6,7 @@ const { createHash } = require('node:crypto');
 // belongs to the connector's explicit mappings and reconciliation.
 const projection = {
   _id: 1, license: 1, branch_id: 1, sales_id: 1, updated_date: 1,
+  customer_id: 1, customer: 1,
   date: 1, created_date: 1, sale_process: 1, payment_status: 1,
   currencyCode: 1, currencyDigits: 1,
   sales_total: 1, sales_sub_total: 1, items_total: 1,
@@ -41,13 +42,24 @@ function canonical(value) {
   return value;
 }
 
+// Export identifiers only. Unsupported legacy values must not leak embedded
+// customer/contact objects into a token scoped only for sales reads.
+function customerReference(value) {
+  if(value===null||value===undefined)return null;
+  if(value?._bsontype==='ObjectId'&&/^[a-f0-9]{24}$/.test(String(value)))return {kind:'objectId',value:String(value)};
+  if(typeof value==='string'&&value.length>0&&value.length<=128&&value===value.trim()&&[...value].every(char=>char.charCodeAt(0)>=32&&char.charCodeAt(0)!==127))return {kind:'string',value};
+  return {kind:'unsupported'};
+}
 function exportSale(doc) {
   const sourceId = {
     kind: doc._id?._bsontype === 'ObjectId' ? 'objectId' : 'string',
     value: String(doc._id)
   };
-  const payload = canonical(JSON.parse(JSON.stringify(doc)));
-  const sourceJson = JSON.stringify({ schema: 'posnic.sale-source.v1', sourceId, values: payload });
+  const {customer_id,customer,...financial}=doc;
+  const payload = canonical(JSON.parse(JSON.stringify(financial)));
+  const references=Object.hasOwn(doc,'customer_id')||Object.hasOwn(doc,'customer')?
+    {customerReferences:{version:1,customerId:customerReference(customer_id),legacyCustomer:customerReference(customer)}}:{};
+  const sourceJson = JSON.stringify({ schema: 'posnic.sale-source.v1', sourceId, values: payload,...references });
   return {
     sourceId, sourceJson,
     revision: createHash('sha256').update(sourceJson, 'utf8').digest('hex')

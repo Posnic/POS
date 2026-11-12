@@ -32,3 +32,10 @@ describe('accounting source snapshots',()=>{
     expect(Object.values(projection).every(value=>value===1)).toBe(true);
   });
 });
+
+test('exports typed customer references without embedding customer objects or changing source',()=>{
+ const id=new ObjectId(),doc={_id:'sale',customer_id:id,customer:String(id),sales_total:105},before=JSON.stringify(doc);
+ const value=JSON.parse(exportSale(doc).sourceJson);expect(value.customerReferences).toEqual({version:1,customerId:{kind:'objectId',value:String(id)},legacyCustomer:{kind:'string',value:String(id)}});expect(value.values).not.toHaveProperty('customer_id');expect(value.values).not.toHaveProperty('customer');expect(JSON.stringify(doc)).toBe(before);
+ const unsafe=exportSale({_id:'sale',customer_id:{email:'private@example.test'},customer:null});expect(unsafe.sourceJson).not.toContain('private');expect(JSON.parse(unsafe.sourceJson).customerReferences.customerId).toEqual({kind:'unsupported'});
+ expect(JSON.parse(exportSale({_id:'sale'}).sourceJson)).not.toHaveProperty('customerReferences');
+});
