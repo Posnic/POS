@@ -465,11 +465,10 @@ describe('SalesRepository', () => {
       expect(collections.sales.updateOne).toHaveBeenCalled();
       expect(r).toBe(true);
     });
-    test('returns false when no match', async () => {
+    test('holds an unmatched wallet write instead of reporting success', async () => {
       if (!collections.sales) collections.sales = mkCol();
       collections.sales.updateOne.mockResolvedValue({ matchedCount: 0, modifiedCount: 0 });
-      const r = await salesRepository.updateWalletAmount(FAKE_ID, 50);
-      expect(r).toBe(false);
+      await expect(salesRepository.updateWalletAmount(FAKE_ID, 50)).rejects.toThrow(/unfinished payment/);
     });
     test('returns false on exception', async () => {
       if (!collections.sales) collections.sales = mkCol();

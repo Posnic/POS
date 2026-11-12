@@ -120,6 +120,14 @@ Real standalone fixtures cover the actual controller with unrelated startup depe
 
 This is not a finished recovery or sync journey. The browser still needs a durable request identity and original-result retrieval: a lost reply after successful final balance acknowledgement followed by a new POST can still repeat an addition. Interrupted commands need normal-entry recovery. `customers` and `transaction` already have generic sync lanes, but command ownership and recovery payloads must not be replayed on another till. Gateway/agent transport, conflict handling and authoritative read-only result visibility remain rollout gates; no manifest change or installed sync claim is made. The source changes remain unmerged/uninstalled while those gates are open.
 
+## Ordinary sale save and wallet write boundary
+
+`SalesRepository.save` checks loaded receipt metadata and adds the shared no-reservation predicates to Mongoose `$where` for existing sales. It preserves existing seating and caller revision conditions. A reservation arriving after the read therefore prevents the write, even when the original document did not contain it. New sale insertion retains its ordinary path. `updateWalletAmount` now requires shop/branch scope and no Books owner/reservation or unfinished invoice/wallet settlement. No match raises a conflict instead of returning false to checkout callers that ignore the return value.
+
+The real repository methods run against real Mongoose and standalone MongoDB in `pos-sale-write.integration.js`; unrelated printing/notification/coupon startup dependencies are substituted. Tests cover each loaded payment field and each intervening reservation, ordinary insertion/edit, actual wallet updates, shop/branch isolation and a caller's unchanged revision predicate. The first tooling invocation inherited Node's test context and skipped its nested test runner; the corrected invocation clears that context and visibly executes the database test. Test databases and tooling remain within the owned disposable root.
+
+This does not claim atomic checkout. The service can continue with stock/register/ledger effects after the initial sale save; those effects and sale deletion/returns still need durable admission on the sale and customer, safe interruption recovery and sync fencing. No new persisted field or sync lane is added by these write predicates. Existing ownership fields must still survive authoritative synchronization before rollout. Installed POS and the published application remain unchanged.
+
 ## Required coordinator and normal-entry work
 
 1. Add an explicit opt-in in the Books connector's own Integrations page. Unset/off keeps the existing POS workflow. Bind the active receiver to protected installation identity, not a browser-supplied authority or a copied database setting. Define how a customer finds the receiver from another authorized installation.

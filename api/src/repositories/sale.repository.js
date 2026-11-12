@@ -2092,7 +2092,12 @@ class SalesRepository {
 
   async save(sale) {
     if (!sale) return null;
-    if (!sale.isNew && typeof sale.$where !== 'function') {
+    if (!sale.isNew) {
+      require('../services/books-receipt-sale').mutable(
+        typeof sale.toObject === 'function' ? sale.toObject() : sale
+      );
+      if (typeof sale.$where === 'function')
+        throw new Error('Sale write conditions are unavailable; reopen the sale.');
       if (sale.captain_payment_plan) {
         await require('../services/captain-payment-guard').mutable(await BaseModel.getDb(), sale);
         sale.set('captain_payment_plan', undefined);
@@ -2105,6 +2110,7 @@ class SalesRepository {
         : (sale.seating_capacity_revision ?? { $exists: false });
       sale.$where = {
         ...(sale.$where || {}),
+        ...require('../services/books-receipt-sale').unreserved(),
         captain_payment_plan: { $exists: false },
         seating_capacity_revision: expectedCapacity,
       };
@@ -2121,6 +2127,8 @@ class SalesRepository {
         {
           _id: new mongoose.Types.ObjectId(saleId),
           license: BaseModel.license,
+          ...(BaseModel.currentBranch ? { branch_id: BaseModel.currentBranch } : {}),
+          ...require('../services/books-receipt-sale').unreserved(),
         },
         {
           $set: {
@@ -2129,8 +2137,14 @@ class SalesRepository {
         }
       );
 
+      if (!result.matchedCount)
+        throw Object.assign(
+          new Error('This sale changed or has an unfinished payment. Check the original sale before changing its wallet amount.'),
+          { status: 409 }
+        );
       return result.modifiedCount > 0;
     } catch (error) {
+      if (error.status === 409) throw error;
       console.error('Error updating wallet amount:', error);
       return false;
     }
