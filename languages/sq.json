@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Ngarko Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Peshojeni për një sasi të kërkuar",
   "lang_you_have_read_only_access_to_product_avail": "Ju keni qasje vetëm për lexim në disponueshmërinë e produktit.",
-  "lang_feedback_customization": "Përshtatje"
+  "lang_feedback_customization": "Përshtatje",
+  "lang_cloud_login_recovery_hint": "Lidhur me cloud Rivendosni fjalëkalimin tuaj në faqen e internetit të dyqanit tuaj, pastaj kthehuni këtu dhe hyni. Asnjë konfigurim i postës elektronike nuk është e nevojshme në këtë kompjuter.",
+  "lang_reset_on_cloud": "Rivendosni në cloud",
+  "lang_cloud_reset_return": "Përfundoni rivendosjen në faqen e internetit të dyqanit tuaj. Kthehuni këtu dhe hyni me fjalëkalimin e ri.",
+  "lang_cloud_login_refresh_unavailable": "Cloud nuk mund të rifreskohet. Ju mund të përdorni fjalëkalimin tuaj të fundit të sinkronizuar jashtë linje; një fjalëkalim i ri cloud ka nevojë për një lidhje interneti.",
+  "lang_cloud_login_refreshing": "Kontrollimi i përditësimeve të përdoruesit cloud",
+  "lang_cloud_login_refreshed": "Kontrollohen përditësimet e përdoruesit cloud. Ju mund të identifikoheni."
 }

@@ -5403,5 +5403,11 @@
   "lang_upload_excel_csv": "Laden Sie Excel/CSV hoch",
   "lang_weigh_for_a_requested_amount": "Wiegen Sie für eine angeforderte Menge",
   "lang_you_have_read_only_access_to_product_avail": "Sie haben nur Lesezugriff auf die Produktverfügbarkeit.",
-  "lang_feedback_customization": "Anpassung"
+  "lang_feedback_customization": "Anpassung",
+  "lang_cloud_login_recovery_hint": "Mit der Cloud verbunden. Setze dein Passwort auf deiner Shop-Website zurück, kehre dann hierher zurück und melde dich an. Auf diesem Computer ist kein E-Mail-Setup erforderlich.",
+  "lang_reset_on_cloud": "Auf Cloud zurücksetzen",
+  "lang_cloud_reset_return": "Beenden Sie das Zurücksetzen auf Ihrer Shop-Website. Kehren Sie hierher zurück und melden Sie sich mit dem neuen Passwort an.",
+  "lang_cloud_login_refresh_unavailable": "Die Cloud konnte nicht aktualisiert werden. Sie können Ihr zuletzt synchronisiertes Passwort offline verwenden. Für ein neues Cloud-Passwort ist eine Internetverbindung erforderlich.",
+  "lang_cloud_login_refreshing": "Updates für Cloud-Benutzer werden überprüft...",
+  "lang_cloud_login_refreshed": "Die Updates für Cloud-Benutzer wurden überprüft. Sie können sich anmelden."
 }

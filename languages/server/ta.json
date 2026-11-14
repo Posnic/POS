@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppசெய்தி குறிப்பை திருப்பித் தரவில்லை. டெலிவரி உறுதிப்படுத்தப்படவில்லை; மறுமுயற்சிப்பதற்கு முன் அரட்டையைச் சரிபார",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppஇன்னும் மீண்டும் இணைக்கிறது அல்லது புதிய தொலைபேசி இணைப்பு தேவை. எந்த செய்தியும் அனுப்பப்படவில்லை.",
   "Messaging permission required.": "செய்தியிடல் அனுமதி தேவை.",
-  "Schedule owner no longer has messaging access.": "அட்டவணை உரிமையாளருக்கு இனி செய்தி அணுகல் இல்லை"
+  "Schedule owner no longer has messaging access.": "அட்டவணை உரிமையாளருக்கு இனி செய்தி அணுகல் இல்லை",
+  "This reset link has expired or was already used. Request a new link.": "இந்த மீட்டமைப்பு இணைப்பு காலாவதியாகிவிட்டது அல்லது ஏற்கனவே பயன்படுத்தப்பட்டது. புதிய இணைப்பைக் கோருங்கள்.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "ஆரம்பத்தில் அல்லது முடிவில் இடைவெளிகள் இல்லாமல் 8-20 எழுத்துக்களைப் பயன்படுத்தவும்."
 }

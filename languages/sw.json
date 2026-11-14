@@ -5403,5 +5403,11 @@
   "lang_upload_excel_csv": "Pakia Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Uzima kwa kiasi kilichoombwa",
   "lang_you_have_read_only_access_to_product_avail": "Una upatikanaji wa kusoma tu kwa upatikanaji wa bidhaa.",
-  "lang_feedback_customization": "Urekebishaji maalum"
+  "lang_feedback_customization": "Urekebishaji maalum",
+  "lang_cloud_login_recovery_hint": "Imeunganishwa na wingu. Weka upya nenosiri lako kwenye wavuti yako ya duka, kisha rudi hapa na uingie. Hakuna usanidi wa barua pepe unaohitajika kwenye kompyuta hii.",
+  "lang_reset_on_cloud": "Weka upya kwenye wingu",
+  "lang_cloud_reset_return": "Kumaliza kuweka upya kwenye wavuti yako ya duka. Rudi hapa na uingie na nenosiri jipya.",
+  "lang_cloud_login_refresh_unavailable": "Wingu haikuweza kuboreshwa. Unaweza kutumia nenosiri lako la mwisho iliyosawazishwa nje ya mtandao; nenosiri jipya la wingu linahitaji unganish",
+  "lang_cloud_login_refreshing": "Angalia sasisho za watumiaji wa wingu",
+  "lang_cloud_login_refreshed": "Sasisho za mtumiaji wa wingu yam Unaweza kuingia."
 }

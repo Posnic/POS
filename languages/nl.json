@@ -5451,5 +5451,11 @@
   "lang_search_posnic": "POSNIC doorzoeken",
   "lang_website": "Website",
   "lang_feedback_demo_disabled": "Dit is een openbare demo. Het verzenden van berichten is uitgeschakeld.",
-  "lang_feedback_customization": "Maatwerk"
+  "lang_feedback_customization": "Maatwerk",
+  "lang_cloud_login_recovery_hint": "Verbonden met de cloud. Stel je wachtwoord opnieuw in op de website van je winkel, ga dan hier terug en meld je aan. Er is geen e-mailinstelling nodig op deze computer.",
+  "lang_reset_on_cloud": "Reset in de cloud",
+  "lang_cloud_reset_return": "Voltooi het resetten op de website van je winkel. Ga hier terug en log in met het nieuwe wachtwoord.",
+  "lang_cloud_login_refresh_unavailable": "De cloud kon niet worden vernieuwd. Je kunt je laatst gesynchroniseerde wachtwoord offline gebruiken; voor een nieuw cloudwachtwoord heb je een internetverbinding nodig.",
+  "lang_cloud_login_refreshing": "Updates voor cloudgebruikers controleren...",
+  "lang_cloud_login_refreshed": "Updates voor cloudgebruikers zijn gecontroleerd. Je kunt je aanmelden."
 }

@@ -5107,5 +5107,11 @@
   "lang_wording_ui_added_wording": "थपिएको शब्दावली",
   "lang_wording_ui_existing_word": "विद्यमान शब्द",
   "lang_wording_ui_replace_words": "शब्दहरू बदल्नुहोस्",
-  "lang_feedback_customization": "अनुकूलन"
+  "lang_feedback_customization": "अनुकूलन",
+  "lang_cloud_login_recovery_hint": "क्लाउडमा जडान गरिएको छ। आफ्नो पसलको वेबसाइटमा पासवर्ड रिसेट गर्नुहोस्, त्यसपछि यहाँ साइन इन गर्नुहोस्। यस कम्प्युटरमा इमेल सेटअप आवश्यक छैन।",
+  "lang_reset_on_cloud": "क्लाउडमा रिसेट गर्नुहोस्",
+  "lang_cloud_reset_return": "वेबसाइटमा पासवर्ड रिसेट गरेपछि यहाँ फर्केर नयाँ पासवर्डले साइन इन गर्नुहोस्।",
+  "lang_cloud_login_refresh_unavailable": "अहिले क्लाउड जाँच गर्न सकिएन। अफलाइन हुँदा अन्तिम सिङ्क गरिएको पासवर्ड प्रयोग गर्नुहोस्। नयाँ क्लाउड पासवर्डका लागि इन्टरनेट चाहिन्छ।",
+  "lang_cloud_login_refreshing": "क्लाउडका प्रयोगकर्ता विवरण जाँच गर्दै…",
+  "lang_cloud_login_refreshed": "क्लाउडका प्रयोगकर्ता विवरण जाँच गरियो। साइन इन गर्न सक्नुहुन्छ।"
 }

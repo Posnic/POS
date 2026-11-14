@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Ittella 'Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Iżen għal ammont mitlub",
   "lang_you_have_read_only_access_to_product_avail": "Għandek aċċess għall-qari biss għad-disponibbiltà tal-prodott.",
-  "lang_feedback_customization": "Personalizzazzjoni"
+  "lang_feedback_customization": "Personalizzazzjoni",
+  "lang_cloud_login_recovery_hint": "Konness mal-cloud. Irrisettja l-password tiegħek fuq il-websajt tal-ħanut tiegħek, imbagħad irritorna hawn u tiffirma. L-ebda setup tal-email mhu meħtieġ fuq dan il-kompjuter.",
+  "lang_reset_on_cloud": "Irrisettja fuq sħaba",
+  "lang_cloud_reset_return": "Temm ir-risettjar fuq il-websajt tal-ħanut tiegħek. Erġa 'lura hawn u idħol bil-password l-ġdida.",
+  "lang_cloud_login_refresh_unavailable": "Cloud ma setgħetx tiġi aġġornata. Tista 'tuża l-aħħar password sinkronizzata tiegħek offline; password sħaba ġdida teħtieġ konnessjoni tal-internet.",
+  "lang_cloud_login_refreshing": "Iċċekkjar tal-aġġornamenti tal-utent cloud",
+  "lang_cloud_login_refreshed": "Aġġornamenti tal-utent tal-cloud ċċekkjati Tista' tidħol."
 }

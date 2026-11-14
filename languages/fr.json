@@ -5403,5 +5403,11 @@
   "lang_upload_excel_csv": "Télécharger un fichier Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Pesez pour obtenir la quantité demandée",
   "lang_you_have_read_only_access_to_product_avail": "Vous avez un accès en lecture seule à la disponibilité des produits.",
-  "lang_feedback_customization": "Personnalisation"
+  "lang_feedback_customization": "Personnalisation",
+  "lang_cloud_login_recovery_hint": "Connecté au cloud. Réinitialisez votre mot de passe sur le site Web de votre boutique, puis revenez ici et connectez-vous. Aucune configuration de messagerie n'est requise sur cet ordinateur.",
+  "lang_reset_on_cloud": "Réinitialiser sur le cloud",
+  "lang_cloud_reset_return": "Terminez la réinitialisation sur le site Web de votre boutique. Revenez ici et connectez-vous avec le nouveau mot de passe.",
+  "lang_cloud_login_refresh_unavailable": "Le cloud n'a pas pu être actualisé. Vous pouvez utiliser votre dernier mot de passe synchronisé hors ligne ; un nouveau mot de passe cloud nécessite une connexion Internet.",
+  "lang_cloud_login_refreshing": "Vérification des mises à jour des utilisateurs du cloud...",
+  "lang_cloud_login_refreshed": "Mises à jour pour les utilisateurs du cloud vérifiées. Vous pouvez vous connecter."
 }

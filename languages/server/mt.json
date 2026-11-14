@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppma rritornax referenza ta' messaġġ. Il-kunsinna mhix ikkonfermata; iċċekkja ċ-chat qabel ma terġa 'tipprova.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppgħadu qed jerġa' jgħaqqad jew teħtieġ link tat-telefon frisk. Ma ntbagħat l-ebda messaġġ.",
   "Messaging permission required.": "Meħtieġ permess tal-messaġġi.",
-  "Schedule owner no longer has messaging access.": "Is-sid tal-iskeda m'għadux ikollu aċċess għall-messaġġi."
+  "Schedule owner no longer has messaging access.": "Is-sid tal-iskeda m'għadux ikollu aċċess għall-messaġġi.",
+  "This reset link has expired or was already used. Request a new link.": "Din il-link tar-reset skadiet jew diġà ntużat. Itlob link ġdid.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Uża 8-20 karattru, mingħajr spazji fil-bidu jew fit-tmiem."
 }

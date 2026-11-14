@@ -5325,5 +5325,11 @@
   "lang_upload_excel_csv": "Muat naik Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Timbang untuk jumlah yang diminta",
   "lang_you_have_read_only_access_to_product_avail": "Anda mempunyai akses baca sahaja kepada ketersediaan produk.",
-  "lang_feedback_customization": "Penyesuaian"
+  "lang_feedback_customization": "Penyesuaian",
+  "lang_cloud_login_recovery_hint": "Disambungkan ke awan. Tetapkan semula kata laluan anda di laman web kedai anda, kemudian kembali ke sini dan log masuk. Tiada persediaan e-mel diperlukan pada komputer ini.",
+  "lang_reset_on_cloud": "Tetapkan semula pada awan",
+  "lang_cloud_reset_return": "Selesaikan menetapkan semula di laman web kedai anda. Kembali ke sini dan log masuk dengan kata laluan baru.",
+  "lang_cloud_login_refresh_unavailable": "Awan tidak dapat disegarkan semula. Anda boleh menggunakan kata laluan terakhir anda yang disegerakkan di luar talian; kata laluan awan baru memerlukan sambungan internet.",
+  "lang_cloud_login_refreshing": "Memeriksa kemas kini pengguna awan...",
+  "lang_cloud_login_refreshed": "Kemas kini pengguna awan diperiksa. Anda boleh log masuk."
 }

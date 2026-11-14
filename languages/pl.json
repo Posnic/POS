@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Prześlij Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Zważyć żądaną kwotę",
   "lang_you_have_read_only_access_to_product_avail": "Masz dostęp tylko do odczytu do dostępności produktu.",
-  "lang_feedback_customization": "Dostosowanie"
+  "lang_feedback_customization": "Dostosowanie",
+  "lang_cloud_login_recovery_hint": "Połączony z chmurą. Zresetuj hasło na stronie sklepu, następnie wróć tutaj i zaloguj się. Na tym komputerze nie jest potrzebna konfiguracja poczty e-mail.",
+  "lang_reset_on_cloud": "Resetuj w chmurze",
+  "lang_cloud_reset_return": "Zakończ resetowanie na stronie sklepu. Wróć tutaj i zaloguj się za pomocą nowego hasła.",
+  "lang_cloud_login_refresh_unavailable": "Chmury nie można odświeżyć. Możesz użyć ostatnio zsynchronizowanego hasła offline; nowe hasło w chmurze wymaga połączenia z Internetem.",
+  "lang_cloud_login_refreshing": "Sprawdzanie aktualizacji użytkowników w chmurze...",
+  "lang_cloud_login_refreshed": "Aktualizacje użytkowników w chmurze sprawdzone. Możesz się zalogować."
 }

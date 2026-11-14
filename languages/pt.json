@@ -5403,5 +5403,11 @@
   "lang_upload_excel_csv": "Carregar em Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Pesar para obter a quantidade solicitada",
   "lang_you_have_read_only_access_to_product_avail": "Você tem acesso somente para leitura à disponibilidade do produto.",
-  "lang_feedback_customization": "Personalização"
+  "lang_feedback_customization": "Personalização",
+  "lang_cloud_login_recovery_hint": "Conectado à nuvem. Redefina sua senha no site da sua loja, depois volte aqui e faça login. Nenhuma configuração de e-mail é necessária neste computador.",
+  "lang_reset_on_cloud": "Redefinir na nuvem",
+  "lang_cloud_reset_return": "Conclua a redefinição no site da sua loja. Volte aqui e faça login com a nova senha.",
+  "lang_cloud_login_refresh_unavailable": "A nuvem não pôde ser atualizada. Você pode usar sua última senha sincronizada offline; uma nova senha na nuvem precisa de uma conexão com a Internet.",
+  "lang_cloud_login_refreshing": "Verificando as atualizações do usuário na nuvem...",
+  "lang_cloud_login_refreshed": "As atualizações do usuário na nuvem foram verificadas. Você pode fazer login."
 }

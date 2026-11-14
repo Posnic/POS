@@ -151,6 +151,46 @@
         document.getElementById('offline_recovery_manage').onclick = manageCodes;
     }
     $(function () {
+        if (document.getElementById('login_form') && window.location.hash === '#recover') {
+            $('#forgotslide').trigger('click');
+        }
+        var cloud = window.electronAPI && window.electronAPI.cloud;
+        if (document.getElementById('login_form') && cloud && cloud.passwordRecovery) {
+            cloud.status().then(function (status) {
+                if (!status.connected) return;
+                var panel = document.createElement('div');
+                panel.className = 'alert alert-info mt-3 text-left';
+                panel.id = 'cloud_login_recovery';
+                var hint = document.createElement('p');
+                hint.textContent = PosnicPro.i18n.t('lang_cloud_login_recovery_hint', 'Connected to cloud. Reset your password on your shop website, then return here and sign in. No email setup is needed on this computer.');
+                var button = document.createElement('button');
+                button.type = 'button'; button.className = 'btn btn-primary';
+                button.textContent = PosnicPro.i18n.t('lang_reset_on_cloud', 'Reset on cloud');
+                var progress = document.createElement('p');
+                progress.className = 'mt-2 mb-0'; progress.setAttribute('role', 'status');
+                button.onclick = async function () {
+                    button.disabled = true;
+                    try {
+                        var result = await cloud.passwordRecovery();
+                        progress.textContent = result.ok ? PosnicPro.i18n.t('lang_cloud_reset_return', 'Finish resetting on your shop website. Return here and sign in with the new password.') : PosnicPro.i18n.say(result.error);
+                    } catch (_) { progress.textContent = PosnicPro.i18n.t('lang_cloud_login_refresh_unavailable', 'Cloud could not be refreshed. You can use your last synced password offline; a new cloud password needs an internet connection.'); }
+                    button.disabled = false;
+                };
+                panel.append(hint, button, progress);
+                document.getElementById('login_form').after(panel);
+                var forgot = document.getElementById('forget_form');
+                if (forgot) {
+                    // Linked shops recover on their own cloud site even when
+                    // the desktop has no mail provider configured.
+                    forgot.querySelectorAll('.form-group, .mb-4, [type="submit"], #offline_recovery_email_help').forEach(function (element) { element.style.display = 'none'; });
+                    forgot.dataset.cloudRecovery = 'true';
+                }
+                progress.textContent = PosnicPro.i18n.t('lang_cloud_login_refreshing', 'Checking cloud user updates…');
+                request('POST', 'users/recovery/refresh-cloud', {}).then(function (result) {
+                    progress.textContent = result.data.state === 'updated' ? PosnicPro.i18n.t('lang_cloud_login_refreshed', 'Cloud user updates checked. You can sign in.') : PosnicPro.i18n.t('lang_cloud_login_refresh_unavailable', 'Cloud could not be refreshed. You can use your last synced password offline; a new cloud password needs an internet connection.');
+                }).catch(function () { progress.textContent = PosnicPro.i18n.t('lang_cloud_login_refresh_unavailable', 'Cloud could not be refreshed. You can use your last synced password offline; a new cloud password needs an internet connection.'); });
+            }).catch(function () {});
+        }
         request('GET', 'users/recovery/options').then(function (result) {
             if (!result.data || !result.data.offline) return;
             var login = document.getElementById('offline_recovery_login');

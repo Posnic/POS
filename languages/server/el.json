@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppδεν επέστρεψε αναφορά μηνύματος. Η παράδοση δεν έχει επιβεβαιωθεί. Ελέγξτε τη συνομιλία πριν προσπαθήσετε ξανά.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppεξακολουθεί να επανασυνδέεται ή χρειάζεται έναν νέο σύνδεσμο τηλεφώνου. Κανένα μήνυμα δεν στάλθηκε.",
   "Messaging permission required.": "Απαιτείται άδεια ανταλλαγής μηνυμάτων.",
-  "Schedule owner no longer has messaging access.": "Ο κάτοχος προγράμματος δεν έχει πλέον πρόσβαση σε μηνύματα."
+  "Schedule owner no longer has messaging access.": "Ο κάτοχος προγράμματος δεν έχει πλέον πρόσβαση σε μηνύματα.",
+  "This reset link has expired or was already used. Request a new link.": "Αυτός ο σύνδεσμος επαναφοράς έχει λήξει ή έχει ήδη χρησιμοποιηθεί. Ζητήστε έναν νέο σύνδεσμο.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Χρησιμοποιήστε 8-20 χαρακτήρες, χωρίς κενά στην αρχή ή στο τέλος."
 }

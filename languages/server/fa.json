@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppمرجع پیام را برنگردانده است. تحویل تایید نشده است. قبل از امتحان مجدد، چت را بررسی کنید.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppهنوز در حال اتصال مجدد است یا نیاز به یک لینک تلفن تازه دارد. هیچ پیامی فرستاده نشده است.",
   "Messaging permission required.": "مجوز پیام رسانی مورد نیاز است.",
-  "Schedule owner no longer has messaging access.": "صاحب برنامه دیگر دسترسی به پیام رسانی ندارد."
+  "Schedule owner no longer has messaging access.": "صاحب برنامه دیگر دسترسی به پیام رسانی ندارد.",
+  "This reset link has expired or was already used. Request a new link.": "این لینک بازنشانی منقضی شده است یا قبلاً استفاده شده است. یک لینک جدید را درخواست کنید",
+  "Use 8-20 characters, without spaces at the beginning or end.": "از 8-20 کاراکتر، بدون فاصله در ابتدای یا انتها استفاده کنید."
 }

@@ -5403,5 +5403,11 @@
   "lang_upload_excel_csv": "تحميل برنامج إكسل/ CSV",
   "lang_weigh_for_a_requested_amount": "قم بالوزن بالكمية المطلوبة",
   "lang_you_have_read_only_access_to_product_avail": "لديك حق الوصول للقراءة فقط إلى توفر المنتج.",
-  "lang_feedback_customization": "التخصيص"
+  "lang_feedback_customization": "التخصيص",
+  "lang_cloud_login_recovery_hint": "متصل بالسحابة. أعد تعيين كلمة المرور الخاصة بك على موقع متجرك، ثم ارجع إلى هنا وقم بتسجيل الدخول. لا يلزم إعداد البريد الإلكتروني على هذا الكمبيوتر.",
+  "lang_reset_on_cloud": "إعادة الضبط على السحابة",
+  "lang_cloud_reset_return": "قم بإنهاء إعادة الضبط على موقع متجرك. ارجع هنا وقم بتسجيل الدخول باستخدام كلمة المرور الجديدة.",
+  "lang_cloud_login_refresh_unavailable": "لا يمكن تحديث السحابة. يمكنك استخدام آخر كلمة مرور تمت مزامنتها دون اتصال بالإنترنت؛ تحتاج كلمة مرور السحابة الجديدة إلى اتصال بالإنترنت.",
+  "lang_cloud_login_refreshing": "جاري التحقق من تحديثات مستخدم السحابة...",
+  "lang_cloud_login_refreshed": "تم فحص تحديثات مستخدم السحابة. يمكنك تسجيل الدخول."
 }

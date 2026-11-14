@@ -23,6 +23,13 @@ const recoveryOptions = (_req, res) =>
     },
   });
 router.get('/options', recoveryOptions);
+router.post('/refresh-cloud', recoveryLimiter, async (_req, res, next) => {
+  try {
+    res.json({ type: 'success', data: await require('../services/prelogin-sync').refresh() });
+  } catch (error) {
+    next(error);
+  }
+});
 router.use((_req, res, next) => {
   if (!enabled())
     return res

@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне повернула посилання на повідомлення. Доставка не підтверджена; перевірте чат перед повторною спробою.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppвсе ще підключається або потребує свіжого телефонного зв'язку. Повідомлення не надіслано.",
   "Messaging permission required.": "Потрібен дозвіл на обмін повідомленнями.",
-  "Schedule owner no longer has messaging access.": "Власник розкладу більше не має доступу до обміну повідомленнями."
+  "Schedule owner no longer has messaging access.": "Власник розкладу більше не має доступу до обміну повідомленнями.",
+  "This reset link has expired or was already used. Request a new link.": "Термін дії цього посилання для скидання закінчився або вже використовувався. Запит на нове посилання.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Використовуйте 8-20 символів, без пробілів на початку або в кінці."
 }

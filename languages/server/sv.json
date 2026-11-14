@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppreturnerade inte en meddelandereferens. Leveransen är obekräftad; kontrollera chatten innan du försöker igen.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppansluter fortfarande igen eller behöver en ny telefonlänk. Inget meddelande skickades.",
   "Messaging permission required.": "Meddelandebehörighet krävs.",
-  "Schedule owner no longer has messaging access.": "Schemaägaren har inte längre meddelandeåtkomst."
+  "Schedule owner no longer has messaging access.": "Schemaägaren har inte längre meddelandeåtkomst.",
+  "This reset link has expired or was already used. Request a new link.": "Den här återställningslänken har gått ut eller har redan använts. Begär en ny länk.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Använd 8-20 tecken, utan mellanslag i början eller slutet."
 }

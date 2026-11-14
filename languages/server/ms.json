@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApptidak mengembalikan rujukan mesej. Penghantaran tidak disahkan; semak sembang sebelum mencuba semula.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmasih menyambung semula atau memerlukan pautan telefon baru. Tiada mesej dihantar.",
   "Messaging permission required.": "Kebenaran pemesejan diperlukan.",
-  "Schedule owner no longer has messaging access.": "Pemilik jadual tidak lagi mempunyai akses pemesejan."
+  "Schedule owner no longer has messaging access.": "Pemilik jadual tidak lagi mempunyai akses pemesejan.",
+  "This reset link has expired or was already used. Request a new link.": "Pautan tetapan semula ini telah tamat tempoh atau telah digunakan. Minta pautan baru.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Gunakan 8-20 aksara, tanpa ruang pada awal atau akhir."
 }

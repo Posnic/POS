@@ -5403,5 +5403,11 @@
   "lang_upload_excel_csv": "Unggah Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Timbang untuk jumlah yang diminta",
   "lang_you_have_read_only_access_to_product_avail": "Anda memiliki akses read-only ke ketersediaan produk.",
-  "lang_feedback_customization": "Penyesuaian"
+  "lang_feedback_customization": "Penyesuaian",
+  "lang_cloud_login_recovery_hint": "Terhubung ke cloud. Setel ulang kata sandi Anda di situs web toko Anda, lalu kembali ke sini dan masuk. Tidak ada pengaturan email yang diperlukan di komputer ini.",
+  "lang_reset_on_cloud": "Setel ulang di cloud",
+  "lang_cloud_reset_return": "Selesaikan pengaturan ulang di situs web toko Anda. Kembali ke sini dan masuk dengan kata sandi baru.",
+  "lang_cloud_login_refresh_unavailable": "Cloud tidak dapat disegarkan. Anda dapat menggunakan kata sandi terakhir yang disinkronkan secara offline; kata sandi cloud baru membutuhkan koneksi internet.",
+  "lang_cloud_login_refreshing": "Memeriksa pembaruan pengguna cloud...",
+  "lang_cloud_login_refreshed": "Pembaruan pengguna cloud diperiksa. Anda dapat masuk."
 }

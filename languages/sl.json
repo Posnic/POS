@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Naložite Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Tehtajte za zahtevano količino",
   "lang_you_have_read_only_access_to_product_avail": "Imate dostop samo za branje do razpoložljivosti izdelka.",
-  "lang_feedback_customization": "Prilagajanje"
+  "lang_feedback_customization": "Prilagajanje",
+  "lang_cloud_login_recovery_hint": "Povezan z oblakom. Ponastavite geslo na spletni strani trgovine, nato se vrnite sem in se prijavite. V tem računalniku ni potrebna nastavitev e-pošte.",
+  "lang_reset_on_cloud": "Ponastavi v oblaku",
+  "lang_cloud_reset_return": "Dokončajte ponastavitev na spletnem mestu trgovine. Vrnite se sem in se prijavite z novim geslom.",
+  "lang_cloud_login_refresh_unavailable": "Oblaka ni bilo mogoče osvežiti. Zadnje sinhronizirano geslo lahko uporabite brez povezave; novo geslo v oblaku potrebuje internetno povezavo.",
+  "lang_cloud_login_refreshing": "Preverjanje posodobitev uporabnikov v oblaku...",
+  "lang_cloud_login_refreshed": "Preverjene so posodobitve uporabnikov v oblaku. Lahko se prijavite."
 }

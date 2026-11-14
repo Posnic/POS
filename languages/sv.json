@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Ladda upp Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Väg för en begärd mängd",
   "lang_you_have_read_only_access_to_product_avail": "Du har skrivskyddad åtkomst till produkttillgänglighet.",
-  "lang_feedback_customization": "Anpassning"
+  "lang_feedback_customization": "Anpassning",
+  "lang_cloud_login_recovery_hint": "Ansluten till molnet. Återställ ditt lösenord på din butiks webbplats, gå sedan tillbaka hit och logga in. Ingen e-postinställning behövs på den här datorn.",
+  "lang_reset_on_cloud": "Återställ på molnet",
+  "lang_cloud_reset_return": "Slutför återställningen på din butiks webbplats. Gå tillbaka hit och logga in med det nya lösenordet.",
+  "lang_cloud_login_refresh_unavailable": "Molnet kunde inte uppdateras. Du kan använda ditt senast synkroniserade lösenord offline; ett nytt molnlösenord kräver en internetanslutning.",
+  "lang_cloud_login_refreshing": "Kontrollerar molnanvändaruppdateringar...",
+  "lang_cloud_login_refreshed": "Molnanvändaruppdateringar kontrollerade. Du kan logga in."
 }

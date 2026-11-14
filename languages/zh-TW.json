@@ -5325,5 +5325,11 @@
   "lang_upload_excel_csv": "上傳 Excel/CSV",
   "lang_weigh_for_a_requested_amount": "以要求的量進行稱重",
   "lang_you_have_read_only_access_to_product_avail": "您可以對產品可用性的唯讀存取權限。",
-  "lang_feedback_customization": "客製化"
+  "lang_feedback_customization": "客製化",
+  "lang_cloud_login_recovery_hint": "連接到雲端。在您的商店網站上重置密碼，然後返回此處並登錄。不需要在此電腦上設定電子郵件。",
+  "lang_reset_on_cloud": "在雲端上重設",
+  "lang_cloud_reset_return": "在您的商店網站上完成重設。返回此處並使用新密碼登錄。",
+  "lang_cloud_login_refresh_unavailable": "雲端無法重新整理。您可以離線使用上次同步的密碼；新的雲密碼需要互聯網連接。",
+  "lang_cloud_login_refreshing": "正在檢查雲端使用者更新...",
+  "lang_cloud_login_refreshed": "已檢查雲端使用者更新。您可以登入。"
 }

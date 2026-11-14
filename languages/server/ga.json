@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppníor thug sé tagairt teachtaireachta ar ais. Níl seachadadh dearbhaithe; seiceáil an comhrá sula ndéanann tú iarracht arís",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApptá sé fós ag athnascadh nó teastaíonn nasc úr teileafóin uait. Níor seoladh aon teachtaireacht.",
   "Messaging permission required.": "Teastaíonn cead teachtaireachtaí.",
-  "Schedule owner no longer has messaging access.": "Níl rochtain ag úinéir an sceideal a thuilleadh"
+  "Schedule owner no longer has messaging access.": "Níl rochtain ag úinéir an sceideal a thuilleadh",
+  "This reset link has expired or was already used. Request a new link.": "Tá an nasc athshocraithe seo in éag nó úsáideadh é cheana féin. Iarr nasc nua.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Úsáid carachtar 8-20, gan spásanna ag an tús nó ag deireadh."
 }

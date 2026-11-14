@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Excel/CSV feltöltése",
   "lang_weigh_for_a_requested_amount": "Mérje meg a kért összeget",
   "lang_you_have_read_only_access_to_product_avail": "Csak olvasható hozzáféréssel rendelkezik a termék elérhetőségéhez.",
-  "lang_feedback_customization": "Testreszabás"
+  "lang_feedback_customization": "Testreszabás",
+  "lang_cloud_login_recovery_hint": "Csatlakoztatva a felhőhöz. Állítsa vissza jelszavát az üzlet webhelyén, majd térjen vissza ide, és jelentkezzen be. Ezen a számítógépen nincs szükség e-mail beállításra.",
+  "lang_reset_on_cloud": "Visszaállítás a felhőn",
+  "lang_cloud_reset_return": "Fejezze be az újraindítást az üzlet webhelyén. Térjen vissza ide, és jelentkezzen be az új jelszóval.",
+  "lang_cloud_login_refresh_unavailable": "A felhőt nem lehetett frissíteni. Az utolsó szinkronizált jelszót offline is használhatja; az új felhőjelszóhoz internetkapcsolatra van szükség.",
+  "lang_cloud_login_refreshing": "Felhőalapú felhasználói frissítések ellenőrzése...",
+  "lang_cloud_login_refreshed": "A felhőalapú felhasználói frissítések ellenőrzése. Bejelentkezhet."
 }

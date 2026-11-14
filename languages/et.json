@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Laadi üles Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Kaaluge soovitud summa jaoks",
   "lang_you_have_read_only_access_to_product_avail": "Teil on ainult loetav juurdepääs toote kättesaadavusele.",
-  "lang_feedback_customization": "Kohandamine"
+  "lang_feedback_customization": "Kohandamine",
+  "lang_cloud_login_recovery_hint": "Pilvega ühendatud. Lähtestage oma poe veebisaidil parool, siis naaske siia ja logige sisse. Selles arvutis pole vaja e-posti seadistamist.",
+  "lang_reset_on_cloud": "Lähtesta pilves",
+  "lang_cloud_reset_return": "Lõpeta lähtestamine oma poe veebisaidil. Naaske siia ja logige sisse uue parooliga.",
+  "lang_cloud_login_refresh_unavailable": "Pilve ei saanud värskendada. Oma viimast sünkroonitud parooli saate kasutada võrguühenduseta; uus pilveparool vajab Interneti-ühendust.",
+  "lang_cloud_login_refreshing": "Pilvekasutajate värskenduste kontrollimine...",
+  "lang_cloud_login_refreshed": "Pilvekasutajate värskendusi kontrollitud. Saate sisse logida."
 }

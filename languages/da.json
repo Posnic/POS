@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Upload Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vejer for et anmodet beløb",
   "lang_you_have_read_only_access_to_product_avail": "Du har skrivebeskyttet adgang til produkttilgængelighed.",
-  "lang_feedback_customization": "Tilpasning"
+  "lang_feedback_customization": "Tilpasning",
+  "lang_cloud_login_recovery_hint": "Forbundet til skyen. Nulstil din adgangskode på din butiks hjemmeside, vend derefter tilbage her og log ind. Der kræves ingen e-mail-opsætning på denne computer.",
+  "lang_reset_on_cloud": "Nulstil i skyen",
+  "lang_cloud_reset_return": "Afslut nulstillingen på din butiks hjemmeside. Vend tilbage her og log ind med den nye adgangskode.",
+  "lang_cloud_login_refresh_unavailable": "Cloud kunne ikke opdateres. Du kan bruge din sidst synkroniserede adgangskode offline; en ny cloud-adgangskode kræver en internetforbindelse.",
+  "lang_cloud_login_refreshing": "Kontrollerer cloud-brugeropdateringer...",
+  "lang_cloud_login_refreshed": "Cloud-brugeropdateringer kontrolleret. Du kan logge ind."
 }

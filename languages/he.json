@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "העלה אקסל/CSV",
   "lang_weigh_for_a_requested_amount": "שקלו עבור סכום מבוקש",
   "lang_you_have_read_only_access_to_product_avail": "יש לך גישה לקריאה בלבד לזמינות המוצר.",
-  "lang_feedback_customization": "התאמה אישית"
+  "lang_feedback_customization": "התאמה אישית",
+  "lang_cloud_login_recovery_hint": "מחובר לענן אפס את הסיסמה שלך באתר החנות שלך, ואז חזור לכאן והיכנס. אין צורך בהגדרת דוא\"ל במחשב זה.",
+  "lang_reset_on_cloud": "איפוס בענן",
+  "lang_cloud_reset_return": "סיים את האיפוס באתר החנות שלך. חזור לכאן והיכנס עם הסיסמה החדשה.",
+  "lang_cloud_login_refresh_unavailable": "לא ניתן לרענן את הענן. אתה יכול להשתמש בסיסמה האחרונה שסונכרנה במצב לא מקוון; סיסמת ענן חדשה זקוקה לחיבור לאינטרנט.",
+  "lang_cloud_login_refreshing": "בדיקת עדכוני משתמשים בענן...",
+  "lang_cloud_login_refreshed": "עדכוני משתמשים בענן נבדקו. אתה יכול להיכנס."
 }

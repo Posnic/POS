@@ -5325,5 +5325,11 @@
   "lang_upload_excel_csv": "Tải lên Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Cân theo số lượng yêu cầu",
   "lang_you_have_read_only_access_to_product_avail": "Bạn có quyền truy cập chỉ đọc vào tính khả dụng của sản phẩm.",
-  "lang_feedback_customization": "Tùy chỉnh"
+  "lang_feedback_customization": "Tùy chỉnh",
+  "lang_cloud_login_recovery_hint": "Kết nối với đám mây. Đặt lại mật khẩu của bạn trên trang web cửa hàng của bạn, sau đó quay lại đây và đăng nhập. Không cần thiết lập email trên máy tính này.",
+  "lang_reset_on_cloud": "Đặt lại trên đám mây",
+  "lang_cloud_reset_return": "Hoàn tất thiết lập lại trên trang web cửa hàng của bạn. Quay lại đây và đăng nhập bằng mật khẩu mới.",
+  "lang_cloud_login_refresh_unavailable": "Đám mây không thể được làm mới. Bạn có thể sử dụng mật khẩu được đồng bộ hóa cuối cùng của mình ngoại tuyến; mật khẩu đám mây mới cần kết nối internet.",
+  "lang_cloud_login_refreshing": "Kiểm tra cập nhật người dùng đám mây...",
+  "lang_cloud_login_refreshed": "Đã kiểm tra cập nhật người dùng đám mây. Bạn có thể đăng nhập."
 }

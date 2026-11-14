@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppbir mesaj referansı döndürmedi. Teslimat onaylanmadı; yeniden denemeden önce sohbeti kontrol edin.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApphala yeniden bağlanıyor veya yeni bir telefon bağlantısına ihtiyaç duyuyor. Mesaj gönderilmedi.",
   "Messaging permission required.": "Mesajlaşma izni gerekli.",
-  "Schedule owner no longer has messaging access.": "Program sahibinin artık mesajlaşma erişimi yok."
+  "Schedule owner no longer has messaging access.": "Program sahibinin artık mesajlaşma erişimi yok.",
+  "This reset link has expired or was already used. Request a new link.": "Bu sıfırlama bağlantısının süresi doldu veya zaten kullanıldı. Yeni bir bağlantı isteyin.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Başlangıçta veya sonunda boşluk bırakmadan 8-20 karakter kullanın."
 }

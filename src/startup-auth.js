@@ -3,6 +3,16 @@ const http = require('http');
 const AUTH_COOKIE_NAMES = new Set(['jwt', 'connect.sid']);
 const STALE_COOKIE_NAMES = ['jwt', 'connect.sid', 'loginuser'];
 
+async function refreshUsersBeforeLogin(origin, request = globalThis.fetch) {
+  try {
+    const response = await request(`${origin}/api/users/recovery/refresh-cloud`, {
+      method: 'POST', signal: AbortSignal.timeout(13000),
+    });
+    if (response.ok) return (await response.json()).data?.state || 'unavailable';
+  } catch (_) { /* Keep offline sign-in available when cloud cannot be reached. */ }
+  return 'unavailable';
+}
+
 function hasUnexpiredAuthCookie(cookies, now = Date.now()) {
   return (cookies || []).some(cookie =>
     AUTH_COOKIE_NAMES.has(cookie.name) &&
@@ -64,6 +74,7 @@ async function clearStaleLogin(cookieStore, origin, logger = console) {
 }
 
 module.exports = {
+  refreshUsersBeforeLogin,
   hasUnexpiredAuthCookie,
   validateSavedLogin,
   clearStaleLogin
