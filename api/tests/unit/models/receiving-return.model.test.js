@@ -364,7 +364,7 @@ describe('returnReceivingOrder — inventory update', () => {
     await returnReceivingOrder(makeData()); // return_quantity = 3
     expect(cols.items.updateOne).toHaveBeenCalledWith(
       expect.any(Object),
-      { $set: { available_quantity: 17 } } // 20 - 3 = 17
+      { $set: { available_quantity: 17, updated_date: expect.any(Date) } } // 20 - 3 = 17
     );
   });
 

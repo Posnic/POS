@@ -1785,7 +1785,7 @@ receivingSchema.statics.voidReceiving = async function (id, reason, context = {}
         const newQty = currentQty - qty;
         await itemsCollection.updateOne(
           { _id: itemId, license: new ObjectId(String(license)) },
-          { $set: { available_quantity: newQty } }
+          { $set: { available_quantity: newQty, updated_date: new Date() } }
         );
         await stockLogsCollection.insertOne({
           stocklog: true,
@@ -1951,7 +1951,7 @@ receivingSchema.statics.receivePartial = async function (id, payload = {}, conte
       }
       await itemsCollection.updateOne(
         { _id: itemDoc._id, license: new ObjectId(String(license)) },
-        { $set: { available_quantity: newQty } }
+        { $set: { available_quantity: newQty, updated_date: new Date() } }
       );
     }
 
@@ -2528,7 +2528,7 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
             // Update item quantity (PHP line 414)
             await itemsCollection.updateOne(
               { _id: itemId, license: new ObjectId(license) },
-              { $set: { available_quantity: newQty } }
+              { $set: { available_quantity: newQty, updated_date: new Date() } }
             );
           }
         }
@@ -2551,7 +2551,7 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
 
             await itemsCollection.updateOne(
               { _id: itemId, license: new ObjectId(license) },
-              { $set: { available_quantity: newQty } }
+              { $set: { available_quantity: newQty, updated_date: new Date() } }
             );
           }
         }
@@ -2733,7 +2733,7 @@ receivingSchema.statics.receivingInsertUpdate = async function (data, id) {
           // has always behaved this way); only the LOG is optional.
           await itemsCollection.updateOne(
             { _id: itemDoc._id, license: new ObjectId(license) },
-            { $set: { available_quantity: newQty } }
+            { $set: { available_quantity: newQty, updated_date: new Date() } }
           );
         }
       }
@@ -2907,7 +2907,7 @@ receivingSchema.statics.deleteReceivingCollectionData = async function (ids) {
 
             await itemsCollection.updateOne(
               { _id: itemId, license: new ObjectId(license) },
-              { $set: { available_quantity: newQuantity } }
+              { $set: { available_quantity: newQuantity, updated_date: new Date() } }
             );
           }
         }

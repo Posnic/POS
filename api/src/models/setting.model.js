@@ -1317,6 +1317,7 @@ class SettingModel extends BaseModel {
             },
             {
               $set: {
+                updated_date: new Date(),
                 'printing_design.$.printing_design': data.print_type,
                 ...(data.print_character !== undefined
                   ? { 'printing_design.$.printing_max_char': data.print_character }

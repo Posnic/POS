@@ -82,6 +82,7 @@ async function returnReceivingOrder(data) {
           { _id: receivingId, 'items.item_id': item.item_id, license: new ObjectId(license) },
           {
             $set: {
+              updated_date: new Date(),
               'items.$.item_quantity': parseFloat(item.item_quantity),
               'items.$.total_amount': parseFloat(item.total_amount),
               'items.$.igst_tax': parseFloat(igstValue),
@@ -93,7 +94,7 @@ async function returnReceivingOrder(data) {
       } else {
         await collection.updateOne(
           { _id: receivingId, 'items.item_id': item.item_id, license: new ObjectId(license) },
-          { $pull: { items: { item_id: item.item_id } } }
+          { $pull: { items: { item_id: item.item_id } }, $set: { updated_date: new Date() } }
         );
       }
 
@@ -145,7 +146,7 @@ async function returnReceivingOrder(data) {
 
         await itemsCollection.updateOne(
           { _id: new ObjectId(item.item_id), license: new ObjectId(license) },
-          { $set: { available_quantity: newQuantity } }
+          { $set: { available_quantity: newQuantity, updated_date: new Date() } }
         );
       }
 
@@ -231,7 +232,7 @@ async function returnReceivingOrder(data) {
 
     await collection.updateOne(
       { _id: receivingId, license: new ObjectId(license) },
-      { $push: { items_return: itemsReturnData } }
+      { $push: { items_return: itemsReturnData }, $set: { updated_date: new Date() } }
     );
 
     // Recalculate totals
