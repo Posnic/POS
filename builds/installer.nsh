@@ -424,8 +424,17 @@ FunctionEnd
 
 ; Runs after electron-builder's file, shortcut and registration cleanup. A
 ; failure must not reach the successful finish page.
+; electron-builder adds a Components page whenever this hook exists. The
+; verification section is mandatory internal work, not a removable component.
+!ifdef BUILD_UNINSTALLER
+  !define MUI_PAGE_CUSTOMFUNCTION_PRE un.PosnicSkipInternalComponents
+  Function un.PosnicSkipInternalComponents
+    Abort
+  FunctionEnd
+!endif
 !macro customUnInstallSection
-  Section "un.Verify removal"
+  Section "un.-Verify removal"
+    SectionIn RO
     !insertmacro check64BitAndSetRegView
     !insertmacro POSNIC_VERIFY_REMOVAL
   SectionEnd
