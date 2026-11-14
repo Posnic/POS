@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Augšupielādējiet Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Nosver pieprasīto summu",
   "lang_you_have_read_only_access_to_product_avail": "Jums ir pieejama tikai lasāma piekļuve produktu pieejamībai.",
-  "lang_feedback_customization": "Pielāgošana"
+  "lang_feedback_customization": "Pielāgošana",
+  "lang_cloud_login_recovery_hint": "Savienots ar mākoni. Atjaunojiet savu paroli veikala vietnē, pēc tam atgriezieties šeit un pierakstieties. Šajā datorā nav nepieciešama e-pasta iestatīšana.",
+  "lang_reset_on_cloud": "Atiestatīt mākonī",
+  "lang_cloud_reset_return": "Pabeidziet atiestatīšanu veikala vietnē. Atgriezieties šeit un pierakstieties ar jauno paroli.",
+  "lang_cloud_login_refresh_unavailable": "Mākoni nevarēja atsvaidzināt. Pēdējo sinhronizēto paroli varat izmantot bezsaistē; jaunai mākoņa parolei ir nepieciešams interneta savienojums.",
+  "lang_cloud_login_refreshing": "Mākoņa lietotāju atjauninājumu pārbaude...",
+  "lang_cloud_login_refreshed": "Pārbaudīti mākoņa lietotāju atjauninājumi. Jūs varat pierakstīties."
 }

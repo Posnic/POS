@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Įkelti “Excel”/CSV",
   "lang_weigh_for_a_requested_amount": "Pasverkite prašomą sumą",
   "lang_you_have_read_only_access_to_product_avail": "Turite tik skaitymui skirtą prieigą prie produkto prieinamumo.",
-  "lang_feedback_customization": "Pritaikymas"
+  "lang_feedback_customization": "Pritaikymas",
+  "lang_cloud_login_recovery_hint": "Prijungtas prie debesies. Iš naujo nustatykite slaptažodį savo parduotuvės svetainėje, tada grįžkite čia ir prisijunkite. Šiame kompiuteryje nereikia el. pašto nustatymo.",
+  "lang_reset_on_cloud": "Iš naujo nustatykite debesyje",
+  "lang_cloud_reset_return": "Baigti iš naujo nustatyti savo parduotuvės svetainėje. Grįžkite čia ir prisijunkite naudodami naują slaptažodį.",
+  "lang_cloud_login_refresh_unavailable": "Debesis negalėjo būti atnaujintas. Paskutinį sinchronizuotą slaptažodį galite naudoti neprisijungę; naujam debesies slaptažodžiui reikia interneto ryšio.",
+  "lang_cloud_login_refreshing": "Debesų naudotojų naujinimų tikrinimas...",
+  "lang_cloud_login_refreshed": "Patikrinti debesų naudotojų naujinimai. Galite prisijungti."
 }

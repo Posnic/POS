@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppસંદેશ સંદર્ભ પાછો આપ્યો નથી. ડિલિવરીની પુષ્ટિ નથી; ફરીથી પ્રયાસ કરતા પહેલા ચેટ તપાસો.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppહજી પણ ફરીથી કનેક્ટ થઈ રહ્યું છે અથવા તાજા ફોન લિંકની જરૂર છે. કોઈ સંદેશ મોકલવામાં આવ્યો નથી.",
   "Messaging permission required.": "મેસેજિંગ પરવાનગી જરૂરી છે.",
-  "Schedule owner no longer has messaging access.": "શેડ્યૂલ માલિક પાસે હવે મેસેજિંગ ઍક્સેસ નથી."
+  "Schedule owner no longer has messaging access.": "શેડ્યૂલ માલિક પાસે હવે મેસેજિંગ ઍક્સેસ નથી.",
+  "This reset link has expired or was already used. Request a new link.": "આ રીસેટ લિંક સમાપ્ત થઈ ગઈ છે અથવા પહેલેથી જ ઉપયોગમાં લેવાતી હતી. નવી લિંકની વિનંતી કરો.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "શરૂઆતમાં અથવા અંતમાં જગ્યાઓ વિના, 8-20 અક્ષરોનો ઉપયોગ કરો."
 }

@@ -5325,5 +5325,11 @@
   "lang_upload_excel_csv": "엑셀/CSV 업로드",
   "lang_weigh_for_a_requested_amount": "요청된 금액에 대한 무게 측정",
   "lang_you_have_read_only_access_to_product_avail": "제품 가용성에 대한 읽기 전용 액세스 권한이 있습니다.",
-  "lang_feedback_customization": "사용자 지정"
+  "lang_feedback_customization": "사용자 지정",
+  "lang_cloud_login_recovery_hint": "클라우드에 연결됨.매장 웹사이트에서 비밀번호를 재설정한 다음 여기로 돌아와 로그인하세요.이 컴퓨터에서는 이메일을 설정할 필요가 없습니다.",
+  "lang_reset_on_cloud": "클라우드에서 초기화",
+  "lang_cloud_reset_return": "매장 웹사이트에서 초기화를 완료하세요.여기로 돌아와 새 비밀번호로 로그인하세요.",
+  "lang_cloud_login_refresh_unavailable": "클라우드를 새로 고칠 수 없습니다.마지막으로 동기화한 암호를 오프라인에서도 사용할 수 있습니다. 새 클라우드 암호를 사용하려면 인터넷 연결이 필요합니다.",
+  "lang_cloud_login_refreshing": "클라우드 사용자 업데이트 확인 중...",
+  "lang_cloud_login_refreshed": "클라우드 사용자 업데이트를 확인했습니다.로그인할 수 있습니다."
 }

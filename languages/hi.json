@@ -5403,5 +5403,11 @@
   "lang_upload_excel_csv": "Excel/CSV अपलोड करें",
   "lang_weigh_for_a_requested_amount": "अनुरोधित राशि के लिए तौलना",
   "lang_you_have_read_only_access_to_product_avail": "आपके पास प्रॉडक्ट की उपलब्धता के लिए रीड-ओनली एक्सेस है।",
-  "lang_feedback_customization": "अनुकूलन"
+  "lang_feedback_customization": "अनुकूलन",
+  "lang_cloud_login_recovery_hint": "क्लाउड से कनेक्ट किया गया। अपनी शॉप वेबसाइट पर अपना पासवर्ड रीसेट करें, फिर यहां वापस आएं और साइन इन करें। इस कंप्यूटर पर किसी ईमेल सेटअप की आवश्यकता नहीं है।",
+  "lang_reset_on_cloud": "क्लाउड पर रीसेट करें",
+  "lang_cloud_reset_return": "अपनी शॉप वेबसाइट पर रीसेट करना समाप्त करें। यहां वापस लौटें और नए पासवर्ड के साथ साइन इन करें।",
+  "lang_cloud_login_refresh_unavailable": "क्लाउड रीफ़्रेश नहीं किया जा सका। आप अपने पिछले सिंक किए गए पासवर्ड का ऑफ़लाइन उपयोग कर सकते हैं; नए क्लाउड पासवर्ड के लिए इंटरनेट कनेक्शन की आवश्यकता होती है।",
+  "lang_cloud_login_refreshing": "क्लाउड यूज़र अपडेट चेक किया जा रहा है...",
+  "lang_cloud_login_refreshed": "क्लाउड यूज़र अपडेट चेक किए गए। आप साइन इन कर सकते हैं।"
 }

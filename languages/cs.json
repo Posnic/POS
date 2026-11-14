@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Nahrát Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Zvažte požadovanou částku",
   "lang_you_have_read_only_access_to_product_avail": "Máte přístup pouze pro čtení k dostupnosti produktu.",
-  "lang_feedback_customization": "Přizpůsobení"
+  "lang_feedback_customization": "Přizpůsobení",
+  "lang_cloud_login_recovery_hint": "Připojeno k cloudu. Obnovte heslo na webových stránkách obchodu, vraťte se sem a přihlaste se. V tomto počítači není potřeba žádné nastavení e-mailu.",
+  "lang_reset_on_cloud": "Obnovit v cloudu",
+  "lang_cloud_reset_return": "Dokončete resetování na webových stránkách obchodu. Vraťte se sem a přihlaste se pomocí nového hesla.",
+  "lang_cloud_login_refresh_unavailable": "Cloud nemohl být obnoven. Naposledy synchronizované heslo můžete použít offline; nové cloudové heslo vyžaduje připojení k internetu.",
+  "lang_cloud_login_refreshing": "Kontrola aktualizací uživatelů cloudu...",
+  "lang_cloud_login_refreshed": "Zkontrolovány aktualizace uživatelů cloudu. Můžete se přihlásit."
 }

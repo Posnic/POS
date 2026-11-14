@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне ответил на ссылку на сообщение. Доставка не подтверждена; проверьте чат перед повторной попыткой.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppвсе еще восстанавливает соединение или нуждается в новой телефонной ссылке. Сообщение не было отправлено.",
   "Messaging permission required.": "Требуется разрешение на обмен сообщениями.",
-  "Schedule owner no longer has messaging access.": "У владельца расписания больше нет доступа к сообщениям."
+  "Schedule owner no longer has messaging access.": "У владельца расписания больше нет доступа к сообщениям.",
+  "This reset link has expired or was already used. Request a new link.": "Срок действия этой ссылки для перезагрузки истек или она уже использовалась. Запросите новую ссылку.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Используйте 8-20 символов без пробелов в начале и конце."
 }

@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Mag-upload ng Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Timbangin para sa isang hiniling na halaga",
   "lang_you_have_read_only_access_to_product_avail": "Mayroon kang read-only access sa pagkakaroon ng produkto.",
-  "lang_feedback_customization": "Pagpapasadya"
+  "lang_feedback_customization": "Pagpapasadya",
+  "lang_cloud_login_recovery_hint": "Nakakonekta sa ulap. I-reset ang iyong password sa website ng iyong tindahan, pagkatapos ay bumalik dito at mag-sign in. Walang kailangan ng pag-setup ng email sa computer na ito.",
+  "lang_reset_on_cloud": "I-reset sa cloud",
+  "lang_cloud_reset_return": "Tapusin ang pag-reset sa website ng iyong tindahan. Bumalik dito at mag-sign in gamit ang bagong password.",
+  "lang_cloud_login_refresh_unavailable": "Hindi mai-refresh ang ulap. Maaari mong gamitin ang iyong huling naka-sync na password nang offline; ang isang bagong cloud password ay nangangailangan ng koneksyon sa internet.",
+  "lang_cloud_login_refreshing": "Sinusuri ang mga update ng user ng cloud...",
+  "lang_cloud_login_refreshed": "Sinuri ang mga update ng user ng cloud. Maaari kang mag-sign in."
 }

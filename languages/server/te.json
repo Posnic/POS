@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppసందేశ సూచనను తిరిగి ఇవ్వలేదు. డెలివరీ ధృవీకరించబడలేదు; తిరిగి ప్రయత్నించే ముందు చాట్ను తనిఖీ చేయండి.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppఇప్పటికీ తిరిగి కనెక్ట్ అవుతోంది లేదా తాజా ఫోన్ లింక్ అవసరం. సందేశం పంపబడలేదు.",
   "Messaging permission required.": "సందేశ అనుమతి అవసరం.",
-  "Schedule owner no longer has messaging access.": "షెడ్యూల్ యజమానికి ఇకపై సందేశ ప్రాప్యత లేదు."
+  "Schedule owner no longer has messaging access.": "షెడ్యూల్ యజమానికి ఇకపై సందేశ ప్రాప్యత లేదు.",
+  "This reset link has expired or was already used. Request a new link.": "ఈ రీసెట్ లింక్ గడువు ముగిసింది లేదా ఇప్పటికే ఉపయోగించబడింది. క్రొత్త లింక్ను అభ్యర్థించండి.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "ప్రారంభంలో లేదా చివరిలో ఖాళీలు లేకుండా 8-20 అక్షరాలను ఉపయోగించండి."
 }

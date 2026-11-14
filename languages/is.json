@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Hladdu upp Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vigt fyrir umbeðna upphæð",
   "lang_you_have_read_only_access_to_product_avail": "Þú hefur aðeins lesaðan aðgang að vöruframboði.",
-  "lang_feedback_customization": "Sérsnið"
+  "lang_feedback_customization": "Sérsnið",
+  "lang_cloud_login_recovery_hint": "Tengdur við ský. Endurstilla lykilorðið þitt á vefsíðu verslunarinnar þinnar, farðu síðan aftur hingað og skráðu þig inn. Engin tölvupóststilling er nauðsynleg á þessari tölvu.",
+  "lang_reset_on_cloud": "Endurstilla á skýinu",
+  "lang_cloud_reset_return": "Kláraðu að endurstilla á vefsíðu verslunarinnar þinnar. Fara aftur hingað og skráðu þig inn með nýja lykilorðinu.",
+  "lang_cloud_login_refresh_unavailable": "Ekki var hægt að endurnýja skýið. Þú getur notað síðasta samstillta lykilorðið þitt án nettengingar; nýtt skýlykilorð þarf nettengingu.",
+  "lang_cloud_login_refreshing": "Athugaðu uppfærslur skýjanotenda...",
+  "lang_cloud_login_refreshed": "Uppfærslur skýjanotanda skoðaðar. Þú getur skráð þig inn."
 }

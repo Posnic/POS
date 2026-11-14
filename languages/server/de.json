@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApphat keine Nachrichtenreferenz zurückgegeben. Die Zustellung ist nicht bestätigt; überprüfen Sie den Chat, bevor Sie es erneut versuchen.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppstellt immer noch eine Verbindung her oder benötigt eine neue Telefonverbindung. Es wurde keine Nachricht gesendet.",
   "Messaging permission required.": "Messaging-Erlaubnis erforderlich.",
-  "Schedule owner no longer has messaging access.": "Der Besitzer des Zeitplans hat keinen Nachrichtenzugriff mehr."
+  "Schedule owner no longer has messaging access.": "Der Besitzer des Zeitplans hat keinen Nachrichtenzugriff mehr.",
+  "This reset link has expired or was already used. Request a new link.": "Dieser Link zum Zurücksetzen ist abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen Link an.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Verwenden Sie 8-20 Zeichen, ohne Leerzeichen am Anfang oder Ende."
 }

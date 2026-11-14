@@ -5210,5 +5210,11 @@
   "lang_your_session_has_ended_please_sign_in_ag": "Your session has ended. Please sign in again.",
   "lang_your_standard_language_stays_unchanged_unt": "Your standard language stays unchanged until you save wording changes.",
   "lang_your_time_or_expertise": "Your time or expertise",
-  "lang_yourselecteddetails_title": "Selected details will be deleted"
+  "lang_yourselecteddetails_title": "Selected details will be deleted",
+  "lang_cloud_login_recovery_hint": "Connected to cloud. Reset your password on your shop website, then return here and sign in. No email setup is needed on this computer.",
+  "lang_reset_on_cloud": "Reset on cloud",
+  "lang_cloud_reset_return": "Finish resetting on your shop website. Return here and sign in with the new password.",
+  "lang_cloud_login_refresh_unavailable": "Cloud could not be refreshed. You can use your last synced password offline; a new cloud password needs an internet connection.",
+  "lang_cloud_login_refreshing": "Checking cloud user updates…",
+  "lang_cloud_login_refreshed": "Cloud user updates checked. You can sign in."
 }

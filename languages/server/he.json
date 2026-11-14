@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppלא החזיר הפניה להודעה. המסירה אינה מאושרת; בדוק את הצ'אט לפני שתנסה שוב.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppעדיין מתחבר מחדש או זקוק לקישור טלפון חדש. שום הודעה לא נשלחה.",
   "Messaging permission required.": "נדרשת הרשאת העברת הודעות.",
-  "Schedule owner no longer has messaging access.": "לבעלים של לוח הזמנים אין עוד גישה להודעות."
+  "Schedule owner no longer has messaging access.": "לבעלים של לוח הזמנים אין עוד גישה להודעות.",
+  "This reset link has expired or was already used. Request a new link.": "קישור האיפוס הזה פג או שכבר נעשה בו שימוש. בקש קישור חדש.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "השתמש 8-20 תווים, ללא רווחים בהתחלה או בסוף."
 }

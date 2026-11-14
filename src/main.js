@@ -1611,6 +1611,18 @@ ipcMain.handle('cloud:status', async () => {
 });
 
 ipcMain.handle('cloud:signup', () => shell.openExternal('https://www.posnic.com/cloud'));
+ipcMain.handle('cloud:password-recovery', async () => {
+  try {
+    const config = JSON.parse(fs.readFileSync(CLOUD_CONFIG_FILE, 'utf8'));
+    const identity = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'cloud-shop-identity.json'), 'utf8'));
+    const url = await require('./cloud-login-recovery').recoveryAddress({ config, identity });
+    if (!url) return { ok: false, error: 'This local shop is not connected to cloud. Use its offline recovery options.' };
+    await shell.openExternal(url);
+    return { ok: true };
+  } catch (_) {
+    return { ok: false, error: 'Could not open the linked cloud shop. Check your internet connection and cloud connection, then try again.' };
+  }
+});
 ipcMain.handle('cloud:plans', () => shell.openExternal('https://www.posnic.com/pricing.html'));
 /*
  * Pairing this till with a code, instead of the shop's password.
@@ -2539,6 +2551,9 @@ async function redirectToWizard() {
 async function redirectToLogin() {
   if (mainWindow) {
     const origin = `http://localhost:${apiPort()}`;
+    // Refresh credentials before trusting either a remembered session or a
+    // typed password. The API skips this for standalone Community shops.
+    await require('./startup-auth').refreshUsersBeforeLogin(origin);
     const cookies = await session.defaultSession.cookies.get({ url: origin });
     const hasSavedCookie = hasUnexpiredAuthCookie(cookies);
     const hasSavedLogin = hasSavedCookie

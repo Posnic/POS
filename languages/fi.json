@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Lataa Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Punnitse pyydetty määrä",
   "lang_you_have_read_only_access_to_product_avail": "Sinulla on vain lukuoikeus tuotteen saatavuuteen.",
-  "lang_feedback_customization": "Mukauttaminen"
+  "lang_feedback_customization": "Mukauttaminen",
+  "lang_cloud_login_recovery_hint": "Yhdistetty pilveen. Palaa salasanasi kauppasi verkkosivustolla, palaa sitten tänne ja kirjaudu sisään. Tässä tietokoneessa ei tarvita sähköpostiasetuksia.",
+  "lang_reset_on_cloud": "Palauta pilvessä",
+  "lang_cloud_reset_return": "Viimeistele palautus kaupan verkkosivustolla. Palaa tänne ja kirjaudu sisään uudella salasanalla.",
+  "lang_cloud_login_refresh_unavailable": "Pilviä ei voitu päivittää. Voit käyttää viimeksi synkronoitua salasanaa offline-tilassa; uusi pilvisalasana vaatii Internet-yhteyden.",
+  "lang_cloud_login_refreshing": "Tarkistetaan pilvikäyttäjän päivityksiä...",
+  "lang_cloud_login_refreshed": "Pilvikäyttäjän päivitykset tarkistettu. Voit kirjautua sisään."
 }

@@ -5325,5 +5325,11 @@
   "lang_upload_excel_csv": "एक्सेल/CSV अपलोड करा",
   "lang_weigh_for_a_requested_amount": "विनंती केलेल्या रकमेसाठी वज",
   "lang_you_have_read_only_access_to_product_avail": "आपल्याकडे उत्पादनाच्या उपलब्धतेमध्ये फक्त वाचन",
-  "lang_feedback_customization": "सानुकूलन"
+  "lang_feedback_customization": "सानुकूलन",
+  "lang_cloud_login_recovery_hint": "क्लाउडशी कनेक्ट आहे आपल्या दुकानाच्या वेबसाइटवर आपला पासवर्ड रीसेट करा, नंतर येथे परत या संगणकावर ईमेल सेटअप आवश्यक नाही.",
+  "lang_reset_on_cloud": "क्लाउडवर रीसेट करा",
+  "lang_cloud_reset_return": "आपल्या दुकान वेबसाइटवर रीसेट करणे पूर्ण येथे परत या आणि नवीन पासवर्डसह साइन इन करा",
+  "lang_cloud_login_refresh_unavailable": "क्लाउड रिफ्रेश केले जाऊ शकत नाही. आपण आपला शेवटचा समक्रमित संकेतशब्द ऑफलाइन वापरू शकता; नवीन क्लाउड पासवर्डला",
+  "lang_cloud_login_refreshing": "क्लाउड वापरकर्ता अद्यतने",
+  "lang_cloud_login_refreshed": "क्लाउड वापरकर्ता अद्यतने आपण साइन इन करू शकता."
 }

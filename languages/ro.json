@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Încărcați Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Cântărește pentru o sumă solicitată",
   "lang_you_have_read_only_access_to_product_avail": "Aveți acces numai la citire la disponibilitatea produsului.",
-  "lang_feedback_customization": "Personalizare"
+  "lang_feedback_customization": "Personalizare",
+  "lang_cloud_login_recovery_hint": "Conectat la cloud. Resetați parola pe site-ul magazinului dvs., apoi reveniți aici și conectați-vă. Nu este necesară configurarea e-mailului pe acest computer.",
+  "lang_reset_on_cloud": "Resetați în cloud",
+  "lang_cloud_reset_return": "Finalizați resetarea pe site-ul magazinului. Reveniți aici și conectați-vă cu noua parolă.",
+  "lang_cloud_login_refresh_unavailable": "Cloudul nu a putut fi reîmprospătat. Puteți utiliza ultima parolă sincronizată offline; o nouă parolă cloud necesită o conexiune la internet.",
+  "lang_cloud_login_refreshing": "Verificarea actualizărilor utilizatorilor din cloud...",
+  "lang_cloud_login_refreshed": "Actualizările utilizatorilor din cloud verificate. Vă puteți conecta."
 }

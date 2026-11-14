@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnevrátil odkaz na zprávu. Dodání není potvrzeno; před opětovným pokusem zkontrolujte chat.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppstále se znovu připojuje nebo potřebuje nové telefonní spojení. Nebyla odeslána žádná zpráva.",
   "Messaging permission required.": "Vyžaduje se oprávnění pro zasílání zpráv.",
-  "Schedule owner no longer has messaging access.": "Vlastník plánu již nemá přístup ke zprávám."
+  "Schedule owner no longer has messaging access.": "Vlastník plánu již nemá přístup ke zprávám.",
+  "This reset link has expired or was already used. Request a new link.": "Platnost tohoto resetovacího odkazu vypršela nebo byla již použita. Požádejte o nový odkaz.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Použijte 8-20 znaků, bez mezer na začátku nebo na konci."
 }

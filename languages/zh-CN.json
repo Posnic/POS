@@ -5325,5 +5325,11 @@
   "lang_upload_excel_csv": "上传 Excel/CSV",
   "lang_weigh_for_a_requested_amount": "按要求的数量进行称重",
   "lang_you_have_read_only_access_to_product_avail": "您对产品供应情况具有只读访问权限。",
-  "lang_feedback_customization": "定制"
+  "lang_feedback_customization": "定制",
+  "lang_cloud_login_recovery_hint": "已连接到云端。在商店网站上重置密码，然后返回此处登录。无需在这台计算机上设置电子邮件。",
+  "lang_reset_on_cloud": "在云端重置",
+  "lang_cloud_reset_return": "在商店网站上完成重置。返回此处并使用新密码登录。",
+  "lang_cloud_login_refresh_unavailable": "无法刷新云。您可以离线使用上次同步的密码；新的云密码需要互联网连接。",
+  "lang_cloud_login_refreshing": "正在检查云用户更新...",
+  "lang_cloud_login_refreshed": "已检查云用户更新。你可以登录。"
 }

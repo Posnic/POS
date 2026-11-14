@@ -5325,5 +5325,11 @@
   "lang_upload_excel_csv": "Excel/CSV yükle",
   "lang_weigh_for_a_requested_amount": "İstenen bir miktar için tartın",
   "lang_you_have_read_only_access_to_product_avail": "Ürün kullanılabilirliğine salt okunur erişiminiz vardır.",
-  "lang_feedback_customization": "Özelleştirme"
+  "lang_feedback_customization": "Özelleştirme",
+  "lang_cloud_login_recovery_hint": "Buluta bağlı. Mağaza web sitenizde şifrenizi sıfırlayın, ardından buraya geri dönün ve oturum açın. Bu bilgisayarda e-posta kurulumuna gerek yoktur.",
+  "lang_reset_on_cloud": "Bulutta sıfırla",
+  "lang_cloud_reset_return": "Mağaza web sitenizde sıfırlamayı bitirin. Buraya dönün ve yeni şifre ile oturum açın.",
+  "lang_cloud_login_refresh_unavailable": "Bulut yenilenemedi. Son senkronize edilen şifrenizi çevrimdışı kullanabilirsiniz; yeni bir bulut parolasının internet bağlantısı gerekir.",
+  "lang_cloud_login_refreshing": "Bulut kullanıcı güncellemelerini kontrol ediyor...",
+  "lang_cloud_login_refreshed": "Bulut kullanıcı güncellemeleri kontrol edildi. Oturum açabilirsiniz."
 }

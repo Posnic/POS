@@ -3111,5 +3111,11 @@
   ],
   "valid": [
     "src/controllers/users.controller.js"
+  ],
+  "This reset link has expired or was already used. Request a new link.": [
+    "src/controllers/users.controller.js"
+  ],
+  "Use 8-20 characters, without spaces at the beginning or end.": [
+    "src/controllers/users.controller.js"
   ]
 }

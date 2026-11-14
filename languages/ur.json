@@ -5325,5 +5325,11 @@
   "lang_upload_excel_csv": "ایکسل/CSV اپ لوڈ کریں",
   "lang_weigh_for_a_requested_amount": "درخواست کردہ رقم کے لئے وزن کریں",
   "lang_you_have_read_only_access_to_product_avail": "آپ کے پاس مصنوعات کی دستیابی تک صرف پڑھنے والی رسائی ہے۔",
-  "lang_feedback_customization": "حسبِ ضرورت تبدیلی"
+  "lang_feedback_customization": "حسبِ ضرورت تبدیلی",
+  "lang_cloud_login_recovery_hint": "بادل سے منسلک ہے۔ اپنی دکان کی ویب سائٹ پر اپنا پاس ورڈ ری سیٹ کریں، پھر یہاں واپس آئیں اور سائن ان کریں۔ اس کمپیوٹر پر کسی ای میل سیٹ اپ کی ضرورت نہیں ہے۔",
+  "lang_reset_on_cloud": "بادل پر ری سیٹ کریں",
+  "lang_cloud_reset_return": "اپنی دکان کی ویب سائٹ پر ری سیٹ کرنا ختم کریں۔ یہاں واپس جائیں اور نئے پاس ورڈ کے ساتھ سائن ان کریں۔",
+  "lang_cloud_login_refresh_unavailable": "بادل کو تازہ نہیں کیا جاسکتا۔ آپ اپنا آخری ہم آہنگ پاس ورڈ آف لائن استعمال کرسکتے ہیں۔ ایک نئے کلاؤڈ پاس ورڈ کو انٹرنیٹ کنکشن کی ضرورت ہے۔",
+  "lang_cloud_login_refreshing": "کلاؤڈ یوزر اپ ڈیٹس کی جانچ",
+  "lang_cloud_login_refreshed": "کلاؤڈ صارف کی تازہ ترین معلومات آپ سائن ان کرسکتے ہیں۔"
 }

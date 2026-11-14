@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Last opp Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Vei for et forespurt beløp",
   "lang_you_have_read_only_access_to_product_avail": "Du har skrivebeskyttet tilgang til produkttilgjengelighet.",
-  "lang_feedback_customization": "Tilpasning"
+  "lang_feedback_customization": "Tilpasning",
+  "lang_cloud_login_recovery_hint": "Koblet til skyen. Tilbakestill passordet ditt på butikkens nettsted, gå tilbake hit og logg inn. Ingen e-postoppsett er nødvendig på denne datamaskinen.",
+  "lang_reset_on_cloud": "Tilbakestill i skyen",
+  "lang_cloud_reset_return": "Fullfør tilbakestillingen på butikkens nettsted. Gå tilbake hit og logg inn med det nye passordet.",
+  "lang_cloud_login_refresh_unavailable": "Cloud kunne ikke oppdateres. Du kan bruke ditt sist synkroniserte passord frakoblet; et nytt skypassord trenger en internettforbindelse.",
+  "lang_cloud_login_refreshing": "Kontrollerer skybrukeroppdateringer...",
+  "lang_cloud_login_refreshed": "Cloud-brukeroppdateringer sjekket. Du kan logge på."
 }

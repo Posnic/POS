@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "Uaslódáil Excel/CSV",
   "lang_weigh_for_a_requested_amount": "Meá le haghaidh méid iarrtha",
   "lang_you_have_read_only_access_to_product_avail": "Tá rochtain léite amháin agat ar infhaighteacht táirgí.",
-  "lang_feedback_customization": "Saincheapadh"
+  "lang_feedback_customization": "Saincheapadh",
+  "lang_cloud_login_recovery_hint": "Ceangailte le scamall. Athshocraigh do phasfhocal ar shuíomh Gréasáin do shiopa, ansin filleadh anseo agus sínigh isteach. Níl gá le socrú ríomhphoist ar an ríomhaire seo.",
+  "lang_reset_on_cloud": "Athshocraigh ar scamall",
+  "lang_cloud_reset_return": "Críochnaigh athshocrú ar shuíomh Gréasáin do shiopa. Fill ar ais anseo agus sínigh isteach leis an bhfocal faire nua.",
+  "lang_cloud_login_refresh_unavailable": "Ní fhéadfaí scamall a athnuachan. Is féidir leat do phasfhocal sioncronaithe deireanach a úsáid as líne; teastaíonn nasc idirlín ó phasfhocal scamall nua.",
+  "lang_cloud_login_refreshing": "Seiceáil nuashonruithe úsáideora scamall",
+  "lang_cloud_login_refreshed": "Seiceáil nuashonruithe úsáideora scamall Is féidir leat síniú isteach."
 }

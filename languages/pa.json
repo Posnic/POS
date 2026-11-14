@@ -5322,5 +5322,11 @@
   "lang_upload_excel_csv": "ਐਕਸਲ/CSV ਅਪਲੋਡ ਕਰੋ",
   "lang_weigh_for_a_requested_amount": "ਬੇਨਤੀ ਕੀਤੀ ਰਕਮ ਲਈ ਤੋਲੋ",
   "lang_you_have_read_only_access_to_product_avail": "ਤੁਹਾਡੇ ਕੋਲ ਉਤਪਾਦ ਦੀ ਉਪਲਬਧਤਾ ਤੱਕ ਸਿਰਫ ਪੜ੍ਹਨ-ਪਹੁੰਚ ਹੈ.",
-  "lang_feedback_customization": "ਲੋੜ ਅਨੁਸਾਰ ਤਬਦੀਲੀ"
+  "lang_feedback_customization": "ਲੋੜ ਅਨੁਸਾਰ ਤਬਦੀਲੀ",
+  "lang_cloud_login_recovery_hint": "ਕਲਾਉਡ ਨਾਲ ਜੁੜਿਆ ਹੋਇਆ ਹੈ. ਆਪਣੀ ਦੁਕਾਨ ਦੀ ਵੈਬਸਾਈਟ ਤੇ ਆਪਣਾ ਪਾਸਵਰਡ ਰੀਸੈਟ ਕਰੋ, ਫਿਰ ਇੱਥੇ ਵਾਪਸ ਜਾਓ ਅਤੇ ਸਾਈਨ ਇਨ ਕਰੋ. ਇਸ ਕੰਪਿਊਟਰ 'ਤੇ ਕਿਸੇ ਈਮੇਲ ਸੈੱਟਅੱਪ ਦੀ ਲੋੜ ਨਹੀਂ ਹੈ।",
+  "lang_reset_on_cloud": "ਕਲਾਉਡ ਤੇ ਰੀਸੈਟ ਕਰੋ",
+  "lang_cloud_reset_return": "ਆਪਣੀ ਦੁਕਾਨ ਦੀ ਵੈਬਸਾਈਟ ਤੇ ਰੀਸੈਟ ਕਰਨਾ ਖਤਮ ਕਰੋ. ਇੱਥੇ ਵਾਪਸ ਜਾਓ ਅਤੇ ਨਵੇਂ ਪਾਸਵਰਡ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।",
+  "lang_cloud_login_refresh_unavailable": "ਕਲਾਉਡ ਨੂੰ ਤਾਜ਼ਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ. ਤੁਸੀਂ ਆਪਣੇ ਆਖਰੀ ਸਿੰਕ ਕੀਤੇ ਪਾਸਵਰਡ ਨੂੰ ਔਫਲਾਈਨ ਵਰਤ ਸਕਦੇ ਹੋ; ਇੱਕ ਨਵੇਂ ਕਲਾਉਡ ਪਾਸਵਰਡ ਨੂੰ ਇੱਕ ਇੰਟਰਨੈਟ ਕਨੈਕਸ਼ਨ",
+  "lang_cloud_login_refreshing": "ਕਲਾਉਡ ਯੂਜ਼ਰ ਅਪਡੇਟਾਂ ਦੀ ਜਾਂਚ ਕਰਨਾ",
+  "lang_cloud_login_refreshed": "ਕਲਾਉਡ ਯੂਜ਼ਰ ਅਪਡੇਟਸ ਦੀ ਜਾਂਚ ਕੀਤੀ ਤੁਸੀਂ ਸਾਈਨ ਇਨ ਕਰ ਸਕਦੇ ਹੋ।"
 }

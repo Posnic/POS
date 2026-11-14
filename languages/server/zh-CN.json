@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApp未返回消息引用。交付未得到确认；请在重试之前检查聊天内容。",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApp仍在重新连接或需要新的电话链接。未发送任何消息。",
   "Messaging permission required.": "需要消息权限。",
-  "Schedule owner no longer has messaging access.": "计划所有者不再具有消息访问权限。"
+  "Schedule owner no longer has messaging access.": "计划所有者不再具有消息访问权限。",
+  "This reset link has expired or was already used. Request a new link.": "此重置链接已过期或已被使用。申请新链接。",
+  "Use 8-20 characters, without spaces at the beginning or end.": "使用 8-20 个字符，开头或结尾不带空格。"
 }

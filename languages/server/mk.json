@@ -979,5 +979,7 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне вратија референца за порака. Испораката е непотврдена; проверете го разговорот пред повторно да се обидете.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppсè уште се поврзува или му треба нова телефонска врска. Ниту една порака не е испратена.",
   "Messaging permission required.": "Потребна е дозвола за пораки.",
-  "Schedule owner no longer has messaging access.": "Сопственикот на распоредот повеќе нема пристап до пораки."
+  "Schedule owner no longer has messaging access.": "Сопственикот на распоредот повеќе нема пристап до пораки.",
+  "This reset link has expired or was already used. Request a new link.": "Оваа врска за ресетирање истече или веќе беше користена. Побарајте нова врска.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Користете 8-20 знаци, без празни места на почетокот или крајот."
 }
