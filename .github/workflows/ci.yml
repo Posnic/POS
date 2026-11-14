@@ -48,6 +48,8 @@ concurrency:
 # silently does nothing on the runner - which is the one place it was needed.
 env:
   TZ: Asia/Kolkata
+  # MongoDB 7.7 loads its OS adapter with dynamic import inside Jest.
+  NODE_OPTIONS: --experimental-vm-modules
   # puppeteer arrives as a transitive dependency (whatsapp-web.js) and its
   # postinstall downloads a whole Chrome from Google's CDN - which 403s
   # often enough to fail unrelated commits at `npm ci`. No CI job launches
