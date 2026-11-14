@@ -98,11 +98,11 @@ async function waitForPort(port, seconds) {
   const jestArgs = args.length ? args : ["--forceExit", "--runInBand"];
 
   log(`running jest ${jestArgs.join(" ")}`);
-  const result = spawnSync("npx", ["jest", ...jestArgs], {
+  const result = spawnSync(process.execPath, ["--experimental-vm-modules", require.resolve("jest/bin/jest"), ...jestArgs], {
     cwd: path.join(__dirname, ".."),
     env,
     stdio: "inherit",
-    shell: process.platform === "win32",
+    windowsHide: true,
   });
 
   if (mongod) {

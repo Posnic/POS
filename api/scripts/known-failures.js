@@ -40,7 +40,7 @@ const jestBin = require.resolve('jest/bin/jest', {
 
 const result = spawnSync(
   process.execPath,
-  [jestBin, ...suites, '--forceExit'],
+  ['--experimental-vm-modules', jestBin, ...suites, '--forceExit'],
   { stdio: 'inherit', cwd: path.join(__dirname, '..') },
 );
 

@@ -82,6 +82,10 @@ jest.mock('mongodb', () => {
 
 // ─── Requires ──────────────────────────────────────────────────────────────────
 
+// This suite mocks the native driver; isolate Mongoose's ObjectId access too.
+jest.mock('mongoose', () => ({
+  Types: { ObjectId: jest.requireMock('mongodb').ObjectId },
+}));
 const BaseModel = require('../../../src/models/base.model');
 const { ObjectId, _mockClient, _mockDb, _mockCollection, _mockCursor, _mockSession } =
   jest.requireMock('mongodb');

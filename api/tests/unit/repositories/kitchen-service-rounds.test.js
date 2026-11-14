@@ -14,7 +14,7 @@ afterAll(async () => {
   spy.mockRestore();
   await mongoose.disconnect();
   await memory.stop();
-});
+}, 60000);
 beforeEach(async () => {
   await collection.deleteMany({});
   branch = new mongoose.Types.ObjectId();

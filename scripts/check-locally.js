@@ -181,6 +181,7 @@ for (const check of wanted) {
     cwd: check.cwd,
     stdio: 'inherit',
     shell: true,
+    env: { ...process.env, NODE_OPTIONS: [process.env.NODE_OPTIONS, '--experimental-vm-modules'].filter(Boolean).join(' ') },
   });
   if (out.status !== 0) failed.push(label);
 }
