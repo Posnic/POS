@@ -19,7 +19,7 @@
     "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\"",
     "docs:api": "node scripts/generate-api-docs.js",
     "docs:lint": "redocly lint ../docs/openapi.json",
-    "docs:check": "node scripts/generate-api-docs.js && git diff --exit-code ../docs/API.md ../docs/openapi.json",
+    "docs:check": "node scripts/generate-api-docs.js && git -C .. diff --exit-code -- docs/API.md docs/openapi.json",
     "test:ci": "node --experimental-vm-modules node_modules/jest/bin/jest.js -c jest.ci.config.js --detectOpenHandles --forceExit",
     "test:known-failures": "node scripts/known-failures.js",
     "test:local": "node scripts/test-local.js",
