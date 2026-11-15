@@ -981,5 +981,9 @@
   "Messaging permission required.": "Machtiging voor berichten vereist.",
   "Schedule owner no longer has messaging access.": "De eigenaar van de planning heeft geen toegang meer tot berichten.",
   "This reset link has expired or was already used. Request a new link.": "Deze resetlink is verlopen of werd al gebruikt. Vraag een nieuwe link aan.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Gebruik 8-20 tekens, zonder spaties aan het begin of einde."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Gebruik 8-20 tekens, zonder spaties aan het begin of einde.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Kon de ondersteuning niet bereiken. Controleer je internetverbinding en probeer het opnieuw. Je opmerking wordt bewaard.",
+  "Could not send your message. Your comment is kept; please retry.": "Kon je bericht niet verzenden. Je reactie wordt bewaard; probeer het opnieuw.",
+  "Invalid item": "Ongeldig item",
+  "Please wait a minute before sending another message.": "Wacht even voordat je nog een bericht stuurt."
 }

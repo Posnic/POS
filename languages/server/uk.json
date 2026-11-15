@@ -981,5 +981,9 @@
   "Messaging permission required.": "Потрібен дозвіл на обмін повідомленнями.",
   "Schedule owner no longer has messaging access.": "Власник розкладу більше не має доступу до обміну повідомленнями.",
   "This reset link has expired or was already used. Request a new link.": "Термін дії цього посилання для скидання закінчився або вже використовувався. Запит на нове посилання.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Використовуйте 8-20 символів, без пробілів на початку або в кінці."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Використовуйте 8-20 символів, без пробілів на початку або в кінці.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Не вдалося долучитися до підтримки. Перевірте підключення до Інтернету та повторіть спробу. Ваш коментар зберігається.",
+  "Could not send your message. Your comment is kept; please retry.": "Не вдалося надіслати повідомлення. Ваш коментар зберігається; будь ласка, повторіть спробу.",
+  "Invalid item": "Невірний елемент",
+  "Please wait a minute before sending another message.": "Будь ласка, зачекайте хвилину, перш ніж надіслати інше повідомлення."
 }

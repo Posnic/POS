@@ -981,5 +981,9 @@
   "Messaging permission required.": "メッセージング権限が必要です。",
   "Schedule owner no longer has messaging access.": "スケジュールの所有者にはメッセージングへのアクセス権がなくなりました。",
   "This reset link has expired or was already used. Request a new link.": "このリセットリンクは有効期限が切れているか、すでに使用されています。新しいリンクをリクエストしてください。",
-  "Use 8-20 characters, without spaces at the beginning or end.": "最初と最後にスペースを入れずに 8 ～ 20 文字で入力してください。"
+  "Use 8-20 characters, without spaces at the beginning or end.": "最初と最後にスペースを入れずに 8 ～ 20 文字で入力してください。",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "サポートに連絡できませんでした。インターネット接続を確認して、再試行してください。コメントは保持されます。",
+  "Could not send your message. Your comment is kept; please retry.": "メッセージを送信できませんでした。コメントは保存されています。もう一度試してください。",
+  "Invalid item": "アイテムが無効です",
+  "Please wait a minute before sending another message.": "1 分待ってから別のメッセージを送信してください。"
 }

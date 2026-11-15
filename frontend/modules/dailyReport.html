@@ -35,17 +35,17 @@
                     </div>
                 </div>
                 <div class="report-export-bar dropdown">
-                    <button type="button" class="btn btn-secondary-rgba btn-sm report-export-toggle dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Export</button>
+                    <button type="button" class="btn btn-secondary-rgba btn-sm report-export-toggle dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><lang class="lang_export">Export</lang></button>
                     <div class="dropdown-menu dropdown-menu-right report-export-options">
-                        <button type="button" disabled class="btn btn-danger-rgba btn-sm" onclick="return PosnicPro.quickreport.dailyReportPdf();"><i class="fa fa-file-pdf-o mr-1" aria-hidden="true"></i>PDF</button>
-                        <button type="button" disabled class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.quickreport.exportCsv();"><i class="fa fa-file-text-o mr-1" aria-hidden="true"></i>CSV</button>
-                        <button type="button" disabled class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.quickreport.exportXls();"><i class="fa fa-file-excel-o mr-1" aria-hidden="true"></i>Excel</button>
-                        <button type="button" disabled class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.quickreport.dailyReportEmail();"><i class="fa fa-envelope-o mr-1" aria-hidden="true"></i>Email</button>
+                        <button type="button" disabled class="btn btn-danger-rgba btn-sm" onclick="return PosnicPro.quickreport.dailyReportPdf();"><i class="fa fa-file-pdf-o mr-1" aria-hidden="true"></i><lang class="lang_pdf">PDF</lang></button>
+                        <button type="button" disabled class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.quickreport.exportCsv();"><i class="fa fa-file-text-o mr-1" aria-hidden="true"></i><lang class="lang_csv">CSV</lang></button>
+                        <button type="button" disabled class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.quickreport.exportXls();"><i class="fa fa-file-excel-o mr-1" aria-hidden="true"></i><lang class="lang_excel">Excel</lang></button>
+                        <button type="button" disabled class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.quickreport.dailyReportEmail();"><i class="fa fa-envelope-o mr-1" aria-hidden="true"></i><lang class="lang_email_title">Email</lang></button>
                         <details class="day-end-print position-relative">
-                            <summary class="btn btn-secondary-rgba btn-sm" onclick="event.stopPropagation()"><i class="fa fa-print mr-1" aria-hidden="true"></i>Print</summary>
+                            <summary class="btn btn-secondary-rgba btn-sm" onclick="event.stopPropagation()"><i class="fa fa-print mr-1" aria-hidden="true"></i><lang class="lang_printed">Print</lang></summary>
                             <div class="dropdown-menu dropdown-menu-right show">
-                                <button type="button" disabled class="dropdown-item" onclick="return PosnicPro.quickreport.printDailyReport();">Print report</button>
-                                <button type="button" disabled class="dropdown-item" onclick="return PosnicPro.quickreport.printDaySlip();">Day-close slip</button>
+                                <button type="button" disabled class="dropdown-item" onclick="return PosnicPro.quickreport.printDailyReport();"><lang class="lang_print_report">Print report</lang></button>
+                                <button type="button" disabled class="dropdown-item" onclick="return PosnicPro.quickreport.printDaySlip();"><lang class="lang_day_close_slip">Day-close slip</lang></button>
                             </div>
                         </details>
                     </div>

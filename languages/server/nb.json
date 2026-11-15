@@ -981,5 +981,9 @@
   "Messaging permission required.": "Meldingstillatelse kreves.",
   "Schedule owner no longer has messaging access.": "Tidsplaneier har ikke lenger meldingstilgang.",
   "This reset link has expired or was already used. Request a new link.": "Denne tilbakestillingskoblingen er utløpt eller ble allerede brukt. Be om en ny lenke.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Bruk 8-20 tegn, uten mellomrom i begynnelsen eller slutten."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Bruk 8-20 tegn, uten mellomrom i begynnelsen eller slutten.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Kunne ikke nå støtte. Sjekk internettforbindelsen din og prøv på nytt. Kommentaren din er beholdt.",
+  "Could not send your message. Your comment is kept; please retry.": "Kunne ikke sende meldingen din. Kommentaren din er beholdt; prøv på nytt.",
+  "Invalid item": "Ugyldig element",
+  "Please wait a minute before sending another message.": "Vent litt før du sender en ny melding."
 }

@@ -981,5 +981,9 @@
   "Messaging permission required.": "إذن المراسلة مطلوب.",
   "Schedule owner no longer has messaging access.": "لم يعد بإمكان مالك الجدول الوصول إلى المراسلة.",
   "This reset link has expired or was already used. Request a new link.": "انتهت صلاحية رابط إعادة الضبط هذا أو تم استخدامه بالفعل. اطلب رابطًا جديدًا.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "استخدم 8-20 حرفًا، بدون مسافات في البداية أو النهاية."
+  "Use 8-20 characters, without spaces at the beginning or end.": "استخدم 8-20 حرفًا، بدون مسافات في البداية أو النهاية.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "تعذّر الوصول إلى الدعم. تحقق من اتصال الإنترنت وأعد المحاولة. يتم الاحتفاظ بتعليقك.",
+  "Could not send your message. Your comment is kept; please retry.": "تعذّر إرسال رسالتك. تم الاحتفاظ بتعليقك؛ يرجى إعادة المحاولة.",
+  "Invalid item": "عنصر غير صالح",
+  "Please wait a minute before sending another message.": "يرجى الانتظار لمدة دقيقة قبل إرسال رسالة أخرى."
 }

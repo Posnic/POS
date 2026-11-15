@@ -981,5 +981,9 @@
   "Messaging permission required.": "נדרשת הרשאת העברת הודעות.",
   "Schedule owner no longer has messaging access.": "לבעלים של לוח הזמנים אין עוד גישה להודעות.",
   "This reset link has expired or was already used. Request a new link.": "קישור האיפוס הזה פג או שכבר נעשה בו שימוש. בקש קישור חדש.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "השתמש 8-20 תווים, ללא רווחים בהתחלה או בסוף."
+  "Use 8-20 characters, without spaces at the beginning or end.": "השתמש 8-20 תווים, ללא רווחים בהתחלה או בסוף.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "לא הצלחתי להגיע לתמיכה. בדוק את חיבור האינטרנט שלך ונסה שוב. ההערה שלך נשמרת.",
+  "Could not send your message. Your comment is kept; please retry.": "לא ניתן לשלוח את ההודעה שלך. התגובה שלך נשמרת; אנא נסה שוב.",
+  "Invalid item": "פריט לא חוקי",
+  "Please wait a minute before sending another message.": "אנא המתן דקה לפני שליחת הודעה נוספת."
 }

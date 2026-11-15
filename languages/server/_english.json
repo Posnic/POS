@@ -1105,6 +1105,9 @@
   "Invalid invoice id": [
     "src/repositories/invoice.repository.js"
   ],
+  "Invalid item": [
+    "src/repositories/item.repository.js"
+  ],
   "Invalid loyalty tier": [
     "src/services/customer.service.js"
   ],
@@ -2530,6 +2533,9 @@
   "This register needs to be resumed on this device. Open Cash Register and choose Resume.": [
     "src/repositories/register.repository.js"
   ],
+  "This reset link has expired or was already used. Request a new link.": [
+    "src/controllers/users.controller.js"
+  ],
   "This shop has no active managed AI allowance.": [
     "src/services/managed-ai-credits.service.js"
   ],
@@ -2734,6 +2740,9 @@
   ],
   "Update info": [
     "src/models/setting.model.js"
+  ],
+  "Use 8-20 characters, without spaces at the beginning or end.": [
+    "src/controllers/users.controller.js"
   ],
   "Use the normal return process for an allocated sale.": [
     "src/services/sale.service.js"
@@ -3110,12 +3119,6 @@
     "src/controllers/settings.controller.js"
   ],
   "valid": [
-    "src/controllers/users.controller.js"
-  ],
-  "This reset link has expired or was already used. Request a new link.": [
-    "src/controllers/users.controller.js"
-  ],
-  "Use 8-20 characters, without spaces at the beginning or end.": [
     "src/controllers/users.controller.js"
   ]
 }

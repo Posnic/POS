@@ -981,5 +981,9 @@
   "Messaging permission required.": "Diperlukan izin pengiriman pesan.",
   "Schedule owner no longer has messaging access.": "Pemilik jadwal tidak lagi memiliki akses pesan.",
   "This reset link has expired or was already used. Request a new link.": "Tautan reset ini telah kedaluwarsa atau sudah digunakan. Minta tautan baru.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Gunakan 8-20 karakter, tanpa spasi di awal atau akhir."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Gunakan 8-20 karakter, tanpa spasi di awal atau akhir.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Tidak dapat mencapai dukungan. Periksa koneksi internet Anda dan coba lagi. Komentar Anda disimpan.",
+  "Could not send your message. Your comment is kept; please retry.": "Tidak dapat mengirim pesan Anda. Komentar Anda disimpan; silakan coba lagi.",
+  "Invalid item": "Item tidak valid",
+  "Please wait a minute before sending another message.": "Harap tunggu sebentar sebelum mengirim pesan lain."
 }

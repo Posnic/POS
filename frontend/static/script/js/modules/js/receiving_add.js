@@ -88,8 +88,8 @@ PosnicPro.receivings = {
             if (location.hash !== '#/receivings/new' || branch !== PosnicPro.local.get('branch_id_set')) return;
             var item = (response.suggestions || []).find(function (row) { return row.item_id === id; });
             if (item) PosnicPro.receivings.addReceivingLineItems(item);
-            else PosnicPro.alert('warning', 'Item unavailable for purchase');
-        }, function () { PosnicPro.alert('warning', 'Item unavailable for purchase'); });
+            else PosnicPro.alert('warning', PosnicPro.i18n.t('lang_item_unavailable_for_purchase', 'Item unavailable for purchase'));
+        }, function () { PosnicPro.alert('warning', PosnicPro.i18n.t('lang_item_unavailable_for_purchase', 'Item unavailable for purchase')); });
     },
     showEdit: function (id) {
         $('#receiving_add_date').removeClass('commonDate');
@@ -1885,7 +1885,7 @@ PosnicPro.purchaseorders = {
             key: 'receivings',
             partyFilter: 'suppliers',
             primaryControls: function (row, state) {
-                var status = $('<select class="form-control lf-primary" aria-label="Status">').appendTo(row);
+                var status = $('<select class="form-control lf-primary" aria-label="Status" data-t-aria-label="lang_userstatus">').appendTo(row);
                 status.append($('<option>').val('').text(PosnicPro.i18n.t('lang_report_all', 'All')));
                 status.append($('<option>').val('ordered').text(PosnicPro.i18n.t('lang_po_ordered', 'Ordered')));
                 status.append($('<option>').val('partial').text(PosnicPro.i18n.t('lang_partially_received', 'Partially received')));
@@ -1894,7 +1894,7 @@ PosnicPro.purchaseorders = {
                 status.val(state.extra.status || '').on('change', function () {
                     PosnicPro.listFilter.setExtra('receivings', 'status', this.value);
                 });
-                var expected = $('<select class="form-control lf-primary" aria-label="Expected">').appendTo(row);
+                var expected = $('<select class="form-control lf-primary" aria-label="Expected" data-t-aria-label="lang_expected">').appendTo(row);
                 expected.append($('<option>').val('').text(PosnicPro.i18n.t('lang_any', 'Any')));
                 expected.append($('<option>').val('today').text(PosnicPro.i18n.t('lang_this_day', 'Today')));
                 expected.append($('<option>').val('tomorrow').text(PosnicPro.i18n.t('lang_tomorrow', 'Tomorrow')));
@@ -2009,7 +2009,7 @@ PosnicPro.purchaseorders = {
             $('#po_list_rows').html(html);
             self.renderPager(data.total,data.total);
         }, function () {
-            $('#po_list_rows').text('Could not load purchases. Refresh to retry.');
+            $('#po_list_rows').text(PosnicPro.i18n.t('lang_could_not_load_purchases_refresh_to_retry', 'Could not load purchases. Refresh to retry.'));
             $('#po_list_paging').empty();
         });
     },

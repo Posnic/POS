@@ -981,5 +981,9 @@
   "Messaging permission required.": "Vyžaduje sa povolenie na správu.",
   "Schedule owner no longer has messaging access.": "Majiteľ plánu už nemá prístup k správam.",
   "This reset link has expired or was already used. Request a new link.": "Tento resetovací odkaz vypršal alebo bol už použitý. Vyžiadajte si nový odkaz.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Použite 8-20 znakov bez medzier na začiatku alebo na konci."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Použite 8-20 znakov bez medzier na začiatku alebo na konci.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nepodarilo sa dosiahnuť podporu. Skontrolujte svoje internetové pripojenie a skúste to znova. Váš komentár je zachovaný.",
+  "Could not send your message. Your comment is kept; please retry.": "Nepodarilo sa odoslať vašu správu. Váš komentár je zachovaný; skúste to znova.",
+  "Invalid item": "Neplatná položka",
+  "Please wait a minute before sending another message.": "Pred odoslaním ďalšej správy počkajte chvíľu."
 }

@@ -981,5 +981,9 @@
   "Messaging permission required.": "Vajalik sõnumside luba.",
   "Schedule owner no longer has messaging access.": "Ajakava omanikul pole enam juurdepääsu sõnumitele.",
   "This reset link has expired or was already used. Request a new link.": "See lähtestamise link on aegunud või seda juba kasutati. Taotlege uut linki.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Kasutage 8-20 tähemärki, ilma tühikuteta alguses või lõpus."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Kasutage 8-20 tähemärki, ilma tühikuteta alguses või lõpus.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Toetust ei suutnud jõuda. Kontrollige oma Interneti-ühendust ja proovige uuesti. Teie kommentaar on säilinud.",
+  "Could not send your message. Your comment is kept; please retry.": "Teie sõnumit ei saanud saata. Teie kommentaar on säilinud; palun proovige uuesti.",
+  "Invalid item": "Kehtetu üksus",
+  "Please wait a minute before sending another message.": "Palun oodake minut enne uue sõnumi saatmist."
 }

@@ -981,5 +981,9 @@
   "Messaging permission required.": "Teastaíonn cead teachtaireachtaí.",
   "Schedule owner no longer has messaging access.": "Níl rochtain ag úinéir an sceideal a thuilleadh",
   "This reset link has expired or was already used. Request a new link.": "Tá an nasc athshocraithe seo in éag nó úsáideadh é cheana féin. Iarr nasc nua.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Úsáid carachtar 8-20, gan spásanna ag an tús nó ag deireadh."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Úsáid carachtar 8-20, gan spásanna ag an tús nó ag deireadh.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Ní raibh sé in ann tacaíocht a bhaint amach. Seiceáil do nasc idirlín agus déan iarracht arís. Coinnítear do thrácht.",
+  "Could not send your message. Your comment is kept; please retry.": "Ní fhéadfaí do theachtaireacht a sheoladh. Coinnítear do thrácht; déan iarracht arís le do thoil.",
+  "Invalid item": "Mír neamhbhailí",
+  "Please wait a minute before sending another message.": "Fan nóiméad le do thoil sula seoltar teachtaireacht eile."
 }

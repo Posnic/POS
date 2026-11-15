@@ -981,5 +981,9 @@
   "Messaging permission required.": "需要消息傳遞權限。",
   "Schedule owner no longer has messaging access.": "排程擁有者不再具有郵件存取權限。",
   "This reset link has expired or was already used. Request a new link.": "此重設連結已過期或已使用。請求新連結。",
-  "Use 8-20 characters, without spaces at the beginning or end.": "使用 8-20 個字元，開頭或結尾不含空格。"
+  "Use 8-20 characters, without spaces at the beginning or end.": "使用 8-20 個字元，開頭或結尾不含空格。",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "無法獲得支持。檢查您的網際網路連線並重試。您的評論已保留。",
+  "Could not send your message. Your comment is kept; please retry.": "無法傳送您的訊息。您的評論已保留，請重試。",
+  "Invalid item": "無效的項目",
+  "Please wait a minute before sending another message.": "請稍候一分鐘，然後再發送另一條消息。"
 }

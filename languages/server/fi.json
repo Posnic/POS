@@ -981,5 +981,9 @@
   "Messaging permission required.": "Viestintälupa vaaditaan.",
   "Schedule owner no longer has messaging access.": "Aikataulun omistajalla ei ole enää viestintäoikeuksia.",
   "This reset link has expired or was already used. Request a new link.": "Tämä nollauslinkki on vanhentunut tai sitä on jo käytetty. Pyydä uusi linkki.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Käytä 8-20 merkkiä ilman välilyöntejä alussa tai lopussa."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Käytä 8-20 merkkiä ilman välilyöntejä alussa tai lopussa.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Tukea ei saatu. Tarkista Internet-yhteys ja yritä uudelleen. Kommenttisi säilytetään.",
+  "Could not send your message. Your comment is kept; please retry.": "Viestiäsi ei voitu lähettää. Kommenttisi säilytetään; yritä uudelleen.",
+  "Invalid item": "Virheellinen kohde",
+  "Please wait a minute before sending another message.": "Odota hetki ennen uuden viestin lähettämistä."
 }

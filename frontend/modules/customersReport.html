@@ -17,21 +17,21 @@
                 <div id="customer-report-search" class="lf-quick">
                     <button type="button" class="customer-report-toggle" aria-controls="customer-report-filters"></button>
                 </div>
-                <dialog id="customer-report-filters" class="lf-dialog lf-report-dialog" aria-label="Filter customers">
+                <dialog id="customer-report-filters" class="lf-dialog lf-report-dialog" aria-label="Filter customers" data-t-aria-label="lang_filter_customers">
                     <div class="tb_filter">
-                        <label for="view_customer_report_input" data-t="lang_customer">Customer</label>
-                        <input type="search" class="form-control lf-q" aria-label="Search customers" placeholder="Search customers" id="view_customer_report_input">
+                        <label for="view_customer_report_input" data-t="lang_customer"><lang class="lang_newcustomer_title">Customer</lang></label>
+                        <input type="search" class="form-control lf-q" aria-label="Search customers" data-t-aria-label="lang_search_customers" placeholder="Search customers" data-t-placeholder="lang_search_customers" id="view_customer_report_input">
                         <input type="hidden" class="customers_input_id">
                     </div>
                     <div class="tb_filter">
-                        <label for="customer_branch_value">Branch</label>
+                        <label for="customer_branch_value"><lang class="lang_newbranch_title">Branch</lang></label>
                         <select class="floating-input select2 load-branch display-current-branch customer_branch_value" multiple="multiple"
                                 data-placeholder="Select Branch" name="customer_branch_value[]" id="customer_branch_value">
                             <option class="allbranch_name" value=""><lang class="lang_report_all">All</lang></option>
                         </select>
                     </div>
                 </dialog>
-                <button hidden type="button" id="change_customer_view" data-id="tableView" onclick="PosnicPro.customerroot.viewPage(this);"><span class="lang_filter_title">Apply</span></button>
+                <button hidden type="button" id="change_customer_view" data-id="tableView" onclick="PosnicPro.customerroot.viewPage(this);"><span class="lang_filter_title"><lang class="lang_filter_title">Apply</lang></span></button>
             </div>
         </div>
     </div>
@@ -82,7 +82,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_customerreport_per_page" data-id="customerreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View customerreport per page">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_customerreport_per_page" data-id="customerreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View customerreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>
@@ -199,7 +199,7 @@
                                                     <div class="card-body ecommerce-pagination">
                                                         <div class="row align-items-center">
                                                             <div class="col-8">
-                                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_customeroutstandingreport_per_page" data-id="customeroutstandingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View customeroutstandingreport per page">
+                                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_customeroutstandingreport_per_page" data-id="customeroutstandingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View customeroutstandingreport per page">
                                                             <option value="5" selected>5</option>
                                                             <option value="10">10</option>
                                                             <option value="25">25</option>

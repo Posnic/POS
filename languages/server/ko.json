@@ -981,5 +981,9 @@
   "Messaging permission required.": "메시지 권한이 필요합니다.",
   "Schedule owner no longer has messaging access.": "일정 소유자에게는 더 이상 메시징 액세스 권한이 없습니다.",
   "This reset link has expired or was already used. Request a new link.": "이 재설정 링크는 만료되었거나 이미 사용되었습니다.새 링크를 요청하세요.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "시작이나 끝에 공백 없이 8~20자를 사용하세요."
+  "Use 8-20 characters, without spaces at the beginning or end.": "시작이나 끝에 공백 없이 8~20자를 사용하세요.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "지원을 받을 수 없습니다.인터넷 연결을 확인하고 다시 시도하세요.댓글은 보관됩니다.",
+  "Could not send your message. Your comment is kept; please retry.": "메시지를 보낼 수 없습니다.댓글이 보관되었습니다. 다시 시도하세요.",
+  "Invalid item": "잘못된 항목",
+  "Please wait a minute before sending another message.": "다른 메시지를 보내기 전에 잠시만 기다려 주세요."
 }

@@ -981,5 +981,9 @@
   "Messaging permission required.": "செய்தியிடல் அனுமதி தேவை.",
   "Schedule owner no longer has messaging access.": "அட்டவணை உரிமையாளருக்கு இனி செய்தி அணுகல் இல்லை",
   "This reset link has expired or was already used. Request a new link.": "இந்த மீட்டமைப்பு இணைப்பு காலாவதியாகிவிட்டது அல்லது ஏற்கனவே பயன்படுத்தப்பட்டது. புதிய இணைப்பைக் கோருங்கள்.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "ஆரம்பத்தில் அல்லது முடிவில் இடைவெளிகள் இல்லாமல் 8-20 எழுத்துக்களைப் பயன்படுத்தவும்."
+  "Use 8-20 characters, without spaces at the beginning or end.": "ஆரம்பத்தில் அல்லது முடிவில் இடைவெளிகள் இல்லாமல் 8-20 எழுத்துக்களைப் பயன்படுத்தவும்.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "ஆதரவை அடைய முடியவில்லை. உங்கள் இணைய இணைப்பைச் சரிபார்த்து மறுமுயற்சி செய்யுங்கள் உங்கள் கருத்து வைக்கப்பட்டுள்ளது.",
+  "Could not send your message. Your comment is kept; please retry.": "உங்கள் செய்தியை அனுப்ப முடியவில்லை. உங்கள் கருத்து வைக்கப்பட்டுள்ளது; தயவுசெய்து மீண்டும் முயற்சிக்கவும்",
+  "Invalid item": "தவறான பொருள்",
+  "Please wait a minute before sending another message.": "மற்றொரு செய்தியை அனுப்புவதற்கு முன் ஒரு நிமிடம் காத்திருங்கள்."
 }

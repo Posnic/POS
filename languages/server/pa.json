@@ -981,5 +981,9 @@
   "Messaging permission required.": "ਮੈਸੇਜਿੰਗ ਆਗਿਆ ਦੀ ਲੋੜ ਹੈ।",
   "Schedule owner no longer has messaging access.": "ਅਨੁਸੂਚੀ ਮਾਲਕ ਕੋਲ ਹੁਣ ਮੈਸੇਜਿੰਗ ਪਹੁੰਚ ਨਹੀਂ ਹੈ।",
   "This reset link has expired or was already used. Request a new link.": "ਇਹ ਰੀਸੈਟ ਲਿੰਕ ਦੀ ਮਿਆਦ ਪੁੱਗ ਗਈ ਹੈ ਜਾਂ ਪਹਿਲਾਂ ਹੀ ਵਰਤੀ ਗਈ ਸੀ ਇੱਕ ਨਵੇਂ ਲਿੰਕ ਦੀ ਬੇਨਤੀ ਕਰੋ।",
-  "Use 8-20 characters, without spaces at the beginning or end.": "ਸ਼ੁਰੂ ਜਾਂ ਅੰਤ ਵਿੱਚ ਖਾਲੀ ਥਾਂਵਾਂ ਤੋਂ ਬਿਨਾਂ, 8-20 ਅੱਖਰਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ।"
+  "Use 8-20 characters, without spaces at the beginning or end.": "ਸ਼ੁਰੂ ਜਾਂ ਅੰਤ ਵਿੱਚ ਖਾਲੀ ਥਾਂਵਾਂ ਤੋਂ ਬਿਨਾਂ, 8-20 ਅੱਖਰਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ।",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "ਸਮਰਥਨ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚ ਸਕਿਆ. ਆਪਣੇ ਇੰਟਰਨੈਟ ਕਨੈਕਸ਼ਨ ਦੀ ਜਾਂਚ ਕਰੋ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ. ਤੁਹਾਡੀ ਟਿੱਪਣੀ ਰੱਖੀ ਗਈ ਹੈ.",
+  "Could not send your message. Your comment is kept; please retry.": "ਤੁਹਾਡਾ ਸੁਨੇਹਾ ਨਹੀਂ ਭੇਜ ਸਕਿਆ। ਤੁਹਾਡੀ ਟਿੱਪਣੀ ਰੱਖੀ ਗਈ ਹੈ; ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ.",
+  "Invalid item": "ਅਵੈਧ ਆਈਟਮ",
+  "Please wait a minute before sending another message.": "ਕਿਰਪਾ ਕਰਕੇ ਕੋਈ ਹੋਰ ਸੁਨੇਹਾ ਭੇਜਣ ਤੋਂ ਪਹਿਲਾਂ ਇੱਕ ਮਿੰਟ ਉਡੀਕ"
 }

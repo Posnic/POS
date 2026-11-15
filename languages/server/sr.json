@@ -981,5 +981,9 @@
   "Messaging permission required.": "Potrebna je dozvola za razmenu poruka.",
   "Schedule owner no longer has messaging access.": "Vlasnik rasporeda više nema pristup porukama.",
   "This reset link has expired or was already used. Request a new link.": "Ova veza za resetovanje je istekla ili je već korišćena. Zatražite novu vezu.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Koristite 8-20 znakova, bez razmaka na početku ili na kraju."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Koristite 8-20 znakova, bez razmaka na početku ili na kraju.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nisam mogao da dođem do podrške. Proverite svoju internet vezu i pokušajte ponovo. Vaš komentar se zadržava.",
+  "Could not send your message. Your comment is kept; please retry.": "Nisam mogao da pošaljem vašu poruku. Vaš komentar je zadržan; pokušajte ponovo.",
+  "Invalid item": "Nevažeća stavka",
+  "Please wait a minute before sending another message.": "Sačekajte minut pre nego što pošaljete drugu poruku."
 }

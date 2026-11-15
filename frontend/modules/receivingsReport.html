@@ -26,17 +26,17 @@
 
                     <button type="button" aria-controls="purchase-report-filters"></button>
                 </div>
-                <dialog id="purchase-report-filters" class="lf-dialog lf-report-dialog" aria-label="Filter purchases">
+                <dialog id="purchase-report-filters" class="lf-dialog lf-report-dialog" aria-label="Filter purchases" data-t-aria-label="lang_filter_purchases">
                     <div class="lf-inline-query">
-                        <label for="purchase-report-supplier">Supplier</label>
-                        <input type="search" id="purchase-report-supplier" placeholder="Choose supplier" aria-label="Choose supplier" class="lf-q form-control">
+                        <label for="purchase-report-supplier"><lang class="lang_newsupplier_title">Supplier</lang></label>
+                        <input type="search" id="purchase-report-supplier" placeholder="Choose supplier" data-t-placeholder="lang_choose_supplier" aria-label="Choose supplier" data-t-aria-label="lang_choose_supplier" class="lf-q form-control">
                     </div>
                     <div>
-                        <label for="purchase-report-sort">Sort purchases</label>
-                        <select id="purchase-report-sort" class="form-control"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="amount">Highest amount</option></select>
+                        <label for="purchase-report-sort"><lang class="lang_sort_purchases">Sort purchases</lang></label>
+                        <select id="purchase-report-sort" class="form-control"><option value="new"><lang class="lang_newest_first">Newest first</lang></option><option value="old"><lang class="lang_oldest_first">Oldest first</lang></option><option value="amount"><lang class="lang_highest_amount">Highest amount</lang></option></select>
                     </div>
                 </dialog>
-                <button hidden type="button" id="change_receiving_view" data-id="tableView" onclick="PosnicPro.receivingroot.viewPage(this);"><span class="lang_filter_title">Apply</span></button>
+                <button hidden type="button" id="change_receiving_view" data-id="tableView" onclick="PosnicPro.receivingroot.viewPage(this);"><span class="lang_filter_title"><lang class="lang_filter_title">Apply</lang></span></button>
             </div>
             <div class="row">
                 <div class="col-lg-2 col-xl-2"></div>
@@ -74,7 +74,7 @@
                             <div class="tab-pane fade show active" id="receiving-line" role="tabpanel" aria-labelledby="receiving-tab-line">
                                 <div id="purchase-report-summary" class="table-responsive" aria-live="polite" hidden>
                                     <table class="table table-sm mb-2">
-                                        <thead><tr><th>Supplier</th><th>Purchases</th><th>Purchased</th><th>Recorded paid</th><th>Outstanding</th><th>Payment unknown</th></tr></thead>
+                                        <thead><tr><th><lang class="lang_newsupplier_title">Supplier</lang></th><th><lang class="lang_po_title">Purchases</lang></th><th><lang class="lang_purchased">Purchased</lang></th><th><lang class="lang_recorded_paid">Recorded paid</lang></th><th><lang class="lang_po_outstanding">Outstanding</lang></th><th><lang class="lang_payment_unknown">Payment unknown</lang></th></tr></thead>
                                         <tbody><tr></tr></tbody>
                                     </table>
                                 </div>
@@ -103,7 +103,7 @@
                                         <div class="row align-items-center">
                                             <div class="col-8 d-flex align-items-center flex-wrap">
                                                 
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto mr-2 select_page" id="view_receivingreport_per_page" data-id="receivingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View receivingreport per page">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto mr-2 select_page" id="view_receivingreport_per_page" data-id="receivingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View receivingreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>

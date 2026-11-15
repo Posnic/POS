@@ -7,7 +7,7 @@
 <button id="count-overview-refresh" class="btn btn-primary-rgba" onclick="PosnicPro.inventorycounts.load();"><i class="feather icon-refresh-cw" aria-hidden="true"></i> <lang class="lang_wf_refresh">Refresh</lang></button>
 <div class="col-auto" data-ask-entry style="display:none"><a class="btn btn-primary-rgba" href="#/askposnic"><lang class="lang_prepare_with_ask_posnic">Prepare with Ask Posnic</lang></a></div>
 </div></div>
-<nav class="count-navigation" aria-label="Stock Counts">
+<nav class="count-navigation" aria-label="Stock Counts" data-t-aria-label="lang_stock_counts">
 <button id="inventory-overview" class="count-tab" data-count-view="overview" onclick="PosnicPro.inventorycounts.navigate('overview');"><lang class="lang_overview">Overview</lang></button>
 <button class="count-tab" data-count-view="audit" data-module="item" data-access="write" onclick="PosnicPro.inventorycounts.navigate('audit');"><i class="feather icon-clipboard" aria-hidden="true"></i> <lang class="lang_start_stock_audit">Start stock audit</lang></button>
 <button class="count-tab" data-count-view="damage" data-module="item" data-access="read" onclick="PosnicPro.inventorycounts.navigate('damage');"><i class="feather icon-alert-triangle" aria-hidden="true"></i> <lang class="lang_spoilage_damage">Spoilage / damage</lang></button>

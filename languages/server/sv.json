@@ -981,5 +981,9 @@
   "Messaging permission required.": "Meddelandebehörighet krävs.",
   "Schedule owner no longer has messaging access.": "Schemaägaren har inte längre meddelandeåtkomst.",
   "This reset link has expired or was already used. Request a new link.": "Den här återställningslänken har gått ut eller har redan använts. Begär en ny länk.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Använd 8-20 tecken, utan mellanslag i början eller slutet."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Använd 8-20 tecken, utan mellanslag i början eller slutet.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Kunde inte nå stöd. Kontrollera din internetanslutning och försök igen. Din kommentar är bevarad.",
+  "Could not send your message. Your comment is kept; please retry.": "Det gick inte att skicka ditt meddelande. Din kommentar behålls; försök igen.",
+  "Invalid item": "Ogiltigt objekt",
+  "Please wait a minute before sending another message.": "Vänta en minut innan du skickar ett nytt meddelande."
 }

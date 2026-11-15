@@ -981,5 +981,9 @@
   "Messaging permission required.": "Skilaboðaleyfi krafist.",
   "Schedule owner no longer has messaging access.": "Eigandi dagskrár hefur ekki lengur aðgang að skilaboðum.",
   "This reset link has expired or was already used. Request a new link.": "Þessi endurstillingarhlekkur er útrunninn eða var þegar notaður. Óska eftir nýjum hlekk.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Notaðu 8-20 stafi, án bil í upphafi eða lok."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Notaðu 8-20 stafi, án bil í upphafi eða lok.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Gat ekki náð stuðningi. Athugaðu nettenginguna þína og reyndu aftur. Athugasemd þín er geymd.",
+  "Could not send your message. Your comment is kept; please retry.": "Gat ekki sent skilaboðin þín. Athugasemd þín er geymd; vinsamlegast reyndu aftur.",
+  "Invalid item": "Ógilt atriði",
+  "Please wait a minute before sending another message.": "Vinsamlegast bíddu í eina mínútu áður en þú sendir önnur skilaboð."
 }

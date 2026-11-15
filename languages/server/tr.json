@@ -981,5 +981,9 @@
   "Messaging permission required.": "Mesajlaşma izni gerekli.",
   "Schedule owner no longer has messaging access.": "Program sahibinin artık mesajlaşma erişimi yok.",
   "This reset link has expired or was already used. Request a new link.": "Bu sıfırlama bağlantısının süresi doldu veya zaten kullanıldı. Yeni bir bağlantı isteyin.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Başlangıçta veya sonunda boşluk bırakmadan 8-20 karakter kullanın."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Başlangıçta veya sonunda boşluk bırakmadan 8-20 karakter kullanın.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Desteğe ulaşılamadı. İnternet bağlantınızı kontrol edin ve tekrar deneyin. Yorumunuz saklandı.",
+  "Could not send your message. Your comment is kept; please retry.": "Mesajınız gönderilemedi. Yorumunuz saklandı; lütfen tekrar deneyin.",
+  "Invalid item": "Geçersiz öğe",
+  "Please wait a minute before sending another message.": "Lütfen başka bir mesaj göndermeden önce bir dakika bekleyin."
 }

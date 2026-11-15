@@ -981,5 +981,9 @@
   "Messaging permission required.": "സന്ദേശമയയ്ക്കൽ അനുമതി ആവശ്യമാണ്.",
   "Schedule owner no longer has messaging access.": "ഷെഡ്യൂൾ ഉടമയ്ക്ക് ഇനി മെസേജിംഗ് ആക്സസ് ഇല്ല.",
   "This reset link has expired or was already used. Request a new link.": "ഈ റീസെറ്റ് ലിങ്ക് കാലഹരണപ്പെട്ടു അല്ലെങ്കിൽ ഇതിനകം ഉപയോഗിച്ചു. ഒരു പുതിയ ലിങ്ക് അഭ്യർത്ഥിക്കുക.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "തുടക്കത്തിലോ അവസാനത്തിലോ ഇടങ്ങളില്ലാതെ 8-20 പ്രതീകങ്ങൾ ഉപയോഗിക്കുക."
+  "Use 8-20 characters, without spaces at the beginning or end.": "തുടക്കത്തിലോ അവസാനത്തിലോ ഇടങ്ങളില്ലാതെ 8-20 പ്രതീകങ്ങൾ ഉപയോഗിക്കുക.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "പിന്തുണയുമായി എത്താൻ കഴിഞ്ഞില്ല. നിങ്ങളുടെ ഇന്റർനെറ്റ് കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക. താങ്കളുടെ അഭിപ്രായം സൂക്ഷിച്ചിരിക്കുന്നു.",
+  "Could not send your message. Your comment is kept; please retry.": "നിങ്ങളുടെ സന്ദേശം അയയ്ക്കാൻ കഴിഞ്ഞില്ല. നിങ്ങളുടെ അഭിപ്രായം സൂക്ഷിച്ചിരിക്കുന്നു; ദയവായി വീണ്ടും ശ്രമിക്കുക.",
+  "Invalid item": "അസാധുവായ ഇനം",
+  "Please wait a minute before sending another message.": "മറ്റൊരു സന്ദേശം അയയ്ക്കുന്നതിന് മുമ്പ് ഒരു മിനിറ്റ് കാത്തിരിക്കുക."
 }

@@ -981,5 +981,9 @@
   "Messaging permission required.": "ต้องได้รับอนุญาตให้ส่งข้อความ",
   "Schedule owner no longer has messaging access.": "เจ้าของตารางเวลาไม่มีการเข้าถึงการส่งข้อความอีกต่อไป",
   "This reset link has expired or was already used. Request a new link.": "ลิงก์รีเซ็ตนี้หมดอายุหรือใช้แล้วขอลิงก์ใหม่",
-  "Use 8-20 characters, without spaces at the beginning or end.": "ใช้อักขระ 8-20 โดยไม่มีช่องว่างที่จุดเริ่มต้นหรือตอนท้าย"
+  "Use 8-20 characters, without spaces at the beginning or end.": "ใช้อักขระ 8-20 โดยไม่มีช่องว่างที่จุดเริ่มต้นหรือตอนท้าย",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "ไม่สามารถเข้าถึงการสนับสนุนได้ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณและลองอีกครั้งความคิดเห็นของคุณจะถูกเก็บไว้",
+  "Could not send your message. Your comment is kept; please retry.": "ไม่สามารถส่งข้อความของคุณได้ความคิดเห็นของคุณถูกเก็บไว้ โปรดลองอีกครั้ง",
+  "Invalid item": "รายการไม่ถูกต้อง",
+  "Please wait a minute before sending another message.": "กรุณารอสักครู่ก่อนส่งข้อความอื่น"
 }

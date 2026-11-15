@@ -14,10 +14,69 @@ test('refresh is visible, idempotent and keeps current filters and page',()=>{
  assert.equal(lf._mounted.sales.state.search,'customer');assert.equal(lf._mounted.sales.state.extra.status,'Paid');
  } finally {dom.window.close();}
 });
+function stripComments(src) {
+  let out = '';
+  let inString = null;
+  for (let i = 0; i < src.length; i += 1) {
+    const c = src[i];
+    const next = src[i + 1];
+    if (inString) {
+      out += c;
+      if (c === '\\') {
+        out += next;
+        i += 1;
+      } else if (c === inString) inString = null;
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`') {
+      inString = c;
+      out += c;
+      continue;
+    }
+    if (c === '/' && next === '/') {
+      while (i < src.length && src[i] !== '\n') i += 1;
+      out += '\n';
+      continue;
+    }
+    if (c === '/' && next === '*') {
+      i += 2;
+      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) i += 1;
+      i += 1;
+      continue;
+    }
+    out += c;
+  }
+  return out;
+}
+
+/** The `{ ... }` that follows a marker, balanced. */
+function literalAfter(src, marker) {
+  const start = src.indexOf(marker);
+  assert.notStrictEqual(start, -1, `${marker} is gone or was renamed`);
+  const from = src.indexOf('{', start);
+  let depth = 0;
+  let inString = null;
+  for (let i = from; i < src.length; i += 1) {
+    const c = src[i];
+    if (inString) {
+      if (c === '\\') i += 1;
+      else if (c === inString) inString = null;
+      continue;
+    }
+    if (c === "'" || c === '"') inString = c;
+    else if (c === '{') depth += 1;
+    else if (c === '}') {
+      depth -= 1;
+      if (depth === 0) return src.slice(from, i + 1);
+    }
+  }
+  return assert.fail(`could not find the end of ${marker}`);
+}
+
 test('every shared list-filter mount has an explicit reload callback',()=>{
  const dir='frontend/static/script/js/modules/js';let count=0;
- for(const f of fs.readdirSync(dir).filter(f=>f.endsWith('.js'))){const source=fs.readFileSync(dir+'/'+f,'utf8');for(const fragment of source.split('PosnicPro.listFilter.mount({').slice(1)){assert.match(fragment.slice(0,230),/onRefresh: function/ ,f);count++;}}
- assert.equal(count,15);
+ for(const f of fs.readdirSync(dir).filter(f=>f.endsWith('.js'))){const source=fs.readFileSync(dir+'/'+f,'utf8');for(const fragment of source.split('PosnicPro.listFilter.mount({').slice(1)){assert.match(literalAfter(stripComments('PosnicPro.listFilter.mount({' + fragment), 'PosnicPro.listFilter.mount({'), /onRefresh:\s*function/, f);count++;}}
+ assert.equal(count,16);
 });
 const setupRefresh = () => {
  const dom=new JSDOM('<button id="filters">Filter</button><div id="rows">Existing data</div>',{runScripts:'outside-only'});

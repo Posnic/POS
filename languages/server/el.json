@@ -981,5 +981,9 @@
   "Messaging permission required.": "Απαιτείται άδεια ανταλλαγής μηνυμάτων.",
   "Schedule owner no longer has messaging access.": "Ο κάτοχος προγράμματος δεν έχει πλέον πρόσβαση σε μηνύματα.",
   "This reset link has expired or was already used. Request a new link.": "Αυτός ο σύνδεσμος επαναφοράς έχει λήξει ή έχει ήδη χρησιμοποιηθεί. Ζητήστε έναν νέο σύνδεσμο.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Χρησιμοποιήστε 8-20 χαρακτήρες, χωρίς κενά στην αρχή ή στο τέλος."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Χρησιμοποιήστε 8-20 χαρακτήρες, χωρίς κενά στην αρχή ή στο τέλος.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Δεν ήταν δυνατή η επίτευξη υποστήριξης. Ελέγξτε τη σύνδεσή σας στο Διαδίκτυο και δοκιμάστε ξανά. Το σχόλιό σας διατηρείται.",
+  "Could not send your message. Your comment is kept; please retry.": "Δεν ήταν δυνατή η αποστολή του μηνύματός σας. Το σχόλιό σας διατηρείται. Παρακαλώ δοκιμάστε ξανά.",
+  "Invalid item": "Μη έγκυρο στοιχείο",
+  "Please wait a minute before sending another message.": "Περιμένετε ένα λεπτό πριν στείλετε άλλο μήνυμα."
 }

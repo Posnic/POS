@@ -7,10 +7,13 @@ const seating = require('../../../src/services/seating-claims');
 // dependency graph must not consume the five-second database assertion budget.
 const saleRepository = require('../../../src/repositories/sale.repository');
 let server, db, scope, ids;
+// These tests perform real database I/O, including concurrent seat claims.
+jest.setTimeout(30000);
 beforeAll(async () => {
   server = await MongoMemoryServer.create();
   await mongoose.connect(server.getUri('seating-claims'));
   db = mongoose.connection.db;
+  require('../../../src/models/base.model').database = db;
 }, 60000);
 afterAll(async () => {
   try {

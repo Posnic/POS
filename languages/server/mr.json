@@ -981,5 +981,9 @@
   "Messaging permission required.": "मेसेजिंगची परवानगी",
   "Schedule owner no longer has messaging access.": "वेळापत्रक मालकाकडे यापुढे संदेश",
   "This reset link has expired or was already used. Request a new link.": "हा रीसेट दुवा कालबाह्य झाला किंवा आधीच वापरला नवीन लिंकची विनंती करा.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "सुरुवातीस किंवा शेवटी स्पेसशिवाय 8-20 अक्षरे वापरा."
+  "Use 8-20 characters, without spaces at the beginning or end.": "सुरुवातीस किंवा शेवटी स्पेसशिवाय 8-20 अक्षरे वापरा.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "समर्थनापर्यंत पोहोच तुमचे इंटरनेट कनेक्शन तपासा आणि आपली टिप्पणी ठेवली आहे",
+  "Could not send your message. Your comment is kept; please retry.": "आपला संदेश पाठवू शकला नाही. आपली टिप्पणी ठेवली गेली आहे; कृपया",
+  "Invalid item": "वैध आयटम",
+  "Please wait a minute before sending another message.": "दुसरा संदेश पाठवण्यापूर्वी कृपया एक मि"
 }

@@ -981,5 +981,9 @@
   "Messaging permission required.": "Kinakailangan ang pahintulot sa pagmem",
   "Schedule owner no longer has messaging access.": "Wala nang access sa pagmemensahe ang may-ari ng iskedyul",
   "This reset link has expired or was already used. Request a new link.": "Nag-expire na ang link sa pag-reset na ito o ginamit na. Humiling ng isang bagong link.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Gumamit ng 8-20 character, nang walang mga puwang sa simula o dulo."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Gumamit ng 8-20 character, nang walang mga puwang sa simula o dulo.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Hindi maabot ang suporta. Suriin ang iyong koneksyon sa internet at subukang muli. Ang iyong komento ay pinananatili.",
+  "Could not send your message. Your comment is kept; please retry.": "Hindi maipadala ang iyong mensahe. Ang iyong komento ay pinananatili; mangyaring subukang muli.",
+  "Invalid item": "Hindi wastong item",
+  "Please wait a minute before sending another message.": "Mangyaring maghintay ng isang minuto bago magpadala ng isa pang mensahe."
 }

@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { JSDOM } = require('jsdom');
-const source = fs.readFileSync('frontend/static/script/js/core/PosnicPro.js', 'utf8').split('// Select existing numbers once on entry, including dynamically opened dialogs.')[1];
+const source = fs.readFileSync('frontend/static/script/js/core/PosnicPro.js', 'utf8').split('// Select existing numbers once on entry, including dynamically opened dialogs.')[1].split('// Immediate acknowledgement')[0];
 function setup() {
   const dom = new JSDOM('<input id="search"><input id="qty" type="number" value="1"><input id="discount" inputmode="decimal" value="10.50">', { runScripts: 'outside-only' });
   dom.window.eval(source);

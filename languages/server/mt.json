@@ -981,5 +981,9 @@
   "Messaging permission required.": "Meħtieġ permess tal-messaġġi.",
   "Schedule owner no longer has messaging access.": "Is-sid tal-iskeda m'għadux ikollu aċċess għall-messaġġi.",
   "This reset link has expired or was already used. Request a new link.": "Din il-link tar-reset skadiet jew diġà ntużat. Itlob link ġdid.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Uża 8-20 karattru, mingħajr spazji fil-bidu jew fit-tmiem."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Uża 8-20 karattru, mingħajr spazji fil-bidu jew fit-tmiem.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Ma setax jilħaq l-appoġġ. Iċċekkja l-konnessjoni tal-internet tiegħek u erġa 'ipprova. Il-kumment tiegħek jinżamm.",
+  "Could not send your message. Your comment is kept; please retry.": "Ma setax tibgħat il-messaġġ tiegħek. Il-kumment tiegħek jinżamm; jekk jogħġbok ipprova mill-ġdid.",
+  "Invalid item": "Oġġett invalidu",
+  "Please wait a minute before sending another message.": "Jekk jogħġbok stenna minuta qabel tibgħat messaġġ ieħor."
 }

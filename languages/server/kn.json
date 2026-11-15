@@ -981,5 +981,9 @@
   "Messaging permission required.": "ಸಂದೇಶ ಕಳುಹಿಸುವ ಅನುಮತಿ ಅಗತ್ಯವಿದೆ.",
   "Schedule owner no longer has messaging access.": "ವೇಳಾಪಟ್ಟಿ ಮಾಲೀಕರು ಇನ್ನು ಮುಂದೆ ಸಂದೇಶ ಪ್ರವೇಶವನ್ನು ಹೊಂದಿಲ್ಲ.",
   "This reset link has expired or was already used. Request a new link.": "ಈ ರೀಸೆಟ್ ಲಿಂಕ್ ಅವಧಿ ಮುಗಿದಿದೆ ಅಥವಾ ಈಗಾಗಲೇ ಬಳಸಲಾಗಿದೆ. ಹೊಸ ಲಿಂಕ್ ಅನ್ನು ವಿನಂತಿಸಿ.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "ಆರಂಭದಲ್ಲಿ ಅಥವಾ ಕೊನೆಯಲ್ಲಿ ಜಾಗಗಳಿಲ್ಲದೆ 8-20 ಅಕ್ಷರಗಳನ್ನು ಬಳಸಿ."
+  "Use 8-20 characters, without spaces at the beginning or end.": "ಆರಂಭದಲ್ಲಿ ಅಥವಾ ಕೊನೆಯಲ್ಲಿ ಜಾಗಗಳಿಲ್ಲದೆ 8-20 ಅಕ್ಷರಗಳನ್ನು ಬಳಸಿ.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "ಬೆಂಬಲವನ್ನು ತಲುಪಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮರುಪ್ರಯತ್ನಿಸಿ. ನಿಮ್ಮ ಕಾಮೆಂಟ್ ಅನ್ನು ಇರಿಸಲಾಗಿದೆ.",
+  "Could not send your message. Your comment is kept; please retry.": "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಕಾಮೆಂಟ್ ಅನ್ನು ಇರಿಸಲಾಗಿದೆ; ದಯವಿಟ್ಟು ಮರುಪ್ರಯತ್ನಿಸಿ.",
+  "Invalid item": "ಅಮಾನ್ಯ ಐಟಂ",
+  "Please wait a minute before sending another message.": "ಇನ್ನೊಂದು ಸಂದೇಶವನ್ನು ಕಳುಹಿಸುವ ಮೊದಲು ದಯವಿಟ್ಟು ಒಂದು ನಿಮಿಷ ಕಾಯಿರಿ."
 }

@@ -103,7 +103,7 @@ jobs:
       - name: Unit tests
         working-directory: api
         run: |
-          npx jest -c jest.ci.config.js --ci --forceExit             --coverageReporters=text-summary --coverage 2>&1 | tee ../.jest-api.log
+          node --experimental-vm-modules node_modules/jest/bin/jest.js -c jest.ci.config.js --ci --forceExit             --coverageReporters=text-summary --coverage 2>&1 | tee ../.jest-api.log
           exit ${PIPESTATUS[0]}
 
       - name: Mobile POS integration
@@ -185,7 +185,7 @@ jobs:
         working-directory: api
         env:
           CI_MONGODB_URI: ${{ secrets.CI_MONGODB_URI }}
-        run: npx jest tests/api --ci --forceExit --runInBand
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/api --ci --forceExit --runInBand
 
   api-docs:
     name: API docs are current

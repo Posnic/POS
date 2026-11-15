@@ -981,5 +981,9 @@
   "Messaging permission required.": "Reikalingas leidimas žinučių siuntimui.",
   "Schedule owner no longer has messaging access.": "Tvarkaraščio savininkas nebeturi prieigos prie pranešimų.",
   "This reset link has expired or was already used. Request a new link.": "Ši atstatymo nuoroda pasibaigė arba jau buvo naudojama. Paprašykite naujos nuorodos.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Naudokite 8-20 simbolių, be tarpų pradžioje ar pabaigoje."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Naudokite 8-20 simbolių, be tarpų pradžioje ar pabaigoje.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nepavyko pasiekti palaikymo. Patikrinkite interneto ryšį ir bandykite iš naujo. Jūsų komentaras yra saugomas.",
+  "Could not send your message. Your comment is kept; please retry.": "Nepavyko išsiųsti savo pranešimo. Jūsų komentaras išsaugotas; pabandykite iš naujo.",
+  "Invalid item": "Neteisingas elementas",
+  "Please wait a minute before sending another message.": "Prieš siųsdami kitą pranešimą, palaukite minutę."
 }

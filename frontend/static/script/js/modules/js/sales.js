@@ -577,18 +577,18 @@ PosnicPro.sales = {
                 $(dialog).off('.salesControls').on('salesOpen.salesControls close.salesControls', placeControls);
                 placeControls();
                 ['seller', 'customer'].forEach(function (key) {
-                    var label = key === 'seller' ? 'Sold by' : 'Customer';
+                    var label = key === 'seller' ? PosnicPro.i18n.t('lang_sold_by', 'Sold by') : PosnicPro.i18n.t('lang_newcustomer_title', 'Customer');
                     var input = $('<input type="text" autocomplete="off" class="form-control form-control-sm">')
-                        .attr('placeholder', key === 'seller' ? 'All sellers' : 'All customers')
+                        .attr('placeholder', key === 'seller' ? PosnicPro.i18n.t('lang_all_sellers', 'All sellers') : PosnicPro.i18n.t('lang_all_customers', 'All customers'))
                         .val(facets[key]?.label || '').appendTo(row);
                     var box = group(key, label, input);
                     var clear = $('<button type="button" class="sales-facet-clear">&times;</button>')
                         .attr('aria-label', 'Clear ' + label).appendTo(box).toggle(!!facets[key])
                         .on('click', function () { input.val('').trigger('input').trigger('focus'); });
                     if (key === 'seller') {
-                        $('<button type="button" class="sales-mine">My sales</button>').prependTo(box)
+                        $('<button type="button" class="sales-mine"><lang class="lang_my_sales">My sales</lang></button>').prependTo(box)
                             .toggle(facets.seller?.id !== 'me').on('click', function () {
-                                facets.seller = {id:'me',label:'My sales'};
+                                facets.seller = {id:'me',label:PosnicPro.i18n.t('lang_my_sales', 'My sales')};
                                 input.val('My sales'); clear.show(); $(this).hide(); self.loadHistory(1);
                             });
                     }
@@ -608,7 +608,7 @@ PosnicPro.sales = {
                     input.on('focus',function(){input.autocomplete('getSuggestions',this.value);})
                         .on('input',function(){if(!this.value && facets[key]) {delete facets[key];clear.hide();box.find('.sales-mine').show();self.loadHistory(1);}});
                 });
-                var tender = $('<select aria-label="Payment method" class="form-control form-control-sm lf-primary">').appendTo(row);
+                var tender = $('<select aria-label="Payment method" data-t-aria-label="lang_payment_method" class="form-control form-control-sm lf-primary">').appendTo(row);
                 ['', 'Cash', 'Card', 'UPI'].forEach(function(v){tender.append($('<option>').val(v).text(v || 'All payment methods'));});
                 tender.val(facets.tender || '').on('change',function(){facets.tender=this.value;self.loadHistory(1);});
                 group('tender', 'Payment method', tender);
@@ -779,7 +779,7 @@ PosnicPro.sales = {
             }
             if (mounted.state.search) {
                 var terms = [mounted.state.search];
-                if (mounted.state.field !== 'all') terms.unshift($('#sales_filter_field option:selected').text());
+                if (mounted.state.field !== 'all') terms.unshift($(mounted.cfg.container).find('.lf-field option:selected').text());
                 if (mounted.state.exact) terms.push('Exact');
                 add(terms.join(' · '), function () { mounted.state.search = ''; mounted.state.field = 'all'; mounted.state.exact = false; PosnicPro.listFilter.render('sales'); });
             }
@@ -872,7 +872,7 @@ PosnicPro.sales = {
             var historySort = PosnicPro.listSort.value('sales');
             var timeLabel = historySort === 'recent' ? PosnicPro.i18n.t('lang_order_created', 'Order created') : historySort === 'updated_desc' ? PosnicPro.i18n.t('lang_last_updated', 'Last updated') : PosnicPro.i18n.t('lang_sale_date_time', 'Sale date & time');
             var html = '<div class="table-responsive"><table class="table table-borderless">'
-                + '<thead><tr><th><lang class="lang_bill">Bill #</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th>Sold by</th><th class="sl-col-date">' + esc(timeLabel) + '</th>'
+                + '<thead><tr><th><lang class="lang_bill">Bill #</lang></th><th><lang class="lang_newcustomer_title">Customer</lang></th><th><lang class="lang_sold_by">Sold by</lang></th><th class="sl-col-date">' + esc(timeLabel) + '</th>'
                 + (restaurant ? '<th><lang class="lang_table">Table</lang></th>' : '')
                 + '<th class="text-right sl-col-items"><lang class="lang_itemdetail_title">Items</lang></th><th class="text-right"><lang class="lang_total_title">Total</lang></th>'
                 + '<th class="text-center"><lang class="lang_userstatus">Status</lang></th></tr></thead><tbody>';

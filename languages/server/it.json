@@ -981,5 +981,9 @@
   "Messaging permission required.": "È richiesta l'autorizzazione alla messaggistica.",
   "Schedule owner no longer has messaging access.": "Il proprietario della pianificazione non ha più accesso alla messaggistica.",
   "This reset link has expired or was already used. Request a new link.": "Questo link di ripristino è scaduto o è già stato utilizzato. Richiedi un nuovo link.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Usa 8-20 caratteri, senza spazi all'inizio o alla fine."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Usa 8-20 caratteri, senza spazi all'inizio o alla fine.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Non è stato possibile contattare l'assistenza. Controlla la tua connessione Internet e riprova. Il tuo commento viene conservato.",
+  "Could not send your message. Your comment is kept; please retry.": "Impossibile inviare il tuo messaggio. Il tuo commento è stato conservato; riprova.",
+  "Invalid item": "Articolo non valido",
+  "Please wait a minute before sending another message.": "Attendi un minuto prima di inviare un altro messaggio."
 }

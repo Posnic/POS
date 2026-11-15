@@ -981,5 +981,9 @@
   "Messaging permission required.": "Se requiere permiso de mensajería.",
   "Schedule owner no longer has messaging access.": "El propietario del programa ya no tiene acceso a la mensajería.",
   "This reset link has expired or was already used. Request a new link.": "Este enlace de restablecimiento ha caducado o ya se utilizó. Solicita un enlace nuevo.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Usa de 8 a 20 caracteres, sin espacios al principio ni al final."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Usa de 8 a 20 caracteres, sin espacios al principio ni al final.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "No se pudo contactar con el soporte. Comprueba la conexión a Internet y vuelve a intentarlo. Tu comentario se conserva.",
+  "Could not send your message. Your comment is kept; please retry.": "No se ha podido enviar tu mensaje. Se conserva tu comentario; vuelve a intentarlo.",
+  "Invalid item": "Artículo no válido",
+  "Please wait a minute before sending another message.": "Espera un minuto antes de enviar otro mensaje."
 }

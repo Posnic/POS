@@ -981,5 +981,9 @@
   "Messaging permission required.": "Üzenetküldési engedély szükséges.",
   "Schedule owner no longer has messaging access.": "Az ütemezés tulajdonosának már nincs üzenetküldési hozzáférése.",
   "This reset link has expired or was already used. Request a new link.": "Ez a visszaállítási link lejárt, vagy már használták. Kérjen új linket.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Használjon 8-20 karaktert, szóköz nélkül az elején vagy a végén."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Használjon 8-20 karaktert, szóköz nélkül az elején vagy a végén.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nem sikerült elérni a támogatást. Ellenőrizze az internetkapcsolatot, és próbálja újra. Megjegyzésedet megtartják.",
+  "Could not send your message. Your comment is kept; please retry.": "Nem sikerült elküldeni az üzenetét. Megjegyzése megmarad; kérjük, próbálkozzon újra.",
+  "Invalid item": "Érvénytelen elem",
+  "Please wait a minute before sending another message.": "Kérjük, várjon egy percet, mielőtt újabb üzenetet küldene."
 }

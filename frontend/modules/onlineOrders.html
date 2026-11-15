@@ -46,9 +46,9 @@
                             from the alarm.
                         -->
                         <div class="d-flex flex-wrap mb-2" style="gap:.5rem">
-  <input type="search" id="online-order-query" aria-label="Search online orders" placeholder="Order number, customer or phone" class="form-control" style="max-width:22rem">
-  <select id="online-order-fulfilment" aria-label="Fulfilment" class="form-control" style="width:auto"><option value="">All fulfilment</option><option value="pickup">Pickup</option><option value="delivery">Delivery</option><option value="takeaway">Takeaway</option><option value="dine_in">Dine in</option></select>
-</div><p id="online-order-no-match" style="display:none">No orders match these filters.</p>
+  <input type="search" id="online-order-query" aria-label="Search online orders" data-t-aria-label="lang_search_online_orders" placeholder="Order number, customer or phone" data-t-placeholder="lang_order_number_customer_or_phone" class="form-control" style="max-width:22rem">
+  <select id="online-order-fulfilment" aria-label="Fulfilment" data-t-aria-label="lang_fulfilment" class="form-control" style="width:auto"><option value=""><lang class="lang_all_fulfilment">All fulfilment</lang></option><option value="pickup"><lang class="lang_fulfilment_pickup">Pickup</lang></option><option value="delivery"><lang class="lang_delivery">Delivery</lang></option><option value="takeaway"><lang class="lang_takeaway">Takeaway</lang></option><option value="dine_in"><lang class="lang_dine_in_2">Dine in</lang></option></select>
+</div><p id="online-order-no-match" style="display:none"><lang class="lang_no_orders_match_these_filters">No orders match these filters.</lang></p>
 <div id="onlineorders_list" aria-live="polite"></div>
 
                         <div id="onlineorders_empty" class="text-center text-muted py-5" style="display:none;">

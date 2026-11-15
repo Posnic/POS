@@ -566,7 +566,7 @@ PosnicPro.listFilter = {
         var $row = $panel.find('.lf-row');
         if (cfg.partyFilter) {
             var party = cfg.partyFilter, fieldName = party === 'customers' ? 'customer_id' : 'supplier_id';
-            var label = party === 'customers' ? 'Customer' : 'Supplier';
+            var label = party === 'customers' ? PosnicPro.i18n.t('lang_newcustomer_title', 'Customer') : PosnicPro.i18n.t('lang_newsupplier_title', 'Supplier');
             var field = $('<input type="search" class="form-control form-control-sm lf-primary">')
                 .attr({placeholder:label,'aria-label':label}).val(st.extra[fieldName] ? st.partyLabel : '').appendTo($row);
             LF.entityPicker(field,party,function (id,name) {
@@ -585,13 +585,13 @@ PosnicPro.listFilter = {
 
     LF.queryHint = function (input, key, inline) {
         var shortHints = {
-            sales:'Search sales', receivings:'Search purchases', items:'Search items', stocklogs:'Search stock logs',
-            customers:'Search customers', suppliers:'Search suppliers',
-            branches:'Search branches', users:'Search employees', categories:'Search categories', customercategory:'Search categories',
-            units:'Search units', variants:'Search variants', inventorycounts:'Search counts', lowstockitems:'Search low stock'
+            sales:PosnicPro.i18n.t('lang_inline_search_sales', 'Search sales'), receivings:PosnicPro.i18n.t('lang_inline_search_receivings', 'Search purchases'), items:PosnicPro.i18n.t('lang_inline_search_items', 'Search items'), stocklogs:PosnicPro.i18n.t('lang_inline_search_stocklogs', 'Search stock logs'),
+            customers:PosnicPro.i18n.t('lang_inline_search_customers', 'Search customers'), suppliers:PosnicPro.i18n.t('lang_inline_search_suppliers', 'Search suppliers'),
+            branches:PosnicPro.i18n.t('lang_inline_search_branches', 'Search branches'), users:PosnicPro.i18n.t('lang_inline_search_users', 'Search employees'), categories:PosnicPro.i18n.t('lang_inline_search_categories', 'Search categories'), customercategory:PosnicPro.i18n.t('lang_inline_search_customercategory', 'Search categories'),
+            units:PosnicPro.i18n.t('lang_inline_search_units', 'Search units'), variants:PosnicPro.i18n.t('lang_inline_search_variants', 'Search variants'), inventorycounts:PosnicPro.i18n.t('lang_inline_search_inventorycounts', 'Search counts'), lowstockitems:PosnicPro.i18n.t('lang_inline_search_lowstockitems', 'Search low stock')
         };
         var detail = LF._mounted[key].cfg.searchPlaceholder || PosnicPro.i18n.t('lang_search','Search');
-        var hint = inline && !LF._mounted[key].cfg.selectionOnly ? PosnicPro.i18n.t('lang_inline_search_'+key,LF._mounted[key].cfg.inlineSearchHint || shortHints[key] || 'Search') : detail;
+        var hint = inline && !LF._mounted[key].cfg.selectionOnly ? (LF._mounted[key].cfg.inlineSearchHint || shortHints[key] || PosnicPro.i18n.t('lang_search', 'Search')) : detail;
         input.attr({placeholder:hint,title:detail});
     };
 
@@ -663,7 +663,7 @@ PosnicPro.listFilter = {
         var close = $('<button type="button" class="btn btn-light">&times;</button>').attr('aria-label', 'Close').appendTo(heading);
         var fields = $('<div class="lf-dialog-fields">').appendTo(dialog);
         var footer = $('<footer>').appendTo(dialog);
-        var done = $('<button type="button" class="btn btn-primary">Done</button>').appendTo(footer);
+        var done = $('<button type="button" class="btn btn-primary"><lang class="lang_done">Done</lang></button>').appendTo(footer);
         row.find('.lf-clear').text(PosnicPro.i18n.t('lang_clear_all', 'Clear all')).prependTo(footer);
         function label(control, caption) {
             var group = $('<div class="lf-control">').insertBefore(control);
@@ -1184,7 +1184,7 @@ PosnicPro.listFilter = {
                     + (r.note ? '<span class="lf-pick-note">' + esc(r.note) + '</span>' : '')
                     + '</a>';
             }).join('')
-            : m.cfg.selectionOnly ? '<div class="lf-pick-empty">No matching customers</div>'
+            : m.cfg.selectionOnly ? '<div class="lf-pick-empty"><lang class="lang_no_matching_customers">No matching customers</lang></div>'
             : '<div class="lf-pick-empty"><lang class="lang_nothing_matches_press_enter_to_search_anyw">Nothing matches - press Enter to search anyway</lang></div>';
 
         $box.html(

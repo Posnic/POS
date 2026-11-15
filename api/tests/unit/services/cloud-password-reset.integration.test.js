@@ -6,6 +6,8 @@ const { ObjectId } = require('mongodb');
 let controller;
 const { passwordMatches } = require('../../../src/utils/password-match');
 let memory, db;
+// Allow real MongoDB I/O and production password hashing on busy CI hosts.
+jest.setTimeout(30000);
 const response = () => {
   const res = { status: jest.fn(), json: jest.fn() };
   res.status.mockReturnValue(res);

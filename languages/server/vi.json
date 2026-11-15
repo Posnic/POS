@@ -981,5 +981,9 @@
   "Messaging permission required.": "Yêu cầu quyền nhắn tin.",
   "Schedule owner no longer has messaging access.": "Chủ sở hữu lịch trình không còn quyền truy cập nhắn tin.",
   "This reset link has expired or was already used. Request a new link.": "Liên kết đặt lại này đã hết hạn hoặc đã được sử dụng. Yêu cầu một liên kết mới.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Sử dụng 8-20 ký tự, không có dấu cách ở đầu hoặc cuối."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Sử dụng 8-20 ký tự, không có dấu cách ở đầu hoặc cuối.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Không thể tiếp cận hỗ trợ. Kiểm tra kết nối internet của bạn và thử lại. Bình luận của bạn được giữ lại.",
+  "Could not send your message. Your comment is kept; please retry.": "Không thể gửi tin nhắn của bạn. Bình luận của bạn được giữ lại; vui lòng thử lại.",
+  "Invalid item": "Mục không hợp lệ",
+  "Please wait a minute before sending another message.": "Vui lòng đợi một phút trước khi gửi tin nhắn khác."
 }

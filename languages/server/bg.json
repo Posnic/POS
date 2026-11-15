@@ -981,5 +981,9 @@
   "Messaging permission required.": "Изисква се разрешение за съобщения.",
   "Schedule owner no longer has messaging access.": "Собственикът на графика вече няма достъп до съобщения.",
   "This reset link has expired or was already used. Request a new link.": "Тази връзка за нулиране е изтекла или вече е използвана. Заявете нова връзка.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Използвайте 8-20 знака, без интервали в началото или края."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Използвайте 8-20 знака, без интервали в началото или края.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Не можах да достигна подкрепа. Проверете интернет връзката си и опитайте отново. Коментарът ви се запазва.",
+  "Could not send your message. Your comment is kept; please retry.": "Не можах да изпратя съобщението ви. Коментарът ви е запазен; моля, опитайте отново.",
+  "Invalid item": "Невалиден елемент",
+  "Please wait a minute before sending another message.": "Моля, изчакайте малко преди да изпратите друго съобщение."
 }

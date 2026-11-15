@@ -17,21 +17,21 @@
                 <div id="user-report-search" class="lf-quick">
                     <button type="button" class="user-report-toggle" aria-controls="user-report-filters"></button>
                 </div>
-                <dialog id="user-report-filters" class="lf-dialog lf-report-dialog" aria-label="Filter employees">
+                <dialog id="user-report-filters" class="lf-dialog lf-report-dialog" aria-label="Filter employees" data-t-aria-label="lang_filter_employees">
                     <div class="tb_filter">
-                        <label for="view_user_report_input" data-t="lang_employee_2">Employee</label>
-                        <input type="search" class="form-control lf-q" aria-label="Choose employee" placeholder="Choose employee" id="view_user_report_input">
+                        <label for="view_user_report_input" data-t="lang_employee_2"><lang class="lang_employee_2">Employee</lang></label>
+                        <input type="search" class="form-control lf-q" aria-label="Choose employee" data-t-aria-label="lang_choose_employee" placeholder="Choose employee" data-t-placeholder="lang_choose_employee" id="view_user_report_input">
                         <input type="hidden" class="users_input_id">
                     </div>
                     <div class="tb_filter">
-                        <label for="user_branch_value">Branch</label>
+                        <label for="user_branch_value"><lang class="lang_newbranch_title">Branch</lang></label>
                         <select class="floating-input select2 load-branch display-current-branch user_branch_value" multiple="multiple"
                                 data-placeholder="Select Branch" name="user_branch_value[]" id="user_branch_value">
                             <option class="allbranch_name" value=""><lang class="lang_report_all">All</lang></option>
                         </select>
                     </div>
                 </dialog>
-                <button hidden type="button" id="change_user_view" data-id="tableView" onclick="PosnicPro.userroot.viewPage(this);"><span class="lang_filter_title">Apply</span></button>
+                <button hidden type="button" id="change_user_view" data-id="tableView" onclick="PosnicPro.userroot.viewPage(this);"><span class="lang_filter_title"><lang class="lang_filter_title">Apply</lang></span></button>
             </div>
         </div>
     </div>
@@ -58,7 +58,7 @@
                                 <a href="javascript:void(0)" onclick="return PosnicPro.users.accountGoToWebsiteURL(this);" class="btn btn-primary"><lang class="lang_upgrade_to_premium">Upgrade to Premium</lang></a>
                             </div>
                             <div class="tab-pane fade show active" id="user-line" role="tabpanel" aria-labelledby="user-tab-line">
-                                <p class="text-right" role="status">Employees with sales <strong id="employee-sales-total">—</strong> · Sales <strong id="employee-sale-count">—</strong> · Total <strong id="employee-sale-amount">—</strong></p>
+                                <p class="text-right" role="status"><lang class="lang_employees_with_sales">Employees with sales</lang> <strong id="employee-sales-total">—</strong> <lang class="lang_sales_2">· Sales</lang> <strong id="employee-sale-count">—</strong> <lang class="lang_total_2">· Total</lang> <strong id="employee-sale-amount">—</strong></p>
                                 <!-- start table -->
                                 <div class="row reportuser_header">
                                     
@@ -70,7 +70,7 @@
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="userreport_exportbtn"
                                                            data-id="userreportexport" onclick="PosnicPro.userreport.userreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
+                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export"><lang class="lang_export">Export</lang></span>
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -117,7 +117,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control amount-spent-select select_page" id="view_userreport_per_page" data-id="userreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View userreport per page">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control amount-spent-select select_page" id="view_userreport_per_page" data-id="userreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View userreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>
@@ -150,7 +150,7 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="user-status-line" role="tabpanel" aria-labelledby="user-status-tab-line">
-                                <p class="text-right" role="status">Activity records <strong id="employee-activity-total">—</strong></p>
+                                <p class="text-right" role="status"><lang class="lang_activity_records">Activity records</lang> <strong id="employee-activity-total">—</strong></p>
                                 <!-- start table -->
                                 <div class="row reportuserstatus_header">
                                     
@@ -162,7 +162,7 @@
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="userstatusreport_exportbtn"
                                                            data-id="userstatusreportexport" onclick="PosnicPro.userstatusreport.userstatusreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
+                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export"><lang class="lang_export">Export</lang></span>
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -191,7 +191,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control amount-spent-select select_page" id="view_userstatusreport_per_page" data-id="userstatusreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View userstatusreport per page">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control amount-spent-select select_page" id="view_userstatusreport_per_page" data-id="userstatusreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View userstatusreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>

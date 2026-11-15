@@ -981,5 +981,9 @@
   "Messaging permission required.": "Потребна е дозвола за пораки.",
   "Schedule owner no longer has messaging access.": "Сопственикот на распоредот повеќе нема пристап до пораки.",
   "This reset link has expired or was already used. Request a new link.": "Оваа врска за ресетирање истече или веќе беше користена. Побарајте нова врска.",
-  "Use 8-20 characters, without spaces at the beginning or end.": "Користете 8-20 знаци, без празни места на почетокот или крајот."
+  "Use 8-20 characters, without spaces at the beginning or end.": "Користете 8-20 знаци, без празни места на почетокот или крајот.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Не можев да стигнеме до поддршка. Проверете ја вашата интернет конекција и обидете се повторно. Вашиот коментар е задржан.",
+  "Could not send your message. Your comment is kept; please retry.": "Не можев да ја испратите вашата порака. Вашиот коментар е задржан; ве молиме обидете се повторно.",
+  "Invalid item": "Невалидна ставка",
+  "Please wait a minute before sending another message.": "Ве молиме почекајте една минута пред да испратите друга порака."
 }

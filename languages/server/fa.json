@@ -981,5 +981,9 @@
   "Messaging permission required.": "مجوز پیام رسانی مورد نیاز است.",
   "Schedule owner no longer has messaging access.": "صاحب برنامه دیگر دسترسی به پیام رسانی ندارد.",
   "This reset link has expired or was already used. Request a new link.": "این لینک بازنشانی منقضی شده است یا قبلاً استفاده شده است. یک لینک جدید را درخواست کنید",
-  "Use 8-20 characters, without spaces at the beginning or end.": "از 8-20 کاراکتر، بدون فاصله در ابتدای یا انتها استفاده کنید."
+  "Use 8-20 characters, without spaces at the beginning or end.": "از 8-20 کاراکتر، بدون فاصله در ابتدای یا انتها استفاده کنید.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "نمی توانست به حمایت برسد. اتصال اینترنت خود را بررسی کنید و دوباره امتحان کنید. نظر شما نگهداری می شود.",
+  "Could not send your message. Your comment is kept; please retry.": "نتوانست پیام شما را ارسال کند. نظر شما حفظ شده است لطفا دوباره امتحان کنید.",
+  "Invalid item": "آیتم نامعتبر",
+  "Please wait a minute before sending another message.": "لطفاً قبل از ارسال پیام دیگر یک دقیقه صبر کنید."
 }
