@@ -68,8 +68,7 @@ const userSchema = new mongoose.Schema(
       validate: {
         validator: function (email) {
           if (!email) return true; // Allow empty for API users
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          return emailRegex.test(email);
+          return typeof email === 'string' && require('validator').isEmail(email);
         },
         message: 'Please provide a valid email address',
       },

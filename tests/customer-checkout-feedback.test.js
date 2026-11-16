@@ -7,7 +7,7 @@ const sales=fs.readFileSync('frontend/static/script/js/modules/js/sales.js','utf
 const settings=fs.readFileSync('frontend/static/script/js/modules/js/settings.js','utf8');
 function env(html='') {
  const dom=new JSDOM(html,{runScripts:'outside-only'});const w=dom.window;w.$=jquery(w);
- w.PosnicPro={sales:{},i18n:{t:(k,f)=>f},local:{get:()=> 'EGP'},get:()=>{},post:()=>{},alert:()=>{}};
+ w.PosnicPro={sales:{},i18n:{t:(k,f)=>f},local:{get:k=>k==='general_settings'?JSON.stringify({module_credit_enable:true}):'EGP'},get:()=>{},post:()=>{},alert:()=>{}};
  return {dom,w,$:w.$};
 }
 test('previous account balance shows signed ledger values, does not overwrite tender, and ignores stale customer replies',()=>{
@@ -47,6 +47,21 @@ test('disabled customer credit skips the ledger request and rejects late replies
   enabled=true;w.PosnicPro.sales.refreshCustomerAccount();branch='two';
   calls[1].ok({type:'success',data:{pending:88,wallet:0}});
   assert.doesNotMatch($('.sale-customer-account').text(),/88/);
+ } finally {dom.window.close();}
+});
+
+test('customer ledger is opt-in when settings are absent, invalid or not boolean true',()=>{
+ const {dom,w,$}=env('<input id="sales_new_customer_id"><div class="sale-customer-account">old balance</div>');
+ try {
+  const a=sales.indexOf('PosnicPro.sales.refreshCustomerAccount =');
+  w.eval(sales.slice(a,sales.indexOf('PosnicPro.sales.applyCustomerPick =',a)));
+  $('#sales_new_customer_id').val('a'.repeat(24));
+  let calls=0;w.PosnicPro.get=()=>calls++;
+  for (const value of [null,'{}','invalid','null','{"module_credit_enable":false}','{"module_credit_enable":"false"}']) {
+   w.PosnicPro.local.get=k=>k==='general_settings'?value:'branch';
+   w.PosnicPro.sales.refreshCustomerAccount();
+   assert.equal(calls,0);assert.equal($('.sale-customer-account').css('display'),'none');
+  }
  } finally {dom.window.close();}
 });
 

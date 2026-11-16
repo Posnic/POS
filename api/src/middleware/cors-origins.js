@@ -120,7 +120,15 @@ const isSameOriginRequest = (origin, req) => {
   try {
     // req.headers.host is what the browser asked for; behind Cloudflare and
     // nginx that is still the customer's domain, which is what we want.
-    return new URL(origin).host === String(req.headers.host || '').toLowerCase();
+    const source = new URL(origin);
+    if (!['http:', 'https:'].includes(source.protocol)) return false;
+    // DNS permits a final root dot. Reverse proxies may remove it from Host
+    // while the browser keeps it in Origin; compare the same DNS name and port.
+    const target = new URL(source.protocol + '//' + String(req.headers.host || ''));
+    return (
+      source.hostname.toLowerCase().replace(/\.$/, '') ===
+        target.hostname.toLowerCase().replace(/\.$/, '') && source.port === target.port
+    );
   } catch (_) {
     return false;
   }

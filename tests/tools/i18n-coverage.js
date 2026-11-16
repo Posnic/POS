@@ -44,7 +44,7 @@ const LANG_DIR = path.resolve(__dirname, '..', '..', 'languages');
 const SKIP = /^(node_modules|public|dist|build|\.git)$/;
 
 function htmlFiles(dir, found = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
     if (entry.isDirectory()) {
       if (!SKIP.test(entry.name)) htmlFiles(path.join(dir, entry.name), found);
     } else if (entry.name.endsWith('.html')) {
@@ -55,7 +55,7 @@ function htmlFiles(dir, found = []) {
 }
 
 function jsFiles(dir, found = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
     if (entry.isDirectory()) {
       if (!SKIP.test(entry.name)) jsFiles(path.join(dir, entry.name), found);
     } else if (entry.name.endsWith('.js')) {

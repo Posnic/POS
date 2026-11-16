@@ -2961,7 +2961,7 @@ PosnicPro.sales = {
             return (
                 '<div class="col-lg-6 col-md-6 col-sm-12 mb-3">' +
                 '<div class="payment-method-card ' + (isActive ? 'payment-active' : '') + '" style="border: 2px solid ' + (isActive ? '#5f63f2' : '#e9ecef') + '; border-radius: 8px; padding: 12px; transition: all 0.3s ease;">' +
-                '<button type="button" class="btn btn-payment-method ' + activeClass + '" style="min-width:140px; font-weight: 600; border-radius: 6px; padding: 10px 20px; background: ' + (isActive ? '#5f63f2' : 'transparent') + '; color: ' + (isActive ? '#fff' : '#495057') + '; border: 2px solid ' + (isActive ? '#5f63f2' : '#dee2e6') + ';">' +
+                '<button type="button" class="btn btn-payment-method ' + activeClass + '" style="width:100%; min-width:0; white-space:normal; overflow-wrap:anywhere; font-weight: 600; border-radius: 6px; padding: 10px 20px; background: ' + (isActive ? '#5f63f2' : 'transparent') + '; color: ' + (isActive ? '#fff' : '#495057') + '; border: 2px solid ' + (isActive ? '#5f63f2' : '#dee2e6') + ';">' +
                 '<input type="radio" class="payment_mode d-none" name="payment_mode" id="' + id + '" value="' + id + '">' +
                 icon + title +
                 '</button>' +
@@ -12328,8 +12328,8 @@ PosnicPro.sales.refreshCustomerAccount = function () {
     var request = PosnicPro.sales._accountRequest = (PosnicPro.sales._accountRequest || 0) + 1;
     var target = $('.sale-customer-account').empty().hide();
     var creditEnabled = function () {
-        try { return JSON.parse(PosnicPro.local.get('general_settings') || '{}').module_credit_enable !== false; }
-        catch (e) { return true; }
+        try { return JSON.parse(PosnicPro.local.get('general_settings') || '{}').module_credit_enable === true; }
+        catch (e) { return false; }
     };
     if (!creditEnabled()) return;
     var branch = PosnicPro.local.get('branch_id_set');

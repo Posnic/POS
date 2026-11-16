@@ -9,10 +9,25 @@ if (!args.includes('--printer') || !printer || !args.includes('--mode') || !['ex
 const packagedArg = args.indexOf('--packaged');
 const packaged = packagedArg >= 0 ? path.resolve(args[packagedArg + 1], 'resources') : null;
 app.setPath('userData', path.resolve(__dirname, '../../qa/receipt-mode-runtime-' + process.pid));
+// Electron may outlive the shell that launched it. Never write diagnostics to
+// inherited pipes: a closed stdout caused an EPIPE dialog during a real test.
+const logDir = app.getPath('userData');
+fs.mkdirSync(logDir, { recursive: true });
+const logFile = path.join(logDir, 'print-test.log');
+const format = require('node:util').format;
+for (const level of ['log', 'info', 'warn', 'error', 'debug']) {
+  console[level] = (...values) => fs.appendFileSync(logFile, level + ' ' + format(...values) + '\n');
+}
 app.whenReady().then(async () => {
   const { JSDOM } = require('jsdom');
   const { HardwareManager } = require(packaged ? path.join(packaged, 'app.asar/src/hardware-manager.js') : '../../src/hardware-manager');
   const manager = new HardwareManager();
+  const originalRaw = manager.sendRawToPrinter.bind(manager);
+  manager.sendRawToPrinter = async (...values) => {
+    const result = await originalRaw(...values);
+    console.log(JSON.stringify({ stage: 'raw-submission', printer: values[0], bytes: values[1].length, result }));
+    return result;
+  };
   manager.setMainWindow(new BrowserWindow({show:false}));
   const dom = new JSDOM('', {url:'http://localhost/',runScripts:'outside-only'});
   const w = dom.window;

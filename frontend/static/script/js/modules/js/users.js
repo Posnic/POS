@@ -1037,7 +1037,8 @@ PosnicPro.users = {
     },
     /*Reset forget password  */
     forgotPassword: function () {
-        var email = $("#email").val();
+        var email = String($("#email").val() || '').trim();
+        $("#email").val(email);
         if (email !== '') {
             if (PosnicPro.validateEmail(email)) {
                 var params = {

@@ -1831,8 +1831,14 @@ PosnicPro = {
     },
     /*To validate the email or not*/
     validateEmail: function ($email) {
-        var emailReg = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
-        return emailReg.test($email);
+        if (typeof $email !== 'string' || $email.length > 254) return false;
+        var parts = $email.split('@');
+        if (parts.length !== 2 || !parts[0] || parts[0].length > 64) return false;
+        if (/^\.|\.$|\.\./.test(parts[0])) return false;
+        var emailReg = /^[^\s@,:;<>"\\()[\]]+@[^\s@.,;<>_]+(?:\.[^\s@.,;<>_]+)+$/;
+        return emailReg.test($email) && parts[1].split('.').every(function (label) {
+            return label.length <= 63 && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label);
+        }) && !/^\d+$/.test(parts[1].split('.').pop());
     },
     /*For display item name last characters sholud be dot*/
     textOverflowEllipsis: function (text, count, insertDots) {

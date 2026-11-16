@@ -158,8 +158,7 @@ const generateToken = (bytes = 32) => {
  * @returns {boolean} True if valid, false otherwise
  */
 const isValidEmail = (email) => {
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(String(email).toLowerCase());
+  return typeof email === 'string' && require('validator').isEmail(email);
 };
 
 /**

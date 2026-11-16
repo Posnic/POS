@@ -38,7 +38,7 @@ const userValidators = {
       .withMessage('Email is required')
       .isEmail()
       .withMessage('Invalid email format')
-      .normalizeEmail(),
+      .toLowerCase(),
     body('password')
       .isLength({ min: 6 })
       .withMessage('Password must be at least 6 characters long'),
@@ -54,7 +54,7 @@ const userValidators = {
       .trim()
       .isLength({ min: 2, max: 50 })
       .withMessage('Name must be between 2 and 50 characters'),
-    body('email').optional().trim().isEmail().withMessage('Invalid email format').normalizeEmail(),
+    body('email').optional().trim().isEmail().withMessage('Invalid email format').toLowerCase(),
   ],
 };
 

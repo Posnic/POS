@@ -405,7 +405,7 @@ PosnicPro.customers = {
     },
     //This Customer Function Used To Add & Edit
     customer: function () {
-        if ($('#customer_name').val() !== '' && PosnicPro.validateEmail($('#customer_email').val())) {
+        if ($('#customer_name').val() !== '' && (!$('#customer_email').val() || PosnicPro.validateEmail($('#customer_email').val()))) {
             var loader = $(".loader-customer");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
             var method = 'POST';

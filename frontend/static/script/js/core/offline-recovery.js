@@ -177,9 +177,12 @@
                     button.disabled = false;
                 };
                 panel.append(hint, button, progress);
-                document.getElementById('login_form').after(panel);
                 var forgot = document.getElementById('forget_form');
                 if (forgot) {
+                    // Recovery choices belong only to the Forgot Password view.
+                    var offlineChoice = document.getElementById('offline_recovery_login');
+                    if (offlineChoice) offlineChoice.before(panel);
+                    else forgot.append(panel);
                     // Linked shops recover on their own cloud site even when
                     // the desktop has no mail provider configured.
                     forgot.querySelectorAll('.form-group, .mb-4, [type="submit"], #offline_recovery_email_help').forEach(function (element) { element.style.display = 'none'; });

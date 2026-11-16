@@ -9,6 +9,10 @@ const branches = read('frontend/static/script/js/modules/js/branches.js');
 function method(w, source, name, next) {
   return w.eval('({' + source.slice(source.indexOf(name + ': function'), source.indexOf(next + ': function', source.indexOf(name + ': function'))) + '})')[name];
 }
+const emailSource = read('frontend/static/script/js/core/PosnicPro.js');
+const emailStart = emailSource.indexOf('validateEmail: function');
+const emailEnd = emailSource.indexOf('\n    },', emailStart);
+const validateEmail = require('node:vm').runInNewContext('({' + emailSource.slice(emailStart, emailEnd) + '\n}}).validateEmail');
 function fixture() {
   const dom = new JSDOM(read('frontend/modules/branchEdit.html'), { runScripts: 'outside-only' });
   const w = dom.window;
@@ -21,7 +25,7 @@ function fixture() {
     return this;
   };
   const calls = [];
-  w.PosnicPro = {
+  w.PosnicPro = { validateEmail,
     i18n: { t: (key, text) => text }, local: { get: () => 'session-branch' },
     settings: { _refLoaded: {}, _refPending: {}, store_telephone: {
       setNumber: value => $('#store_telephone').val(value),
