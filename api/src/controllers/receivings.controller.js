@@ -883,7 +883,10 @@ class ReceivingsController extends BaseController {
       };
       const r = await req.db
         .collection('receivings')
-        .updateOne({ _id: new ObjectId(id), ...tenant }, { $push: { attachments: meta } });
+        .updateOne(
+          { _id: new ObjectId(id), ...tenant },
+          { $push: { attachments: meta }, $set: { updated_date: new Date() } }
+        );
       if (!r.matchedCount) {
         /* A purchase ORDER id can arrive here too - the one purchases door
            attaches to either record. */
@@ -909,7 +912,7 @@ class ReceivingsController extends BaseController {
       const id = String(req.params.id || '');
       const attId = String(req.params.attId || '');
       if (!ObjectId.isValid(id) || !attId) return this.error(res, 'Not found', 404);
-      const pull = { $pull: { attachments: { id: attId } } };
+      const pull = { $pull: { attachments: { id: attId } }, $set: { updated_date: new Date() } };
       const r = await req.db
         .collection('receivings')
         .updateOne({ _id: new ObjectId(id), ...tenant }, pull);
@@ -2008,6 +2011,7 @@ class ReceivingsController extends BaseController {
         {
           $set: {
             company_price: price,
+            updated_date: new Date(),
           },
         }
       );

@@ -26,7 +26,7 @@ function result(printerName, values = {}) {
     error: '', retryable: true, success: false, ...values };
 }
 
-function inspectWindows(printerName) {
+function inspectWindows(printerName, run = execFile) {
   // Pass names as data, never interpolate them into PowerShell expressions.
   const name = Buffer.from(JSON.stringify(String(printerName)), 'utf8').toString('base64');
   const script = `
@@ -39,21 +39,39 @@ $p = $p[0]
 $portPresent = $true
 $devicePresent = $true
 if ($p.PortName -match '^USB[0-9]+$') {
-  $portPresent = @((Get-PrinterPort) | Where-Object { $_.Name -ceq $p.PortName }).Count -gt 0
+  # PrintManagement is not available on every supported Windows installation.
+  # A failed optional port probe is not evidence that the printer is unplugged.
+  try { $portPresent = @((Get-PrinterPort -ErrorAction Stop) | Where-Object { $_.Name -ceq $p.PortName }).Count -gt 0 } catch { $portPresent = $true }
   if ($p.PNPDeviceID) {
-    $devicePresent = @((Get-CimInstance Win32_PnPEntity) | Where-Object { $_.PNPDeviceID -eq $p.PNPDeviceID -and $_.ConfigManagerErrorCode -eq 0 }).Count -gt 0
+    try { $devicePresent = @((Get-CimInstance Win32_PnPEntity -ErrorAction Stop) | Where-Object { $_.PNPDeviceID -eq $p.PNPDeviceID -and $_.ConfigManagerErrorCode -eq 0 }).Count -gt 0 } catch { $devicePresent = $true }
   }
 }
-$jobs = @(Get-PrintJob -PrinterName $name | ForEach-Object {
-  @{id=[int]$_.ID;document=[string]$_.DocumentName;status=[string]$_.JobStatus}
-})
+try {
+  $jobs = @(Get-PrintJob -PrinterName $name -ErrorAction Stop | ForEach-Object {
+    @{id=[int]$_.ID;document=[string]$_.DocumentName;status=[string]$_.JobStatus}
+  })
+} catch {
+  # Win32_PrintJob works without the PrintManagement PowerShell module.
+  # Name is '<printer>, <job id>'; split at the last comma (names can contain commas).
+  $jobs = @(Get-CimInstance Win32_PrintJob -ErrorAction Stop | Where-Object {
+    $separator = $_.Name.LastIndexOf(',')
+    $separator -ge 0 -and $_.Name.Substring(0, $separator) -ceq $name
+  } | ForEach-Object {
+    @{id=[int]$_.JobId;document=[string]$_.Document;status=([string]$_.JobStatus + ' ' + [string]$_.Status)}
+  })
+}
 @{present=$true;workOffline=[bool]$p.WorkOffline;offline=($p.PrinterStatus -eq 7 -or $p.ExtendedPrinterStatus -eq 7);portPresent=$portPresent;devicePresent=$devicePresent;jobs=$jobs} | ConvertTo-Json -Depth 4 -Compress
 `;
-  return new Promise((resolve, reject) => execFile('powershell.exe',
+  return new Promise((resolve, reject) => run('powershell.exe',
     ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
-    { windowsHide: true, timeout: 5000, maxBuffer: 1024 * 1024, encoding: 'utf8' },
-    (error, stdout) => {
-      if (error) return reject(new Error('Could not inspect the Windows printer queue'));
+    { windowsHide: true, timeout: 15000, maxBuffer: 1024 * 1024, encoding: 'utf8' },
+    (error, stdout, stderr) => {
+      if (error) {
+        const reason = error.killed ? 'Windows queue inspection timed out' :
+          error.code === 'ENOENT' ? 'Windows PowerShell was not found' :
+          String(stderr || error.message || 'Windows queue service unavailable').trim().split(/\r?\n/)[0].slice(0, 240);
+        return reject(new Error('Could not inspect the Windows printer queue: ' + reason));
+      }
       try { resolve(JSON.parse(stdout.replace(/^\uFEFF/, '').trim())); }
       catch (_) { reject(new Error('Invalid Windows printer queue response')); }
     }));
@@ -121,5 +139,5 @@ function createSpooler({ inspect = inspectWindows, platform = process.platform,
 }
 
 const service = createSpooler();
-module.exports = { ...service, createSpooler, result, defaultPrinterName,
+module.exports = { ...service, createSpooler, result, defaultPrinterName, inspectWindows,
   documentName: (key, index) => 'Posnic-KOT-' + crypto.createHash('sha256').update(`${key}:${index}`).digest('hex').slice(0, 32) };

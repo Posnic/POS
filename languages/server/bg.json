@@ -699,7 +699,6 @@
   "Template saved successfully": "Шаблонът е запазен успешно",
   "Template updated successfully": "Шаблонът е актуализиран успешно",
   "Templates retrieved successfully": "Успешно извлечени шаблони",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Благодарим ви за заявката за забравена парола. Ако този имейл адрес съществува в нашата база данни, скоро ще получите имейл на този адрес. Ако не получите съобщението за нулиране на паролата в рамките на няколко минути, моля, проверете папката си със спам.",
   "Thanks for the feedback.": "Благодаря за обратната връзка.",
   "That Ask Posnic action is disabled.": "Това Ask Posnic действие е деактивирано.",
   "That branch already has items - nothing was copied": "Този клон вече има елементи - нищо не е копирано",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне върна препратка към съобщението. Доставката не е потвърдена; проверете чата, преди да опитате отново.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppвсе още се свързва отново или се нуждае от нова телефонна връзка. Не е изпратено съобщение.",
   "Messaging permission required.": "Изисква се разрешение за съобщения.",
-  "Schedule owner no longer has messaging access.": "Собственикът на графика вече няма достъп до съобщения."
+  "Schedule owner no longer has messaging access.": "Собственикът на графика вече няма достъп до съобщения.",
+  "This reset link has expired or was already used. Request a new link.": "Тази връзка за нулиране е изтекла или вече е използвана. Заявете нова връзка.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Използвайте 8-20 знака, без интервали в началото или края.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Не можах да достигна подкрепа. Проверете интернет връзката си и опитайте отново. Коментарът ви се запазва.",
+  "Could not send your message. Your comment is kept; please retry.": "Не можах да изпратя съобщението ви. Коментарът ви е запазен; моля, опитайте отново.",
+  "Invalid item": "Невалиден елемент",
+  "Please wait a minute before sending another message.": "Моля, изчакайте малко преди да изпратите друго съобщение.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ако акаунтът използва този имейл адрес, ще изпратим връзка за нулиране на паролата. Проверете папката си за входящи и спам."
 }

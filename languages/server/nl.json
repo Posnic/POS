@@ -699,7 +699,6 @@
   "Template saved successfully": "Sjabloon succesvol opgeslagen",
   "Template updated successfully": "Sjabloon succesvol bijgewerkt",
   "Templates retrieved successfully": "Sjablonen zijn succesvol opgehaald",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Bedankt voor je wachtwoordverzoek dat je bent vergeten. Als dat e-mailadres in onze database voorkomt, ontvang je binnenkort een e-mail naar dat adres. Als u niet binnen enkele ogenblikken het bericht voor het opnieuw instellen van uw wachtwoord ontvangt, controleer dan uw spam-map.",
   "Thanks for the feedback.": "Bedankt voor de feedback.",
   "That Ask Posnic action is disabled.": "Die Ask Posnic actie is uitgeschakeld.",
   "That branch already has items - nothing was copied": "Dat filiaal heeft al items - er is niets gekopieerd",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppheeft geen berichtreferentie geretourneerd. De bezorging is niet bevestigd; controleer de chat voordat je het opnieuw probeert.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmaakt nog steeds opnieuw verbinding of heeft een nieuwe telefoonverbinding nodig. Er is geen bericht verzonden.",
   "Messaging permission required.": "Machtiging voor berichten vereist.",
-  "Schedule owner no longer has messaging access.": "De eigenaar van de planning heeft geen toegang meer tot berichten."
+  "Schedule owner no longer has messaging access.": "De eigenaar van de planning heeft geen toegang meer tot berichten.",
+  "This reset link has expired or was already used. Request a new link.": "Deze resetlink is verlopen of werd al gebruikt. Vraag een nieuwe link aan.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Gebruik 8-20 tekens, zonder spaties aan het begin of einde.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Kon de ondersteuning niet bereiken. Controleer je internetverbinding en probeer het opnieuw. Je opmerking wordt bewaard.",
+  "Could not send your message. Your comment is kept; please retry.": "Kon je bericht niet verzenden. Je reactie wordt bewaard; probeer het opnieuw.",
+  "Invalid item": "Ongeldig item",
+  "Please wait a minute before sending another message.": "Wacht even voordat je nog een bericht stuurt.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Als een account dit e-mailadres gebruikt, sturen we een link om het wachtwoord opnieuw in te stellen. Controleer je inbox en spammap."
 }

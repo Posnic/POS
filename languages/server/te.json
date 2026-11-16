@@ -699,7 +699,6 @@
   "Template saved successfully": "మూస విజయవంతంగా సేవ్ చేయబడింది",
   "Template updated successfully": "టెంప్లేట్ విజయవంతంగా నవీకరించబడింది",
   "Templates retrieved successfully": "టెంప్లేట్లు విజయవంతంగా తిరిగి పొందబడ్డాయి",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "మీ మర్చిపోయిన పాస్వర్డ్ అభ్యర్థనకు ధన్యవాదాలు. ఆ ఇమెయిల్ చిరునామా మా డేటాబేస్లో ఉన్నట్లయితే, మీరు త్వరలోనే ఆ చిరునామాకు ఇమెయిల్ అందుకుంటారు. మీరు కొన్ని క్షణాలలో పాస్వర్డ్ రీసెట్ సందేశాన్ని అందుకోకపోతే, దయచేసి మీ స్పామ్ ఫోల్డర్ను తనిఖీ చేయండి.",
   "Thanks for the feedback.": "అభిప్రాయానికి ధన్యవాదాలు.",
   "That Ask Posnic action is disabled.": "ఆ Ask Posnic చర్య నిలిపివేయబడింది.",
   "That branch already has items - nothing was copied": "ఆ శాఖలో ఇప్పటికే అంశాలు ఉన్నాయి - ఏమీ కాపీ చేయబడలేదు",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppసందేశ సూచనను తిరిగి ఇవ్వలేదు. డెలివరీ ధృవీకరించబడలేదు; తిరిగి ప్రయత్నించే ముందు చాట్ను తనిఖీ చేయండి.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppఇప్పటికీ తిరిగి కనెక్ట్ అవుతోంది లేదా తాజా ఫోన్ లింక్ అవసరం. సందేశం పంపబడలేదు.",
   "Messaging permission required.": "సందేశ అనుమతి అవసరం.",
-  "Schedule owner no longer has messaging access.": "షెడ్యూల్ యజమానికి ఇకపై సందేశ ప్రాప్యత లేదు."
+  "Schedule owner no longer has messaging access.": "షెడ్యూల్ యజమానికి ఇకపై సందేశ ప్రాప్యత లేదు.",
+  "This reset link has expired or was already used. Request a new link.": "ఈ రీసెట్ లింక్ గడువు ముగిసింది లేదా ఇప్పటికే ఉపయోగించబడింది. క్రొత్త లింక్ను అభ్యర్థించండి.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "ప్రారంభంలో లేదా చివరిలో ఖాళీలు లేకుండా 8-20 అక్షరాలను ఉపయోగించండి.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "మద్దతును చేరుకోలేకపోయింది. మీ ఇంటర్నెట్ కనెక్షన్ను తనిఖీ చేసి తిరిగి ప్రయత్నించండి. మీ వ్యాఖ్య ఉంచబడింది.",
+  "Could not send your message. Your comment is kept; please retry.": "మీ సందేశాన్ని పంపలేకపోయింది. మీ వ్యాఖ్య ఉంచబడింది; దయచేసి తిరిగి ప్రయత్నించండి.",
+  "Invalid item": "చెల్లని అంశం",
+  "Please wait a minute before sending another message.": "దయచేసి మరొక సందేశాన్ని పంపే ముందు ఒక నిమిషం వేచి ఉండండి.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "ఒక ఖాతా ఈ ఇమెయిల్ చిరునామాను ఉపయోగిస్తే, మేము పాస్వర్డ్ రీసెట్ లింక్ను పంపుతాము. మీ ఇన్బాక్స్ మరియు స్పామ్ ఫోల్డర్ను తనిఖీ చేయండి."
 }

@@ -112,11 +112,11 @@
                                 aria-labelledby="sale-view-tab-line">
                                 <div id="sale-report-facets" class="lf-quick report-facet-search">
                                     <button type="button" class="report-popup-toggle"></button>
-                                    <dialog class="lf-dialog lf-report-dialog" aria-label="Filter sales">
-                                        <div class="lf-inline-query"><label for="sale-report-facets-0">Search receipts</label><input type="search" class="form-control lf-q" id="sale-report-facets-0" aria-label="Search receipts" placeholder="Search receipts" title="Sale ID, invoice or customer"></div>
-                                        <div><label for="sale-report-facets-1">Choose customer</label><input type="search" class="form-control" id="sale-report-facets-1" aria-label="Choose customer" placeholder="Choose customer"></div>
-                                        <div><label for="sale-report-facets-2">Payment method</label><select class="form-control" id="sale-report-facets-2" aria-label="Payment method"><option value="">Payment method</option><option>Cash</option><option>Card</option><option>UPI</option></select></div>
-                                        <div><button type="button" aria-pressed="false" class="btn btn-outline-primary">My sales</button></div>
+                                    <dialog class="lf-dialog lf-report-dialog" aria-label="Filter sales" data-t-aria-label="lang_filter_sales">
+                                        <div class="lf-inline-query"><label for="sale-report-facets-0"><lang class="lang_search_receipts">Search receipts</lang></label><input type="search" class="form-control lf-q" id="sale-report-facets-0" aria-label="Search receipts" data-t-aria-label="lang_search_receipts" placeholder="Search receipts" data-t-placeholder="lang_search_receipts" title="Sale ID, invoice or customer" data-t-title="lang_sale_id_invoice_or_customer"></div>
+                                        <div><label for="sale-report-facets-1"><lang class="lang_choose_customer_2">Choose customer</lang></label><input type="search" class="form-control" id="sale-report-facets-1" aria-label="Choose customer" data-t-aria-label="lang_choose_customer_2" placeholder="Choose customer" data-t-placeholder="lang_choose_customer_2"></div>
+                                        <div><label for="sale-report-facets-2"><lang class="lang_payment_method">Payment method</lang></label><select class="form-control" id="sale-report-facets-2" aria-label="Payment method" data-t-aria-label="lang_payment_method"><option value=""><lang class="lang_payment_method">Payment method</lang></option><option><lang class="lang_cash_title">Cash</lang></option><option><lang class="lang_card">Card</lang></option><option><lang class="lang_upi">UPI</lang></option></select></div>
+                                        <div><button type="button" aria-pressed="false" class="btn btn-outline-primary"><lang class="lang_my_sales">My sales</lang></button></div>
                                     </dialog>
                                 </div>
                                 <div class="row reportsale_header">
@@ -167,7 +167,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_salereport_per_page"
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_salereport_per_page"
                                             data-id="salereport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View salereport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
@@ -245,7 +245,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_instantreport_per_page"
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_instantreport_per_page"
                                             data-id="instantreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View instantreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
@@ -287,7 +287,7 @@
                                 aria-labelledby="sale-summary-tab-line">
 
                                 <table id="sales-summary-export" data-export-title="Sales summary" hidden>
-                                    <thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody></tbody>
+                                    <thead><tr><th><lang class="lang_metric">Metric</lang></th><th><lang class="lang_value_title">Value</lang></th></tr></thead><tbody></tbody>
                                 </table>
                                 <div class="row">
                                     <!-- Start col -->

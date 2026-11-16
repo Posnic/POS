@@ -699,7 +699,6 @@
   "Template saved successfully": "템플릿이 성공적으로 저장되었습니다.",
   "Template updated successfully": "템플릿이 성공적으로 업데이트되었습니다.",
   "Templates retrieved successfully": "템플릿이 성공적으로 검색되었습니다.",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "비밀번호를 잊어버려 요청해 주셔서 감사합니다.해당 이메일 주소가 데이터베이스에 있는 경우 곧 해당 주소로 이메일을 받게 됩니다.몇 분 내에 비밀번호 재설정 메시지를 받지 못하면 스팸 폴더를 확인해 보세요.",
   "Thanks for the feedback.": "피드백을 주셔서 감사합니다.",
   "That Ask Posnic action is disabled.": "해당 Ask Posnic 작업은 비활성화되었습니다.",
   "That branch already has items - nothing was copied": "해당 브랜치에는 이미 항목이 있습니다. 아무 것도 복사되지 않았습니다.",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApp메시지 참조를 반환하지 않았습니다.전송이 확인되지 않았습니다. 다시 시도하기 전에 채팅을 확인하세요.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApp아직 재연결 중이거나 새 전화 연결이 필요합니다.메시지가 전송되지 않았습니다.",
   "Messaging permission required.": "메시지 권한이 필요합니다.",
-  "Schedule owner no longer has messaging access.": "일정 소유자에게는 더 이상 메시징 액세스 권한이 없습니다."
+  "Schedule owner no longer has messaging access.": "일정 소유자에게는 더 이상 메시징 액세스 권한이 없습니다.",
+  "This reset link has expired or was already used. Request a new link.": "이 재설정 링크는 만료되었거나 이미 사용되었습니다.새 링크를 요청하세요.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "시작이나 끝에 공백 없이 8~20자를 사용하세요.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "지원을 받을 수 없습니다.인터넷 연결을 확인하고 다시 시도하세요.댓글은 보관됩니다.",
+  "Could not send your message. Your comment is kept; please retry.": "메시지를 보낼 수 없습니다.댓글이 보관되었습니다. 다시 시도하세요.",
+  "Invalid item": "잘못된 항목",
+  "Please wait a minute before sending another message.": "다른 메시지를 보내기 전에 잠시만 기다려 주세요.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "계정에서 이 이메일 주소를 사용하는 경우 비밀번호 재설정 링크를 보내드립니다.받은 편지함과 스팸 폴더를 확인하세요."
 }

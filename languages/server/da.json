@@ -699,7 +699,6 @@
   "Template saved successfully": "Skabelon gemt med succes",
   "Template updated successfully": "Skabelon opdateret med succes",
   "Templates retrieved successfully": "Skabeloner hentet med succes",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Tak for din anmodning om glemt adgangskode. Hvis denne e-mail-adresse findes i vores database, vil du snart modtage en e-mail til denne adresse. Hvis du ikke modtager meddelelsen om nulstilling af adgangskode inden for få øjeblikke, tjek venligst din spam-mappe.",
   "Thanks for the feedback.": "Tak for feedbacken.",
   "That Ask Posnic action is disabled.": "Denne Ask Posnic handling er deaktiveret.",
   "That branch already has items - nothing was copied": "Denne gren har allerede varer - intet blev kopieret",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppreturnerede ikke en meddelelsesreference. Levering er ubekræftet; tjek chatten, før du prøver igen.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppopretter stadig forbindelse igen eller har brug for et nyt telefonlink. Der blev ikke sendt nogen besked.",
   "Messaging permission required.": "Meddelelsestilladelse kræves.",
-  "Schedule owner no longer has messaging access.": "Tidsplanejeren har ikke længere adgang til beskeder."
+  "Schedule owner no longer has messaging access.": "Tidsplanejeren har ikke længere adgang til beskeder.",
+  "This reset link has expired or was already used. Request a new link.": "Dette nulstillingslink er udløbet eller blev allerede brugt. Anmod om et nyt link.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Brug 8-20 tegn uden mellemrum i begyndelsen eller slutningen.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Kunne ikke nå støtte. Kontroller din internetforbindelse, og prøv igen. Din kommentar er bevaret.",
+  "Could not send your message. Your comment is kept; please retry.": "Kunne ikke sende din besked. Din kommentar bevares; prøv igen.",
+  "Invalid item": "Ugyldigt element",
+  "Please wait a minute before sending another message.": "Vent et øjeblik, før du sender en ny besked.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Hvis en konto bruger denne e-mail-adresse, sender vi et link til nulstilling af adgangskode. Tjek din indbakke og spam-mappe."
 }

@@ -5976,7 +5976,7 @@ class ItemRepository extends BaseModel {
         throw new Error('Invalid quantity');
       const result = await collection.updateOne(
         { _id: objectId, ...require('../utils/record-scope').scope(context) },
-        { $set: { available_quantity: quantity } }
+        { $set: { available_quantity: quantity, updated_date: new Date() } }
       );
       if (!result.matchedCount) return { status: false, message: 'Item not found' };
 
@@ -8199,7 +8199,7 @@ class ItemRepository extends BaseModel {
 
     const result = await collection.updateOne(
       { _id: objectId },
-      { $inc: { available_quantity: quantityChange } }
+      { $inc: { available_quantity: quantityChange }, $set: { updated_date: new Date() } }
     );
 
     /*
@@ -8235,7 +8235,7 @@ class ItemRepository extends BaseModel {
         track_inventory: { $in: [true, 'true'] },
         negative_stock: { $ne: true },
       },
-      { $inc: { available_quantity: -qty } },
+      { $inc: { available_quantity: -qty }, $set: { updated_date: new Date() } },
       { returnDocument: 'after' }
     );
 
@@ -8266,7 +8266,10 @@ class ItemRepository extends BaseModel {
 
     const delta = typeof quantityChange === 'number' ? quantityChange : Number(quantityChange) || 0;
 
-    return collection.updateOne({ _id: objectId }, { $inc: { quantity: delta } });
+    return collection.updateOne(
+      { _id: objectId },
+      { $inc: { quantity: delta }, $set: { updated_date: new Date() } }
+    );
   }
 
   /**

@@ -91,6 +91,9 @@ const ALLOWED_ANONYMOUS = {
     // ownership with a one-use 128-bit code, with its own persistent limiter.
     // Code generation/status stay behind protect and owner checks.
     '/options', '/reset',
+    // Rate-limited prelogin status only. Uses the already-bound device agent;
+    // accepts no account, shop address or credential and returns no user data.
+    '/refresh-cloud',
   ],
   'users.routes.js': [
     // Invisible to this sweep for months: the file is single-quoted and the

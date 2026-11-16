@@ -699,7 +699,6 @@
   "Template saved successfully": "Mall salvestatud edukalt",
   "Template updated successfully": "Malli uuendatud edukalt",
   "Templates retrieved successfully": "Mallid on edukalt leitud",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Täname teid unustatud parooli taotluse eest. Kui see e-posti aadress on meie andmebaasis olemas, saate varsti sellele aadressile e-kirja. Kui te ei saa mõne hetke jooksul parooli lähtestamise sõnumit, palun kontrollige oma rämpsposti kausta.",
   "Thanks for the feedback.": "Täname tagasiside eest.",
   "That Ask Posnic action is disabled.": "See Ask Posnic tegevus on keelatud.",
   "That branch already has items - nothing was copied": "Sellel harul on juba esemeid - midagi ei kopeeritud",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppei tagastanud sõnumi viidet. Kohaletoimetamine pole kinnitatud; kontrollige vestlust enne uuesti proovimist.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppühendab endiselt uuesti või vajab värsket telefonilinki. Ühtegi sõnumit ei saadetud.",
   "Messaging permission required.": "Vajalik sõnumside luba.",
-  "Schedule owner no longer has messaging access.": "Ajakava omanikul pole enam juurdepääsu sõnumitele."
+  "Schedule owner no longer has messaging access.": "Ajakava omanikul pole enam juurdepääsu sõnumitele.",
+  "This reset link has expired or was already used. Request a new link.": "See lähtestamise link on aegunud või seda juba kasutati. Taotlege uut linki.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Kasutage 8-20 tähemärki, ilma tühikuteta alguses või lõpus.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Toetust ei suutnud jõuda. Kontrollige oma Interneti-ühendust ja proovige uuesti. Teie kommentaar on säilinud.",
+  "Could not send your message. Your comment is kept; please retry.": "Teie sõnumit ei saanud saata. Teie kommentaar on säilinud; palun proovige uuesti.",
+  "Invalid item": "Kehtetu üksus",
+  "Please wait a minute before sending another message.": "Palun oodake minut enne uue sõnumi saatmist.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Kui konto kasutab seda e-posti aadressi, saadame parooli lähtestamise lingi. Kontrollige oma postkasti ja rämpsposti kausta."
 }

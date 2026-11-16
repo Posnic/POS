@@ -192,8 +192,7 @@ class CustomerModel extends BaseModel {
 
     // Email validation
     if (data.email) {
-      const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
-      if (!emailRegex.test(data.email)) {
+      if (!require('validator').isEmail(data.email)) {
         errors.push({ field: 'email', message: 'Invalid email format' });
       }
     }

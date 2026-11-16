@@ -699,7 +699,6 @@
   "Template saved successfully": "සැකිල්ල සාර්ථකව සුරකින",
   "Template updated successfully": "සැකිල්ල සාර්ථකව යාවත්කාල",
   "Templates retrieved successfully": "සැකිලි සාර්ථකව ලබා ගන්නා ලදි",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "ඔබගේ අමතක වූ මුරපද ඉල්ලීමට ස්තූතියි. එම විද්යුත් තැපැල් ලිපිනය අපගේ දත්ත ගබඩාවේ පවතී නම්, ඔබට කෙටි කලකින් එම ලිපිනයට විද්යුත් තැපෑලක් ලැබෙනු ඇත. ඔබට සුළු මොහොතක් ඇතුළත මුරපදය යළි පිහිටුවීමේ පණිවිඩය නොලැබුණහොත්, කරුණාකර ඔබේ ස්පෑම් ෆෝල්ඩරය පරීක්ෂා කරන්න.",
   "Thanks for the feedback.": "ප්රතිපෝෂණයට ස්තූතියි.",
   "That Ask Posnic action is disabled.": "එම Ask Posnic ක්රියාව අක්රීය වී ඇත.",
   "That branch already has items - nothing was copied": "එම ශාඛාවේ දැනටමත් අයිතම ඇත - කිසිවක් පිටපත් කර නොමැත",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppපණිවිඩ යොමු කිරීමක් ආපසු ලබා දුන්නේ නැත. බෙදා හැරීම තහවුරු කර නොමැත; නැවත උත්සාහ කිරීමට පෙර චැට් පරීක්ෂා කරන්න.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppතවමත් නැවත සම්බන්ධ වෙමින් පවතී හෝ නැවුම් දුරකථන සබැඳියක් අවශ්ය වේ. පණිවිඩයක් එවලා නැහැ.",
   "Messaging permission required.": "පණිවිඩ අවසරය අවශ්යයි.",
-  "Schedule owner no longer has messaging access.": "උපලේඛන හිමිකරුට තවදුරටත් පණිවිඩ ප්රවේශය නැත."
+  "Schedule owner no longer has messaging access.": "උපලේඛන හිමිකරුට තවදුරටත් පණිවිඩ ප්රවේශය නැත.",
+  "This reset link has expired or was already used. Request a new link.": "මෙම යළි පිහිටුවීමේ සබැඳිය කල් ඉකුත් වී ඇත හෝ දැනටමත් භාවිතා කර ඇත. නව සබැඳියක් ඉල්ලන්න.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "ආරම්භයේ හෝ අවසානයේ අවකාශයන් නොමැතිව අක්ෂර 8-20 භාවිතා කරන්න.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "සහයෝගය ලබා ගන්න බැරි වුණා. ඔබේ අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න. ඔබේ අදහස රඳවා තබා ඇත.",
+  "Could not send your message. Your comment is kept; please retry.": "ඔබේ පණිවිඩය යැවීමට නොහැකි විය. ඔබේ අදහස තබා ඇත; කරුණාකර නැවත උත්සාහ කරන්න.",
+  "Invalid item": "අවලංගු අයිතමය",
+  "Please wait a minute before sending another message.": "තවත් පණිවිඩයක් යැවීමට පෙර විනාඩියක් බලා සිටින්න.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "ගිණුමක් මෙම විද්යුත් තැපැල් ලිපිනය භාවිතා කරන්නේ නම්, අපි මුරපදය යළි පිහිටුවීමේ සබැඳියක් එවනු ඇත. ඔබේ එන පෙට්ටිය සහ ස්පෑම් ෆෝල්ඩරය පරීක්ෂා කරන්න."
 }

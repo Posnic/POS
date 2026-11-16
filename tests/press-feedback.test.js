@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const {JSDOM} = require('jsdom');
-const source=fs.readFileSync('frontend/static/script/js/core/PosnicPro.js','utf8').split('// Immediate acknowledgement of a press, independent of later server success.')[1];
+const source=fs.readFileSync('frontend/static/script/js/core/PosnicPro.js','utf8').split('// Immediate acknowledgement of a press, independent of later server success.')[1].split('// Filing reports')[0];
 test('press feedback acknowledges pointer and keyboard actions without submitting or cancelling the click',()=>{
  const dom=new JSDOM('<button><span>Serve</span></button><input><button disabled>Disabled</button><a href="#">Action</a>',{runScripts:'outside-only'}),w=dom.window;
  try {

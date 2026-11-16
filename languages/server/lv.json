@@ -699,7 +699,6 @@
   "Template saved successfully": "Veiksmīgi saglabāta veidne",
   "Template updated successfully": "Veiksmīgi atjaunināta veidne",
   "Templates retrieved successfully": "Veiksmīgi iegūtas veidnes",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Paldies par aizmirsto paroles pieprasījumu. Ja šī e-pasta adrese pastāv mūsu datu bāzē, drīz uz šo adresi saņemsiet e-pastu. Ja dažu brīžu laikā nesaņemat paroles atiestatīšanas ziņojumu, lūdzu, pārbaudiet savu surogātpasta mapi.",
   "Thanks for the feedback.": "Paldies par atsauksmēm.",
   "That Ask Posnic action is disabled.": "Šī darb Ask Posnic ība ir atspējota.",
   "That branch already has items - nothing was copied": "Šajā filiālē jau ir vienumi - nekas netika kopēts",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppneatdeva ziņojuma atsauci. Piegāde nav apstiprināta; pirms atkārtotas mēģināšanas pārbaudiet tērzēšanu.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppjoprojām atjauno savienojumu vai nepieciešama jauna tālruņa saite. Ziņojums netika nosūtīts.",
   "Messaging permission required.": "Ir nepieciešama ziņojumapmaiņas atļauja.",
-  "Schedule owner no longer has messaging access.": "Grafika īpašniekam vairs nav piekļuves ziņojumapmaiņai."
+  "Schedule owner no longer has messaging access.": "Grafika īpašniekam vairs nav piekļuves ziņojumapmaiņai.",
+  "This reset link has expired or was already used. Request a new link.": "Šīs atiestatīšanas saites derīguma termiņš ir beidzies vai tā jau tika izmantota. Pieprasīt jaunu saiti.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Izmantojiet 8-20 rakstzīmes bez atstarpēm sākumā vai beigās.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nevarēja sasniegt atbalstu. Pārbaudiet interneta savienojumu un mēģiniet vēlreiz. Jūsu komentārs tiek saglabāts.",
+  "Could not send your message. Your comment is kept; please retry.": "Nevarēja nosūtīt savu ziņojumu. Jūsu komentārs tiek saglabāts; lūdzu, mēģiniet vēlreiz.",
+  "Invalid item": "Nederīgs vienums",
+  "Please wait a minute before sending another message.": "Lūdzu, pagaidiet minūti pirms cita ziņojuma nosūtīšanas.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ja konts izmanto šo e-pasta adresi, mēs nosūtīsim paroles atiestatīšanas saiti. Pārbaudiet iesūtni un surogātpasta mapi."
 }

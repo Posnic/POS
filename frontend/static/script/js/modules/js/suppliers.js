@@ -398,7 +398,7 @@ PosnicPro.suppliers = {
     },
     /*This suppliers Function Used To Add & Edit function*/
     supplier: function () {
-        if ($('#supplier_name').val() !== '' && PosnicPro.validateEmail($('#supplier_email').val())) {
+        if ($('#supplier_name').val() !== '' && (!$('#supplier_email').val() || PosnicPro.validateEmail($('#supplier_email').val()))) {
             var loader = $(".loader-supplier");
             $("<div class='loadingSpinner'></div>").appendTo(loader);
             PosnicPro.action = 'add';

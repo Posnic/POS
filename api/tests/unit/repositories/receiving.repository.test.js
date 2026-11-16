@@ -447,7 +447,7 @@ describe('ReceivingRepository', () => {
       });
       expect(itemsCol.updateOne).toHaveBeenCalledWith(
         { _id: expect.anything(), license: FAKE_LICENSE },
-        { $set: { available_quantity: 15 } }
+        { $set: { available_quantity: 15, updated_date: expect.any(Date) } }
       );
     });
 

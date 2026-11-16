@@ -1180,6 +1180,10 @@ class BaseModel {
         $set: {
           ...update.$set,
           updatedAt: new Date(),
+          ...(this.collectionName !== 'recycle_bin' &&
+          require('../sync/collections.json').synced[this.collectionName]
+            ? { updated_date: new Date() }
+            : {}),
         },
         ...(update.$push && { $push: update.$push }),
         ...(update.$pull && { $pull: update.$pull }),

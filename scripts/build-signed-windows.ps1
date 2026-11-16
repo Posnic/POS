@@ -3,8 +3,7 @@
 [CmdletBinding()]
 param(
     [string]$Thumbprint,
-    [string]$SyncAgentDir,
-    [switch]$CommunityOnly
+    [string]$ExpectedCommit
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
@@ -20,10 +19,11 @@ try {
     Get-Command node,npm.cmd,git -ErrorAction Stop | Out-Null
     Run-Checked node -Arguments @('-e', 'const [a,b]=process.versions.node.split(".").map(Number); if(a<22||(a===22&&b<12))process.exit(1)')
     $branch = (& git branch --show-current).Trim()
-    if ($LASTEXITCODE -ne 0 -or $branch -ne 'main') { throw 'Use a clean git clone checked out to main.' }
+    if ($LASTEXITCODE -ne 0 -or ($branch -ne 'main' -and !$ExpectedCommit)) { throw 'Use main, or pass the exact tested commit with -ExpectedCommit.' }
     $dirty = & git status --porcelain --untracked-files=normal
-    if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Commit or move local changes first. This build requires a clean main checkout.' }
+    if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Commit or move local changes first. This build requires a clean checkout.' }
     $commit = (& git rev-parse HEAD).Trim()
+    if ($ExpectedCommit -and $commit -ne $ExpectedCommit) { throw 'Checkout does not match the tested release commit.' }
     $certs = @(Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert | Where-Object {
         $_.HasPrivateKey -and $_.NotBefore -le (Get-Date) -and $_.NotAfter -gt (Get-Date)
     })
@@ -41,14 +41,9 @@ try {
     Write-Host "Publisher: $($cert.Subject)" -ForegroundColor Cyan
     Write-Host 'Enter the token PIN only in the token software dialog. This script never reads or saves it.'
     Write-Host 'The driver may prompt more than once, or use an already unlocked session.'
-    if (!$SyncAgentDir) { $SyncAgentDir = $oldAgent }
-    if (!$SyncAgentDir) { $SyncAgentDir = Join-Path (Split-Path $root -Parent) 'Gateway\apps\sync-agent' }
-    if (!(Test-Path -LiteralPath (Join-Path $SyncAgentDir 'src\index.js'))) {
-        if (!$CommunityOnly) { throw 'Cloud sync agent missing. Clone Posnic/Gateway beside POS, or pass -SyncAgentDir. Use -CommunityOnly only for an intentionally offline-only build.' }
-        # Use an absent path even if the parent environment points at another agent.
-        $SyncAgentDir = Join-Path $env:TEMP ([guid]::NewGuid().ToString())
-    } elseif ($CommunityOnly) { throw 'Do not combine -CommunityOnly with an available sync agent.' }
-    $env:SYNC_AGENT_DIR = ( [IO.Path]::GetFullPath($SyncAgentDir) )
+    # Public installer: the signed cloud component is delivered after activation.
+    # Never auto-discover a private sibling checkout or inherit SYNC_AGENT_DIR.
+    $env:SYNC_AGENT_DIR = Join-Path $env:TEMP ('posnic-public-' + [guid]::NewGuid().ToString('N'))
     if (!(Test-Path 'mongodb\bin\mongod.exe')) {
         throw 'MongoDB build prerequisite missing. Run src\download-mongodb.bat once, then run this command again.'
     }
@@ -58,9 +53,17 @@ try {
     $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
     $run = [guid]::NewGuid().ToString('N').Substring(0,8)
     $out = Join-Path $root "dist\signed-$version-$run"
-    Run-Checked npm.cmd -Arguments @('run','build','--','--publish','never',"-c.directories.output=$out")
+    Run-Checked npm.cmd -Arguments @('run','prebuild')
+    $agentFiles = @(Get-ChildItem 'builds/sync-agent' -Force -Recurse -File | Where-Object { $_.Name -ne '.placeholder' })
+    if ($agentFiles.Count) { throw 'Public build contains unexpected sync component files. Build stopped.' }
+    Run-Checked npx.cmd -Arguments @('electron-builder','--win','nsis','--x64','--publish','never',"--config.directories.output=$out")
     $exe = Join-Path $out "Posnic-$version-windows-x64-installer.exe"
     if (!(Test-Path -LiteralPath $exe)) { throw 'The expected installer was not generated.' }
+    $appSignature = Get-AuthenticodeSignature -LiteralPath (Join-Path $out 'win-unpacked/Posnic.exe')
+    if ($appSignature.Status -ne 'Valid' -or !$appSignature.TimeStamperCertificate -or
+        $appSignature.SignerCertificate.Thumbprint -ne $cert.Thumbprint) {
+        throw 'Application signature, publisher or timestamp verification failed.'
+    }
     $signature = Get-AuthenticodeSignature -LiteralPath $exe
     if ($signature.Status -ne 'Valid' -or !$signature.TimeStamperCertificate -or
         $signature.SignerCertificate.Thumbprint -ne $cert.Thumbprint) {

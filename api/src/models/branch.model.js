@@ -2029,6 +2029,7 @@ class BranchModel {
       const db = this.model.db;
       const branchId = new Types.ObjectId(branchDetails.id);
       const updateData = {
+        updated_date: new Date(),
         branch_name: branchDetails.branch_name,
         store_address: branchDetails.store_address,
         store_email: branchDetails.store_email,
@@ -2053,32 +2054,33 @@ class BranchModel {
       const itemsCollection = db.collection('items');
       await itemsCollection.updateMany(
         { branch_id: branchId, license: new Types.ObjectId(license) },
-        { $set: { branch_name: branchDetails.branch_name } }
+        { $set: { branch_name: branchDetails.branch_name, updated_date: new Date() } }
       );
 
       // PHP line 545: CustomerModel::updateCustomerModel($branchDetails)
       const customersCollection = db.collection('customers');
       await customersCollection.updateMany(
         { branch_id: branchId, license: new Types.ObjectId(license) },
-        { $set: { branch_name: branchDetails.branch_name } }
+        { $set: { branch_name: branchDetails.branch_name, updated_date: new Date() } }
       );
 
       // PHP line 546: ExpensesModel::updateExpensesModel($branchDetails)
       const expensesCollection = db.collection('expenses');
       await expensesCollection.updateMany(
         { branch_id: branchId, license: new Types.ObjectId(license) },
-        { $set: { branch_name: branchDetails.branch_name } }
+        { $set: { branch_name: branchDetails.branch_name, updated_date: new Date() } }
       );
 
       // PHP line 547: SupplierModel::updateSupplierModel($branchDetails)
       const suppliersCollection = db.collection('suppliers');
       await suppliersCollection.updateMany(
         { branch_id: branchId, license: new Types.ObjectId(license) },
-        { $set: { branch_name: branchDetails.branch_name } }
+        { $set: { branch_name: branchDetails.branch_name, updated_date: new Date() } }
       );
 
       // PHP line 548: BaseModel::updateBackupModel($branchDetails)
       const recycleBinCollection = db.collection('recycle_bin');
+      // Preserve the original deletion timestamp when relabelling a tombstone.
       await recycleBinCollection.updateMany(
         { branch_id: branchId, license: new Types.ObjectId(license) },
         { $set: { branch_name: branchDetails.branch_name } }
@@ -2088,7 +2090,7 @@ class BranchModel {
       const categoriesCollection = db.collection('categories');
       await categoriesCollection.updateMany(
         { branch_id: branchId, license: new Types.ObjectId(license) },
-        { $set: { branch_name: branchDetails.branch_name } }
+        { $set: { branch_name: branchDetails.branch_name, updated_date: new Date() } }
       );
 
       console.log(`Updated branch name in all collections for branch ${branchId}`);

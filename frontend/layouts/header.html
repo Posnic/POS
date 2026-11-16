@@ -10,7 +10,7 @@
             </div>
             <div class="mobile-togglebar">
                 <ul class="list-inline mb-0">
-                    <li class="list-inline-item"><button type="button" id="posnic-mobile-search" class="global-search-trigger" aria-label="Search anything in POSNIC" data-t-aria-label="lang_search_posnic" aria-haspopup="dialog"><i class="feather icon-search" aria-hidden="true"></i></button></li>
+                    <li class="list-inline-item"><button type="button" id="posnic-mobile-search" class="global-search-trigger" aria-label="Search anything in POSNIC" data-t-aria-label="lang_search_anything_in_posnic" aria-haspopup="dialog"><i class="feather icon-search" aria-hidden="true"></i></button></li>
                     <li class="list-inline-item">
                         <div class="topbar-toggle-icon">
                             <a class="topbar-toggle-hamburger" href="javascript:void(0)">
@@ -121,7 +121,7 @@
                 </ul>
             </div>
             <div class="header-search-slot">
-                <button type="button" id="posnic-header-search" class="global-search-trigger" aria-label="Search anything in POSNIC" data-t-aria-label="lang_search_posnic" aria-haspopup="dialog"><i class="feather icon-search" aria-hidden="true"></i><span><lang class="lang_search_anything">Search anything</lang></span><kbd><lang class="lang_ctrl_k">Ctrl K</lang></kbd></button>
+                <button type="button" id="posnic-header-search" class="global-search-trigger" aria-label="Search anything in POSNIC" data-t-aria-label="lang_search_anything_in_posnic" aria-haspopup="dialog"><i class="feather icon-search" aria-hidden="true"></i><span><lang class="lang_search_anything">Search anything</lang></span><kbd><lang class="lang_ctrl_k">Ctrl K</lang></kbd></button>
             </div>
             <div class="infobar">
                 <ul class="list-inline mb-0">
@@ -200,17 +200,6 @@
                             } catch (e) { /* fail open */ }
                         })();
                     </script>
-                    <li class="list-inline-item" data-toggle="tooltip" title="Shortcut Keys" data-t-title="lang_shortcut_title" data-module="dashboard"
-                        data-access="read">
-                        <div class="offlinebar">
-                            <a href="javascript:void(0)" id="shortcut" class="infobar-icon offline-mode"
-                                data-action="add" data-target="#shortcutpage" role="button"
-                                onclick="PosnicPro.settings.showShortcut();">
-                                <img src="static/images/svg-icon/shortcut.svg" class="img-fluid icon-svg"
-                                    alt="shortcut" loading="lazy" decoding="async">
-                            </a>
-                        </div>
-                    </li>
                     <li class="list-inline-item" data-toggle="tooltip" title="Theme" data-t-title="lang_theme">
                         <div class="themebar">
                             <div class="dropdown" id="dropdown-theme">

@@ -30,7 +30,10 @@ for (const [digits, amount, expected] of [[0, 95, '95'], [2, 31.67, '31.67'], [3
         Object.assign(win.PosnicPro.sales, { mountHistoryFilters() {}, mountProvenanceHistory() {}, paintHistoryFilters() {}, renderHistoryPager() {}, HIST_PAGE_SIZE: 25 });
         win.PosnicPro.sales.loadHistory(1);
         const cells = win.document.querySelectorAll('#sales_list_rows tbody td');
-        assert.equal(cells[4].textContent, 'Currency\u00a0' + expected);
+        const headers = [...win.document.querySelectorAll('#sales_list_rows thead th')];
+        const totalIndex = headers.findIndex(header => header.textContent === 'Total');
+        assert.ok(totalIndex >= 0, 'Total column must be present');
+        assert.equal(cells[totalIndex].textContent, 'Currency\u00a0' + expected);
         dom.window.close();
     });
 }

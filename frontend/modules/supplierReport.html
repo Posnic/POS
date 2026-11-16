@@ -17,21 +17,21 @@
                 <div id="supplier-report-search" class="lf-quick">
                     <button type="button" class="supplier-report-toggle" aria-controls="supplier-report-filters"></button>
                 </div>
-                <dialog id="supplier-report-filters" class="lf-dialog lf-report-dialog" aria-label="Filter suppliers">
+                <dialog id="supplier-report-filters" class="lf-dialog lf-report-dialog" aria-label="Filter suppliers" data-t-aria-label="lang_filter_suppliers">
                     <div class="tb_filter">
-                        <label for="view_supplier_report_input" data-t="lang_supplier">Supplier</label>
-                        <input type="search" class="form-control lf-q" aria-label="Choose supplier" placeholder="Choose supplier" id="view_supplier_report_input">
+                        <label for="view_supplier_report_input" data-t="lang_supplier"><lang class="lang_newsupplier_title">Supplier</lang></label>
+                        <input type="search" class="form-control lf-q" aria-label="Choose supplier" data-t-aria-label="lang_choose_supplier" placeholder="Choose supplier" data-t-placeholder="lang_choose_supplier" id="view_supplier_report_input">
                         <input type="hidden" class="suppliers_input_id">
                     </div>
                     <div class="tb_filter">
-                        <label for="supplier_branch_value">Branch</label>
+                        <label for="supplier_branch_value"><lang class="lang_newbranch_title">Branch</lang></label>
                         <select class="floating-input select2 load-branch display-current-branch supplier_branch_value" multiple="multiple"
                                 data-placeholder="Select Branch" name="supplier_branch_value[]" id="supplier_branch_value">
                             <option class="allbranch_name" value=""><lang class="lang_report_all">All</lang></option>
                         </select>
                     </div>
                 </dialog>
-                <button hidden type="button" id="change_supplier_view" data-id="tableView" onclick="PosnicPro.supplierroot.viewPage(this);"><span class="lang_filter_title">Apply</span></button>
+                <button hidden type="button" id="change_supplier_view" data-id="tableView" onclick="PosnicPro.supplierroot.viewPage(this);"><span class="lang_filter_title"><lang class="lang_filter_title">Apply</lang></span></button>
             </div>
         </div>
     </div>
@@ -72,7 +72,7 @@
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="supplierreport_exportbtn"
                                                            data-id="supplierreportexport" onclick="PosnicPro.supplierreport.supplierreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
+                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export"><lang class="lang_export">Export</lang></span>
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -101,7 +101,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_supplierreport_per_page" data-id="supplierreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View supplierreport per page">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_supplierreport_per_page" data-id="supplierreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View supplierreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>
@@ -146,7 +146,7 @@
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="supplierproductreport_exportbtn"
                                                            data-id="supplierproductreportexport" onclick="PosnicPro.supplierproductreport.supplierproductreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
+                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export"><lang class="lang_export">Export</lang></span>
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -176,7 +176,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_supplierproductreport_per_page" data-id="supplierproductreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View supplierproductreport per page">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_supplierproductreport_per_page" data-id="supplierproductreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View supplierproductreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>
@@ -221,7 +221,7 @@
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="suppliersalereport_exportbtn"
                                                            data-id="suppliersalereportexport" onclick="PosnicPro.suppliersalereport.suppliersalereportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
+                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export"><lang class="lang_export">Export</lang></span>
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -252,7 +252,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_suppliersalereport_per_page" data-id="suppliersalereport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View suppliersalereport per page">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_suppliersalereport_per_page" data-id="suppliersalereport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View suppliersalereport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>

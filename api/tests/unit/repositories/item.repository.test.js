@@ -1710,10 +1710,32 @@ describe('ItemRepository', () => {
     test('updates stock', async () => {
       const r = await repo.updateStock(FAKE_ID, 5);
       expect(r.modifiedCount).toBe(1);
+      expect(col.updateOne).toHaveBeenCalledWith(
+        { _id: FAKE_ID },
+        { $inc: { available_quantity: 5 }, $set: { updated_date: expect.any(Date) } }
+      );
     });
     test('rethrows error', async () => {
       repo.getCollection.mockRejectedValueOnce(new Error('fail'));
       await expect(repo.updateStock(FAKE_ID, 5)).rejects.toThrow('fail');
+    });
+  });
+
+  describe('deductStockIfAvailable sync timestamp', () => {
+    test('stamps the same atomic write as the guarded stock deduction', async () => {
+      col.findOneAndUpdate = jest.fn().mockResolvedValue({ _id: FAKE_ID, available_quantity: 8 });
+      const result = await repo.deductStockIfAvailable(FAKE_ID, 2);
+      expect(result.available_quantity).toBe(8);
+      expect(col.findOneAndUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ _id: FAKE_ID, available_quantity: { $gte: 2 } }),
+        { $inc: { available_quantity: -2 }, $set: { updated_date: expect.any(Date) } },
+        { returnDocument: 'after' }
+      );
+    });
+    test('does not retry an unavailable deduction with an unguarded write', async () => {
+      col.findOneAndUpdate = jest.fn().mockResolvedValue(null);
+      expect(await repo.deductStockIfAvailable(FAKE_ID, 2)).toBeNull();
+      expect(col.updateOne).not.toHaveBeenCalled();
     });
   });
 

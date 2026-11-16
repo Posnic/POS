@@ -1088,7 +1088,7 @@ PosnicPro.quickreport = {
       return;
     }
     // quick email check (client-side only; server still validates)
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!PosnicPro.validateEmail(email)) {
       PosnicPro.alert("error", "Enter a valid email address");
       return;
     }

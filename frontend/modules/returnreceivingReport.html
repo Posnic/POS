@@ -18,17 +18,17 @@
 
                     <button type="button" aria-controls="return-report-filters"></button>
                 </div>
-                <dialog id="return-report-filters" class="lf-dialog lf-report-dialog" aria-label="Filter purchase returns">
-                    <div class="lf-inline-query"><label for="return-report-query">Search purchase returns</label>
-                    <input type="search" id="return-report-query" class="lf-q form-control" aria-label="Search purchase returns" placeholder="Search purchase returns">
+                <dialog id="return-report-filters" class="lf-dialog lf-report-dialog" aria-label="Filter purchase returns" data-t-aria-label="lang_filter_purchase_returns">
+                    <div class="lf-inline-query"><label for="return-report-query"><lang class="lang_search_purchase_returns">Search purchase returns</lang></label>
+                    <input type="search" id="return-report-query" class="lf-q form-control" aria-label="Search purchase returns" data-t-aria-label="lang_search_purchase_returns" placeholder="Search purchase returns" data-t-placeholder="lang_search_purchase_returns">
                     </div>
                     <div>
-                        <label for="return-report-party">Supplier</label>
-                        <input type="search" id="return-report-party" placeholder="Choose supplier" class="form-control">
+                        <label for="return-report-party"><lang class="lang_newsupplier_title">Supplier</lang></label>
+                        <input type="search" id="return-report-party" placeholder="Choose supplier" data-t-placeholder="lang_choose_supplier" class="form-control">
                     </div>
                     <div>
-                        <label for="return-report-sort">Sort returns</label>
-                        <select id="return-report-sort" class="form-control"><option value="amount">Largest return</option><option value="new">Newest first</option><option value="old">Oldest first</option></select>
+                        <label for="return-report-sort"><lang class="lang_sort_returns">Sort returns</lang></label>
+                        <select id="return-report-sort" class="form-control"><option value="amount"><lang class="lang_largest_return">Largest return</lang></option><option value="new"><lang class="lang_newest_first">Newest first</lang></option><option value="old"><lang class="lang_oldest_first">Oldest first</lang></option></select>
                     </div>
                 </dialog>
                 <div class="col-lg-5 col-xl-5 lf-legacy-primary tb_filter" style="display:none;">
@@ -37,7 +37,7 @@
                         <option class="allbranch_name" value=''><lang class="lang_report_all">All</lang></option>
                     </select>
                 </div>
-                <button hidden type="button" id="change_returnreceiving_view" data-id="tableView" onclick="PosnicPro.returnreceivingroot.viewPage(this);"><span class="lang_filter_title">Apply</span></button>
+                <button hidden type="button" id="change_returnreceiving_view" data-id="tableView" onclick="PosnicPro.returnreceivingroot.viewPage(this);"><span class="lang_filter_title"><lang class="lang_filter_title">Apply</lang></span></button>
             </div>            
         </div>
     </div>
@@ -85,7 +85,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_returnreceivingreport_per_page" data-id="returnreceivingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreceivingreport per page">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_returnreceivingreport_per_page" data-id="returnreceivingreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreceivingreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>
@@ -130,7 +130,7 @@
                                                     <li class="list-inline-item email_320">
                                                         <a href="javascript:void(0);" data-module="report" data-access="read" id="returnreceivingproductreport_exportbtn"
                                                            data-id="returnreceivingproductreportexport" onclick="PosnicPro.returnreceivingproductreport.returnproductreportexport(this);" class="sale_color dash_sale_count" data-toggle="tooltip" title="Export All To CSV" data-t-title="lang_exportcsv_title">
-                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export">Export</span>
+                                                            <i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export"><lang class="lang_export">Export</lang></span>
                                                         </a>
                                                     </li>
                                                 </ul>
@@ -161,7 +161,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_returnreceivingproductreport_per_page" data-id="returnreceivingproductreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreceivingproductreport per page">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_returnreceivingproductreport_per_page" data-id="returnreceivingproductreport" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreceivingproductreport per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>
@@ -288,7 +288,7 @@
                                     <div class="card-body ecommerce-pagination">
                                         <div class="row align-items-center">
                                             <div class="col-8">
-                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0">Rows <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_returnreceivingproductdetails_per_page" data-id="returnreceivingproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreceivingproductdetails per page">
+                                                <div class="hint-text"><label class="d-inline-flex align-items-center mr-2 mb-0"><lang class="lang_rows">Rows</lang> <select class="form-control form-control-sm w-auto ml-1 select_page" id="view_returnreceivingproductdetails_per_page" data-id="returnreceivingproductdetails" onChange="PosnicPro.setPerPage(this, 'Table');" aria-label="View returnreceivingproductdetails per page">
                                             <option value="5" selected>5</option>
                                             <option value="10">10</option>
                                             <option value="25">25</option>

@@ -568,7 +568,6 @@
   "Template saved successfully": "تم حفظ القالب بنجاح",
   "Template updated successfully": "تم تحديث القالب بنجاح",
   "Templates retrieved successfully": "تم جلب القوالب بنجاح",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "شكرًا لك على طلب استعادة كلمة المرور. إذا كان هذا البريد الإلكتروني موجودًا في قاعدة بياناتنا، فستصلك رسالة على هذا العنوان بعد قليل. وإذا لم تصلك رسالة إعادة تعيين كلمة المرور خلال دقائق، يرجى التحقق من مجلد البريد غير المرغوب فيه.",
   "That branch already has items - nothing was copied": "هذا الفرع يحتوي على أصناف بالفعل - لم يُنسخ أي شيء",
   "That card is already assigned to another user": "هذه البطاقة معيّنة بالفعل لمستخدم آخر",
   "That is more than the ": "هذا أكثر من ",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppلم تقم بإرجاع مرجع الرسالة. التسليم غير مؤكد؛ تحقق من الدردشة قبل إعادة المحاولة.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppلا يزال يعيد الاتصال أو يحتاج إلى رابط هاتف جديد. لم يتم إرسال أي رسالة.",
   "Messaging permission required.": "إذن المراسلة مطلوب.",
-  "Schedule owner no longer has messaging access.": "لم يعد بإمكان مالك الجدول الوصول إلى المراسلة."
+  "Schedule owner no longer has messaging access.": "لم يعد بإمكان مالك الجدول الوصول إلى المراسلة.",
+  "This reset link has expired or was already used. Request a new link.": "انتهت صلاحية رابط إعادة الضبط هذا أو تم استخدامه بالفعل. اطلب رابطًا جديدًا.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "استخدم 8-20 حرفًا، بدون مسافات في البداية أو النهاية.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "تعذّر الوصول إلى الدعم. تحقق من اتصال الإنترنت وأعد المحاولة. يتم الاحتفاظ بتعليقك.",
+  "Could not send your message. Your comment is kept; please retry.": "تعذّر إرسال رسالتك. تم الاحتفاظ بتعليقك؛ يرجى إعادة المحاولة.",
+  "Invalid item": "عنصر غير صالح",
+  "Please wait a minute before sending another message.": "يرجى الانتظار لمدة دقيقة قبل إرسال رسالة أخرى.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "إذا كان الحساب يستخدم عنوان البريد الإلكتروني هذا، فسنرسل رابط إعادة تعيين كلمة المرور. تحقق من صندوق الوارد ومجلد البريد العشوائي."
 }

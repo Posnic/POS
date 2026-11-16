@@ -28,7 +28,7 @@ const calculateLoyaltyTier = (points) => {
  */
 const isValidEmail = (email) => {
   if (!email) return true; // Email is optional
-  return VALIDATION_PATTERNS.EMAIL.test(email);
+  return typeof email === 'string' && require('validator').isEmail(email);
 };
 
 /**

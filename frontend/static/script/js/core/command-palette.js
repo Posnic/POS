@@ -616,7 +616,7 @@
         if (tracked && item.low_stock != null) lines.push('Low-stock alert: ' + item.low_stock);
         if (item.stock_locations?.length) lines.push('Locations: ' + item.stock_locations.join(', '));
         swal({ titleText: item.name, text: lines.join(' · '), confirmButtonText: 'Done' });
-      }, () => PosnicPro.alert('warning', 'Item unavailable'));
+      }, () => PosnicPro.alert('warning', PosnicPro.i18n.t('lang_item_unavailable', 'Item unavailable')));
     });
     action('Stock logs', 'stocklogs', () => go('stocklogs', item => PosnicPro.stocklogs.filterItem(item)));
     action('Make purchase', 'receivings/new', () => go('receivings/new', item => PosnicPro.receivings.addPickedItem(item.id)));
@@ -720,7 +720,7 @@
     dialog.id = 'cmdk-overlay';
     dialog.setAttribute('aria-label', 'Search POSNIC');
     dialog.innerHTML =
-      '<div id="cmdk-box"><div class="cmdk-field"><input id="cmdk-input" type="search" maxlength="96" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-label="Search POSNIC" data-t-aria-label="lang_search_posnic" placeholder="Search anything" data-t-placeholder="lang_search_anything"><button type="button" id="cmdk-close" aria-label="Close search" data-t-aria-label="lang_close_search" title="Close search"><i class="feather icon-x" aria-hidden="true"></i></button></div><div id="cmdk-tabs"></div><div id="cmdk-list" role="listbox"></div><div id="cmdk-status" role="status"></div><div id="cmdk-hint">↑ ↓ Select · Enter Open · Esc Close <button type="button" id="cmdk-clear"><lang class="lang_clear_history">Clear history</lang></button></div></div>';
+      '<div id="cmdk-box"><div class="cmdk-field"><input id="cmdk-input" type="search" maxlength="96" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-label="Search POSNIC" data-t-aria-label="lang_search_posnic" placeholder="Search anything" data-t-placeholder="lang_search_anything"><button type="button" id="cmdk-close" aria-label="Close search" data-t-aria-label="lang_close_search" title="Close search" data-t-title="lang_close_search"><i class="feather icon-x" aria-hidden="true"></i></button></div><div id="cmdk-tabs"></div><div id="cmdk-list" role="listbox"></div><div id="cmdk-status" role="status"></div><div id="cmdk-hint">↑ ↓ Select · Enter Open · Esc Close <button type="button" id="cmdk-clear"><lang class="lang_clear_history">Clear history</lang></button></div></div>';
     document.body.append(dialog);
     for (const name of groupNames) {
       if (name === 'Employees' && !aclCan('user', 'read')) continue;

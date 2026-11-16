@@ -699,7 +699,6 @@
   "Template saved successfully": "Șablonul salvat cu succes",
   "Template updated successfully": "Șablonul actualizat cu succes",
   "Templates retrieved successfully": "Șabloane recuperate cu succes",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Vă mulțumim pentru solicitarea de parolă uitată. Dacă această adresă de e-mail există în baza noastră de date, veți primi un e-mail la acea adresă în scurt timp. Dacă nu primiți mesajul de resetare a parolei în câteva momente, vă rugăm să verificați dosarul de spam.",
   "Thanks for the feedback.": "Vă mulțumim pentru feedback.",
   "That Ask Posnic action is disabled.": "Ask PosnicAcțiunea este dezactivată.",
   "That branch already has items - nothing was copied": "Această ramură are deja articole - nimic nu a fost copiat",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnu a returnat o referință de mesaj. Livrarea nu este confirmată; verificați chat-ul înainte de a încerca din nou.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppîncă se reconectează sau are nevoie de o legătură telefonică nouă. Nu a fost trimis niciun mesaj.",
   "Messaging permission required.": "Este necesară permisiunea de mesagerie.",
-  "Schedule owner no longer has messaging access.": "Proprietarul programului nu mai are acces la mesagerie."
+  "Schedule owner no longer has messaging access.": "Proprietarul programului nu mai are acces la mesagerie.",
+  "This reset link has expired or was already used. Request a new link.": "Acest link de resetare a expirat sau a fost deja utilizat. Solicitați un link nou.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Utilizați 8-20 de caractere, fără spații la început sau sfârșit.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nu am putut ajunge la sprijin. Verificați conexiunea la internet și încercați din nou. Comentariul dvs. este păstrat.",
+  "Could not send your message. Your comment is kept; please retry.": "Nu am putut trimite mesajul. Comentariul dvs. este păstrat; încercați din nou.",
+  "Invalid item": "Element nevalid",
+  "Please wait a minute before sending another message.": "Vă rugăm să așteptați un minut înainte de a trimite un alt mesaj.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Dacă un cont utilizează această adresă de e-mail, vom trimite un link de resetare a parolei. Verificați căsuța de e-mail și folderul spam."
 }

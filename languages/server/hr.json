@@ -699,7 +699,6 @@
   "Template saved successfully": "Predložak je uspješno spreman",
   "Template updated successfully": "Predložak je uspješno ažuriran",
   "Templates retrieved successfully": "Predlošci su uspješno preuzeti",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Hvala vam na zahtjevu za zaboravljenu lozinku. Ako ta adresa e-pošte postoji u našoj bazi podataka, uskoro ćete primiti e-poštu na tu adresu. Ako u roku od nekoliko trenutaka ne primite poruku o resetiranju lozinke, provjerite mapu neželjene pošte.",
   "Thanks for the feedback.": "Hvala na povratnim informacijama.",
   "That Ask Posnic action is disabled.": "Ta Ask Posnic akcija je onemogućena.",
   "That branch already has items - nothing was copied": "Ta grana već ima stavke - ništa nije kopirano",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnije vratio referencu poruke. Dostava nije potvrđena; provjerite chat prije ponovnog pokušaja.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppjoš uvijek se ponovno povezuje ili mu je potrebna nova telefonska veza. Nije poslana nijedna poruka.",
   "Messaging permission required.": "Potrebno je dopuštenje za razmjenu poruka.",
-  "Schedule owner no longer has messaging access.": "Vlasnik rasporeda više nema pristup porukama."
+  "Schedule owner no longer has messaging access.": "Vlasnik rasporeda više nema pristup porukama.",
+  "This reset link has expired or was already used. Request a new link.": "Ova veza za resetiranje je istekla ili je već korištena. Zatražite novu vezu.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Koristite 8-20 znakova, bez razmaka na početku ili na kraju.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nisam mogao doći do podrške. Provjerite internetsku vezu i pokušajte ponovo. Vaš komentar je zadržan.",
+  "Could not send your message. Your comment is kept; please retry.": "Nisam mogao poslati poruku. Vaš komentar je zadržan; pokušajte ponovo.",
+  "Invalid item": "Nevažeća stavka",
+  "Please wait a minute before sending another message.": "Molimo pričekajte minutu prije nego što pošaljete drugu poruku.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ako račun koristi ovu adresu e-pošte, poslat ćemo vezu za resetiranje lozinke. Provjerite svoju pristiglu poštu i mapu neželjene pošte."
 }

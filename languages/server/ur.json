@@ -699,7 +699,6 @@
   "Template saved successfully": "ٹیمپلیٹ کامیابی سے",
   "Template updated successfully": "سانچہ کامیابی کے ساتھ اپ",
   "Templates retrieved successfully": "سانچے کامیابی کے ساتھ حاصل",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "آپ کی بھول گئی پاس ورڈ کی درخواست کا شکریہ۔ اگر یہ ای میل ایڈریس ہمارے ڈیٹا بیس میں موجود ہے تو، آپ کو جلد ہی اس پتے پر ایک ای میل موصول ہوگا۔ اگر آپ کو کچھ لمحوں میں پاس ورڈ ری سیٹ پیغام موصول نہیں ہوتا ہے تو، براہ کرم اپنا اسپام فولڈر چیک کریں۔",
   "Thanks for the feedback.": "آراء کے لئے شکریہ.",
   "That Ask Posnic action is disabled.": "یہ Ask Posnic عمل غیر فعال ہے۔",
   "That branch already has items - nothing was copied": "اس شاخ میں پہلے ہی اشیاء موجود ہیں - کچھ بھی کاپی نہیں کیا گیا",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppپیغام کا حوالہ واپس نہیں کیا۔ ترسیل کی تصدیق نہیں ہوئی ہے۔ دوبارہ کوشش کرنے سے پہلے چیٹ کو چیک کریں۔",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppاب بھی دوبارہ رابطہ قائم کررہا ہے یا کسی تازہ فون لنک کی ضرورت ہے۔ کوئی پیغام نہیں بھیجا گیا",
   "Messaging permission required.": "پیغام رسانی کی اجازت ضروری ہے۔",
-  "Schedule owner no longer has messaging access.": "شیڈول مالک کے پاس اب میسجنگ تک رسائی نہیں ہے۔"
+  "Schedule owner no longer has messaging access.": "شیڈول مالک کے پاس اب میسجنگ تک رسائی نہیں ہے۔",
+  "This reset link has expired or was already used. Request a new link.": "اس ری سیٹ لنک کی میعاد ختم ہوچکا ہے یا پہلے ہی استعمال ہوا تھا۔ ایک نئے لنک کی درخواست کریں۔",
+  "Use 8-20 characters, without spaces at the beginning or end.": "شروع یا آخر میں خالی جگہوں کے بغیر، 8-20 حروف استعمال کریں۔",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "حمایت تک نہیں پہنچ سکا۔ اپنا انٹرنیٹ کنکشن چیک کریں اور دوبارہ کوشش کریں۔ آپ کا تبصرہ برقرار رکھا گیا ہے۔",
+  "Could not send your message. Your comment is kept; please retry.": "آپ کا پیغام نہیں بھیج سکا۔ آپ کا تبصرہ برقرار رکھا گیا ہے۔ براہ کرم دوبارہ کوشش کریں۔",
+  "Invalid item": "غلط آئٹم",
+  "Please wait a minute before sending another message.": "دوسرا پیغام بھیجنے سے پہلے ایک منٹ انتظار کریں۔",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "اگر کوئی اکاؤنٹ اس ای میل ایڈریس کا استعمال کرتا ہے تو، ہم پاس ورڈ ری سیٹ لنک بھیجیں گے۔ اپنے ان باکس اور اسپام فولڈر کو چیک کریں۔"
 }

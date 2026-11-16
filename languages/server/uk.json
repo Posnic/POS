@@ -699,7 +699,6 @@
   "Template saved successfully": "Шаблон успішно збережений",
   "Template updated successfully": "Шаблон успішно оновлений",
   "Templates retrieved successfully": "Шаблони успішно отримані",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Дякуємо за запит на забутий пароль. Якщо ця адреса електронної пошти існує в нашій базі даних, ви отримаєте електронний лист на цю адресу найближчим часом. Якщо ви не отримаєте повідомлення про скидання пароля протягом декількох хвилин, перевірте папку спаму.",
   "Thanks for the feedback.": "Дякую за відгук.",
   "That Ask Posnic action is disabled.": "Ця Ask Posnic дія відключена.",
   "That branch already has items - nothing was copied": "У цій гілці вже є елементи - нічого не скопійовано",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне повернула посилання на повідомлення. Доставка не підтверджена; перевірте чат перед повторною спробою.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppвсе ще підключається або потребує свіжого телефонного зв'язку. Повідомлення не надіслано.",
   "Messaging permission required.": "Потрібен дозвіл на обмін повідомленнями.",
-  "Schedule owner no longer has messaging access.": "Власник розкладу більше не має доступу до обміну повідомленнями."
+  "Schedule owner no longer has messaging access.": "Власник розкладу більше не має доступу до обміну повідомленнями.",
+  "This reset link has expired or was already used. Request a new link.": "Термін дії цього посилання для скидання закінчився або вже використовувався. Запит на нове посилання.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Використовуйте 8-20 символів, без пробілів на початку або в кінці.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Не вдалося долучитися до підтримки. Перевірте підключення до Інтернету та повторіть спробу. Ваш коментар зберігається.",
+  "Could not send your message. Your comment is kept; please retry.": "Не вдалося надіслати повідомлення. Ваш коментар зберігається; будь ласка, повторіть спробу.",
+  "Invalid item": "Невірний елемент",
+  "Please wait a minute before sending another message.": "Будь ласка, зачекайте хвилину, перш ніж надіслати інше повідомлення.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Якщо обліковий запис використовує цю адресу електронної пошти, ми надішлемо посилання для скидання пароля. Перевірте папку «Вхідні» та спам."
 }

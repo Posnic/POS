@@ -8928,6 +8928,7 @@ PosnicPro.salesChannels = {
             self.renderPartners(values.sales_channel_partners);
             self.renderVenues(values.partner_venues);
             self.renderCharges(values.channel_charges);
+            self._loaded = true;
             $("#online_ordering_default_store").val(values.online_ordering_default_store || "");
             /* Anything that is not exactly "manual" is auto, which is what the
                server makes of it too - see utils/order-approval for why that is
@@ -10174,7 +10175,7 @@ PosnicPro.settings.ai = {
      * a shop that set up and left still sees the month at a glance.
      */
     loadSpend: function () {
-        PosnicPro.get('items/aiSpend', {}, function (response) {
+        PosnicPro.get('items/aiSpend', function (response) {
             var data = (response && response.data) || {};
             var rows = data.features || [];
             var host = $('#ai_spend_table').empty();

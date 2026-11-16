@@ -195,13 +195,13 @@ PosnicPro.stocklogs = {
         PosnicPro.listFilter.mount({
             key: 'stocklogs',
             primaryControls: function(row, state) {
-                var item = $('<input type="search" class="form-control form-control-sm lf-primary" aria-label="Item" placeholder="Item name">')
+                var item = $('<input type="search" class="form-control form-control-sm lf-primary" aria-label="Item" data-t-aria-label="lang_newitem_title" placeholder="Item name" data-t-placeholder="lang_item_name">')
                     .val(state.extra.view_item_id ? state.itemLabel : '').appendTo(row);
                 PosnicPro.listFilter.entityPicker(item, 'items', function (id,label) {
                     state.itemLabel = label;
                     PosnicPro.listFilter.setExtra('stocklogs','view_item_id',id);
                 });
-                var sort = $('<select class="form-control form-control-sm lf-primary" aria-label="Sort stock movements">').appendTo(row);
+                var sort = $('<select class="form-control form-control-sm lf-primary" aria-label="Sort stock movements" data-t-aria-label="lang_sort_stock_movements">').appendTo(row);
                 [['','Newest first'],['decrease','Largest decrease'],['increase','Largest increase']].forEach(function(pair){
                     sort.append($('<option>').val(pair[0]).text(pair[1]));
                 });

@@ -112,7 +112,7 @@ const FIELD_LIMITS = {
 
 // Validation patterns
 const VALIDATION_PATTERNS = {
-  EMAIL: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+  EMAIL: /^[^\s@,;<>]+@[^\s@.,;<>]+(?:\.[^\s@.,;<>]+)+$/,
   PHONE: /^[+]?[0-9]{10,15}$/,
   GST_NUMBER: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
   PINCODE: /^[0-9]{6}$/,

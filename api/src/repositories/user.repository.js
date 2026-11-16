@@ -461,11 +461,35 @@ class UsersRepository {
     }
   }
 
-  async updateUserPassword(retypePassword, newPassword, userkey) {
+  async updateUserPassword(userkey, newPassword, retypePassword) {
     try {
-      const user = await this.userModel.findOne({ userkey }).select('+password').lean();
+      if (typeof userkey !== 'string' || !userkey || userkey.length > 250) {
+        return { status: false, data: null, message: 'Password reset key is required' };
+      }
+      if (
+        typeof newPassword !== 'string' ||
+        newPassword.length < 8 ||
+        newPassword.length > 20 ||
+        newPassword.trim() !== newPassword
+      ) {
+        return {
+          status: false,
+          data: null,
+          message: 'Use 8-20 characters, without spaces at the beginning or end.',
+        };
+      }
+      const user = await this.userModel
+        .findOne({ userkey })
+        .select('+password +userkey +expire_date')
+        .lean();
 
-      if (!user || user.userkey !== userkey) {
+      if (
+        !user ||
+        user.userkey !== userkey ||
+        !user.expire_date ||
+        !Number.isFinite(+new Date(user.expire_date)) ||
+        new Date(user.expire_date) <= new Date()
+      ) {
         return {
           status: 'exist',
           data: null,
@@ -496,15 +520,26 @@ class UsersRepository {
       const random = new Date().toLocaleDateString('en-GB').replace(/\//g, '') + Math.random();
       const newUserkey = await bcrypt.hash(random, 10);
 
-      await this.userModel.updateOne(
-        { userkey },
+      const result = await this.userModel.updateOne(
+        { _id: user._id, userkey, expire_date: { $gt: new Date() } },
         {
           $set: {
             password: hashedPassword,
             userkey: newUserkey,
+            updated_date: new Date(),
+            passwordChangedAt: new Date(),
           },
+          $inc: { authVersion: 1 },
+          $unset: { expire_date: '' },
         }
       );
+      if (result.matchedCount !== 1) {
+        return {
+          status: false,
+          data: null,
+          message: 'This reset link has expired or was already used. Request a new link.',
+        };
+      }
 
       return {
         status: 'success',

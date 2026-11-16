@@ -16860,6 +16860,30 @@
         }
       }
     },
+    "/users/recovery/refresh-cloud": {
+      "post": {
+        "summary": "error",
+        "operationId": "post_users_recovery_refresh_cloud",
+        "tags": [
+          "Recovery"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "description": "Request body is not yet documented. This endpoint has no validation middleware, so its shape cannot be derived from the source. Adding validation improves both runtime safety and this document."
+      }
+    },
     "/users/recovery/reset": {
       "post": {
         "summary": "resetWithRecoveryCode",
@@ -25887,6 +25911,53 @@
       "post": {
         "summary": "updateNewPassword",
         "operationId": "post_users_updateNewPassword",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "update_new_password": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 20,
+                    "description": "The New Password field is required"
+                  },
+                  "retype_new_password": {
+                    "type": "string",
+                    "description": "The Retype Password field is required"
+                  }
+                },
+                "required": [
+                  "update_new_password",
+                  "retype_new_password"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "updateNewPassword",
+        "operationId": "put_users_updateNewPassword",
         "tags": [
           "Users"
         ],

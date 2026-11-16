@@ -131,7 +131,7 @@ const commonValidators = {
       .withMessage('Email is required')
       .isEmail()
       .withMessage('Please provide a valid email')
-      .normalizeEmail();
+      .toLowerCase();
   },
 
   // Password validation

@@ -700,7 +700,6 @@
   "Template saved successfully": "வெற்றிகரமாக சேமிக்கப்பட்டது",
   "Template updated successfully": "வார்ப்புரு வெற்றிகரமாக",
   "Templates retrieved successfully": "வெற்றிகரமாக மீட்கப்பட்ட",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "உங்கள் மறந்துவிட்ட கடவுச்சொல் கோரிக்கைக்கு நன்றி. அந்த மின்னஞ்சல் முகவரி எங்கள் தரவுத்தளத்தில் இருந்தால், விரைவில் அந்த முகவரிக்கு ஒரு மின்னஞ்சலைப் பெறுவீர்கள். சில கணங்களுக்குள் கடவுச்சொல் மீட்டமைப்பு செய்தியைப் பெறவில்லை என்றால், தயவுசெய்து உங்கள் ஸ்பேம் கோப்புறையைச் சரிபார்க்கவும்.",
   "Thanks for the feedback.": "கருத்துக்கு நன்றி.",
   "That Ask Posnic action is disabled.": "அந்த Ask Posnic செயல் முடக்கப்பட்டுள்ளது.",
   "That branch already has items - nothing was copied": "அந்த கிளையில் ஏற்கனவே பொருட்கள் உள்ளன - எதுவும் நகலப்படவில்லை",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppசெய்தி குறிப்பை திருப்பித் தரவில்லை. டெலிவரி உறுதிப்படுத்தப்படவில்லை; மறுமுயற்சிப்பதற்கு முன் அரட்டையைச் சரிபார",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppஇன்னும் மீண்டும் இணைக்கிறது அல்லது புதிய தொலைபேசி இணைப்பு தேவை. எந்த செய்தியும் அனுப்பப்படவில்லை.",
   "Messaging permission required.": "செய்தியிடல் அனுமதி தேவை.",
-  "Schedule owner no longer has messaging access.": "அட்டவணை உரிமையாளருக்கு இனி செய்தி அணுகல் இல்லை"
+  "Schedule owner no longer has messaging access.": "அட்டவணை உரிமையாளருக்கு இனி செய்தி அணுகல் இல்லை",
+  "This reset link has expired or was already used. Request a new link.": "இந்த மீட்டமைப்பு இணைப்பு காலாவதியாகிவிட்டது அல்லது ஏற்கனவே பயன்படுத்தப்பட்டது. புதிய இணைப்பைக் கோருங்கள்.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "ஆரம்பத்தில் அல்லது முடிவில் இடைவெளிகள் இல்லாமல் 8-20 எழுத்துக்களைப் பயன்படுத்தவும்.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "ஆதரவை அடைய முடியவில்லை. உங்கள் இணைய இணைப்பைச் சரிபார்த்து மறுமுயற்சி செய்யுங்கள் உங்கள் கருத்து வைக்கப்பட்டுள்ளது.",
+  "Could not send your message. Your comment is kept; please retry.": "உங்கள் செய்தியை அனுப்ப முடியவில்லை. உங்கள் கருத்து வைக்கப்பட்டுள்ளது; தயவுசெய்து மீண்டும் முயற்சிக்கவும்",
+  "Invalid item": "தவறான பொருள்",
+  "Please wait a minute before sending another message.": "மற்றொரு செய்தியை அனுப்புவதற்கு முன் ஒரு நிமிடம் காத்திருங்கள்.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "ஒரு கணக்கு இந்த மின்னஞ்சல் முகவரியைப் பயன்படுத்தினால், கடவுச்சொல் மீட்டமைப்பு இணைப்பை அனுப்புவோம். உங்கள் இன்பாக்ஸ் மற்றும் ஸ்பேம் கோப்புறையை சரிபார்க்கவும்."
 }

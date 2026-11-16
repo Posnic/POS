@@ -699,7 +699,6 @@
   "Template saved successfully": "Szablon został pomyślnie zapisany",
   "Template updated successfully": "Szablon został pomyślnie zaktualizowany",
   "Templates retrieved successfully": "Pomyślnie pobrane szablony",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Dziękujemy za zapomniane hasło. Jeśli ten adres e-mail istnieje w naszej bazie danych, wkrótce otrzymasz wiadomość e-mail na ten adres. Jeśli w ciągu kilku chwil nie otrzymasz wiadomości o resetowaniu hasła, sprawdź folder ze spamem.",
   "Thanks for the feedback.": "Dzięki za opinię.",
   "That Ask Posnic action is disabled.": "Ta Ask Posnic akcja jest wyłączona.",
   "That branch already has items - nothing was copied": "Ta gałąź ma już przedmioty - nic nie zostało skopiowane",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnie zwrócił odniesienia do wiadomości. Dostawa jest niepotwierdzona; sprawdź czat przed ponowną próbą.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppnadal łączy się ponownie lub potrzebuje nowego łącza telefonicznego. Żadna wiadomość nie została wysłana.",
   "Messaging permission required.": "Wymagane pozwolenie na przesyłanie wiadomości.",
-  "Schedule owner no longer has messaging access.": "Właściciel harmonogramu nie ma już dostępu do wiadomości."
+  "Schedule owner no longer has messaging access.": "Właściciel harmonogramu nie ma już dostępu do wiadomości.",
+  "This reset link has expired or was already used. Request a new link.": "Ten link resetowania wygasł lub był już używany. Poproś o nowy link.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Użyj 8-20 znaków, bez spacji na początku lub na końcu.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nie udało się dotrzeć do wsparcia. Sprawdź połączenie internetowe i spróbuj ponownie. Twój komentarz jest zachowany.",
+  "Could not send your message. Your comment is kept; please retry.": "Nie można wysłać wiadomości. Twój komentarz jest zachowany; spróbuj ponownie.",
+  "Invalid item": "Nieprawidłowy element",
+  "Please wait a minute before sending another message.": "Proszę poczekać chwilę przed wysłaniem kolejnej wiadomości.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Jeśli konto używa tego adresu e-mail, wyślemy link do resetowania hasła. Sprawdź swoją skrzynkę odbiorczą i folder ze spamem."
 }

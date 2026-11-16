@@ -699,7 +699,6 @@
   "Template saved successfully": "Το πρότυπο αποθηκεύτηκε με επιτυχία",
   "Template updated successfully": "Το πρότυπο ενημερώθηκε με επιτυχία",
   "Templates retrieved successfully": "Τα πρότυπα ανακτήθηκαν με επιτυχία",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Σας ευχαριστούμε για το αίτημα ξεχασμένου κωδικού πρόσβασης. Εάν αυτή η διεύθυνση ηλεκτρονικού ταχυδρομείου υπάρχει στη βάση δεδομένων μας, θα λάβετε ένα μήνυμα ηλεκτρονικού ταχυδρομείου σε αυτήν τη διεύθυνση σύντομα. Εάν δεν λάβετε το μήνυμα επαναφοράς κωδικού πρόσβασης μέσα σε λίγα λεπτά, ελέγξτε το φάκελο ανεπιθύμητων μηνυμάτων.",
   "Thanks for the feedback.": "Ευχαριστώ για τα σχόλια.",
   "That Ask Posnic action is disabled.": "Αυτή η Ask Posnic ενέργεια είναι απενεργοποιημένη.",
   "That branch already has items - nothing was copied": "Αυτός ο κλάδος έχει ήδη στοιχεία - τίποτα δεν αντιγράφηκε",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppδεν επέστρεψε αναφορά μηνύματος. Η παράδοση δεν έχει επιβεβαιωθεί. Ελέγξτε τη συνομιλία πριν προσπαθήσετε ξανά.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppεξακολουθεί να επανασυνδέεται ή χρειάζεται έναν νέο σύνδεσμο τηλεφώνου. Κανένα μήνυμα δεν στάλθηκε.",
   "Messaging permission required.": "Απαιτείται άδεια ανταλλαγής μηνυμάτων.",
-  "Schedule owner no longer has messaging access.": "Ο κάτοχος προγράμματος δεν έχει πλέον πρόσβαση σε μηνύματα."
+  "Schedule owner no longer has messaging access.": "Ο κάτοχος προγράμματος δεν έχει πλέον πρόσβαση σε μηνύματα.",
+  "This reset link has expired or was already used. Request a new link.": "Αυτός ο σύνδεσμος επαναφοράς έχει λήξει ή έχει ήδη χρησιμοποιηθεί. Ζητήστε έναν νέο σύνδεσμο.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Χρησιμοποιήστε 8-20 χαρακτήρες, χωρίς κενά στην αρχή ή στο τέλος.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Δεν ήταν δυνατή η επίτευξη υποστήριξης. Ελέγξτε τη σύνδεσή σας στο Διαδίκτυο και δοκιμάστε ξανά. Το σχόλιό σας διατηρείται.",
+  "Could not send your message. Your comment is kept; please retry.": "Δεν ήταν δυνατή η αποστολή του μηνύματός σας. Το σχόλιό σας διατηρείται. Παρακαλώ δοκιμάστε ξανά.",
+  "Invalid item": "Μη έγκυρο στοιχείο",
+  "Please wait a minute before sending another message.": "Περιμένετε ένα λεπτό πριν στείλετε άλλο μήνυμα.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Εάν ένας λογαριασμός χρησιμοποιεί αυτήν τη διεύθυνση ηλεκτρονικού ταχυδρομείου, θα στείλουμε έναν σύνδεσμο επαναφοράς κωδικού πρόσβασης. Ελέγξτε το φάκελο εισερχόμενων και ανεπιθύμητων μηνυμάτων."
 }

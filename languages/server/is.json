@@ -699,7 +699,6 @@
   "Template saved successfully": "Snið vistað með góðum árangri",
   "Template updated successfully": "Snið uppfært með góðum árangri",
   "Templates retrieved successfully": "Sniðmát sótt",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Þakka þér fyrir gleymt lykilorð beiðni þína. Ef það netfang er til í gagnagrunni okkar færðu tölvupóst á það netfang innan skamms. Ef þú færð ekki skilaboðin um endurstillingu lykilorðs innan nokkurra augnablik skaltu athuga ruslpóstmöppuna þína.",
   "Thanks for the feedback.": "Takk fyrir viðbrögðin.",
   "That Ask Posnic action is disabled.": "Þessi að Ask Posnic gerð er óvirk.",
   "That branch already has items - nothing was copied": "Það útibú hefur nú þegar hluti - ekkert var afritað",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppskilaði ekki skilaboðatilvísun. Afhending er óstaðfest; athugaðu spjallið áður en þú reynir aftur.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApper enn að tengja aftur eða þarf nýjan símatengil. Engin skilaboð voru send.",
   "Messaging permission required.": "Skilaboðaleyfi krafist.",
-  "Schedule owner no longer has messaging access.": "Eigandi dagskrár hefur ekki lengur aðgang að skilaboðum."
+  "Schedule owner no longer has messaging access.": "Eigandi dagskrár hefur ekki lengur aðgang að skilaboðum.",
+  "This reset link has expired or was already used. Request a new link.": "Þessi endurstillingarhlekkur er útrunninn eða var þegar notaður. Óska eftir nýjum hlekk.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Notaðu 8-20 stafi, án bil í upphafi eða lok.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Gat ekki náð stuðningi. Athugaðu nettenginguna þína og reyndu aftur. Athugasemd þín er geymd.",
+  "Could not send your message. Your comment is kept; please retry.": "Gat ekki sent skilaboðin þín. Athugasemd þín er geymd; vinsamlegast reyndu aftur.",
+  "Invalid item": "Ógilt atriði",
+  "Please wait a minute before sending another message.": "Vinsamlegast bíddu í eina mínútu áður en þú sendir önnur skilaboð.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ef reikningur notar þetta netfang munum við senda tengil fyrir endurstillingu lykilorðs. Athugaðu pósthólfið þitt og ruslpóstmöppuna."
 }

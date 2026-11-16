@@ -1317,6 +1317,7 @@ class SettingModel extends BaseModel {
             },
             {
               $set: {
+                updated_date: new Date(),
                 'printing_design.$.printing_design': data.print_type,
                 ...(data.print_character !== undefined
                   ? { 'printing_design.$.printing_max_char': data.print_character }
@@ -4569,7 +4570,7 @@ class SettingModel extends BaseModel {
           status: true,
           data: null,
           message:
-            'Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.',
+            'If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.',
         };
       }
 
@@ -4619,7 +4620,7 @@ class SettingModel extends BaseModel {
             status: true,
             data: null,
             message:
-              'Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.',
+              'If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.',
           };
         }
 
@@ -4632,13 +4633,17 @@ class SettingModel extends BaseModel {
         const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
         sendSmtpEmail.to = [{ email: email, name: user.username }];
-        sendSmtpEmail.templateId = 5; // Brevo template ID (matching PHP)
-        sendSmtpEmail.params = {
-          bodyMessage: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
-          mailpath: basePath,
-        };
-        sendSmtpEmail.headers = {
-          'X-Mailin-custom': 'custom_header_1:custom_value_1|custom_header_2:custom_value_2',
+        // Keep recovery mail versioned with the API instead of the legacy provider template.
+        Object.assign(
+          sendSmtpEmail,
+          require('../utils/password-reset-email')({
+            name: [user.firstname, user.lastname].filter(Boolean).join(' '),
+            url: basePath,
+          })
+        );
+        sendSmtpEmail.sender = {
+          name: process.env.WHITE_LABEL_NAME || 'Posnic',
+          email: process.env.BREVO_SENDER_EMAIL || 'info@posnic.com',
         };
 
         await apiInstance.sendTransacEmail(sendSmtpEmail);
@@ -4647,7 +4652,7 @@ class SettingModel extends BaseModel {
           status: true,
           data: null,
           message:
-            'Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.',
+            'If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.',
         };
       } catch (emailError) {
         console.error('Error sending email via Brevo:', emailError);
@@ -4659,7 +4664,7 @@ class SettingModel extends BaseModel {
           status: true,
           data: null,
           message:
-            'Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.',
+            'If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.',
         };
       }
     } catch (error) {

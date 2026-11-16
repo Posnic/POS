@@ -699,7 +699,6 @@
   "Template saved successfully": "A sablon sikeresen mentve",
   "Template updated successfully": "A sablon sikeresen frissítve",
   "Templates retrieved successfully": "Sikeresen letöltött sablonok",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Köszönjük elfelejtett jelszókérését. Ha ez az e-mail cím létezik adatbázisunkban, hamarosan e-mailt kap erre a címre. Ha néhány pillanaton belül nem kapja meg a jelszó-visszaállítási üzenetet, kérjük, ellenőrizze a spam mappát.",
   "Thanks for the feedback.": "Köszönöm a visszajelzést.",
   "That Ask Posnic action is disabled.": "Ez a Ask Posnic művelet le van tiltva.",
   "That branch already has items - nothing was copied": "Ennek az ágnak már vannak elemei - semmit sem másoltak",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnem adott vissza üzenethivatkozást. A kézbesítés nem erősített meg; ellenőrizze a csevegést, mielőtt újrapróbálná.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmég mindig újra csatlakozik, vagy új telefonkapcsolatra van szüksége. Üzenetet nem küldtek.",
   "Messaging permission required.": "Üzenetküldési engedély szükséges.",
-  "Schedule owner no longer has messaging access.": "Az ütemezés tulajdonosának már nincs üzenetküldési hozzáférése."
+  "Schedule owner no longer has messaging access.": "Az ütemezés tulajdonosának már nincs üzenetküldési hozzáférése.",
+  "This reset link has expired or was already used. Request a new link.": "Ez a visszaállítási link lejárt, vagy már használták. Kérjen új linket.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Használjon 8-20 karaktert, szóköz nélkül az elején vagy a végén.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nem sikerült elérni a támogatást. Ellenőrizze az internetkapcsolatot, és próbálja újra. Megjegyzésedet megtartják.",
+  "Could not send your message. Your comment is kept; please retry.": "Nem sikerült elküldeni az üzenetét. Megjegyzése megmarad; kérjük, próbálkozzon újra.",
+  "Invalid item": "Érvénytelen elem",
+  "Please wait a minute before sending another message.": "Kérjük, várjon egy percet, mielőtt újabb üzenetet küldene.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ha egy fiók használja ezt az e-mail címet, küldünk egy jelszó-visszaállítási linket. Ellenőrizze a beérkező levelek és a spam mappát."
 }

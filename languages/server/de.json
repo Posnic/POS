@@ -568,7 +568,6 @@
   "Template saved successfully": "Vorlage erfolgreich gespeichert",
   "Template updated successfully": "Vorlage erfolgreich aktualisiert",
   "Templates retrieved successfully": "Vorlagen erfolgreich abgerufen",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Vielen Dank für Ihre Anfrage zum vergessenen Passwort. Wenn diese E-Mail-Adresse in unserer Datenbank vorhanden ist, erhalten Sie in Kürze eine E-Mail an diese Adresse. Sollten Sie die Nachricht zum Zurücksetzen des Passworts nicht innerhalb weniger Augenblicke erhalten, prüfen Sie bitte Ihren Spam-Ordner.",
   "That branch already has items - nothing was copied": "Diese Filiale hat bereits Artikel - es wurde nichts kopiert",
   "That card is already assigned to another user": "Diese Karte ist bereits einem anderen Benutzer zugewiesen",
   "That is more than the ": "Das ist mehr als der noch offene Betrag von ",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApphat keine Nachrichtenreferenz zurückgegeben. Die Zustellung ist nicht bestätigt; überprüfen Sie den Chat, bevor Sie es erneut versuchen.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppstellt immer noch eine Verbindung her oder benötigt eine neue Telefonverbindung. Es wurde keine Nachricht gesendet.",
   "Messaging permission required.": "Messaging-Erlaubnis erforderlich.",
-  "Schedule owner no longer has messaging access.": "Der Besitzer des Zeitplans hat keinen Nachrichtenzugriff mehr."
+  "Schedule owner no longer has messaging access.": "Der Besitzer des Zeitplans hat keinen Nachrichtenzugriff mehr.",
+  "This reset link has expired or was already used. Request a new link.": "Dieser Link zum Zurücksetzen ist abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen Link an.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Verwenden Sie 8-20 Zeichen, ohne Leerzeichen am Anfang oder Ende.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Der Support konnte nicht erreicht werden. Überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut. Ihr Kommentar wird beibehalten.",
+  "Could not send your message. Your comment is kept; please retry.": "Deine Nachricht konnte nicht gesendet werden. Ihr Kommentar wurde gespeichert. Bitte versuchen Sie es erneut.",
+  "Invalid item": "Ungültiger Artikel",
+  "Please wait a minute before sending another message.": "Bitte warten Sie eine Minute, bevor Sie eine weitere Nachricht senden.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Wenn ein Konto diese E-Mail-Adresse verwendet, senden wir einen Link zum Zurücksetzen des Passworts. Überprüfe deinen Posteingang und Spam-Ordner."
 }

@@ -568,7 +568,6 @@
   "Template saved successfully": "टेम्पलेट सफलतापूर्वक सहेजा गया",
   "Template updated successfully": "टेम्पलेट सफलतापूर्वक अपडेट हुआ",
   "Templates retrieved successfully": "टेम्पलेट सफलतापूर्वक मिल गए",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "भूले हुए पासवर्ड के आपके अनुरोध के लिए धन्यवाद। अगर वह ईमेल पता हमारे डेटाबेस में है, तो उस पते पर थोड़ी देर में एक ईमेल पहुंच जाएगा। अगर कुछ ही पलों में पासवर्ड रीसेट का संदेश न मिले, तो कृपया अपना स्पैम फ़ोल्डर देख लें।",
   "That branch already has items - nothing was copied": "उस शाखा में पहले से वस्तुएं हैं - कुछ भी कॉपी नहीं हुआ",
   "That card is already assigned to another user": "वह कार्ड पहले से किसी दूसरे उपयोगकर्ता को दिया गया है",
   "That is more than the ": "यह इनवॉइस पर बाकी राशि से ज़्यादा है - बाकी ",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppसंदेश का संदर्भ नहीं लौटाया। डिलीवरी की पुष्टि नहीं हुई है; फिर से कोशिश करने से पहले चैट की जांच करें।",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppअभी भी फिर से कनेक्ट हो रहा है या उसे नए फ़ोन लिंक की ज़रूरत है। कोई संदेश नहीं भेजा गया।",
   "Messaging permission required.": "संदेश भेजने की अनुमति आवश्यक है।",
-  "Schedule owner no longer has messaging access.": "शेड्यूल के मालिक के पास अब मैसेजिंग ऐक्सेस नहीं है।"
+  "Schedule owner no longer has messaging access.": "शेड्यूल के मालिक के पास अब मैसेजिंग ऐक्सेस नहीं है।",
+  "This reset link has expired or was already used. Request a new link.": "इस रीसेट लिंक की समय सीमा समाप्त हो गई है या पहले ही इस्तेमाल किया जा चुका है। नए लिंक का अनुरोध करें।",
+  "Use 8-20 characters, without spaces at the beginning or end.": "शुरुआत या अंत में रिक्त स्थान के बिना, 8-20 वर्णों का उपयोग करें।",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "समर्थन तक नहीं पहुंच सका। अपना इंटरनेट कनेक्शन जाँचें और फिर से कोशिश करें। आपकी टिप्पणी रखी गई है।",
+  "Could not send your message. Your comment is kept; please retry.": "आपका संदेश नहीं भेज सका। आपकी टिप्पणी बरकरार है; कृपया फिर से कोशिश करें।",
+  "Invalid item": "अमान्य आइटम",
+  "Please wait a minute before sending another message.": "कृपया दूसरा संदेश भेजने से पहले एक मिनट प्रतीक्षा करें।",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "यदि कोई खाता इस ईमेल पते का उपयोग करता है, तो हम एक पासवर्ड रीसेट लिंक भेजेंगे। अपना इनबॉक्स और स्पैम फोल्डर देखें।"
 }

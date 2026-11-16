@@ -5506,7 +5506,7 @@ class SalesController extends BaseController {
     try {
       // Validate email
       const email = req.body.email || req.query.email;
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (!email || !(typeof email === 'string' && require('validator').isEmail(email))) {
         return this.error(res, ERROR_MESSAGES.VALID_EMAIL_REQUIRED, 400);
       }
 
@@ -5862,7 +5862,7 @@ class SalesController extends BaseController {
         return this.error(res, ERROR_MESSAGES.SALES_ID_REQUIRED, 400);
       }
 
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (!email || !(typeof email === 'string' && require('validator').isEmail(email))) {
         return this.error(res, ERROR_MESSAGES.VALID_EMAIL_REQUIRED, 400);
       }
 
@@ -6801,7 +6801,10 @@ class SalesController extends BaseController {
       const input = req.body;
 
       // Validate email
-      if (!input.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) {
+      if (
+        !input.email ||
+        !(typeof input.email === 'string' && require('validator').isEmail(input.email))
+      ) {
         return this.error(res, ERROR_MESSAGES.VALID_EMAIL_REQUIRED, 400);
       }
 

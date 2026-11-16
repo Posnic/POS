@@ -2008,8 +2008,8 @@ describe('updateNewPassword', () => {
     const req = mockReq({
       body: {
         forgot_key_value: 'key123',
-        update_new_password: 'pass',
-        retype_new_password: 'pass',
+        update_new_password: 'newpass123',
+        retype_new_password: 'newpass123',
       },
     });
     const res = mockRes();
@@ -2020,14 +2020,16 @@ describe('updateNewPassword', () => {
 
   test('200 success when key matches', async () => {
     const key = 'validkey123';
-    mockUserModel.findOne.mockReturnValue(buildFindOneChain({ userkey: key }));
+    mockUserModel.findOne.mockReturnValue(
+      buildFindOneChain({ _id: 'user1', userkey: key, expire_date: new Date(Date.now() + 60000) })
+    );
     mockBcrypt.hash.mockResolvedValue('newhashed');
-    mockUserModel.updateOne.mockResolvedValue({ modifiedCount: 1 });
+    mockUserModel.updateOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     const req = mockReq({
       body: {
         forgot_key_value: key,
-        update_new_password: 'newpass',
-        retype_new_password: 'newpass',
+        update_new_password: 'newpass123',
+        retype_new_password: 'newpass123',
       },
     });
     const res = mockRes();
@@ -2036,6 +2038,53 @@ describe('updateNewPassword', () => {
     expect(res.json.mock.calls[0][0].type).toBe('success');
     expect(mockBcrypt.hash).toHaveBeenCalled();
     expect(mockUserModel.updateOne).toHaveBeenCalled();
+    const [filter, update] = mockUserModel.updateOne.mock.calls[0];
+    expect(filter.expire_date.$gt).toBeInstanceOf(Date);
+    expect(update.$set.updated_date).toBeInstanceOf(Date);
+    expect(update.$inc.authVersion).toBe(1);
+    expect(update.$unset).toEqual({ expire_date: '' });
+  });
+
+  test.each([undefined, new Date(0)])(
+    'rejects a reset without a live expiry (%s)',
+    async (expiry) => {
+      mockUserModel.findOne.mockReturnValue(
+        buildFindOneChain({ userkey: 'key', expire_date: expiry })
+      );
+      const res = mockRes();
+      await ctrl.updateNewPassword(
+        mockReq({
+          body: {
+            forgot_key_value: 'key',
+            update_new_password: 'newpass123',
+            retype_new_password: 'newpass123',
+          },
+        }),
+        res
+      );
+      expect(res.json.mock.calls[0][0].type).toBe('exist');
+      expect(mockUserModel.updateOne).not.toHaveBeenCalled();
+    }
+  );
+
+  test('a reset raced by another request cannot succeed twice', async () => {
+    mockUserModel.findOne.mockReturnValue(
+      buildFindOneChain({ _id: 'user1', userkey: 'key', expire_date: new Date(Date.now() + 60000) })
+    );
+    mockUserModel.updateOne.mockResolvedValue({ matchedCount: 0 });
+    const res = mockRes();
+    await ctrl.updateNewPassword(
+      mockReq({
+        body: {
+          forgot_key_value: 'key',
+          update_new_password: 'newpass123',
+          retype_new_password: 'newpass123',
+        },
+      }),
+      res
+    );
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].type).toBe('error');
   });
 });
 

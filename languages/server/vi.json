@@ -699,7 +699,6 @@
   "Template saved successfully": "Mẫu đã lưu thành công",
   "Template updated successfully": "Mẫu được cập nhật thành công",
   "Templates retrieved successfully": "Các mẫu được truy xuất thành công",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Cảm ơn bạn đã yêu cầu mật khẩu quên của bạn. Nếu địa chỉ email đó tồn tại trong cơ sở dữ liệu của chúng tôi, bạn sẽ sớm nhận được email đến địa chỉ đó. Nếu bạn không nhận được thông báo đặt lại mật khẩu trong vài phút, vui lòng kiểm tra thư mục thư rác của bạn.",
   "Thanks for the feedback.": "Cảm ơn phản hồi.",
   "That Ask Posnic action is disabled.": "Hành Ask Posnic động đó bị vô hiệu hóa.",
   "That branch already has items - nothing was copied": "Chi nhánh đó đã có các mục - không có gì được sao chép",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppkhông trả về một tham chiếu tin nhắn. Giao hàng chưa được xác nhận; kiểm tra cuộc trò chuyện trước khi thử lại.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppvẫn đang kết nối lại hoặc cần một liên kết điện thoại mới. Không có tin nhắn nào được gửi.",
   "Messaging permission required.": "Yêu cầu quyền nhắn tin.",
-  "Schedule owner no longer has messaging access.": "Chủ sở hữu lịch trình không còn quyền truy cập nhắn tin."
+  "Schedule owner no longer has messaging access.": "Chủ sở hữu lịch trình không còn quyền truy cập nhắn tin.",
+  "This reset link has expired or was already used. Request a new link.": "Liên kết đặt lại này đã hết hạn hoặc đã được sử dụng. Yêu cầu một liên kết mới.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Sử dụng 8-20 ký tự, không có dấu cách ở đầu hoặc cuối.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Không thể tiếp cận hỗ trợ. Kiểm tra kết nối internet của bạn và thử lại. Bình luận của bạn được giữ lại.",
+  "Could not send your message. Your comment is kept; please retry.": "Không thể gửi tin nhắn của bạn. Bình luận của bạn được giữ lại; vui lòng thử lại.",
+  "Invalid item": "Mục không hợp lệ",
+  "Please wait a minute before sending another message.": "Vui lòng đợi một phút trước khi gửi tin nhắn khác.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Nếu tài khoản sử dụng địa chỉ email này, chúng tôi sẽ gửi liên kết đặt lại mật khẩu. Kiểm tra hộp thư đến và thư mục thư rác của bạn."
 }

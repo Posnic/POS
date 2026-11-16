@@ -887,7 +887,10 @@ class SettingController extends BaseController {
   // PHP: Forgot Password
   async forgotPassword(req, res) {
     try {
-      if (!req.body.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.email)) {
+      if (
+        !req.body.email ||
+        !(typeof req.body.email === 'string' && require('validator').isEmail(req.body.email))
+      ) {
         return res.status(400).json({ type: 'error', message: 'Valid email required' });
       }
       const settingModel = this.createModelWithContext(req);

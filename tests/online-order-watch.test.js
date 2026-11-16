@@ -281,7 +281,7 @@ function listenTo(page) {
   return notes;
 }
 
-test('a table calling is heard on a web till, which is where nothing heard it', () => {
+test('a table calling is heard on a web till, which is where nothing heard it', (t) => {
   /*
    * Owner: "he is in table 7 and wants to call waiter or captain... desktop
    * app and captain mobile apps getting notification."
@@ -295,6 +295,7 @@ test('a table calling is heard on a web till, which is where nothing heard it', 
    * round, rebuilt in software.
    */
   const floor = till({ queue: [], ringing: [{ call_id: 'c1', table_number: '7' }] });
+  t.after(() => floor.window.close());
   assert.deepStrictEqual(floor.calls.toasts, [['Alert', 'Table is calling - Table 7']]);
   floor.window.close();
 });
@@ -368,7 +369,7 @@ test('a call is the louder pattern, because a person is sitting there waiting', 
   floor.window.close();
 });
 
-test('a call is NOT counted on the Online orders menu, because it is not on that page', () => {
+test('a call is NOT counted on the Online orders menu, because it is not on that page', (t) => {
   /*
    * The badge hangs on that menu entry and is the way IN to it, and the queue
    * page draws `data` - it has never carried calls. A number there that
@@ -377,6 +378,7 @@ test('a call is NOT counted on the Online orders menu, because it is not on that
    * and look. The request dock is where a call is answered.
    */
   const floor = till({ queue: [], ringing: [{ call_id: 'c1', table_number: '7' }] });
+  t.after(() => floor.window.close());
   assert.strictEqual(
     floor.document.querySelector('.online-orders-badge'),
     null,
@@ -394,7 +396,7 @@ test('a call is NOT counted on the Online orders menu, because it is not on that
   assert.match(queue, /var list = \(response && response\.data\) \|\| \[\];/);
   assert.match(
     queue,
-    /\$\('#onlineorders_list'\)\.html\(list\.map\(self\.card\)\.join\(''\)\)/,
+    /self\.queue = list;\s*self\.paintQueue\(\)/,
     'the queue page now draws something other than the orders'
   );
   floor.window.close();

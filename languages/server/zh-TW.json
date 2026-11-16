@@ -699,7 +699,6 @@
   "Template saved successfully": "已成功儲存範本",
   "Template updated successfully": "已成功更新範本",
   "Templates retrieved successfully": "已成功擷取範本",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "感謝您忘記密碼請求。如果該電子郵件地址存在於我們的數據庫中，您將很快收到該地址的電子郵件。如果您在幾分鐘內沒有收到密碼重置消息，請檢查您的垃圾郵件文件夾。",
   "Thanks for the feedback.": "感謝您的反饋。",
   "That Ask Posnic action is disabled.": "該動Ask Posnic作已停用。",
   "That branch already has items - nothing was copied": "該分支已經有項目-沒有複製任何內容",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApp沒有返回郵件引用。交貨尚未確認，請先檢查聊天，然後再重試。",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApp仍在重新連接或需要新的電話鏈接。沒有發送任何訊息。",
   "Messaging permission required.": "需要消息傳遞權限。",
-  "Schedule owner no longer has messaging access.": "排程擁有者不再具有郵件存取權限。"
+  "Schedule owner no longer has messaging access.": "排程擁有者不再具有郵件存取權限。",
+  "This reset link has expired or was already used. Request a new link.": "此重設連結已過期或已使用。請求新連結。",
+  "Use 8-20 characters, without spaces at the beginning or end.": "使用 8-20 個字元，開頭或結尾不含空格。",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "無法獲得支持。檢查您的網際網路連線並重試。您的評論已保留。",
+  "Could not send your message. Your comment is kept; please retry.": "無法傳送您的訊息。您的評論已保留，請重試。",
+  "Invalid item": "無效的項目",
+  "Please wait a minute before sending another message.": "請稍候一分鐘，然後再發送另一條消息。",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "如果帳戶使用此電子郵件地址，我們將發送密碼重設鏈接。檢查您的收件箱和垃圾郵件文件夾。"
 }

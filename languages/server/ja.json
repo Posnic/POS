@@ -699,7 +699,6 @@
   "Template saved successfully": "テンプレートは正常に保存されました",
   "Template updated successfully": "テンプレートは正常に更新されました",
   "Templates retrieved successfully": "テンプレートは正常に取得されました",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "パスワードを忘れたことをリクエストしていただきありがとうございます。そのメールアドレスがデータベースに存在する場合は、まもなくそのアドレスにメールが届きます。しばらく経ってもパスワードリセットのメッセージが届かない場合は、迷惑メールフォルダを確認してください。",
   "Thanks for the feedback.": "フィードバックをありがとうございます。",
   "That Ask Posnic action is disabled.": "Ask Posnicそのアクションは無効になっています。",
   "That branch already has items - nothing was copied": "そのブランチには既に項目があり、何もコピーされていません",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppメッセージリファレンスが返されませんでした。配信は未確認です。チャットを確認してから再試行してください。",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppまだ再接続中か、新しい電話リンクが必要です。メッセージは送信されませんでした。",
   "Messaging permission required.": "メッセージング権限が必要です。",
-  "Schedule owner no longer has messaging access.": "スケジュールの所有者にはメッセージングへのアクセス権がなくなりました。"
+  "Schedule owner no longer has messaging access.": "スケジュールの所有者にはメッセージングへのアクセス権がなくなりました。",
+  "This reset link has expired or was already used. Request a new link.": "このリセットリンクは有効期限が切れているか、すでに使用されています。新しいリンクをリクエストしてください。",
+  "Use 8-20 characters, without spaces at the beginning or end.": "最初と最後にスペースを入れずに 8 ～ 20 文字で入力してください。",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "サポートに連絡できませんでした。インターネット接続を確認して、再試行してください。コメントは保持されます。",
+  "Could not send your message. Your comment is kept; please retry.": "メッセージを送信できませんでした。コメントは保存されています。もう一度試してください。",
+  "Invalid item": "アイテムが無効です",
+  "Please wait a minute before sending another message.": "1 分待ってから別のメッセージを送信してください。",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "アカウントがこのメールアドレスを使用している場合、パスワードリセットリンクが送信されます。受信トレイと迷惑メールフォルダを確認してください。"
 }

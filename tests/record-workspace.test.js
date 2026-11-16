@@ -5,12 +5,16 @@ const path = require('node:path');
 const { JSDOM } = require('jsdom');
 const root = path.join(__dirname, '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const emailSource = read('frontend/static/script/js/core/PosnicPro.js');
+const emailStart = emailSource.indexOf('validateEmail: function');
+const emailEnd = emailSource.indexOf('\n    },', emailStart);
+const validateEmail = require('node:vm').runInNewContext('({' + emailSource.slice(emailStart, emailEnd) + '\n}}).validateEmail');
 function fixture() {
   const files = ['modules/units.html', 'modals/customer_category_add.html', 'modals/variant_add.html', 'modals/tax.html', 'modals/payment.html', 'modals/denomcash.html', 'modals/expense.html', 'modals/tableorder.html', 'modals/user.html', 'modals/customer.html', 'modals/supplier.html', 'modals/branch.html', 'modals/category_add.html', 'modules/branchEdit.html', 'modules/settings_write.html'];
   const dom = new JSDOM(files.map(p => read('frontend/' + p)).join('\n'), { runScripts: 'outside-only' });
   const w = dom.window;
   w.eval(read('frontend/static/script/js/jquery.min.js'));
-  w.PosnicPro = { i18n: { t: (key, text) => text } };
+  w.PosnicPro = { validateEmail, i18n: { t: (key, text) => text } };
   return { dom, w, d: w.document };
 }
 test('reorganizing retains every control, form owner, current value and submit handler', () => {

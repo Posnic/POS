@@ -142,7 +142,7 @@ PosnicPro.items = {
             $btn.show();
             return;
         }
-        PosnicPro.get('items/aiAvailability', {}, function (r) {
+        PosnicPro.get('items/aiAvailability', function (r) {
             var ok = !!(r && r.data && r.data.available);
             PosnicPro.items._aiAvailable = ok ? true : null;
             $btn.toggle(ok);
@@ -521,15 +521,15 @@ PosnicPro.items = {
         PosnicPro.listFilter.mount({
             key: 'items',
             primaryControls: function (row, state) {
-                var category = $('<select aria-label="Category" class="form-control form-control-sm lf-primary">').appendTo(row);
-                category.append($('<option>').val('').text('All categories'));
+                var category = $('<select aria-label="Category" data-t-aria-label="lang_newcategory_title" class="form-control form-control-sm lf-primary">').appendTo(row);
+                category.append($('<option>').val('').text(PosnicPro.i18n.t('lang_all_categories', 'All categories')));
                 PosnicPro.get({url:'categories/getCategoryAjaxList',data:{query:''}}, function (r) {
                     (r.suggestions || []).forEach(function (c) { category.append($('<option>').val(c.id).text(c.name)); });
                     category.val(state.extra.category_id || '');
                     PosnicPro.listFilter.paintButton('items');
                 });
                 category.on('change', function () { PosnicPro.listFilter.setExtra('items','category_id',this.value); });
-                var stock = $('<select aria-label="Stock level" class="form-control form-control-sm lf-primary">').appendTo(row);
+                var stock = $('<select aria-label="Stock level" data-t-aria-label="lang_stock_level" class="form-control form-control-sm lf-primary">').appendTo(row);
                 [['','All stock'],['low','Low stock'],['out','Out of stock'],['in','In stock']].forEach(function (o) {
                     stock.append($('<option>').val(o[0]).text(o[1]));
                 });
@@ -548,7 +548,7 @@ PosnicPro.items = {
                     PosnicPro.get({url:'sales',data:{page:1,limit:1,filters:JSON.stringify({sales_id:reference})}},function(r){
                         if(reference!==row.find('.lf-q').val().trim() || branch!==PosnicPro.local.get('branch_id_set') || !row[0].isConnected)return;
                         var sale=r.data?.list?.[0];
-                        if(!sale || sale.sales_id!==reference){PosnicPro.alert('info','No matching sale');return;}
+                        if(!sale || sale.sales_id!==reference){PosnicPro.alert('info', PosnicPro.i18n.t('lang_no_matching_sale', 'No matching sale'));return;}
                         state.extra.saleItems=Array.from(new Set((sale.items||[]).map(function(i){return String(i.item_id?.$oid || i.item_id);}).filter(function(id){return /^[a-f0-9]{24}$/i.test(id);})));
                         state.search='';state.saleLabel=sale.sales_id;
                         PosnicPro.listFilter.render('items');PosnicPro.listFilter._changed('items');
@@ -561,12 +561,12 @@ PosnicPro.items = {
                 var bounds = state.extra[active] || {};
                 $('<summary class="btn btn-sm btn-light border">').text(active ? fields[active] + ' ' + (bounds.$gte ?? '…') + ' – ' + (bounds.$lte ?? '…') : 'Range').appendTo(editor);
                 var form = $('<form class="p-2 bg-white border rounded">').appendTo(editor);
-                var field = $('<select aria-label="Range field" class="form-control">').appendTo(form);
+                var field = $('<select aria-label="Range field" data-t-aria-label="lang_range_field" class="form-control">').appendTo(form);
                 Object.entries(fields).forEach(function (pair) { field.append($('<option>').val(pair[0]).text(pair[1])); });
                 field.val(active || 'selling_price');
-                var from = $('<input aria-label="From" placeholder="From" type="number" step="any" class="form-control">').val(bounds.$gte ?? '').appendTo(form);
-                var to = $('<input aria-label="To" placeholder="To" type="number" step="any" class="form-control">').val(bounds.$lte ?? '').appendTo(form);
-                form.append('<button class="btn btn-primary">Apply</button>').on('submit', function(e) {
+                var from = $('<input aria-label="From" data-t-aria-label="lang_from" placeholder="From" data-t-placeholder="lang_from" type="number" step="any" class="form-control">').val(bounds.$gte ?? '').appendTo(form);
+                var to = $('<input aria-label="To" data-t-aria-label="lang_to_2" placeholder="To" data-t-placeholder="lang_to_2" type="number" step="any" class="form-control">').val(bounds.$lte ?? '').appendTo(form);
+                form.append('<button class="btn btn-primary"><lang class="lang_filter_title">Apply</lang></button>').on('submit', function(e) {
                     e.preventDefault();
                     to[0].setCustomValidity(from.val() && to.val() && Number(from.val()) > Number(to.val()) ? 'End must be at least the start' : '');
                     if (!form[0].reportValidity()) return;
@@ -601,8 +601,8 @@ PosnicPro.items = {
                 { v: 'recent', l: PosnicPro.i18n.t('lang_recently_updated', 'Recently updated'), i: 'clock' },
                 { v: 'margin_desc', l: PosnicPro.i18n.t('lang_high_margin_first', 'High margin first'), i: 'trending-up' },
                 { v: 'margin_asc', l: PosnicPro.i18n.t('lang_low_margin_first', 'Low margin first'), i: 'trending-down' },
-                { v: 'stock_desc', l: 'Highest stock first', i: 'layers' },
-                { v: 'created_desc', l: 'Newest added', i: 'clock' },
+                { v: 'stock_desc', l: PosnicPro.i18n.t('lang_highest_stock_first', 'Highest stock first'), i: 'layers' },
+                { v: 'created_desc', l: PosnicPro.i18n.t('lang_newest_added', 'Newest added'), i: 'clock' },
                 { v: 'stock_asc', l: PosnicPro.i18n.t('lang_low_stock_first', 'Low stock first'), i: 'alert-triangle' },
                 { v: 'price_desc', l: PosnicPro.i18n.t('lang_price_high_to_low', 'Price: high to low'), i: 'arrow-down' },
                 { v: 'price_asc', l: PosnicPro.i18n.t('lang_price_low_to_high', 'Price: low to high'), i: 'arrow-up' },
@@ -6155,7 +6155,7 @@ PosnicPro.itemPlate = {
 
         if (PosnicPro.items._aiAvailable === true) { $btn.show(); return; }
 
-        PosnicPro.get('items/aiAvailability', {}, function (r) {
+        PosnicPro.get('items/aiAvailability', function (r) {
             var ok = !!(r && r.data && r.data.available);
             PosnicPro.items._aiAvailable = ok ? true : null;
             $btn.toggle(ok);

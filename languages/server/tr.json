@@ -699,7 +699,6 @@
   "Template saved successfully": "Şablon başarıyla kaydedildi",
   "Template updated successfully": "Şablon başarıyla güncellendi",
   "Templates retrieved successfully": "Şablonlar başarıyla alındı",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Unutulan şifre talebiniz için teşekkür ederiz. Bu e-posta adresi veritabanımızda varsa, kısa süre içinde o adrese bir e-posta alacaksınız. Parola sıfırlama mesajını birkaç dakika içinde almazsanız, lütfen spam klasörünüzü kontrol edin.",
   "Thanks for the feedback.": "Geri bildirim için teşekkürler.",
   "That Ask Posnic action is disabled.": "Bu ey Ask Posnic lem devre dışı bırakıldı.",
   "That branch already has items - nothing was copied": "Bu dalda zaten öğeler var - hiçbir şey kopyalanmadı",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppbir mesaj referansı döndürmedi. Teslimat onaylanmadı; yeniden denemeden önce sohbeti kontrol edin.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsApphala yeniden bağlanıyor veya yeni bir telefon bağlantısına ihtiyaç duyuyor. Mesaj gönderilmedi.",
   "Messaging permission required.": "Mesajlaşma izni gerekli.",
-  "Schedule owner no longer has messaging access.": "Program sahibinin artık mesajlaşma erişimi yok."
+  "Schedule owner no longer has messaging access.": "Program sahibinin artık mesajlaşma erişimi yok.",
+  "This reset link has expired or was already used. Request a new link.": "Bu sıfırlama bağlantısının süresi doldu veya zaten kullanıldı. Yeni bir bağlantı isteyin.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Başlangıçta veya sonunda boşluk bırakmadan 8-20 karakter kullanın.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Desteğe ulaşılamadı. İnternet bağlantınızı kontrol edin ve tekrar deneyin. Yorumunuz saklandı.",
+  "Could not send your message. Your comment is kept; please retry.": "Mesajınız gönderilemedi. Yorumunuz saklandı; lütfen tekrar deneyin.",
+  "Invalid item": "Geçersiz öğe",
+  "Please wait a minute before sending another message.": "Lütfen başka bir mesaj göndermeden önce bir dakika bekleyin.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Bir hesap bu e-posta adresini kullanıyorsa, bir şifre sıfırlama bağlantısı göndereceğiz. Gelen kutunuzu ve spam klasörünüzü kontrol edin."
 }

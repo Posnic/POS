@@ -699,7 +699,6 @@
   "Template saved successfully": "Malli tallennettu onnistuneesti",
   "Template updated successfully": "Malli päivitettiin onnistuneesti",
   "Templates retrieved successfully": "Mallit haettiin onnistuneesti",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Kiitos unohtuneesta salasanapyynnöstäsi. Jos kyseinen sähköpostiosoite on tietokannassamme, saat sähköpostin kyseiseen osoitteeseen pian. Jos et saa salasanan palautusviestiä muutamassa hetkessä, tarkista roskapostikansiosi.",
   "Thanks for the feedback.": "Kiitos palautteesta.",
   "That Ask Posnic action is disabled.": "Tämä Ask Posnic toiminta on poistettu käytöstä.",
   "That branch already has items - nothing was copied": "Haaralla on jo kohteita - mitään ei kopioitu",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppei palauttanut viestiviittausta. Toimitus ei ole vahvistettu; tarkista keskustelu ennen kuin yrität uudelleen.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmuodostaa edelleen yhteyden uudelleen tai tarvitsee uuden puhelinlinkin. Viestiä ei lähetetty.",
   "Messaging permission required.": "Viestintälupa vaaditaan.",
-  "Schedule owner no longer has messaging access.": "Aikataulun omistajalla ei ole enää viestintäoikeuksia."
+  "Schedule owner no longer has messaging access.": "Aikataulun omistajalla ei ole enää viestintäoikeuksia.",
+  "This reset link has expired or was already used. Request a new link.": "Tämä nollauslinkki on vanhentunut tai sitä on jo käytetty. Pyydä uusi linkki.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Käytä 8-20 merkkiä ilman välilyöntejä alussa tai lopussa.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Tukea ei saatu. Tarkista Internet-yhteys ja yritä uudelleen. Kommenttisi säilytetään.",
+  "Could not send your message. Your comment is kept; please retry.": "Viestiäsi ei voitu lähettää. Kommenttisi säilytetään; yritä uudelleen.",
+  "Invalid item": "Virheellinen kohde",
+  "Please wait a minute before sending another message.": "Odota hetki ennen uuden viestin lähettämistä.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Jos tili käyttää tätä sähköpostiosoitetta, lähetämme salasanan palautuslinkin. Tarkista postilaatikko ja roskapostikansio."
 }

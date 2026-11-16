@@ -1362,7 +1362,7 @@ PosnicPro = {
      * screen shows - same principle as the day-end summary.
      */
     reportPages: [
-        { root: '#registerreport_new', title: 'Register Report', range: '.view_register_report_daterange', file: 'register-report',
+        { root: '#registerreport_new', title: 'Register Report', titleKey: 'lang_register_report', range: '.view_register_report_daterange', file: 'register-report',
             full: [{ table: '#view_registerreport', per: '#view_registerreport_per_page', load: 'registerreport.registerreportTable' }] },
         { root: '#salereport_new', title: 'Sales Report', titleKey: 'lang_sales_report', range: '#view_sale_report_daterange', file: 'sales-report',
             full: [
@@ -1498,7 +1498,7 @@ PosnicPro = {
                 clearInterval(t);
                 clearTimeout(failsafe);
                 restore();
-                PosnicPro.alert('error', 'Could not load every report row for export. Please try again.');
+                PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_every_report_row_for_export', 'Could not load every report row for export. Please try again.'));
                 return;
             }
             if (!busy && n >= total) {
@@ -1566,7 +1566,7 @@ PosnicPro = {
             if (!host.length) { return; }
             host.addClass('report-export-host').append(
                 '<div class="report-export-bar dropdown">'
-                + '<button type="button" class="btn btn-secondary-rgba btn-sm report-export-toggle dropdown-toggle" data-toggle="dropdown" data-display="static" aria-expanded="false"><i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export">Export</span></button>'
+                + '<button type="button" class="btn btn-secondary-rgba btn-sm report-export-toggle dropdown-toggle" data-toggle="dropdown" data-display="static" aria-expanded="false"><i class="feather icon-download mr-1" aria-hidden="true"></i><span class="list-file-action-label" data-t="lang_export"><lang class="lang_export">Export</lang></span></button>'
                 + '<div class="dropdown-menu dropdown-menu-right report-export-options">'
                 + '<button type="button" class="btn btn-danger-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'pdf\');" title="Download A4 PDF" data-t-title="lang_download_a4_pdf"><i class="fa fa-file-pdf-o mr-1"></i>PDF</button> '
                 + '<button type="button" class="btn btn-secondary-rgba btn-sm" onclick="return PosnicPro.pageExport(' + i + ', \'csv\');" title="Export CSV" data-t-title="lang_export_csv"><i class="fa fa-file-text-o mr-1"></i>CSV</button> '
@@ -1831,8 +1831,14 @@ PosnicPro = {
     },
     /*To validate the email or not*/
     validateEmail: function ($email) {
-        var emailReg = /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/;
-        return emailReg.test($email);
+        if (typeof $email !== 'string' || $email.length > 254) return false;
+        var parts = $email.split('@');
+        if (parts.length !== 2 || !parts[0] || parts[0].length > 64) return false;
+        if (/^\.|\.$|\.\./.test(parts[0])) return false;
+        var emailReg = /^[^\s@,:;<>"\\()[\]]+@[^\s@.,;<>_]+(?:\.[^\s@.,;<>_]+)+$/;
+        return emailReg.test($email) && parts[1].split('.').every(function (label) {
+            return label.length <= 63 && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label);
+        }) && !/^\d+$/.test(parts[1].split('.').pop());
     },
     /*For display item name last characters sholud be dot*/
     textOverflowEllipsis: function (text, count, insertDots) {
@@ -2422,7 +2428,7 @@ PosnicPro = {
             PosnicPro.get(url, function (response) {
                 if (ticket !== PosnicPro.shiftWidget._reportSequence) return;
                 if (!employee) {
-                    var select = $('#labour-report-employee').empty().append($('<option>').val('').text('All employees'));
+                    var select = $('#labour-report-employee').empty().append($('<option>').val('').text(PosnicPro.i18n.t('lang_all_employees', 'All employees')));
                     (response.data?.rows || []).forEach(function (row) {
                         if (row.user_id) select.append($('<option>').val(row.user_id).text(row.user_name || row.user_id));
                     });
@@ -3028,7 +3034,7 @@ PosnicPro = {
         var header = $('#'+pageId+' > #containerbar > .breadcrumbbar').first();
         if (!header.length) return;
         header.addClass('report-page-header');
-        var html = '<nav aria-label="Reports" class="report-group-tabs"><ul class="nav nav-tabs users-roles-tabs">';
+        var html = '<nav aria-label="Reports" data-t-aria-label="lang_report_title" class="report-group-tabs"><ul class="nav nav-tabs users-roles-tabs">';
         group.items.forEach(function (i) {
             if (i.module && s[i.module] === false) { return; }
             if (i.country === 'IN' && !['india', 'in', 'ind'].includes(String(PosnicPro.local.get('country_setting') || '').trim().toLowerCase())) { return; }
@@ -3894,30 +3900,34 @@ PosnicPro = {
         }
 
     },
-    printBarcode: function () {
-        var value = $("#barcodeValue").val();
-        var btype = "code128";
-        var renderer = "canvas";
-        var settings = {
-            output: renderer,
-            barWidth: $("#barWidth").val(),
-            barHeight: $("#barHeight").val()
-        };
-        if (renderer === 'canvas') {
-            clearCanvas();
-            $("#barcodeTarget").hide();
-            $("#canvasTarget").show().barcode(value, btype, settings);
-        } else {
-            $("#canvasTarget").hide();
-            $("#barcodeTarget").html("").show().barcode(value, btype, settings);
-        }
-
-        function clearCanvas() {
-            var canvas = $('#canvasTarget').get(0);
-            var ctx = canvas.getContext('2d');
+    printBarcode: function (value) {
+        // Legacy pages still read the visible canvas. Receipt printing passes
+        // the current sale ID and uses the returned image, so it also works
+        // before a template (and its canvas/input) has been mounted.
+        if (!arguments.length) { value = $("#barcodeValue").val(); }
+        var canvas = document.getElementById('canvasTarget') || document.createElement('canvas');
+        try {
+            var ctx = typeof canvas.getContext === 'function' && canvas.getContext('2d');
+            if (!ctx) { return ''; }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // This plugin supports printable ASCII (Code 128 B/C) only. It returns
+            // an unchanged jQuery object for unsupported input, not an error.
+            if (value == null || !/^[\x20-\x7e]+$/.test(String(value)) || typeof $.fn.barcode !== 'function') { return ''; }
+            var rendered = $(canvas).show().barcode(String(value), 'code128', {
+                output: 'canvas',
+                barWidth: $("#barWidth").val(),
+                barHeight: $("#barHeight").val()
+            });
+            $("#barcodeTarget").hide();
+            return rendered === false ? '' : canvas.toDataURL('image/png');
+        } catch (error) {
+            // An optional barcode must not prevent the receipt from printing.
+            // Do not reuse an image from a previous sale after a failed render.
+            console.warn('[print] Could not render receipt barcode');
+            return '';
         }
     },
+
     /*
      * The shop's timezone, never null.
      *
@@ -4231,7 +4241,7 @@ PosnicPro = {
             'staffactivity': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th><lang class="lang_login_date_time">Login Date/Time</lang></th><th><lang class="lang_outlet">Outlet</lang></th><th><lang class="lang_ip_address">IP address</lang></th><th><lang class="lang_device_type">Device type</lang></th><th><lang class="lang_os">OS</lang></th><th><lang class="lang_browser">Browser</lang></th></tr>',
             'expensesreport': '<tr><th>#</th><th><lang class="lang_amount_title">Amount</lang></th><th><lang class="lang_type_title">Type</lang></th><th> Category </th><th><lang class="lang_recipientname_title">Recipient Name</lang></th><th><lang class="lang_approvedby">Approvedby</lang></th><th><lang class="lang_description_title">Description</lang></th></tr>',
             'transactionreport': '<tr><th>#</th><th><lang class="lang_name_title">Name</lang></th><th class="text-right"><lang class="lang_credit_title">Credit</lang></th><th class="text-right"><lang class="lang_debit_title">Debit</lang></th><th class="text-right"><lang class="lang_wallet_amount">Wallet Amount</lang></th><th class="text-right"><lang class="lang_sales_pending">Sales Pending</lang></th><th class="text-right"><lang class="lang_overall_due">Overall Due</lang></th></tr>',
-            'itemstock': '<tr><th>#</th><th>Item name</th><th class="text-center">On hand</th><th class="text-right">Unit cost</th><th class="text-right">Stock at cost</th><th class="text-right">Selling price</th><th class="text-right">Stock at selling price</th></tr>'
+            'itemstock': '<tr><th>#</th><th><lang class="lang_item_name">Item name</lang></th><th class="text-center"><lang class="lang_on_hand">On hand</lang></th><th class="text-right"><lang class="lang_unit_cost">Unit cost</lang></th><th class="text-right"><lang class="lang_stock_at_cost">Stock at cost</lang></th><th class="text-right"><lang class="lang_selling_price_2">Selling price</lang></th><th class="text-right"><lang class="lang_stock_at_selling_price">Stock at selling price</lang></th></tr>'
         };
 
         var table = $(selector || '#view_' + report);
@@ -6559,7 +6569,7 @@ PosnicPro.gstreadiness = {
 
                 if (!retired.length) {
                     $('#gstready_retired').html('<tr><td colspan="4" class="text-center text-muted">'
-                        + (q ? 'No matches.' : 'Nothing on a withdrawn slab - this part is done.') + '</td></tr>');
+                        + (q ? PosnicPro.i18n.t('lang_no_matches', 'No matches.') : PosnicPro.i18n.t('lang_nothing_on_a_withdrawn_slab_this_part_is_d', 'Nothing on a withdrawn slab - this part is done.')) + '</td></tr>');
                 } else {
                     $('#gstready_retired').html(retired.map(function (r) {
                         return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'
@@ -6572,7 +6582,7 @@ PosnicPro.gstreadiness = {
 
                 if (!differs.length) {
                     $('#gstready_differs').html('<tr><td colspan="5" class="text-center text-muted">'
-                        + (q ? 'No matches.' : 'No item disagrees with a live reference rate.') + '</td></tr>');
+                        + (q ? PosnicPro.i18n.t('lang_no_matches', 'No matches.') : PosnicPro.i18n.t('lang_no_item_disagrees_with_a_live_reference_ra', 'No item disagrees with a live reference rate.')) + '</td></tr>');
                 } else {
                     $('#gstready_differs').html(differs.map(function (r) {
                         return '<tr class="gstready-row" data-id="' + esc(r.id) + '" style="cursor:pointer;">'

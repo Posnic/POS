@@ -112,7 +112,7 @@ const CHECKS = [
   {
     job: 'API unit tests',
     cwd: API,
-    command: ['npx', 'jest', '-c', 'jest.ci.config.js', '--ci', '--forceExit', '--silent'],
+    command: ['node', '--experimental-vm-modules', 'node_modules/jest/bin/jest.js', '-c', 'jest.ci.config.js', '--ci', '--forceExit', '--silent'],
     /*
      * Minutes, not seconds, and it downloads a MongoDB the first time. Worth
      * having before a push that touches the API, not before every push.
@@ -122,7 +122,7 @@ const CHECKS = [
   {
     job: 'REST API against a real database',
     cwd: API,
-    command: ['npx', 'jest', 'tests/api', '--ci', '--forceExit', '--runInBand', '--silent'],
+    command: ['node', '--experimental-vm-modules', 'node_modules/jest/bin/jest.js', 'tests/api', '--ci', '--forceExit', '--runInBand', '--silent'],
     slow: true,
   },
   {

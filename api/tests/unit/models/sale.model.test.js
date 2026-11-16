@@ -60,6 +60,16 @@ jest.mock('axios', () => jest.fn().mockResolvedValue({ data: 'ok' }));
 
 const mongoose = require('mongoose');
 const Sale = require('../../../src/models/sale.model');
+test('outlet context survives Mongoose construction and hydration', () => {
+  const context = {
+    outlet_id: '000000000000000000000123',
+    outlet_snapshot: { name: 'QA outlet', markup_percent: 10, prices: [] },
+    room_reference: 'QA-ROOM-17',
+  };
+  const stored = new Sale(context).toObject();
+  expect(stored).toMatchObject(context);
+  expect(Sale.hydrate(stored).toObject()).toMatchObject(context);
+});
 const BaseModel = require('../../../src/models/base.model');
 const { sendEmail } = require('../../../src/utils/email');
 

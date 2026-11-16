@@ -699,7 +699,6 @@
   "Template saved successfully": "قالب با موفقیت ذخیره شد",
   "Template updated successfully": "قالب با موفقیت به روز شد",
   "Templates retrieved successfully": "قالب ها با موفقیت بازیابی شدند",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "از درخواست رمز عبور فراموش شده متشکرم. اگر این آدرس ایمیل در پایگاه داده ما وجود داشته باشد، به زودی یک ایمیل به آن آدرس دریافت خواهید کرد. اگر پیام بازنشانی رمز عبور را ظرف چند لحظه دریافت نکردید، لطفاً پوشه اسپم خود را بررسی کنید.",
   "Thanks for the feedback.": "با تشکر از بازخورد",
   "That Ask Posnic action is disabled.": "این Ask Posnic عمل غیرفعال است.",
   "That branch already has items - nothing was copied": "آن شاخه قبلاً موارد دارد - هیچ چیز کپی نشده است",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppمرجع پیام را برنگردانده است. تحویل تایید نشده است. قبل از امتحان مجدد، چت را بررسی کنید.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppهنوز در حال اتصال مجدد است یا نیاز به یک لینک تلفن تازه دارد. هیچ پیامی فرستاده نشده است.",
   "Messaging permission required.": "مجوز پیام رسانی مورد نیاز است.",
-  "Schedule owner no longer has messaging access.": "صاحب برنامه دیگر دسترسی به پیام رسانی ندارد."
+  "Schedule owner no longer has messaging access.": "صاحب برنامه دیگر دسترسی به پیام رسانی ندارد.",
+  "This reset link has expired or was already used. Request a new link.": "این لینک بازنشانی منقضی شده است یا قبلاً استفاده شده است. یک لینک جدید را درخواست کنید",
+  "Use 8-20 characters, without spaces at the beginning or end.": "از 8-20 کاراکتر، بدون فاصله در ابتدای یا انتها استفاده کنید.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "نمی توانست به حمایت برسد. اتصال اینترنت خود را بررسی کنید و دوباره امتحان کنید. نظر شما نگهداری می شود.",
+  "Could not send your message. Your comment is kept; please retry.": "نتوانست پیام شما را ارسال کند. نظر شما حفظ شده است لطفا دوباره امتحان کنید.",
+  "Invalid item": "آیتم نامعتبر",
+  "Please wait a minute before sending another message.": "لطفاً قبل از ارسال پیام دیگر یک دقیقه صبر کنید.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "اگر حساب کاربری از این آدرس ایمیل استفاده کند، ما یک لینک تنظیم مجدد رمز عبور ارسال خواهیم کرد. صندوق ورودی و پوشه اسپم خود را بررسی کنید."
 }

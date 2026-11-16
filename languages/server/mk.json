@@ -699,7 +699,6 @@
   "Template saved successfully": "Шаблонот успешно зачуван",
   "Template updated successfully": "Шаблонот успешно ажуриран",
   "Templates retrieved successfully": "Успешно преземени шаблони",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Ви благодариме за вашето барање за заборавена лозинка. Ако таа е-адреса постои во нашата база на податоци, наскоро ќе добиете е-пошта на таа адреса. Ако не ја добиете пораката за ресетирање на лозинката во рок од неколку моменти, ве молиме проверете ја вашата папка за спам.",
   "Thanks for the feedback.": "Ви благодариме за повратните информации.",
   "That Ask Posnic action is disabled.": "Таа Ask Posnic акција е оневозможена.",
   "That branch already has items - nothing was copied": "Таа гранка веќе има предмети - ништо не беше копирано",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне вратија референца за порака. Испораката е непотврдена; проверете го разговорот пред повторно да се обидете.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppсè уште се поврзува или му треба нова телефонска врска. Ниту една порака не е испратена.",
   "Messaging permission required.": "Потребна е дозвола за пораки.",
-  "Schedule owner no longer has messaging access.": "Сопственикот на распоредот повеќе нема пристап до пораки."
+  "Schedule owner no longer has messaging access.": "Сопственикот на распоредот повеќе нема пристап до пораки.",
+  "This reset link has expired or was already used. Request a new link.": "Оваа врска за ресетирање истече или веќе беше користена. Побарајте нова врска.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Користете 8-20 знаци, без празни места на почетокот или крајот.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Не можев да стигнеме до поддршка. Проверете ја вашата интернет конекција и обидете се повторно. Вашиот коментар е задржан.",
+  "Could not send your message. Your comment is kept; please retry.": "Не можев да ја испратите вашата порака. Вашиот коментар е задржан; ве молиме обидете се повторно.",
+  "Invalid item": "Невалидна ставка",
+  "Please wait a minute before sending another message.": "Ве молиме почекајте една минута пред да испратите друга порака.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ако некоја сметка ја користи оваа адреса за е-пошта, ќе испратиме врска за ресетирање на лозинката. Проверете го вашето сандаче и папката за спам."
 }

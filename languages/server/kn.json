@@ -699,7 +699,6 @@
   "Template saved successfully": "ಟೆಂಪ್ಲೇಟ್ ಯಶಸ್ವಿಯಾಗಿ ಉ",
   "Template updated successfully": "ಟೆಂಪ್ಲೇಟ್ ಯಶಸ್ವಿಯಾಗಿ ನ",
   "Templates retrieved successfully": "ಟೆಂಪ್ಲೇಟ್ಗಳನ್ನು ಯಶಸ್ವಿಯಾಗಿ",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "ನಿಮ್ಮ ಮರೆತುಹೋದ ಪಾಸ್ವರ್ಡ್ ವಿನಂತಿಗೆ ಧನ್ಯವಾದಗಳು. ಆ ಇಮೇಲ್ ವಿಳಾಸವು ನಮ್ಮ ಡೇಟಾಬೇಸ್ನಲ್ಲಿ ಅಸ್ತಿತ್ವದಲ್ಲಿದ್ದರೆ, ಶೀಘ್ರದಲ್ಲೇ ಆ ವಿಳಾಸಕ್ಕೆ ನೀವು ಇಮೇಲ್ ಸ್ವೀಕರಿಸುತ್ತೀರಿ. ಕೆಲವೇ ಕ್ಷಣಗಳಲ್ಲಿ ಪಾಸ್ವರ್ಡ್ ಮರುಹೊಂದಿಸುವ ಸಂದೇಶವನ್ನು ನೀವು ಸ್ವೀಕರಿಸದಿದ್ದರೆ, ದಯವಿಟ್ಟು ನಿಮ್ಮ ಸ್ಪ್ಯಾಮ್ ಫೋಲ್ಡರ್ ಅನ್ನು ಪರಿಶೀಲಿಸಿ.",
   "Thanks for the feedback.": "ಪ್ರತಿಕ್ರಿಯೆಗಾಗಿ ಧನ್ಯವಾದಗಳು.",
   "That Ask Posnic action is disabled.": "ಆ Ask Posnic ಕ್ರಿಯೆಯನ್ನು ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ.",
   "That branch already has items - nothing was copied": "ಆ ಶಾಖೆಯು ಈಗಾಗಲೇ ಐಟಂಗಳನ್ನು ಹೊಂದಿದೆ - ಏನನ್ನೂ ನಕಲಿಸಲಾಗಿಲ್ಲ",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppಸಂದೇಶ ಉಲ್ಲೇಖವನ್ನು ಹಿಂತಿರುಗಿಸಲಿಲ್ಲ. ವಿತರಣೆಯನ್ನು ದೃಢೀಕರಿಸಲಾಗಿಲ್ಲ; ಮರುಪ್ರಯತ್ನಿಸುವ ಮೊದಲು ಚಾಟ್ ಅನ್ನು ಪರಿಶೀಲಿಸಿ.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppಇನ್ನೂ ಮರುಸಂಪರ್ಕಿಸುತ್ತಿದೆ ಅಥವಾ ತಾಜಾ ಫೋನ್ ಲಿಂಕ್ ಅಗತ್ಯವಿದೆ. ಯಾವುದೇ ಸಂದೇಶವನ್ನು ಕಳುಹಿಸಲಾಗಿಲ್ಲ.",
   "Messaging permission required.": "ಸಂದೇಶ ಕಳುಹಿಸುವ ಅನುಮತಿ ಅಗತ್ಯವಿದೆ.",
-  "Schedule owner no longer has messaging access.": "ವೇಳಾಪಟ್ಟಿ ಮಾಲೀಕರು ಇನ್ನು ಮುಂದೆ ಸಂದೇಶ ಪ್ರವೇಶವನ್ನು ಹೊಂದಿಲ್ಲ."
+  "Schedule owner no longer has messaging access.": "ವೇಳಾಪಟ್ಟಿ ಮಾಲೀಕರು ಇನ್ನು ಮುಂದೆ ಸಂದೇಶ ಪ್ರವೇಶವನ್ನು ಹೊಂದಿಲ್ಲ.",
+  "This reset link has expired or was already used. Request a new link.": "ಈ ರೀಸೆಟ್ ಲಿಂಕ್ ಅವಧಿ ಮುಗಿದಿದೆ ಅಥವಾ ಈಗಾಗಲೇ ಬಳಸಲಾಗಿದೆ. ಹೊಸ ಲಿಂಕ್ ಅನ್ನು ವಿನಂತಿಸಿ.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "ಆರಂಭದಲ್ಲಿ ಅಥವಾ ಕೊನೆಯಲ್ಲಿ ಜಾಗಗಳಿಲ್ಲದೆ 8-20 ಅಕ್ಷರಗಳನ್ನು ಬಳಸಿ.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "ಬೆಂಬಲವನ್ನು ತಲುಪಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮರುಪ್ರಯತ್ನಿಸಿ. ನಿಮ್ಮ ಕಾಮೆಂಟ್ ಅನ್ನು ಇರಿಸಲಾಗಿದೆ.",
+  "Could not send your message. Your comment is kept; please retry.": "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಕಾಮೆಂಟ್ ಅನ್ನು ಇರಿಸಲಾಗಿದೆ; ದಯವಿಟ್ಟು ಮರುಪ್ರಯತ್ನಿಸಿ.",
+  "Invalid item": "ಅಮಾನ್ಯ ಐಟಂ",
+  "Please wait a minute before sending another message.": "ಇನ್ನೊಂದು ಸಂದೇಶವನ್ನು ಕಳುಹಿಸುವ ಮೊದಲು ದಯವಿಟ್ಟು ಒಂದು ನಿಮಿಷ ಕಾಯಿರಿ.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "ಒಂದು ಖಾತೆ ಈ ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ಬಳಸಿದರೆ, ನಾವು ಪಾಸ್ವರ್ಡ್ ಮರುಹೊಂದಿಸುವ ಲಿಂಕ್ ಅನ್ನು ಕಳುಹಿಸುತ್ತೇವೆ. ನಿಮ್ಮ ಇನ್ಬಾಕ್ಸ್ ಮತ್ತು ಸ್ಪ್ಯಾಮ್ ಫೋಲ್ಡರ್ ಪರಿಶೀಲಿಸಿ."
 }

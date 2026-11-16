@@ -21,7 +21,7 @@ $.validator.addMethod("strong_password", function (value, element) {
 });
 
 jQuery.validator.addMethod("emailExt", function (value, element, param) {
-    return this.optional(element) || /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(value);
+    return this.optional(element) || PosnicPro.validateEmail(value);
 }, 'please enter a valid email');
 
 jQuery.validator.addMethod("city", function (city_name, element) {

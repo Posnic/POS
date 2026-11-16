@@ -699,7 +699,6 @@
   "Template saved successfully": "Templat berjaya disimpan",
   "Template updated successfully": "Templat dikemas kini dengan jayanya",
   "Templates retrieved successfully": "Templat berjaya diambil",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Terima kasih atas permintaan kata laluan anda yang terlupa. Jika alamat e-mel itu wujud dalam pangkalan data kami, anda akan menerima e-mel ke alamat tersebut tidak lama lagi. Jika anda tidak menerima mesej tetapan semula kata laluan dalam beberapa saat, sila semak folder spam anda.",
   "Thanks for the feedback.": "Terima kasih atas maklum balas.",
   "That Ask Posnic action is disabled.": "Tind Ask Posnic akan itu dilumpuhkan.",
   "That branch already has items - nothing was copied": "Cawangan itu sudah mempunyai item - tiada apa yang disalin",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApptidak mengembalikan rujukan mesej. Penghantaran tidak disahkan; semak sembang sebelum mencuba semula.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmasih menyambung semula atau memerlukan pautan telefon baru. Tiada mesej dihantar.",
   "Messaging permission required.": "Kebenaran pemesejan diperlukan.",
-  "Schedule owner no longer has messaging access.": "Pemilik jadual tidak lagi mempunyai akses pemesejan."
+  "Schedule owner no longer has messaging access.": "Pemilik jadual tidak lagi mempunyai akses pemesejan.",
+  "This reset link has expired or was already used. Request a new link.": "Pautan tetapan semula ini telah tamat tempoh atau telah digunakan. Minta pautan baru.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Gunakan 8-20 aksara, tanpa ruang pada awal atau akhir.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Tidak dapat mencapai sokongan. Semak sambungan internet anda dan cuba semula. Komen anda disimpan.",
+  "Could not send your message. Your comment is kept; please retry.": "Tidak dapat menghantar mesej anda. Komen anda disimpan; sila cuba semula.",
+  "Invalid item": "Item tidak sah",
+  "Please wait a minute before sending another message.": "Sila tunggu sebentar sebelum menghantar mesej lain.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Jika akaun menggunakan alamat e-mel ini, kami akan menghantar pautan tetapan semula kata laluan. Semak peti masuk dan folder spam anda."
 }

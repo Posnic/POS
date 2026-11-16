@@ -699,7 +699,6 @@
   "Template saved successfully": "નમૂનો સફળતાપૂર્વક બચાવવામાં",
   "Template updated successfully": "નમૂનો સફળતાપૂર્વક સુધારો",
   "Templates retrieved successfully": "નમૂનાઓ સફળતાપૂર્વક મેળવવામાં",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "તમારી ભૂલી ગયેલા પાસવર્ડ વિનંતી બદલ આભાર. જો તે ઇમેઇલ સરનામું અમારા ડેટાબેઝમાં અસ્તિત્વમાં છે, તો તમને ટૂંક સમયમાં તે સરનામાં પર ઇમેઇલ પ્રાપ્ત થશે. જો તમને થોડી ક્ષણોમાં પાસવર્ડ રીસેટ મેસેજ પ્રાપ્ત ન થાય, તો કૃપા કરીને તમારું સ્પામ ફોલ્ડર તપાસો.",
   "Thanks for the feedback.": "પ્રતિસાદ બદલ આભાર.",
   "That Ask Posnic action is disabled.": "તે ક્ર Ask Posnic િયા અક્ષમ છે.",
   "That branch already has items - nothing was copied": "તે શાખામાં પહેલેથી જ વસ્તુઓ છે - કંઈ કૉપિ કરવામાં આવી નથી",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppસંદેશ સંદર્ભ પાછો આપ્યો નથી. ડિલિવરીની પુષ્ટિ નથી; ફરીથી પ્રયાસ કરતા પહેલા ચેટ તપાસો.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppહજી પણ ફરીથી કનેક્ટ થઈ રહ્યું છે અથવા તાજા ફોન લિંકની જરૂર છે. કોઈ સંદેશ મોકલવામાં આવ્યો નથી.",
   "Messaging permission required.": "મેસેજિંગ પરવાનગી જરૂરી છે.",
-  "Schedule owner no longer has messaging access.": "શેડ્યૂલ માલિક પાસે હવે મેસેજિંગ ઍક્સેસ નથી."
+  "Schedule owner no longer has messaging access.": "શેડ્યૂલ માલિક પાસે હવે મેસેજિંગ ઍક્સેસ નથી.",
+  "This reset link has expired or was already used. Request a new link.": "આ રીસેટ લિંક સમાપ્ત થઈ ગઈ છે અથવા પહેલેથી જ ઉપયોગમાં લેવાતી હતી. નવી લિંકની વિનંતી કરો.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "શરૂઆતમાં અથવા અંતમાં જગ્યાઓ વિના, 8-20 અક્ષરોનો ઉપયોગ કરો.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "આધાર સુધી પહોંચી શક્યું નથી. તમારું ઇન્ટરનેટ કનેક્શન તપાસો અને ફરીથી પ્રયાસ કરો. તમારી ટિપ્પણી રાખવામાં આવી છે.",
+  "Could not send your message. Your comment is kept; please retry.": "તમારો સંદેશ મોકલી શક્યો નથી. તમારી ટિપ્પણી રાખવામાં આવી છે; કૃપા કરીને ફરીથી પ્રયાસ કરો.",
+  "Invalid item": "અમાન્ય આઇટમ",
+  "Please wait a minute before sending another message.": "કૃપા કરીને બીજો સંદેશ મોકલતા પહેલા એક મિનિટ રાહ જુઓ.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "જો કોઈ એકાઉન્ટ આ ઇમેઇલ સરનામાનો ઉપયોગ કરે છે, તો અમે પાસવર્ડ રીસેટ લિંક મોકલીશું. તમારું ઇનબૉક્સ અને સ્પામ ફોલ્ડર તપાસો."
 }

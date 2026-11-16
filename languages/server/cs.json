@@ -699,7 +699,6 @@
   "Template saved successfully": "Šablona byla úspěšně uložena",
   "Template updated successfully": "Šablona byla úspěšně aktualizována",
   "Templates retrieved successfully": "Šablony byly úspěšně načteny",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Děkujeme za žádost o zapomenuté heslo. Pokud tato e-mailová adresa existuje v naší databázi, brzy obdržíte e-mail na tuto adresu. Pokud během několika okamžiků neobdržíte zprávu o obnovení hesla, zkontrolujte složku se spamem.",
   "Thanks for the feedback.": "Díky za zpětnou vazbu.",
   "That Ask Posnic action is disabled.": "Tato Ask Posnic akce je zakázána.",
   "That branch already has items - nothing was copied": "Tato větev již obsahuje položky - nic nebylo zkopírováno",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppnevrátil odkaz na zprávu. Dodání není potvrzeno; před opětovným pokusem zkontrolujte chat.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppstále se znovu připojuje nebo potřebuje nové telefonní spojení. Nebyla odeslána žádná zpráva.",
   "Messaging permission required.": "Vyžaduje se oprávnění pro zasílání zpráv.",
-  "Schedule owner no longer has messaging access.": "Vlastník plánu již nemá přístup ke zprávám."
+  "Schedule owner no longer has messaging access.": "Vlastník plánu již nemá přístup ke zprávám.",
+  "This reset link has expired or was already used. Request a new link.": "Platnost tohoto resetovacího odkazu vypršela nebo byla již použita. Požádejte o nový odkaz.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Použijte 8-20 znaků, bez mezer na začátku nebo na konci.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nepodařilo se získat podporu. Zkontrolujte připojení k internetu a zkuste to znovu. Váš komentář je zachován.",
+  "Could not send your message. Your comment is kept; please retry.": "Nepodařilo se odeslat vaši zprávu. Váš komentář je zachován; zkuste to prosím znovu.",
+  "Invalid item": "Neplatná položka",
+  "Please wait a minute before sending another message.": "Počkejte prosím minutu před odesláním další zprávy.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Pokud účet používá tuto e-mailovou adresu, zašleme odkaz na obnovení hesla. Zkontrolujte složku doručené pošty a nevyžádané pošty."
 }

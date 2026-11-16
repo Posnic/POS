@@ -646,37 +646,59 @@ describe('UsersRepository', () => {
   // ── updateUserPassword ────────────────────────────────────────────────────────
   describe('updateUserPassword', () => {
     test('updates password when conditions met', async () => {
-      mockUserModel.findOne.mockReturnValue(mkQuery({ userkey: 'abc', password: 'old' }));
+      mockUserModel.findOne.mockReturnValue(
+        mkQuery({
+          _id: FAKE_ID,
+          userkey: 'abc',
+          password: 'old',
+          expire_date: new Date(Date.now() + 600000),
+        })
+      );
       bcrypt.compare.mockResolvedValue(false);
-      const r = await repository.updateUserPassword('new', 'new', 'abc');
+      mockUserModel.updateOne.mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+      const r = await repository.updateUserPassword('abc', 'Newpass123', 'Newpass123');
       expect(r.status).toBe('success');
       expect(mockUserModel.updateOne).toHaveBeenCalledWith(
-        { userkey: 'abc' },
+        { _id: FAKE_ID, userkey: 'abc', expire_date: { $gt: expect.any(Date) } },
         expect.objectContaining({ $set: expect.objectContaining({ password: 'hashed-value' }) })
       );
     });
     test('returns exist when userkey mismatch', async () => {
       mockUserModel.findOne.mockReturnValue(mkQuery(null));
-      const r = await repository.updateUserPassword('a', 'a', 'bad');
+      const r = await repository.updateUserPassword('bad', 'Newpass123', 'Newpass123');
       expect(r.status).toBe('exist');
     });
     test('returns false when passwords mismatch', async () => {
-      mockUserModel.findOne.mockReturnValue(mkQuery({ userkey: 'k', password: 'old' }));
-      const r = await repository.updateUserPassword('a', 'b', 'k');
+      mockUserModel.findOne.mockReturnValue(
+        mkQuery({
+          _id: FAKE_ID,
+          userkey: 'k',
+          password: 'old',
+          expire_date: new Date(Date.now() + 600000),
+        })
+      );
+      const r = await repository.updateUserPassword('k', 'Newpass123', 'Otherpass123');
       expect(r.status).toBe(false);
       expect(r.message).toBe('Password mismatch');
     });
     test('returns exist when password unchanged', async () => {
-      mockUserModel.findOne.mockReturnValue(mkQuery({ userkey: 'abc', password: 'old' }));
+      mockUserModel.findOne.mockReturnValue(
+        mkQuery({
+          _id: FAKE_ID,
+          userkey: 'abc',
+          password: 'old',
+          expire_date: new Date(Date.now() + 600000),
+        })
+      );
       bcrypt.compare.mockResolvedValue(true);
-      const r = await repository.updateUserPassword('new', 'new', 'abc');
+      const r = await repository.updateUserPassword('abc', 'Newpass123', 'Newpass123');
       expect(r.status).toBe('exist');
     });
     test('catches exception', async () => {
       mockUserModel.findOne.mockImplementation(() => {
         throw new Error('db fail');
       });
-      const r = await repository.updateUserPassword('a', 'a', 'k');
+      const r = await repository.updateUserPassword('k', 'Newpass123', 'Newpass123');
       expect(r.status).toBe(false);
       expect(r.message).toBe('db fail');
     });

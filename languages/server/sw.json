@@ -699,7 +699,6 @@
   "Template saved successfully": "Templeti iliyohifadhiwa",
   "Template updated successfully": "Template iliyosasishwa kwa",
   "Templates retrieved successfully": "Templo zilizopatikana kwa",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Asante kwa ombi lako la nenosiri lililosahaulika. Ikiwa anwani hiyo ya barua pepe iko kwenye hifadhidata yetu, utapokea barua pepe kwa anwani hiyo hivi karibuni. Ikiwa haupokea ujumbe wa kuweka upya nenosiri ndani ya muda chache, tafadhali angalia folda yako ya barua taka.",
   "Thanks for the feedback.": "Asante kwa maoni.",
   "That Ask Posnic action is disabled.": "Hatua Ask Posnic hiyo imezimwa.",
   "That branch already has items - nothing was copied": "Tawi hilo tayari lina vitu - hakuna kitu kilichopiliwa",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApphakurudi kumbukumbu ya ujumbe. Uwasilishaji haujathibitishwa; angalia mazungumzo kabla ya kujaribu tena.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppbado inaunganisha tena au inahitaji kiungo kipya cha simu. Hakuna ujumbe uliotumwa.",
   "Messaging permission required.": "Ruhusa ya ujumbe unahitajika",
-  "Schedule owner no longer has messaging access.": "Mmiliki wa ratiba hana tena ufikiaji wa ujumbe."
+  "Schedule owner no longer has messaging access.": "Mmiliki wa ratiba hana tena ufikiaji wa ujumbe.",
+  "This reset link has expired or was already used. Request a new link.": "Kiungo hiki cha kuweka upya kimekwisha au tayari kilitumika. Omba kiungo kipya.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Tumia herufi 8-20, bila nafasi mwanzoni au mwisho.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Haikuweza kufikia msaada. Angalia muunganisho wako wa mtandao na jaribu tena. Maoni yako yamehifadhiwa.",
+  "Could not send your message. Your comment is kept; please retry.": "Haikuweza kutuma ujumbe wako. Maoni yako yamehifadhiwa; tafadhali jaribu tena.",
+  "Invalid item": "Bidhaa isiyo sahihi",
+  "Please wait a minute before sending another message.": "Tafadhali subiri dakika moja kabla ya kutuma ujumbe mwingine.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ikiwa akaunti inatumia anwani hii ya barua pepe, tutatuma kiungo cha kuweka upya nenosiri. Angalia sanduku lako la ujumbe na folda ya barua taka."
 }

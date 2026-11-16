@@ -699,7 +699,6 @@
   "Template saved successfully": "Шаблон успешно сохранен",
   "Template updated successfully": "Шаблон успешно обновлен",
   "Templates retrieved successfully": "Шаблоны успешно получены",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Благодарим вас за запрос на забытый пароль. Если этот адрес электронной почты есть в нашей базе данных, вы вскоре получите на него электронное письмо. Если вы не получите сообщение об изменении пароля в течение нескольких секунд, проверьте папку со спамом.",
   "Thanks for the feedback.": "Спасибо за отзыв.",
   "That Ask Posnic action is disabled.": "Это Ask Posnic действие отключено.",
   "That branch already has items - nothing was copied": "В этой ветке уже есть элементы - ничего не скопировано",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppне ответил на ссылку на сообщение. Доставка не подтверждена; проверьте чат перед повторной попыткой.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppвсе еще восстанавливает соединение или нуждается в новой телефонной ссылке. Сообщение не было отправлено.",
   "Messaging permission required.": "Требуется разрешение на обмен сообщениями.",
-  "Schedule owner no longer has messaging access.": "У владельца расписания больше нет доступа к сообщениям."
+  "Schedule owner no longer has messaging access.": "У владельца расписания больше нет доступа к сообщениям.",
+  "This reset link has expired or was already used. Request a new link.": "Срок действия этой ссылки для перезагрузки истек или она уже использовалась. Запросите новую ссылку.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Используйте 8-20 символов без пробелов в начале и конце.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Не удалось получить поддержку. Проверьте подключение к Интернету и повторите попытку. Ваш комментарий сохранен.",
+  "Could not send your message. Your comment is kept; please retry.": "Не удалось отправить сообщение. Ваш комментарий сохранен; повторите попытку.",
+  "Invalid item": "Неверный товар",
+  "Please wait a minute before sending another message.": "Пожалуйста, подождите минуту, прежде чем отправить еще одно сообщение.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Если учетная запись использует этот адрес электронной почты, мы отправим ссылку для восстановления пароля. Проверьте папку «Входящие» и «Спам»."
 }

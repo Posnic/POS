@@ -699,7 +699,6 @@
   "Template saved successfully": "Mallen har sparats framgångsrikt",
   "Template updated successfully": "Mallen har uppdaterats framgångsrikt",
   "Templates retrieved successfully": "Mallar hämtade framgångsrikt",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Tack för din begäran om glömt lösenord. Om den e-postadressen finns i vår databas, du kommer att få ett e-postmeddelande till den adressen inom kort. Om du inte får lösenordsåterställningsmeddelandet inom några ögonblick, kontrollera din skräppostmapp.",
   "Thanks for the feedback.": "Tack för feedbacken.",
   "That Ask Posnic action is disabled.": "Den åtgär Ask Posnic den är inaktiverad.",
   "That branch already has items - nothing was copied": "Den grenen har redan objekt - ingenting kopierades",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppreturnerade inte en meddelandereferens. Leveransen är obekräftad; kontrollera chatten innan du försöker igen.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppansluter fortfarande igen eller behöver en ny telefonlänk. Inget meddelande skickades.",
   "Messaging permission required.": "Meddelandebehörighet krävs.",
-  "Schedule owner no longer has messaging access.": "Schemaägaren har inte längre meddelandeåtkomst."
+  "Schedule owner no longer has messaging access.": "Schemaägaren har inte längre meddelandeåtkomst.",
+  "This reset link has expired or was already used. Request a new link.": "Den här återställningslänken har gått ut eller har redan använts. Begär en ny länk.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Använd 8-20 tecken, utan mellanslag i början eller slutet.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Kunde inte nå stöd. Kontrollera din internetanslutning och försök igen. Din kommentar är bevarad.",
+  "Could not send your message. Your comment is kept; please retry.": "Det gick inte att skicka ditt meddelande. Din kommentar behålls; försök igen.",
+  "Invalid item": "Ogiltigt objekt",
+  "Please wait a minute before sending another message.": "Vänta en minut innan du skickar ett nytt meddelande.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Om ett konto använder den här e-postadressen skickar vi en länk för återställning av lösenord. Kontrollera din inkorg och skräppostmapp."
 }

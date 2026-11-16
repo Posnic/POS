@@ -32,7 +32,11 @@ function payload(req) {
   if (body.website) throw new Error('Could not send your message.');
   const email = clean(body.email, 255);
   const comment = clean(body.comment, 7001);
-  if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (
+    !email ||
+    email.length > 254 ||
+    !(typeof email === 'string' && require('validator').isEmail(email))
+  ) {
     throw new Error('Enter a valid reply email address.');
   }
   if (!CATEGORIES.has(body.category)) throw new Error('Choose a type.');

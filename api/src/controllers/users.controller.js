@@ -289,6 +289,10 @@ class UsersController extends BaseController {
       // PHP GUMP filter: trim|sanitize_string (no lowercase)
       const loginId = String(username).trim();
 
+      // A cloud reset can arrive while the login screen is open. Refresh before
+      // reading the password, not after rejecting it. Offline remains usable.
+      await require('../services/prelogin-sync').refresh();
+
       // Find user by email or username, including all fields needed for the legacy response
       const user = await this.userModel
         .findOne({
@@ -2221,7 +2225,11 @@ class UsersController extends BaseController {
     try {
       const { forgot_key_value, update_new_password, retype_new_password } = req.body;
 
-      if (!forgot_key_value) {
+      if (
+        typeof forgot_key_value !== 'string' ||
+        !forgot_key_value ||
+        forgot_key_value.length > 250
+      ) {
         return res.status(400).json({
           type: 'error',
           message: 'Password reset key is required',
@@ -2245,13 +2253,32 @@ class UsersController extends BaseController {
         });
       }
 
+      if (
+        typeof update_new_password !== 'string' ||
+        update_new_password.length < 8 ||
+        update_new_password.length > 20 ||
+        update_new_password.trim() !== update_new_password
+      ) {
+        return res.status(400).json({
+          type: 'error',
+          message: 'Use 8-20 characters, without spaces at the beginning or end.',
+          data: null,
+        });
+      }
+
       // Find user by userkey
       const userRecords = await this.userModel
         .findOne({ userkey: forgot_key_value })
-        .select('+password +userkey')
+        .select('+password +userkey +expire_date')
         .lean();
 
-      if (!userRecords || userRecords.userkey !== forgot_key_value) {
+      if (
+        !userRecords ||
+        userRecords.userkey !== forgot_key_value ||
+        !userRecords.expire_date ||
+        !Number.isFinite(Date.parse(userRecords.expire_date)) ||
+        new Date(userRecords.expire_date) <= new Date()
+      ) {
         return res.status(200).json({
           type: 'exist',
           message: 'Already used this link, please contact posnic admin !.',
@@ -2269,15 +2296,27 @@ class UsersController extends BaseController {
       const newUserKey = await bcrypt.hash(random, 10);
 
       // Update user
-      await this.userModel.updateOne(
-        { userkey: forgot_key_value },
+      const resetResult = await this.userModel.updateOne(
+        { _id: userRecords._id, userkey: forgot_key_value, expire_date: { $gt: new Date() } },
         {
           $set: {
             password: hashedPassword,
             userkey: newUserKey,
+            updated_date: new Date(),
+            passwordChangedAt: new Date(),
           },
+          $inc: { authVersion: 1 },
+          $unset: { expire_date: '' },
         }
       );
+
+      if (resetResult.matchedCount !== 1) {
+        return res.status(400).json({
+          type: 'error',
+          message: 'This reset link has expired or was already used. Request a new link.',
+          data: null,
+        });
+      }
 
       return res.status(200).json({
         type: 'success',

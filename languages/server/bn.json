@@ -699,7 +699,6 @@
   "Template saved successfully": "টেমপ্লেট সফলভাবে",
   "Template updated successfully": "টেমপ্লেট সফলভাবে",
   "Templates retrieved successfully": "সফলভাবে টেমপ্লেট",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "আপনার ভুলে যাওয়া পাসওয়ার্ড অনুরোধের জন্য আপনাকে ধন্য যদি সেই ইমেল ঠিকানাটি আমাদের ডাটাবেসে বিদ্যমান থাকে তবে আপনি শীঘ্রই সেই ঠিকানায় একটি ইমেল পাবেন। আপনি যদি কয়েক মুহুর্তের মধ্যে পাসওয়ার্ড রিসেট বার্তাটি না পান তবে দয়া করে আপনার স্প্যাম ফোল্ডারটি পরীক্ষা করুন।",
   "Thanks for the feedback.": "প্রতিক্রিয়ার জন্য ধন্যবাদ।",
   "That Ask Posnic action is disabled.": "সেই প Ask Posnic দক্ষেপ নিষ্ক্রিয়।",
   "That branch already has items - nothing was copied": "সেই শাখায় ইতিমধ্যে আইটেম রয়েছে - কিছুই কপি করা হয়",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppকোনও বার্তা রেফারেন্স ফেরত দেয়নি। ডেলিভারি অনিশ্চিত; পুনরায় চেষ্টা করার আগে চ্যাটটি পরীক্ষা করুন।",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppএখনও পুনরায় সংযোগ করছে বা একটি নতুন ফোন লিঙ্ক প্রয়োজন। কোন বার্তা পাঠানো হয়নি।",
   "Messaging permission required.": "মেসেজিং অনুমতি প্রয়োজন।",
-  "Schedule owner no longer has messaging access.": "শিডিউল মালিকের আর মেসেজিং অ্যাক্সেস নেই।"
+  "Schedule owner no longer has messaging access.": "শিডিউল মালিকের আর মেসেজিং অ্যাক্সেস নেই।",
+  "This reset link has expired or was already used. Request a new link.": "এই রিসেট লিঙ্কটি মেয়াদ শেষ হয়েছে বা ইতিমধ্যে ব্যবহৃত হয়েছিল। একটি নতুন লিঙ্কের অনুরোধ করুন।",
+  "Use 8-20 characters, without spaces at the beginning or end.": "শুরুতে বা শেষে স্পেস ছাড়াই 8-20 অক্ষর ব্যবহার করুন।",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "সমর্থনে পৌঁছাতে পারেনি। আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন। আপনার মন্তব্য রাখা হয়েছে।",
+  "Could not send your message. Your comment is kept; please retry.": "আপনার বার্তা পাঠাতে পারেনি। আপনার মন্তব্য রাখা হয়েছে; দয়া করে পুনরায় চেষ্টা করুন।",
+  "Invalid item": "অবৈধ আইটেম",
+  "Please wait a minute before sending another message.": "অন্য বার্তা প্রেরণের আগে দয়া করে এক মিনিট অপেক্ষা করুন।",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "যদি কোনও অ্যাকাউন্ট এই ইমেল ঠিকানাটি ব্যবহার করে তবে আমরা একটি পাসওয়ার্ড রিসেট লিঙ্ক পাঠাব। আপনার ইনবক্স এবং স্প্যাম ফোল্ডার চেক করুন।"
 }

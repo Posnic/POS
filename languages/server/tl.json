@@ -699,7 +699,6 @@
   "Template saved successfully": "Matagumpay na na-save ang template",
   "Template updated successfully": "Matagumpay na na-update ang template",
   "Templates retrieved successfully": "Matagumpay na nakuha ang template",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "Salamat sa iyong nakalimutan na kahilingan sa password. Kung umiiral ang email address na iyon sa aming database, makakatanggap ka ng isang email sa address na iyon sa lalong madaling panahon. Kung hindi mo natanggap ang mensahe sa pag-reset ng password sa loob ng ilang sandali, mangyaring suriin ang iyong spam folder.",
   "Thanks for the feedback.": "Salamat sa feedback.",
   "That Ask Posnic action is disabled.": "Ang pagkilos na Ask Posnic iyon ay hindi pinagana.",
   "That branch already has items - nothing was copied": "Mayroon nang mga item na sangay na iyon - walang kinopya",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsApphindi nagbabalik ng sanggunian ng mensahe. Hindi nakumpirma ang paghahatid; suriin ang chat bago muling subukan.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppmuling nakakonekta pa rin o nangangailangan ng isang sariwang link sa telepono. Walang mensahe ang ipinadala.",
   "Messaging permission required.": "Kinakailangan ang pahintulot sa pagmem",
-  "Schedule owner no longer has messaging access.": "Wala nang access sa pagmemensahe ang may-ari ng iskedyul"
+  "Schedule owner no longer has messaging access.": "Wala nang access sa pagmemensahe ang may-ari ng iskedyul",
+  "This reset link has expired or was already used. Request a new link.": "Nag-expire na ang link sa pag-reset na ito o ginamit na. Humiling ng isang bagong link.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "Gumamit ng 8-20 character, nang walang mga puwang sa simula o dulo.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Hindi maabot ang suporta. Suriin ang iyong koneksyon sa internet at subukang muli. Ang iyong komento ay pinananatili.",
+  "Could not send your message. Your comment is kept; please retry.": "Hindi maipadala ang iyong mensahe. Ang iyong komento ay pinananatili; mangyaring subukang muli.",
+  "Invalid item": "Hindi wastong item",
+  "Please wait a minute before sending another message.": "Mangyaring maghintay ng isang minuto bago magpadala ng isa pang mensahe.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Kung gumagamit ng isang account ang email address na ito, magpapadala kami ng link sa pag-reset ng password. Suriin ang iyong inbox at spam folder."
 }

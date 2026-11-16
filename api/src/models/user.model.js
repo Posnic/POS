@@ -68,8 +68,7 @@ const userSchema = new mongoose.Schema(
       validate: {
         validator: function (email) {
           if (!email) return true; // Allow empty for API users
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          return emailRegex.test(email);
+          return typeof email === 'string' && require('validator').isEmail(email);
         },
         message: 'Please provide a valid email address',
       },
@@ -513,9 +512,16 @@ userSchema.pre('save', function () {
 userSchema.pre('save', function () {
   const now = new Date();
   this.updatedAt = now;
+  this.updated_date = now;
   if (!this.createdAt) {
     this.createdAt = now;
   }
+});
+
+// Query updates bypass save middleware. Profiles, permissions and password
+// changes must advance the same checkpoint that connected tills consume.
+userSchema.pre(['updateOne', 'updateMany', 'findOneAndUpdate'], function () {
+  if (!this.getUpdate()?.$set?.updated_date) this.set({ updated_date: new Date() });
 });
 
 // CRITICAL: Pre-save validation to prevent empty branch_access

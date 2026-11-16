@@ -699,7 +699,6 @@
   "Template saved successfully": "התבנית נשמרה בהצלחה",
   "Template updated successfully": "התבנית עודכנה בהצלחה",
   "Templates retrieved successfully": "תבניות אוחזרו בהצלחה",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "תודה על בקשת הסיסמה שנשכחת. אם כתובת דוא\"ל זו קיימת במסד הנתונים שלנו, תקבל דוא\"ל לכתובת זו בקרוב. אם לא תקבל את הודעת איפוס הסיסמה תוך מספר רגעים, אנא בדוק את תיקיית הספאם שלך.",
   "Thanks for the feedback.": "תודה על המשוב.",
   "That Ask Posnic action is disabled.": "Ask Posnicפעולה זו מושבתת.",
   "That branch already has items - nothing was copied": "בסניף הזה כבר יש פריטים - שום דבר לא הועתק",
@@ -979,5 +978,12 @@
   "WhatsApp did not return a message reference. Delivery is unconfirmed; check the chat before retrying.": "WhatsAppלא החזיר הפניה להודעה. המסירה אינה מאושרת; בדוק את הצ'אט לפני שתנסה שוב.",
   "WhatsApp is still reconnecting or needs a fresh phone link. No message was sent.": "WhatsAppעדיין מתחבר מחדש או זקוק לקישור טלפון חדש. שום הודעה לא נשלחה.",
   "Messaging permission required.": "נדרשת הרשאת העברת הודעות.",
-  "Schedule owner no longer has messaging access.": "לבעלים של לוח הזמנים אין עוד גישה להודעות."
+  "Schedule owner no longer has messaging access.": "לבעלים של לוח הזמנים אין עוד גישה להודעות.",
+  "This reset link has expired or was already used. Request a new link.": "קישור האיפוס הזה פג או שכבר נעשה בו שימוש. בקש קישור חדש.",
+  "Use 8-20 characters, without spaces at the beginning or end.": "השתמש 8-20 תווים, ללא רווחים בהתחלה או בסוף.",
+  "Could not reach support. Check your internet connection and retry. Your comment is kept.": "לא הצלחתי להגיע לתמיכה. בדוק את חיבור האינטרנט שלך ונסה שוב. ההערה שלך נשמרת.",
+  "Could not send your message. Your comment is kept; please retry.": "לא ניתן לשלוח את ההודעה שלך. התגובה שלך נשמרת; אנא נסה שוב.",
+  "Invalid item": "פריט לא חוקי",
+  "Please wait a minute before sending another message.": "אנא המתן דקה לפני שליחת הודעה נוספת.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "אם חשבון משתמש בכתובת דוא\"ל זו, נשלח קישור לאיפוס סיסמה. בדוק את תיבת הדואר הנכנס ואת תיקיית הספאם שלך."
 }
