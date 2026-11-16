@@ -136,12 +136,9 @@ Var POSNIC_POWERSHELL
   normal_install_mode:
     DetailPrint "INSTALL/UPDATE MODE"
   install_mode_done:
-  IfSilent setup_review_done
-    CreateDirectory "$APPDATA\posnic"
-    FileOpen $0 "$APPDATA\posnic\.setup-review" w
-    FileWrite $0 "manual-install"
-    FileClose $0
-  setup_review_done:
+  ; Installing over an existing shop must keep its selected profile and open
+  ; its normal login. The application detects genuinely unfinished setup from
+  ; the database; a manual installer must not force the setup wizard again.
   
   ; ── Close any running instance of Posnic before installing ──
   DetailPrint "[TIME CHECK] Step 1 START: Process termination"

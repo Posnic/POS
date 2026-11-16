@@ -5572,6 +5572,8 @@ function startServer() {
         setInterval(runAssetCheck, 24 * 60 * 60 * 1000);
       }
 
+      require('./user-data-path').clearUpgradeReview(app.getPath('userData'), result.needsWizard);
+
       // Start optional cloud sync agent (no-op unless installed + activated).
       // start() is async since the self-update apply step (U3.5); a rejection
       // must not become an unhandled one.
