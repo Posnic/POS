@@ -75,6 +75,16 @@ router.post(
   bindController(userController.updateNewPassword)
 );
 
+// Compatibility for already-delivered reset pages, which submit PUT.
+// Token/expiry checks and atomic single-use consumption remain in the controller.
+router.put(
+  '/updateNewPassword',
+  demoGuard,
+  validatePasswordUpdate,
+  handleValidationErrors,
+  bindController(userController.updateNewPassword)
+);
+
 // Token verification endpoint (public)
 router.get('/verify-token', protect, (req, res) => {
   // If we reach here, the token is valid (validated by protect middleware)

@@ -699,7 +699,6 @@
   "Template saved successfully": "テンプレートは正常に保存されました",
   "Template updated successfully": "テンプレートは正常に更新されました",
   "Templates retrieved successfully": "テンプレートは正常に取得されました",
-  "Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.": "パスワードを忘れたことをリクエストしていただきありがとうございます。そのメールアドレスがデータベースに存在する場合は、まもなくそのアドレスにメールが届きます。しばらく経ってもパスワードリセットのメッセージが届かない場合は、迷惑メールフォルダを確認してください。",
   "Thanks for the feedback.": "フィードバックをありがとうございます。",
   "That Ask Posnic action is disabled.": "Ask Posnicそのアクションは無効になっています。",
   "That branch already has items - nothing was copied": "そのブランチには既に項目があり、何もコピーされていません",

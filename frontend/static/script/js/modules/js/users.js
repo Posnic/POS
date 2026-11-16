@@ -1777,11 +1777,11 @@ PosnicPro.users = {
                     url: 'users/updateNewPassword',
                     data: JSON.stringify(PosnicPro.getFormData($('#forgotpassword_form')))
                 };
-                PosnicPro.put(params, function (resultData) {
+                PosnicPro.post(params, function (resultData) {
                     if (resultData.type === 'success') {
                         PosnicPro.alert(resultData.type, resultData.message);
                         setTimeout(function () {
-                            location.href = "login.html";
+                            location.href = "/login.html";
                         }, 1000);
                     } else if (resultData.type === 'exist') {
                         PosnicPro.alert('error', resultData.message);
