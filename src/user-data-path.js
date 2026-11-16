@@ -19,4 +19,12 @@ function configure(app, env = process.env) {
   return true;
 }
 
-module.exports = { configure };
+// Older manual installers requested setup again even when the database already
+// contains a configured shop. Clear only that obsolete marker after the API has
+// confirmed setup is complete, before cloud sync and connectors start.
+function clearUpgradeReview(directory, needsWizard) {
+  if (needsWizard !== false) return;
+  fs.rmSync(path.join(directory, ".setup-review"), { force: true });
+}
+
+module.exports = { configure, clearUpgradeReview };
