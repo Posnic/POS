@@ -10175,7 +10175,7 @@ PosnicPro.settings.ai = {
      * a shop that set up and left still sees the month at a glance.
      */
     loadSpend: function () {
-        PosnicPro.get('items/aiSpend', {}, function (response) {
+        PosnicPro.get('items/aiSpend', function (response) {
             var data = (response && response.data) || {};
             var rows = data.features || [];
             var host = $('#ai_spend_table').empty();

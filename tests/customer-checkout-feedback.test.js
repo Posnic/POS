@@ -144,3 +144,17 @@ test('a late default-customer lookup cannot replace a typed or chosen customer',
   assert.equal($('#sales_new_customer_id').val(),'chosen');
  } finally {dom.window.close();}
 });
+
+
+test('zero customer balance stays hidden even with credit enabled',()=>{
+ const {dom,w,$}=env('<input id="sales_new_customer_id"><div class="sale-customer-account">old balance</div>');
+ try {
+  const a=sales.indexOf('PosnicPro.sales.refreshCustomerAccount =');
+  w.eval(sales.slice(a,sales.indexOf('PosnicPro.sales.applyCustomerPick =',a)));
+  $('#sales_new_customer_id').val('a'.repeat(24));
+  w.PosnicPro.get=(p,ok)=>ok({type:'success',data:{pending:0,wallet:0}});
+  w.PosnicPro.sales.refreshCustomerAccount();
+  assert.equal($('.sale-customer-account').text(),'');
+  assert.equal($('.sale-customer-account').css('display'),'none');
+ } finally {dom.window.close();}
+});

@@ -142,7 +142,7 @@ PosnicPro.items = {
             $btn.show();
             return;
         }
-        PosnicPro.get('items/aiAvailability', {}, function (r) {
+        PosnicPro.get('items/aiAvailability', function (r) {
             var ok = !!(r && r.data && r.data.available);
             PosnicPro.items._aiAvailable = ok ? true : null;
             $btn.toggle(ok);
@@ -6155,7 +6155,7 @@ PosnicPro.itemPlate = {
 
         if (PosnicPro.items._aiAvailable === true) { $btn.show(); return; }
 
-        PosnicPro.get('items/aiAvailability', {}, function (r) {
+        PosnicPro.get('items/aiAvailability', function (r) {
             var ok = !!(r && r.data && r.data.available);
             PosnicPro.items._aiAvailable = ok ? true : null;
             $btn.toggle(ok);

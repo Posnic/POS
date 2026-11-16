@@ -267,6 +267,10 @@ const saleSchema = new mongoose.Schema(
     // ---- PHP-compatible legacy fields (mirroring Api/src/model/sales_model.php::$fields) ----
 
     receipt_quote: { type: mongoose.Schema.Types.Mixed },
+    // Persist the service-validated outlet context on the Mongoose write path.
+    outlet_id: { type: String },
+    outlet_snapshot: { type: mongoose.Schema.Types.Mixed },
+    room_reference: { type: String, trim: true, maxlength: 80 },
 
     // Branch & document identity
     branch_id: {

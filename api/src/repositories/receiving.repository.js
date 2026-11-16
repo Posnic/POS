@@ -289,7 +289,7 @@ class ReceivingRepository extends BaseModel {
           // Update item quantity (PHP line 963)
           await itemsCollection.updateOne(
             { _id: itemObjectId, license: BaseModel.license },
-            { $set: { available_quantity: closingBalance } }
+            { $set: { available_quantity: closingBalance, updated_date: new Date() } }
           );
         } catch (itemError) {
           console.error(`Error processing stock log for item ${item.item_id}:`, itemError);

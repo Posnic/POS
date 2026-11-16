@@ -164,7 +164,7 @@
             el('item_translation_toggle').setAttribute('aria-expanded', 'false'); paint();
             status(PosnicPro.i18n.t('lang_item_translation_save_hint', "Saved with this item. Empty fields use the original. Descriptions appear only on the customer menu."));
             var token = ++formVersion;
-            if (typeof PosnicPro.get === 'function') PosnicPro.get('items/aiAvailability', {}, function (response) {
+            if (typeof PosnicPro.get === 'function') PosnicPro.get('items/aiAvailability', function (response) {
                 if (token !== formVersion) return;
                 available = !!(response && response.data && response.data.available); capture(); paint();
             }, function () { /* Manual translation always works. */ });

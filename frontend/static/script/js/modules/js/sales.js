@@ -12348,6 +12348,7 @@ PosnicPro.sales.refreshCustomerAccount = function () {
         var pending = Number(response.data.pending), wallet = Number(response.data.wallet);
         if (!Number.isFinite(pending) || !Number.isFinite(wallet)) { failed(); return; }
         var balance = wallet < 0 && pending >= 0 ? pending + Math.abs(wallet) : pending;
+        if (Number(balance.toFixed(2)) === 0) { target.empty().hide(); return; }
         target.empty().show().append($('<span>').text(
             t('lang_previous_account_balance', 'Previous account balance') + ': ' +
             (PosnicPro.local.get('currencySign') || '') + ' ' + balance.toFixed(2) + ' '

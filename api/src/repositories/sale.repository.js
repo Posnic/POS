@@ -5412,6 +5412,7 @@ class SalesRepository {
             await itemsCollection.updateOne(itemFilter, {
               $set: {
                 available_quantity: closingBalance,
+                updated_date: now,
               },
             });
           }
