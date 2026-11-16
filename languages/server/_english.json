@@ -1683,7 +1683,8 @@
     "src/models/setting.model.js"
   ],
   "Password reset key is required": [
-    "src/controllers/users.controller.js"
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
   ],
   "Password reset. Sign in with your new password. This recovery code can no longer be used.": [
     "src/services/recovery.service.js"
@@ -2534,7 +2535,8 @@
     "src/repositories/register.repository.js"
   ],
   "This reset link has expired or was already used. Request a new link.": [
-    "src/controllers/users.controller.js"
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
   ],
   "This shop has no active managed AI allowance.": [
     "src/services/managed-ai-credits.service.js"
@@ -2742,7 +2744,8 @@
     "src/models/setting.model.js"
   ],
   "Use 8-20 characters, without spaces at the beginning or end.": [
-    "src/controllers/users.controller.js"
+    "src/controllers/users.controller.js",
+    "src/repositories/user.repository.js"
   ],
   "Use the normal return process for an allocated sale.": [
     "src/services/sale.service.js"

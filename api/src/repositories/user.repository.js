@@ -463,16 +463,20 @@ class UsersRepository {
 
   async updateUserPassword(userkey, newPassword, retypePassword) {
     try {
+      if (typeof userkey !== 'string' || !userkey || userkey.length > 250) {
+        return { status: false, data: null, message: 'Password reset key is required' };
+      }
       if (
-        typeof userkey !== 'string' ||
-        !userkey ||
-        userkey.length > 250 ||
         typeof newPassword !== 'string' ||
         newPassword.length < 8 ||
         newPassword.length > 20 ||
         newPassword.trim() !== newPassword
       ) {
-        return { status: false, data: null, message: 'Invalid password reset details' };
+        return {
+          status: false,
+          data: null,
+          message: 'Use 8-20 characters, without spaces at the beginning or end.',
+        };
       }
       const user = await this.userModel
         .findOne({ userkey })
