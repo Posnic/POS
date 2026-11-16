@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Δεν ήταν δυνατή η επίτευξη υποστήριξης. Ελέγξτε τη σύνδεσή σας στο Διαδίκτυο και δοκιμάστε ξανά. Το σχόλιό σας διατηρείται.",
   "Could not send your message. Your comment is kept; please retry.": "Δεν ήταν δυνατή η αποστολή του μηνύματός σας. Το σχόλιό σας διατηρείται. Παρακαλώ δοκιμάστε ξανά.",
   "Invalid item": "Μη έγκυρο στοιχείο",
-  "Please wait a minute before sending another message.": "Περιμένετε ένα λεπτό πριν στείλετε άλλο μήνυμα."
+  "Please wait a minute before sending another message.": "Περιμένετε ένα λεπτό πριν στείλετε άλλο μήνυμα.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Εάν ένας λογαριασμός χρησιμοποιεί αυτήν τη διεύθυνση ηλεκτρονικού ταχυδρομείου, θα στείλουμε έναν σύνδεσμο επαναφοράς κωδικού πρόσβασης. Ελέγξτε το φάκελο εισερχόμενων και ανεπιθύμητων μηνυμάτων."
 }

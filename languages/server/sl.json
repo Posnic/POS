@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nisem mogel doseči podpore. Preverite svojo internetno povezavo in poskusite znova. Vaš komentar je ohranjen.",
   "Could not send your message. Your comment is kept; please retry.": "Tvojega sporočila nisem mogel poslati. Vaš komentar je ohranjen; poskusite znova.",
   "Invalid item": "Neveljavna postavka",
-  "Please wait a minute before sending another message.": "Počakajte minuto, preden pošljete drugo sporočilo."
+  "Please wait a minute before sending another message.": "Počakajte minuto, preden pošljete drugo sporočilo.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Če račun uporablja ta e-poštni naslov, bomo poslali povezavo za ponastavitev gesla. Preverite mapo Prejeto in mapo z neželeno pošto."
 }

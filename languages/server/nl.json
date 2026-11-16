@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Kon de ondersteuning niet bereiken. Controleer je internetverbinding en probeer het opnieuw. Je opmerking wordt bewaard.",
   "Could not send your message. Your comment is kept; please retry.": "Kon je bericht niet verzenden. Je reactie wordt bewaard; probeer het opnieuw.",
   "Invalid item": "Ongeldig item",
-  "Please wait a minute before sending another message.": "Wacht even voordat je nog een bericht stuurt."
+  "Please wait a minute before sending another message.": "Wacht even voordat je nog een bericht stuurt.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Als een account dit e-mailadres gebruikt, sturen we een link om het wachtwoord opnieuw in te stellen. Controleer je inbox en spammap."
 }

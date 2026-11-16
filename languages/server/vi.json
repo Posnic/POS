@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Không thể tiếp cận hỗ trợ. Kiểm tra kết nối internet của bạn và thử lại. Bình luận của bạn được giữ lại.",
   "Could not send your message. Your comment is kept; please retry.": "Không thể gửi tin nhắn của bạn. Bình luận của bạn được giữ lại; vui lòng thử lại.",
   "Invalid item": "Mục không hợp lệ",
-  "Please wait a minute before sending another message.": "Vui lòng đợi một phút trước khi gửi tin nhắn khác."
+  "Please wait a minute before sending another message.": "Vui lòng đợi một phút trước khi gửi tin nhắn khác.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Nếu tài khoản sử dụng địa chỉ email này, chúng tôi sẽ gửi liên kết đặt lại mật khẩu. Kiểm tra hộp thư đến và thư mục thư rác của bạn."
 }

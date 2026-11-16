@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "无法获得支持。请检查您的互联网连接并重试。您的评论已保留。",
   "Could not send your message. Your comment is kept; please retry.": "无法发送您的消息。您的评论已保留；请重试。",
   "Invalid item": "无效的商品",
-  "Please wait a minute before sending another message.": "请稍等片刻再发送另一封邮件。"
+  "Please wait a minute before sending another message.": "请稍等片刻再发送另一封邮件。",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "如果账户使用此电子邮件地址，我们将发送密码重置链接。检查您的收件箱和垃圾邮件文件夹。"
 }

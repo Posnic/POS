@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Haikuweza kufikia msaada. Angalia muunganisho wako wa mtandao na jaribu tena. Maoni yako yamehifadhiwa.",
   "Could not send your message. Your comment is kept; please retry.": "Haikuweza kutuma ujumbe wako. Maoni yako yamehifadhiwa; tafadhali jaribu tena.",
   "Invalid item": "Bidhaa isiyo sahihi",
-  "Please wait a minute before sending another message.": "Tafadhali subiri dakika moja kabla ya kutuma ujumbe mwingine."
+  "Please wait a minute before sending another message.": "Tafadhali subiri dakika moja kabla ya kutuma ujumbe mwingine.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ikiwa akaunti inatumia anwani hii ya barua pepe, tutatuma kiungo cha kuweka upya nenosiri. Angalia sanduku lako la ujumbe na folda ya barua taka."
 }

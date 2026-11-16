@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Не вдалося долучитися до підтримки. Перевірте підключення до Інтернету та повторіть спробу. Ваш коментар зберігається.",
   "Could not send your message. Your comment is kept; please retry.": "Не вдалося надіслати повідомлення. Ваш коментар зберігається; будь ласка, повторіть спробу.",
   "Invalid item": "Невірний елемент",
-  "Please wait a minute before sending another message.": "Будь ласка, зачекайте хвилину, перш ніж надіслати інше повідомлення."
+  "Please wait a minute before sending another message.": "Будь ласка, зачекайте хвилину, перш ніж надіслати інше повідомлення.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Якщо обліковий запис використовує цю адресу електронної пошти, ми надішлемо посилання для скидання пароля. Перевірте папку «Вхідні» та спам."
 }

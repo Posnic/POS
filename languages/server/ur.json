@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "حمایت تک نہیں پہنچ سکا۔ اپنا انٹرنیٹ کنکشن چیک کریں اور دوبارہ کوشش کریں۔ آپ کا تبصرہ برقرار رکھا گیا ہے۔",
   "Could not send your message. Your comment is kept; please retry.": "آپ کا پیغام نہیں بھیج سکا۔ آپ کا تبصرہ برقرار رکھا گیا ہے۔ براہ کرم دوبارہ کوشش کریں۔",
   "Invalid item": "غلط آئٹم",
-  "Please wait a minute before sending another message.": "دوسرا پیغام بھیجنے سے پہلے ایک منٹ انتظار کریں۔"
+  "Please wait a minute before sending another message.": "دوسرا پیغام بھیجنے سے پہلے ایک منٹ انتظار کریں۔",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "اگر کوئی اکاؤنٹ اس ای میل ایڈریس کا استعمال کرتا ہے تو، ہم پاس ورڈ ری سیٹ لنک بھیجیں گے۔ اپنے ان باکس اور اسپام فولڈر کو چیک کریں۔"
 }

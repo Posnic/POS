@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Не удалось получить поддержку. Проверьте подключение к Интернету и повторите попытку. Ваш комментарий сохранен.",
   "Could not send your message. Your comment is kept; please retry.": "Не удалось отправить сообщение. Ваш комментарий сохранен; повторите попытку.",
   "Invalid item": "Неверный товар",
-  "Please wait a minute before sending another message.": "Пожалуйста, подождите минуту, прежде чем отправить еще одно сообщение."
+  "Please wait a minute before sending another message.": "Пожалуйста, подождите минуту, прежде чем отправить еще одно сообщение.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Если учетная запись использует этот адрес электронной почты, мы отправим ссылку для восстановления пароля. Проверьте папку «Входящие» и «Спам»."
 }

@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "සහයෝගය ලබා ගන්න බැරි වුණා. ඔබේ අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න. ඔබේ අදහස රඳවා තබා ඇත.",
   "Could not send your message. Your comment is kept; please retry.": "ඔබේ පණිවිඩය යැවීමට නොහැකි විය. ඔබේ අදහස තබා ඇත; කරුණාකර නැවත උත්සාහ කරන්න.",
   "Invalid item": "අවලංගු අයිතමය",
-  "Please wait a minute before sending another message.": "තවත් පණිවිඩයක් යැවීමට පෙර විනාඩියක් බලා සිටින්න."
+  "Please wait a minute before sending another message.": "තවත් පණිවිඩයක් යැවීමට පෙර විනාඩියක් බලා සිටින්න.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "ගිණුමක් මෙම විද්යුත් තැපැල් ලිපිනය භාවිතා කරන්නේ නම්, අපි මුරපදය යළි පිහිටුවීමේ සබැඳියක් එවනු ඇත. ඔබේ එන පෙට්ටිය සහ ස්පෑම් ෆෝල්ඩරය පරීක්ෂා කරන්න."
 }

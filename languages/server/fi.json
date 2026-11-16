@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Tukea ei saatu. Tarkista Internet-yhteys ja yritä uudelleen. Kommenttisi säilytetään.",
   "Could not send your message. Your comment is kept; please retry.": "Viestiäsi ei voitu lähettää. Kommenttisi säilytetään; yritä uudelleen.",
   "Invalid item": "Virheellinen kohde",
-  "Please wait a minute before sending another message.": "Odota hetki ennen uuden viestin lähettämistä."
+  "Please wait a minute before sending another message.": "Odota hetki ennen uuden viestin lähettämistä.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Jos tili käyttää tätä sähköpostiosoitetta, lähetämme salasanan palautuslinkin. Tarkista postilaatikko ja roskapostikansio."
 }

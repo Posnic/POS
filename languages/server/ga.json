@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Ní raibh sé in ann tacaíocht a bhaint amach. Seiceáil do nasc idirlín agus déan iarracht arís. Coinnítear do thrácht.",
   "Could not send your message. Your comment is kept; please retry.": "Ní fhéadfaí do theachtaireacht a sheoladh. Coinnítear do thrácht; déan iarracht arís le do thoil.",
   "Invalid item": "Mír neamhbhailí",
-  "Please wait a minute before sending another message.": "Fan nóiméad le do thoil sula seoltar teachtaireacht eile."
+  "Please wait a minute before sending another message.": "Fan nóiméad le do thoil sula seoltar teachtaireacht eile.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Má úsáideann cuntas an seoladh ríomhphoist seo, seolfaimid nasc athshocraithe pasfhocal. Seiceáil do bhosca isteach agus fillteán spam."
 }

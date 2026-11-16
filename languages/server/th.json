@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "ไม่สามารถเข้าถึงการสนับสนุนได้ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณและลองอีกครั้งความคิดเห็นของคุณจะถูกเก็บไว้",
   "Could not send your message. Your comment is kept; please retry.": "ไม่สามารถส่งข้อความของคุณได้ความคิดเห็นของคุณถูกเก็บไว้ โปรดลองอีกครั้ง",
   "Invalid item": "รายการไม่ถูกต้อง",
-  "Please wait a minute before sending another message.": "กรุณารอสักครู่ก่อนส่งข้อความอื่น"
+  "Please wait a minute before sending another message.": "กรุณารอสักครู่ก่อนส่งข้อความอื่น",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "หากบัญชีใช้ที่อยู่อีเมลนี้เราจะส่งลิงก์รีเซ็ตรหัสผ่านตรวจสอบกล่องจดหมายและโฟลเดอร์สแปมของคุณ"
 }

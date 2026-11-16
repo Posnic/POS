@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Desteğe ulaşılamadı. İnternet bağlantınızı kontrol edin ve tekrar deneyin. Yorumunuz saklandı.",
   "Could not send your message. Your comment is kept; please retry.": "Mesajınız gönderilemedi. Yorumunuz saklandı; lütfen tekrar deneyin.",
   "Invalid item": "Geçersiz öğe",
-  "Please wait a minute before sending another message.": "Lütfen başka bir mesaj göndermeden önce bir dakika bekleyin."
+  "Please wait a minute before sending another message.": "Lütfen başka bir mesaj göndermeden önce bir dakika bekleyin.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Bir hesap bu e-posta adresini kullanıyorsa, bir şifre sıfırlama bağlantısı göndereceğiz. Gelen kutunuzu ve spam klasörünüzü kontrol edin."
 }

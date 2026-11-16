@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "No se pudo contactar con el soporte. Comprueba la conexión a Internet y vuelve a intentarlo. Tu comentario se conserva.",
   "Could not send your message. Your comment is kept; please retry.": "No se ha podido enviar tu mensaje. Se conserva tu comentario; vuelve a intentarlo.",
   "Invalid item": "Artículo no válido",
-  "Please wait a minute before sending another message.": "Espera un minuto antes de enviar otro mensaje."
+  "Please wait a minute before sending another message.": "Espera un minuto antes de enviar otro mensaje.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Si una cuenta usa esta dirección de correo electrónico, le enviaremos un enlace para restablecer la contraseña. Revisa tu bandeja de entrada y tu carpeta de correo no deseado."
 }

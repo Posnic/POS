@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nepodarilo sa dosiahnuť podporu. Skontrolujte svoje internetové pripojenie a skúste to znova. Váš komentár je zachovaný.",
   "Could not send your message. Your comment is kept; please retry.": "Nepodarilo sa odoslať vašu správu. Váš komentár je zachovaný; skúste to znova.",
   "Invalid item": "Neplatná položka",
-  "Please wait a minute before sending another message.": "Pred odoslaním ďalšej správy počkajte chvíľu."
+  "Please wait a minute before sending another message.": "Pred odoslaním ďalšej správy počkajte chvíľu.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ak účet používa túto e-mailovú adresu, pošleme odkaz na obnovenie hesla. Skontrolujte svoju doručenú poštu a priečinok nevyžiadanej pošty."
 }

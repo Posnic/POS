@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "ಬೆಂಬಲವನ್ನು ತಲುಪಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಮರುಪ್ರಯತ್ನಿಸಿ. ನಿಮ್ಮ ಕಾಮೆಂಟ್ ಅನ್ನು ಇರಿಸಲಾಗಿದೆ.",
   "Could not send your message. Your comment is kept; please retry.": "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ನಿಮ್ಮ ಕಾಮೆಂಟ್ ಅನ್ನು ಇರಿಸಲಾಗಿದೆ; ದಯವಿಟ್ಟು ಮರುಪ್ರಯತ್ನಿಸಿ.",
   "Invalid item": "ಅಮಾನ್ಯ ಐಟಂ",
-  "Please wait a minute before sending another message.": "ಇನ್ನೊಂದು ಸಂದೇಶವನ್ನು ಕಳುಹಿಸುವ ಮೊದಲು ದಯವಿಟ್ಟು ಒಂದು ನಿಮಿಷ ಕಾಯಿರಿ."
+  "Please wait a minute before sending another message.": "ಇನ್ನೊಂದು ಸಂದೇಶವನ್ನು ಕಳುಹಿಸುವ ಮೊದಲು ದಯವಿಟ್ಟು ಒಂದು ನಿಮಿಷ ಕಾಯಿರಿ.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "ಒಂದು ಖಾತೆ ಈ ಇಮೇಲ್ ವಿಳಾಸವನ್ನು ಬಳಸಿದರೆ, ನಾವು ಪಾಸ್ವರ್ಡ್ ಮರುಹೊಂದಿಸುವ ಲಿಂಕ್ ಅನ್ನು ಕಳುಹಿಸುತ್ತೇವೆ. ನಿಮ್ಮ ಇನ್ಬಾಕ್ಸ್ ಮತ್ತು ಸ್ಪ್ಯಾಮ್ ಫೋಲ್ಡರ್ ಪರಿಶೀಲಿಸಿ."
 }

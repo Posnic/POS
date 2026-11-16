@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nepavyko pasiekti palaikymo. Patikrinkite interneto ryšį ir bandykite iš naujo. Jūsų komentaras yra saugomas.",
   "Could not send your message. Your comment is kept; please retry.": "Nepavyko išsiųsti savo pranešimo. Jūsų komentaras išsaugotas; pabandykite iš naujo.",
   "Invalid item": "Neteisingas elementas",
-  "Please wait a minute before sending another message.": "Prieš siųsdami kitą pranešimą, palaukite minutę."
+  "Please wait a minute before sending another message.": "Prieš siųsdami kitą pranešimą, palaukite minutę.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Jei paskyra naudoja šį el. pašto adresą, atsiųsime slaptažodžio nustatymo nuorodą. Patikrinkite savo pašto dėžutę ir šlamšto aplanką."
 }

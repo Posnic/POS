@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Kunne ikke nå støtte. Kontroller din internetforbindelse, og prøv igen. Din kommentar er bevaret.",
   "Could not send your message. Your comment is kept; please retry.": "Kunne ikke sende din besked. Din kommentar bevares; prøv igen.",
   "Invalid item": "Ugyldigt element",
-  "Please wait a minute before sending another message.": "Vent et øjeblik, før du sender en ny besked."
+  "Please wait a minute before sending another message.": "Vent et øjeblik, før du sender en ny besked.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Hvis en konto bruger denne e-mail-adresse, sender vi et link til nulstilling af adgangskode. Tjek din indbakke og spam-mappe."
 }

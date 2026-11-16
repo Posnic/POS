@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Gat ekki náð stuðningi. Athugaðu nettenginguna þína og reyndu aftur. Athugasemd þín er geymd.",
   "Could not send your message. Your comment is kept; please retry.": "Gat ekki sent skilaboðin þín. Athugasemd þín er geymd; vinsamlegast reyndu aftur.",
   "Invalid item": "Ógilt atriði",
-  "Please wait a minute before sending another message.": "Vinsamlegast bíddu í eina mínútu áður en þú sendir önnur skilaboð."
+  "Please wait a minute before sending another message.": "Vinsamlegast bíddu í eina mínútu áður en þú sendir önnur skilaboð.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ef reikningur notar þetta netfang munum við senda tengil fyrir endurstillingu lykilorðs. Athugaðu pósthólfið þitt og ruslpóstmöppuna."
 }

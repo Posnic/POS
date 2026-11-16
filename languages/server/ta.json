@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "ஆதரவை அடைய முடியவில்லை. உங்கள் இணைய இணைப்பைச் சரிபார்த்து மறுமுயற்சி செய்யுங்கள் உங்கள் கருத்து வைக்கப்பட்டுள்ளது.",
   "Could not send your message. Your comment is kept; please retry.": "உங்கள் செய்தியை அனுப்ப முடியவில்லை. உங்கள் கருத்து வைக்கப்பட்டுள்ளது; தயவுசெய்து மீண்டும் முயற்சிக்கவும்",
   "Invalid item": "தவறான பொருள்",
-  "Please wait a minute before sending another message.": "மற்றொரு செய்தியை அனுப்புவதற்கு முன் ஒரு நிமிடம் காத்திருங்கள்."
+  "Please wait a minute before sending another message.": "மற்றொரு செய்தியை அனுப்புவதற்கு முன் ஒரு நிமிடம் காத்திருங்கள்.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "ஒரு கணக்கு இந்த மின்னஞ்சல் முகவரியைப் பயன்படுத்தினால், கடவுச்சொல் மீட்டமைப்பு இணைப்பை அனுப்புவோம். உங்கள் இன்பாக்ஸ் மற்றும் ஸ்பேம் கோப்புறையை சரிபார்க்கவும்."
 }

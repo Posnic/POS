@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Не можах да достигна подкрепа. Проверете интернет връзката си и опитайте отново. Коментарът ви се запазва.",
   "Could not send your message. Your comment is kept; please retry.": "Не можах да изпратя съобщението ви. Коментарът ви е запазен; моля, опитайте отново.",
   "Invalid item": "Невалиден елемент",
-  "Please wait a minute before sending another message.": "Моля, изчакайте малко преди да изпратите друго съобщение."
+  "Please wait a minute before sending another message.": "Моля, изчакайте малко преди да изпратите друго съобщение.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ако акаунтът използва този имейл адрес, ще изпратим връзка за нулиране на паролата. Проверете папката си за входящи и спам."
 }

@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "تعذّر الوصول إلى الدعم. تحقق من اتصال الإنترنت وأعد المحاولة. يتم الاحتفاظ بتعليقك.",
   "Could not send your message. Your comment is kept; please retry.": "تعذّر إرسال رسالتك. تم الاحتفاظ بتعليقك؛ يرجى إعادة المحاولة.",
   "Invalid item": "عنصر غير صالح",
-  "Please wait a minute before sending another message.": "يرجى الانتظار لمدة دقيقة قبل إرسال رسالة أخرى."
+  "Please wait a minute before sending another message.": "يرجى الانتظار لمدة دقيقة قبل إرسال رسالة أخرى.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "إذا كان الحساب يستخدم عنوان البريد الإلكتروني هذا، فسنرسل رابط إعادة تعيين كلمة المرور. تحقق من صندوق الوارد ومجلد البريد العشوائي."
 }

@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Tidak dapat mencapai sokongan. Semak sambungan internet anda dan cuba semula. Komen anda disimpan.",
   "Could not send your message. Your comment is kept; please retry.": "Tidak dapat menghantar mesej anda. Komen anda disimpan; sila cuba semula.",
   "Invalid item": "Item tidak sah",
-  "Please wait a minute before sending another message.": "Sila tunggu sebentar sebelum menghantar mesej lain."
+  "Please wait a minute before sending another message.": "Sila tunggu sebentar sebelum menghantar mesej lain.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Jika akaun menggunakan alamat e-mel ini, kami akan menghantar pautan tetapan semula kata laluan. Semak peti masuk dan folder spam anda."
 }

@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nuk mund të arrijë mbështetje. Kontrolloni lidhjen tuaj të internetit dhe provoni përsëri. Komenti juaj është ruajtur.",
   "Could not send your message. Your comment is kept; please retry.": "Nuk mund të dërgoj mesazhin tuaj. Komenti juaj është mbajtur; ju lutemi përsëriteni.",
   "Invalid item": "Artikulli i pavlefshëm",
-  "Please wait a minute before sending another message.": "Ju lutemi prisni një minutë para se të dërgoni një mesazh tjetër."
+  "Please wait a minute before sending another message.": "Ju lutemi prisni një minutë para se të dërgoni një mesazh tjetër.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Nëse një llogari përdor këtë adresë emaili, ne do të dërgojmë një lidhje rivendosjes së fjalëkalimit. Kontrolloni kutinë tuaj postare dhe dosjen e spam."
 }

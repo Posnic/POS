@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nem sikerült elérni a támogatást. Ellenőrizze az internetkapcsolatot, és próbálja újra. Megjegyzésedet megtartják.",
   "Could not send your message. Your comment is kept; please retry.": "Nem sikerült elküldeni az üzenetét. Megjegyzése megmarad; kérjük, próbálkozzon újra.",
   "Invalid item": "Érvénytelen elem",
-  "Please wait a minute before sending another message.": "Kérjük, várjon egy percet, mielőtt újabb üzenetet küldene."
+  "Please wait a minute before sending another message.": "Kérjük, várjon egy percet, mielőtt újabb üzenetet küldene.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ha egy fiók használja ezt az e-mail címet, küldünk egy jelszó-visszaállítási linket. Ellenőrizze a beérkező levelek és a spam mappát."
 }

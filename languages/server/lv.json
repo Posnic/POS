@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nevarēja sasniegt atbalstu. Pārbaudiet interneta savienojumu un mēģiniet vēlreiz. Jūsu komentārs tiek saglabāts.",
   "Could not send your message. Your comment is kept; please retry.": "Nevarēja nosūtīt savu ziņojumu. Jūsu komentārs tiek saglabāts; lūdzu, mēģiniet vēlreiz.",
   "Invalid item": "Nederīgs vienums",
-  "Please wait a minute before sending another message.": "Lūdzu, pagaidiet minūti pirms cita ziņojuma nosūtīšanas."
+  "Please wait a minute before sending another message.": "Lūdzu, pagaidiet minūti pirms cita ziņojuma nosūtīšanas.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Ja konts izmanto šo e-pasta adresi, mēs nosūtīsim paroles atiestatīšanas saiti. Pārbaudiet iesūtni un surogātpasta mapi."
 }

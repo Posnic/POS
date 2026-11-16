@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "Nu am putut ajunge la sprijin. Verificați conexiunea la internet și încercați din nou. Comentariul dvs. este păstrat.",
   "Could not send your message. Your comment is kept; please retry.": "Nu am putut trimite mesajul. Comentariul dvs. este păstrat; încercați din nou.",
   "Invalid item": "Element nevalid",
-  "Please wait a minute before sending another message.": "Vă rugăm să așteptați un minut înainte de a trimite un alt mesaj."
+  "Please wait a minute before sending another message.": "Vă rugăm să așteptați un minut înainte de a trimite un alt mesaj.",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "Dacă un cont utilizează această adresă de e-mail, vom trimite un link de resetare a parolei. Verificați căsuța de e-mail și folderul spam."
 }

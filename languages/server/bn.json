@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "সমর্থনে পৌঁছাতে পারেনি। আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করুন। আপনার মন্তব্য রাখা হয়েছে।",
   "Could not send your message. Your comment is kept; please retry.": "আপনার বার্তা পাঠাতে পারেনি। আপনার মন্তব্য রাখা হয়েছে; দয়া করে পুনরায় চেষ্টা করুন।",
   "Invalid item": "অবৈধ আইটেম",
-  "Please wait a minute before sending another message.": "অন্য বার্তা প্রেরণের আগে দয়া করে এক মিনিট অপেক্ষা করুন।"
+  "Please wait a minute before sending another message.": "অন্য বার্তা প্রেরণের আগে দয়া করে এক মিনিট অপেক্ষা করুন।",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "যদি কোনও অ্যাকাউন্ট এই ইমেল ঠিকানাটি ব্যবহার করে তবে আমরা একটি পাসওয়ার্ড রিসেট লিঙ্ক পাঠাব। আপনার ইনবক্স এবং স্প্যাম ফোল্ডার চেক করুন।"
 }

@@ -985,5 +985,6 @@
   "Could not reach support. Check your internet connection and retry. Your comment is kept.": "サポートに連絡できませんでした。インターネット接続を確認して、再試行してください。コメントは保持されます。",
   "Could not send your message. Your comment is kept; please retry.": "メッセージを送信できませんでした。コメントは保存されています。もう一度試してください。",
   "Invalid item": "アイテムが無効です",
-  "Please wait a minute before sending another message.": "1 分待ってから別のメッセージを送信してください。"
+  "Please wait a minute before sending another message.": "1 分待ってから別のメッセージを送信してください。",
+  "If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.": "アカウントがこのメールアドレスを使用している場合、パスワードリセットリンクが送信されます。受信トレイと迷惑メールフォルダを確認してください。"
 }

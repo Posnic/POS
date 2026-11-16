@@ -4570,7 +4570,7 @@ class SettingModel extends BaseModel {
           status: true,
           data: null,
           message:
-            'Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.',
+            'If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.',
         };
       }
 
@@ -4620,7 +4620,7 @@ class SettingModel extends BaseModel {
             status: true,
             data: null,
             message:
-              'Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.',
+              'If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.',
           };
         }
 
@@ -4648,7 +4648,7 @@ class SettingModel extends BaseModel {
           status: true,
           data: null,
           message:
-            'Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.',
+            'If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.',
         };
       } catch (emailError) {
         console.error('Error sending email via Brevo:', emailError);
@@ -4660,7 +4660,7 @@ class SettingModel extends BaseModel {
           status: true,
           data: null,
           message:
-            'Thank you for your forgotten password request. If that email address exists in our database, you will receive an email to that address shortly. If you do not receive the password reset message within a few moments, please check your spam folder.',
+            'If an account uses this email address, we will send a password reset link. Check your inbox and spam folder.',
         };
       }
     } catch (error) {
