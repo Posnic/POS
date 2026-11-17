@@ -82,6 +82,13 @@ test('ambiguous fields require explicit selection; overload and negative cannot 
   assert.equal(parseFrame('OL 0.375 kg'),null);
   const r=new ScaleReader();r.push('-0.375 kg\r');assert.equal(r.weight,null);
 });
+test('an invalid number selector is refused instead of throwing', () => {
+  for (const numberIndex of [-1, -0.5, 1.5, 2.5]) {
+    assert.equal(parseFrame('1.000 kg', { numberIndex }), null, `numberIndex ${numberIndex}`);
+  }
+  assert.equal(parseFrame('0.375 24.00 9.00', { numberIndex: 1.5 }), null);
+  assert.equal(parseFrame('0.375 24.00 9.00', { numberIndex: 1 }).kg, 0.375);
+});
 test('unstable status never becomes stable from repeated frames; single stable transfer works',()=>{
   const r=new ScaleReader();for(let i=0;i<10;i++)r.push('US,GS,0.375kg\r');assert.equal(r.isStable,false);
   r.push('ST,GS,0.375kg\r');assert.equal(r.isStable,true);
