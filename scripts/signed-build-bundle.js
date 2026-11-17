@@ -22,13 +22,17 @@ function bundle(dir, version, commit, publisher) {
   }
   const blockmap = name + '.blockmap';
   if (!fs.statSync(path.join(dir, blockmap)).size) throw new Error('Empty blockmap');
+  const portable = `Posnic-${version}-windows-x64-portable.exe`;
+  if (!fs.existsSync(path.join(dir, portable)) || !fs.statSync(path.join(dir, portable)).size) {
+    throw new Error('Missing or empty standalone portable EXE');
+  }
   const dest = path.join(dir, 'handoff');
   fs.mkdirSync(dest); // Never reuse a previous handoff.
-  const files = [name, blockmap, ...manifests];
+  const files = [name, portable, blockmap, ...manifests];
   for (const file of files) fs.copyFileSync(path.join(dir, file), path.join(dest, file));
   fs.writeFileSync(path.join(dest, 'BUILD-INFO.json'), JSON.stringify({
     version, commit, publisher, createdAt: new Date().toISOString(),
-    note: 'Built locally; installer Authenticode and timestamp verified by build-signed-windows.ps1. Not published.',
+    note: 'Built locally; installer and portable Authenticode and timestamps verified by build-signed-windows.ps1. Not published.',
   }, null, 2) + '\n');
   files.push('BUILD-INFO.json');
   fs.writeFileSync(path.join(dest, 'SHA256SUMS.txt'), files.map((file) =>

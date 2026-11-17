@@ -1,5 +1,36 @@
 # Agent rules
 
+## Release completeness is mandatory
+
+Before any build or publication, read `.github/workflows/release.yml`, the
+APT/Snap/site publication workflows, `package.json` build targets, and the
+signing, handoff and release verification scripts. Follow the existing release
+pipeline; never replace it with a manual upload of whichever EXE is available.
+
+- A normal release includes the signed Windows installer **and standalone
+  portable EXE**, macOS x64 and arm64 DMG and ZIP builds, and Linux AppImage,
+  Debian and Snap packages. Verify current configured targets, update manifests,
+  blockmaps, checksums, SBOMs and required provenance/signatures as well.
+- Match every artifact to the approved source commit and version. Inspect actual
+  packaged contents under the distribution rules below. Verify Windows signatures
+  and timestamps, macOS signing/notarization, and updater hashes after signing.
+- Keep a new release in draft until the complete asset matrix and required checks
+  pass. Do not publish a partial stable release, mark it latest, announce completion,
+  or bypass a release gate merely because one platform passed. A missing package
+  or signing agreement is a blocker; report it and obtain explicit authorization
+  for a partial release if the user wants that exception.
+- Verify the public download assets and downstream APT, Snap Store and website
+  publication separately. A successful upload or workflow dispatch is not evidence
+  of successful publication. Preserve existing signed assets when repairing a
+  release; never move its tag or overwrite validated binaries silently.
+- Report a per-platform result with evidence: built, signed, tested, published,
+  or blocked. Distinguish package inspection from execution on the target OS and
+  printer submission from confirmed physical output. Never claim unrun tests passed.
+- Before giving another machine a signing command, verify that the command builds
+  and includes BOTH Windows targets in its handoff. An installer is not the
+  standalone copy. Do not relabel an installer as portable or distribute an
+  unsigned replacement as a signed stable build.
+
 Posnic credits people, not software tools.
 
 - Do not add an AI assistant, agent, model, bot, automation, coding tool, or
@@ -47,7 +78,6 @@ on and what is off, and that is the only question it answers.
 Integrations is for what genuinely faces outward on its own - API tokens,
 webhooks, signed connectors, the shop's own analytics property - not for any
 feature that happens to call somebody else's API.
-
 
 ## Local verification and CI costs
 

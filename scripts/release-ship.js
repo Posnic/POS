@@ -206,10 +206,14 @@ async function main() {
   const names = (rel.assets || []).map((a) => a.name);
   const need = [
     [/windows.*installer\.exe$/, 'Windows installer'],
+    [/windows.*portable\.exe$/, 'Windows standalone portable'],
     [/macos-arm64\.dmg$/, 'macOS arm64 dmg'],
     [/macos-x64\.dmg$/, 'macOS x64 dmg'],
+    [/macos-arm64\.zip$/, 'macOS arm64 zip'],
+    [/macos-x64\.zip$/, 'macOS x64 zip'],
     [/\.AppImage$/, 'Linux AppImage'],
     [/_amd64\.deb$/, 'Debian package'],
+    [/_amd64\.snap$/, 'Snap package'],
     [/^latest\.yml$/, 'Windows update manifest'],
     [/^latest-mac\.yml$/, 'macOS update manifest'],
     [/^latest-linux\.yml$/, 'Linux update manifest'],
