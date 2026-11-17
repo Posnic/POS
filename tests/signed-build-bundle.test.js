@@ -14,6 +14,7 @@ function fixture(t, change = () => {}) {
   const name = 'Posnic-1.9.2-windows-x64-installer.exe';
   const bytes = Buffer.from('synthetic installer bytes, not a signed executable');
   fs.writeFileSync(path.join(dir, name), bytes);
+  fs.writeFileSync(path.join(dir, 'Posnic-1.9.2-windows-x64-portable.exe'), 'synthetic portable');
   fs.writeFileSync(path.join(dir, name + '.blockmap'), 'synthetic blockmap');
   const hash = crypto.createHash('sha512').update(bytes).digest('base64');
   const meta = { version: '1.9.2', path: name, sha512: hash,
@@ -28,11 +29,18 @@ test('handoff preserves exact installer bytes and includes verifiable checksums'
   assert.deepEqual(fs.readFileSync(path.join(dest, name)), fs.readFileSync(path.join(dir, name)));
   const info = JSON.parse(fs.readFileSync(path.join(dest, 'BUILD-INFO.json')));
   assert.equal(info.commit, 'abc123');
+  assert.equal(fs.readFileSync(path.join(dest, 'Posnic-1.9.2-windows-x64-portable.exe'), 'utf8'), 'synthetic portable');
   for (const line of fs.readFileSync(path.join(dest, 'SHA256SUMS.txt'), 'utf8').trim().split('\n')) {
     const [hash, file] = line.split('  ');
     assert.equal(hash, crypto.createHash('sha256').update(fs.readFileSync(path.join(dest, file))).digest('hex'));
   }
   assert.throws(() => bundle(dir, '1.9.2', 'abc123', 'Test Publisher'), /EEXIST/);
+});
+test('rejects an installer-only handoff before creating output', (t) => {
+  const { dir } = fixture(t);
+  fs.unlinkSync(path.join(dir, 'Posnic-1.9.2-windows-x64-portable.exe'));
+  assert.throws(() => bundle(dir, '1.9.2', 'abc123', 'Test'), /standalone portable/);
+  assert.equal(fs.existsSync(path.join(dir, 'handoff')), false);
 });
 for (const [label, change] of [
   ['wrong hash', (m) => { m.sha512 = 'wrong'; }],

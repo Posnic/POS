@@ -56,9 +56,16 @@ try {
     Run-Checked npm.cmd -Arguments @('run','prebuild')
     $agentFiles = @(Get-ChildItem 'builds/sync-agent' -Force -Recurse -File | Where-Object { $_.Name -ne '.placeholder' })
     if ($agentFiles.Count) { throw 'Public build contains unexpected sync component files. Build stopped.' }
-    Run-Checked npx.cmd -Arguments @('electron-builder','--win','nsis','--x64','--publish','never',"--config.directories.output=$out")
+    Run-Checked npx.cmd -Arguments @('electron-builder','--win','nsis','portable','--x64','--publish','never',"--config.directories.output=$out")
     $exe = Join-Path $out "Posnic-$version-windows-x64-installer.exe"
     if (!(Test-Path -LiteralPath $exe)) { throw 'The expected installer was not generated.' }
+    $portable = Join-Path $out "Posnic-$version-windows-x64-portable.exe"
+    if (!(Test-Path -LiteralPath $portable)) { throw 'The expected standalone portable EXE was not generated.' }
+    $portableSignature = Get-AuthenticodeSignature -LiteralPath $portable
+    if ($portableSignature.Status -ne 'Valid' -or !$portableSignature.TimeStamperCertificate -or
+        $portableSignature.SignerCertificate.Thumbprint -ne $cert.Thumbprint) {
+        throw 'Portable signature, publisher or timestamp verification failed. Do not distribute this build.'
+    }
     $appSignature = Get-AuthenticodeSignature -LiteralPath (Join-Path $out 'win-unpacked/Posnic.exe')
     if ($appSignature.Status -ne 'Valid' -or !$appSignature.TimeStamperCertificate -or
         $appSignature.SignerCertificate.Thumbprint -ne $cert.Thumbprint) {
