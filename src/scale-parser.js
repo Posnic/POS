@@ -22,7 +22,7 @@ function parseFrame(frame, options = {}) {
   if (options.protocol === 'ohaus' && /\?/.test(raw)) status = false;
   const matches = tagged.length ? tagged : [...text.matchAll(new RegExp('(?<![\\d.])(' + number + ')(?![\\d.])', 'g'))];
   const index = Number(options.numberIndex || 0);
-  if (!matches.length || (!index && matches.length !== 1) || index > matches.length) return null;
+  if (!matches.length || !Number.isInteger(index) || index < 0 || index > matches.length || (!index && matches.length !== 1)) return null;
   const match = matches[index ? index - 1 : 0];
   const token = match[1].replace(/\s/g, '');
   let value = Number(token), unit = tagged.length ? match[2].toLowerCase() : options.unit || 'auto';
