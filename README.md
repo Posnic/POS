@@ -21,7 +21,7 @@ before making a package-level licence statement.
 [![CI](https://github.com/Posnic/POS/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Posnic/POS/actions/workflows/ci.yml)
 [![Release](https://github.com/Posnic/POS/actions/workflows/release.yml/badge.svg)](https://github.com/Posnic/POS/actions/workflows/release.yml)
 [![Downloads](https://img.shields.io/github/downloads/Posnic/POS/total?label=downloads&color=brightgreen)](https://github.com/Posnic/POS/releases)
-[![Latest release](https://img.shields.io/github/v/release/Posnic/POS?include_prereleases&label=latest&color=blue)](https://github.com/Posnic/POS/releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/Posnic/POS?label=stable&color=blue)](https://github.com/Posnic/POS/releases/latest)
 [![Tests](https://img.shields.io/badge/tests-9%2C000%2B%20passing-brightgreen)](docs/DEVELOPMENT.md#running-the-tests)
 [![Coverage](https://img.shields.io/badge/coverage-69%25%20statements-yellow)](docs/DEVELOPMENT.md#running-the-tests)
 [![API](https://img.shields.io/badge/REST%20API-961%20endpoints-blue)](docs/API.md)
@@ -29,7 +29,7 @@ before making a package-level licence statement.
 [![Package notices](https://img.shields.io/badge/package%20notices-component%20licences-informational)](THIRD-PARTY-NOTICES.md)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/Posnic/POS/releases/latest)
 
-### [⬇ Download for Windows](https://github.com/Posnic/POS/releases/latest) · [macOS](https://github.com/Posnic/POS/releases/latest) · [Linux](https://github.com/Posnic/POS/releases/latest)
+### [⬇ Download Windows 1.9.2](https://github.com/Posnic/POS/releases/download/v1.9.2/Posnic-1.9.2-windows-x64-installer.exe) · [Linux downloads](#download-posnic-192) · [Release notes](https://github.com/Posnic/POS/releases/tag/v1.9.2)
 
 ### [▶ Try the live demo](https://demo.posnic.io) — nothing to install, resets on the hour
 
@@ -44,6 +44,35 @@ hour. Outbound email, SMS and password changes are switched off there.
 </div>
 
 ---
+
+## Download Posnic 1.9.2
+
+| Platform | Download | Availability |
+| --- | --- | --- |
+| Windows x64 installer | [Signed EXE](https://github.com/Posnic/POS/releases/download/v1.9.2/Posnic-1.9.2-windows-x64-installer.exe) | Available; publisher BillMax |
+| Windows standalone portable | Pending | Signed portable package is not yet available for 1.9.2 |
+| macOS Intel / Apple Silicon | Pending | Signing and notarization verification are not yet complete for 1.9.2 |
+| Linux x64 AppImage | [AppImage](https://github.com/Posnic/POS/releases/download/v1.9.2/Posnic-1.9.2-linux-x86_64.AppImage) | Available |
+| Debian / Ubuntu amd64 | [DEB](https://github.com/Posnic/POS/releases/download/v1.9.2/posnic_1.9.2_amd64.deb) · [Signed APT repository](https://packages.posnic.com) | Available |
+| Linux Snap | [Snap package](https://github.com/Posnic/POS/releases/download/v1.9.2/posnic_1.9.2_amd64.snap) · [Snap Store](https://snapcraft.io/posnic) | Published to stable |
+
+Check downloads against [SHA256SUMS.txt](https://github.com/Posnic/POS/releases/download/v1.9.2/SHA256SUMS.txt).
+See the [release page](https://github.com/Posnic/POS/releases/tag/v1.9.2) for current package availability.
+
+### What's new in 1.9.2
+
+- Password recovery accepts email aliases and allows the reset flow without an existing login. Cloud-linked desktops refresh user details before login when connected.
+- Recovery choices appear after **Forgot Password**, with clearer confirmation and email wording.
+- Receipt printing handles sales without a mounted barcode canvas and improves Windows printer detection.
+- Stock updates record change timestamps; outlet sales preserve outlet and room-reference details.
+- Checkout layout and zero-balance visibility are corrected.
+- Manual upgrades preserve the selected shop instead of reopening first-time setup for a configured shop.
+
+**Updating an existing Windows shop:** back up first, close Posnic completely,
+then run the installer using the same Windows user and installation location.
+Do not uninstall first. If first-time setup unexpectedly appears, stop and
+contact support before creating another shop. Test your printer after updating;
+a submitted print job alone does not confirm paper output.
 
 ## Posnic in use
 
