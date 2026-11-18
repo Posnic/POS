@@ -7227,6 +7227,9 @@ class SalesController extends BaseController {
           SaleModel,
           staffOrder: Boolean(req.user),
           paperOrder,
+          // qrOrder is guarded by optionalProtect + protectOrKioskKey.
+          // Never derive payment/discount authority from request-body fields.
+          trustedCheckout: true,
         }
       );
 
