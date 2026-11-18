@@ -66,7 +66,7 @@ test('staff is read from the request, never from the body', () => {
 
 test('the flag is carried through the service untouched', () => {
   expect(SERVICE).toMatch(
-    /createOnlineOrder: async \(data, \{ SaleModel, staffOrder = false(?:,[^}]*)? \} = \{\}\)/
+    /createOnlineOrder: async \(\s*data,\s*\{ SaleModel, staffOrder = false(?:,[^}]*)? \} = \{\}\s*\)/
   );
   expect(SERVICE).toMatch(/staffOrder,/);
 });
