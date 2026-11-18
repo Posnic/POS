@@ -2,6 +2,9 @@
 
 How a release goes out, and how to take one back.
 
+Start with [Release handoff](RELEASE_HANDOFF.md) for the current cross-platform
+checklist, separate signing-machine handoff, and a copyable agent prompt.
+
 This exists because the second half is the half nobody writes down. Shipping is
 rehearsed every time; undoing a bad release is attempted once, under pressure,
 by whoever is available.
@@ -53,8 +56,10 @@ stops automatic updates for everyone, with no error anywhere.
    git push origin v1.4.0
    ```
 
-5. **`release.yml` takes over.** It re-runs CI, builds Windows, macOS and Linux,
-   checksums everything, and creates the release **as a draft**.
+5. **`release.yml` takes over.** It re-runs CI, builds macOS and Linux,
+   generates their metadata, and creates the release **as a draft**. Windows
+   installer and portable EXE are built on the Certum signing computer; see
+   [build instructions](BUILD_INSTRUCTIONS.md). CI does not build Windows.
 
 6. **Check the draft before publishing.**
    - The installers are all there and the sizes look sane
@@ -85,7 +90,7 @@ stops automatic updates for everyone, with no error anywhere.
      ```
      `Status` must be `Valid`. **`NotSigned` means stop** - see below.
 
-7. **Publish.** Every installed till finds it at its next check.
+7. **Finish Windows verification, then publish only after all gates pass.**
 
    Windows is built and card-signed locally. Before this step, upload its
    installer, portable package, blockmap, `latest.yml`, both SBOMs and
@@ -231,7 +236,8 @@ something. That is the point of it.
 
 ## Before publishing installers publicly
 
-Not yet done, and each one blocks a public binary release:
+Verify these for the proposed release; this is a checklist, not a claim that
+they are currently missing or have already passed:
 
 - [ ] Code signing certificate obtained and configured
 - [ ] `Get-AuthenticodeSignature` reports `Valid` on a clean machine

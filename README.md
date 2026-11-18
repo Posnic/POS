@@ -281,6 +281,7 @@ the free edition worse. This is written down in [GOVERNANCE.md](docs/GOVERNANCE.
 | [Retail POS user access review checklist](https://posnic.github.io/retail-pos-user-access-review-checklist.html) | Review staff roles, sensitive actions, leavers, offline enforcement, integrations and retained evidence |
 | [Retail POS returns, refunds and voids checklist](https://posnic.github.io/retail-pos-returns-refunds-voids-checklist.html) | Verify original sales, approvals, payment reversals, stock disposition, offline queues and reconciliation |
 | [Release runbook](docs/RELEASE_RUNBOOK.md) | How a release goes out, and four ways to take one back |
+| [Release handoff](docs/RELEASE_HANDOFF.md) | Complete platform checklist and signing-machine/agent handoff |
 | [Release verification](docs/VERIFY_RELEASE.md) | Match a package to its checksum, CycloneDX inventory, provenance and component licences |
 | [Support lifecycle](docs/SUPPORT_LIFECYCLE.md) | Which versions get fixes, and for how long |
 | [Incident response](docs/INCIDENT_RESPONSE.md) | Who decides, who is told, and when |

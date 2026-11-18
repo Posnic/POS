@@ -2,6 +2,10 @@
 
 ## Release completeness is mandatory
 
+Start every release task with [the release handoff checklist](docs/RELEASE_HANDOFF.md).
+Keep a completed evidence checklist for the exact version and commit; do not
+infer completion from an earlier chat or from a successful upload.
+
 Before any build or publication, read `.github/workflows/release.yml`, the
 APT/Snap/site publication workflows, `package.json` build targets, and the
 signing, handoff and release verification scripts. Follow the existing release
