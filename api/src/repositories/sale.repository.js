@@ -8466,7 +8466,13 @@ class SalesRepository {
 
   async createOnlineOrder(
     data,
-    { SaleModel, staffOrder = false, seatingProtocol = false, paperOrder = null } = {}
+    {
+      SaleModel,
+      staffOrder = false,
+      seatingProtocol = false,
+      paperOrder = null,
+      trustedCheckout = false,
+    } = {}
   ) {
     try {
       const db = await BaseModel.getDb();
@@ -8888,7 +8894,9 @@ class SalesRepository {
         saleItems.reduce((s, i) => s + round(i.item_subtotal ?? i.unit_price * i.quantity), 0)
       );
       const totalTax = round(saleItems.reduce((s, i) => s + i.tax_amount, 0));
-      const discountAmt = round(Number(kiosk_discount_amount) || 0);
+      // Only an authenticated checkout may supply a manual discount. Public
+      // coupon codes are priced independently against the shop's own offers.
+      const discountAmt = trustedCheckout === true ? round(Number(kiosk_discount_amount) || 0) : 0;
       const itemDiscountTotal = round(
         saleItems.reduce((s, i) => s + Number(i.item_discount || 0), 0)
       );
@@ -9048,10 +9056,12 @@ class SalesRepository {
       const said = String(data.payment_status || '')
         .trim()
         .toLowerCase();
-      const paidUpFront = said === 'paid' || said === 'completed';
+      const claimsPaid = said === 'paid' || said === 'completed';
+      // This capability comes from the guarded controller, never the body.
+      const paidUpFront = trustedCheckout === true && claimsPaid;
       const paymentMethod =
         data.payment_mode ||
-        (said && !paidUpFront ? said.charAt(0).toUpperCase() + said.slice(1) : 'Cash');
+        (said && !claimsPaid ? said.charAt(0).toUpperCase() + said.slice(1) : 'Cash');
 
       /*
        * HOW MANY THINGS ARE ON THIS SALE.
@@ -9268,7 +9278,7 @@ class SalesRepository {
         coupon_id: couponUsed ? couponUsed.couponId : null,
         coupon_discount: couponDiscount,
         extra_discount_type: 'price',
-        discount_description: kiosk_discount_description || '',
+        discount_description: trustedCheckout === true ? kiosk_discount_description || '' : '',
         customer_phone: customerMobile || '',
         /* For a delivery: who, and where. */
         customer_name: String(customer_name || '')

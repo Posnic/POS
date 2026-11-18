@@ -4560,12 +4560,16 @@ module.exports = {
     salesRepository.multiKitchenPrintModel(branchId, options),
   markKitchenPrintedModel: async (saleIds, printedIndexes, printedKeys) =>
     salesRepository.markKitchenPrintedModel(saleIds, printedIndexes, printedKeys),
-  createOnlineOrder: async (data, { SaleModel, staffOrder = false, paperOrder = null } = {}) =>
+  createOnlineOrder: async (
+    data,
+    { SaleModel, staffOrder = false, paperOrder = null, trustedCheckout = false } = {}
+  ) =>
     salesRepository.createOnlineOrder(data, {
       SaleModel: getModel(SaleModel),
       /* Carried through untouched: the route decides it, nothing else may. */
       staffOrder,
       paperOrder,
+      trustedCheckout,
       // All configured-table submissions participate, including older clients.
       seatingProtocol: true,
     }),

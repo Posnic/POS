@@ -2782,6 +2782,20 @@ describe('SalesService', () => {
   });
 
   // ── pass-through delegations ──────────────────────────────────────────────
+  test('checkout authority defaults off and can only come from server options', async () => {
+    const payload = { trustedCheckout: true, payment_status: 'paid' };
+    salesRepository.createOnlineOrder = jest.fn().mockResolvedValue({ status: true });
+    await salesService.createOnlineOrder(payload);
+    expect(salesRepository.createOnlineOrder).toHaveBeenLastCalledWith(
+      payload,
+      expect.objectContaining({ trustedCheckout: false })
+    );
+    await salesService.createOnlineOrder(payload, { trustedCheckout: true });
+    expect(salesRepository.createOnlineOrder).toHaveBeenLastCalledWith(
+      payload,
+      expect.objectContaining({ trustedCheckout: true })
+    );
+  });
 
   describe('createSale', () => {
     test('delegates to repository.create', async () => {

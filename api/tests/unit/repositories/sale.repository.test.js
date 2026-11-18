@@ -1286,6 +1286,85 @@ describe('SalesRepository', () => {
   });
 
   describe('createOnlineOrder', () => {
+    test.each(['paid', 'completed', ' PAID ', 'cash'])(
+      'public orders cannot claim payment or a manual discount (%s)',
+      async (payment_status) => {
+        collections.branches = mkCol();
+        collections.branches.findOne.mockResolvedValue({
+          _id: FAKE_BRANCH,
+          name: 'Main',
+          online_ordering: { store_id: 'SHOP1', mode: 'order' },
+        });
+        collections.sales = mkCol();
+        collections.sales.insertOne.mockResolvedValue({ insertedId: FAKE_ID });
+        collections.items = mkCol();
+        collections.items.findOne.mockResolvedValue({
+          _id: FAKE_ITEM,
+          branch_id: FAKE_BRANCH,
+          name: 'Test',
+          selling_price: 100,
+          tax: 0,
+          tax_type: 'exclusive',
+        });
+        const result = await salesRepository.createOnlineOrder({
+          branch: FAKE_BRANCH,
+          items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+          payment_status,
+          kiosk_discount_amount: 99999,
+          kiosk_discount_description: 'Forged discount',
+          trustedCheckout: true,
+          staffOrder: true,
+        });
+        expect(result.status).toBe(true);
+        const saved = collections.sales.insertOne.mock.calls[0][0];
+        expect(saved).toMatchObject({
+          payment_status: 'Unpaid',
+          total: 100,
+          extra_discount: 0,
+          discount: 0,
+          discount_description: '',
+        });
+        expect(result.data.payment_status).toBe('Unpaid');
+      }
+    );
+
+    test('guarded checkout retains payment and manual discount support', async () => {
+      collections.branches = mkCol();
+      collections.branches.findOne.mockResolvedValue({
+        _id: FAKE_BRANCH,
+        name: 'Main',
+        online_ordering: { store_id: 'SHOP1', mode: 'order' },
+      });
+      collections.sales = mkCol();
+      collections.sales.insertOne.mockResolvedValue({ insertedId: FAKE_ID });
+      collections.items = mkCol();
+      collections.items.findOne.mockResolvedValue({
+        _id: FAKE_ITEM,
+        branch_id: FAKE_BRANCH,
+        name: 'Test',
+        selling_price: 100,
+        tax: 0,
+        tax_type: 'exclusive',
+      });
+      const result = await salesRepository.createOnlineOrder(
+        {
+          branch: FAKE_BRANCH,
+          items: [{ item_id: FAKE_ITEM, item_quantity: 1 }],
+          payment_status: 'paid',
+          kiosk_discount_amount: 10,
+          kiosk_discount_description: 'Manager discount',
+        },
+        { trustedCheckout: true }
+      );
+      expect(result.status).toBe(true);
+      expect(collections.sales.insertOne.mock.calls[0][0]).toMatchObject({
+        payment_status: 'Paid',
+        total: 90,
+        extra_discount: 10,
+        discount_description: 'Manager discount',
+      });
+    });
+
     test.each([
       [true, 95, 0.5],
       [false, 94.5, 0],

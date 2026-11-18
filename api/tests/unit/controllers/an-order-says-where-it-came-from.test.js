@@ -77,6 +77,27 @@ describe('the door every handset uses', () => {
     return seen;
   };
 
+  test('public ordering cannot grant itself trusted checkout authority', async () => {
+    const publicController = require('../../../src/controllers/online-ordering.controller');
+    const req = aRequest({
+      branch: 'other-shop',
+      trustedCheckout: true,
+      staffOrder: true,
+      payment_status: 'paid',
+      kiosk_discount_amount: 99999,
+    });
+    req.params = { storeId: 'SHOP1' };
+    await publicController.createOrder(req, aResponse());
+    expect(seen.data.branch).toBe('SHOP1');
+    expect(seen.opts.trustedCheckout).not.toBe(true);
+    expect(seen.opts.staffOrder).not.toBe(true);
+  });
+
+  test('guarded staff and kiosk checkout passes authority outside the body', async () => {
+    const result = await place({ trustedCheckout: false, payment_status: 'paid' });
+    expect(result.opts.trustedCheckout).toBe(true);
+  });
+
   test('the address and the user agent come from the request', async () => {
     const { data } = await place({ branch: 'b1', items: [] });
 
