@@ -579,6 +579,7 @@
       "category": "public.app-category.business",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
+      "sign": "scripts/sign-mac-runtime.js",
       "entitlements": "builds/entitlements.mac.plist",
       "entitlementsInherit": "builds/entitlements.mac.plist",
       "target": [
@@ -686,6 +687,7 @@
   "devDependencies": {
     "@electron/asar": "^4.3.1",
     "7zip-bin": "^5.2.0",
+    "app-builder-lib": "26.15.3",
     "electron": "^43.7.8",
     "electron-builder": "^26.15.3",
     "husky": "^9.1.7",

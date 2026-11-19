@@ -21,6 +21,7 @@ const dependencyFiles = [
   path.join(rootDir, 'api', 'package-lock.json')
 ];
 const forceRebuild = process.argv.includes('--force');
+if (process.platform === 'darwin') require('./prepare-mac-canvas').prepareMacCanvas(rootDir);
 
 /*
  * Leave out what a running application never opens.
@@ -126,6 +127,7 @@ const DEV_EXCLUDE = DEV_DROP.map((name) => `-x!${name}`);
 function createFingerprint() {
   const hash = crypto.createHash('sha256');
   hash.update('posnic-api-runtime-v2-validated');
+  if (process.platform === 'darwin') hash.update('mac-canvas-both-architectures-v1');
   hash.update(process.platform);
   hash.update(process.arch);
   hash.update(process.versions.modules || '');
