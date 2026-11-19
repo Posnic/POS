@@ -315,8 +315,8 @@
                 content += '</tbody></table>';
             } else if (b.type === 'totals') {
                 content = '<div class="rd-totals">' + (b.taxDisplay === 'hidden' ? '' : pair('Subtotal', money(data.items_subtotal)));
-                if (Number(data.discount)) content += pair('Discount', money(-Number(data.discount)));
-                if (Number(data.sale_extra_discount)) content += pair('Extra discount', money(-Number(data.sale_extra_discount)));
+                var discount = (Number(data.discount) || 0) + (Number(data.sale_extra_discount) || 0);
+                if (discount) content += pair('Discount', money(-discount));
                 var igst = items.reduce(function (n, i) { return n + Number(i.igst_tax || 0); }, 0);
                 var cgst = items.reduce(function (n, i) { return n + Number(i.cgst_tax || 0); }, 0);
                 var sgst = items.reduce(function (n, i) { return n + Number(i.sgst_tax == null ? i.cgst_tax || 0 : i.sgst_tax); }, 0);

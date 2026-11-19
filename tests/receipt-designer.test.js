@@ -1733,3 +1733,14 @@ test('foreign saved receipt layouts suppress HSN while retaining normal country 
   assert.equal($('[data-prop="hsn"]').length,1);
   dom.window.close();
 });
+
+test('saved bill-level discount prints as Discount in thermal and sheet layouts', () => {
+    const { dom, engine, sale, $ } = setup();
+    for (const format of ['80','a4']) {
+        const text = $('<div>').html(engine.render({...sale, discount:0, sale_extra_discount:1314, round_off:0}, format, false)).text();
+        assert.match(text, /Discount/);
+        assert.match(text, /1,?314/);
+        assert.doesNotMatch(text, /Extra discount|Adjustments|Round Off/i);
+    }
+    dom.window.close();
+});

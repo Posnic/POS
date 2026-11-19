@@ -702,7 +702,7 @@ function buildBillPayload(sale = {}, branch = {}, options = {}) {
             (c.source === 'room' && Number(c.percent) > 0 ? ` (${Number(c.percent)}%)` : ''),
           amount: num(c.amount),
         })),
-    discount: num(sale.discount),
+    discount: allocation ? num(sale.discount) : num(sale.discount) + num(sale.sale_extra_discount),
     roundOff: num(sale.round_off || sale.sales_round_off),
     total: num(sale.sales_total != null ? sale.sales_total : sale.total),
 
@@ -804,7 +804,7 @@ function receiptDocument(sale, branch, bill) {
   doc.receipt_line_rows = bill.items;
   doc.receipt_quote = sale.receipt_quote || null;
   doc.discount = bill.discount;
-  doc.sale_extra_discount = num(sale.sale_extra_discount);
+  doc.sale_extra_discount = 0; // Included in the bill discount above.
   doc.round_off = bill.roundOff;
   doc.charges = Array.isArray(sale.charges)
     ? sale.charges.map((c) => ({

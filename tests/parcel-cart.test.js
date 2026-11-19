@@ -1,0 +1,34 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const { JSDOM } = require('jsdom');
+const core = require('../order/assets/kiosk-core');
+test('customer basket carries per-unit parcel rates through quantity edits', () => {
+    const a = {id:'a', parcel_charge:5}, b = {id:'b', parcel_charge:2};
+    const first = core.changeCartQuantity([],a,'a',1).cart;
+    const both = core.changeCartQuantity(first,b,'b',1).cart;
+    assert.equal(core.parcelTotal(both),7);
+    assert.equal(core.parcelTotal(core.changeCartQuantity(both,b,'b',-1).cart),5);
+});
+test('till updates the parcel row on quantity and order type changes', () => {
+    const dom = new JSDOM('<table id="sales_new_items_table"><tbody></tbody></table><div id="sale_parcel_charge"><b></b></div>');
+    const $ = require('jquery')(dom.window);
+    const sale = {saleProcess:'counter', dineType:'Take away', charges:[], SaleTableLineItems:{a:{parcel_charge:5},b:{parcel_charge:2}}};
+    for(const id of ['a','b']) $('#sales_new_items_table tbody').append('<tr><td name="addSalesLineItemId">'+id+'</td><td><input id="touchsale_item_qty'+id+'" value="1"></td></tr>');
+    const file = fs.readFileSync(path.join(__dirname,'../frontend/static/script/js/modules/js/sales.js'),'utf8');
+    vm.runInNewContext(file.slice(file.indexOf('PosnicPro.sales.updateParcelCharge ='),file.indexOf('PosnicPro.sales.chargesTotal =')), {PosnicPro:{sales:sale},$});
+    sale.updateParcelCharge();
+    sale.updateParcelCharge();
+    assert.deepEqual(Array.from(sale.charges,c=>c.amount),[7]);
+    assert.equal($('#sale_parcel_charge b').text(),'7.00');
+    $('#touchsale_item_qtya').val(2);
+    sale.updateParcelCharge();
+    assert.equal(sale.charges[0].amount,12);
+    sale.dineType='Dine-in';
+    sale.updateParcelCharge();
+    assert.equal(sale.charges.length,0);
+    assert.equal($('#sale_parcel_charge').css('display'),'none');
+    dom.window.close();
+});

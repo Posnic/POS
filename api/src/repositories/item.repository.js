@@ -1746,6 +1746,7 @@ class ItemRepository extends BaseModel {
           variant_value: 1,
           variant_axis: 1,
           variant_parent_name: 1,
+          parcel_charge: 1,
           selling_price: 1,
           available_quantity: 1,
           track_inventory: 1,
@@ -1762,6 +1763,7 @@ class ItemRepository extends BaseModel {
         variant_value: r.variant_value || '',
         variant_axis: r.variant_axis || '',
         variant_parent_name: r.variant_parent_name || '',
+        parcel_charge: Number(r.parcel_charge) || 0,
         selling_price: r.selling_price || 0,
         available_quantity: r.available_quantity || 0,
         track_inventory: r.track_inventory === true,
@@ -1900,6 +1902,11 @@ class ItemRepository extends BaseModel {
         id
       );
 
+      if (
+        data.parcel_charge !== undefined &&
+        (!Number.isFinite(Number(data.parcel_charge)) || Number(data.parcel_charge) < 0)
+      )
+        return { status: false, message: 'Enter a valid non-negative parcel charge.' };
       const updateData = {
         branch_id: branchObjectId,
         branch_name: branchName,
@@ -1941,6 +1948,7 @@ class ItemRepository extends BaseModel {
         tax_fields: taxFields,
         mrp_price: parseFloat(data.mrp_price) || 0,
         company_price: parseFloat(data.company_price) || 0,
+        ...(data.parcel_charge !== undefined ? { parcel_charge: Number(data.parcel_charge) } : {}),
         selling_price: parseFloat(data.selling_price) || 0,
         available_quantity: parseFloat(data.available_quantity) || 0,
         image: (data.cover_image || '').trim(),
@@ -3075,6 +3083,7 @@ class ItemRepository extends BaseModel {
               name: 1,
               default_language: 1,
               translations: 1,
+              parcel_charge: 1,
               selling_price: 1,
               open_price: 1,
               mrp_price: 1,
@@ -3115,6 +3124,7 @@ class ItemRepository extends BaseModel {
         item_id: item._id?.toString?.() || '',
         item_name: item.name || '',
         ...itemText.snapshot(item),
+        parcel_charge: Number(item.parcel_charge) || 0,
         selling_price: item.selling_price || 0,
         open_price: item.open_price === true,
         mrp_price: item.mrp_price || 0,
@@ -3314,6 +3324,7 @@ class ItemRepository extends BaseModel {
         selling_units: item.selling_units || [],
         stock_locations: require('../helpers/stock-locations').read(item),
         ...itemText.snapshot(item),
+        parcel_charge: Number(item.parcel_charge) || 0,
         selling_price: item.selling_price || 0,
         itemid: item.itemid || '',
         available_quantity: String(item.available_quantity || 0),
@@ -3616,6 +3627,7 @@ class ItemRepository extends BaseModel {
         item_id: item._id?.toString() || '',
         item_name: item.name || '',
         ...itemText.snapshot(item),
+        parcel_charge: Number(item.parcel_charge) || 0,
         selling_price: item.selling_price || 0,
         item_code: item.itemid || '',
         item_unit: item.unit || 'qty',
@@ -3704,6 +3716,7 @@ class ItemRepository extends BaseModel {
         item_id: item._id?.toString() || '',
         item_name: item.name || '',
         ...itemText.snapshot(item),
+        parcel_charge: Number(item.parcel_charge) || 0,
         selling_price: item.selling_price || 0,
         item_code: item.itemid || '',
         item_unit: item.unit || 'qty',
@@ -3974,6 +3987,7 @@ class ItemRepository extends BaseModel {
           item_id: item._id?.toString() || '',
           item_name: item.name || '',
           ...itemText.snapshot(item),
+          parcel_charge: Number(item.parcel_charge) || 0,
           selling_price: item.selling_price || 0,
           itemid: item.itemid || '',
           available_quantity: String(item.available_quantity || 0),
@@ -4052,6 +4066,7 @@ class ItemRepository extends BaseModel {
         ...itemText.snapshot(item),
         discount_amount: item.discount_amount || 0,
         discount_percentage: item.discount_percentage || 0,
+        parcel_charge: Number(item.parcel_charge) || 0,
         selling_price: item.selling_price || 0,
         category_name: item.category_name || '',
         image: item.image || DEFAULTS.IMAGE,
@@ -4248,6 +4263,7 @@ class ItemRepository extends BaseModel {
             default_language: 1,
             translations: 1,
             category_name: 1,
+            parcel_charge: 1,
             selling_price: 1,
             channel_off: 1,
             channel_hours: 1,
@@ -4605,6 +4621,7 @@ class ItemRepository extends BaseModel {
             translations: 1,
             description: 1,
             image: 1,
+            parcel_charge: 1,
             selling_price: 1,
             discount_amount: 1,
             discount_percentage: 1,
@@ -5217,6 +5234,7 @@ class ItemRepository extends BaseModel {
                    neither ever reached it - the menu had them and the page
                    people actually order from did not. */
                 diet: '$diet',
+                parcel_charge: '$parcel_charge',
                 prep_minutes: '$prep_minutes',
                 /* What is on the plate and what is in it. Folded into
                    facts and CLAIMS below and do not travel raw. */
@@ -5877,6 +5895,7 @@ class ItemRepository extends BaseModel {
         id: item._id?.toString() || '',
         name: item.name || '',
         ...itemText.snapshot(item),
+        parcel_charge: Number(item.parcel_charge) || 0,
         selling_price: item.selling_price || 0,
         category_id: item.category_id?.toString() || '',
         category_name: item.category_name || '',
@@ -6506,6 +6525,7 @@ class ItemRepository extends BaseModel {
         item_id: item._id?.toString() || '',
         item_name: item.name || '',
         ...itemText.snapshot(item),
+        parcel_charge: Number(item.parcel_charge) || 0,
         selling_price: item.selling_price || 0,
         itemid: item.itemid || '',
         available_quantity: String(item.available_quantity || 0),

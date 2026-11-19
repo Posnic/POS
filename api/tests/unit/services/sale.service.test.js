@@ -913,6 +913,25 @@ describe('SalesService', () => {
     });
   });
   describe('Additional charges in ordinary checkout', () => {
+    test('counter preview and final payment use the menu parcel rate and quantity', async () => {
+      mockItemRepositoryInstance.findItemById.mockResolvedValue(makeItemDoc({ parcel_charge: 5 }));
+      mockCustomerRepositoryInstance.findById.mockResolvedValue({ balance: 0 });
+      const data = makeSaleData({
+        dine_type: 'Take away',
+        sales_total: '210',
+        multi_payment: { Cash: 210 },
+        charges: [{ source: 'parcel', name: 'Parcel Charge', amount: 100 }],
+      });
+      const preview = await salesService.previewSale(data, makeContext());
+      expect(preview.data.header.salesTotalForDoc).toBe(210);
+      await salesService.processSale(data, '', 'Add', makeContext());
+      const saved = salesRepository.create.mock.calls[0][0];
+      expect(saved.charges).toEqual([
+        expect.objectContaining({ name: 'Parcel Charge', amount: 10 }),
+      ]);
+      expect(saved.items).toHaveLength(1);
+      expect(saved.items[0].parcel_charge).toBe(5);
+    });
     test.each([
       [0, 'price', [{ name: 'Parcel', amount: 20, taxed: false }], 220],
       [10, 'price', [{ name: 'Parcel', amount: 20, taxed: false }], 210],

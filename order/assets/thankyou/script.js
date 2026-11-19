@@ -166,6 +166,11 @@ async function renderAndPrint() {
     $("#discount").text(`-₹${receiptData.discount.toFixed(2)}`);
     $("#tax").text(`₹${receiptData.tax.toFixed(2)}`);
     /* The fee for the way it travelled, when there was one. */
+    const parcel = (receiptData.charges || []).find(c => c.source === 'parcel');
+    if (parcel) {
+        $("#parcel-amount").text(`₹${Number(parcel.amount).toFixed(2)}`);
+        $("#parcel-row").prop("hidden", false);
+    }
     if (Number(receiptData.delivery_fee) > 0) {
         const how = String(receiptData.fulfilment || localStorage.getItem("order_fulfilment") || "");
         $("#fee-label").text(how === "delivery" ? "Delivery" : how === "dine_in" ? "Service" : "Packing");

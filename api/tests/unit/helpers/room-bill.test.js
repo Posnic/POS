@@ -191,3 +191,54 @@ test('legacy combined tax and untaxed room bills do not acquire extra tax', () =
   untaxed.tax = 50;
   expect(taxRows(untaxed, {}).reduce((sum, row) => sum + row.amount, 0)).toBe(50);
 });
+
+test.each([
+  [100, 10, 4.5, 0, 94.5],
+  [8760, 1314, 0, 438, 7884],
+])(
+  'keeps bill discount separate on a %i subtotal and its guest receipt',
+  (subtotal, discount, service, tax, total) => {
+    const saved = {
+      _id: 'test-sale',
+      sales_sub_total: subtotal,
+      sales_total: total,
+      discount: 0,
+      sale_extra_discount: discount,
+      tax,
+      round_off: 0,
+      items: [
+        {
+          item_name: 'Food',
+          item_quantity: 1,
+          item_price: subtotal,
+          item_base_price: subtotal,
+          total_amount: subtotal + tax,
+          item_tax: tax,
+          tax_components: tax
+            ? [
+                { name: 'CGST', amount: tax / 2 },
+                { name: 'SGST', amount: tax / 2 },
+              ]
+            : [],
+        },
+      ],
+      charges: service ? [{ source: 'room', name: 'Room service charge', amount: service }] : [],
+    };
+    const bill = buildBillPayload(saved, india);
+    expect(bill).toMatchObject({ discount, roundOff: 0, total });
+    expect(receiptDocument(saved, india, bill)).toMatchObject({
+      discount,
+      sale_extra_discount: 0,
+      round_off: 0,
+    });
+    const snapshot = require('../../../src/services/guest-bill.service').snapshotFrom(
+      [saved],
+      india,
+      '1'
+    );
+    expect(snapshot.lines[0].components.find((c) => c.key === 'discount').minor).toBe(
+      -discount * 100
+    );
+    expect(snapshot.lines[0].components.find((c) => c.key === 'adjustment').minor).toBe(0);
+  }
+);

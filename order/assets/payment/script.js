@@ -235,8 +235,14 @@ function paintCharges() {
     const box = document.getElementById("pay-charges");
     if (!box) return { fee: 0, allowed: true, short: 0 };
     const charge = typeof chargeFor === "function" ? chargeFor(payState.chosen, payState.subtotal) : { fee: 0, allowed: true, short: 0, toFree: 0, waived: false, minimum: 0 };
+    const parcel = ['takeaway', 'pickup'].includes(payState.chosen) ? payState.parcelAmount || 0 : 0;
+    const parcelRow = document.getElementById("pay-parcel-row");
+    if (parcelRow) {
+        parcelRow.hidden = !parcel;
+        parcelRow.lastElementChild.textContent = money(parcel);
+    }
     const hasFee = charge.fee > 0 || charge.waived;
-    box.hidden = !(hasFee || !charge.allowed);
+    box.hidden = !(hasFee || parcel > 0 || !charge.allowed);
     const sub = document.getElementById("pay-subtotal");
     if (sub) sub.textContent = money(payState.subtotal);
     const feeRow = document.getElementById("pay-fee-row");
@@ -261,7 +267,7 @@ function paintCharges() {
 
 function paintProceed() {
     const charge = paintCharges();
-    payState.total = Math.round((payState.subtotal + (charge.allowed ? charge.fee : 0)) * 100) / 100;
+    payState.total = Math.round((payState.subtotal + (charge.allowed ? charge.fee + parcel : 0)) * 100) / 100;
     payState.allowed = charge.allowed;
     const button = document.getElementById("proceed-btn");
     if (button) {
@@ -859,6 +865,7 @@ function showAlert(message) {
     payState.cash = cashEnabled;
     payState.offline = offlineAllowed;
     payState.phoneRequired = showPhoneInput;
+    payState.parcelAmount = KioskCore.parcelTotal(cartLines);
     payState.subtotal = totalAmount;
     payState.total = totalAmount;
     payState.items = cartLines.reduce((sum, line) => sum + (Number(line.quantity) || 0), 0);
@@ -884,7 +891,7 @@ function showAlert(message) {
     const firstCharge = typeof chargeFor === "function" ? chargeFor(choices[0], totalAmount) : { fee: 0, allowed: true };
     const settled = choices.length === 1 && (choices[0] !== "dine_in" || payState.tableFromCode) && choices[0] !== "delivery"
         /* A fee or a minimum is something to be told about before paying. */
-        && firstCharge.allowed && !(firstCharge.fee > 0);
+        && firstCharge.allowed && !(firstCharge.fee > 0) && !(['takeaway', 'pickup'].includes(choices[0]) && payState.parcelAmount > 0);
     const needsType = !settled && !(payState.chosen && choices.includes(payState.chosen));
     const oneWayToPay = !(razorpayEnabled && offlineAllowed);
 

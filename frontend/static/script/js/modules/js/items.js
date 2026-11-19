@@ -1051,6 +1051,7 @@ PosnicPro.items = {
                item saved without one threw here. */
             category_name: PosnicPro.items.selectAttr('#items_category', 'data-category-name'),
             cover_image: $('#item_logo').val(),
+            parcel_charge: Number($('#items_parcel_charge').val() || 0),
             inventory: $('#item_track_inventory').is(':checked'),
             ecommerce: $('#item_ecommerce').is(':checked'),
             show_on_menu: $('#item_show_on_menu').is(':checked'),
@@ -1347,6 +1348,7 @@ PosnicPro.items = {
                     category_id: PosnicPro.items.selectAttr('#items_category', 'data-category-id'),
                     category_name: PosnicPro.items.selectAttr('#items_category', 'data-category-name'),
                     cover_image: $('#item_logo').val(),
+                    parcel_charge: Number($('#items_parcel_charge').val() || 0),
                     inventory: $('#item_track_inventory').is(':checked'),
                     ecommerce: $('#item_ecommerce').is(':checked'),
                     show_on_menu: $('#item_show_on_menu').is(':checked'),
@@ -1910,6 +1912,7 @@ PosnicPro.items = {
                         $('<div>').html(data.description).text() || data.description
                     );
                 }
+                $('#items_parcel_charge').val(data.parcel_charge || 0);
                 (data.track_inventory === true) ? $('#item_track_inventory').prop('checked', true) : $('#item_track_inventory').prop("checked", false);
                 (data.ecommerce === true) ? $('#item_ecommerce').prop('checked', true) : $('#item_ecommerce').prop("checked", false);
                 /* Absent means shown: an item saved before this field existed
@@ -2861,6 +2864,7 @@ PosnicPro.items = {
                     $('#hsn_tax').hide();
                     $('#default_tax').show();
                 }
+                $('#items_parcel_charge').val(data.parcel_charge || 0);
                 (data.track_inventory === true) ? $('#item_track_inventory').prop('checked', true) : $('#item_track_inventory').prop("checked", false);
                 (data.ecommerce === true) ? $('#item_ecommerce').prop('checked', true) : $('#item_ecommerce').prop("checked", false);
                 /* Absent means shown: an item saved before this field existed

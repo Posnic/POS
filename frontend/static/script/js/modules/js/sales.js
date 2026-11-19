@@ -181,6 +181,7 @@ PosnicPro.sales = {
             var value = $(this).val() || 'Dine-in';
             PosnicPro.sales.dineType = value;
             $('#sale_dine_type').val(value);
+            PosnicPro.sales.calculation.extraDiscoundCalculation();
         });
 
         PosnicPro.sales.recentMenu.recentSalesTabDetails();
@@ -1770,6 +1771,7 @@ PosnicPro.sales = {
         PosnicPro.sales.SaleTableLineItems[id] = {
             item_id: id,
             product_id: params.product_id || params.item_id || id,
+            parcel_charge: Number(params.parcel_charge) || 0,
             item_quantity: item_quantity,
             unit_conversion: params.unit_conversion,
             addSalesLineDiscount: addSalesLineDiscount,
@@ -3989,6 +3991,7 @@ PosnicPro.kotorder = {
             var dineType = $(this).val();
             PosnicPro.kotorder.kotOrderType = dineType;
 
+            PosnicPro.sales.calculation.extraDiscoundCalculation();
             // Update label styles: active option gets solid btn-info, inactive
             // stays as btn-outline-info so the selection is clearly visible.
             if (dineType === 'Take away') {
@@ -7052,6 +7055,22 @@ PosnicPro.sales.taxFeatureOn = function () {
     return PosnicPro.local.get('default_tax_enable_disable') === 'true';
 };
 PosnicPro.sales.charges = [];
+PosnicPro.sales.updateParcelCharge = function () {
+    var sale = PosnicPro.sales;
+    if (sale.paymentOnlyMode) return;
+    var type = sale.saleProcess === 'KOT' && PosnicPro.kotorder ? PosnicPro.kotorder.kotOrderType : sale.dineType;
+    var minor = 0;
+    if (/^(take[ _-]?away|parcel|pick[ _-]?up)$/i.test(type || '')) {
+        $('#sales_new_items_table tbody tr').each(function () {
+            var id = $(this).find('[name="addSalesLineItemId"]').text();
+            var line = (sale.SaleTableLineItems || {})[id];
+            if (line) minor += Math.round((line.parcel_charge || 0) * (Number($('#touchsale_item_qty' + id).val()) || 0) * 100);
+        });
+    }
+    sale.charges = (sale.charges || []).filter(function (charge) { return charge.source !== 'parcel'; });
+    if (minor > 0) sale.charges.push({name: 'Parcel Charge', source: 'parcel', amount: minor / 100, taxed: false, tax_amount: 0});
+    $('#sale_parcel_charge').toggle(minor > 0).find('b').text((minor / 100).toFixed(2));
+};
 PosnicPro.sales.chargesTotal = function () {
     var t = 0;
     (PosnicPro.sales.charges || []).forEach(function (c) { t += Number(c.amount) || 0; });
@@ -7122,6 +7141,7 @@ PosnicPro.sales.renderCharges = function () {
     try { rate = PosnicPro.sales.chargeTax.rate(); } catch (e) { rate = 0; }
     var html = '';
     list.forEach(function (c, i) {
+        if (c.source === 'parcel') { $('#sale_parcel_charge').show().find('b').text(Number(c.amount).toFixed(2)); return; }
         // keep the payload fields current: the sale save sends these objects as-is
         c.tax_amount = PosnicPro.sales.chargeTax.amountFor(c);
         if (c.source !== 'outlet' && PosnicPro.sales.paymentOnlyMode !== true) c.tax_name = c.taxed === true ? PosnicPro.sales.chargeTax.taxName() : '';
@@ -7374,6 +7394,7 @@ PosnicPro.sales.calculation = {
         // named charges join the payable after discounts, before round-off;
         // a taxed charge brings its tax with it
         if (PosnicPro.billingoutlets) PosnicPro.billingoutlets.charge(outputVal);
+        PosnicPro.sales.updateParcelCharge();
         var chargesSum = PosnicPro.sales.chargesTotal();
         var chargesTax = PosnicPro.sales.chargesTax();
         if (chargesSum > 0) { outputVal = outputVal + chargesSum + chargesTax; }
@@ -7589,6 +7610,7 @@ PosnicPro.sales.setDefaults = function () {
     // A new customer's bill must not inherit the previous sale's charges.
     PosnicPro.sales.charges = [];
     PosnicPro.sales._chargeTaxShown = false;
+    $('#sale_parcel_charge').hide();
     $('#sale_charges_list').empty();
     $('#sale_charge_entry').remove();
 

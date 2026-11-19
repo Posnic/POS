@@ -827,6 +827,9 @@ const processSale = async (
         // Mongoose Schema Required Fields (Node-native)
         item: new ObjectId(itemId),
         name: document.name,
+        parcel_charge: previousLine
+          ? Number(previousLine.parcel_charge) || 0
+          : Number(document.parcel_charge) || 0,
         quantity: itemQuantity,
         ...require('../utils/kitchen-amount').forSaleItem(document, item, sellingPrice),
         unit_price:
@@ -962,13 +965,20 @@ const processSale = async (
     // Stop before numbering, stock, payment or sale writes. This internal
     // preview uses the exact checkout tax and header calculations above/below.
     const manualCharges = await normalizeSaleCharges(
-      Array.isArray(data.charges) && outlet
-        ? data.charges.filter((c) => c?.source !== 'outlet')
+      Array.isArray(data.charges)
+        ? data.charges.filter((c) => c?.source !== 'parcel' && (!outlet || c?.source !== 'outlet'))
         : data.charges,
       (existingSale?.charges || []).filter((c) => c.source !== 'outlet'),
       context
     );
-    data = { ...data, charges: manualCharges };
+    data = {
+      ...data,
+      charges: require('./parcel-charge').withParcelCharge(
+        manualCharges,
+        data.dine_type ?? existingSale?.dine_type,
+        itemsale
+      ),
+    };
     if (outlet) {
       const base = calculateSaleHeader(data, sale_tot_amount, {
         ...context,
