@@ -39,7 +39,7 @@ function reconcile(incoming, existing) {
   }
   const result = incoming.map((line) => {
     if (id(line)) {
-      const saved = existing.find((row) => id(row) === id(line));
+      const saved = (existing || []).find((row) => id(row) === id(line));
       if (saved && product(saved) !== product(line)) throw new Error('order_line_product_changed');
       return { ...line };
     }
