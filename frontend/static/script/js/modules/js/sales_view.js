@@ -285,7 +285,7 @@ PosnicPro.sales.view = {
         }
         let extraDiscount = '';
         if (data.sale_extra_discount !== 0 && data.sale_extra_discount !== null) {
-            extraDiscount = '<td><lang class="lang_extra_discount_2">Extra Discount :</lang></td>' +
+            extraDiscount = '<td><lang class="lang_discount_title">Discount</lang></td>' +
                 '<td class="pull-right">' + currency + "&nbsp;" + '-' + '<span class="number">' + data.sale_extra_discount + '</span></td>';
         }
         $('#extra_discount_view').html(extraDiscount);
@@ -505,7 +505,7 @@ PosnicPro.sales.view = {
         }
         let returnExtraDiscount = '';
         if (data.return_extra_discount !== 0 && data.return_extra_discount !== null) {
-            returnExtraDiscount = '<td><lang class="lang_extra_discount_2">Extra Discount :</lang></td>' +
+            returnExtraDiscount = '<td><lang class="lang_discount_title">Discount</lang></td>' +
                 '<td class="pull-right">' + currency + '<span class="number">' + "&nbsp;" + '-' + data.return_extra_discount + '</span></td>';
         }
         $('#return_extra_discount_view').append(returnExtraDiscount);
@@ -1142,12 +1142,12 @@ PosnicPro.sales.view = {
                 let extraDiscStandardPrint = '';
                 if (extraDisValue !== 0) {
                     extraDiscPrintView =
-                        '<td class="print-deatils-size-family print-footer-align"> Extra-Discount:  &nbsp; &nbsp; </td>' +
+                        '<td class="print-deatils-size-family print-footer-align"> Discount:  &nbsp; &nbsp; </td>' +
                         '<td class="print-deatils-size-family print-footer-align">' +
                         currency + '&nbsp; - <span class="number">' + extraDisValue + '</span></td>';
                     extraDiscStandardPrint =
                         '<div class="col-md-8 col-sm-8 col-xs-6">' +
-                        '<div class="invoice-footer-value"><lang class="lang_extra_disc_2">Extra-Disc</lang></div>' +
+                        '<div class="invoice-footer-value"><lang class="lang_discount_title">Discount</lang></div>' +
                         '</div>' +
                         '<div class="col-md-4 col-sm-4 col-xs-6">' +
                         '<div class="invoice-footer-value invoice-payment text-dark">' + currency + " &nbsp;" + '-' + extraDisValue + '</div>' +
@@ -1233,12 +1233,12 @@ PosnicPro.sales.view = {
                     let extraDiscStandardPrint = '';
                     if (extraDisValue !== 0) {
                         extraDiscPrintView =
-                            '<td class="print-deatils-size-family print-footer-align"> Extra-Discount:     </td>' +
+                            '<td class="print-deatils-size-family print-footer-align"> Discount:     </td>' +
                             '<td class="print-deatils-size-family print-footer-align">' +
                             currency + '&nbsp; - <span class="number">' + extraDisValue + '</span></td>';
                         extraDiscStandardPrint =
                             '<div class="col-md-8 col-sm-8 col-xs-6">' +
-                            '<div class="invoice-footer-value"><lang class="lang_extra_disc_2">Extra-Disc</lang></div>' +
+                            '<div class="invoice-footer-value"><lang class="lang_discount_title">Discount</lang></div>' +
                             '</div>' +
                             '<div class="col-md-4 col-sm-4 col-xs-6">' +
                             '<div class="invoice-footer-value invoice-payment text-dark">' + currency + " &nbsp;" + '-' + extraDisValue + '</div>' +
@@ -1645,7 +1645,7 @@ PosnicPro.sales.view = {
                         let extraDisValue = data.sale_extra_discount !== null ? data.sale_extra_discount : 0;
                         let extraDiscPrintView = '';
                         if (extraDisValue !== 0) {
-                            extraDiscPrintView = '<td class="print-deatils-size-family print-footer-align"> Extra-Discount:     </td>' +
+                            extraDiscPrintView = '<td class="print-deatils-size-family print-footer-align"> Discount:     </td>' +
                                 '<td class="print-deatils-size-family print-footer-align">' +
                                 currency + '&nbsp; - <span class="number">' + extraDisValue + '</span></td>';
                         }
@@ -1743,7 +1743,7 @@ PosnicPro.sales.view = {
                         if (extraDisValue !== 0) {
                             extraDiscStandardPrint =
                                 '<div class="col-md-8 col-sm-8 col-xs-6">' +
-                                '<div class="invoice-footer-value"><lang class="lang_extra_disc_2">Extra-Disc</lang></div>' +
+                                '<div class="invoice-footer-value"><lang class="lang_discount_title">Discount</lang></div>' +
                                 '</div>' +
                                 '<div class="col-md-4 col-sm-4 col-xs-6">' +
                                 '<div class="invoice-footer-value invoice-payment text-dark">' + currency + " &nbsp;" + '-' + extraDisValue + '</div>' +
@@ -2338,12 +2338,12 @@ PosnicPro.sales.view = {
                 let extraDiscStandardPrint = '';
                 if (extraDisValue !== 0) {
                     extraDiscPrintView =
-                        '<td class="print-deatils-size-family print-footer-align"> Extra-Discount:     </td>' +
+                        '<td class="print-deatils-size-family print-footer-align"> Discount:     </td>' +
                         '<td class="print-deatils-size-family print-footer-align">' +
                         currency + '&nbsp; - <span class="number">' + extraDisValue + '</span></td>';
                     extraDiscStandardPrint =
                         '<div class="col-md-8 col-sm-8 col-xs-6">' +
-                        '<div class="invoice-footer-value"><lang class="lang_extra_disc_2">Extra-Disc</lang></div>' +
+                        '<div class="invoice-footer-value"><lang class="lang_discount_title">Discount</lang></div>' +
                         '</div>' +
                         '<div class="col-md-4 col-sm-4 col-xs-6">' +
                         '<div class="invoice-footer-value invoice-payment text-dark">' + currency + "&nbsp;" + '-' + extraDisValue + '</div>' +

@@ -38,6 +38,7 @@ const saleItemSchema = new mongoose.Schema(
     },
     barcode: String,
     sku: String,
+    parcel_charge: { type: Number, min: 0 },
     quantity: {
       type: Number,
       required: true,
@@ -1026,6 +1027,7 @@ saleSchema.pre('save', async function () {
         item_discount: src.item_discount != null ? src.item_discount : 0,
         item_discount_percentage:
           src.item_discount_percentage != null ? src.item_discount_percentage : 0,
+        parcel_charge: Number(src.parcel_charge) || 0,
         item_quantity: src.item_quantity != null ? src.item_quantity : 0,
         item_available_quantity:
           src.item_available_quantity != null ? src.item_available_quantity : 0,

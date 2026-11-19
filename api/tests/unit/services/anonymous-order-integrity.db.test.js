@@ -117,3 +117,35 @@ test('checkout rejects missing or wrong keys; verified kiosk retains explicit pa
     extra_discount: 10,
   });
 });
+
+test('takeaway checkout prices parcel charges from the menu and persists only food as order lines', async () => {
+  const original = await db.collection('items').findOne({ _id: item });
+  const a = new ObjectId(),
+    b = new ObjectId();
+  await db.collection('items').insertMany([
+    { ...original, _id: a, name: 'Meal A', parcel_charge: 5 },
+    { ...original, _id: b, name: 'Meal B', parcel_charge: 2 },
+  ]);
+  const body = {
+    fulfilment: 'takeaway',
+    dine_type: 'Take away',
+    idempotencyKey: 'parcel-fee-test',
+    items: [
+      { item_id: String(a), item_quantity: 1, parcel_charge: 90 },
+      { item_id: String(b), item_quantity: 1 },
+    ],
+  };
+  const first = await post('/api/online-ordering/TESTSHOP/orders', body);
+  expect(first.status).toBe(200);
+  const saved = await db.collection('sales').findOne({ idempotency_key: 'parcel-fee-test' });
+  expect(saved.charges).toEqual([
+    expect.objectContaining({ name: 'Parcel Charge', amount: 7, source: 'parcel' }),
+  ]);
+  expect(saved.sales_total).toBe(207);
+  expect(saved.items.map((i) => i.item_name)).toEqual(['Meal A', 'Meal B']);
+  expect(saved.changes[0].items.map((i) => i.item_name)).toEqual(['Meal A', 'Meal B']);
+  expect((await post('/api/online-ordering/TESTSHOP/orders', body)).status).toBe(200);
+  expect(await db.collection('sales').countDocuments({ idempotency_key: 'parcel-fee-test' })).toBe(
+    1
+  );
+});

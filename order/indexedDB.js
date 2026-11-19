@@ -1296,6 +1296,7 @@ async function validateCartWithProducts(updatedProducts, renderUI = true) {
                     img: updatedProduct.img,
                     icon: updatedProduct.icon || "",
                     diet: updatedProduct.diet || "",
+                    parcel_charge: updatedProduct.parcel_charge,
                     price: updatedProduct.price,
                     tax_price: updatedProduct.tax_price,
                     /*
@@ -1461,6 +1462,10 @@ async function renderCart(cartData = null) {
         $("#bill-tax-row").prop("hidden", totalTax <= 0);
         $("#bill-items-row").prop("hidden", totalTax <= 0);
         $("#bill").toggleClass("bill-plain", totalTax <= 0);
+        const parcel = ["takeaway", "pickup"].includes(localStorage.getItem("order_fulfilment")) ? KioskCore.parcelTotal(cartData) : 0;
+        $("#bill-parcel-row").prop("hidden", !parcel);
+        $("#bill-parcel").text(money(parcel));
+        totalPrice += parcel;
         $("#bill-total").text(money(totalPrice));
         /*
          * THE SUMS ONLY WHERE THERE ARE SUMS.
@@ -1470,7 +1475,7 @@ async function renderCart(cartData = null) {
          * twice, in two shapes, on a screen that was otherwise half empty.
          * It earns its place the moment there is a breakdown to break down.
          */
-        $("#bill").prop("hidden", totalTax <= 0);
+        $("#bill").prop("hidden", totalTax <= 0 && !parcel);
 
         /*
          * WHERE IT IS GOING, at the moment of committing to it.
@@ -1908,6 +1913,7 @@ function catalogueItem(item, categoryName) {
         default_language: item.default_language || '',
         translations: Array.isArray(item.translations) ? item.translations : [],
         available_quantity: item.available_quantity || 0,
+        parcel_charge: Number(item.parcel_charge) || 0,
         price: parseFloat(item.final_price) || 0,
         discount_price: parseFloat(item.discount_price) || 0,
         tax_price: parseFloat(item.tax_price) || 0,

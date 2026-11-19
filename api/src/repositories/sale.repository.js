@@ -343,6 +343,7 @@ class SalesRepository {
       }
 
       const doc = { ...saleDoc };
+      doc.receipt_discount = require('../helpers/bill-payload').receiptDiscount(doc, doc);
       // Preserve exact transferred amounts before legacy display normalization
       // changes line aliases or derives totals from unit prices.
       const transferredBill = saleDoc.captain_transfer_allocation
@@ -8975,9 +8976,15 @@ class SalesRepository {
             data.room_charge_quote
           )
         : null;
+      const orderCharges = require('../services/parcel-charge').withParcelCharge(
+        roomCharge ? [roomCharge] : [],
+        fulfilment || dine_type,
+        saleItems
+      );
+      const parcelAmount = orderCharges.find((c) => c.source === 'parcel')?.amount || 0;
       const roomChargeTotal = roomCharge ? roomCharge.amount + roomCharge.tax_amount : 0;
       const rounded = require('../services/sale-header').roundSaleTotal(
-        round(afterCoupon + deliveryFee + roomChargeTotal),
+        round(afterCoupon + deliveryFee + roomChargeTotal + parcelAmount),
         branchDoc.roundOff,
         monetary.currencyDigits
       );
@@ -9255,7 +9262,7 @@ class SalesRepository {
         table_number: servicePoint.label || kiosk_table_no || '',
         table_id: staffRoom ? '' : kiosk_table_id || '',
         venue: deliverTo,
-        ...(roomCharge ? { charges: [roomCharge] } : {}),
+        ...(orderCharges.length ? { charges: orderCharges } : {}),
         venue_commission: venueCommission,
         delivery_fee: deliveryFee,
         person_count: person_count || 0,
@@ -9507,7 +9514,7 @@ class SalesRepository {
           subtotal,
           discount: round(itemDiscountTotal + discountAmt),
           tax: totalTax + (roomCharge?.tax_amount || 0),
-          ...(roomCharge ? { charges: [roomCharge] } : {}),
+          ...(orderCharges.length ? { charges: orderCharges } : {}),
           delivery_fee: deliveryFee,
           total: finalTotal,
           /* Echoed back so the confirmation screen can say "we will bring it
@@ -10769,7 +10776,7 @@ class SalesRepository {
               ),
               ...(await require('../services/sale-charges').normalizeSaleCharges(
                 Array.isArray(charges)
-                  ? charges.filter((c) => !['outlet', 'room'].includes(c?.source))
+                  ? charges.filter((c) => !['outlet', 'room', 'parcel'].includes(c?.source))
                   : charges,
                 savedCharges.filter((c) => c.source !== 'outlet'),
                 {
@@ -11271,6 +11278,9 @@ class SalesRepository {
         const nextLine = {
           ...previousLine,
           ...amounts,
+          parcel_charge: previousLine
+            ? Number(previousLine.parcel_charge) || 0
+            : Number(itemDoc.parcel_charge) || 0,
           item_id: productId,
           ...preparation,
           ...require('../utils/kitchen-amount').forSaleItem(itemDoc, item, pricing.selling_price),
@@ -11352,6 +11362,12 @@ class SalesRepository {
       }
       if (extraDiscountAmount > itemsSub) extraDiscountAmount = itemsSub;
 
+      if (!orderDoc.captain_transfer_allocation)
+        normalizedCharges = require('../services/parcel-charge').withParcelCharge(
+          normalizedCharges,
+          dineType || orderDoc.fulfilment || orderDoc.dine_type,
+          finalItems
+        );
       if (!orderDoc.captain_transfer_allocation)
         normalizedCharges = normalizedCharges.map((c) =>
           c.source === 'room'
@@ -11868,6 +11884,7 @@ class SalesRepository {
     return {
       line: {
         ...amounts,
+        parcel_charge: Number(itemDoc.parcel_charge) || 0,
         item_id: itemId,
         ...serviceLine.metadata(item),
         item_name: itemDoc.name || item.item_name || '',
@@ -12260,11 +12277,21 @@ class SalesRepository {
     const itemDiscount = round(lines.reduce((s, l) => s + Number(l.item_discount || 0), 0));
     const extra = Number((orderDoc && orderDoc.extra_discount) || 0);
     const food = round(lines.reduce((s, l) => s + lineTotalOf(l), 0) - extra);
-    const total = round(food + Number((orderDoc && orderDoc.delivery_fee) || 0));
+    const charges = require('../services/parcel-charge').withParcelCharge(
+      orderDoc?.charges,
+      orderDoc?.fulfilment || orderDoc?.dine_type,
+      lines
+    );
+    const total = round(
+      food +
+        Number(orderDoc?.delivery_fee || 0) +
+        charges.reduce((sum, c) => sum + Number(c.amount) + Number(c.tax_amount || 0), 0)
+    );
     return {
       subtotal,
       tax,
       total,
+      ...(charges.length || orderDoc?.charges ? { charges } : {}),
       discount: round(itemDiscount + extra),
       number_of_items: lines.reduce((s, l) => s + qtyOf(l), 0),
     };
@@ -12365,6 +12392,7 @@ class SalesRepository {
         $set: {
           items: kept,
           changes: log,
+          ...(totals.charges ? { charges: totals.charges } : {}),
           subtotal: totals.subtotal,
           sales_sub_total: totals.subtotal,
           items_subtotal: totals.subtotal,

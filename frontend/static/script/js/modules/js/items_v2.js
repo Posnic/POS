@@ -4,6 +4,8 @@
     function assess(f) {
         var tracked = f.kind !== 'service' && f.stock === 'tracked';
         var price = Number(f.price), quantity = Number(f.quantity), cost = Number(f.cost);
+        var parcel = Number(f.parcel || 0);
+        if (!Number.isFinite(parcel) || parcel < 0) return { error: 'Enter a parcel charge of zero or more.', field: 'iv2-parcel' };
         if (!String(f.name || '').trim()) return { error: 'Give your item a name.', field: 'iv2-name' };
         if (![price, cost].every(function (n) { return Number.isFinite(n) && n >= 0; })) return { error: 'Enter a valid price of zero or more.', field: 'iv2-price' };
         if (tracked && (!Number.isFinite(quantity) || quantity < 0)) return { error: 'Enter an opening stock quantity of zero or more.', field: 'iv2-quantity' };
@@ -14,7 +16,7 @@
     function payload(f) {
         var a = assess(f);
         if (a.error) throw new Error(a.error);
-        return { name: f.name.trim(), selling_price: a.price, company_price: Number(f.cost), available_quantity: a.quantity,
+        return { name: f.name.trim(), selling_price: a.price, parcel_charge: Number(f.parcel || 0), company_price: Number(f.cost), available_quantity: a.quantity,
             inventory: a.tracked, negative_stock: a.negative, item_kind: f.kind === 'service' ? 'service' : 'product', service_unit: 'fixed',
             tax_id: f.taxId || '', tax_name: f.taxName || '', tax: Number(f.taxRate) || 0, tax_type: f.taxType,
             category_id: f.categoryId || '', category_name: f.categoryName || '', barcode_id: f.barcode.trim(), sku_id: f.sku.trim(),
@@ -66,7 +68,7 @@
         var tax = document.getElementById('iv2-tax').selectedOptions[0];
         var category = document.getElementById('iv2-category').selectedOptions[0];
         var details = P.itemsV2Details.status();
-        return { name: value('iv2-name'), price: details.family && details.prices.length ? Math.min.apply(null, details.prices) : value('iv2-price'), cost: value('iv2-cost'), quantity: details.family && details.quantities.length ? Math.min.apply(null, details.quantities) : value('iv2-quantity'), kind: selected('iv2-kind'), stock: selected('iv2-stock'), zeroStock: selected('iv2-zero-stock'), confirmZero: document.getElementById('iv2-confirm-zero').checked, openPrice: details.openPrice, family: details.family,
+        return { name: value('iv2-name'), parcel: value('iv2-parcel'), price: details.family && details.prices.length ? Math.min.apply(null, details.prices) : value('iv2-price'), cost: value('iv2-cost'), quantity: details.family && details.quantities.length ? Math.min.apply(null, details.quantities) : value('iv2-quantity'), kind: selected('iv2-kind'), stock: selected('iv2-stock'), zeroStock: selected('iv2-zero-stock'), confirmZero: document.getElementById('iv2-confirm-zero').checked, openPrice: details.openPrice, family: details.family,
             taxId: taxReady && capabilities.tax ? value('iv2-tax') : '', taxName: capabilities.tax && tax && tax.dataset.name || '', taxRate: capabilities.tax && tax && tax.dataset.rate || 0, taxType: value('iv2-tax-type'), categoryId: value('iv2-category'), categoryName: category && category.dataset.name || '', barcode: value('iv2-barcode'), sku: value('iv2-sku'), description: value('iv2-description') };
     }
     function money(n) { return (P.local.get('currencySign') || '') + Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -320,7 +322,7 @@
             function set(id,v){var e=document.getElementById('iv2-'+id);if(e)e.value=v==null?'':v;}
             function choice(name,v){document.querySelectorAll('#items_v2 [name="iv2-'+name+'"]').forEach(function(e){e.checked=e.value===v;});}
             choice('kind',item.item_kind==='service'?'service':'product');choice('stock',item.track_inventory?'tracked':'untracked');choice('zero-stock',item.negative_stock?'negative':'later');
-            set('name',item.name);set('price',item.selling_price);set('cost',item.company_price);set('quantity',Math.max(0,Number(item.available_quantity)||0));set('sku',item.itemid);set('barcode',item.barcode_id);set('description',item.description);set('tax-type',item.tax_type||'inclusive');set('diet',item.diet);
+            set('name',item.name);set('price',item.selling_price);set('parcel',item.parcel_charge||0);set('cost',item.company_price);set('quantity',Math.max(0,Number(item.available_quantity)||0));set('sku',item.itemid);set('barcode',item.barcode_id);set('description',item.description);set('tax-type',item.tax_type||'inclusive');set('diet',item.diet);
             document.getElementById('iv2-confirm-zero').checked=Number(item.selling_price)===0;
             document.getElementById('iv2-orderable').checked=!!item.ecommerce;document.getElementById('iv2-menu').checked=item.show_on_menu!==false;
             function select(id,v,name,rate){var e=document.getElementById('iv2-'+id),o=new Option(name||'',String(v||''));o.dataset.name=name||'';o.dataset.rate=rate||0;e.add(o);e.value=String(v||'');}

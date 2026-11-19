@@ -16,6 +16,7 @@ function setup(status = 'Unpaid', payments = { Upi: 250 }) {
   win.PosnicPro = { local: { get: () => 'Rs.' }, configPaymentType: [{ payment_value: 'Upi' }], alert: (_type, message) => { win.lastError = message; }, sales: {
     extraDiscount: { sale_new_tot: 262.5 }, EditRecentSaleParams: { sales_total: 262.5, payment_status: status, multi_payment: payments }, paymentOnlyMode: true
   } };
+  win.eval(source.slice(source.indexOf('PosnicPro.sales.updateParcelCharge ='), source.indexOf('PosnicPro.sales.chargesTotal =')));
   for (const name of ['sub', 'paymentMethodEnabled', 'showPaymentMode', 'showMultiPaymentMode', 'getPaymentObject', 'payableCap', 'initPaymentValidation', 'openTenderModel']) {
     const start = source.indexOf('    ' + name + ': function');
     const end = source.indexOf('\n    },', start);

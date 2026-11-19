@@ -5,6 +5,10 @@
 })(typeof globalThis !== "undefined" ? globalThis : window, function createKioskCore() {
     const BRANCH_STORES = Object.freeze(["branch", "products", "cart", "images", "payment", "phonepe"]);
 
+    function parcelTotal(lines) {
+        return lines.reduce((sum, line) => sum + Math.round((Number(line.parcel_charge) || 0) * Number(line.quantity || 0) * 100), 0) / 100;
+    }
+
     function changeCartQuantity(cartData, product, productId, change) {
         const id = String(productId ?? "");
         const numericChange = Number(change) || 0;
@@ -24,6 +28,7 @@
                     translations: product.translations.filter(row => row.name).map(row => ({locale: row.locale, name: row.name})) } : {}),
                 img: product.img,
                 price: product.price,
+                ...(Number(product.parcel_charge) > 0 ? { parcel_charge: Number(product.parcel_charge) } : {}),
                 tax_price: product.tax_price,
                 /* Whether this dish takes a spice level. Carried onto the line
                    so the basket can offer the picker without going back to the
@@ -114,6 +119,7 @@
 
     return {
         BRANCH_STORES,
+        parcelTotal,
         changeCartQuantity,
         createSingleFlight,
         createPollingController
