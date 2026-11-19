@@ -439,3 +439,16 @@ for (const layout of ['80', '58', 'a4']) {
         dom.window.close();
     });
 }
+
+test('legacy thermal receipt sends one discount and zero rounding to the printer', () => {
+    const { dom, win, branch, data, preview } = till();
+    const html = preview.documentFor(branch, {...data, items_subtotal:8760, items_total:7884, discount:0,
+        sale_extra_discount:1314, round_off:0}, '80');
+    const raw = win.PosnicPro.receiptData(html);
+    assert.equal(raw.discount,1314);
+    assert.equal(Number(raw.roundOff),0);
+    const printed = require('../src/escpos-receipt').renderSale(raw).toString('latin1');
+    assert.match(printed,/Discount[^\n]*1,?314/);
+    assert.doesNotMatch(printed,/Extra discount|Round off|Adjustments/i);
+    dom.window.close();
+});

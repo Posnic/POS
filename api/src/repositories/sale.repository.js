@@ -343,6 +343,7 @@ class SalesRepository {
       }
 
       const doc = { ...saleDoc };
+      doc.receipt_discount = require('../helpers/bill-payload').receiptDiscount(doc, doc);
       // Preserve exact transferred amounts before legacy display normalization
       // changes line aliases or derives totals from unit prices.
       const transferredBill = saleDoc.captain_transfer_allocation
@@ -12290,7 +12291,7 @@ class SalesRepository {
       subtotal,
       tax,
       total,
-      charges,
+      ...(charges.length || orderDoc?.charges ? { charges } : {}),
       discount: round(itemDiscount + extra),
       number_of_items: lines.reduce((s, l) => s + qtyOf(l), 0),
     };
@@ -12391,7 +12392,7 @@ class SalesRepository {
         $set: {
           items: kept,
           changes: log,
-          charges: totals.charges,
+          ...(totals.charges ? { charges: totals.charges } : {}),
           subtotal: totals.subtotal,
           sales_sub_total: totals.subtotal,
           items_subtotal: totals.subtotal,

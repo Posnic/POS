@@ -798,6 +798,9 @@
   "Enter a valid email address": [
     "app.js"
   ],
+  "Enter a valid non-negative parcel charge.": [
+    "src/repositories/item.repository.js"
+  ],
   "Enter a valid phone number including country code.": [
     "src/services/whatsapp.service.js"
   ],

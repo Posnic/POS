@@ -402,7 +402,11 @@ PosnicPro.receiptLogo = function (paperWidth) {
         // The well-known totals, in the order a receipt reads.
         var total = take(pairs, [/^total$/i, /grand total/i, /^net\b/i]);
         var subTotal = take(pairs, [/sub\s*total/i]);
-        var discount = take(pairs, [/discount/i]);
+        var discount = null;
+        var discountRow;
+        while ((discountRow = take(pairs, [/^(?:(?:extra|bill|item)[ -]?)?disc(?:ount)?$/i]))) {
+            discount = (discount || 0) + Math.abs(num(discountRow) || 0);
+        }
         var roundOff = take(pairs, [/round/i]);
         var change = take(pairs, [/change/i]);
 
@@ -512,7 +516,7 @@ PosnicPro.receiptLogo = function (paperWidth) {
 
             subTotal: num(subTotal),
             taxes: taxes.map(function (p) { return { label: p.label, amount: num(p) }; }),
-            discount: num(discount),
+            discount: discount,
             roundOff: num(roundOff),
             total: num(total),
             change: num(change),

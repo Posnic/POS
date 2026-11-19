@@ -563,6 +563,18 @@ function totalQuantity(branch, items) {
   return qty > 0 ? String(Math.round(qty * 1000) / 1000) : '';
 }
 
+function receiptDiscount(sale, branch) {
+  if (!num(sale.sale_extra_discount) && !num(sale.extra_discount)) return num(sale.discount);
+  try {
+    const recorded = require('../services/captain-transfer-discount').legacy(sale, branch);
+    return Money.fromMinor(recorded.totalDiscountMinor, Money.policy(branch));
+  } catch (error) {
+    if (error.message !== 'The saved discount needs reconciliation.') throw error;
+    // Older combined headers can also include coupons without a line allocation.
+    return num(sale.discount);
+  }
+}
+
 /**
  * Everything src/escpos-receipt.js needs, and nothing it does not.
  *
@@ -702,7 +714,7 @@ function buildBillPayload(sale = {}, branch = {}, options = {}) {
             (c.source === 'room' && Number(c.percent) > 0 ? ` (${Number(c.percent)}%)` : ''),
           amount: num(c.amount),
         })),
-    discount: allocation ? num(sale.discount) : num(sale.discount) + num(sale.sale_extra_discount),
+    discount: allocation ? num(sale.discount) : receiptDiscount(sale, branch),
     roundOff: num(sale.round_off || sale.sales_round_off),
     total: num(sale.sales_total != null ? sale.sales_total : sale.total),
 
@@ -841,4 +853,12 @@ function receiptDocument(sale, branch, bill) {
  * what counts as a number, a sale could be filed under a guest whose receipt
  * says there was no guest.
  */
-module.exports = { buildBillPayload, receiptDocument, isDialable, sessionName, taxRows, itemLines };
+module.exports = {
+  buildBillPayload,
+  receiptDocument,
+  receiptDiscount,
+  isDialable,
+  sessionName,
+  taxRows,
+  itemLines,
+};

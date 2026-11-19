@@ -258,6 +258,7 @@
       "delivery": "டெலிவரி",
       "Service": "சேவை",
       "service": "சேவை",
+      "Parcel Charge": "பார்சல் கட்டணம்",
       "Packing": "பேக்கிங்",
       "packing": "பேக்கிங்",
       "Free": "இலவசம்",

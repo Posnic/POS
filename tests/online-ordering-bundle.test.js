@@ -896,7 +896,7 @@ test('the sums are shown only where there are sums to show', () => {
      that was otherwise half empty. */
   assert.match(
     readBundle('indexedDB.js'),
-    /\$\("#bill"\)\.prop\("hidden", totalTax <= 0\)/,
+    /\$\("#bill"\)\.prop\("hidden", totalTax <= 0 && !parcel\)/,
     'the bill card repeats the bottom bar when there is no breakdown'
   );
 });

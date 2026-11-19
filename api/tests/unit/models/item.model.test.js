@@ -794,7 +794,8 @@ describe('Item.LegacyItemModel › class identity', () => {
     // Optional parcel measurements are projected without requiring them on legacy items.
     // + configured selling units, retained by legacy catalogue reads.
     // Includes branch stock locations and catalogue provenance.
-    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(88);
+    expect(LegacyItemModel.fields.parcel_charge).toMatchObject({ type: 'Number', select: true });
+    expect(Object.keys(LegacyItemModel.fields)).toHaveLength(89);
     expect(LegacyItemModel.fields).toEqual(
       expect.objectContaining({
         /* Named as well as counted: a count alone passes if one field is
