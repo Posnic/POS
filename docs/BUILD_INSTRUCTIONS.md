@@ -1,5 +1,8 @@
 # Posnic Build Instructions
 
+For publication, start with [Release handoff](RELEASE_HANDOFF.md). A signed
+build ZIP is an input to release verification, not a completed release.
+
 ## Signed Windows build on another computer
 
 Install Git, Node.js 22.12 or newer, the Microsoft Visual C++ x64 runtime,
@@ -14,21 +17,33 @@ git clone https://github.com/Posnic/POS.git
 cd POS
 git checkout <tested-commit>
 .\src\download-mongodb.bat
+if (!(Test-Path .\mongodb\bin\mongod.exe)) { throw 'MongoDB download/setup did not complete. Stop before building.' }
 powershell -NoProfile -File .\scripts\build-signed-windows.ps1 -ExpectedCommit <tested-commit>
 ```
 
 Replace both `<tested-commit>` values with the same full commit hash. The
 MongoDB download is a one-time prerequisite. The build helper installs locked
-root, API and frontend dependencies, prepares fresh resources, builds only
-the Windows installer, and verifies the application and installer signatures
+root, API and frontend dependencies, prepares fresh resources, builds both
+the Windows installer and standalone portable EXE, and verifies their and the application signatures
 and timestamps. If multiple certificates exist, add `-Thumbprint` with the
 intended public certificate thumbprint. No password or token PIN belongs in
 this command.
 
-Send back `dist/Posnic-<version>-signed-<run>.zip`. It contains the signed EXE,
+Send back `dist/Posnic-<version>-signed-<run>.zip`. It contains both signed EXEs,
 blockmap, updater YAML, build commit and checksums. Do not sign the finished
 EXE again: that would invalidate its updater hashes. This command does not
 push, tag, upload or publish anything.
+
+Run each command on its own line and stop on failure. A returned PowerShell
+prompt or a download progress bar does not prove MongoDB was installed. The
+batch file's manual fallback mentions `setup-bundled-mongodb.bat`, which is not
+present in this checkout: do not send someone looking for that missing script.
+If automatic download fails, obtain the Windows x64 **ZIP** for the version
+pinned by `src/download-mongodb.bat` from MongoDB's official download source,
+extract it into a temporary directory, and copy its `bin` contents into the
+repository's `mongodb/bin`. Confirm `mongod.exe --version` matches the pinned
+version and run `npm run check:mongodb` after dependencies are installed.
+Installing an MSI service alone does not supply the build's bundled files.
 
 A private Gateway checkout is neither needed nor bundled. Cloud activation
 uses separately authenticated, signed component delivery. Existing cloud
