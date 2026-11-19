@@ -2255,10 +2255,25 @@ class SalesRepository {
             sales_count: { $sum: 1 },
           },
         },
-        { $facet: {
-          rows: [{ $sort: { sales_total: -1, '_id.user_id': 1 } }, { $skip: skip }, { $limit: limit }],
-          totals: [{ $group: { _id: null, employees: { $sum: 1 }, sales: { $sum: '$sales_count' }, amount: { $sum: '$sales_total' } } }],
-        } },
+        {
+          $facet: {
+            rows: [
+              { $sort: { sales_total: -1, '_id.user_id': 1 } },
+              { $skip: skip },
+              { $limit: limit },
+            ],
+            totals: [
+              {
+                $group: {
+                  _id: null,
+                  employees: { $sum: 1 },
+                  sales: { $sum: '$sales_count' },
+                  amount: { $sum: '$sales_total' },
+                },
+              },
+            ],
+          },
+        },
       ];
       const [report] = await salesCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
       const summary = report.totals[0] || { employees: 0, sales: 0, amount: 0 };
@@ -2427,10 +2442,14 @@ class SalesRepository {
       });
 
       if (!mongoose.Types.ObjectId.isValid(data.license)) throw Error('Missing license');
-      andConditions.push({license:new mongoose.Types.ObjectId(String(data.license))});
+      andConditions.push({ license: new mongoose.Types.ObjectId(String(data.license)) });
       if (data.customer) {
         if (!mongoose.Types.ObjectId.isValid(data.customer)) throw Error('Invalid customer');
-        andConditions.push({customer_id:{$in:[String(data.customer),new mongoose.Types.ObjectId(String(data.customer))]}});
+        andConditions.push({
+          customer_id: {
+            $in: [String(data.customer), new mongoose.Types.ObjectId(String(data.customer))],
+          },
+        });
       }
       const filters = { $and: andConditions };
       const limit = parseInt(options.limit, 10) > 0 ? parseInt(options.limit, 10) : 5;
@@ -2441,24 +2460,76 @@ class SalesRepository {
       const salesCollection = db.collection('sales');
 
       const stages = [
-        {$match:filters}, {$unwind:'$items_return'}, {$unwind:'$items_return.returnArray'},
-        {$set:{event:'$items_return.returnArray'}},
-        {$set:{eventDate:{$convert:{input:{$ifNull:['$event.returnDate',{$arrayElemAt:['$event.returnValue.return_date',0]}]},to:'date',onError:null,onNull:null}}}},
-        {$match:{eventDate:{$gte:fromDate,$lte:toDate}}}
+        { $match: filters },
+        { $unwind: '$items_return' },
+        { $unwind: '$items_return.returnArray' },
+        { $set: { event: '$items_return.returnArray' } },
+        {
+          $set: {
+            eventDate: {
+              $convert: {
+                input: {
+                  $ifNull: [
+                    '$event.returnDate',
+                    { $arrayElemAt: ['$event.returnValue.return_date', 0] },
+                  ],
+                },
+                to: 'date',
+                onError: null,
+                onNull: null,
+              },
+            },
+          },
+        },
+        { $match: { eventDate: { $gte: fromDate, $lte: toDate } } },
       ];
       if (data.search) {
-        const literal = new RegExp(data.search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');
-        stages.push({$match:{$or:['sales_id','customer_name','event.returnId','event.returnValue.return_id'].map(k=>({[k]:literal}))}});
+        const literal = new RegExp(data.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        stages.push({
+          $match: {
+            $or: ['sales_id', 'customer_name', 'event.returnId', 'event.returnValue.return_id'].map(
+              (k) => ({ [k]: literal })
+            ),
+          },
+        });
       }
-      stages.push({$project:{sale_id:'$sales_id',customer_name:1,payment_mode:1,date:'$eventDate',
-        ref:'$event.returnId',count:{$size:{$ifNull:['$event.returnValue',[]]}},
-        amount:{$ifNull:['$event.itemsTotalAmount',{$sum:'$event.returnValue.total_amount'}]}}});
-      const sort = options.sort === 'new' ? {date:-1,_id:-1,ref:1} : {amount:-1,date:-1,_id:-1,ref:1};
-      const [result] = await salesCollection.aggregate([...stages,
-        {$facet:{list:[{$sort:sort},{$skip:skip},{$limit:limit}],counts:[{$count:'total'}]}}
-      ]).toArray();
-      const list = result.list.map(row=>({id:row._id,sale_id:row.sale_id,customer_name:row.customer_name,
-        payment_mode:row.payment_mode,date:formatDate(row.date),return:round(row.amount || 0,2),count:row.count}));
+      stages.push({
+        $project: {
+          sale_id: '$sales_id',
+          customer_name: 1,
+          payment_mode: 1,
+          date: '$eventDate',
+          ref: '$event.returnId',
+          count: { $size: { $ifNull: ['$event.returnValue', []] } },
+          amount: {
+            $ifNull: ['$event.itemsTotalAmount', { $sum: '$event.returnValue.total_amount' }],
+          },
+        },
+      });
+      const sort =
+        options.sort === 'new'
+          ? { date: -1, _id: -1, ref: 1 }
+          : { amount: -1, date: -1, _id: -1, ref: 1 };
+      const [result] = await salesCollection
+        .aggregate([
+          ...stages,
+          {
+            $facet: {
+              list: [{ $sort: sort }, { $skip: skip }, { $limit: limit }],
+              counts: [{ $count: 'total' }],
+            },
+          },
+        ])
+        .toArray();
+      const list = result.list.map((row) => ({
+        id: row._id,
+        sale_id: row.sale_id,
+        customer_name: row.customer_name,
+        payment_mode: row.payment_mode,
+        date: formatDate(row.date),
+        return: round(row.amount || 0, 2),
+        count: row.count,
+      }));
       const total = result.counts[0]?.total || 0;
       return {
         status: true,
@@ -2545,10 +2616,25 @@ class SalesRepository {
             },
           },
         },
-        { $facet: {
-          rows: [{ $sort: { sales_total: -1, '_id.user_id': 1 } }, { $skip: skip }, { $limit: limit }],
-          totals: [{ $group: { _id: null, employees: { $sum: 1 }, sales: { $sum: '$sales_count' }, amount: { $sum: '$sales_total' } } }],
-        } },
+        {
+          $facet: {
+            rows: [
+              { $sort: { sales_total: -1, '_id.user_id': 1 } },
+              { $skip: skip },
+              { $limit: limit },
+            ],
+            totals: [
+              {
+                $group: {
+                  _id: null,
+                  employees: { $sum: 1 },
+                  sales: { $sum: '$sales_count' },
+                  amount: { $sum: '$sales_total' },
+                },
+              },
+            ],
+          },
+        },
       ];
 
       const [report] = await salesCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
@@ -2565,7 +2651,7 @@ class SalesRepository {
         branch_name: null,
       };
 
-      for (const doc of aggResults) {
+      for (const doc of salesList) {
         const id = doc._id || {};
         list.push({
           _id: id.item_id ? id.item_id.toString() : '',
