@@ -39,7 +39,7 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-const extra = ((pkg.build && pkg.build.extraResources) || []).filter(
+const extra = [...((pkg.build && pkg.build.extraResources) || []), ...require('../scripts/verify-packaged-runtime').runtimeCopies].filter(
   (e) => e && typeof e === 'object' && typeof e.from === 'string' && typeof e.to === 'string'
 );
 
