@@ -13,6 +13,7 @@ function fixture(){
 const check=f=>validateEvidence(f.reports,f.assets,f.version,f.commit);
 test('all nine formats across four native platform/architecture pairs are required',()=>{const f=fixture();assert.equal(f.assets.length,9);check(f);});
 for(const [label,mutate] of [
+ ['unexpected executable',f=>f.assets.push({name:'extra.exe',digest:'sha256:'+'b'.repeat(64)})],
  ['absent platform',f=>f.reports.pop()],
  ['missing portable EXE',f=>f.reports[0].results.pop()],
  ['different source',f=>f.reports[0].commit='c'.repeat(40)],

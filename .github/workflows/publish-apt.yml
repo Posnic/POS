@@ -30,6 +30,7 @@ on:
         required: true
 
 permissions:
+  actions: read
   contents: write # uploads .asc signatures back to the release
 
 jobs:
