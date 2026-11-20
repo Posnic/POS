@@ -3872,6 +3872,7 @@
   "lang_recover_with_an_offline_code": "Recover with an offline code",
   "lang_recovery_account_label": "Account: {account}",
   "lang_recovery_back_to_login": "Back to sign in",
+  "lang_recovery_still_need_help": "Still need help? View recovery options",
   "lang_recovery_code": "Recovery code",
   "lang_recovery_code_example_hint": "Example only. Use a code from your own sheet:",
   "lang_recovery_code_format": "XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX",
