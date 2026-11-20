@@ -82,6 +82,13 @@ test('artifact identity is explicit for every release format', () => {
   );
 });
 
+test('Snap packages receive Linux SBOMs', () => withTempDir((directory) => {
+  const name = 'posnic_1.9.3_amd64.snap';
+  fs.writeFileSync(path.join(directory, name), 'snap');
+  assert.deepStrictEqual(discoverArtifacts(directory), [path.join(directory, name)]);
+  assert.deepStrictEqual(artifactIdentity(name), { platform: 'linux', architecture: 'x86_64', format: 'snap-package' });
+}));
+
 test('artifact discovery ignores updater metadata and generated SBOMs', () => withTempDir((directory) => {
   for (const name of [
     'Posnic-1.4.0-windows-x64-installer.exe',
