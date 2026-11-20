@@ -26,6 +26,22 @@ const ENTRIES = (pkg.build.files || [])
   .filter((f) => typeof f === 'string' && f.endsWith('.js') && !f.startsWith('!'))
   .filter((f) => fs.existsSync(path.join(ROOT, f)));
 
+// electron-builder excludes extraResources sources from app.asar, even when
+// build.files explicitly includes them. Check every platform override as well.
+const overlaps = [];
+for (const config of [pkg.build, ...['win', 'mac', 'linux'].map(key => pkg.build[key] || {})]) {
+  for (const resource of config.extraResources || []) {
+    const source = (typeof resource === 'string' ? resource : resource.from || '').replace(/\\/g, '/').replace(/\/$/, '');
+    for (const file of included.filter(file => file.startsWith('src/') && file.endsWith('.js'))) {
+      if (source && (file === source || file.startsWith(source + '/'))) overlaps.push(file + ' via ' + source);
+    }
+  }
+}
+if (overlaps.length) {
+  console.error('[package] extraResources would exclude app files from ASAR:\n' + overlaps.join('\n'));
+  process.exit(1);
+}
+
 const missing = [];
 const seen = new Set();
 
