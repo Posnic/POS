@@ -81,6 +81,7 @@ exports.default = async function afterPack(context) {
   await require('./verify-packaged-runtime').verifyPackagedRuntime(context);
   require('./stage-snap-mongodb-runtime.cjs').stageSnapMongoRuntime(context);
   installLinuxAppStreamMetadata(context);
+  await require('./sign-mac-api-archive.cjs').signMacApiArchive(context);
   adhocSignMac(context);
 };
 

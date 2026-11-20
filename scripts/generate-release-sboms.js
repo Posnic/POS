@@ -7,7 +7,7 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const API_ROOT = path.join(ROOT, "api");
-const ARTIFACT_PATTERN = /\.(?:exe|dmg|zip|appimage|deb)$/i;
+const ARTIFACT_PATTERN = /\.(?:exe|dmg|zip|appimage|deb|snap)$/i;
 const DNS_NAMESPACE = Buffer.from("6ba7b8109dad11d180b400c04fd430c8", "hex");
 
 function sha256File(filePath) {
@@ -40,6 +40,7 @@ function artifactIdentity(fileName) {
   if (
     lower.endsWith(".appimage") ||
     lower.endsWith(".deb") ||
+    lower.endsWith(".snap") ||
     lower.includes("linux")
   )
     platform = "linux";
@@ -49,6 +50,7 @@ function artifactIdentity(fileName) {
   else if (lower.endsWith(".dmg")) format = "disk-image";
   else if (lower.endsWith(".appimage")) format = "appimage";
   else if (lower.endsWith(".deb")) format = "debian-package";
+  else if (lower.endsWith(".snap")) format = "snap-package";
   else if (lower.endsWith(".zip")) format = "archive";
 
   let architecture = "unknown";
