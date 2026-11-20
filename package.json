@@ -5,7 +5,7 @@
   "main": "src/main.js",
   "desktopName": "com.posnic.app.desktop",
   "scripts": {
-    "postinstall": "node scripts/enable-installer-extraction-details.js && node scripts/fix-snap-template.cjs",
+    "postinstall": "node scripts/enable-installer-extraction-details.js",
     "prepare": "husky",
     "start": "electron .",
     "dev": "node scripts/dev-server.js",
@@ -663,6 +663,7 @@
     },
     "afterPack": "scripts/after-pack.js",
     "snap": {
+      "base": "core22",
       "confinement": "strict",
       "grade": "stable",
       "summary": "Free open-source point of sale",
