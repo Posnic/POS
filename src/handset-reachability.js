@@ -78,7 +78,7 @@ function profileCovers(profileField, category) {
  * Existing branch settings are read without changing or migrating them.
  */
 function captainIsOn(branches) {
-  return (branches || []).some((b) => b && b.table_options === 'enable'
+  return (branches || []).some((b) => b && [true, 'true', 'enable'].includes(b.table_options)
     && (b.module_captain_enable === true || b.module_captain_enable === 'true'));
 }
 

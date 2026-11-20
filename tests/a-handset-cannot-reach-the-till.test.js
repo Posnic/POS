@@ -174,8 +174,10 @@ test('retail and unset branches never trigger the Captain firewall check', () =>
 });
 
 test('explicitly enabled restaurant branches retain the Captain check', () => {
-  for (const value of [true, 'true']) {
-    assert.strictEqual(handsets.captainIsOn([{ table_options: 'enable', module_captain_enable: value }]), true);
+  for (const mode of [true, 'true', 'enable']) {
+    for (const value of [true, 'true']) {
+      assert.strictEqual(handsets.captainIsOn([{ table_options: mode, module_captain_enable: value }]), true);
+    }
   }
   assert.strictEqual(handsets.captainIsOn([
     { table_options: 'disable', module_captain_enable: true },
