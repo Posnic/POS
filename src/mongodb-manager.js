@@ -221,8 +221,16 @@ class MongoDBManager {
     if (authEnabled && !extraArgs.includes('--repair')) {
       args.push('--auth');
     }
+    // Snap cannot use host libraries. Scope the bundled core22 runtime to
+    // mongod so Electron keeps its own desktop-library environment.
+    const env = { ...process.env };
+    if (process.platform === 'linux' && process.env.SNAP) {
+      const libraries = path.resolve(path.dirname(this.mongoPath), '../lib');
+      env.LD_LIBRARY_PATH = libraries + (env.LD_LIBRARY_PATH ? ':' + env.LD_LIBRARY_PATH : '');
+    }
     const proc = spawn(this.mongoPath, args, {
       detached: false,
+      env,
       stdio: ['ignore', 'ignore', 'pipe']
     });
     if (proc.stderr) {

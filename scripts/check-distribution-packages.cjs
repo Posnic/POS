@@ -69,6 +69,9 @@ async function checkArtifact(artifact) {
       // profile inside the installed snap's permitted common directory.
       const common=path.join(os.homedir(),'snap/posnic/common');fs.mkdirSync(common,{recursive:true});
       snapProfile=fs.mkdtempSync(path.join(common,'package-test-'));
+      // Verify the actual loader inside strict confinement before the UI timeout.
+      run('/usr/bin/snap', ['run', '--shell', 'posnic', '-c',
+        'LD_LIBRARY_PATH="$SNAP/resources/mongodb/lib:$LD_LIBRARY_PATH" "$SNAP/resources/mongodb/bin/mongod" --version']);
       executable='/usr/bin/snap';args=['run','posnic'];
     } else throw new Error('Unsupported artifact '+artifact);
     await smokeExecutable(executable,snapProfile||root,args);
