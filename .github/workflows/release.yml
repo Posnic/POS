@@ -11,15 +11,19 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to build (for re-running a failed release)"
+        description: "Existing tag to build, or exact source ref for a verification-only run"
         required: true
+      verification_only:
+        description: "Build, sign, notarize and test CI artifacts without creating/updating any release or tag"
+        type: boolean
+        default: false
 
 permissions:
-  contents: write   # needed to create the release and upload assets
+  contents: write # needed to create the release and upload assets
 
 jobs:
   # A tag that fails its own tests should never reach a download page.
@@ -87,8 +91,8 @@ jobs:
         # That command refuses to publish anything unsigned, untimestamped, or
         # whose latest.yml does not match the installer beside it.
         include:
-          - { os: macos-latest,   name: macOS,   flag: '--mac' }
-          - { os: ubuntu-latest,  name: Linux,   flag: '--linux --x64' }
+          - { os: macos-latest, name: macOS, flag: "--mac" }
+          - { os: ubuntu-latest, name: Linux, flag: "--linux --x64" }
     runs-on: ${{ matrix.os }}
     # secrets cannot appear in step-level `if:` expressions (GitHub refuses
     # the whole file, silently, as a 0-second startup failure) - so their
@@ -100,7 +104,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: '${{ inputs.tag || github.ref }}'
+          ref: "${{ inputs.tag || github.ref }}"
           submodules: recursive
 
       - uses: actions/setup-node@v7
@@ -364,18 +368,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: macos-15-intel, arch: x64}
-          - {os: macos-latest, arch: arm64}
+          - { os: macos-15-intel, arch: x64 }
+          - { os: macos-latest, arch: arm64 }
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-        with: {ref: '${{ inputs.tag || github.ref }}'}
+        with: { ref: "${{ inputs.tag || github.ref }}" }
       - uses: actions/setup-node@v7
-        with: {node-version: 22}
+        with: { node-version: 22 }
       - run: npm ci
       - uses: actions/download-artifact@v8
-        with: {name: macOS, path: dist}
+        with: { name: macOS, path: dist }
       - name: Launch both downloaded package formats on native architecture
         run: RELEASE_COMMIT=$(git rev-parse HEAD) node scripts/check-distribution-packages.cjs dist
       - uses: actions/upload-artifact@v7
@@ -386,6 +390,7 @@ jobs:
 
   publish:
     name: Publish release
+    if: github.event_name != 'workflow_dispatch' || !inputs.verification_only
     needs: [build, verify-mac-packages]
     runs-on: ubuntu-latest
     permissions:
@@ -397,7 +402,7 @@ jobs:
       ASSET_SIGNING_KEY: ${{ secrets.POSNIC_ASSET_SIGNING_KEY }}
     steps:
       - uses: actions/checkout@v7
-        with: { ref: '${{ inputs.tag || github.ref }}' }
+        with: { ref: "${{ inputs.tag || github.ref }}" }
 
       - uses: actions/download-artifact@v8
         with: { path: artifacts }
@@ -470,14 +475,14 @@ jobs:
             *)
               cat > release/NOTES.md <<POSNIC_STABLE
           ## Posnic ${TAG}
-          
+
           A stable release. Every installer below is signed by a publisher your
           operating system can check for itself - how, per platform, next.
           POSNIC_STABLE
               ;;
           esac
           cat >> release/NOTES.md <<'POSNIC_COMMON'
-          
+
           ### About the installers
 
           - **Windows** is signed and timestamped. The installer names its
@@ -534,7 +539,7 @@ jobs:
           tag_name: ${{ inputs.tag || github.ref_name }}
           files: release/*
           generate_release_notes: true
-          draft: true          # a human decides when it goes public
+          draft: true # a human decides when it goes public
           # A pre-release by default, until the installers are signed: with
           # allowPrerelease false, electron-updater ignores pre-releases, so no
           # existing installation is pushed a beta it did not ask for.

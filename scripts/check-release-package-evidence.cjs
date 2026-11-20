@@ -23,6 +23,10 @@ function validateEvidence(reports, assets, version, commit) {
     for(const name of expectedNames(platform,arch,version)) {
       const result=report.results.find(r=>r.name===name);
       assert.equal(result?.passed,true,`Package did not pass native startup: ${name}`);
+      if(platform==='darwin') {
+        assert.equal(result.canvas?.passed,true,`Packaged canvas did not render: ${name}`);
+        assert.equal(result.canvas.arch,arch,`Packaged canvas architecture differs: ${name}`);
+      }
       const asset=assets.find(a=>a.name===name);
       assert.ok(asset,`Missing release package: ${name}`);
       assert.match(result.sha256||'',/^[a-f0-9]{64}$/);

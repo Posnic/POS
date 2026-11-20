@@ -13,3 +13,16 @@ PR packages are unsigned test builds and are never uploaded as downloads. Actual
 Each successful native run writes PACKAGE-CHECK-platform-arch.json with exact artifact hashes, source commit and workflow run ID. Windows verification uploads this report to the draft only after both signed packages boot. release:ship and APT/Snap/site workflows reject absent/failed/stale evidence, changed artifact bytes, or evidence from a PR workflow. Run Windows verification against the draft before attempting publication. Rerun verification after any artifact changes. Never manually bypass the gates with gh release edit.
 
 Coverage is fresh installation/startup, not every feature, upgrade schema, authenticated shop login, physical printing or cloud sync. Those need their own acceptance checks. No test can guarantee the absence of all defects. Do not claim a platform passed until its native CI job succeeds. Reports cannot prevent a repository administrator from manually bypassing the documented publication process.
+
+Both macOS formats also extract the packaged API runtime and use that package's
+Electron to load native canvas, render and inspect a pixel, and encode a PNG.
+The report records the executing architecture; the publication gate rejects
+missing, failed or wrong-architecture canvas evidence. The shared release API
+ZIP includes integrity-checked, lockfile-pinned x64 and arm64 canvas packages.
+
+To verify signed/notarized non-Windows packages before freezing a release tag,
+dispatch the existing Release workflow on the reviewed source ref with `tag`
+set to its exact commit and `verification_only: true`. Existing build and native
+verification jobs run and retain CI artifacts; the release-creation job is
+skipped. This does not create/move a tag, publish a release, or replace final
+source-bound release evidence after the version and commit are frozen.
