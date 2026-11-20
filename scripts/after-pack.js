@@ -78,6 +78,7 @@ function adhocSignMac(context) {
 }
 
 exports.default = async function afterPack(context) {
+  await require('./verify-packaged-runtime').verifyPackagedRuntime(context);
   installLinuxAppStreamMetadata(context);
   adhocSignMac(context);
 };

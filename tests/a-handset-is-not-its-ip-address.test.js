@@ -234,7 +234,7 @@ test('it is in the packaged build, WHERE SERVER.JS CAN ACTUALLY REACH IT', () =>
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
   assert.ok(pkg.build.files.includes('src/handset-slots.js'), 'not in the asar');
   assert.ok(
-    (pkg.build.extraResources || []).some(
+    [...(pkg.build.extraResources || []), ...require('../scripts/verify-packaged-runtime').runtimeCopies].some(
       (e) => e && e.from === 'src/handset-slots.js' && e.to === 'handset-slots.js'
     ),
     'not beside server.js at the resources root, which is the only place its require can look'
