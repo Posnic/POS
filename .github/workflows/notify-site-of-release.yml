@@ -25,6 +25,15 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Verified release tag
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   notify:
@@ -46,6 +55,7 @@ jobs:
           # is skipped rather than failed: the site's daily check still catches
           # up, and a release must never be held up by a notification.
           TOKEN: ${{ secrets.SITE_DISPATCH_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
         run: |
           if [ -z "$TOKEN" ]; then
             echo "SITE_DISPATCH_TOKEN is not set - skipping."
@@ -53,7 +63,7 @@ jobs:
             exit 0
           fi
 
-          tag="${{ github.event.release.tag_name }}"
+          tag="$RELEASE_TAG"
           echo "telling web-frontend about ${tag:-a new release}"
 
           code=$(curl -sS -o /tmp/dispatch.out -w '%{http_code}' \

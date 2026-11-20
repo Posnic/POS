@@ -32,6 +32,18 @@ async function inspectResources(url) {
   const pkg = require('../package.json');
   await require('./verify-packaged-runtime').verifyArchive(path.join(resources, 'app.asar'),
     pkg.build.files.filter(p => typeof p === 'string' && p.startsWith('src/') && p.endsWith('.js')));
+  const asar = await import('@electron/asar');
+  const archive = path.join(resources, 'app.asar');
+  const embedded = JSON.parse(asar.extractFile(archive, 'package.json').toString('utf8'));
+  const expectedVersion = process.env.RELEASE_TAG ? process.env.RELEASE_TAG.replace(/^v/, '') : pkg.version;
+  if (embedded.version !== expectedVersion) throw new Error('Packaged version does not match the release');
+  // Bind desktop code to the checkout used to verify this release, not just
+  // to a filename or a manifest that could describe a renamed old build.
+  for (const name of pkg.build.files.filter(p => typeof p === 'string' && p.startsWith('src/') && p.endsWith('.js'))) {
+    if (asar.extractFile(archive, name).toString('utf8').replace(/\r\n/g, '\n') !== fs.readFileSync(path.join(__dirname, '..', name), 'utf8').replace(/\r\n/g, '\n')) {
+      throw new Error('Packaged source differs from the verification checkout: ' + name);
+    }
+  }
   for (const name of ['api/node_modules.zip', 'mongodb/bin/mongod' + (process.platform === 'win32' ? '.exe' : '')]) {
     if (!fs.existsSync(path.join(resources, name))) throw new Error('Missing packaged resource: ' + name);
   }

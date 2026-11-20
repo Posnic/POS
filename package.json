@@ -15,7 +15,7 @@
     "prepare:api-runtime": "node scripts/prepare-api-runtime.js",
     "prepare:api-runtime:force": "node scripts/prepare-api-runtime.js --force",
     "prepare:sync-agent": "node scripts/prepare-sync-agent.js",
-    "prepare:bundle": "node scripts/enable-installer-extraction-details.js && npm run prepare:vc-runtime && npm run prepare:frontend && npm run prepare:api-runtime && npm run prepare:sync-agent",
+    "prepare:bundle": "node scripts/fix-snap-template.cjs && node scripts/enable-installer-extraction-details.js && npm run prepare:vc-runtime && npm run prepare:frontend && npm run prepare:api-runtime && npm run prepare:sync-agent",
     "prebuild": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
     "build": "electron-builder --win --x64",
     "prebuild:fast": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
@@ -663,6 +663,7 @@
     },
     "afterPack": "scripts/after-pack.js",
     "snap": {
+      "base": "core22",
       "confinement": "strict",
       "grade": "stable",
       "summary": "Free open-source point of sale",

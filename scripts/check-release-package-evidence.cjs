@@ -7,6 +7,12 @@ const {execFileSync}=require('node:child_process');
 const {expectedNames}=require('./check-distribution-packages.cjs');
 const platforms=[['win32','x64'],['darwin','x64'],['darwin','arm64'],['linux','x64']];
 function validateEvidence(reports, assets, version, commit) {
+  const allowed = new Set(platforms.flatMap(([platform,arch])=>expectedNames(platform,arch,version)));
+  for (const asset of assets) {
+    if (/\.(exe|dmg|zip|AppImage|deb|snap)$/.test(asset.name) && asset.name !== 'posnic-assets.zip') {
+      assert.ok(allowed.has(asset.name), 'Unverified extra release package: ' + asset.name);
+    }
+  }
   for (const [platform,arch] of platforms) {
     const report=reports.find(r=>r.platform===platform && r.arch===arch);
     assert.ok(report, `Missing startup evidence for ${platform}/${arch}`);

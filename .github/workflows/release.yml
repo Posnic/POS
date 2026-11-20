@@ -253,6 +253,12 @@ jobs:
       # electron-builder would publish to the release by itself; it is turned
       # off here so that a half-finished matrix never leaves a release with
       # only one platform attached.
+      - name: Require macOS signing and notarization for release artifacts
+        if: matrix.name == 'macOS' && (env.HAVE_MAC_CERT != 'true' || env.HAVE_NOTARY != 'true')
+        run: |
+          echo "::error::macOS release signing and notarization are required. Keep this release unpublished."
+          exit 1
+
       - name: Build
         run: >
           npx electron-builder ${{ matrix.flag }} --publish never
@@ -315,7 +321,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y xvfb libasound2t64
+          sudo apt-get install --no-install-recommends -y xvfb libasound2t64 snapd
           artifacts=(dist/*.AppImage)
           test "${#artifacts[@]}" -eq 1
           RELEASE_COMMIT=$(git rev-parse HEAD) xvfb-run -a node scripts/check-distribution-packages.cjs dist

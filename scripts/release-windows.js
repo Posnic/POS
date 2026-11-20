@@ -254,7 +254,7 @@ function main() {
   if (!sums.ok) fail('Could not upload SHA256SUMS.txt:\n  ' + sums.out.trim());
   console.log('  SHA256SUMS.txt updated with the Windows entries');
 
-  console.log(`\n  Windows published to ${tag}, signed and timestamped.\n`);
+  console.log(`\n  Windows uploaded to draft ${tag}, signed and timestamped. Native verification and publication remain pending.\n`);
 }
 
 main();
