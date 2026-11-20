@@ -79,6 +79,7 @@ function adhocSignMac(context) {
 
 exports.default = async function afterPack(context) {
   await require('./verify-packaged-runtime').verifyPackagedRuntime(context);
+  require('./stage-snap-mongodb-runtime.cjs').stageSnapMongoRuntime(context);
   installLinuxAppStreamMetadata(context);
   adhocSignMac(context);
 };
