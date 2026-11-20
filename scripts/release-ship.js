@@ -226,6 +226,11 @@ async function main() {
   }
   console.log('  all ' + need.length + ' required artifacts present (' + names.length + ' assets total)');
 
+  step('Verify native startup evidence for every exact package');
+  if (!runLive('node', ['scripts/check-release-package-evidence.cjs', tag])) {
+    fail('Native package evidence is missing, failed, or stale. Keep the release draft and complete Windows/macOS/Linux verification.');
+  }
+
   step('Publish');
   if (!rel.isDraft) {
     console.log('  already public - nothing left to do');
@@ -235,7 +240,7 @@ async function main() {
     const go = await confirm('  Make ' + tag + ' public? This starts the APT repo, Snap and website updates.');
     if (!go) {
       console.log('\n  Left as a draft. Publish later with:\n'
-        + '    gh release edit ' + tag + ' --draft=false --prerelease=false --latest\n');
+        + '    npm run release:ship -- ' + tag + '\n');
       return;
     }
   }

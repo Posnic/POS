@@ -1,47 +1,102 @@
-name: Packaged Linux startup
+name: Packaged native startup
 on:
   pull_request:
-    paths:
-      - 'src/**'
-      - 'scripts/**'
-      - 'package*.json'
-      - '.github/workflows/release.yml'
-      - '.github/workflows/packaged-linux-startup.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   startup:
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
+    name: ${{ matrix.name }} ${{ matrix.arch }} customer packages
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: windows-latest, name: Windows, arch: x64, flag: '--win nsis portable --x64'}
+          - {os: macos-15-intel, name: macOS, arch: x64, flag: '--mac dmg zip --x64'}
+          - {os: macos-latest, name: macOS, arch: arm64, flag: '--mac dmg zip --arm64'}
+          - {os: ubuntu-latest, name: Linux, arch: x64, flag: '--linux --x64'}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
-        with:
-          node-version: 22
+        with: {node-version: 22}
       - run: npm ci
       - run: npm ci
         working-directory: frontend
       - run: npm ci
         working-directory: api
-      - name: Prepare bundled runtime
+      - name: Fetch the bundled MongoDB
         shell: bash
         run: |
           set -euo pipefail
           VERSION=$(grep -oE 'set MONGODB_VERSION=[0-9.]+' src/download-mongodb.bat | cut -d= -f2)
-          curl -fsSL -o mongo.tgz "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-${VERSION}.tgz"
-          mkdir -p mongodb/bin
-          tar -xzf mongo.tgz --wildcards --strip-components=2 -C mongodb/bin '*/bin/mongod'
-          chmod +x mongodb/bin/mongod
-          npm run prepare:bundle
-      - name: Build the customer package
-        run: npx electron-builder --linux AppImage --x64 --publish never
-      - name: Boot the customer package
+          echo "MongoDB $VERSION, the version src/download-mongodb.bat pins"
+
+          fetch_tgz() {   # url, destination bin directory
+            curl -fsSL -o mongo.tgz "$1"
+            mkdir -p "$2"
+            # --strip-components drops the versioned top directory the archive
+            # carries, so the binary lands where the app looks for it.
+            # GNU tar needs --wildcards for a glob and BSD tar rejects the
+            # flag, so ask tar which it is rather than guessing by platform.
+            if tar --version 2>/dev/null | grep -qi 'gnu tar'; then
+              tar -xzf mongo.tgz --wildcards --strip-components=2 -C "$2" '*/bin/mongod'
+            else
+              tar -xzf mongo.tgz --strip-components=2 -C "$2" '*/bin/mongod'
+            fi
+            chmod +x "$2/mongod"
+            rm -f mongo.tgz
+          }
+
+          case "${{ matrix.name }}" in
+            Windows)
+              curl -fsSL -o mongodb.zip                 "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-${VERSION}.zip"
+              7z x -bso0 mongodb.zip -omongodb-temp
+              mkdir -p mongodb/bin
+              cp "mongodb-temp/mongodb-win32-x86_64-windows-${VERSION}/bin/mongod.exe" mongodb/bin/
+              # mongod links against the Visual C++ runtime. A runner has it in
+              # System32; a shop's clean Windows may not, so the three DLLs
+              # travel with it - the same ones bundle-vc-runtime.js collects.
+              for dll in msvcp140.dll vcruntime140.dll vcruntime140_1.dll; do
+                cp "/c/Windows/System32/$dll" mongodb/bin/
+              done
+              rm -rf mongodb.zip mongodb-temp
+              node scripts/check-mongodb-binaries.js
+              ;;
+            macOS)
+              fetch_tgz "https://fastdl.mongodb.org/osx/mongodb-macos-x86_64-${VERSION}.tgz"  mongodb-x64/bin
+              fetch_tgz "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-${VERSION}.tgz"   mongodb-arm64/bin
+              ls -l mongodb-x64/bin/mongod mongodb-arm64/bin/mongod
+              ;;
+            Linux)
+              fetch_tgz "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-${VERSION}.tgz" mongodb/bin
+              ls -l mongodb/bin/mongod
+              ;;
+          esac
+
+
+      - name: Prepare bundled runtime
+        run: npm run prepare:bundle
+      - name: Build test packages without publishing
+        run: npx electron-builder ${{ matrix.flag }} --publish never
+      - name: Install Linux test prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y xvfb libasound2t64 snapd
+      - name: Install and boot every native package format
         shell: bash
         run: |
           set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y xvfb libasound2t64
-          artifacts=(dist/*.AppImage)
-          test "${#artifacts[@]}" -eq 1
-          xvfb-run -a node scripts/smoke-linux-release.cjs "${artifacts[0]}"
+          if [ "${{ runner.os }}" = Linux ]; then
+            xvfb-run -a node scripts/check-distribution-packages.cjs dist
+          else
+            node scripts/check-distribution-packages.cjs dist
+          fi
+      - name: Keep verification evidence only
+        uses: actions/upload-artifact@v7
+        with:
+          name: package-check-${{ runner.os }}-${{ matrix.arch }}
+          path: dist/PACKAGE-CHECK-*.json
+          if-no-files-found: error

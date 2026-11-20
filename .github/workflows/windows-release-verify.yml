@@ -63,6 +63,12 @@ jobs:
             if (-not $signature.TimeStamperCertificate) { throw "Missing timestamp: $($file.Name)" }
             Write-Output "Verified BillMax signature and timestamp: $($file.Name)"
           }
+      - name: Install verification toolchain
+        run: npm ci
+      - name: Install and launch signed installer and portable packages
+        run: node scripts/check-distribution-packages.cjs windows-release
+      - name: Save hash-bound native startup evidence to the draft
+        run: gh release upload $env:RELEASE_TAG windows-release/PACKAGE-CHECK-win32-x64.json --clobber
       # Records verification of a local build. It does NOT claim that this
       # runner compiled the packages. The source declaration remains explicit.
       - name: Attest verified Windows release files
