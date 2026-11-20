@@ -84,7 +84,7 @@ test('AppImage and Debian packages use the metadata filename each catalog expect
   t.after(() => fs.rmSync(appOutDir, { recursive: true, force: true }));
 
   const hook = require('../scripts/after-pack.js');
-  await hook.default({
+  hook.installLinuxAppStreamMetadata({
     electronPlatformName: 'linux',
     appOutDir,
     targets: [{ name: 'AppImage' }, { name: 'deb' }],
