@@ -93,3 +93,55 @@ test('hosted verifier and user instructions use the supported custom predicate t
   assert.ok(guide.includes(`--predicate-type ${type}`));
   assert.ok(!workflow.includes('predicate-type: https://slsa.dev/provenance/v1'));
 });
+
+test('local handoff completion includes manifest and SBOM checksums without changing either EXE', async t => {
+  const f = fixture(t);
+  const {buildBlockMap} = require('app-builder-lib/out/targets/blockmap/blockmap');
+  const installer = path.join(f.directory,'Posnic-1.9.0-windows-x64-installer.exe');
+  await buildBlockMap(installer,'gzip',installer+'.blockmap');
+  fs.writeFileSync(path.join(f.directory,'BUILD-INFO.json'),JSON.stringify({version:'1.9.0',commit:f.manifest.sourceCommit}));
+  const before = sha256(fs.readFileSync(installer));
+  const {completeHandoff} = require('../scripts/complete-windows-handoff');
+  const digest = await completeHandoff(f.directory,'1.9.0',f.manifest.sourceCommit);
+  const bytes = fs.readFileSync(path.join(f.directory,'WINDOWS-RELEASE.json'));
+  assert.equal(sha256(bytes),digest);
+  validateManifest(bytes,{tag:'v1.9.0',commit:f.manifest.sourceCommit,digest});
+  assert.equal(sha256(fs.readFileSync(installer)),before);
+  const sums=fs.readFileSync(path.join(f.directory,'SHA256SUMS.txt'),'utf8').trim().split('\n');
+  assert.equal(sums.length,8);
+  for(const line of sums){const [hash,name]=line.split('  ');assert.equal(sha256(fs.readFileSync(path.join(f.directory,name))),hash);}
+});
+
+test('local handoff completion rejects stale blockmaps before emitting release approval metadata', async t => {
+  const f = fixture(t);
+  const installer=path.join(f.directory,'Posnic-1.9.0-windows-x64-installer.exe');
+  const {buildBlockMap}=require('app-builder-lib/out/targets/blockmap/blockmap');
+  await buildBlockMap(installer,'gzip',installer+'.blockmap');
+  fs.writeFileSync(path.join(f.directory,'BUILD-INFO.json'),JSON.stringify({version:'1.9.0',commit:f.manifest.sourceCommit}));
+  fs.appendFileSync(installer,'different signed bytes');
+  // Match the SBOM to the changed bytes; the old blockmap must still fail.
+  const sbomFile=installer+'.cdx.json',sbom=JSON.parse(fs.readFileSync(sbomFile));
+  sbom.metadata.component.hashes[0].content=sha256(fs.readFileSync(installer));
+  fs.writeFileSync(sbomFile,JSON.stringify(sbom));
+  const latest=fs.readFileSync(path.join(f.directory,'latest.yml'),'utf8');
+  const hash=crypto.createHash('sha512').update(fs.readFileSync(installer)).digest('base64');
+  fs.writeFileSync(path.join(f.directory,'latest.yml'),latest.replace(/sha512: .+/g,'sha512: '+hash).replace(/size: \d+/, 'size: '+fs.statSync(installer).size));
+  await assert.rejects(require('../scripts/complete-windows-handoff').completeHandoff(f.directory,'1.9.0',f.manifest.sourceCommit),/blockmap differs/);
+  assert.equal(fs.existsSync(path.join(f.directory,'WINDOWS-RELEASE.json')),false);
+});
+
+test('verification-only releases skip publication but retain signed native build verification', () => {
+  const workflow=require('js-yaml').load(fs.readFileSync(path.join(__dirname,'../.github/workflows/release.yml'),'utf8'));
+  assert.equal(workflow.on.workflow_dispatch.inputs.verification_only.type,'boolean');
+  assert.equal(workflow.on.workflow_dispatch.inputs.verification_only.default,false);
+  assert.match(workflow.jobs.publish.if,/!inputs.verification_only/);
+  assert.deepEqual(workflow.jobs.publish.needs,['build','verify-mac-packages']);
+  assert.equal(workflow.jobs.build.steps.some(s=>s.name==='Verify macOS signature and notarization'),true);
+});
+
+test('handoff completion cannot relabel artifacts with a different source commit', async t => {
+  const f=fixture(t);
+  fs.writeFileSync(path.join(f.directory,'BUILD-INFO.json'),JSON.stringify({version:'1.9.0',commit:f.manifest.sourceCommit}));
+  await assert.rejects(require('../scripts/complete-windows-handoff').completeHandoff(f.directory,'1.9.0','b'.repeat(40)),/Build source differs/);
+  assert.equal(fs.existsSync(path.join(f.directory,'WINDOWS-RELEASE.json')),false);
+});

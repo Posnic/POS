@@ -17,8 +17,8 @@ Push-Location $root
 try {
     if ($env:OS -ne 'Windows_NT') { throw 'Run this script on Windows with the USB token attached.' }
     Get-Command node,npm.cmd,git -ErrorAction Stop | Out-Null
-    Run-Checked node -Arguments @('-e', 'const [a,b]=process.versions.node.split(".").map(Number); if(a<22||(a===22&&b<12))process.exit(1)')
-    $branch = (& git branch --show-current).Trim()
+    Run-Checked node -Arguments @('-e', 'const [a,b]=process.versions.node.split(String.fromCharCode(46)).map(Number); if(a<22||(a===22&&b<12))process.exit(1)')
+    $branch = ((& git branch --show-current) -join '').Trim()
     if ($LASTEXITCODE -ne 0 -or ($branch -ne 'main' -and !$ExpectedCommit)) { throw 'Use main, or pass the exact tested commit with -ExpectedCommit.' }
     $dirty = & git status --porcelain --untracked-files=normal
     if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Commit or move local changes first. This build requires a clean checkout.' }
@@ -79,6 +79,8 @@ try {
     # Validate updater hashes after signing; never sign the completed EXE again.
     Run-Checked node -Arguments @('scripts/signed-build-bundle.js',$out,$version,$commit,$cert.Subject)
     $bundle = Join-Path $out 'handoff'
+    Run-Checked npm.cmd -Arguments @('run','release:sbom','--','--dist',$bundle)
+    Run-Checked node -Arguments @('scripts/complete-windows-handoff.js',$bundle,$version,$commit)
     $zip = Join-Path $root "dist\Posnic-$version-signed-$run.zip"
     Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath $zip
     Write-Host "`nVerified signed build: $zip" -ForegroundColor Green

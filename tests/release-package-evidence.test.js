@@ -7,7 +7,7 @@ function fixture(){
  const version='1.9.3',commit='a'.repeat(40),assets=[];
  const reports=platforms.map(([platform,arch])=>({schema:1,platform,arch,version,commit,runId:'123',results:expectedNames(platform,arch,version).map(name=>{
   assets.push({name,digest:'sha256:'+'b'.repeat(64)});
-  return {name,sha256:'b'.repeat(64),passed:true};
+  return {name,sha256:'b'.repeat(64),passed:true,...(platform==='darwin'?{canvas:{arch,passed:true}}:{})};
  })}));return {reports,assets,version,commit};
 }
 const check=f=>validateEvidence(f.reports,f.assets,f.version,f.commit);
@@ -23,4 +23,7 @@ for(const [label,mutate] of [
  ['missing release asset',f=>f.assets.pop()],
  ['missing digest',f=>delete f.assets[0].digest],
  ['missing CI provenance',f=>delete f.reports[0].runId]
+ ,['missing native canvas evidence',f=>delete f.reports[1].results[0].canvas]
+ ,['failed canvas rendering',f=>f.reports[1].results[0].canvas.passed=false]
+ ,['wrong canvas architecture',f=>f.reports[1].results[0].canvas.arch='arm64']
 ])test('publication rejects '+label,()=>{const f=fixture();mutate(f);assert.throws(()=>check(f));});

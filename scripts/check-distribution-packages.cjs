@@ -5,6 +5,7 @@ const os = require('node:os');
 const crypto = require('node:crypto');
 const {execFileSync} = require('node:child_process');
 const {smokeExecutable} = require('./smoke-packaged-app.cjs');
+const {checkMacCanvas} = require('./check-mac-canvas.cjs');
 const run = (exe,args,options={}) => execFileSync(exe,args,{stdio:'pipe',timeout:180000,windowsHide:true,...options});
 function expectedNames(platform, arch, version) {
   if (platform === 'win32') return ['installer','portable'].map(kind=>`Posnic-${version}-windows-x64-${kind}.exe`);
@@ -74,8 +75,9 @@ async function checkArtifact(artifact) {
         'LD_LIBRARY_PATH="$SNAP/resources/mongodb/lib:$LD_LIBRARY_PATH" "$SNAP/resources/mongodb/bin/mongod" --version']);
       executable='/usr/bin/snap';args=['run','posnic'];
     } else throw new Error('Unsupported artifact '+artifact);
+    const canvas = process.platform === 'darwin' ? checkMacCanvas(executable,root) : undefined;
     await smokeExecutable(executable,snapProfile||root,args);
-    return {name:path.basename(artifact),sha256:crypto.createHash('sha256').update(fs.readFileSync(artifact)).digest('hex'),passed:true};
+    return {name:path.basename(artifact),sha256:crypto.createHash('sha256').update(fs.readFileSync(artifact)).digest('hex'),passed:true,...(canvas ? {canvas} : {})};
   } finally {
     if (mount) { try {run('hdiutil',['detach',mount]);}catch{} }
     if (snapInstalled) {try {run('sudo',['snap','remove','--purge','posnic']);}catch{}}

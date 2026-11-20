@@ -263,6 +263,7 @@ jobs:
       - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name: ${{ needs.version.outputs.tag }} (test build)
           files: release/*
           # Published rather than drafted, because a draft has no assets a

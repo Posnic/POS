@@ -68,6 +68,12 @@ test('beta publication keeps builder diagnostics out of release assets', () => {
   assert.doesNotMatch(publisher, /-name '\*\.yml'/);
 });
 
+test('a new beta tag points to the attested build source instead of the default branch', () => {
+  const workflow = require('js-yaml').load(BETA_WORKFLOW);
+  const publication = workflow.jobs.publish.steps.find(step => step.uses?.startsWith('softprops/action-gh-release@'));
+  assert.equal(publication.with.target_commitish, '${{ github.sha }}');
+});
+
 test('the guide does not promote inventory or provenance into a security claim', () => {
   assert.match(GUIDE, /Older releases may predate the SBOM and provenance workflow/);
   assert.match(GUIDE, /cannot be counted as checks\s+that passed/);

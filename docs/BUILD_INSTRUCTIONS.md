@@ -19,14 +19,15 @@ powershell -NoProfile -File .\scripts\build-signed-windows.ps1 -ExpectedCommit <
 
 Replace both `<tested-commit>` values with the same full commit hash. The
 MongoDB download is a one-time prerequisite. The build helper installs locked
-root, API and frontend dependencies, prepares fresh resources, builds only
-the Windows installer, and verifies the application and installer signatures
-and timestamps. If multiple certificates exist, add `-Thumbprint` with the
+root, API and frontend dependencies, prepares fresh resources, builds both
+the Windows installer and standalone portable EXE, and verifies the application,
+installer and portable signatures and timestamps. If multiple certificates exist, add `-Thumbprint` with the
 intended public certificate thumbprint. No password or token PIN belongs in
 this command.
 
-Send back `dist/Posnic-<version>-signed-<run>.zip`. It contains the signed EXE,
-blockmap, updater YAML, build commit and checksums. Do not sign the finished
+Send back `dist/Posnic-<version>-signed-<run>.zip`. It contains both signed EXEs,
+installer blockmap, updater YAML, build information, both artifact-specific
+CycloneDX SBOMs, `WINDOWS-RELEASE.json` and checksums. Do not sign the finished
 EXE again: that would invalidate its updater hashes. This command does not
 push, tag, upload or publish anything.
 
