@@ -309,6 +309,17 @@ jobs:
         if: matrix.name == 'macOS'
         run: node scripts/prepare-mac-updater.js
 
+      - name: Boot the actual Linux AppImage in an isolated shop
+        if: matrix.name == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y xvfb libasound2t64
+          artifacts=(dist/*.AppImage)
+          test "${#artifacts[@]}" -eq 1
+          xvfb-run -a node scripts/smoke-linux-release.cjs "${artifacts[0]}"
+
       - name: Generate artifact SBOMs
         run: npm run release:sbom
 

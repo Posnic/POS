@@ -47,3 +47,22 @@ test('post-pack preserves archive modules and copies standalone server dependenc
     }
   } finally { fs.rmSync(root,{recursive:true,force:true}); }
 });
+
+test('source gate rejects the historical extraResources collision before packaging', () => {
+  const { spawnSync } = require('node:child_process');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'posnic-collision-test-'));
+  try {
+    fs.mkdirSync(path.join(root, 'scripts'));
+    fs.copyFileSync(path.join(__dirname, '../scripts/check-packaged-modules.js'), path.join(root, 'scripts/check-packaged-modules.js'));
+    for (const platform of ['shared', 'linux', 'mac', 'win']) {
+      const build = { files: ['src/asset-updater.js'], extraResources: [] };
+      const collision = [{from: 'src/asset-updater.js', to: 'src/asset-updater.js'}];
+      if (platform === 'shared') build.extraResources = collision;
+      else build[platform] = {extraResources: collision};
+      fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({build}));
+      const result = spawnSync(process.execPath, [path.join(root, 'scripts/check-packaged-modules.js')], {encoding: 'utf8'});
+      assert.equal(result.status, 1, platform);
+      assert.match(result.stderr, /extraResources would exclude/);
+    }
+  } finally { fs.rmSync(root, {recursive: true, force: true}); }
+});

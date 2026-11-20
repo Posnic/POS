@@ -1,0 +1,47 @@
+name: Packaged Linux startup
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/packaged-linux-startup.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  startup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm ci
+        working-directory: frontend
+      - run: npm ci
+        working-directory: api
+      - name: Prepare bundled runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -oE 'set MONGODB_VERSION=[0-9.]+' src/download-mongodb.bat | cut -d= -f2)
+          curl -fsSL -o mongo.tgz "https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu2204-${VERSION}.tgz"
+          mkdir -p mongodb/bin
+          tar -xzf mongo.tgz --wildcards --strip-components=2 -C mongodb/bin '*/bin/mongod'
+          chmod +x mongodb/bin/mongod
+          npm run prepare:bundle
+      - name: Build the customer package
+        run: npx electron-builder --linux AppImage --x64 --publish never
+      - name: Boot the customer package
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y xvfb libasound2t64
+          artifacts=(dist/*.AppImage)
+          test "${#artifacts[@]}" -eq 1
+          xvfb-run -a node scripts/smoke-linux-release.cjs "${artifacts[0]}"
