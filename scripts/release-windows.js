@@ -209,6 +209,9 @@ function main() {
   }
   console.log(`\n  latest.yml matches ${meta.path}`);
 
+  const releaseState = JSON.parse(run('gh', ['release', 'view', tag, '--json', 'isDraft']));
+  if (!releaseState.isDraft) fail('Windows assets may only be uploaded to an unpublished draft for native verification.');
+
   /* ---- upload ---- */
   /* Same rule as the gate above: the manifests belong to this build, and the
      installers and blockmaps must carry this version - an older build's files

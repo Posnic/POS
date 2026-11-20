@@ -41,6 +41,14 @@ jobs:
       HAVE_BUCKET: ${{ vars.PACKAGES_BUCKET != '' }}
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: {node-version: 22}
+      - name: Require verified native packages before distribution
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: node scripts/check-release-package-evidence.cjs "$RELEASE_TAG"
+      - uses: actions/checkout@v7
 
       - name: Explain and stop when signing is not configured yet
         if: env.HAVE_GPG != 'true'

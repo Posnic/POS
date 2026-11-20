@@ -32,6 +32,14 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: {node-version: 22}
+      - name: Require verified native packages before distribution
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: node scripts/check-release-package-evidence.cjs "$RELEASE_TAG"
       - name: Dispatch to web-frontend
         env:
           # A token that can dispatch into the other repo. Without it this step

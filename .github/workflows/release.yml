@@ -318,7 +318,7 @@ jobs:
           sudo apt-get install --no-install-recommends -y xvfb libasound2t64
           artifacts=(dist/*.AppImage)
           test "${#artifacts[@]}" -eq 1
-          xvfb-run -a node scripts/smoke-linux-release.cjs "${artifacts[0]}"
+          RELEASE_COMMIT=$(git rev-parse HEAD) xvfb-run -a node scripts/check-distribution-packages.cjs dist
 
       - name: Generate artifact SBOMs
         run: npm run release:sbom
@@ -339,6 +339,7 @@ jobs:
             # beside a store that was silently never updated.
             dist/*.snap
             dist/*.cdx.json
+            dist/PACKAGE-CHECK-*.json
             # The update manifest, without which auto-update cannot work at all:
             # electron-updater fetches latest.yml - latest-mac.yml, latest-linux.yml
             # on the others - to learn what the newest version is. It was built on
@@ -350,9 +351,36 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  verify-mac-packages:
+    name: Verify macOS ${{ matrix.arch }} packages
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: macos-15-intel, arch: x64}
+          - {os: macos-latest, arch: arm64}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with: {ref: '${{ inputs.tag || github.ref }}'}
+      - uses: actions/setup-node@v7
+        with: {node-version: 22}
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with: {name: macOS, path: dist}
+      - name: Launch both downloaded package formats on native architecture
+        run: RELEASE_COMMIT=$(git rev-parse HEAD) node scripts/check-distribution-packages.cjs dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-check-mac-${{ matrix.arch }}
+          path: dist/PACKAGE-CHECK-*.json
+          if-no-files-found: error
+
   publish:
     name: Publish release
-    needs: build
+    needs: [build, verify-mac-packages]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -393,7 +421,7 @@ jobs:
           mkdir -p release
           find artifacts -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \
             -o -name '*.AppImage' -o -name '*.deb' -o -name '*.snap' -o -name 'latest*.yml' \
-            -o -name '*.blockmap' -o -name '*.cdx.json' \) -exec mv {} release/ \;
+            -o -name '*.blockmap' -o -name '*.cdx.json' -o -name 'PACKAGE-CHECK-*.json' \) -exec mv {} release/ \;
           # The machine-readable statement of what this release IS (version,
           # channel, schema + sync-protocol, oldest supported client). Fleet
           # tooling and the gateway read this instead of parsing file names.
