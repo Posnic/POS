@@ -73,20 +73,13 @@ function profileCovers(profileField, category) {
   return raw.split(',').map((p) => normaliseCategory(p)).includes(category);
 }
 
-/*
- * Is the captain app switched on for this shop?
- *
- * `module_captain_enable` follows the house rule for module toggles: absent
- * means ON, and the string 'false' is a real stored value because the settings
- * form posts strings. Reading it as a plain boolean would count every shop
- * that has switched the captain app OFF as a shop that uses it, and this check
- * would then go and nag a kirana store about handsets it does not own.
+/* Only explicitly enabled restaurant tills need the automatic Captain check.
+ * Retail branches and legacy records with no module choice must stay silent.
+ * Existing branch settings are read without changing or migrating them.
  */
 function captainIsOn(branches) {
-  return (branches || []).some((b) => {
-    const v = b && b.module_captain_enable;
-    return !(v === false || v === 'false');
-  });
+  return (branches || []).some((b) => b && b.table_options === 'enable'
+    && (b.module_captain_enable === true || b.module_captain_enable === 'true'));
 }
 
 /* Quote a value into a PowerShell single-quoted string. Everything passed
@@ -183,8 +176,8 @@ function elevatedArgs(script) {
   const encoded = encodeCommand(script);
   return [
     '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command',
-    'Start-Process -FilePath powershell.exe -Verb RunAs -WindowStyle Hidden -Wait '
-      + "-ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-EncodedCommand','" + encoded + "'",
+    "$ErrorActionPreference = 'Stop'; $repair = Start-Process -FilePath powershell.exe -Verb RunAs -WindowStyle Hidden -Wait -PassThru "
+      + "-ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-EncodedCommand','" + encoded + "'; exit $repair.ExitCode",
   ];
 }
 

@@ -161,26 +161,30 @@ test('a domain-joined network is called two different things by Windows', () => 
 
 /* ------------------------------------------------------------- who is asked */
 
-test('a shop that has switched the captain app off is never asked about it', () => {
-  /*
-   * module_captain_enable is an absent-means-ON toggle saved by a form that
-   * posts strings, so 'false' is a real stored value. Reading it as a boolean
-   * would send this dialog to every kirana store in the country.
-   */
-  assert.strictEqual(handsets.captainIsOn([{ module_captain_enable: 'false' }]), false);
-  assert.strictEqual(handsets.captainIsOn([{ module_captain_enable: false }]), false);
-  assert.strictEqual(handsets.captainIsOn([{ module_captain_enable: 'true' }]), true);
-  assert.strictEqual(handsets.captainIsOn([{ module_captain_enable: true }]), true);
-  /* Absent is on: every shop installed before the toggle existed has no value
-     stored, and they are the ones most likely to be using handsets. */
-  assert.strictEqual(handsets.captainIsOn([{ branch_name: 'Main' }]), true);
-  /* One branch using it is enough; the firewall is per machine, not per shop. */
-  assert.strictEqual(handsets.captainIsOn([{ module_captain_enable: false }, { module_captain_enable: true }]), true);
+test('retail and unset branches never trigger the Captain firewall check', () => {
+  for (const branch of [{}, { branch_name: 'GSHCL' }, null,
+    { table_options: 'disable', module_captain_enable: true },
+    { module_captain_enable: true }, { table_options: 'enable' }]) {
+    assert.strictEqual(handsets.captainIsOn([branch]), false);
+  }
+  for (const value of [false, 'false', 0, '0', '', null, undefined]) {
+    assert.strictEqual(handsets.captainIsOn([{ table_options: 'enable', module_captain_enable: value }]), false);
+  }
   assert.strictEqual(handsets.captainIsOn([]), false);
 });
 
+test('explicitly enabled restaurant branches retain the Captain check', () => {
+  for (const value of [true, 'true']) {
+    assert.strictEqual(handsets.captainIsOn([{ table_options: 'enable', module_captain_enable: value }]), true);
+  }
+  assert.strictEqual(handsets.captainIsOn([
+    { table_options: 'disable', module_captain_enable: true },
+    { table_options: 'enable', module_captain_enable: false },
+  ]), false, 'restaurant and Captain must be enabled on the same branch');
+});
+
 test('the branch read carries the toggle, or nothing can gate on it', () => {
-  assert.match(IPC, /projection: \{ branch_name: 1, module_captain_enable: 1 \}/);
+  assert.match(IPC, /projection: \{ branch_name: 1, module_captain_enable: 1, table_options: 1 \}/);
   assert.match(IPC, /module_captain_enable: b\.module_captain_enable/);
 });
 
@@ -346,7 +350,8 @@ test('whether the repair worked is checked, not assumed', () => {
   const fn = MAIN.slice(MAIN.indexOf('async function reportHandsetReachability'), MAIN.indexOf('function seedBrandFromBuild'));
   const after = fn.slice(fn.indexOf('handsets.applyFix'));
   assert.match(after, /const after = await handsets\.check\(/);
-  assert.match(after, /title: after\.ok \? 'Handsets can reach this till' : 'Still blocked'/);
+  assert.match(after, /title: after\.kind === 'reachable' \? 'Firewall rule verified' : 'Firewall check incomplete'/);
+  assert.ok(!after.includes('The rule was added'));
 });
 
 test('the check stays off the startup path', () => {
@@ -454,4 +459,34 @@ test('the old firewall batch file is gone rather than left to mislead', () => {
    * than no repair.
    */
   assert.ok(!fs.existsSync(path.join(ROOT, 'src', 'open-firewall-port.bat')));
+});
+
+// Execute only a harmless child exit, never the firewall repair or UAC prompt.
+test('repair wrapper propagates a failed child exit instead of reporting success', { skip: process.platform !== 'win32' }, () => {
+  const { spawnSync } = require('node:child_process');
+  for (const code of [0, 7]) {
+    const args = handsets.elevatedArgs('exit ' + code);
+    args[args.length - 1] = args[args.length - 1].replace('-Verb RunAs ', '');
+    const result = spawnSync('powershell.exe', args, { windowsHide: true, timeout: 15000 });
+    assert.strictEqual(result.status, code, String(result.stderr));
+  }
+});
+
+test('retail startup exits before probing or offering firewall repair', async () => {
+  const vm = require('node:vm');
+  const start = MAIN.indexOf('async function reportHandsetReachability()');
+  const end = MAIN.indexOf('/*', MAIN.indexOf('\n}', start) + 2);
+  const source = MAIN.slice(start, end);
+  let probes = 0;
+  let dialogs = 0;
+  const sandbox = {
+    process: { platform: 'win32' },
+    readLocalBranches: async () => [{ table_options: 'disable', module_captain_enable: true }],
+    require: () => ({ ...handsets, check: () => { probes++; } }),
+    dialog: { showMessageBox: () => { dialogs++; } },
+  };
+  vm.runInNewContext(source, sandbox);
+  await sandbox.reportHandsetReachability();
+  assert.strictEqual(probes, 0);
+  assert.strictEqual(dialogs, 0);
 });

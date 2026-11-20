@@ -5097,7 +5097,7 @@ app.whenReady().then(async () => {
  *   while they are looking the other way.
  *
  *   SILENT UNLESS THE SHOP USES HANDSETS. module_captain_enable, read with the
- *   same absent-means-on rule the rest of the app uses.
+ *   explicit opt-in and restaurant settings.
  *
  *   SILENT UNLESS SOMETHING IS ACTUALLY WRONG. A machine that cannot be read
  *   produces no dialog at all; see verdict().
@@ -5153,10 +5153,10 @@ async function reportHandsetReachability() {
     console.warn('[Handsets] the firewall rule was not created:', fixed.error);
     await dialog.showMessageBox(target, {
       type: 'info',
-      title: 'Nothing was changed',
-      message: 'Windows did not grant permission, so the firewall was left as it was.',
-      detail: 'Nothing on this computer has changed. You can try again from the Windows Firewall '
-        + 'settings, or the next time Posnic starts.',
+      title: 'Firewall repair did not complete',
+      message: 'Windows did not complete the requested firewall repair.',
+      detail: 'Permission may have been declined, or Windows could not apply the rule. '
+        + 'The repair may be incomplete. Please share the support log if help is needed.',
       buttons: ['OK'],
       noLink: true,
     });
@@ -5168,14 +5168,13 @@ async function reportHandsetReachability() {
   console.log(`[Handsets] after repair: ${after.kind}`);
   await dialog.showMessageBox(target, {
     type: after.ok ? 'info' : 'warning',
-    title: after.ok ? 'Handsets can reach this till' : 'Still blocked',
-    message: after.ok
-      ? 'Windows Firewall now allows Posnic to accept connections from the shop network.'
-      : 'The rule was added, but something is still refusing connections.',
-    detail: after.ok
-      ? 'Staff phones on the same Wi-Fi should find this till straight away. There is nothing '
-        + 'to restart.'
-      : `${handsets.explain(after)}\n\nThis is worth sending to support along with the log file.`,
+    title: after.kind === 'reachable' ? 'Firewall rule verified' : 'Firewall check incomplete',
+    message: after.kind === 'reachable'
+      ? 'A Windows Firewall allow rule was found for this network.'
+      : 'The repair finished, but access from staff phones has not been verified.',
+    detail: after.kind === 'reachable'
+      ? 'Try connecting the Captain app from a staff phone on the same shop network.'
+      : `${handsets.explain(after)}\n\nThis check is for Captain staff phones, not the weighing scale. Please share the support log if help is needed.`,
     buttons: ['OK'],
     noLink: true,
   });
