@@ -17,6 +17,17 @@ function findApp(root) {
   if (apps.length!==1) throw new Error('Expected exactly one app bundle');
   return path.join(root,apps[0]);
 }
+function stopInstallerAutoLaunch(executable) {
+  const target=fs.realpathSync.native(executable).toLowerCase();
+  const raw=run('powershell.exe',['-NoProfile','-NonInteractive','-Command',
+    "@(Get-CimInstance Win32_Process -Filter \"Name = 'Posnic.exe'\" | Select-Object ProcessId,ExecutablePath) | ConvertTo-Json -Compress"],{encoding:'utf8'});
+  const processes=raw.trim()?JSON.parse(raw):[];
+  for(const item of Array.isArray(processes)?processes:[processes]) {
+    if(!item.ExecutablePath) continue;
+    let candidate;try {candidate=fs.realpathSync.native(item.ExecutablePath).toLowerCase();}catch{continue;}
+    if(candidate===target) {try {run('taskkill',['/pid',String(item.ProcessId),'/T','/F']);}catch{}}
+  }
+}
 async function checkArtifact(artifact) {
   // Installers may register file associations and services. Only disposable
   // hosted CI runners are allowed; never install over a developer's shop.
@@ -27,9 +38,12 @@ async function checkArtifact(artifact) {
     let executable, args=[];
     if (artifact.endsWith('-installer.exe')) {
       const destination=path.join(root,'installed');
-      run(artifact,['/S','/D='+destination]);
+      run(artifact,['/S','/D='+destination],{stdio:'ignore',env:{...process.env,POSNIC_USER_DATA:path.join(root,'installer-startup')}});
       executable=path.join(destination,'Posnic.exe');
       if (!fs.existsSync(executable)) throw new Error('Installer did not create Posnic.exe');
+      // The production silent-update installer deliberately auto-launches.
+      // Stop that exact disposable installation before the instrumented launch.
+      stopInstallerAutoLaunch(executable);
     } else if (artifact.endsWith('-portable.exe')) {
       executable=artifact;
     } else if (artifact.endsWith('.dmg')) {
