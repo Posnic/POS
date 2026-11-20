@@ -5,7 +5,7 @@
   "main": "src/main.js",
   "desktopName": "com.posnic.app.desktop",
   "scripts": {
-    "postinstall": "node scripts/enable-installer-extraction-details.js",
+    "postinstall": "node scripts/enable-installer-extraction-details.js && node scripts/fix-snap-template.cjs",
     "prepare": "husky",
     "start": "electron .",
     "dev": "node scripts/dev-server.js",
@@ -15,7 +15,7 @@
     "prepare:api-runtime": "node scripts/prepare-api-runtime.js",
     "prepare:api-runtime:force": "node scripts/prepare-api-runtime.js --force",
     "prepare:sync-agent": "node scripts/prepare-sync-agent.js",
-    "prepare:bundle": "node scripts/enable-installer-extraction-details.js && npm run prepare:vc-runtime && npm run prepare:frontend && npm run prepare:api-runtime && npm run prepare:sync-agent",
+    "prepare:bundle": "node scripts/fix-snap-template.cjs && node scripts/enable-installer-extraction-details.js && npm run prepare:vc-runtime && npm run prepare:frontend && npm run prepare:api-runtime && npm run prepare:sync-agent",
     "prebuild": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
     "build": "electron-builder --win --x64",
     "prebuild:fast": "npm run clear:brand-seed && npm run check:mongodb && npm run prepare:bundle",
