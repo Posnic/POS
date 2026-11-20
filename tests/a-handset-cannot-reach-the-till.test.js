@@ -162,7 +162,7 @@ test('a domain-joined network is called two different things by Windows', () => 
 /* ------------------------------------------------------------- who is asked */
 
 test('retail and unset branches never trigger the Captain firewall check', () => {
-  for (const branch of [{}, { branch_name: 'GSHCL' }, null,
+  for (const branch of [{}, { branch_name: 'Retail Shop' }, null,
     { table_options: 'disable', module_captain_enable: true },
     { module_captain_enable: true }, { table_options: 'enable' }]) {
     assert.strictEqual(handsets.captainIsOn([branch]), false);
