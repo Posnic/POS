@@ -84,10 +84,22 @@ async function verifyOnboarding(port, wizard) {
   await evaluate(wizard, "document.getElementById('recoverySaved').click(); document.getElementById('recoveryContinue').click(); true");
   const login = await waitFor(port, /login\.html/, "document.readyState === 'complete' && !!window.PosnicPro?.users?.loginCheck && !!document.getElementById('login_button')", 'the login form');
   await enter(login, 'username', email);
+  await enter(login, 'password', 'DeliberatelyWrong!Password');
+  await evaluate(login, "document.getElementById('login_button').click(); true");
+  await waitFor(port, /login\.html/, "document.getElementById('login_error')?.innerText.includes('Username or password is incorrect') && document.getElementById('login_error').getClientRects().length > 0 && !localStorage.getItem('posnic_jwt_token')", 'wrong-password rejection');
+  await enter(login, 'username', email);
   await enter(login, 'password', password);
   await evaluate(login, "document.getElementById('login_button').click(); true");
-  await waitFor(port, /dashboard\.html/, "document.readyState === 'complete' && !!localStorage.getItem('posnic_jwt_token') && !!document.body?.innerText.trim()", 'the authenticated dashboard');
-  console.log('PASS: packaged offline setup and login reached the authenticated dashboard with the exact new credentials.');
+  const dashboard = await waitFor(port, /dashboard\.html/, "document.readyState === 'complete' && !!localStorage.getItem('posnic_jwt_token') && !!document.body?.innerText.trim()", 'the authenticated dashboard');
+  await evaluate(dashboard, "document.getElementById('logout').click(); true");
+  const confirmation = await waitFor(port, /dashboard\.html/, "document.querySelector('.swal2-confirm')?.getClientRects().length > 0", 'logout confirmation');
+  await evaluate(confirmation, "document.querySelector('.swal2-confirm').click(); true");
+  const loggedOut = await waitFor(port, /login\.html/, "document.readyState === 'complete' && !!window.PosnicPro?.users?.loginCheck && !localStorage.getItem('posnic_jwt_token')", 'the logged-out form');
+  await enter(loggedOut, 'username', email);
+  await enter(loggedOut, 'password', password);
+  await evaluate(loggedOut, "document.getElementById('login_button').click(); true");
+  await waitFor(port, /dashboard\.html/, "document.readyState === 'complete' && !!localStorage.getItem('posnic_jwt_token') && !!document.body?.innerText.trim()", 'the dashboard after signing in again');
+  console.log('PASS: packaged offline setup rejected a wrong password, authenticated exact new credentials, and signed in again after logout.');
 }
 
 module.exports = { verifyOnboarding };

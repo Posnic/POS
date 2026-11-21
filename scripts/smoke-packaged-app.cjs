@@ -58,8 +58,13 @@ async function smokeExecutable(executable, root, args = []) {
     const home = path.join(root, 'home'); fs.mkdirSync(home, {recursive: true});
     const shop = path.join(home, 'shop');
     if (fs.existsSync(shop)) throw new Error('Onboarding smoke test requires a new isolated shop profile');
-    const env = {...process.env, HOME: home, XDG_CONFIG_HOME: path.join(home, '.config'),
+    const env = {...process.env, XDG_CONFIG_HOME: path.join(home, '.config'),
       XDG_DATA_HOME: path.join(home, '.local/share'), POSNIC_USER_DATA: shop};
+    // macOS safeStorage needs the runner's real login Keychain. Replacing HOME
+    // hides it and blocks SecItemAdd behind a "Keychain Not Found" modal.
+    // POSNIC_USER_DATA isolates the entire app/shop profile on every platform;
+    // keep HOME isolation elsewhere, but retain the real OS keystore on macOS.
+    if (process.platform !== 'darwin') env.HOME = home;
     delete env.ELECTRON_RUN_AS_NODE;
     child = spawn(executable, [...args, ...(process.platform === 'linux' ? ['--no-sandbox'] : []), '--remote-debugging-port=' + port],
       {cwd: path.dirname(executable), env, detached: process.platform !== 'win32', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe']});

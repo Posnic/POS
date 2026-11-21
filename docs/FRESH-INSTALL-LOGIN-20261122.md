@@ -36,7 +36,7 @@ Never request their password.
   recovery-code acknowledgement and a login through the rendered form reaching
   the authenticated dashboard. It uses a disposable profile and refuses an
   existing one. Input uses Chromium's text editing path to catch truncation.
-  No new CI jobs or platforms were added. This extended gate is not yet executed.
+  No new CI jobs or platforms were added.
 
 ## Verification
 
@@ -45,10 +45,23 @@ Never request their password.
 - API lint: zero errors; 49 existing warnings.
 - Syntax, diff whitespace and attribution checks passed.
 - Real signed 1.9.4 API: fresh setup and login returned success and a token.
-- Native UI test: blocked at the Windows firewall permission dialog; the user
-  must dismiss it. Do not bypass or automate Windows security controls.
-- New packaged build, native onboarding gate, restart/login and signed release:
-  pending. Passing unit tests is not release acceptance.
+- Native signed 1.9.4 Windows UI: created a fresh fictional shop using a
+  29-character password. Typing the same password into login retained only 20
+  characters and produced the invalid-credentials error. This is an actual
+  desktop reproduction, not just a service test.
+- Native package run 44947400386 at 1b2d9c48: Windows installer/portable and
+  Linux AppImage/DEB/Snap passed fresh setup through authenticated dashboard
+  using a long password with surrounding spaces. Both macOS architectures
+  stalled after saving the database connection configuration, before recovery
+  confirmation. Diagnostic rerun 44948650269 captured a macOS "Keychain Not
+  Found" modal and SecItemAdd waiting in the main thread. The harness had
+  overridden HOME with an empty directory, hiding the runner's login Keychain.
+  The harness now retains macOS HOME while POSNIC_USER_DATA still isolates the
+  app/shop profile. Encryption remains enabled. Verification rerun pending.
+- Unsigned fixed Windows candidate built locally. Its separate firewall prompt
+  currently blocks the manual native acceptance test; user dismissal requested.
+- Restart/login, remaining native acceptance and signed release are pending.
+  Passing unit tests is not release acceptance.
 
 The isolated API test profile is
 `C:/Users/Kayal/Documents/Codex/fresh-login-repro-194-20261122`.
@@ -62,6 +75,15 @@ replication. It does not reset existing owners, copy credentials to another
 shop, or change cloud authority. Existing cloud hash provisioning and login
 refresh behavior remain intact. The shared login page needs the matching web
 deployment as well as rebuilt desktop packages.
+
+For an account created by 1.9.4 with more than 20 characters, the stored hash
+already covers the accepted password; fixing login input should allow that
+existing account to sign in. Verify this using the isolated old-version shop.
+For an account created with surrounding spaces, 1.9.4 has already discarded
+those spaces before hashing. The new installation fix cannot reconstruct them
+or change that stored password. Such an existing account still uses the
+previously stored trimmed password; do not introduce a global login-trimming
+fallback or silently rewrite existing hashes.
 
 Do not overwrite 1.9.4 or move its tag. Before releasing a new version, complete
 native setup/login, logout/login and restart/login on the actual package; verify
