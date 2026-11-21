@@ -56,8 +56,10 @@ async function smokeExecutable(executable, root, args = []) {
     const port = server.address().port;
     await new Promise(resolve => server.close(resolve));
     const home = path.join(root, 'home'); fs.mkdirSync(home, {recursive: true});
+    const shop = path.join(home, 'shop');
+    if (fs.existsSync(shop)) throw new Error('Onboarding smoke test requires a new isolated shop profile');
     const env = {...process.env, HOME: home, XDG_CONFIG_HOME: path.join(home, '.config'),
-      XDG_DATA_HOME: path.join(home, '.local/share'), POSNIC_USER_DATA: path.join(home, 'shop')};
+      XDG_DATA_HOME: path.join(home, '.local/share'), POSNIC_USER_DATA: shop};
     delete env.ELECTRON_RUN_AS_NODE;
     child = spawn(executable, [...args, ...(process.platform === 'linux' ? ['--no-sandbox'] : []), '--remote-debugging-port=' + port],
       {cwd: path.dirname(executable), env, detached: process.platform !== 'win32', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe']});
@@ -80,6 +82,7 @@ async function smokeExecutable(executable, root, args = []) {
           if (Date.now() - readySince >= 5000) {
             await inspectResources(target.url);
             console.log('PASS: packaged executable reached the rendered first-run wizard and remained alive.');
+            await require('./verify-packaged-onboarding.cjs').verifyOnboarding(port, target);
             return;
           }
         } else readySince = 0;
