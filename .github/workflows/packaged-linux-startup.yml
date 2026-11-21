@@ -95,8 +95,11 @@ jobs:
             node scripts/check-distribution-packages.cjs dist
           fi
       - name: Keep verification evidence only
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: package-check-${{ runner.os }}-${{ matrix.arch }}
-          path: dist/PACKAGE-CHECK-*.json
+          path: |
+            dist/PACKAGE-CHECK-*.json
+            dist/PACKAGE-FAILURE-*
           if-no-files-found: error

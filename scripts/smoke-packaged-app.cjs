@@ -90,7 +90,19 @@ async function smokeExecutable(executable, root, args = []) {
       await delay(500);
     }
     throw new Error('Packaged app did not reach the rendered first-run wizard within 180 seconds');
-  } catch (error) { console.error(output); throw error; }
+  } catch (error) {
+    console.error(output);
+    // Capture a blocked native call (for example an OS keystore prompt) on
+    // disposable macOS runners. Never weaken credential protection to make
+    // an unattended package test pass.
+    if (process.platform === 'darwin' && process.env.GITHUB_ACTIONS === 'true' && child?.pid) {
+      const evidence = path.resolve('dist');
+      fs.mkdirSync(evidence, {recursive: true});
+      try { execFileSync('/usr/sbin/screencapture', ['-x', path.join(evidence, 'PACKAGE-FAILURE-macos.png')], {timeout:10000, stdio:'ignore'}); } catch {}
+      try { execFileSync('/usr/bin/sample', [String(child.pid), '1', '1', '-file', path.join(evidence, 'PACKAGE-FAILURE-macos-stack.txt')], {timeout:10000, stdio:'ignore'}); } catch {}
+    }
+    throw error;
+  }
   finally {
     if (child?.pid) {
       if (process.platform === 'win32') {
