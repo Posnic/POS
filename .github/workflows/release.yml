@@ -380,6 +380,18 @@ jobs:
       - run: npm ci
       - uses: actions/download-artifact@v8
         with: { name: macOS, path: dist }
+      # A verifier-only repair can test an existing immutable release source
+      # without changing or re-signing its packages. Pin the probe to this
+      # workflow revision; keep the artifact source checkout and reports intact.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          path: verification-tools
+          sparse-checkout: scripts/check-mac-canvas.cjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Use the workflow revision's canvas verifier
+        run: cp verification-tools/scripts/check-mac-canvas.cjs scripts/check-mac-canvas.cjs
       - name: Launch both downloaded package formats on native architecture
         run: RELEASE_COMMIT=$(git rev-parse HEAD) node scripts/check-distribution-packages.cjs dist
       - uses: actions/upload-artifact@v7

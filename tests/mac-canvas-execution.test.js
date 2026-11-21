@@ -19,7 +19,10 @@ function fixture(t, pixel = [18,52,86,255]) {
       assert.equal(args[2], archive);
       const target = path.join(args[3], '@napi-rs/canvas');
       fs.mkdirSync(target, {recursive:true});
-      fs.writeFileSync(path.join(target, 'index.js'), `exports.createCanvas = () => ({
+      const binding = path.join(args[3], '@napi-rs/canvas-test-binding');
+      fs.mkdirSync(binding, {recursive:true});
+      fs.writeFileSync(path.join(target, 'index.js'), "module.exports = require('@napi-rs/canvas-test-binding');");
+      fs.writeFileSync(path.join(binding, 'index.js'), `exports.createCanvas = () => ({
         getContext: () => ({fillRect(){}, getImageData:()=>({data:${JSON.stringify(pixel)}})}),
         toBuffer: () => Buffer.from('89504e470d0a1a0a','hex')
       });`);

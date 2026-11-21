@@ -9,7 +9,9 @@ const {execFileSync} = require('node:child_process');
 function checkMacCanvas(executable, scratch, run = execFileSync) {
   const archive = path.resolve(path.dirname(executable), '../Resources/api/node_modules.zip');
   if (!fs.existsSync(archive)) throw new Error('Packaged API archive missing for canvas verification');
-  const modules = path.join(scratch, 'canvas-runtime');
+  // Bare imports from canvas must find sibling native packages through Node's
+  // node_modules lookup, just as they do in the installed API runtime.
+  const modules = path.join(scratch, 'canvas-runtime', 'node_modules');
   fs.mkdirSync(modules, {recursive: true});
   run('/usr/bin/ditto', ['-x', '-k', archive, modules], {stdio: 'pipe', timeout: 180000});
   const probe = `
