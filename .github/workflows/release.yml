@@ -113,6 +113,20 @@ jobs:
       - name: Install
         run: npm ci
 
+      # API runtime preparation only chmods the host's 7zip-bin binary. The Mac
+      # runner also packages the other architecture, whose npm file can be
+      # 0644. Set both inputs executable BEFORE packaging and signing.
+      - name: Prepare both Mac extractor architectures
+        if: matrix.name == 'macOS'
+        run: |
+          set -euo pipefail
+          for ARCH in x64 arm64; do
+            TOOL="node_modules/7zip-bin/mac/$ARCH/7za"
+            test -f "$TOOL"
+            chmod 755 "$TOOL"
+            test -x "$TOOL"
+          done
+
       # The v1.6.2 tag locks 26.15.3. New macOS runners reject its use of the
       # certificate import password to unlock a randomly-passworded keychain.
       # Apply the upstream three-line fix without changing the tagged app:
@@ -284,10 +298,16 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.ASC_API_ISSUER }}
         run: |
           set -euo pipefail
-          APP=$(find dist/mac* -maxdepth 1 -name '*.app' | head -1)
-          codesign --verify --deep --strict --verbose=2 "$APP"
+          for APP in dist/mac*/*.app; do
+            test -x "$APP/Contents/MacOS/Posnic"
+            test -x "$APP/Contents/Resources/tools/7za"
+            test -x "$APP/Contents/Resources/mongodb/bin/mongod"
+            codesign --verify --deep --strict --verbose=2 "$APP"
+            if [ "$HAVE_NOTARY" = "true" ]; then
+              spctl -a -vv "$APP"
+            fi
+          done
           if [ "$HAVE_NOTARY" = "true" ]; then
-            spctl -a -vv "$APP"
             # electron-builder notarizes the APP while packing - the dmg is
             # born afterwards, signed but ticketless, and Gatekeeper's
             # assessment of the container then says "Unnotarized Developer
