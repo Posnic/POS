@@ -1,6 +1,7 @@
 # Fresh Community setup login investigation — 22 November 2026
 
-Status: fixes prepared; native desktop acceptance and release are not complete.
+Status: core fix reproduced and verified in native packages; expanded entry-point
+audit changes tested locally, final combined CI and signed release pending.
 
 ## Evidence and root causes
 
@@ -40,8 +41,8 @@ Never request their password.
 
 ## Verification
 
-- 38 focused desktop/authentication/setup/packaging tests passed.
-- 60 installation-service tests passed.
+- 45 focused desktop/authentication/setup/packaging tests passed.
+- 370 API controller/service/repository/validation tests passed.
 - API lint: zero errors; 49 existing warnings.
 - Syntax, diff whitespace and attribution checks passed.
 - Real signed 1.9.4 API: fresh setup and login returned success and a token.
@@ -57,11 +58,41 @@ Never request their password.
   Found" modal and SecItemAdd waiting in the main thread. The harness had
   overridden HOME with an empty directory, hiding the runner's login Keychain.
   The harness now retains macOS HOME while POSNIC_USER_DATA still isolates the
-  app/shop profile. Encryption remains enabled. Verification rerun pending.
-- Unsigned fixed Windows candidate built locally. Its separate firewall prompt
-  currently blocks the manual native acceptance test; user dismissal requested.
+  app/shop profile. Encryption remains enabled. Run 44949576446 at 22167125
+  passed all nine formats on Windows, Linux, Intel Mac and ARM Mac, including
+  wrong-password rejection and login after logout.
+- Local Windows candidate: real native signup blocked mismatched confirmation,
+  accepted the corrected long password with surrounding spaces, and typing the
+  exact password into login reached the authenticated dashboard. Fictional
+  profile: fresh-login-fixed-ui-20261122. Firewall dismissal no longer blocks it.
 - Restart/login, remaining native acceptance and signed release are pending.
   Passing unit tests is not release acceptance.
+
+## Expanded entry-point audit
+
+Normal offline signup already had a required confirmation and exact match check
+in setup-region.js. Advanced setup lacked owner confirmation; it is now required
+before advancing and again before submission. Both send confirmation to the API,
+which validates it when supplied without breaking older provisioners. Setup's
+server minimum now matches the wizard's eight characters. UTF-8 byte limits are
+checked without truncating or trimming passwords.
+
+Mobile, kiosk and admin verification had stale hash/trim paths; they now share
+the existing dual-format verifier, retaining role, activation, branch and tenant
+checks. Existing-password checks allow long credentials and preserve spaces.
+Change-password middleware no longer trims any of the three password fields.
+Legacy base64-before-bcrypt write paths reject more than 54 UTF-8 bytes, since
+base64 expands those bytes to bcrypt's 72-byte boundary. Their existing character
+limits remain; the forgot-password UI now agrees with its controller's eight-
+character minimum. New staff creation cannot omit a password or accept fewer
+than five characters (login's existing minimum); empty password on edit still
+means no password change. New owner emails are stored lowercase, matching the
+user model's email lookup contract; no existing records are migrated.
+
+The broader changes require a new native matrix run. A CodeQL alert on the
+test harness readiness condition is also being checked after separating read-
+only readiness observation from archive verification and onboarding execution;
+no security check was disabled or alert dismissed.
 
 The isolated API test profile is
 `C:/Users/Kayal/Documents/Codex/fresh-login-repro-194-20261122`.

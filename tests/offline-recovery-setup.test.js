@@ -187,7 +187,7 @@ test('Cloud and staff pages do not offer owner recovery controls', async () => {
   }
 });
 
-async function install(mode) {
+async function install(mode, confirmation = 'Owner-password-26') {
   const dom = new JSDOM(wizardHTML, { url: 'http://localhost/install-wizard.html', runScripts: 'outside-only', virtualConsole: new VirtualConsole() });
   const w = dom.window, doc = w.document, data = sample(), navigations = [], requests = [];
   const saved = downloads(w);
@@ -203,10 +203,10 @@ async function install(mode) {
   if (mode === 'quick') {
     doc.getElementById('qCountry').value = 'India';
     doc.getElementById('qCountry').dispatchEvent(new w.Event('change'));
-    for (const [id, value] of Object.entries({ qBusinessName: 'Test shop', qEmail: 'owner@example.test', qPassword: 'Owner-password-26', qConfirmPassword: 'Owner-password-26', qState: 'Goa', qCity: 'Panaji', qTimezone: 'Asia/Kolkata' })) doc.getElementById(id).value = value;
+    for (const [id, value] of Object.entries({ qBusinessName: 'Test shop', qEmail: 'owner@example.test', qPassword: 'Owner-password-26', qConfirmPassword: confirmation, qState: 'Goa', qCity: 'Panaji', qTimezone: 'Asia/Kolkata' })) doc.getElementById(id).value = value;
     doc.getElementById('qCreateBtn').click();
   } else {
-    for (const [id, value] of Object.entries({ email: 'owner@example.test', password: 'Owner-password-26', branchName: 'Test shop', address: 'Test address', dbPassword: 'Strong-database-26!', dbPasswordConfirm: 'Strong-database-26!' })) doc.getElementById(id).value = value;
+    for (const [id, value] of Object.entries({ email: 'owner@example.test', password: 'Owner-password-26', ownerPasswordConfirm: confirmation, branchName: 'Test shop', address: 'Test address', dbPassword: 'Strong-database-26!', dbPasswordConfirm: 'Strong-database-26!' })) doc.getElementById(id).value = value;
     for (const id of ['country', 'state']) { const option = doc.createElement('option'); option.value = 'Test'; option.textContent = 'Test'; doc.getElementById(id).append(option); doc.getElementById(id).value = 'Test'; }
     doc.getElementById('backupEnabled').checked = false;
     doc.getElementById('loadDemoData').checked = false;
@@ -216,6 +216,13 @@ async function install(mode) {
   for (let i = 0; i < 30 && doc.getElementById('stepRecovery').style.display !== 'block'; i++) await new Promise((r) => setTimeout(r, 30));
   return { dom, w, doc, data, saved, navigations, requests };
 }
+for (const mode of ['quick', 'advanced']) test(`${mode} installation rejects mismatched confirmation before writing a shop`, async () => {
+  const {dom,requests,navigations}=await install(mode,'Wrong-confirmation');
+  try {
+    assert.equal(requests.filter(r=>r.url.endsWith('/api/install/add')).length,0);
+    assert.deepEqual(navigations,[]);
+  } finally {dom.window.close();}
+});
 for (const mode of ['quick', 'advanced']) test(`${mode} installation waits for saved-code confirmation before sign-in`, async () => {
   const { dom, w, doc, data, saved, navigations, requests } = await install(mode);
   try {

@@ -7,6 +7,7 @@ const { JSDOM } = require('jsdom');
 function fixture(t) {
   const source = name => fs.readFileSync(path.join(__dirname, '../src', name), 'utf8');
   const dom = new JSDOM(source('install-wizard.html'), { runScripts: 'outside-only' });
+  dom.window.TextEncoder = TextEncoder;
   t.after(() => dom.window.close());
   dom.window.eval(source('setup-region-data.js'));
   dom.window.eval(source('setup-region.js'));
@@ -54,4 +55,19 @@ test('confirmation blocks mismatched passwords and clears after correction', t =
  for(const [id,value] of Object.entries({qBusinessName:'Shop',qEmail:'a@example.com',qPassword:'password123',qConfirmPassword:'different',qState:'Goa',qCity:'Panaji',qTimezone:'Asia/Kolkata'})) f.set(id,value);
  assert.equal(f.api.validate(),false); assert.equal(f.doc.getElementById('qConfirmPasswordError').textContent,'Passwords do not match.');
  f.set('qConfirmPassword','password123'); assert.equal(f.api.validate(),true); assert.equal(f.doc.getElementById('qError').style.display,'none');
+});
+
+test('setup rejects missing confirmation and oversized UTF-8 passwords without changing input', t => {
+ const f=fixture(t); f.country('India');
+ for(const [id,value] of Object.entries({qBusinessName:'Shop',qEmail:'owner@example.com',qState:'Goa',qCity:'Panaji',qTimezone:'Asia/Kolkata'})) f.set(id,value);
+ for(const [password,confirm,valid] of [
+   ['password123','',false], ['password123','password124',false],
+   ['short','short',false], ['é'.repeat(37),'é'.repeat(37),false],
+   ['é'.repeat(36),'é'.repeat(36),true],
+   [' LongOwnerPassword!WithSpaces ',' LongOwnerPassword!WithSpaces ',true],
+ ]) {
+   f.set('qPassword',password); f.set('qConfirmPassword',confirm);
+   assert.equal(f.api.validate(),valid);
+   assert.equal(f.doc.getElementById('qPassword').value,password);
+ }
 });

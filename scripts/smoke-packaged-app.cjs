@@ -48,6 +48,30 @@ async function inspectResources(url) {
     if (!fs.existsSync(path.join(resources, name))) throw new Error('Missing packaged resource: ' + name);
   }
 }
+// Read-only readiness observation. This renderer signal is not authorization
+// for host actions; the caller owns the isolated child and verifies its archive.
+async function waitForWizard(port, child, status) {
+  const deadline = Date.now() + 180000;
+  let readySince = 0;
+  while (Date.now() < deadline) {
+    const {launchError, output} = status();
+    if (launchError) throw launchError;
+    if (child.exitCode !== null || child.signalCode !== null) throw new Error('Packaged app exited before verification');
+    if (/Cannot find module|Uncaught Exception|main-uncaught-exception|main-unhandled-rejection/i.test(output)) throw new Error('Packaged startup exception');
+    let targets = [];
+    try { targets = await (await fetch('http://127.0.0.1:' + port + '/json/list', {signal: AbortSignal.timeout(2000)})).json(); } catch {}
+    const target = targets.find(t => t.type === 'page' && /\/install-wizard\.html(?:[?#]|$)/.test(t.url));
+    if (target) {
+      const page = await evaluate(target.webSocketDebuggerUrl);
+      if (page.ready === 'complete' && page.text > 40 && page.controls > 0) {
+        readySince ||= Date.now();
+        if (Date.now() - readySince >= 5000) return target;
+      } else readySince = 0;
+    } else readySince = 0;
+    await delay(500);
+  }
+  throw new Error('Packaged app did not reach the rendered first-run wizard within 180 seconds');
+}
 async function smokeExecutable(executable, root, args = []) {
   let child, output = '';
   try {
@@ -71,30 +95,10 @@ async function smokeExecutable(executable, root, args = []) {
     let launchError;
     child.on('error', error => { launchError = error; });
     for (const stream of [child.stdout, child.stderr]) stream.on('data', bytes => { output = (output + bytes).slice(-200000); });
-    const deadline = Date.now() + 180000;
-    let readySince = 0;
-    while (Date.now() < deadline) {
-      if (launchError) throw launchError;
-      if (child.exitCode !== null || child.signalCode !== null) throw new Error('Packaged app exited before verification');
-      if (/Cannot find module|Uncaught Exception|main-uncaught-exception|main-unhandled-rejection/i.test(output)) throw new Error('Packaged startup exception');
-      let targets = [];
-      try { targets = await (await fetch('http://127.0.0.1:' + port + '/json/list', {signal: AbortSignal.timeout(2000)})).json(); } catch {}
-      const target = targets.find(t => t.type === 'page' && /\/install-wizard\.html(?:[?#]|$)/.test(t.url));
-      if (target) {
-        const page = await evaluate(target.webSocketDebuggerUrl);
-        if (page.ready === 'complete' && page.text > 40 && page.controls > 0) {
-          readySince ||= Date.now();
-          if (Date.now() - readySince >= 5000) {
-            await inspectResources(target.url);
-            console.log('PASS: packaged executable reached the rendered first-run wizard and remained alive.');
-            await require('./verify-packaged-onboarding.cjs').verifyOnboarding(port, target);
-            return;
-          }
-        } else readySince = 0;
-      } else readySince = 0;
-      await delay(500);
-    }
-    throw new Error('Packaged app did not reach the rendered first-run wizard within 180 seconds');
+    const target = await waitForWizard(port, child, () => ({launchError, output}));
+    await inspectResources(target.url);
+    console.log('PASS: packaged executable reached the rendered first-run wizard and remained alive.');
+    await require('./verify-packaged-onboarding.cjs').verifyOnboarding(port, target);
   } catch (error) {
     console.error(output);
     // Capture a blocked native call (for example an OS keystore prompt) on

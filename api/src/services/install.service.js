@@ -390,7 +390,7 @@ class InstallService {
       username: data.register_username.trim(),
       password: hashedPassword,
       usertype: USER_TYPES.SUPER_ADMIN,
-      email: data.register_useremail.trim(),
+      email: data.register_useremail.trim().toLowerCase(),
       apikey: '',
       access: DEFAULT_ACCESS,
       image: DEFAULTS.IMAGE,
