@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "O item não foi encontrado ou o preço de venda foi mantido. Revise-o em Editar preços.",
   "Branch access required": "É necessário acesso à",
   "Branch and supported language required": "filial Filial e idioma suportado",
-  "Password must contain between 5 and 20 characters": "A senha deve conter entre 5 e 20 caracteres",
+  "Password must contain between 8 and 20 characters": "A senha deve conter entre 8 e 20 caracteres",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Unidades alternativas são suportadas para vendas comuns no balcão. Use a unidade base para esse canal de venda.",
   "Audience choices": "Escolhas de público",
   "Choose a table first.": "Escolha uma mesa primeiro.",

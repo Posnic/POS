@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Artikel ni najden ali prodajna cena je zadržana. Preglejte ga v Uredi cene.",
   "Branch access required": "Potreben je dostop do podružnice Zah",
   "Branch and supported language required": "tevan podružnica in podprti jezik",
-  "Password must contain between 5 and 20 characters": "Geslo mora vsebovati od 5 do 20 znakov",
+  "Password must contain between 8 and 20 characters": "Geslo mora vsebovati od 8 do 20 znakov",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Nadomestne enote so podprte za običajno prodajo na števcu. Uporabite osnovno enoto za ta prodajni kanal.",
   "Audience choices": "Izbira občinstva",
   "Choose a table first.": "Najprej izberite tabelo.",

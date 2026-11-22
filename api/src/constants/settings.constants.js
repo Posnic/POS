@@ -192,7 +192,7 @@ const VALIDATION_RULES = {
   DEFAULT_SUPPLIER: { MIN: 3, MAX: 100 },
 
   // Password
-  PASSWORD: { MIN: 5, MAX: 20 },
+  PASSWORD: { MIN: 8, MAX: 20 },
 
   // SMS
   WAY2SMS_API: { MAX: 100 },

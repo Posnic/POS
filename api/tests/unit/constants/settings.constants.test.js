@@ -150,7 +150,7 @@ describe('settings.constants', () => {
       PAYMENT_VALUE: { MIN: 1, MAX: 12 },
       DEFAULT_CUSTOMER: { MIN: 3, MAX: 100 },
       DEFAULT_SUPPLIER: { MIN: 3, MAX: 100 },
-      PASSWORD: { MIN: 5, MAX: 20 },
+      PASSWORD: { MIN: 8, MAX: 20 },
       WAY2SMS_API: { MAX: 100 },
       WAY2SMS_USERID: { MAX: 20 },
       TEXTLOCAL_API: { MAX: 100 },

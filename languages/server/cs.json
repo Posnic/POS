@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Položka nenalezena nebo je zachována prodejní cena. Zkontrolujte to v Upravit ceny.",
   "Branch access required": "přístup k pobočce",
   "Branch and supported language required": "Požaduje se pobočka a podporovaný jazyk",
-  "Password must contain between 5 and 20 characters": "Heslo musí obsahovat 5 až 20 znaků",
+  "Password must contain between 8 and 20 characters": "Heslo musí obsahovat 8 až 20 znaků",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Alternativní jednotky jsou podporovány pro běžný prodej na přepážce. Použijte základní jednotku pro tento prodejní kanál.",
   "Audience choices": "Volby publika",
   "Choose a table first.": "Nejprve vyberte tabulku.",

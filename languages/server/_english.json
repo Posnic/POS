@@ -1676,7 +1676,7 @@
     "src/controllers/users.controller.js",
     "src/repositories/user.repository.js"
   ],
-  "Password must contain between 5 and 20 characters": [
+  "Password must contain between 8 and 20 characters": [
     "src/models/user.model.js"
   ],
   "Password reset is not configured for this shop. Please contact support.": [

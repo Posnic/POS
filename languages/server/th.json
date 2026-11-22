@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "ไม่พบสินค้า หรือราคาขายถูกเก็บไว้ตรวจสอบในแก้ไขราคา",
   "Branch access required": "ต้องเข้าถึงสาขา ต้อง",
   "Branch and supported language required": "ใช้สาขาและภาษาที่รองรับ",
-  "Password must contain between 5 and 20 characters": "รหัสผ่านต้องมีอักขระหว่าง 5 ถึง 20 อักขระ",
+  "Password must contain between 8 and 20 characters": "รหัสผ่านต้องมีอักขระหว่าง 8 ถึง 20 อักขระ",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "รองรับหน่วยอื่นสำหรับการขายเคาน์เตอร์ทั่วไปใช้หน่วยพื้นฐานสำหรับช่องทางการขายนี้",
   "Audience choices": "ทางเลือกของผู้ชม",
   "Choose a table first.": "เลือกตารางก่อน",

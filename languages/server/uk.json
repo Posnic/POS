@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Товар не знайдено або ціна продажу збережена. Перегляньте його в розділі Редагувати ціни.",
   "Branch access required": "Потрібний доступ до відділення Потрі",
   "Branch and supported language required": "бна гілка та підтримувана мова",
-  "Password must contain between 5 and 20 characters": "Пароль повинен містити від 5 до 20 символів",
+  "Password must contain between 8 and 20 characters": "Пароль повинен містити від 8 до 20 символів",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Альтернативні одиниці підтримуються для звичайних зустрічних продажів. Використовуйте базовий блок для цього каналу продажу.",
   "Audience choices": "Вибір аудиторії",
   "Choose a table first.": "Спочатку виберіть таблицю.",

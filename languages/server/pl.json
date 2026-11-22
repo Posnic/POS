@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Przedmiot nie został znaleziony lub cena sprzedaży jest utrzymywana. Przejrzyj to w Edytuj ceny.",
   "Branch access required": "Wymagany dostęp do oddziału Wym",
   "Branch and supported language required": "agany oddział i obsługiwany język",
-  "Password must contain between 5 and 20 characters": "Hasło musi zawierać od 5 do 20 znaków",
+  "Password must contain between 8 and 20 characters": "Hasło musi zawierać od 8 do 20 znaków",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Jednostki alternatywne są obsługiwane w przypadku zwykłej sprzedaży na liczniku. Użyj jednostki bazowej dla tego kanału sprzedaży.",
   "Audience choices": "Wybór odbiorców",
   "Choose a table first.": "Najpierw wybierz tabelę.",

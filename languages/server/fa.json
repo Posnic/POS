@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "مورد یافت نشد یا قیمت فروش حفظ شده است. آن را در ویرایش قیمت ها مرور کنید.",
   "Branch access required": "دسترسی به شعبه مورد نیاز",
   "Branch and supported language required": "شعبه و زبان پشتیبانی شده مورد نیاز است",
-  "Password must contain between 5 and 20 characters": "رمز عبور باید حاوی بین 5 تا 20 کاراکتر باشد",
+  "Password must contain between 8 and 20 characters": "رمز عبور باید حاوی بین 8 تا 20 کاراکتر باشد",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "واحدهای جایگزین برای پیشفروش معمولی پشتیبانی می شوند. از واحد پایه برای این کانال فروش استفاده کنید.",
   "Audience choices": "انتخاب مخاطبان",
   "Choose a table first.": "ابتدا یک جدول را انتخاب کنید.",

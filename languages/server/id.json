@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Barang tidak ditemukan atau harga jual dipegang. Tinjau di Edit harga.",
   "Branch access required": "Diperlukan akses cabang",
   "Branch and supported language required": "Cabang dan bahasa yang didukung",
-  "Password must contain between 5 and 20 characters": "Kata sandi harus berisi antara 5 dan 20 karakter",
+  "Password must contain between 8 and 20 characters": "Kata sandi harus berisi antara 8 dan 20 karakter",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Unit alternatif didukung untuk penjualan konter biasa. Gunakan unit dasar untuk saluran penjualan ini.",
   "Audience choices": "Pilihan audiens",
   "Choose a table first.": "Pilih tabel terlebih dahulu.",

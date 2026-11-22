@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Mír nach bhfuarthas nó coimeádtar praghas díola. Déan athbhreithniú air i Eagar praghsanna",
   "Branch access required": "Teastaíonn rochtain bra",
   "Branch and supported language required": "inse agus teanga tacaithe ag teastáil",
-  "Password must contain between 5 and 20 characters": "Caithfidh idir 5 agus 20 carachtar a bheith i bhfocal faire",
+  "Password must contain between 8 and 20 characters": "Caithfidh idir 8 agus 20 carachtar a bheith i bhfocal faire",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Tacaítear le haonaid mhalartacha le haghaidh gnáth-dhíolacháin Úsáid an bunaonad don chainéal díola seo.",
   "Audience choices": "Roganna lucht féachana",
   "Choose a table first.": "Roghnaigh tábla ar dtús.",

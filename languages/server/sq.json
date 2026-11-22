@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Artikulli nuk gjendet ose çmimi i shitjes mbahet. Rishikoni atë në Redakto çmimet.",
   "Branch access required": "Kërkohet qasja në",
   "Branch and supported language required": "degë Dega dhe gjuha e mbështetur",
-  "Password must contain between 5 and 20 characters": "Fjalëkalimi duhet të përmbajë nga 5 deri në 20 karaktere",
+  "Password must contain between 8 and 20 characters": "Fjalëkalimi duhet të përmbajë nga 8 deri në 20 karaktere",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Njësitë alternative mbështeten për shitjet e zakonshme të banakut. Përdorni njësinë bazë për këtë kanal shitjeje.",
   "Audience choices": "zgjedhjet e audiencës",
   "Choose a table first.": "Së pari zgjidhni një tabelë.",

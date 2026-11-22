@@ -1768,7 +1768,7 @@ PosnicPro.users = {
         });
     },
     changeUserPassword: function () {
-        var regexPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,20}$/;
+        var regexPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
         var new_password = $('#retype_new_password').val();
         var confirm_password = $('#update_new_password').val();
         if ((regexPassword.test(confirm_password)) && (regexPassword.test(new_password))) {
@@ -1802,7 +1802,7 @@ PosnicPro.users = {
     },
     /*Change user account password*/
     changePassword: function () {
-        var regexPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,20}$/;
+        var regexPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
         var confirm_password = $('#confirm_password').val();
         var new_password = $('#new_password').val();
         if ((regexPassword.test(confirm_password)) && (regexPassword.test(new_password))) {
@@ -1916,7 +1916,7 @@ PosnicPro.users = {
                 },
                 password: {
                     required: true,
-                    minlength: 5,
+                    minlength: 8,
                     maxlength: 20
                 },
                 retype_password: {
@@ -1953,18 +1953,18 @@ PosnicPro.users = {
                 },
                 password: {
                     required: "Enter a password",
-                    minlength: "Password must be at least 5 characters",
+                    minlength: "Password must be at least 8 characters",
                     maxlength: "Password should not be more than 20 characters"
                 },
                 retype_password: {
                     required: "Type the password again",
-                    minlength: "Password must be at least 5 characters",
+                    minlength: "Password must be at least 8 characters",
                     maxlength: "Password should not be more than 20 characters",
                     equalTo: "Passwords do not match. Enter the same password in both fields."
                 },
                 email: {
                     required: "Enter the email address",
-                    minlength: "Password must be at least 5 characters",
+                    minlength: "Password must be at least 8 characters",
                     maxlength: "Password should not be more than 20 characters"
                 },
                 branch_id: {
@@ -2375,13 +2375,13 @@ $(document).ready(function () {
             },
             new_password: {
                 required: true,
-                minlength: 5,
+                minlength: 8,
                 strong_password: true,
                 maxlength: 20
             },
             confirm_password: {
                 required: true,
-                minlength: 5,
+                minlength: 8,
                 maxlength: 20,
                 equalTo: "#new_password"
             }
@@ -2392,12 +2392,12 @@ $(document).ready(function () {
             },
             new_password: {
                 required: "Enter New Password",
-                minlength: "Password must be at least 5 characters",
+                minlength: "Password must be at least 8 characters",
                 maxlength: "Password should not be more than 20 characters"
             },
             confirm_password: {
                 required: "Enter Confirm Password",
-                minlength: "Password must be at least 5 characters",
+                minlength: "Password must be at least 8 characters",
                 maxlength: "Password should not be more than 20 characters",
                 equalTo: "Not match confirm Password"
             }

@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Varen ble ikke funnet eller salgsprisen holdes. Gjennomgå det i Rediger priser.",
   "Branch access required": "Filialtilgang kreves",
   "Branch and supported language required": "Filial og støttet språk kreves",
-  "Password must contain between 5 and 20 characters": "Passordet må inneholde mellom 5 og 20 tegn",
+  "Password must contain between 8 and 20 characters": "Passordet må inneholde mellom 8 og 20 tegn",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Alternative enheter støttes for vanlig motsalg. Bruk basisenheten for denne salgskanalen.",
   "Audience choices": "Publikumsvalg",
   "Choose a table first.": "Velg et bord først.",

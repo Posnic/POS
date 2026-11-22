@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "பொருள் கண்டுபிடிக்கப்படவில்லை அல்லது விற்பனை விலை நடைபெறுகிறது. விலைகளைத் திருத்து இல் மதிப்பாய்வு செய்யவும்.",
   "Branch access required": "கிளை அணுகல் தேவை கி",
   "Branch and supported language required": "ளை மற்றும் ஆதரிக்கப்படும் மொழி தேவை",
-  "Password must contain between 5 and 20 characters": "கடவுச்சொல்லில் 5 முதல் 20 எழுத்துக்கள் வரை இருக்க வேண்டும்",
+  "Password must contain between 8 and 20 characters": "கடவுச்சொல்லில் 8 முதல் 20 எழுத்துக்கள் வரை இருக்க வேண்டும்",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "மாற்று அலகுகள் சாதாரண கவுண்டர் விற்பனைக்கு ஆதரிக்கப்படுகின்றன. இந்த விற்பனை சேனலுக்கான அடிப்படை அலகைப் பயன்படுத்தவும்.",
   "Audience choices": "பார்வையாளர் தேர்வுகள்",
   "Choose a table first.": "முதலில் அட்டவணையைத் தேர்வுசெய்க",

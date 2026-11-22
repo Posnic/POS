@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Hlutur fannst ekki eða söluverð er haldið. Skoðaðu það í Breyta verði.",
   "Branch access required": "Aðgangur að útibúum krafist",
   "Branch and supported language required": "Útibú og studd tungumál þarf",
-  "Password must contain between 5 and 20 characters": "Lykilorð verður að innihalda á milli 5 og 20 stafi",
+  "Password must contain between 8 and 20 characters": "Lykilorð verður að innihalda á milli 8 og 20 stafi",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Varaeiningar eru studdar við venjulega teljasölu. Notaðu grunneininguna fyrir þessa sölurás.",
   "Audience choices": "Val áhorfenda",
   "Choose a table first.": "Veldu borð fyrst.",

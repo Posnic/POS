@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "아이템을 찾을 수 없거나 판매 가격이 보류되었습니다.가격 편집에서 검토하세요.",
   "Branch access required": "브랜치 액세스 필요",
   "Branch and supported language required": "브랜치 및 지원 언어 필요",
-  "Password must contain between 5 and 20 characters": "비밀번호는 5~20자 사이여야 합니다.",
+  "Password must contain between 8 and 20 characters": "비밀번호는 8~20자 사이여야 합니다.",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "일반 카운터 판매의 경우 대체 단위가 지원됩니다.이 판매 채널에는 기본 단위를 사용하십시오.",
   "Audience choices": "잠재고객 선택",
   "Choose a table first.": "먼저 테이블을 선택하세요.",

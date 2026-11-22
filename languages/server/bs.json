@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Artikal nije pronađen ili se održava prodajna cijena. Pregledajte ga u Uredi cijene.",
   "Branch access required": "Potreban je pristup podruž",
   "Branch and supported language required": "nici Podružnica i podržani jezik",
-  "Password must contain between 5 and 20 characters": "Lozinka mora sadržavati između 5 i 20 znakova",
+  "Password must contain between 8 and 20 characters": "Lozinka mora sadržavati između 8 i 20 znakova",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Alternativne jedinice podržane su za običnu šaltersku prodaju. Koristite osnovnu jedinicu za ovaj prodajni kanal.",
   "Audience choices": "Izbor publike",
   "Choose a table first.": "Prvo odaberite tablicu.",

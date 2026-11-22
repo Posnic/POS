@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Prekė nerasta arba pardavimo kaina laikoma. Peržiūrėkite jį skiltyje Redaguoti kainas.",
   "Branch access required": "Reikalinga prieiga prie filialo Reik",
   "Branch and supported language required": "alinga filialas ir palaikoma kalba",
-  "Password must contain between 5 and 20 characters": "Slaptažodyje turi būti nuo 5 iki 20 simbolių",
+  "Password must contain between 8 and 20 characters": "Slaptažodyje turi būti nuo 8 iki 20 simbolių",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Alternatyvūs vienetai palaikomi įprastam prekybiniam prekybai. Naudokite šio pardavimo kanalo bazinį bloką.",
   "Audience choices": "Auditorijos pasirinkimas",
   "Choose a table first.": "Pirmiausia pasirinkite lentelę.",

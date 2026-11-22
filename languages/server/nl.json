@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Het item is niet gevonden of de verkoopprijs is beperkt. Bekijk het in Prijzen bewerken.",
   "Branch access required": "Toegang tot het filiaal vereist",
   "Branch and supported language required": "Branche en ondersteunde taal vereist",
-  "Password must contain between 5 and 20 characters": "Het wachtwoord moet tussen de 5 en 20 tekens bevatten",
+  "Password must contain between 8 and 20 characters": "Het wachtwoord moet tussen de 8 en 20 tekens bevatten",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Alternatieve eenheden worden ondersteund voor gewone verkoop aan de toonbank. Gebruik de basiseenheid voor dit verkoopkanaal.",
   "Audience choices": "Keuzes van het publiek",
   "Choose a table first.": "Kies eerst een tafel.",

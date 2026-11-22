@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Không tìm thấy mặt hàng hoặc giá bán được giữ. Xem lại nó trong Chỉnh sửa giá.",
   "Branch access required": "Yêu cầu quyền truy cập",
   "Branch and supported language required": "chi nhánh Chi nhánh và ngôn ngữ được hỗ trợ",
-  "Password must contain between 5 and 20 characters": "Mật khẩu phải chứa từ 5 đến 20 ký tự",
+  "Password must contain between 8 and 20 characters": "Mật khẩu phải chứa từ 8 đến 20 ký tự",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Các đơn vị thay thế được hỗ trợ cho việc bán hàng tại quầy thông thường. Sử dụng đơn vị cơ sở cho kênh bán hàng này.",
   "Audience choices": "Lựa chọn đối tượng",
   "Choose a table first.": "Chọn một bảng trước.",

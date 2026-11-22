@@ -2158,7 +2158,7 @@ class UsersController extends BaseController {
 
       const { password } = req.query;
 
-      if (!password || String(password).length < 5 || String(password).length > 20) {
+      if (typeof password !== 'string' || !password.length || password.length > 200) {
         return res.status(400).json({
           type: 'error',
           message: 'Validation error',

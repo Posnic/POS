@@ -1909,15 +1909,15 @@ describe('userVerify', () => {
     expect(res.status).toHaveBeenCalledWith(401);
   });
 
-  test('400 when password too short (<5)', async () => {
+  test('400 when password is empty', async () => {
     const res = mockRes();
-    await ctrl.userVerify(mockReq({ query: { password: 'abc' } }), res);
+    await ctrl.userVerify(mockReq({ query: { password: '' } }), res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test('400 when password too long (>20)', async () => {
+  test('400 when password exceeds 200', async () => {
     const res = mockRes();
-    await ctrl.userVerify(mockReq({ query: { password: 'a'.repeat(21) } }), res);
+    await ctrl.userVerify(mockReq({ query: { password: 'a'.repeat(201) } }), res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
@@ -1951,7 +1951,10 @@ describe('userVerify', () => {
     mockUserModel.findById.mockReturnValue(buildSelectLean(user));
     mockBcrypt.compare.mockResolvedValue(true);
     const res = mockRes();
-    await ctrl.userVerify(mockReq({ query: { password: 'correct12' } }), res);
+    await ctrl.userVerify(
+      mockReq({ query: { password: ' exact existing password longer than 20 ' } }),
+      res
+    );
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Valid Admin' }));
   });

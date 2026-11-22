@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Kauba ei leitud või müügihinda hoitakse. Vaadake see üle jaotises Muuda hindu.",
   "Branch access required": "Vajalik on juurdepääs filiaalile",
   "Branch and supported language required": "Vaja on filiaali ja toetatud keelt",
-  "Password must contain between 5 and 20 characters": "Parool peab sisaldama 5-20 tähemärki",
+  "Password must contain between 8 and 20 characters": "Parool peab sisaldama 8-20 tähemärki",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Tavalise letimüügi jaoks toetatakse alternatiivseid üksusi. Kasutage selle müügikanali baasseadet.",
   "Audience choices": "Publiku valikud",
   "Choose a table first.": "Valige kõigepealt tabel.",

@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "අයිතමය සොයාගත නොහැකි හෝ විකුණුම් මිල රඳවා ඇත. මිල ගණන් සංස්කරණය කිරීමේ දී එය සමාලෝචනය කරන්න.",
   "Branch access required": "ශාඛා ප්රවේශය අවශ්ය",
   "Branch and supported language required": "ශාඛාව සහ සහාය භාෂාව අවශ්ය වේ",
-  "Password must contain between 5 and 20 characters": "මුරපදය අක්ෂර 5 ත් 20 ත් අතර ප්රමාණයක් අඩංගු විය යුතුය",
+  "Password must contain between 8 and 20 characters": "මුරපදය අක්ෂර 8 ත් 20 ත් අතර ප්රමාණයක් අඩංගු විය යුතුය",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "සාමාන්ය කවුන්ටර විකුණුම් සඳහා විකල්ප ඒකක සහාය දක්වයි. මෙම විකුණුම් නාලිකාව සඳහා මූලික ඒකකය භාවිතා කරන්න.",
   "Audience choices": "ප්රේක්ෂක තේරීම්",
   "Choose a table first.": "පළමුව වගුවක් තෝරන්න.",
