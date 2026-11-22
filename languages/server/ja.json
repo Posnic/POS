@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "商品が見つからない、または販売価格が保留になっています。「価格の編集」で確認してください。",
   "Branch access required": "支店へのアクセスが必要です",
   "Branch and supported language required": "ブランチへのアクセスが必要ですブランチとサポート対象言語が必要です",
-  "Password must contain between 5 and 20 characters": "パスワードは5文字から20文字以内でなければなりません",
+  "Password must contain between 8 and 20 characters": "パスワードは8文字から20文字以内でなければなりません",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "通常のカウンターセールスでは、代替ユニットがサポートされています。この販売チャネルにはベースユニットを使用してください。",
   "Audience choices": "オーディエンスの選択",
   "Choose a table first.": "最初にテーブルを選択してください。",

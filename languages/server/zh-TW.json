@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "未找到商品或保留售價。在「編輯價格」中檢閱它。",
   "Branch access required": "需要分支機構訪問需",
   "Branch and supported language required": "要分支和支持的語言",
-  "Password must contain between 5 and 20 characters": "密碼必須包含 5 至 20 個字元之間",
+  "Password must contain between 8 and 20 characters": "密碼必須包含 8 至 20 個字元之間",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "普通櫃檯銷售支持替代單位。使用此銷售渠道的基本單位。",
   "Audience choices": "觀眾選擇",
   "Choose a table first.": "首先選擇一個表格。",

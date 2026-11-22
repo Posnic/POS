@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "వస్తువు కనుగొనబడలేదు లేదా అమ్మకపు ధర జరుగుతుంది. ధరలను సవరించడంలో సమీక్షించండి.",
   "Branch access required": "బ్రాంచ్ యాక్సెస్ అవసరం",
   "Branch and supported language required": "బ్రాంచ్ మరియు మద్దతు ఉన్న భాష అవసరం",
-  "Password must contain between 5 and 20 characters": "పాస్వర్డ్లో 5 నుండి 20 అక్షరాల మధ్య ఉండాలి",
+  "Password must contain between 8 and 20 characters": "పాస్వర్డ్లో 8 నుండి 20 అక్షరాల మధ్య ఉండాలి",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "సాధారణ కౌంటర్ అమ్మకాలకు ప్రత్యామ్నాయ యూనిట్లు మద్దతు ఇస్తాయి. ఈ అమ్మకపు ఛానెల్ కోసం బేస్ యూనిట్ను ఉపయోగించండి.",
   "Audience choices": "ప్రేక్షకుల ఎంపికలు",
   "Choose a table first.": "మొదట పట్టికను ఎంచుకోండి.",

@@ -25557,7 +25557,7 @@
                   },
                   "password": {
                     "type": "string",
-                    "minLength": 5,
+                    "minLength": 8,
                     "maxLength": 20,
                     "description": "Password is required for a new user"
                   },

@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "आयटम सापडला नाही किंवा विक्री किंमत ठेवली आहे संपादित किंमती मध्ये त्याचे पुनरावलोक",
   "Branch access required": "शाखा प्रवेश आव",
   "Branch and supported language required": "श्यक आहे शाखा आणि सम",
-  "Password must contain between 5 and 20 characters": "संकेतशब्दामध्ये 5 ते 20 वर्ण असणे आवश्यक आहे",
+  "Password must contain between 8 and 20 characters": "संकेतशब्दामध्ये 8 ते 20 वर्ण असणे आवश्यक आहे",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "सामान्य काउंटर विक्रीसाठी पर्यायी युनिट् या विक्री चॅनेलसाठी बेस युनिट वापरा.",
   "Audience choices": "प्रेक्षक निवड",
   "Choose a table first.": "प्रथम टेबल निवडा.",

@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Ürün bulunamadı veya satış fiyatı tutuldu. Fiyatları düzenle bölümünde inceleyin.",
   "Branch access required": "Şube erişimi gerekli",
   "Branch and supported language required": "Şube ve desteklenen dil gereklidir",
-  "Password must contain between 5 and 20 characters": "Şifre 5 ile 20 karakter arasında olmalıdır",
+  "Password must contain between 8 and 20 characters": "Şifre 8 ile 20 karakter arasında olmalıdır",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Sıradan tezgah satışları için alternatif birimler desteklenir. Bu satış kanalı için temel üniteyi kullanın.",
   "Audience choices": "Kitle seçimleri",
   "Choose a table first.": "Önce bir masa seçin.",

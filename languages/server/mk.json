@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Предметот не е пронајден или продажната цена се одржува. Прегледајте го во Уреди цени.",
   "Branch access required": "Потребен е пристап до филијал",
   "Branch and supported language required": "ата Потребен е гранка и поддржан јазик",
-  "Password must contain between 5 and 20 characters": "Лозинката мора да содржи помеѓу 5 и 20 знаци",
+  "Password must contain between 8 and 20 characters": "Лозинката мора да содржи помеѓу 8 и 20 знаци",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Алтернативни единици се поддржани за обична продажба на шалтер. Користете ја основната единица за овој продажен канал.",
   "Audience choices": "Избор на публиката",
   "Choose a table first.": "Најпрво изберете табела.",

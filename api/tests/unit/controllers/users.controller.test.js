@@ -1951,7 +1951,10 @@ describe('userVerify', () => {
     mockUserModel.findById.mockReturnValue(buildSelectLean(user));
     mockBcrypt.compare.mockResolvedValue(true);
     const res = mockRes();
-    await ctrl.userVerify(mockReq({ query: { password: ' exact existing password longer than 20 ' } }), res);
+    await ctrl.userVerify(
+      mockReq({ query: { password: ' exact existing password longer than 20 ' } }),
+      res
+    );
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Valid Admin' }));
   });

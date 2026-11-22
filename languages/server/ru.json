@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Товар не найден или цена продажи сохранена. Ознакомьтесь с ним в разделе Редактирование цен.",
   "Branch access required": "Требуется доступ к филиалу Требуется",
   "Branch and supported language required": "ветка и поддерживаемый язык",
-  "Password must contain between 5 and 20 characters": "Пароль должен содержать от 5 до 20 символов",
+  "Password must contain between 8 and 20 characters": "Пароль должен содержать от 8 до 20 символов",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Для обычных продаж на прилавках поддерживаются альтернативные единицы. Используйте базовую единицу для этого канала продаж.",
   "Audience choices": "Выбор аудитории",
   "Choose a table first.": "Сначала выберите стол.",

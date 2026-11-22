@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "ಐಟಂ ಕಂಡುಬಂದಿಲ್ಲ ಅಥವಾ ಮಾರಾಟದ ಬೆಲೆ ನಡೆಯುತ್ತದೆ. ಸಂಪಾದಿಸಿ ಬೆಲೆಗಳಲ್ಲಿ ಅದನ್ನು ಪರಿಶೀಲಿಸಿ.",
   "Branch access required": "ಶಾಖಾ ಪ್ರವೇಶ ಅಗತ್ಯವಿದೆ",
   "Branch and supported language required": "ಶಾಖೆ ಮತ್ತು ಬೆಂಬಲಿತ ಭಾಷೆ ಅಗತ್ಯವಿದೆ",
-  "Password must contain between 5 and 20 characters": "ಪಾಸ್ವರ್ಡ್ 5 ರಿಂದ 20 ಅಕ್ಷರಗಳ ನಡುವೆ ಇರಬೇಕು",
+  "Password must contain between 8 and 20 characters": "ಪಾಸ್ವರ್ಡ್ 8 ರಿಂದ 20 ಅಕ್ಷರಗಳ ನಡುವೆ ಇರಬೇಕು",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "ಸಾಮಾನ್ಯ ಕೌಂಟರ್ ಮಾರಾಟಕ್ಕೆ ಪರ್ಯಾಯ ಘಟಕಗಳನ್ನು ಬೆಂಬಲಿಸಲಾಗುತ್ತದೆ. ಈ ಮಾರಾಟ ಚಾನಲ್ಗಾಗಿ ಮೂಲ ಘಟಕವನ್ನು ಬಳಸಿ.",
   "Audience choices": "ಪ್ರೇಕ್ಷಕರ ಆಯ್ಕೆಗಳು",
   "Choose a table first.": "ಮೊದಲು ಟೇಬಲ್ ಆರಿಸಿ.",

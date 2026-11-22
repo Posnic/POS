@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "Bidhaa haijapatikana au bei ya kuuza kinashikiliwa. Ipitia katika Hariri bei.",
   "Branch access required": "Ufikiaji wa tawi in",
   "Branch and supported language required": "ahitajika Tawi na lugha inayo",
-  "Password must contain between 5 and 20 characters": "Nenosiri lazima iwe na kati ya herufi 5 na 20",
+  "Password must contain between 8 and 20 characters": "Nenosiri lazima iwe na kati ya herufi 8 na 20",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "Vitengo mbadala vinasaidiwa kwa mauzo ya kawaida ya kaunta. Tumia kitengo cha msingi kwa kituo hiki cha kuuza.",
   "Audience choices": "Uchaguzi wa hadhira",
   "Choose a table first.": "Chagua meza kwanza.",

@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "ഇനം കണ്ടെത്തുകയോ വിൽപന വില കൈവശം വയ്ക്കുകയോ ചെയ്തിട്ടില്ല. വിലകൾ എഡിറ്റ് ചെയ്യുന്നതിൽ ഇത് അവലോകനം ചെയ്യുക.",
   "Branch access required": "ബ്രാഞ്ച് ആക്സസ് ആവശ്യമാണ്",
   "Branch and supported language required": "ബ്രാഞ്ചും പിന്തുണയ്ക്കുന്ന ഭാഷയും ആവശ്യമാണ്",
-  "Password must contain between 5 and 20 characters": "പാസ്വേഡിൽ 5 മുതൽ 20 വരെ പ്രതീകങ്ങൾ അടങ്ങിയിരിക്കണം",
+  "Password must contain between 8 and 20 characters": "പാസ്വേഡിൽ 8 മുതൽ 20 വരെ പ്രതീകങ്ങൾ അടങ്ങിയിരിക്കണം",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "സാധാരണ കൗണ്ടർ വിൽപ്പനയ്ക്കായി ഇതര യൂണിറ്റുകൾ പിന്തുണയ്ക്കുന്നു. ഈ വിൽപ്പന ചാനലിനായി അടിസ്ഥാന യൂണിറ്റ് ഉപയോഗിക്കുക.",
   "Audience choices": "പ്രേക്ഷക തിരഞ്ഞെടുപ്പുകൾ",
   "Choose a table first.": "ആദ്യം ഒരു പട്ടിക തിരഞ്ഞെടുക്കുക.",

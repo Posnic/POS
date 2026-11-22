@@ -961,7 +961,7 @@
   "Item not found or selling price is held. Review it in Edit prices.": "لم يتم العثور على السلعة أو تم الاحتفاظ بسعر البيع. قم بمراجعتها في تحرير الأسعار.",
   "Branch access required": "الوصول إلى الفرع مطلوب",
   "Branch and supported language required": "الفرع واللغة المدعومة",
-  "Password must contain between 5 and 20 characters": "يجب أن تحتوي كلمة المرور على ما بين 5 و 20 حرفًا",
+  "Password must contain between 8 and 20 characters": "يجب أن تحتوي كلمة المرور على ما بين 8 و 20 حرفًا",
   "Alternate units are supported for ordinary counter sales. Use the base unit for this selling channel.": "يتم دعم الوحدات البديلة للمبيعات المضادة العادية. استخدم الوحدة الأساسية لقناة البيع هذه.",
   "Audience choices": "اختيارات الجمهور",
   "Choose a table first.": "اختر الجدول أولاً.",
