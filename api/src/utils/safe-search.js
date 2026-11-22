@@ -52,4 +52,9 @@ function isSearchable(value, min = 1) {
   return typeof value === 'string' && value.trim().length >= min;
 }
 
-module.exports = { searchPattern, isSearchable, MATCHES_NOTHING };
+// Match the complete stored address, including older mixed-case records.
+function emailMatch(value) {
+  return new RegExp('^' + searchPattern(value) + '$', 'i');
+}
+
+module.exports = { searchPattern, isSearchable, MATCHES_NOTHING, emailMatch };

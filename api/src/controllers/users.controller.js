@@ -4,7 +4,7 @@ const { redact } = require('../utils/redact');
 const { clientIp } = require('../utils/client-ip');
 const { currentConnection } = require('../db/tenant-context');
 const { remember: rememberHandset } = require('../utils/handsets');
-const { searchPattern } = require('../utils/safe-search');
+const { searchPattern, emailMatch } = require('../utils/safe-search');
 const BaseController = require('./base.controller');
 const UserModel = require('../models/user.model');
 const Branch = require('../models/branch.model');
@@ -205,7 +205,7 @@ class UsersController extends BaseController {
       }
 
       // 2) Check if user exists && password is correct
-      const user = await this.userModel.findOne({ email }).select('+password');
+      const user = await this.userModel.findOne({ email: emailMatch(email) }).select('+password');
 
       if (
         !user ||
@@ -296,7 +296,7 @@ class UsersController extends BaseController {
       // Find user by email or username, including all fields needed for the legacy response
       const user = await this.userModel
         .findOne({
-          $or: [{ email: loginId }, { username: loginId }],
+          $or: [{ email: emailMatch(loginId) }, { username: loginId }],
         })
         .select(
           '+password +license +branch_access +printing_design +access +plan +plan_access +activate +firstname +lastname +username +email +image +register_status +usertype +role_id'

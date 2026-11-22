@@ -1,3 +1,4 @@
+const { emailMatch } = require('../utils/safe-search');
 const { redact } = require('../utils/redact');
 const crypto = require('crypto');
 const { promisify } = require('util');
@@ -67,7 +68,7 @@ exports.login = async (req, res, next) => {
     }
 
     // 2) Check if user exists && password is correct
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: emailMatch(email) }).select('+password');
 
     if (!user || !(await user.correctPassword(password, user.password))) {
       return next(new AppError('Incorrect email or password', 401));
@@ -136,7 +137,8 @@ exports.restrictTo = (...roles) => {
 exports.forgotPassword = async (req, res, next) => {
   try {
     // 1) Get user based on POSTed email
-    const user = await User.findOne({ email: req.body.email });
+    const matches = await User.find({ email: emailMatch(req.body.email) }).limit(2);
+    const user = matches.length === 1 ? matches[0] : null;
     if (!user) {
       return next(new AppError('There is no user with that email address.', 404));
     }

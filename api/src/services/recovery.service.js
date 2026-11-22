@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { ObjectId } = require('mongodb');
+const { emailMatch } = require('../utils/safe-search');
 const codes = require('../utils/recovery-codes');
 const { recordAudit } = require('../utils/audit-trail');
 const { passwordMatches } = require('../utils/password-match');
@@ -88,7 +89,7 @@ async function reset(db, input = {}, audit = {}) {
   const hash = codes.digest(recoveryCode);
   const users = db.collection('users');
   const filter = {
-    $or: [{ email: account.trim() }, { username: account.trim() }],
+    $or: [{ email: emailMatch(account) }, { username: account.trim() }],
     usertype: 'super_admin',
     activate: true,
     isActive: { $ne: false },
