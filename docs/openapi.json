@@ -23658,8 +23658,8 @@
                 "properties": {
                   "old_password": {
                     "type": "string",
-                    "minLength": 3,
-                    "maxLength": 250,
+                    "minLength": 1,
+                    "maxLength": 200,
                     "description": "Old password is required"
                   },
                   "new_password": {
@@ -25557,8 +25557,13 @@
                   },
                   "password": {
                     "type": "string",
+                    "minLength": 5,
                     "maxLength": 20,
-                    "description": "The Password field can be no longer than 20 characters in length"
+                    "description": "Password is required for a new user"
+                  },
+                  "retype_password": {
+                    "type": "string",
+                    "description": "Password confirmation does not match password"
                   },
                   "usertype": {
                     "type": "string",
@@ -25589,6 +25594,7 @@
                   "firstname",
                   "name",
                   "email",
+                  "password",
                   "usertype",
                   "branch_id",
                   "app_name",
@@ -25937,7 +25943,7 @@
                 "properties": {
                   "update_new_password": {
                     "type": "string",
-                    "minLength": 5,
+                    "minLength": 8,
                     "maxLength": 20,
                     "description": "The New Password field is required"
                   },
@@ -25984,7 +25990,7 @@
                 "properties": {
                   "update_new_password": {
                     "type": "string",
-                    "minLength": 5,
+                    "minLength": 8,
                     "maxLength": 20,
                     "description": "The New Password field is required"
                   },
@@ -26594,7 +26600,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "maxLength": 20
+              "maxLength": 200
             },
             "description": "The Password field is required"
           }

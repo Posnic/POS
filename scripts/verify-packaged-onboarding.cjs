@@ -54,7 +54,10 @@ async function enter(target, id, value) {
     field.focus(); field.select(); return document.activeElement === field;
   })()`);
   if (!focused) throw new Error('Onboarding input is unavailable: ' + id);
-  await command(target.webSocketDebuggerUrl, 'Input.insertText', { text: value });
+  if (value === '') {
+    await command(target.webSocketDebuggerUrl, 'Input.dispatchKeyEvent', { type: 'keyDown', key: 'Backspace', code: 'Backspace', windowsVirtualKeyCode: 8 });
+    await command(target.webSocketDebuggerUrl, 'Input.dispatchKeyEvent', { type: 'keyUp', key: 'Backspace', code: 'Backspace', windowsVirtualKeyCode: 8 });
+  } else await command(target.webSocketDebuggerUrl, 'Input.insertText', { text: value });
   const exact = await evaluate(target, `document.getElementById(${JSON.stringify(id)}).value === ${JSON.stringify(value)}`);
   if (!exact) throw new Error('Onboarding input changed or truncated: ' + id);
 }
@@ -62,11 +65,12 @@ async function enter(target, id, value) {
 async function verifyOnboarding(port, wizard) {
   // Only called from smokeExecutable's newly-created isolated profile. Never
   // attach this test to a customer's running till or an existing user profile.
-  const email = 'package-acceptance@example.invalid';
+  const setupEmail = 'Package-Acceptance@Example.invalid';
+  const email = setupEmail.toLowerCase();
   const password = ' PackageAcceptance!LongPassword194 ';
   await evaluate(wizard, "document.getElementById('chooseLocalBtn').click(); true");
   for (const [id, value] of Object.entries({
-    qBusinessName: 'Package Acceptance Shop', qEmail: email,
+    qBusinessName: 'Package Acceptance Shop', qEmail: setupEmail,
     qPassword: password, qConfirmPassword: password,
   })) await enter(wizard, id, value);
   await evaluate(wizard, `(() => {
@@ -78,6 +82,19 @@ async function verifyOnboarding(port, wizard) {
   for (const [id, value] of Object.entries({
     qState: 'Dubai', qCity: 'Dubai', qTimezone: 'Asia/Dubai',
   })) await enter(wizard, id, value);
+  for (const [candidate, confirmation, errorId] of [
+    [password, '', 'qConfirmPasswordError'],
+    [password, 'Mismatch!123', 'qConfirmPasswordError'],
+    ['short', 'short', 'qPasswordError'],
+    ['é'.repeat(37), 'é'.repeat(37), 'qPasswordError'],
+  ]) {
+    await enter(wizard, 'qPassword', candidate);
+    await enter(wizard, 'qConfirmPassword', confirmation);
+    await evaluate(wizard, "document.getElementById('qCreateBtn').click(); true");
+    await waitFor(port, /install-wizard\.html/, `!!document.getElementById(${JSON.stringify(errorId)})?.innerText && !document.getElementById(${JSON.stringify(errorId)}).hidden && document.getElementById('qCreateBtn').getClientRects().length > 0`, 'setup validation before shop creation');
+  }
+  await enter(wizard, 'qPassword', password);
+  await enter(wizard, 'qConfirmPassword', password);
   await evaluate(wizard, "document.getElementById('qCreateBtn').click(); true");
   wizard = await waitFor(port, /install-wizard\.html/, "document.getElementById('recoverySaved')?.getClientRects().length > 0", 'the recovery-code confirmation');
   // Test-only credentials and codes are disposable; do not print them in logs.
