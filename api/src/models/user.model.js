@@ -1050,13 +1050,13 @@ userSchema.statics.userInsertUpdate = async function (data, id, context) {
     if (verify_password === 'yes' && data.usertype !== 'api') {
       if (
         typeof data.password !== 'string' ||
-        data.password.length < 5 ||
+        Array.from(data.password).length < 8 ||
         data.password.length > 20
       ) {
         return {
           status: false,
           data: null,
-          message: 'Password must contain between 5 and 20 characters',
+          message: 'Password must contain between 8 and 20 characters',
         };
       }
       if (data.retype_password !== undefined && data.retype_password !== data.password) {
