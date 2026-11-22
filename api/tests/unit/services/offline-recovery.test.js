@@ -147,7 +147,9 @@ test('reset mail resolves a unique mixed-case address and uses its saved spellin
   const Settings = require('../../../src/models/setting.model');
   const sdk = require('sib-api-v3-sdk');
   const send = jest.fn().mockResolvedValue({});
-  const client = jest.spyOn(sdk, 'TransactionalEmailsApi').mockImplementation(() => ({ sendTransacEmail: send }));
+  const client = jest
+    .spyOn(sdk, 'TransactionalEmailsApi')
+    .mockImplementation(() => ({ sendTransacEmail: send }));
   const email = 'Mixed.Case+owner@example.test';
   try {
     process.env.PUBLIC_BASE_URL = 'https://fixture.posnic.io';

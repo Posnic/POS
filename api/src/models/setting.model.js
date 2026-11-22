@@ -4554,7 +4554,10 @@ class SettingModel extends BaseModel {
       }
       const usersCollection = await this.getCollection('users');
       // Older shops may contain two addresses differing only by case.
-      const matches = await usersCollection.find({ email: emailMatch(email) }).limit(2).toArray();
+      const matches = await usersCollection
+        .find({ email: emailMatch(email) })
+        .limit(2)
+        .toArray();
       const user = matches.length === 1 ? matches[0] : null;
 
       if (!user) {
