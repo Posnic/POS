@@ -40,9 +40,18 @@ const validateUser = [
 
   body('password')
     .if(body('usertype').not().equals('api'))
-    .optional({ checkFalsy: true })
-    .isLength({ max: 20 })
-    .withMessage('The Password field can be no longer than 20 characters in length'),
+    .if((value, { req }) => !req.params?.id || !!value)
+    .notEmpty()
+    .withMessage('Password is required for a new user')
+    .isLength({ min: 5, max: 20 })
+    .withMessage('The Password field must be between 5 and 20 characters in length')
+    .custom((value) => typeof value === 'string' && Buffer.byteLength(value, 'utf8') <= 54)
+    .withMessage('Password must not exceed 54 UTF-8 bytes'),
+
+  body('retype_password')
+    .optional()
+    .custom((value, { req }) => value === req.body.password)
+    .withMessage('Password confirmation does not match password'),
 
   body('usertype')
     .if(body('usertype').not().equals('api'))
@@ -90,6 +99,8 @@ const validateLogin = [
   body('password')
     .notEmpty()
     .withMessage('The Password field is required')
+    .isString()
+    .withMessage('Password must be a string')
     .isLength({ min: 5, max: 200 })
     .withMessage('The Password field needs to be between 5 and 200 characters in length'),
 ];
@@ -98,8 +109,10 @@ const validatePasswordUpdate = [
   body('update_new_password')
     .notEmpty()
     .withMessage('The New Password field is required')
-    .isLength({ min: 5, max: 20 })
-    .withMessage('The New Password field needs to be between 5 and 20 characters in length'),
+    .isLength({ min: 8, max: 20 })
+    .withMessage('The New Password field needs to be between 8 and 20 characters in length')
+    .custom((value) => typeof value === 'string' && Buffer.byteLength(value, 'utf8') <= 54)
+    .withMessage('New password must not exceed 54 UTF-8 bytes'),
 
   body('retype_new_password')
     .notEmpty()
@@ -116,8 +129,8 @@ const validateUserVerify = [
   query('password')
     .notEmpty()
     .withMessage('The Password field is required')
-    .isLength({ max: 20 })
-    .withMessage('The Password field can be no longer than 20 characters in length'),
+    .isLength({ max: 200 })
+    .withMessage('The Password field can be no longer than 200 characters in length'),
 ];
 
 const validateChangeBranch = [

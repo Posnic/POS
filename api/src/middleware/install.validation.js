@@ -44,13 +44,27 @@ const validateInstallation = [
     .if((_value, { req }) => !req.body.register_userpasswordhash)
     .notEmpty()
     .withMessage('Password is required')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters'),
+    .isString()
+    .withMessage('Password must be a string')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters')
+    .bail()
+    .custom((value) => typeof value === 'string' && Buffer.byteLength(value, 'utf8') <= 72)
+    .withMessage(
+      'Password must not exceed 72 UTF-8 bytes; accented characters and symbols may use more than one byte'
+    ),
 
   body('register_userpasswordhash')
     .optional()
     .matches(/^\$2[aby]?\$\d{2}\$[./A-Za-z0-9]{53}$/)
     .withMessage('register_userpasswordhash must be a bcrypt hash'),
+
+  // Older provisioners do not send confirmation. When supplied by a setup
+  // form, enforce exact equality server-side as well as in the renderer.
+  body('register_password_confirm')
+    .optional()
+    .custom((value, { req }) => value === req.body.register_userpassword)
+    .withMessage('Password confirmation does not match password'),
 
   body('register_license')
     .notEmpty()

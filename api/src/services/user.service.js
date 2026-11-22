@@ -2,6 +2,7 @@ const usersRepository = require('../repositories/user.repository');
 const UserModel = require('../models/user.model');
 const Branch = require('../models/branch.model');
 const bcrypt = require('bcryptjs');
+const { passwordMatches } = require('../utils/password-match');
 const { ObjectId } = require('mongodb');
 const { ERROR_MESSAGES } = require('../constants/users.constants');
 
@@ -671,7 +672,6 @@ class UsersService {
     try {
       const { ERROR_MESSAGES, SUCCESS_MESSAGES } = require('../constants/users.constants');
       const myusername = String(username).trim();
-      const mypassword = Buffer.from(String(password).trim()).toString('base64');
 
       const user = await this.repository.findOne(
         {
@@ -696,7 +696,7 @@ class UsersService {
         };
       }
 
-      const passwordValid = await bcrypt.compare(mypassword, user.password);
+      const passwordValid = await passwordMatches(password, user.password);
 
       if (!passwordValid) {
         return {
@@ -734,7 +734,6 @@ class UsersService {
       const { SUCCESS_MESSAGES } = require('../constants/users.constants');
 
       const myusername = String(username).trim();
-      const mypassword = Buffer.from(String(password).trim()).toString('base64');
 
       const user = await this.repository.findOne(
         {
@@ -751,7 +750,7 @@ class UsersService {
         };
       }
 
-      const passwordValid = await bcrypt.compare(mypassword, user.password);
+      const passwordValid = await passwordMatches(password, user.password);
 
       if (!passwordValid || !user.activate) {
         return {

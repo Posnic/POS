@@ -57,6 +57,7 @@
     Object.entries(required).forEach(([id, message]) => { if (!field(id).value.trim()) messages[id] = message; });
     if (field('qEmail').value.trim() && !field('qEmail').validity.valid) messages.qEmail = 'Enter a valid email address, for example name@example.com.';
     if (field('qPassword').value && field('qPassword').value.length < 8) messages.qPassword = 'Use at least 8 characters for your password.';
+    if (new TextEncoder().encode(field('qPassword').value).length > 72) messages.qPassword = 'Password must not exceed 72 UTF-8 bytes. Accented characters and symbols may use more than one byte.';
     const row = data.countries.find(row => row[2] === country.value);
     const states = row ? data.states.filter(state => state[0] === row[0]).map(state => state[1]) : [];
     if (states.length && field('qState').value.trim()) {

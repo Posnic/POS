@@ -3,6 +3,7 @@ const { currentConnection } = require('../db/tenant-context');
 const Branch = require('../models/branch.model');
 const { ObjectId } = require('mongodb');
 const bcrypt = require('bcryptjs');
+const { passwordMatches } = require('../utils/password-match');
 
 class UsersRepository {
   constructor() {
@@ -260,8 +261,7 @@ class UsersRepository {
         };
       }
 
-      const base64Password = Buffer.from(password).toString('base64');
-      const isValid = await bcrypt.compare(base64Password, user.password);
+      const isValid = await passwordMatches(password, user.password);
 
       if (isValid && user.usertype === 'super_admin') {
         return {

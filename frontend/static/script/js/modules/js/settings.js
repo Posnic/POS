@@ -1660,7 +1660,9 @@ if ($wrapper.length) {
 
     },
     verifyViewDangerZoneConfirmed: function () {
-        var regexPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,20}$/;
+        // Verification accepts existing credentials; do not apply a new-password
+        // complexity policy or reject valid long/space-containing owner passwords.
+        var regexPassword = /^[\s\S]{1,200}$/;
         var password = $('#verifyPassword').val();
         if (password !== '' && (regexPassword.test(password))) {
             var params = {
@@ -2036,7 +2038,7 @@ if ($wrapper.length) {
         });
     },
     verifyDeleteCollections: function () {
-        var regexPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{5,20}$/;
+        var regexPassword = /^[\s\S]{1,200}$/;
         if ((regexPassword.test($('#verify_password').val()))) {
             var password = ($('#verify_password').val() !== '') ? $('#verify_password').val() : $('#user_verify_password').val();
             var params = {
