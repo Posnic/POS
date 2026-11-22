@@ -1,0 +1,82 @@
+{
+  "provider": "woocommerce",
+  "store": "Synthetic_WooCommerce_Store",
+  "currency": "EUR",
+  "monetaryUnit": "cents",
+  "taxableShipping": true,
+  "roundingMode": "HALF_UP",
+  "orders": [
+    {
+      "externalOrderId": "SYNTH-WC-ORD-2001",
+      "scenario": "percentage_discount_with_shipping_and_tax",
+      "items": [
+        { "sku": "SYNTH-SKU-101", "qty": 2, "unitPriceCents": 1999 }
+      ],
+      "discount": { "type": "percentage", "valueBps": 1000 },
+      "shippingCents": 499,
+      "taxRateBps": 2000,
+      "expected": {
+        "valid": true,
+        "subtotalCents": 3998,
+        "discountCents": 400,
+        "discountedSubtotalCents": 3598,
+        "taxableAmountCents": 4097,
+        "taxCents": 819,
+        "totalCents": 4916
+      }
+    },
+    {
+      "externalOrderId": "SYNTH-WC-ORD-2002",
+      "scenario": "fixed_discount_and_rounding_edge_case",
+      "items": [
+        { "sku": "SYNTH-SKU-202", "qty": 3, "unitPriceCents": 333 }
+      ],
+      "discount": { "type": "fixed", "amountCents": 250 },
+      "shippingCents": 350,
+      "taxRateBps": 550,
+      "expected": {
+        "valid": true,
+        "subtotalCents": 999,
+        "discountCents": 250,
+        "discountedSubtotalCents": 749,
+        "taxableAmountCents": 1099,
+        "taxCents": 60,
+        "totalCents": 1159
+      }
+    },
+    {
+      "externalOrderId": "SYNTH-WC-ORD-2003",
+      "scenario": "half_cent_rounding_boundary",
+      "items": [
+        { "sku": "SYNTH-SKU-205", "qty": 1, "unitPriceCents": 1005 }
+      ],
+      "discount": { "type": "fixed", "amountCents": 0 },
+      "shippingCents": 0,
+      "taxRateBps": 1000,
+      "expected": {
+        "valid": true,
+        "subtotalCents": 1005,
+        "discountCents": 0,
+        "discountedSubtotalCents": 1005,
+        "taxableAmountCents": 1005,
+        "taxCents": 101,
+        "totalCents": 1106
+      }
+    },
+    {
+      "externalOrderId": "SYNTH-WC-ORD-2004-INVALID",
+      "scenario": "rejected_discount_exceeding_subtotal",
+      "items": [
+        { "sku": "SYNTH-SKU-303", "qty": 1, "unitPriceCents": 1500 }
+      ],
+      "discount": { "type": "fixed", "amountCents": 2000 },
+      "shippingCents": 500,
+      "taxRateBps": 2000,
+      "expected": {
+        "valid": false,
+        "rejected": true,
+        "reason": "DISCOUNT_EXCEEDS_SUBTOTAL"
+      }
+    }
+  ]
+}
