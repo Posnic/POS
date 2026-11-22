@@ -385,7 +385,7 @@ describe('restrictTo', () => {
 
 describe('forgotPassword', () => {
   test('calls next(AppError 404) when user not found', async () => {
-    User.findOne.mockResolvedValue(null);
+    User.find.mockReturnValue({ limit: jest.fn().mockResolvedValue([]) });
     const next = mockNext();
 
     await authController.forgotPassword(mockReq({ body: { email: 'x@x.com' } }), mockRes(), next);
@@ -396,7 +396,7 @@ describe('forgotPassword', () => {
 
   test('generates reset token, saves user, sends email, responds 200', async () => {
     const user = makeUser();
-    User.findOne.mockResolvedValue(user);
+    User.find.mockReturnValue({ limit: jest.fn().mockResolvedValue([user]) });
     const res = mockRes();
     const next = mockNext();
 
@@ -413,7 +413,7 @@ describe('forgotPassword', () => {
 
   test('clears reset fields and calls next(AppError 500) when email send fails', async () => {
     const user = makeUser();
-    User.findOne.mockResolvedValue(user);
+    User.find.mockReturnValue({ limit: jest.fn().mockResolvedValue([user]) });
     Email.mockImplementation(() => ({
       sendPasswordReset: jest.fn().mockRejectedValue(new Error('SMTP error')),
     }));
@@ -428,9 +428,9 @@ describe('forgotPassword', () => {
     expect(err.statusCode).toBe(500);
   });
 
-  test('calls next(err) when User.findOne throws', async () => {
+  test('calls next(err) when User.find throws', async () => {
     const dbErr = new Error('DB error');
-    User.findOne.mockRejectedValue(dbErr);
+    User.find.mockReturnValue({ limit: jest.fn().mockRejectedValue(dbErr) });
     const next = mockNext();
 
     await authController.forgotPassword(mockReq({ body: { email: 'a@b.com' } }), mockRes(), next);

@@ -28,6 +28,8 @@ const envKeys = [
   'POSNIC_KEY',
   'POSNIC_SYNC_PAIRED',
   'DEMO_MODE',
+  'PUBLIC_BASE_URL',
+  'BREVO_API_KEY',
   'JWT_SECRET',
 ];
 const savedEnv = Object.fromEntries(envKeys.map((k) => [k, process.env[k]]));
@@ -141,8 +143,39 @@ test('128-bit codes are normalized, hashed, redacted, and hidden from normal use
   ).not.toContain(batch.record.hashes[0]);
 });
 
+test('reset mail resolves a unique mixed-case address and uses its saved spelling', async () => {
+  const Settings = require('../../../src/models/setting.model');
+  const sdk = require('sib-api-v3-sdk');
+  const send = jest.fn().mockResolvedValue({});
+  const client = jest
+    .spyOn(sdk, 'TransactionalEmailsApi')
+    .mockImplementation(() => ({ sendTransacEmail: send }));
+  const email = 'Mixed.Case+owner@example.test';
+  try {
+    process.env.PUBLIC_BASE_URL = 'https://fixture.posnic.io';
+    process.env.BREVO_API_KEY = 'fixture-only';
+    const users = db.collection('users');
+    await users.updateOne({ _id: owner._id }, { $set: { email } });
+    const settings = new Settings();
+    await settings.getForgotUserDetails(email.toUpperCase());
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][0].to[0].email).toBe(email);
+
+    await settings.getForgotUserDetails('MixedXCase+owner@example.test');
+    await users.insertOne({ email: email.toLowerCase() });
+    await settings.getForgotUserDetails(email.toUpperCase());
+    expect(send).toHaveBeenCalledTimes(1);
+  } finally {
+    client.mockRestore();
+  }
+});
+
 test('reset works without email, consumes only its code, preserves shop data and records an audit', async () => {
-  const result = await ask('/recovery/reset', { body: input() });
+  const storedEmail = 'Mixed.Case+owner@example.invalid';
+  await db.collection('users').updateOne({ _id: owner._id }, { $set: { email: storedEmail } });
+  const result = await ask('/recovery/reset', {
+    body: input({ account: storedEmail.toUpperCase() }),
+  });
   expect(result.status).toBe(200);
   expect(result.headers.get('cache-control')).toBe('no-store');
   const user = await db.collection('users').findOne({ _id: owner._id });

@@ -1,4 +1,4 @@
-const { searchPattern } = require('../utils/safe-search');
+const { searchPattern, emailMatch } = require('../utils/safe-search');
 const BaseModel = require('./base.model');
 const { ObjectId } = require('mongodb');
 const fs = require('fs');
@@ -4553,17 +4553,12 @@ class SettingModel extends BaseModel {
         };
       }
       const usersCollection = await this.getCollection('users');
-      /*
-       * String(), because this value came from a request body and Mongo reads
-       * an object as operators. `{"email": {"$ne": null}}` posted to
-       * forgot-password would otherwise match the FIRST user in the shop and
-       * send a reset link for somebody else's account.
-       *
-       * The controller's regex happens to reject an object today - test()
-       * stringifies it to "[object Object]" - but that is the caller being
-       * careful, and this method is what actually touches the database.
-       */
-      const user = await usersCollection.findOne({ email: String(email) });
+      // Older shops may contain two addresses differing only by case.
+      const matches = await usersCollection
+        .find({ email: emailMatch(email) })
+        .limit(2)
+        .toArray();
+      const user = matches.length === 1 ? matches[0] : null;
 
       if (!user) {
         return {
@@ -4632,7 +4627,7 @@ class SettingModel extends BaseModel {
         const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
         const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
-        sendSmtpEmail.to = [{ email: email, name: user.username }];
+        sendSmtpEmail.to = [{ email: user.email, name: user.username }];
         // Keep recovery mail versioned with the API instead of the legacy provider template.
         Object.assign(
           sendSmtpEmail,
