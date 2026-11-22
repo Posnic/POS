@@ -373,7 +373,7 @@ class InstallService {
     // without ever storing it in the clear or asking the customer twice.
     const hashedPassword = data.register_userpasswordhash
       ? String(data.register_userpasswordhash)
-      : await bcrypt.hash(data.register_userpassword.trim(), 10);
+      : await bcrypt.hash(data.register_userpassword, 10);
 
     const userData = {
       ...(recovery ? { localRecovery: recovery.record } : {}),
@@ -390,7 +390,7 @@ class InstallService {
       username: data.register_username.trim(),
       password: hashedPassword,
       usertype: USER_TYPES.SUPER_ADMIN,
-      email: data.register_useremail.trim(),
+      email: data.register_useremail.trim().toLowerCase(),
       apikey: '',
       access: DEFAULT_ACCESS,
       image: DEFAULTS.IMAGE,

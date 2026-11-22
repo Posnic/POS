@@ -48,6 +48,30 @@ async function inspectResources(url) {
     if (!fs.existsSync(path.join(resources, name))) throw new Error('Missing packaged resource: ' + name);
   }
 }
+// Read-only readiness observation. This renderer signal is not authorization
+// for host actions; the caller owns the isolated child and verifies its archive.
+async function waitForWizard(port, child, status) {
+  const deadline = Date.now() + 180000;
+  let readySince = 0;
+  while (Date.now() < deadline) {
+    const {launchError, output} = status();
+    if (launchError) throw launchError;
+    if (child.exitCode !== null || child.signalCode !== null) throw new Error('Packaged app exited before verification');
+    if (/Cannot find module|Uncaught Exception|main-uncaught-exception|main-unhandled-rejection/i.test(output)) throw new Error('Packaged startup exception');
+    let targets = [];
+    try { targets = await (await fetch('http://127.0.0.1:' + port + '/json/list', {signal: AbortSignal.timeout(2000)})).json(); } catch {}
+    const target = targets.find(t => t.type === 'page' && /\/install-wizard\.html(?:[?#]|$)/.test(t.url));
+    if (target) {
+      const page = await evaluate(target.webSocketDebuggerUrl);
+      if (page.ready === 'complete' && page.text > 40 && page.controls > 0) {
+        readySince ||= Date.now();
+        if (Date.now() - readySince >= 5000) return target;
+      } else readySince = 0;
+    } else readySince = 0;
+    await delay(500);
+  }
+  throw new Error('Packaged app did not reach the rendered first-run wizard within 180 seconds');
+}
 async function smokeExecutable(executable, root, args = []) {
   let child, output = '';
   try {
@@ -56,38 +80,38 @@ async function smokeExecutable(executable, root, args = []) {
     const port = server.address().port;
     await new Promise(resolve => server.close(resolve));
     const home = path.join(root, 'home'); fs.mkdirSync(home, {recursive: true});
-    const env = {...process.env, HOME: home, XDG_CONFIG_HOME: path.join(home, '.config'),
-      XDG_DATA_HOME: path.join(home, '.local/share'), POSNIC_USER_DATA: path.join(home, 'shop')};
+    const shop = path.join(home, 'shop');
+    if (fs.existsSync(shop)) throw new Error('Onboarding smoke test requires a new isolated shop profile');
+    const env = {...process.env, XDG_CONFIG_HOME: path.join(home, '.config'),
+      XDG_DATA_HOME: path.join(home, '.local/share'), POSNIC_USER_DATA: shop};
+    // macOS safeStorage needs the runner's real login Keychain. Replacing HOME
+    // hides it and blocks SecItemAdd behind a "Keychain Not Found" modal.
+    // POSNIC_USER_DATA isolates the entire app/shop profile on every platform;
+    // keep HOME isolation elsewhere, but retain the real OS keystore on macOS.
+    if (process.platform !== 'darwin') env.HOME = home;
     delete env.ELECTRON_RUN_AS_NODE;
     child = spawn(executable, [...args, ...(process.platform === 'linux' ? ['--no-sandbox'] : []), '--remote-debugging-port=' + port],
       {cwd: path.dirname(executable), env, detached: process.platform !== 'win32', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe']});
     let launchError;
     child.on('error', error => { launchError = error; });
     for (const stream of [child.stdout, child.stderr]) stream.on('data', bytes => { output = (output + bytes).slice(-200000); });
-    const deadline = Date.now() + 180000;
-    let readySince = 0;
-    while (Date.now() < deadline) {
-      if (launchError) throw launchError;
-      if (child.exitCode !== null || child.signalCode !== null) throw new Error('Packaged app exited before verification');
-      if (/Cannot find module|Uncaught Exception|main-uncaught-exception|main-unhandled-rejection/i.test(output)) throw new Error('Packaged startup exception');
-      let targets = [];
-      try { targets = await (await fetch('http://127.0.0.1:' + port + '/json/list', {signal: AbortSignal.timeout(2000)})).json(); } catch {}
-      const target = targets.find(t => t.type === 'page' && /\/install-wizard\.html(?:[?#]|$)/.test(t.url));
-      if (target) {
-        const page = await evaluate(target.webSocketDebuggerUrl);
-        if (page.ready === 'complete' && page.text > 40 && page.controls > 0) {
-          readySince ||= Date.now();
-          if (Date.now() - readySince >= 5000) {
-            await inspectResources(target.url);
-            console.log('PASS: packaged executable reached the rendered first-run wizard and remained alive.');
-            return;
-          }
-        } else readySince = 0;
-      } else readySince = 0;
-      await delay(500);
+    const target = await waitForWizard(port, child, () => ({launchError, output}));
+    await inspectResources(target.url);
+    console.log('PASS: packaged executable reached the rendered first-run wizard and remained alive.');
+    await require('./verify-packaged-onboarding.cjs').verifyOnboarding(port, target);
+  } catch (error) {
+    console.error(output);
+    // Capture a blocked native call (for example an OS keystore prompt) on
+    // disposable macOS runners. Never weaken credential protection to make
+    // an unattended package test pass.
+    if (process.platform === 'darwin' && process.env.GITHUB_ACTIONS === 'true' && child?.pid) {
+      const evidence = path.resolve('dist');
+      fs.mkdirSync(evidence, {recursive: true});
+      try { execFileSync('/usr/sbin/screencapture', ['-x', path.join(evidence, 'PACKAGE-FAILURE-macos.png')], {timeout:10000, stdio:'ignore'}); } catch {}
+      try { execFileSync('/usr/bin/sample', [String(child.pid), '1', '1', '-file', path.join(evidence, 'PACKAGE-FAILURE-macos-stack.txt')], {timeout:10000, stdio:'ignore'}); } catch {}
     }
-    throw new Error('Packaged app did not reach the rendered first-run wizard within 180 seconds');
-  } catch (error) { console.error(output); throw error; }
+    throw error;
+  }
   finally {
     if (child?.pid) {
       if (process.platform === 'win32') {

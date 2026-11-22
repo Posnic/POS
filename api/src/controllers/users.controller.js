@@ -9,6 +9,7 @@ const BaseController = require('./base.controller');
 const UserModel = require('../models/user.model');
 const Branch = require('../models/branch.model');
 const bcrypt = require('bcryptjs');
+const { passwordMatches } = require('../utils/password-match');
 const {
   createSendToken,
   signLegacyToken,
@@ -2188,11 +2189,7 @@ class UsersController extends BaseController {
         });
       }
 
-      // Base64 encode password for comparison (matching PHP behavior)
-      const mypassword = Buffer.from(String(password).trim()).toString('base64');
-
-      // Verify password
-      const passwordValid = await bcrypt.compare(mypassword, user.password);
+      const passwordValid = await passwordMatches(password, user.password);
 
       if (passwordValid && user.usertype === 'super_admin') {
         return res.status(200).json({
@@ -2572,7 +2569,6 @@ class UsersController extends BaseController {
       const { username, password } = req.body || {};
 
       const myusername = String(username).trim();
-      const mypassword = Buffer.from(String(password).trim()).toString('base64');
 
       const ip =
         req.ip ||
@@ -2617,7 +2613,7 @@ class UsersController extends BaseController {
 
         let passwordValid = false;
         if (recordsFiltered.password) {
-          passwordValid = await bcrypt.compare(mypassword, recordsFiltered.password);
+          passwordValid = await passwordMatches(password, recordsFiltered.password);
         }
 
         if (
@@ -2703,7 +2699,6 @@ class UsersController extends BaseController {
       }
 
       const myusername = String(username).trim();
-      const mypassword = Buffer.from(String(password).trim()).toString('base64');
 
       const ip =
         req.ip ||
@@ -2754,11 +2749,7 @@ class UsersController extends BaseController {
 
         let passwordValid = false;
         if (recordsFiltered.password) {
-          passwordValid = await bcrypt.compare(mypassword, recordsFiltered.password);
-          if (!passwordValid) {
-            const rawPassword = String(password).trim();
-            passwordValid = await bcrypt.compare(rawPassword, recordsFiltered.password);
-          }
+          passwordValid = await passwordMatches(password, recordsFiltered.password);
         }
 
         if (

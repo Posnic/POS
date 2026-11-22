@@ -1916,6 +1916,7 @@ PosnicPro.users = {
                 },
                 password: {
                     required: true,
+                    minlength: 5,
                     maxlength: 20
                 },
                 retype_password: {

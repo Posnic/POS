@@ -32,6 +32,7 @@ jest.mock('express-validator', () => {
     notEmpty: jest.fn().mockReturnThis(),
     withMessage: jest.fn().mockReturnThis(),
     isLength: jest.fn().mockReturnThis(),
+    isString: jest.fn().mockReturnThis(),
     isEmail: jest.fn().mockReturnThis(),
     optional: jest.fn().mockReturnThis(),
     custom: jest.fn().mockReturnThis(),

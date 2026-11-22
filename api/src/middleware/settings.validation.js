@@ -236,25 +236,23 @@ const validateCommonSettings = [
  */
 const validateChangePassword = [
   body('old_password')
-    .trim()
     .notEmpty()
     .withMessage('Old password is required')
-    .isLength({ min: VALIDATION_RULES.PASSWORD.MIN, max: VALIDATION_RULES.PASSWORD.MAX })
-    .withMessage(
-      `Old password must be between ${VALIDATION_RULES.PASSWORD.MIN} and ${VALIDATION_RULES.PASSWORD.MAX} characters`
-    ),
+    .isString()
+    .isLength({ min: 1, max: 200 })
+    .withMessage('Current password must be between 1 and 200 characters'),
 
   body('new_password')
-    .trim()
     .notEmpty()
     .withMessage('New password is required')
     .isLength({ min: VALIDATION_RULES.PASSWORD.MIN, max: VALIDATION_RULES.PASSWORD.MAX })
     .withMessage(
       `New password must be between ${VALIDATION_RULES.PASSWORD.MIN} and ${VALIDATION_RULES.PASSWORD.MAX} characters`
-    ),
+    )
+    .custom((value) => typeof value === 'string' && Buffer.byteLength(value, 'utf8') <= 54)
+    .withMessage('New password must not exceed 54 UTF-8 bytes'),
 
   body('confirm_password')
-    .trim()
     .notEmpty()
     .withMessage('Confirm password is required')
     .custom((value, { req }) => {
