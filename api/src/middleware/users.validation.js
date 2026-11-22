@@ -43,8 +43,8 @@ const validateUser = [
     .if((value, { req }) => !req.params?.id || !!value)
     .notEmpty()
     .withMessage('Password is required for a new user')
-    .isLength({ min: 5, max: 20 })
-    .withMessage('The Password field must be between 5 and 20 characters in length')
+    .isLength({ min: 8, max: 20 })
+    .withMessage('The Password field must be between 8 and 20 characters in length')
     .custom((value) => typeof value === 'string' && Buffer.byteLength(value, 'utf8') <= 54)
     .withMessage('Password must not exceed 54 UTF-8 bytes'),
 

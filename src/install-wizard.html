@@ -1303,7 +1303,7 @@ const form = document.getElementById('installForm');
         // Password validation
         function validatePassword(password) {
             const requirements = {
-                length: password.length >= 8,
+                length: Array.from(password).length >= 8,
                 uppercase: /[A-Z]/.test(password),
                 lowercase: /[a-z]/.test(password),
                 number: /[0-9]/.test(password),
@@ -1551,7 +1551,7 @@ const form = document.getElementById('installForm');
                 qError.style.display = 'block';
                 return;
             }
-            if (password.length < 8 || new TextEncoder().encode(password).length > 72) {
+            if (Array.from(password).length < 8 || new TextEncoder().encode(password).length > 72) {
                 qError.textContent = 'Use at least 8 characters and no more than 72 UTF-8 bytes. Accented characters and symbols may use more than one byte.';
                 qError.style.display = 'block';
                 return;
@@ -2353,7 +2353,7 @@ const form = document.getElementById('installForm');
                 return;
             }
 
-            if (formData.register_userpassword.length < 8 || new TextEncoder().encode(formData.register_userpassword).length > 72) {
+            if (Array.from(formData.register_userpassword).length < 8 || new TextEncoder().encode(formData.register_userpassword).length > 72) {
                 errorMessage.textContent = 'Use at least 8 characters and no more than 72 UTF-8 bytes. Accented characters and symbols may use more than one byte.';
                 errorMessage.style.display = 'block';
                 return;

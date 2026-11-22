@@ -4696,16 +4696,13 @@ $("#eraseForm").validate({
     rules: {
         verifyPassword: {
             required: true,
-            minlength: 5,
-            strong_password: true,
-            maxlength: 20
+            maxlength: 200
         }
     },
     messages: {
         verifyPassword: {
             required: "Enter the password",
-            minlength: "Password must be at least 5 characters",
-            maxlength: "Password should not be more than 20 characters"
+            maxlength: "Password should not be more than 200 characters"
         }
     }
 });

@@ -22,6 +22,9 @@ test('regional choices supply the selected country, state, city, currency and ti
   assert.equal(f.doc.getElementById('qCurrency').value, 'INR');
   f.set('qState', 'Goa'); f.set('qCity', 'Panaji'); f.set('qTimezone', 'Asia/Kolkata');
   f.set('qBusinessName', 'Test shop'); f.set('qEmail', 'owner@example.com'); f.set('qPassword', 'test-pass-123'); f.set('qConfirmPassword', 'test-pass-123');
+  f.set('qPassword', '😀'.repeat(4)); f.set('qConfirmPassword', '😀'.repeat(4));
+  assert.equal(f.api.validate(), false);
+  f.set('qPassword', '😀'.repeat(8)); f.set('qConfirmPassword', '😀'.repeat(8));
   assert.equal(f.api.validate(), true);
   assert.equal(f.api.values().register_countryid, '101');
   assert.equal(f.api.values().register_state, 'Goa');
