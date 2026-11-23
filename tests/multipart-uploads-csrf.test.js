@@ -34,6 +34,7 @@ async function fixture(t) {
     });
     app.use(csrf.protect);
     app.get('/setting/getSettings', (_req, res) => res.json({ status: true }));
+    app.post('/users/verify', express.json(), (req, res) => res.json({ received: req.body }));
     app.post('/setting/updateBranchLogo', multer().single('file'), (req, res) => {
         uploads++;
         res.json({ status: true, file: req.file && req.file.buffer.toString('hex'),
@@ -92,6 +93,17 @@ async function fixture(t) {
         read: () => request((done) => p.get('setting/getSettings', done)),
         upload: () => request((done) => p.requestImage('POST', 'setting/updateBranchLogo', form(), false, done)) };
 }
+
+test('sign-in uses the reflected token when the form is submitted before a credentialed read', async (t) => {
+    const f = await fixture(t);
+    const result = await new Promise((resolve, reject) => {
+        f.p.post({ url: 'users/verify', data: JSON.stringify({ username: 'fixture' }) }, resolve, reject);
+    });
+    assert.equal(result.received.username, 'fixture');
+    assert.deepEqual(f.seen.map(r => r.path), ['/users/verify', '/users/verify']);
+    assert.equal(f.p.csrfToken, f.expected);
+    assert.deepEqual(f.alerts, []);
+});
 
 test('a settings read authorizes the logo upload and preserves its multipart bytes and fields', async (t) => {
     const f = await fixture(t);
