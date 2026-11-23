@@ -41,3 +41,17 @@ test('restored sync hides pause guidance and reports online', async t => {
   assert.equal(p.d.getElementById('cloudPaused').hidden, true);
   assert.equal(p.d.getElementById('syncState').textContent, 'Online, syncing');
 });
+
+test('confirmed trial shows the inline check and secure email guidance', async t => {
+  const sync = {cloudPaused:true,pauseReason:'TRIAL_EXPIRED',canCheckAccess:true,pending:2};
+  const p = await windowFor(t,sync);
+  assert.equal(p.d.getElementById('checkAccess').hidden,false);
+  assert.match(p.d.getElementById('pauseTitle').textContent,/Your cloud trial has ended/);
+  assert.match(p.d.getElementById('trialGuidance').textContent,/registered email/);
+  let checks=0;
+  p.w.electronAPI.cloud.checkAccess=async()=>{checks++;sync.cloudPaused=false;return {cloudPaused:false};};
+  p.d.getElementById('checkAccess').click();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(checks,1);
+  assert.equal(p.d.getElementById('cloudPaused').hidden,true);
+});

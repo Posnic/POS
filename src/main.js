@@ -1456,6 +1456,30 @@ const assetUpdater = new AssetUpdater({
 });
 const BRAND_FILE = path.join(BRAND_DIR, 'brand.json');
 
+// Desktop workers and windows share one paired agent and its durable decision.
+async function pairedCloudPaused() {
+  if (!fs.existsSync(CLOUD_CONFIG_FILE)) return false;
+  try {
+    const response = await fetch(`http://127.0.0.1:${process.env.SYNC_AGENT_PORT}/cloud-access`, {
+      signal: AbortSignal.timeout(1500)
+    });
+    if (response.status === 404) return false; // previous agent protocol
+    return !response.ok || (await response.json()).cloudPaused !== false;
+  } catch { return true; } // wait for this profile's agent to read its persisted state
+}
+async function observeCloudDenial(response) {
+  if (response.status !== 403 || !fs.existsSync(CLOUD_CONFIG_FILE)) return;
+  const body = await response.clone().json().catch(() => null);
+  if (body?.code !== 'TRIAL_EXPIRED') return;
+  await fetch(`http://127.0.0.1:${process.env.SYNC_AGENT_PORT}/verify-cloud-denial`, {
+    method: 'POST', headers: { 'x-posnic-local': '1' }, signal: AbortSignal.timeout(12000)
+  }).catch(() => {});
+}
+async function pairedFetch(url, options) {
+  const response = await fetch(url, { ...options, redirect: 'error' });
+  await observeCloudDenial(response);
+  return response;
+}
 let captainDiscoveryBusy = false;
 async function refreshCaptainDiscovery() {
   if (captainDiscoveryBusy) return;
@@ -1465,13 +1489,13 @@ async function refreshCaptainDiscovery() {
     let config;
     try { config = JSON.parse(fs.readFileSync(CLOUD_CONFIG_FILE, 'utf8')); }
     catch (error) { if (error.code === 'ENOENT') return; throw error; }
-    if (!config.gatewayUrl || !config.deviceToken) return;
+    if (!config.gatewayUrl || !config.deviceToken || await pairedCloudPaused()) return;
     let savedTenant;
     try { savedTenant = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'cloud-shop-identity.json'), 'utf8')).tenantDb; }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
     client = new (require('mongodb').MongoClient)(cloudLocalMongoUri(app, config.localUri), { serverSelectionTimeoutMS: 3000 });
     await client.connect();
-    await require('./cloud-captain-discovery').refresh({ config, savedTenant, db: client.db(config.localDb || 'PosnicPro') });
+    await require('./cloud-captain-discovery').refresh({ config, savedTenant, db: client.db(config.localDb || 'PosnicPro'), fetchImpl: pairedFetch });
   } finally {
     try { if (client) await client.close(); }
     finally { captainDiscoveryBusy = false; }
@@ -1481,11 +1505,11 @@ async function refreshCaptainDiscovery() {
 async function refreshBrand() {
   if (!fs.existsSync(CLOUD_CONFIG_FILE)) return;
   const cfg = JSON.parse(fs.readFileSync(CLOUD_CONFIG_FILE, 'utf8'));
-  if (!cfg.gatewayUrl || !cfg.deviceToken) return;
+  if (!cfg.gatewayUrl || !cfg.deviceToken || await pairedCloudPaused()) return;
   const base = String(cfg.gatewayUrl).replace(/\/+$/, '');
   const headers = { authorization: 'Bearer ' + cfg.deviceToken };
 
-  const response = await fetch(`${base}/v1/brand`, { headers, signal: AbortSignal.timeout(15_000) });
+  const response = await pairedFetch(`${base}/v1/brand`, { headers, signal: AbortSignal.timeout(15_000) });
   if (!response.ok) return;                       // suspended, or an older gateway
   const brand = await response.json();
 
@@ -1510,7 +1534,7 @@ async function refreshBrand() {
     ]) {
       const target = path.join(BRAND_DIR, file);
       if (!flag) { if (fs.existsSync(target)) fs.unlinkSync(target); continue; }
-      const img = await fetch(`${base}/v1/brand/logo?which=${which}`, { headers, signal: AbortSignal.timeout(20_000) });
+      const img = await pairedFetch(`${base}/v1/brand/logo?which=${which}`, { headers, signal: AbortSignal.timeout(20_000) });
       if (!img.ok) continue;
       fs.writeFileSync(target, Buffer.from(await img.arrayBuffer()));
     }
@@ -1529,10 +1553,10 @@ async function refreshBrand() {
 async function refreshLimits() {
   if (!fs.existsSync(CLOUD_CONFIG_FILE)) return;
   const cfg = JSON.parse(fs.readFileSync(CLOUD_CONFIG_FILE, 'utf8'));
-  if (!cfg.gatewayUrl || !cfg.deviceToken) return;
+  if (!cfg.gatewayUrl || !cfg.deviceToken || await pairedCloudPaused()) return;
   const base = String(cfg.gatewayUrl).replace(/\/+$/, '');
 
-  const response = await fetch(`${base}/v1/limits`, {
+  const response = await pairedFetch(`${base}/v1/limits`, {
     headers: { authorization: 'Bearer ' + cfg.deviceToken },
     signal: AbortSignal.timeout(15_000),
   });
@@ -1610,6 +1634,14 @@ ipcMain.handle('cloud:status', async () => {
   return { connected, sync, running: !!(syncAgentManager && syncAgentManager.child) };
 });
 
+ipcMain.handle('cloud:check-access', async () => {
+  try {
+    const response = await fetch(`http://127.0.0.1:${process.env.SYNC_AGENT_PORT}/check-cloud-access`, {
+      method: 'POST', headers: { 'x-posnic-local': '1' }, signal: AbortSignal.timeout(12000)
+    });
+    return response.ok ? await response.json() : null;
+  } catch { return null; }
+});
 ipcMain.handle('cloud:signup', () => shell.openExternal('https://www.posnic.com/cloud'));
 ipcMain.handle('cloud:password-recovery', async () => {
   try {
@@ -4858,6 +4890,7 @@ app.whenReady().then(async () => {
    * served. This one runs inside the till, so it looks.
    */
   billManager = new BillManager(hardwareManager, {
+    observeCloudDenial,
     /*
      * WHETHER TO ASK THE CLOUD AT ALL, read fresh on every pass.
      *
@@ -4872,7 +4905,11 @@ app.whenReady().then(async () => {
      */
     findCloudPrint: async () => {
       try {
-        return require('./device-preferences').cloudPrintRelay();
+        const relay = require('./device-preferences').cloudPrintRelay();
+        if (relay.enabled && (relay.apiUrl || process.env.POSNIC_CLOUD_API) && await pairedCloudPaused()) {
+          return { ...relay, enabled: false };
+        }
+        return relay;
       } catch (e) {
         return { enabled: false, apiUrl: '', key: '' };
       }

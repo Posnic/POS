@@ -149,6 +149,7 @@ async function enqueue({ collection, documentId, reason, priority = 'critical' }
         {
           $setOnInsert: { collection, documentId, dedupe: true, createdAt: now, attempts: 0 },
           $set: { priority, reason, updatedAt: now },
+          $inc: { revision: 1 },
         },
         { upsert: true }
       );

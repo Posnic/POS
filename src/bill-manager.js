@@ -145,6 +145,7 @@ const WAITING_EVERY_MS = 60 * 1000;
 class BillManager {
   constructor(hardwareManager, options = {}) {
     this.hardware = hardwareManager;
+    this.observeCloudDenial = options.observeCloudDenial;
     /* How the till finds out which shop it is. Injected so this file needs no
        database of its own and can be driven by a test. */
     this.branchId = options.branchId || '';
@@ -488,6 +489,7 @@ class BillManager {
      * arrive. Said out loud here instead, because it is fixable in one field:
      * the key belongs to the shop's server, not to this machine.
      */
+    if (wait && response.status === 403) await this.observeCloudDenial?.(response);
     if (response.status === 401 || response.status === 403) {
       throw new Error(
         'refused by ' + base + ': this shop has not allowed this till to print. ' +
