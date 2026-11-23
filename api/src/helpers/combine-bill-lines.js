@@ -47,8 +47,6 @@ const fields = [
   'item_price',
   'item_base_price',
   'unit_price',
-  'item_status',
-  'return',
   'guest_id',
   'seat_id',
 ];
@@ -70,6 +68,9 @@ module.exports = function combineBillLines(source, displayed, monetary) {
               hsn: line.hsn,
               translations: line.translations,
               default_language: line.default_language,
+              // A later kitchen round explicitly marks an ordinary sale line as Add.
+              status: /^add$/i.test(original.item_status) ? null : original.item_status || null,
+              returned: original.return || false,
               terms: fields.map((field) => original[field]),
             })
           )
@@ -91,7 +92,7 @@ module.exports = function combineBillLines(source, displayed, monetary) {
 };
 module.exports.source = (item) =>
   Object.fromEntries(
-    ['item_id', 'item', ...fields]
+    ['item_id', 'item', 'item_status', 'return', ...fields]
       .filter((field) => item[field] != null)
       .map((field) => [field, item[field]])
   );
