@@ -27,6 +27,22 @@ test('6 + 1 + 1 kitchen rounds display as eight without modifying the saved line
   expect(JSON.stringify(items)).toBe(before);
 });
 
+test('a later kitchen addition combines with the original on the customer receipt', () => {
+  const first = {
+    ...source(1),
+    item_id: 'prawn',
+    item_name: 'Dynamite Prawn',
+    item_base_price: 360,
+  };
+  const added = { ...first, line_id: 'second-round', item_status: 'Add', return: false };
+  const sale = { items: [first, source(1), added] };
+  const bill = buildBillPayload(sale, {});
+  expect(bill.receiptDocument.receipt_line_rows).toEqual(bill.items);
+  expect(bill.items).toHaveLength(2);
+  expect(bill.items[0]).toMatchObject({ name: 'Dynamite Prawn', qty: '2', amount: 720 });
+  expect(sale.items).toHaveLength(3);
+});
+
 test.each([
   'item_id',
   'item_base_price',
