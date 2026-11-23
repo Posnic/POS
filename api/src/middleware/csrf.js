@@ -106,6 +106,7 @@ const protect = (req, res, next) => {
 
   return res.status(403).json({
     type: 'error',
+    code: 'CSRF_TOKEN_MISMATCH',
     status: false,
     message: 'Your session security token is missing or expired. Refresh and try again.',
     data: null,

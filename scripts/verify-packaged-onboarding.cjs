@@ -45,6 +45,24 @@ async function waitFor(port, pagePattern, expression, label) {
   throw new Error('Packaged onboarding did not reach ' + label);
 }
 
+// A navigation may replace the CDP execution context before Runtime.evaluate
+// replies, even when the submit succeeded. Dispatch once and require the
+// destination page to prove the transition.
+async function clickAndWait(port, source, selector, pagePattern, expression, label) {
+  try {
+    const found = await evaluate(source, `(() => {
+      const control = document.querySelector(${JSON.stringify(selector)});
+      if (!control) return false;
+      setTimeout(() => control.click(), 0);
+      return true;
+    })()`);
+    if (!found) throw new Error('Onboarding control unavailable: ' + selector);
+  } catch (error) {
+    if (!/renderer command timed out|debugger connection failed/.test(error.message)) throw error;
+  }
+  return waitFor(port, pagePattern, expression, label);
+}
+
 async function enter(target, id, value) {
   // Input.insertText follows Chromium's editing path, including maxlength.
   // Assigning .value alone would miss the released login truncation bug.
@@ -106,16 +124,12 @@ async function verifyOnboarding(port, wizard) {
   await waitFor(port, /login\.html/, "document.getElementById('login_error')?.innerText.includes('Username or password is incorrect') && document.getElementById('login_error').getClientRects().length > 0 && !localStorage.getItem('posnic_jwt_token')", 'wrong-password rejection');
   await enter(login, 'username', email);
   await enter(login, 'password', password);
-  await evaluate(login, "document.getElementById('login_button').click(); true");
-  const dashboard = await waitFor(port, /dashboard\.html/, "document.readyState === 'complete' && !!localStorage.getItem('posnic_jwt_token') && !!document.body?.innerText.trim()", 'the authenticated dashboard');
-  await evaluate(dashboard, "document.getElementById('logout').click(); true");
-  const confirmation = await waitFor(port, /dashboard\.html/, "document.querySelector('.swal2-confirm')?.getClientRects().length > 0", 'logout confirmation');
-  await evaluate(confirmation, "document.querySelector('.swal2-confirm').click(); true");
-  const loggedOut = await waitFor(port, /login\.html/, "document.readyState === 'complete' && !!window.PosnicPro?.users?.loginCheck && !localStorage.getItem('posnic_jwt_token')", 'the logged-out form');
+  const dashboard = await clickAndWait(port, login, '#login_button', /dashboard\.html/, "document.readyState === 'complete' && !!localStorage.getItem('posnic_jwt_token') && !!document.body?.innerText.trim()", 'the authenticated dashboard');
+  const confirmation = await clickAndWait(port, dashboard, '#logout', /dashboard\.html/, "document.querySelector('.swal2-confirm')?.getClientRects().length > 0", 'logout confirmation');
+  const loggedOut = await clickAndWait(port, confirmation, '.swal2-confirm', /login\.html/, "document.readyState === 'complete' && !!window.PosnicPro?.users?.loginCheck && !localStorage.getItem('posnic_jwt_token')", 'the logged-out form');
   await enter(loggedOut, 'username', email);
   await enter(loggedOut, 'password', password);
-  await evaluate(loggedOut, "document.getElementById('login_button').click(); true");
-  await waitFor(port, /dashboard\.html/, "document.readyState === 'complete' && !!localStorage.getItem('posnic_jwt_token') && !!document.body?.innerText.trim()", 'the dashboard after signing in again');
+  await clickAndWait(port, loggedOut, '#login_button', /dashboard\.html/, "document.readyState === 'complete' && !!localStorage.getItem('posnic_jwt_token') && !!document.body?.innerText.trim()", 'the dashboard after signing in again');
   console.log('PASS: packaged offline setup rejected a wrong password, authenticated exact new credentials, and signed in again after logout.');
 }
 

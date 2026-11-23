@@ -151,6 +151,13 @@ PosnicPro.request = function (params, callback, failure = null) {
                 }
             }
 
+            // A newly loaded sign-in page can submit before any credentialed
+            // read has supplied its token. This rejection precedes verification.
+            if (xhr.status === 403 && refreshed && response && response.code === 'CSRF_TOKEN_MISMATCH' &&
+                    params.url === 'users/verify' && method === 'POST' && !params.retriedLoginCsrf) {
+                return PosnicPro.request(Object.assign({}, params, { retriedLoginCsrf: true }), callback, failure);
+            }
+
             if (xhr.status === 422 && String(params.url).replace(/^\//, '') === 'sales/updateOrder' &&
                 PosnicPro.retryOrderApproval && PosnicPro.retryOrderApproval(params, callback, failure, response)) return;
 
