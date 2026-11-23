@@ -60,6 +60,7 @@ test('header search resolves action wording, settings and role changes through t
     ['create a client', 'customers/new'],
     ['new purchase', 'receivings/new'],
     ['configure invoice', 'settings/invoices'],
+    ['check cloud access', 'settings/cloudsync'],
   ]) {
     matches(q)[0].click();
     assert.equal(routes.at(-1), route);
@@ -81,5 +82,9 @@ test('header search resolves action wording, settings and role changes through t
   w.PosnicPro.palette.close();
   w.PosnicPro.userACL.sales.write = false;
   assert.equal(matches('new sales').length, 0);
+  w.PosnicPro.userACL.branch.write = false;
+  w.PosnicPro.palette.close();
+  const restricted = matches('check cloud access').map(row => row.textContent);
+  assert.ok(!restricted.some(label => /Cloud Sync/i.test(label)), restricted.join(', '));
   dom.window.close();
 });

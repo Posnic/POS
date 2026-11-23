@@ -77,12 +77,16 @@
             <div class="status-row"><span>Batch lane (masters)</span><span class="value muted" id="laneBatch">, </span></div>
             <div class="error-box" id="lastErrorBox" style="display:none"></div>
             <section id="cloudPaused" hidden aria-live="polite">
-                <h3>Cloud access is paused</h3>
+                <h3 id="pauseTitle">Cloud access is paused</h3>
+                <p id="trialGuidance" hidden>Only records already available on this computer can be used offline. For an eligible extension, check your registered email for the secure link.</p>
+                <button class="btn secondary" id="checkAccess" hidden>Check cloud access</button>
                 <p id="cloudPausedHelp"></p>
                 <p>Keep your existing shop and device connection. Local changes wait on this computer until cloud access is restored. Make regular local backups.</p>
                 <button class="btn" id="plansBtn">View cloud plans</button>
-                <p>If this is an account restriction rather than an expired trial, contact info@posnic.com before buying a plan.</p>
+                <p id="genericHoldHelp">If this is an account restriction rather than an expired trial, contact info@posnic.com before buying a plan.</p>
             </section>
+            <button class="btn secondary" id="reauthorize" hidden>Sign in to this cloud shop</button>
+            <p id="accessResult" role="status"></p>
         </div>
         <div class="card">
             <h3>Manage</h3>
@@ -131,8 +135,8 @@
 
     <script>
         const $ = (id) => document.getElementById(id);
-        const fmtTime = (t) => t ? new Date(t).toLocaleString() : ', ';
-        const fmtLane = (l) => l ? `${fmtTime(l.at)} (↑${l.pushed || 0} ↓${l.pulled || 0})` : ', ';
+        const fmtTime = (t) => t ? new Date(t).toLocaleString() : '—';
+        const fmtLane = (l) => l ? `${fmtTime(l.at)} (↑${l.pushed || 0} ↓${l.pulled || 0})` : '—';
 
         async function refreshStatus() {
             if (!window.electronAPI?.cloud) return;
@@ -144,6 +148,13 @@
 
             const sync = status.sync;
             $('cloudPaused').hidden = !sync?.cloudPaused;
+            const trial = sync?.pauseReason === 'TRIAL_EXPIRED';
+            const title = trial ? 'Your cloud trial has ended. You can continue using Posnic Community offline. Cloud sync is paused.' : 'Cloud access is paused';
+            if ($('pauseTitle').textContent !== title) $('pauseTitle').textContent = title;
+            $('trialGuidance').hidden = !trial;
+            $('genericHoldHelp').hidden = trial;
+            $('reauthorize').hidden = sync?.accessCheck !== 'authentication_required' && sync?.failureKind !== 'authentication_required';
+            $('checkAccess').hidden = !sync?.canCheckAccess;
             $('connState').textContent = 'Activated';
             $('connState').className = 'value ok';
 
@@ -161,23 +172,44 @@
                     : 'In progress…');
             $('initialSync').className = 'value ' + (sync.initialSyncComplete ? 'ok' : 'warn');
             $('lastSync').textContent = fmtTime(sync.lastSuccessAt);
-            $('pending').textContent = sync.pending == null ? ', ' : `${sync.pending} record(s)`;
+            $('pending').textContent = sync.pending == null ? '—' : `${sync.pending} record(s)`;
             $('pending').className = 'value ' + (sync.pending > 0 ? 'warn' : 'ok');
             $('laneRealtime').textContent = fmtLane(sync.last_realtime);
             $('laneBatch').textContent = fmtLane(sync.last_batch);
 
-            $('cloudPausedHelp').textContent = sync.initialSyncComplete
+            const localHelp = sync.initialSyncComplete
                 ? 'Continue using this downloaded shop locally in Community mode. Sales, receipts, stock and local backups remain available.'
                 : 'The initial shop download is not complete. Do not assume this computer has all your cloud data. Restore a local backup or restore cloud access to finish downloading.';
+            if ($('cloudPausedHelp').textContent !== localHelp) $('cloudPausedHelp').textContent = localHelp;
             const showError = sync.lastError && !sync.online && !sync.cloudPaused;
             $('lastErrorBox').style.display = showError ? 'block' : 'none';
             if (showError) {
                 $('lastErrorBox').textContent =
                     `Last error (${fmtTime(sync.lastErrorAt)}): ${sync.lastError}, ` +
-                    'billing continues normally; sync resumes when the connection returns.';
+                    (sync.failureKind === 'authentication_required' ? 'Sign in to this cloud shop to restore the device connection.'
+                        : sync.failureKind === 'server_error' ? 'The cloud service could not complete this request. Local billing remains available.'
+                        : 'Local billing remains available. Pending changes stay on this computer.');
             }
         }
 
+        $('reauthorize').onclick = async () => {
+            $('reauthorize').disabled = true;
+            try {
+                const result = await window.electronAPI.cloud.authorize('login');
+                $('accessResult').textContent = result.ok ? 'Device authenticated.' : result.error;
+                await refreshStatus();
+            } finally { $('reauthorize').disabled = false; }
+        };
+        $('checkAccess').onclick = async () => {
+            $('checkAccess').disabled = true;
+            try {
+                const result = await window.electronAPI.cloud.checkAccess();
+                $('accessResult').textContent = !result || result.accessCheck === 'unavailable' ? 'Could not confirm cloud access. Try again later.'
+                    : result.accessCheck === 'authentication_required' ? 'Your device needs to authenticate again. Sign in to this cloud shop to reconnect.'
+                    : result.cloudPaused ? 'Cloud access is still paused.' : 'Cloud access restored.';
+                await refreshStatus();
+            } finally { $('checkAccess').disabled = false; }
+        };
         $('signup').addEventListener('click', (e) => {
             e.preventDefault();
             connectCloud(() => window.electronAPI.cloud.authorize('signup'), true);
