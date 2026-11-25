@@ -168,7 +168,7 @@ test('the API tells a signed-in caller which build answered', () => {
   const routes = fs.readFileSync(path.join(ROOT, 'api', 'src', 'routes', 'base.routes.js'), 'utf8');
   const at = routes.indexOf('if (req.user)');
   assert.ok(at > 0, 'the signed-in half of health is gone');
-  assert.match(routes.slice(at, at + 900), /version: pkg\.version/,
+  assert.match(routes.slice(at, at + 900), /version: resolveAppVersion\(/,
     'health does not report the API version');
 
   /* And NOT to an anonymous one: the reasoning in that file about not

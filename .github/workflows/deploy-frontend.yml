@@ -20,6 +20,7 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
+      - "package.json"
       - ".github/workflows/deploy-frontend.yml"
   workflow_dispatch:
 

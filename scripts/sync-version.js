@@ -25,6 +25,7 @@ const { execFileSync } = require("child_process");
 const ROOT = path.join(__dirname, "..");
 const CHECK = process.argv.includes("--check");
 const version = require(path.join(ROOT, "package.json")).version;
+require('./stamp-runtime-version').stampRuntimeVersion(ROOT, CHECK);
 
 const changed = [];
 const wrong = [];
@@ -58,8 +59,7 @@ edit("codemeta.json", [
 ]);
 
 edit("codemeta.json", [[/("releaseNotes":\s*")[^"]+("\s*,?)/, `$1https://github.com/Posnic/POS/releases/tag/v${version}$2`]]);
-edit("frontend/login.html", [[/("softwareVersion":\s*")[^"]+(")/, `$1${version}$2`]]);
-for (const file of ["package-lock.json", "api/package-lock.json"]) {
+for (const file of ["package-lock.json", "api/package-lock.json", "frontend/package-lock.json"]) {
   edit(file, [
     [/^(  "version":\s*")[^"]+(")/m, `$1${version}$2`],
     [/^(      "version":\s*")[^"]+(")/m, `$1${version}$2`],
@@ -82,6 +82,7 @@ edit("CITATION.cff", [[/^(version:\s*).+$/m, `$1${version}`]]);
  * because CI regenerates it and compares.
  */
 edit("api/package.json", [[/^(\s*"version":\s*")[^"]+(")/m, `$1${version}$2`]]);
+edit("frontend/package.json", [[/^(\s*"version":\s*")[^"]+(")/m, `$1${version}$2`]]);
 
 if (!CHECK) {
   /*
