@@ -2579,3 +2579,22 @@ $(document).on('click', '#u_doc_sales tr.u-doc-sale-row', function () {
     var id = $(this).data('id');
     if (id) { hasher.setHash('sales/' + id); }
 });
+
+// Check the authenticated server policy each time; never trust a local role flag.
+$(document).on('show.bs.modal', '#changePasswordView, #password_new', function () {
+    var modal = $(this);
+    var fields = modal.find('input[type=password], button[type=submit]');
+    fields.prop('disabled', true);
+    modal.find('.form-row, button[type=submit]').show();
+    modal.find('.cloud-owner-password-policy').remove();
+    PosnicPro.get('users/password-policy', function (policy) {
+        if (!policy || typeof policy.managed !== 'boolean') return;
+        if (!policy.managed) { fields.prop('disabled', false); return; }
+        modal.find('.form-row, button[type=submit]').hide();
+        var notice = $('<div class="alert alert-info cloud-owner-password-policy" role="status"></div>');
+        notice.append($('<p></p>').text(policy.message));
+        notice.append($('<a target="_blank" rel="noopener noreferrer"><lang class="lang_manage_password_in_browser">Manage password in browser</lang></a>')
+            .attr('href', 'https://www.posnic.com/account.html#password'));
+        modal.find('.modal-body').prepend(notice);
+    });
+});

@@ -2622,6 +2622,8 @@ class SettingModel extends BaseModel {
         return { status: false, message: 'User not found' };
       }
 
+      require('../services/cloud-owner').requireLocal(user);
+
       // Verify old password - compare with hashed password in database
       if (!user.password) {
         return { status: false, message: 'User password not set' };

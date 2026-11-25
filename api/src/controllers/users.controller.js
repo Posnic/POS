@@ -9,7 +9,7 @@ const BaseController = require('./base.controller');
 const UserModel = require('../models/user.model');
 const Branch = require('../models/branch.model');
 const bcrypt = require('bcryptjs');
-const { passwordMatches } = require('../utils/password-match');
+const cloudOwner = require('../services/cloud-owner');
 const {
   createSendToken,
   signLegacyToken,
@@ -208,10 +208,7 @@ class UsersController extends BaseController {
       // 2) Check if user exists && password is correct
       const user = await this.userModel.findOne({ email: emailMatch(email) }).select('+password');
 
-      if (
-        !user ||
-        !(await require('../utils/password-match').passwordMatches(password, user.password))
-      ) {
+      if (!user || !(await cloudOwner.passwordMatches(user, password))) {
         return next(new AppError('Incorrect email or password', httpStatus.UNAUTHORIZED));
       }
 
@@ -329,24 +326,7 @@ class UsersController extends BaseController {
         });
       }
 
-      // Verify password - try both base64 and non-base64 formats for compatibility
-      let passwordValid = false;
-
-      // Only attempt password comparison when a user record exists
-      if (user && user.password) {
-        // First try with base64 encoding (new format from password change)
-        const base64Password = Buffer.from(String(password)).toString('base64');
-        passwordValid = await bcrypt.compare(base64Password, user.password);
-
-        // If base64 fails, try without base64 (old format)
-        if (!passwordValid) {
-          /* String() here as well as above: bcrypt.compare on a non-string
-             behaves differently across versions, and `password` arrives
-             straight from the request body where it can be an object or an
-             array. The base64 branch already coerced; this one did not. */
-          passwordValid = await bcrypt.compare(String(password), user.password);
-        }
-      }
+      const passwordValid = await cloudOwner.passwordMatches(user, password);
 
       if (!passwordValid) {
         // Match legacy PHP behaviour for incorrect credentials:
@@ -1302,6 +1282,8 @@ class UsersController extends BaseController {
         return this.error(res, 'Your current password is incorrect', 403);
       }
 
+      cloudOwner.requireLocal(user);
+
       // 2) Check if new passwords match
       if (newPassword !== newPasswordConfirm) {
         return this.error(res, 'New passwords do not match', 400);
@@ -1316,7 +1298,7 @@ class UsersController extends BaseController {
       createSendToken(user, 200, res);
     } catch (error) {
       console.error('Error in UsersController.updatePassword:', error);
-      return this.error(res, 'Failed to update password: ' + error.message, 500);
+      return this.error(res, error.message, error.statusCode || 500);
     }
   }
 
@@ -2189,7 +2171,7 @@ class UsersController extends BaseController {
         });
       }
 
-      const passwordValid = await passwordMatches(password, user.password);
+      const passwordValid = await cloudOwner.passwordMatches(user, password);
 
       if (passwordValid && user.usertype === 'super_admin') {
         return res.status(200).json({
@@ -2283,6 +2265,8 @@ class UsersController extends BaseController {
         });
       }
 
+      cloudOwner.requireLocal(userRecords);
+
       // Hash new password (base64 encode first, matching PHP behavior)
       const passwordToHash = Buffer.from(update_new_password).toString('base64');
       const hashedPassword = await bcrypt.hash(passwordToHash, 12);
@@ -2322,7 +2306,7 @@ class UsersController extends BaseController {
       });
     } catch (error) {
       console.error('Error in UsersController.updateNewPassword:', error);
-      return res.status(500).json({
+      return res.status(error.statusCode || 500).json({
         type: 'error',
         message: error.message,
         data: null,
@@ -2514,6 +2498,22 @@ class UsersController extends BaseController {
         userACLPlan,
       };
 
+      await cloudOwner.hydrate(recordsFiltered);
+      if ((Number(ssoRecord.authVersion) || 0) !== (Number(recordsFiltered.authVersion) || 0)) {
+        return res.status(401).json({
+          type: 'error',
+          message: 'Your password changed. Open your shop again from your website account.',
+        });
+      }
+      const claim = await ssoCollection.updateOne(
+        { _id: ssoRecord._id, status: 'active' },
+        { $set: { status: 'deactive' } }
+      );
+      if (claim.modifiedCount !== 1)
+        return res
+          .status(401)
+          .json({ type: 'error', message: 'This sign-in link was already used.' });
+
       // Establish the same authenticated state as the normal login flow.
       // Without this, SSO validates successfully but subsequent browser
       // requests are anonymous and the frontend returns to the login page.
@@ -2534,12 +2534,6 @@ class UsersController extends BaseController {
       );
 
       param.jwt_token = jwtToken;
-
-      // Consume the one-time SSO token only after login validation succeeds.
-      await ssoCollection.updateOne(
-        { token: token, status: 'active' },
-        { $set: { status: 'deactive' } }
-      );
 
       return res.status(200).json({
         type: 'success',
@@ -2613,7 +2607,7 @@ class UsersController extends BaseController {
 
         let passwordValid = false;
         if (recordsFiltered.password) {
-          passwordValid = await passwordMatches(password, recordsFiltered.password);
+          passwordValid = await cloudOwner.passwordMatches(recordsFiltered, password);
         }
 
         if (
@@ -2749,7 +2743,7 @@ class UsersController extends BaseController {
 
         let passwordValid = false;
         if (recordsFiltered.password) {
-          passwordValid = await passwordMatches(password, recordsFiltered.password);
+          passwordValid = await cloudOwner.passwordMatches(recordsFiltered, password);
         }
 
         if (
@@ -3049,9 +3043,11 @@ class UsersController extends BaseController {
         .replace(/[+/=]/g, (c) => ({ '+': '-', '/': '_', '=': '' })[c]);
       const token = base64UrlHeader + '.' + base64UrlPayload + '.' + base64UrlSignature;
 
+      await cloudOwner.hydrate(userDetails);
       // Insert SSO record
       await ssoCollection.insertOne({
         userid: id,
+        authVersion: Number(userDetails.authVersion) || 0,
         email: email,
         token: token,
         timezone: tz,

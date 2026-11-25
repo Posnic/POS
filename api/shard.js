@@ -184,7 +184,16 @@ async function loadRegistry() {
     .db(CONTROL_DB)
     .collection('tenants')
     .find(query)
-    .project({ subdomain: 1, tenantDb: 1, secrets: 1, suspended: 1, suspendedReason: 1, webDomain: 1, hosts: 1 })
+    .project({
+      subdomain: 1,
+      tenantDb: 1,
+      secrets: 1,
+      suspended: 1,
+      suspendedReason: 1,
+      webDomain: 1,
+      hosts: 1,
+      ownerIdentity: 1,
+    })
     .toArray();
 
   const key = masterKey();
@@ -220,6 +229,24 @@ async function loadRegistry() {
       connection,
       db: connection.db,
       secrets,
+      ownerIdentity: t.ownerIdentity,
+      readOwnerCredential: t.ownerIdentity
+        ? () =>
+            controlClient
+              .db(CONTROL_DB)
+              .collection('web_users')
+              .findOne(
+                { _id: new (require('mongodb').ObjectId)(String(t.ownerIdentity.webUserId)) },
+                {
+                  projection: {
+                    passwordHash: 1,
+                    authVersion: 1,
+                    passwordChangedAt: 1,
+                    disabled: 1,
+                  },
+                }
+              )
+        : null,
     };
 
     /* Every name this shop answers to reaches the same entry, so a customer on
@@ -284,7 +311,9 @@ async function main() {
   }
 
   await loadRegistry();
-  const releaseExtensions = await require('./src/services/extension-shard-runtime').start({ tenants: byHost.values() });
+  const releaseExtensions = await require('./src/services/extension-shard-runtime').start({
+    tenants: byHost.values(),
+  });
   app.locals.releaseExtensionRuntime = releaseExtensions;
   require('./src/services/ask-posnic-runner.service').start({ tenants: () => byHost.values() });
   setInterval(() => {
@@ -336,9 +365,15 @@ async function main() {
   });
 
   server.listen(PORT, HOST, () => {
-    server.once('close', require('./src/services/catalogue-sharing').start({ tenants: () => byHost.values() }));
+    server.once(
+      'close',
+      require('./src/services/catalogue-sharing').start({ tenants: () => byHost.values() })
+    );
     if (releaseExtensions) server.once('close', releaseExtensions);
-    server.once('close', require('./src/services/price-schedule-worker').start({ tenants: () => byHost.values() }));
+    server.once(
+      'close',
+      require('./src/services/price-schedule-worker').start({ tenants: () => byHost.values() })
+    );
     const stopNotifications =
       require('./src/services/business-notification-worker').startNotifications({
         tenants: () => [...byHost.values()],

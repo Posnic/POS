@@ -19,7 +19,7 @@ async function findUserByIdentifier(identifier) {
     try {
       const byId = await User.findById(normalized).select('+license +branch_access');
       if (byId) {
-        return byId;
+        return require('../services/cloud-owner').hydrate(byId);
       }
     } catch (error) {
       console.warn('findUserByIdentifier: failed to lookup by ObjectId', error.message);
@@ -41,7 +41,9 @@ async function findUserByIdentifier(identifier) {
     { name: normalized },
   ];
 
-  return User.findOne({ $or: orConditions }).select('+license +branch_access');
+  return require('../services/cloud-owner').hydrate(
+    await User.findOne({ $or: orConditions }).select('+license +branch_access')
+  );
 }
 
 module.exports = { findUserByIdentifier };
