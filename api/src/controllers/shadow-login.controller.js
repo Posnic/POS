@@ -293,7 +293,7 @@ async function shadowLogin(req, res) {
   /* replace, not assign: the back button should not return to a page that
      still holds the token in its source. d.next is server-sanitised to a
      bare hash route (letters, digits, slash, dash, underscore only). */
-  location.replace(d.next ? '/dashboard.html#/' + d.next : '/');
+  location.replace(d.next ? '/dashboard.html#/' + d.next : '/dashboard.html');
 })();
 </script>`);
 }

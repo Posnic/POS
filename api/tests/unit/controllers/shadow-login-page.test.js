@@ -75,7 +75,7 @@ describe('the next route (the rig lands on any page in one launch)', () => {
     expect(src).not.toMatch(/\$\{nextRoute\}/);
   });
 
-  test('the redirect goes to the app shell with the hash, or home without one', () => {
-    expect(src).toMatch(/d\.next \? '\/dashboard\.html#\/' \+ d\.next : '\/'/);
+  test('the redirect goes to the app shell with the hash, or the dashboard without one', () => {
+    expect(src).toMatch(/d\.next \? '\/dashboard\.html#\/' \+ d\.next : '\/dashboard\.html'/);
   });
 });
