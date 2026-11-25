@@ -25,8 +25,8 @@ test('owner login reads authority; stale password rejected and staff encoding pr
       usertype: 'super_admin',
       password: await bcrypt.hash('Old-fixture-7', 4),
     };
-    assert.equal(await policy.verify(owner, 'Old-fixture-7'), false);
-    assert.equal(await policy.verify(owner, 'New-fixture-7'), true);
+    assert.equal(await policy.passwordMatches(owner, 'Old-fixture-7'), false);
+    assert.equal(await policy.passwordMatches(owner, 'New-fixture-7'), true);
     assert.equal(owner.authVersion, 9);
     assert.throws(() => policy.requireLocal(owner), { code: 'CLOUD_OWNER_BROWSER_REQUIRED' });
     const staff = {
@@ -34,9 +34,9 @@ test('owner login reads authority; stale password rejected and staff encoding pr
       usertype: 'staff',
       password: await bcrypt.hash(Buffer.from('Staff-fixture-7').toString('base64'), 4),
     };
-    assert.equal(await policy.verify(staff, 'Staff-fixture-7'), true);
+    assert.equal(await policy.passwordMatches(staff, 'Staff-fixture-7'), true);
   });
   await runWithTenant({ ...tenant, readOwnerCredential: async () => null }, async () =>
-    assert.rejects(() => policy.verify({ _id: 'owner' }, 'anything'), /unavailable/)
+    assert.rejects(() => policy.passwordMatches({ _id: 'owner' }, 'anything'), /unavailable/)
   );
 });

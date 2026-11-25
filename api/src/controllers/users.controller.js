@@ -208,7 +208,7 @@ class UsersController extends BaseController {
       // 2) Check if user exists && password is correct
       const user = await this.userModel.findOne({ email: emailMatch(email) }).select('+password');
 
-      if (!user || !(await cloudOwner.verify(user, password))) {
+      if (!user || !(await cloudOwner.passwordMatches(user, password))) {
         return next(new AppError('Incorrect email or password', httpStatus.UNAUTHORIZED));
       }
 
@@ -326,7 +326,7 @@ class UsersController extends BaseController {
         });
       }
 
-      const passwordValid = await cloudOwner.verify(user, password);
+      const passwordValid = await cloudOwner.passwordMatches(user, password);
 
       if (!passwordValid) {
         // Match legacy PHP behaviour for incorrect credentials:
@@ -2171,7 +2171,7 @@ class UsersController extends BaseController {
         });
       }
 
-      const passwordValid = await cloudOwner.verify(user, password);
+      const passwordValid = await cloudOwner.passwordMatches(user, password);
 
       if (passwordValid && user.usertype === 'super_admin') {
         return res.status(200).json({
@@ -2607,7 +2607,7 @@ class UsersController extends BaseController {
 
         let passwordValid = false;
         if (recordsFiltered.password) {
-          passwordValid = await cloudOwner.verify(recordsFiltered, password);
+          passwordValid = await cloudOwner.passwordMatches(recordsFiltered, password);
         }
 
         if (
@@ -2743,7 +2743,7 @@ class UsersController extends BaseController {
 
         let passwordValid = false;
         if (recordsFiltered.password) {
-          passwordValid = await cloudOwner.verify(recordsFiltered, password);
+          passwordValid = await cloudOwner.passwordMatches(recordsFiltered, password);
         }
 
         if (

@@ -93,8 +93,8 @@ test('bound owner uses central credential and refuses local reset and model writ
   };
   await runWithTenant(tenant, async () => {
     const owner = await User.findById(id).select('+password');
-    expect(await policy.verify(owner, 'Old-owner-7')).toBe(false);
-    expect(await policy.verify(owner, 'Website-owner-7')).toBe(true);
+    expect(await policy.passwordMatches(owner, 'Old-owner-7')).toBe(false);
+    expect(await policy.passwordMatches(owner, 'Website-owner-7')).toBe(true);
     expect(owner.authVersion).toBe(15);
     expect(owner.isModified('password')).toBe(false);
     await expect(
@@ -120,8 +120,7 @@ test('bound owner uses central credential and refuses local reset and model writ
 });
 
 test('real HTTP owner login follows website changes and rejects stale sessions', async () => {
-  const express = require('express'),
-    session = require('express-session');
+  const express = require('express');
   const { runWithTenant } = require('../../../src/db/tenant-context');
   const id = new ObjectId(),
     websiteId = new ObjectId(),
@@ -156,10 +155,8 @@ test('real HTTP owner login follows website changes and rejects stale sessions',
   };
   const app = express();
   app.use(express.json());
-  app.use(
-    session({ secret: 'isolated-session-fixture-only', resave: false, saveUninitialized: false })
-  );
   app.use((req, res, next) => runWithTenant(tenant, next));
+  app.use(require('../../../src/middleware/csrf').protect);
   app.use('/api/users', require('../../../src/routes/users.routes'));
   const server = await new Promise((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));

@@ -476,6 +476,9 @@
   "Clocked out": [
     "src/repositories/shift.repository.js"
   ],
+  "Cloud account verification is temporarily unavailable. Please try again.": [
+    "app.js"
+  ],
   "Common settings updated": [
     "src/controllers/settings.controller.js"
   ],
@@ -2561,6 +2564,9 @@
   "This shop transcribes on the handset, not on the server": [
     "src/services/transcribe.service.js"
   ],
+  "This sign-in link was already used.": [
+    "src/controllers/users.controller.js"
+  ],
   "This supplier details already exist in our system": [
     "src/models/supplier-legacy.model.js"
   ],
@@ -2916,6 +2922,9 @@
   "Your link expired, please contact posnic admin !": [
     "src/controllers/users.controller.js",
     "src/repositories/user.repository.js"
+  ],
+  "Your password changed. Open your shop again from your website account.": [
+    "src/controllers/users.controller.js"
   ],
   "Your password was recently changed. Please log in again.": [
     "src/middleware/auth.js"

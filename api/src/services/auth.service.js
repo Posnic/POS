@@ -47,7 +47,7 @@ const login = async (email, password) => {
   if (
     !user ||
     !(await (cloudOwner.linked(user)
-      ? cloudOwner.verify(user, password)
+      ? cloudOwner.passwordMatches(user, password)
       : user.isPasswordMatch(password)))
   ) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');

@@ -76,7 +76,7 @@ function applyIdentity(user, account) {
 async function hydrate(user) {
   return applyIdentity(user, await authority(user));
 }
-async function verify(user, password) {
+async function passwordMatches(user, password) {
   if (typeof password !== 'string') return false;
   const account = await authority(user);
   applyIdentity(user, account);
@@ -99,7 +99,7 @@ module.exports = {
   linked,
   requireLocal,
   hydrate,
-  verify,
+  passwordMatches,
   touchesProtected,
   refusal,
   MANAGE_URL,

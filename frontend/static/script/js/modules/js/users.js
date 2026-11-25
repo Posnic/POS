@@ -2593,7 +2593,7 @@ $(document).on('show.bs.modal', '#changePasswordView, #password_new', function (
         modal.find('.form-row, button[type=submit]').hide();
         var notice = $('<div class="alert alert-info cloud-owner-password-policy" role="status"></div>');
         notice.append($('<p></p>').text(policy.message));
-        notice.append($('<a target="_blank" rel="noopener noreferrer">Manage password in browser</a>')
+        notice.append($('<a target="_blank" rel="noopener noreferrer"><lang class="lang_manage_password_in_browser">Manage password in browser</lang></a>')
             .attr('href', 'https://www.posnic.com/account.html#password'));
         modal.find('.modal-body').prepend(notice);
     });

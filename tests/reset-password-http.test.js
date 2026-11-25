@@ -39,7 +39,7 @@ const start = source.indexOf("  async updateNewPassword(req, res)");
 const end = source.indexOf("\n  /**", start);
 const method = vm.runInNewContext(
   "({" + source.slice(start, end) + "}).updateNewPassword",
-  { bcrypt, Buffer, Date, Math, console },
+  { bcrypt, Buffer, Date, Math, console, cloudOwner: require("../api/src/services/cloud-owner") },
 );
 async function fixture(expired = false) {
   const record = {

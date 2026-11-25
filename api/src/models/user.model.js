@@ -630,7 +630,7 @@ userSchema.statics.findByCredentials = async function (email, password) {
     throw new Error('Unable to login');
   }
 
-  const isMatch = await require('../services/cloud-owner').verify(user, password);
+  const isMatch = await require('../services/cloud-owner').passwordMatches(user, password);
 
   if (!isMatch) {
     user.failedLoginAttempts += 1;
