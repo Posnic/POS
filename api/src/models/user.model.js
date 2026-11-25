@@ -478,18 +478,29 @@ userSchema.virtual('initials').get(function () {
 // Browser-managed owners cannot be changed through alternate model write paths.
 userSchema.pre('save', async function () {
   const policy = require('../services/cloud-owner');
-  if (!this.isNew && this.modifiedPaths().some(key => policy.touchesProtected({ [key]: true }))) {
+  if (!this.isNew && this.modifiedPaths().some((key) => policy.touchesProtected({ [key]: true }))) {
     policy.requireLocal(this);
     policy.requireLocal(await this.constructor.collection.findOne({ _id: this._id }));
   }
 });
-userSchema.pre(['updateOne', 'updateMany', 'findOneAndUpdate', 'replaceOne', 'deleteOne', 'deleteMany', 'findOneAndDelete'], async function () {
-  const policy = require('../services/cloud-owner');
-  if (!/delete|replace/i.test(this.op) && !policy.touchesProtected(this.getUpdate())) return;
-  // Include inactive owners too: activation must not bypass the write guard.
-  const rows = await this.model.collection.find(this.cast(this.model)).toArray();
-  for (const row of rows) policy.requireLocal(row);
-});
+userSchema.pre(
+  [
+    'updateOne',
+    'updateMany',
+    'findOneAndUpdate',
+    'replaceOne',
+    'deleteOne',
+    'deleteMany',
+    'findOneAndDelete',
+  ],
+  async function () {
+    const policy = require('../services/cloud-owner');
+    if (!/delete|replace/i.test(this.op) && !policy.touchesProtected(this.getUpdate())) return;
+    // Include inactive owners too: activation must not bypass the write guard.
+    const rows = await this.model.collection.find(this.cast(this.model)).toArray();
+    for (const row of rows) policy.requireLocal(row);
+  }
+);
 
 // Pre-save middleware to hash password
 // NOTE: PHP userInsertUpdate() receives already-hashed password from controller

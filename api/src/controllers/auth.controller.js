@@ -99,7 +99,9 @@ exports.protect = async (req, res, next) => {
     const decoded = await promisify(jwt.verify)(token, currentSecret('JWT_SECRET'));
 
     // 3) Check if user still exists
-    const currentUser = await require('../services/cloud-owner').hydrate(await User.findById(decoded.id));
+    const currentUser = await require('../services/cloud-owner').hydrate(
+      await User.findById(decoded.id)
+    );
     if (!currentUser) {
       return next(new AppError('The user belonging to this token no longer exists.', 401));
     }
@@ -449,7 +451,9 @@ exports.verifyToken = async (req, res, next) => {
     const decoded = await promisify(jwt.verify)(token, currentSecret('JWT_SECRET'));
 
     // Check if user still exists
-    const currentUser = await require('../services/cloud-owner').hydrate(await User.findById(decoded.id));
+    const currentUser = await require('../services/cloud-owner').hydrate(
+      await User.findById(decoded.id)
+    );
     if (!currentUser) {
       return res.status(401).json({
         status: 'error',

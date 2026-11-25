@@ -208,10 +208,7 @@ class UsersController extends BaseController {
       // 2) Check if user exists && password is correct
       const user = await this.userModel.findOne({ email: emailMatch(email) }).select('+password');
 
-      if (
-        !user ||
-        !(await cloudOwner.verify(user, password))
-      ) {
+      if (!user || !(await cloudOwner.verify(user, password))) {
         return next(new AppError('Incorrect email or password', httpStatus.UNAUTHORIZED));
       }
 
@@ -2503,11 +2500,21 @@ class UsersController extends BaseController {
 
       await cloudOwner.hydrate(recordsFiltered);
       if ((Number(ssoRecord.authVersion) || 0) !== (Number(recordsFiltered.authVersion) || 0)) {
-        return res.status(401).json({ type: 'error', message: 'Your password changed. Open your shop again from your website account.' });
+        return res
+          .status(401)
+          .json({
+            type: 'error',
+            message: 'Your password changed. Open your shop again from your website account.',
+          });
       }
-      const claim = await ssoCollection.updateOne({ _id: ssoRecord._id, status: 'active' }, { $set: { status: 'deactive' } });
-      if (claim.modifiedCount !== 1) return res.status(401).json({ type: 'error', message: 'This sign-in link was already used.' });
-
+      const claim = await ssoCollection.updateOne(
+        { _id: ssoRecord._id, status: 'active' },
+        { $set: { status: 'deactive' } }
+      );
+      if (claim.modifiedCount !== 1)
+        return res
+          .status(401)
+          .json({ type: 'error', message: 'This sign-in link was already used.' });
 
       // Establish the same authenticated state as the normal login flow.
       // Without this, SSO validates successfully but subsequent browser

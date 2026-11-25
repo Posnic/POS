@@ -44,7 +44,12 @@ const cloudOwner = require('./cloud-owner');
 const login = async (email, password) => {
   const user = await User.findOne({ email });
 
-  if (!user || !(await (cloudOwner.linked(user) ? cloudOwner.verify(user, password) : user.isPasswordMatch(password)))) {
+  if (
+    !user ||
+    !(await (cloudOwner.linked(user)
+      ? cloudOwner.verify(user, password)
+      : user.isPasswordMatch(password)))
+  ) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
   }
 
