@@ -42,6 +42,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
+      - name: Stamp the API product version from the root package
+        run: node scripts/stamp-runtime-version.js
 
       # Built here rather than on the box: a 2 GB machine running mongod and
       # the API should not also be running a gulp build, and building in CI

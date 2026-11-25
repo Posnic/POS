@@ -61,7 +61,7 @@ test('frontend source carries machine-readable discovery files for the app domai
 
 test('public app entry pages expose canonical POS metadata', () => {
   const index = read(FRONTEND, 'index.html');
-  const login = read(FRONTEND, 'login.html');
+  const login = require('../frontend/gulpfile.js/product-version').renderProductVersion(read(FRONTEND, 'login.html'));
   const keywordContent = POSNIC_SEO_KEYWORDS.join(', ');
 
   for (const html of [index, login]) {

@@ -1,5 +1,6 @@
 var fs = require('fs');
 var path = require('path')
+const { renderProductVersion } = require('./product-version');
 /* html-minifier was required here for YEARS while its one call sat commented
    out below - meanwhile it was the frontend's only unfixable high-severity
    audit finding. The pages ship readable on purpose; the dependency is gone. */
@@ -119,7 +120,7 @@ function buildAllHtml(cb, skip) {
             let written = 0;
             for (let item in html) {
                 if (html.hasOwnProperty(item) && typeof html[item] === 'string') {
-                    let content = getLinkContent(html[item]);
+                    let content = renderProductVersion(getLinkContent(html[item]));
                     if (!fs.existsSync(publicDir)) {
                         fs.mkdirSync(publicDir, {recursive: true});
                     }

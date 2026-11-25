@@ -17,8 +17,8 @@
 // The app version is the ROOT package version (the only one users and the
 // updater see). Resolution: POSNIC_APP_VERSION env (set by the desktop shell)
 // -> ../package.json next to the api directory (dev tree / bundled layouts)
-// -> null. Null is deliberate: reporting an unrelated number (api/package.json
-// says 2.0.0 forever) would be worse than admitting we don't know.
+// -> generated product-version.json for standalone API deployments -> null.
+// The API dependency package version is not an independent product version.
 
 const fs = require('fs');
 const path = require('path');
@@ -36,6 +36,12 @@ function resolveAppVersion(env, apiRoot) {
   } catch (e) {
     /* no adjacent root package: version stays unknown */
   }
+  try {
+    const built = JSON.parse(fs.readFileSync(path.join(apiRoot, 'product-version.json'), 'utf8'));
+    if (built.source === 'root-package' && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(built.version || '')) {
+      return built.version;
+    }
+  } catch (e) { /* older deployments may not have build metadata */ }
   return null;
 }
 

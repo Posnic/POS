@@ -16,6 +16,7 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
+      - "package.json"
       - "scripts/build-cdn-frontend.js"
       - ".github/workflows/deploy-frontend-cdn.yml"
   workflow_dispatch:

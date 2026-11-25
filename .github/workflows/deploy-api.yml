@@ -8,6 +8,8 @@ on:
     branches: [main]
     paths:
       - "api/**"
+      - "package.json"
+      - "scripts/stamp-runtime-version.js"
       # The API serves /menu and /order from these, so a change to either is
       # a change to what customers see. Without them a menu-only commit
       # passes CI, merges, and the workflow never even starts.
@@ -34,6 +36,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Stamp the API product version from the root package
+        run: node scripts/stamp-runtime-version.js
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh

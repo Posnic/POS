@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const BaseController = require('../controllers/base.controller');
 const { protect, optionalProtect } = require('../middleware/auth');
-const pkg = require('../../package.json');
+const { resolveAppVersion } = require('../utils/runtime-info');
+const path = require('path');
 const { rateLimit } = require('express-rate-limit');
 const feedbackController = require('../controllers/help-feedback.controller');
 
@@ -65,7 +66,7 @@ router.get('/health', optionalProtect, (req, res) => {
        * handing an unauthenticated caller a shopping list applies to the
        * build number as much as to the Node version.
        */
-      version: pkg.version,
+      version: resolveAppVersion({}, path.resolve(__dirname, '../..')),
       memory: process.memoryUsage(),
       node: process.version,
       platform: process.platform,
