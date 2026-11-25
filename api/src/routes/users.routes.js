@@ -103,6 +103,10 @@ router.get('/verify-token', protect, (req, res) => {
 
 // Protected routes (require authentication)
 router.use(protect);
+router.get('/password-policy', (req, res) => {
+  const policy = require('../services/cloud-owner');
+  res.set('Cache-Control', 'no-store').json({ managed: policy.linked(req.user), manageUrl: policy.MANAGE_URL, message: policy.MESSAGE });
+});
 
 // Legacy branch selection endpoints (require auth but not admin)
 router.get('/userBranchSelection', bindController(userController.userBranchSelection));

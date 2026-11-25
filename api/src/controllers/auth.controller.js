@@ -70,7 +70,7 @@ exports.login = async (req, res, next) => {
     // 2) Check if user exists && password is correct
     const user = await User.findOne({ email: emailMatch(email) }).select('+password');
 
-    if (!user || !(await user.correctPassword(password, user.password))) {
+    if (!user || !(await require('../services/cloud-owner').verify(user, password))) {
       return next(new AppError('Incorrect email or password', 401));
     }
 
@@ -99,7 +99,7 @@ exports.protect = async (req, res, next) => {
     const decoded = await promisify(jwt.verify)(token, currentSecret('JWT_SECRET'));
 
     // 3) Check if user still exists
-    const currentUser = await User.findById(decoded.id);
+    const currentUser = await require('../services/cloud-owner').hydrate(await User.findById(decoded.id));
     if (!currentUser) {
       return next(new AppError('The user belonging to this token no longer exists.', 401));
     }
@@ -142,6 +142,8 @@ exports.forgotPassword = async (req, res, next) => {
     if (!user) {
       return next(new AppError('There is no user with that email address.', 404));
     }
+
+    require('../services/cloud-owner').requireLocal(user);
 
     // 2) Generate the random reset token
     const resetToken = user.createPasswordResetToken();
@@ -187,6 +189,7 @@ exports.resetPassword = async (req, res, next) => {
       return next(new AppError('Token is invalid or has expired', 400));
     }
 
+    require('../services/cloud-owner').requireLocal(user);
     user.password = req.body.password;
     user.passwordConfirm = req.body.passwordConfirm;
     user.passwordResetToken = undefined;
@@ -212,6 +215,7 @@ exports.updatePassword = async (req, res, next) => {
     }
 
     // 3) If so, update password
+    require('../services/cloud-owner').requireLocal(user);
     user.password = req.body.password;
     user.passwordConfirm = req.body.passwordConfirm;
     await user.save();
@@ -445,7 +449,7 @@ exports.verifyToken = async (req, res, next) => {
     const decoded = await promisify(jwt.verify)(token, currentSecret('JWT_SECRET'));
 
     // Check if user still exists
-    const currentUser = await User.findById(decoded.id);
+    const currentUser = await require('../services/cloud-owner').hydrate(await User.findById(decoded.id));
     if (!currentUser) {
       return res.status(401).json({
         status: 'error',

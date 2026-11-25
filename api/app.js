@@ -37,6 +37,19 @@ const suppliersRoutes = require('./src/routes/suppliers.routes');
 
 // Start express app
 const app = express();
+app.use(async (req, res, next) => {
+  const context = require('./src/db/tenant-context');
+  if (context.currentTenant() || !app.locals.cloudOwnerContext) return next();
+  try {
+    return context.runWithTenant(await app.locals.cloudOwnerContext(), next);
+  } catch {
+    return res
+      .status(503)
+      .json({
+        message: 'Cloud account verification is temporarily unavailable. Please try again.',
+      });
+  }
+});
 
 // nginx terminates TLS in live environments. Trust only the first proxy hop so
 // Express can correctly recognize HTTPS and emit secure session cookies.
@@ -1110,7 +1123,10 @@ app.use(attachDb);
  * fetched itself; see src/realtime/ for both halves.
  */
 const { changeEvents } = require('./src/realtime/change-events');
-const { subscribe: sseSubscribe, closeAll: closeEventStreams } = require('./src/realtime/event-bus');
+const {
+  subscribe: sseSubscribe,
+  closeAll: closeEventStreams,
+} = require('./src/realtime/event-bus');
 process.once('posnic:api-shutdown', closeEventStreams);
 const { protect: sseProtect } = require('./src/middleware/auth');
 app.use(changeEvents);
@@ -1129,10 +1145,21 @@ app.use(
 app.use(['/api/captain/v1', '/captain/v1'], require('./src/routes/captain-access.routes'));
 app.use('/api/kitchen', require('./src/routes/kitchen-board.routes'));
 app.get(/^\/kitchen$/, (_req, res) => res.redirect('/kitchen/'));
-const kitchenLocaleFiles = fs.readdirSync(path.join(__dirname, 'src', 'kitchen-board', 'locales'))
+const kitchenLocaleFiles = fs
+  .readdirSync(path.join(__dirname, 'src', 'kitchen-board', 'locales'))
   .filter((file) => /^(?:index|[a-z]{2}(?:-[A-Z]{2})?)\.json$/.test(file))
   .map((file) => 'locales/' + file);
-for (const file of ['index.html', 'board.js', 'board.css', 'device.js', 'i18n.js', 'manifest.webmanifest', 'sw.js', 'icon.svg', ...kitchenLocaleFiles]) {
+for (const file of [
+  'index.html',
+  'board.js',
+  'board.css',
+  'device.js',
+  'i18n.js',
+  'manifest.webmanifest',
+  'sw.js',
+  'icon.svg',
+  ...kitchenLocaleFiles,
+]) {
   app.get(
     file === 'index.html' ? ['/kitchen/', '/kitchen/index.html'] : '/kitchen/' + file,
     (_req, res) => {
@@ -1148,14 +1175,18 @@ for (const extension of ['html', 'js', 'css']) {
   const suffix = extension === 'html' ? '' : '.' + extension;
   app.get(['/api/captain-setup' + suffix, '/captain-setup' + suffix], (req, res) => {
     res.set('Cache-Control', 'no-store');
-    res.sendFile(require('path').join(__dirname, 'src/routes/captain-setup.' + extension), {dotfiles:'allow'});
+    res.sendFile(require('path').join(__dirname, 'src/routes/captain-setup.' + extension), {
+      dotfiles: 'allow',
+    });
   });
 }
 for (const extension of ['html', 'js', 'css']) {
   const suffix = extension === 'html' ? '' : '.' + extension;
   app.get(['/api/mobile-pos-setup' + suffix, '/mobile-pos-setup' + suffix], (req, res) => {
     res.set('Cache-Control', 'no-store');
-    res.sendFile('mobile-pos-setup.' + extension, { root: require('path').join(__dirname, 'src/routes') });
+    res.sendFile('mobile-pos-setup.' + extension, {
+      root: require('path').join(__dirname, 'src/routes'),
+    });
   });
 }
 

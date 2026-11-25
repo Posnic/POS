@@ -8,6 +8,8 @@ const codes = require('../utils/recovery-codes');
 const { recordAudit } = require('../utils/audit-trail');
 const { passwordMatches } = require('../utils/password-match');
 
+const cloudOwner = require('./cloud-owner');
+
 const INVALID = 'The account or recovery code is incorrect, already used, or replaced.';
 function failure(message, status = 400) {
   return Object.assign(new Error(message), { statusCode: status });
@@ -29,6 +31,7 @@ async function status(db, userId) {
   guard();
   const user = await db.collection('users').findOne({ _id: id(userId) });
   if (!owner(user)) return { eligible: false };
+  if (cloudOwner.linked(user)) return { eligible: false, manageUrl: cloudOwner.MANAGE_URL };
   return {
     eligible: true,
     remaining: (user.localRecovery?.hashes || []).length,
@@ -42,6 +45,7 @@ async function generate(db, userId, password, audit = {}) {
   if (!owner(user)) throw failure('Only the shop owner can manage recovery codes.', 403);
   if (!(await passwordMatches(password, user.password)))
     throw failure('Your current password is incorrect.', 403);
+  cloudOwner.requireLocal(user);
   const batch = codes.createBatch();
   const result = await users.updateOne(
     {
@@ -97,6 +101,7 @@ async function reset(db, input = {}, audit = {}) {
   };
   const user = await users.findOne(filter);
   if (!user) throw failure(INVALID);
+  cloudOwner.requireLocal(user);
   const password = await bcrypt.hash(Buffer.from(newPassword).toString('base64'), 12);
   const now = new Date();
   // Consume and change the password in ONE document write: two simultaneous

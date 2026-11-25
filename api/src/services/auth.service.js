@@ -40,10 +40,11 @@ const register = async (userBody) => {
  * @param {string} password
  * @returns {Promise<{user: Object, tokens: Object}>}
  */
+const cloudOwner = require('./cloud-owner');
 const login = async (email, password) => {
   const user = await User.findOne({ email });
 
-  if (!user || !(await user.isPasswordMatch(password))) {
+  if (!user || !(await (cloudOwner.linked(user) ? cloudOwner.verify(user, password) : user.isPasswordMatch(password)))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
   }
 
@@ -93,6 +94,7 @@ const refreshAuth = async (refreshToken) => {
       throw new Error();
     }
 
+    if (cloudOwner.linked(user)) throw new Error('Cloud owner must sign in again');
     await refreshTokenDoc.remove();
     return tokenService.generateAuthTokens(user);
   } catch (error) {
@@ -119,6 +121,7 @@ const resetPassword = async (resetPasswordToken, newPassword) => {
       throw new Error();
     }
 
+    cloudOwner.requireLocal(user);
     user.password = newPassword;
     await user.save();
 

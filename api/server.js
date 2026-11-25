@@ -71,8 +71,9 @@ const startServer = async () => {
       migrateOptionalEmailIndexes,
     } = require('./src/database/migrations/optional-email-indexes');
     await migrateOptionalEmailIndexes(mongoose.connection.db);
-    await require('./src/database/migrations/receiving-number-indexes')
-      .migrateReceivingNumberIndexes(mongoose.connection.db);
+    await require('./src/database/migrations/receiving-number-indexes').migrateReceivingNumberIndexes(
+      mongoose.connection.db
+    );
 
     // Versioned, ledgered schema migrations (SEAMLESS_UPDATE_ROADMAP U1.3):
     // every not-yet-applied entry in src/db/migrations/index.js runs before
@@ -93,6 +94,43 @@ const startServer = async () => {
     const mongoClient = new MongoClient(DB_URI, { maxPoolSize: POOL_SIZE });
     await mongoClient.connect();
     app.locals.mongoClient = mongoClient;
+    if (process.env.POSNIC_CLOUD === '1' && process.env.CONTROL_URI && process.env.CONTROL_DB) {
+      const authority = new MongoClient(process.env.CONTROL_URI, {
+        maxPoolSize: 3,
+        serverSelectionTimeoutMS: 5000,
+      });
+      await authority.connect();
+      const control = authority.db(process.env.CONTROL_DB);
+      app.locals.cloudOwnerContext = async () => {
+        const tenant = await control
+          .collection('tenants')
+          .findOne(
+            { tenantDb: mongoose.connection.db.databaseName },
+            { projection: { ownerIdentity: 1 } }
+          );
+        if (!tenant) throw new Error('Tenant authority missing');
+        return {
+          db: mongoose.connection.db,
+          connection: mongoose.connection,
+          ownerIdentity: tenant.ownerIdentity,
+          readOwnerCredential: () =>
+            control
+              .collection('web_users')
+              .findOne(
+                { _id: new (require('mongodb').ObjectId)(String(tenant.ownerIdentity.webUserId)) },
+                {
+                  projection: {
+                    passwordHash: 1,
+                    authVersion: 1,
+                    passwordChangedAt: 1,
+                    disabled: 1,
+                  },
+                }
+              ),
+        };
+      };
+    }
+
     console.log('✅ MongoDB Client added to app.locals for session management');
 
     // Start Express server
@@ -102,21 +140,39 @@ const startServer = async () => {
     const HOST = process.env.HOST || config.server?.host || config.host || '0.0.0.0';
     // An incompatible or damaged extension must not prevent the till starting.
     try {
-      const result = await require('./src/services/extension-package-loader').initializeInstalledExtensions({ db: mongoose.connection.db });
+      const result =
+        await require('./src/services/extension-package-loader').initializeInstalledExtensions({
+          db: mongoose.connection.db,
+        });
       app.locals.releaseExtensionRuntime = result.release;
       for (const failure of result.failures)
-        console.error('[EXTENSIONS] Package not activated:', failure.id || 'configuration', failure.code);
+        console.error(
+          '[EXTENSIONS] Package not activated:',
+          failure.id || 'configuration',
+          failure.code
+        );
     } catch (error) {
       console.error('[EXTENSIONS] Could not read installed packages:', error.code || error.message);
     }
     // Recover schedules owned by this installation before accepting sales.
-    await require('./src/db/tenant-context').runWithTenant({ db: mongoose.connection.db },
-      () => require('./src/services/price-schedule-worker').drain(mongoose.connection.db, { startup: true }));
+    await require('./src/db/tenant-context').runWithTenant({ db: mongoose.connection.db }, () =>
+      require('./src/services/price-schedule-worker').drain(mongoose.connection.db, {
+        startup: true,
+      })
+    );
     const server = app.listen(PORT, HOST, () => {
-      server.once('close', require('./src/services/catalogue-sharing').start({ tenants: () => [{ db: mongoose.connection.db }] }));
-      server.once('close', require('./src/services/price-schedule-worker').start({
-        tenants: () => [{ db: mongoose.connection.db }],
-      }));
+      server.once(
+        'close',
+        require('./src/services/catalogue-sharing').start({
+          tenants: () => [{ db: mongoose.connection.db }],
+        })
+      );
+      server.once(
+        'close',
+        require('./src/services/price-schedule-worker').start({
+          tenants: () => [{ db: mongoose.connection.db }],
+        })
+      );
       const stopNotifications =
         require('./src/services/business-notification-worker').startNotifications({
           tenants: () => [{ db: mongoose.connection.db }],

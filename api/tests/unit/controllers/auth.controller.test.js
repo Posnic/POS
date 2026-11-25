@@ -1,3 +1,7 @@
+jest.mock('../../../src/services/cloud-owner', () => ({
+  ...jest.requireActual('../../../src/services/cloud-owner'),
+  verify: (user, password) => user.correctPassword(password, user.password),
+}));
 /**
  * Unit tests for auth.controller.js
  *

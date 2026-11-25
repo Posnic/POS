@@ -205,7 +205,7 @@ beforeEach(() => {
   mockLoginCheckColl.updateOne.mockResolvedValue({ modifiedCount: 1 });
   mockSsoColl.findOne.mockResolvedValue(null);
   mockSsoColl.insertOne.mockResolvedValue({});
-  mockSsoColl.updateOne.mockResolvedValue({});
+  mockSsoColl.updateOne.mockResolvedValue({ modifiedCount: 1 });
   mockUserSessionsColl.findOne.mockResolvedValue(null);
   mockUserSessionsColl.insertOne.mockResolvedValue({ insertedId: 'usid1' });
   mockUserSessionsColl.updateOne.mockResolvedValue({ modifiedCount: 0 });
@@ -2212,7 +2212,7 @@ describe('ssoAuth', () => {
       expire_date: new Date(Date.now() + 60000),
     };
     mockSsoColl.findOne.mockResolvedValue(ssoRecord);
-    mockSsoColl.updateOne.mockResolvedValue({});
+    mockSsoColl.updateOne.mockResolvedValue({ modifiedCount: 1 });
 
     const userChain = {
       select: jest.fn(),
