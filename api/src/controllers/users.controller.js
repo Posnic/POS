@@ -2500,12 +2500,10 @@ class UsersController extends BaseController {
 
       await cloudOwner.hydrate(recordsFiltered);
       if ((Number(ssoRecord.authVersion) || 0) !== (Number(recordsFiltered.authVersion) || 0)) {
-        return res
-          .status(401)
-          .json({
-            type: 'error',
-            message: 'Your password changed. Open your shop again from your website account.',
-          });
+        return res.status(401).json({
+          type: 'error',
+          message: 'Your password changed. Open your shop again from your website account.',
+        });
       }
       const claim = await ssoCollection.updateOne(
         { _id: ssoRecord._id, status: 'active' },

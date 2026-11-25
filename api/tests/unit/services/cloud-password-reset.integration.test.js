@@ -76,17 +76,15 @@ test('bound owner uses central credential and refuses local reset and model writ
     passwordHash: await bcrypt.hash('Website-owner-7', 4),
     authVersion: 15,
   };
-  await db
-    .collection('users')
-    .insertOne({
-      _id: id,
-      usertype: 'super_admin',
-      email: 'cloud-owner@example.test',
-      password: oldHash,
-      authVersion: 2,
-      userkey: 'owner-reset-fixture',
-      expire_date: new Date(Date.now() + 60000),
-    });
+  await db.collection('users').insertOne({
+    _id: id,
+    usertype: 'super_admin',
+    email: 'cloud-owner@example.test',
+    password: oldHash,
+    authVersion: 2,
+    userkey: 'owner-reset-fixture',
+    expire_date: new Date(Date.now() + 60000),
+  });
   const tenant = {
     db,
     connection: mongoose.connection,
@@ -137,20 +135,18 @@ test('real HTTP owner login follows website changes and rejects stale sessions',
   await db
     .collection('branches')
     .insertOne({ _id: branchId, license, branch_name: 'Isolated owner shop' });
-  await db
-    .collection('users')
-    .insertOne({
-      _id: id,
-      email: 'http-owner@example.test',
-      username: 'http-owner@example.test',
-      usertype: 'super_admin',
-      activate: true,
-      isActive: true,
-      password: await bcrypt.hash('Stale-shop-7', 4),
-      license,
-      branch_access: [{ branch_id: branchId }],
-      access: {},
-    });
+  await db.collection('users').insertOne({
+    _id: id,
+    email: 'http-owner@example.test',
+    username: 'http-owner@example.test',
+    usertype: 'super_admin',
+    activate: true,
+    isActive: true,
+    password: await bcrypt.hash('Stale-shop-7', 4),
+    license,
+    branch_access: [{ branch_id: branchId }],
+    access: {},
+  });
   const tenant = {
     db,
     connection: mongoose.connection,
