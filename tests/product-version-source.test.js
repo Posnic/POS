@@ -29,6 +29,7 @@ test('one root version change reaches browser metadata and a standalone API', (t
     assert.equal(resolveAppVersion({ POSNIC_APP_VERSION: '1.8.0' }, api), '1.8.0', 'an older installed shell must not claim the latest release');
   }
   fs.writeFileSync(path.join(fixture, 'package.json'), JSON.stringify({ name: 'posnic', version: '4.0.0' }));
+  assert.equal(resolveAppVersion({}, api), '3.2.1-beta.12', 'an unrelated or stale parent must not override the deployed API build');
   assert.throws(() => stampRuntimeVersion(fixture, true), /stale/);
 });
 

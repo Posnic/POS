@@ -16,8 +16,8 @@
 //
 // The app version is the ROOT package version (the only one users and the
 // updater see). Resolution: POSNIC_APP_VERSION env (set by the desktop shell)
-// -> ../package.json next to the api directory (dev tree / bundled layouts)
-// -> generated product-version.json for standalone API deployments -> null.
+// -> generated product-version.json for this API build
+// -> ../package.json next to the api directory (unbuilt dev tree) -> null.
 // The API dependency package version is not an independent product version.
 
 const fs = require('fs');
@@ -28,15 +28,6 @@ function resolveAppVersion(env, apiRoot) {
   const fromEnv = String(env.POSNIC_APP_VERSION || '').trim();
   if (/^\d+\.\d+\.\d+/.test(fromEnv)) return fromEnv;
   try {
-    const rootPkg = JSON.parse(fs.readFileSync(path.join(apiRoot, '..', 'package.json'), 'utf8'));
-    // The api's own package.json must never masquerade as the app version.
-    if (rootPkg && rootPkg.name !== 'posnic-api' && /^\d+\.\d+\.\d+/.test(rootPkg.version || '')) {
-      return rootPkg.version;
-    }
-  } catch (e) {
-    /* no adjacent root package: version stays unknown */
-  }
-  try {
     const built = JSON.parse(fs.readFileSync(path.join(apiRoot, 'product-version.json'), 'utf8'));
     if (
       built.source === 'root-package' &&
@@ -46,6 +37,15 @@ function resolveAppVersion(env, apiRoot) {
     }
   } catch (e) {
     /* older deployments may not have build metadata */
+  }
+  try {
+    const rootPkg = JSON.parse(fs.readFileSync(path.join(apiRoot, '..', 'package.json'), 'utf8'));
+    // The api's own package.json must never masquerade as the app version.
+    if (rootPkg && rootPkg.name !== 'posnic-api' && /^\d+\.\d+\.\d+/.test(rootPkg.version || '')) {
+      return rootPkg.version;
+    }
+  } catch (e) {
+    /* no adjacent root package: version stays unknown */
   }
   return null;
 }
