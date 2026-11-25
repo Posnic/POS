@@ -38,10 +38,15 @@ function resolveAppVersion(env, apiRoot) {
   }
   try {
     const built = JSON.parse(fs.readFileSync(path.join(apiRoot, 'product-version.json'), 'utf8'));
-    if (built.source === 'root-package' && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(built.version || '')) {
+    if (
+      built.source === 'root-package' &&
+      /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(built.version || '')
+    ) {
       return built.version;
     }
-  } catch (e) { /* older deployments may not have build metadata */ }
+  } catch (e) {
+    /* older deployments may not have build metadata */
+  }
   return null;
 }
 
