@@ -10,7 +10,12 @@ function stampRuntimeVersion(root, check = false) {
   }
   const target = path.join(root, 'api/product-version.json');
   const content = JSON.stringify({ source: 'root-package', version }, null, 2) + '\n';
-  const existing = fs.existsSync(target) ? fs.readFileSync(target, 'utf8').replace(/\r\n/g, '\n') : '';
+  let existing = '';
+  try {
+    existing = fs.readFileSync(target, 'utf8').replace(/\r\n/g, '\n');
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
   if (existing === content) return;
   if (check) throw new Error('api/product-version.json is stale; run node scripts/sync-version.js');
   fs.writeFileSync(target, content);
