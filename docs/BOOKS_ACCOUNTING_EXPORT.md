@@ -320,3 +320,23 @@ This protects invoice records only. The ordinary invoice-payment service can
 still reach sale/customer writes before its mirror, and wallet/edit/delete paths
 still need the common admission protocol. Do not enable the new receipt route or
 claim competing-writer protection complete until those changes and tests pass.
+
+### Ordinary invoice-payment admission
+
+The existing invoice-sync `recordPayment` path now atomically reserves its original
+sale before any money write, then admits the original scoped customer. It refuses
+Books or another ordinary collection's reservation. Failed customer admission
+releases the untouched sale. Sale/customer financial writes retain the admission
+ID predicate and check matchedCount. Successful invoice note and balance mirror
+are required before customer then sale admission releases. Interrupted writes
+retain original amount/method/reference/cashier/balance evidence and prevent a
+blind second collection. Books sale/customer admission checks this legacy marker.
+
+Real-Mongo tests exercise competing ordinary calls, Books reservations on sale or
+customer, normal partial/full collection, money-in lost reply, retained holds and
+Books refusal. Three integration suites and 33 existing invoice unit tests pass.
+No live POS data or installed executable changed. The new legacy lock fields are
+execution state on otherwise shared documents: transport exclusion/authoritative
+coordination remain rollout requirements. Wallet/other customer and sale writers
+still need admission. Recovery UI and deterministic resolution of interrupted
+legacy effects are unfinished; do not release this source as client-ready.

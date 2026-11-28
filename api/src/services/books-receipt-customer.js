@@ -68,6 +68,7 @@ function create({db}){
     const {state,sale}=await sales.verifyReserved(context,id,commandId);
     if(sale.customer_id==null)return {required:false};
     const customer=await customers.findOne(customerQuery(sale));if(!customer)fail('Original customer unavailable');
+    if(customer.legacy_invoice_payment_lock)fail('Customer has an unfinished invoice payment');
     const rows=await ledger(sale),baseline=sorted(rows),baselineHash=hash(baseline);
     if(customer.books_receipt_lock){const lock=original(customer,state);if(lock.baselineHash!==baselineHash||minor(customer.balance)!==BigInt(lock.balanceMinor))fail('Customer ledger changed');return lock;}
     const own=rows.filter(row=>hash(row.sale_id)===hash(sale._id));

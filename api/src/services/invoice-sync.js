@@ -166,6 +166,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   if (!sale)
     return { status: false, data: null, message: 'The sale behind this invoice was not found' };
 
+  if (sale.books_receipt_lock || sale.legacy_invoice_payment_lock) return { status: false, data: null, message: 'This sale has an unfinished payment; recover the original request' };
   const before = snapshotFromSale(sale);
   if (!before) return { status: false, data: null, message: 'A parked cart cannot be paid' };
   if (before.balance <= 0) {
@@ -204,6 +205,29 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   const db = await BaseModel.getDb();
   const sales = db.collection('sales');
 
+  // Admit this existing workflow on the same documents Books reserves, before
+  // any money write. Interrupted effects retain admission for explicit recovery.
+  if (String(sale.source_invoice_id) !== String(invoice._id)) {
+    return { status: false, data: null, message: 'Original invoice sale changed' };
+  }
+  const admission = { id: require('node:crypto').randomUUID(), invoiceId: String(invoice._id),
+    amount, method, reference, note, actor: userName, startedAt: now, before };
+  const unlocked = { books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false } };
+  const admitted = await sales.updateOne({ _id: sale._id, ...unlocked,
+    $expr: { $eq: ['$$ROOT', { $literal: sale }] } }, { $set: { legacy_invoice_payment_lock: admission } });
+  if (!admitted.matchedCount) return { status: false, data: null, message: 'Sale changed or has an unfinished payment; check the original request' };
+  const customerKey = sale.customer_id && ObjectId.isValid(String(sale.customer_id))
+    ? { _id: new ObjectId(String(sale.customer_id)), license: sale.license, branch_id: sale.branch_id } : null;
+  if (customerKey) {
+    const held = await db.collection('customers').updateOne({ ...customerKey, ...unlocked },
+      { $set: { legacy_invoice_payment_lock: admission } });
+    if (!held.matchedCount) {
+      await sales.updateOne({ _id: sale._id, 'legacy_invoice_payment_lock.id': admission.id }, { $unset: { legacy_invoice_payment_lock: '' } });
+      return { status: false, data: null, message: 'Customer unavailable or has an unfinished payment; no money was recorded' };
+    }
+  }
+
+  const requireWrite = async operation => { const result = await operation; if (!result.matchedCount) throw new Error('Payment admission changed; recover the original request'); return result; };
   const saleSet = {
     partial_balance: paidAfter,
     payment_pending: pendingAfter,
@@ -269,7 +293,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
         $set: { pending: pendingAfter, type: 'out', updated_date: now },
       }
     );
-    await sales.updateOne({ _id: sale._id }, { $set: saleSet, $inc: { wallet_amount: amount } });
+    await requireWrite(sales.updateOne({ _id: sale._id, 'legacy_invoice_payment_lock.id': admission.id }, { $set: saleSet, $inc: { wallet_amount: amount } }));
     /* customer balance = money in - money out, the same sum the customer
        page and the transaction endpoint compute */
     const filter = { customer_id: customerId, license: sale.license };
@@ -287,21 +311,29 @@ async function recordPayment(invoice, payment = {}, context = {}) {
       ])
       .toArray();
     const balance = agg.length ? round2((agg[0].totalIn || 0) - (agg[0].totalOut || 0)) : 0;
-    await db
+    await requireWrite(db
       .collection('customers')
-      .updateOne({ _id: customerId }, { $set: { balance, updated_date: now } });
+      .updateOne({ ...customerKey, 'legacy_invoice_payment_lock.id': admission.id }, { $set: { balance, updated_date: now } }));
   } else {
-    await sales.updateOne({ _id: sale._id }, { $set: saleSet });
+    await requireWrite(sales.updateOne({ _id: sale._id, 'legacy_invoice_payment_lock.id': admission.id }, { $set: saleSet }));
   }
 
   const InvoiceRepository = require('../repositories/invoice.repository');
   const repo = new InvoiceRepository();
-  await repo.recordPayment(
+  const noted = await repo.recordPayment(
     String(invoice._id),
     { amount, method, reference, note, date: now, by: userName },
     context
   );
+  if (!noted.status) throw new Error('Payment requires original-result recovery: invoice note was not confirmed');
   const synced = await syncSale(sale._id, { invoiceId: String(invoice._id) });
+  if (!synced.synced) throw new Error('Payment requires original-result recovery: invoice balance was not confirmed');
+  if (customerKey) {
+    const released = await db.collection('customers').updateOne({ ...customerKey, 'legacy_invoice_payment_lock.id': admission.id }, { $unset: { legacy_invoice_payment_lock: '' } });
+    if (!released.matchedCount) throw new Error('Customer payment admission changed; recover the original request');
+  }
+  const released = await sales.updateOne({ _id: sale._id, 'legacy_invoice_payment_lock.id': admission.id }, { $unset: { legacy_invoice_payment_lock: '' } });
+  if (!released.matchedCount) throw new Error('Sale payment admission changed; recover the original request');
   /* the word comes from what was just written, not from the mirror's reply -
      the reply is the same truth a moment later, but the message must not
      depend on a round trip */
