@@ -910,3 +910,21 @@ values within the storage range. Currency conversion, Decimal128 migration and
 reconciliation of already drifted legacy balances are not implemented. The engine
 is still unmounted pending legacy writer coordination and normal-page integration;
 branch restrictions, history archival and sync authority remain open.
+
+
+### Customer page adapter prepared (not registered)
+
+Added an explicit page adapter around the real customer add-entry form and existing
+manual-deletion confirmation. It fetches scoped customer identity before opening,
+retains/fixes original values after an uncertain reply, refreshes current balance
+from the server after completion and refuses stale customer/user/branch actions.
+Invalid unsaved input remains editable. The original page functions can be restored
+by uninstalling the adapter. It is not added to pages_css_js_map yet.
+
+Three tests pass using actual customers.js and customer modal markup in jsdom.
+Transport, autocomplete and phone widgets are fixtures. Tests cover four-decimal
+form submission/lost reply/reopen, explicit saved-result check/current-ledger
+refresh, manual deletion confirmation, changed customer/branch refusal and invalid
+input. Store/recovery companion tests also passed during the work. No temporary
+profile/database created by these DOM tests. Full live route/page registration,
+legacy writer replacement and authority/sync acceptance remain open.
