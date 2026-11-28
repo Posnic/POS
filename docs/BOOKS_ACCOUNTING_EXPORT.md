@@ -972,3 +972,7 @@ The explicit router factory requires authentication middleware, authenticated re
 ### Settlement browser original storage
 
 The bilingual recovery mockup is verified in the paired Books checkout (native Chromium, 390/960 widths, gold/green/dark, stop confirmation/race; screenshots visually inspected). The new browser store retains scoped UUID/selected sales before sending, serializes tabs through Web Locks, preserves exact numeric inputs and blocks replacement until verified saved/replaceable-stopped results. Four Node tests pass using simulated storage/locks, including reload, scope isolation, stale results, corruption/quota/silent failure and decimal inputs. Native browser persistence and component/page wiring remain required before activation.
+
+### Settlement recovery component
+
+Added the EN/AR DOM component around the retained browser request and HTTP adapter contract. Reopening is read-only; pending phases gate continuation, only prepared permits a second explicit stop confirmation, and reservation races keep the original. Matching saved/stopped results release storage; ledger refresh is a separate action and displays historical balance as such. Late account/branch replies and changed originals are ignored/held. Five jsdom tests pass with fixture transport/locks: lost reply/reopen, Arabic original-only continuation, stop/race, stopped refresh/absent retry and changed evidence/scope/storage. Native browser/HTTP acceptance and customer-page registration remain open.
