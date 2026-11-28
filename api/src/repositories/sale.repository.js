@@ -7146,6 +7146,46 @@ class SalesRepository {
       const loggedUserName = data.loggedUserName;
       const loggedUserId = data.loggedUserId;
 
+      // Validate the entire customer batch before the first financial write.
+      // This is preflight, not durable admission across legacy writers.
+      let customerOriginal;
+      if (data.id) {
+        if (!ObjectId.isValid(String(data.id)) || !ObjectId.isValid(String(branch_id)))
+          throw new Error('A valid customer and branch are required.');
+        customerOriginal = await customerCollection.findOne({_id:new ObjectId(String(data.id)),license,branch_id:new ObjectId(String(branch_id))});
+        if (!customerOriginal || customerOriginal.is_deleted === true)
+          throw new Error('Customer unavailable. Reopen the customer ledger.');
+        if (['wallet_entry_lock','books_receipt_lock','legacy_invoice_payment_lock'].some(key=>Object.hasOwn(customerOriginal,key)))
+          throw new Error('Customer has an unfinished payment. Recover the original request first.');
+        const decimal = require('../utils/wallet-decimal');
+        const ledger = await transactionCollection.find({customer_id:customerOriginal._id,license}).limit(10001).toArray();
+        if (ledger.length > 10000 || ledger.some(row=>String(row.branch_id)!==String(branch_id)))
+          throw new Error('Customer ledger requires review before settlement.');
+        const available = decimal.balance(ledger);
+        if (available !== customerOriginal.balance)
+          throw new Error('Customer balance differs from its ledger. Review it before settlement.');
+        const selected = new Set(), amounts = [];
+        if (!Array.isArray(data.sales) || data.sales.length > 100)
+          throw new Error('Select at most 100 sales for settlement.');
+        for (const item of data.sales) {
+          if (!ObjectId.isValid(String(item.id)) || selected.has(String(item.id)))
+            throw new Error('Select each valid sale only once.');
+          selected.add(String(item.id));
+          if (typeof item.amount !== 'number' || item.amount <= 0) throw new Error('Invalid settlement amount.');
+          decimal.amount(item.amount);
+          const original = await saleCollection.findOne({_id:new ObjectId(String(item.id)),license,branch_id:new ObjectId(String(branch_id))});
+          if (!original || String(original.customer_id)!==String(customerOriginal._id) || original.payment_pending!==item.amount ||
+              (item.paidamount!==undefined && Number(item.paidamount)!==Number(original.partial_balance||0)))
+            throw new Error('A selected sale changed. Reopen the customer ledger.');
+          await require('../services/captain-payment-guard').mutable(db,original);
+          const allocations = ledger.filter(row=>String(row.sale_id)===String(original._id));
+          if (allocations.length!==1 || allocations[0].type!=='out' || allocations[0].amount!==Number(original.wallet_amount||0))
+            throw new Error('The original customer allocation differs. Review it before settling this sale.');
+          amounts.push({type:'in',amount:item.amount});
+        }
+        if (decimal.balance(amounts)>available) throw new Error('Not enough wallet balance.');
+      }
+
       // Process each sale
       for (const saleData of data.sales) {
         // Build query filter
@@ -7258,31 +7298,9 @@ class SalesRepository {
         filters.branch_id = new ObjectId(branch_id);
       }
 
-      const aggregateResult = await transactionCollection
-        .aggregate([
-          { $match: filters },
-          {
-            $group: {
-              _id: null,
-              totalInAmount: {
-                $sum: { $cond: [{ $eq: ['$type', 'in'] }, '$amount', 0] },
-              },
-              totalOutAmount: {
-                $sum: { $cond: [{ $eq: ['$type', 'out'] }, '$amount', 0] },
-              },
-            },
-          },
-          {
-            $addFields: {
-              totalAmountDue: {
-                $subtract: ['$totalInAmount', '$totalOutAmount'],
-              },
-            },
-          },
-        ])
-        .toArray();
-
-      const totalWalletAmount = aggregateResult.length > 0 ? aggregateResult[0].totalAmountDue : 0;
+      const settledLedger = await transactionCollection.find(filters).limit(10001).toArray();
+      if (settledLedger.length > 10000) throw new Error('Customer ledger requires review before completing settlement.');
+      const totalWalletAmount = require('../utils/wallet-decimal').balance(settledLedger);
 
       // Build customer update filter
       const customerFilter = {
@@ -7295,11 +7313,15 @@ class SalesRepository {
       }
 
       // Update customer balance
-      await customerCollection.updateOne(customerFilter, {
+      const customerSaved = await customerCollection.updateOne({ ...customerFilter,
+        ...(customerOriginal ? {$expr:{$eq:['$$ROOT',{$literal:customerOriginal}]}} : {}),
+      }, {
         $set: {
           balance: totalWalletAmount,
         },
       });
+
+      if (!customerSaved.matchedCount) throw new Error('Customer changed during settlement. Review the original settlement before continuing.');
 
       return {
         status: true,

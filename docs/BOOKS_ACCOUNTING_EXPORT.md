@@ -932,3 +932,7 @@ legacy writer replacement and authority/sync acceptance remain open.
 ### Cumulative legacy settlement regression
 
 Legacy settlement now retains prior allocation (40 + 65 = 105), validates the selected customer and pending amount, rejects ambiguous allocations, and compares original sale/allocation snapshots at writes. The paired Books real-Mongo payment-admission test and 338 POS repository/controller unit tests pass. This remains sequential settlement without durable customer-wide admission/recovery; wallet adapters remain unmounted and no installed or release acceptance is implied.
+
+### Server wallet settlement preflight
+
+The entire selected batch is checked before writes: scoped customer, no active or malformed reservation, unique sales, original allocations, exact customer/ledger agreement and enough credit. Cross-branch ledgers are held. Completion uses exact decimal balance and compares the original customer snapshot. Paired standalone-Mongo tests cover no-write refusals, decimal settlement and late customer change; 338 POS unit tests pass. The late-change test demonstrates remaining partial sale effects when customer completion is refused. Durable shared admission/recovery is still required; no wallet activation or release acceptance.
