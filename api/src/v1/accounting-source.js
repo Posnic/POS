@@ -25,7 +25,7 @@ function pick(value, fields) {
   for (const key of fields) if (Object.hasOwn(value, key)) result[key] = scalar(value[key]);
   return result;
 }
-const HEADER = '_id license branch_id sales_id invoice_id sales_date created_date updated_date sale_process sales_total sales_subtotal subtotal paid_amount payment_pending balance tax items_total items_return_total items_return_subtotal return_tax return_discount sale_extra_discount coupon_discount_value loyalty_redeem_value sales_round_off round_off tip_amount tip_in_total wallet_amount currencyCode currencyDigits source_invoice_id'.split(' ');
+const HEADER = '_id license branch_id sales_id invoice_id sales_date created_date updated_date sale_process sales_total sales_subtotal subtotal paid_amount partial_balance payment_status payment_pending balance tax items_total items_return_total items_return_subtotal return_tax return_discount sale_extra_discount coupon_discount_value loyalty_redeem_value sales_round_off round_off tip_amount tip_in_total wallet_amount currencyCode currencyDigits source_invoice_id'.split(' ');
 const LINE = '_id item name item_name quantity qty price item_price selling_price total total_amount subtotal tax tax_amount tax_rate discount discount_type discount_amount return_quantity returned_quantity'.split(' ');
 const PAYMENT = 'id at method amount date created_date created_at return_obj_id return_id'.split(' ');
 function rows(value, select) {

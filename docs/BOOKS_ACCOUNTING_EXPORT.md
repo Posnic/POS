@@ -48,3 +48,53 @@ Books cross-repository contract/HTTP/auth integration tests passed, including th
 full desktop/cloud connector contract with 27 scoped sales. Disposable databases
 were removed by the owned runner. Installed POS and live sync remain unverified.
 No persisted business fields or sync lanes changed; no release was built.
+
+### Stored invoice payment balances
+
+Export `partial_balance` and `payment_status` verbatim alongside `paid_amount`.
+The ordinary invoice payment service writes `partial_balance`, not `paid_amount`;
+omitting it hid saved evidence and could miss a revision change. Books compares
+present balance aliases and refuses conflicting amounts. Neither a paid label nor
+a reconciled cumulative balance is an immutable receipt. These are existing sale
+fields on the existing sales lane; no write path or stored schema changed.
+
+### Ordinary receipt capture recovery plan (not implemented)
+
+The source audit found these distinct paths:
+
+- `services/invoice-sync.js::recordPayment`: separate customer money-in insert,
+  sale allocation insert/update, sale balance write, customer balance write,
+  invoice note and mirror. There is no command identity or atomic admission
+  spanning those effects in this checkout. A retry after a partial write can
+  duplicate effects; current tests mock individual operations.
+- `services/sale.service.js::processSalePayment`: appends a mutable payment and
+  saves the sale. This is different from the invoice service and must not be
+  mistaken for coverage of ordinary invoice receipts.
+- `repositories/sale.repository.js`: customer settlement changes wallet allocation;
+  existing credit consumption must not create another cash receipt.
+- Captain allocations, payment corrections and return refund records have other
+  identities and recovery paths. Their source snapshots remain review evidence,
+  not permission to repost their financial effects.
+
+Implementation order: define a versioned command with caller-retained identity,
+original typed sale/invoice/customer identities, original revision and exact
+amount/currency; reserve the affected sale and customer before accepting money;
+store immutable accepted evidence on the executing installation; apply and verify
+idempotent sale/ledger/invoice projections; expose authenticated recovery and stop
+states; release admission only after all effects are verified. Existing invoice,
+wallet, edit, delete, return and correction paths must honor the same admission
+before enabling a new command route. Preserve existing printed invoice totals.
+
+Sync review: `sales` is branch-scoped in `api/src/sync/collections.json`, while
+`transaction` and `payment` are currently excluded as unknown to the cloud.
+That exclusion is a gap, not approval for a new financial feature. Execution
+journals must stay with the accepting installation; a separately scoped immutable
+read view or authoritative retrieval is needed for Books/cloud/other tills. Check
+Gateway and the actually installed agent before deciding the transport. Do not
+replicate commands to replay money on another installation.
+
+Acceptance must inject failure after each effect and test same-command retries,
+changed payload refusal, concurrent invoice/wallet collection, customer edits,
+original-source mutation, branch/tenant separation, disconnect/reconnect, and
+origin/cloud/other-till visibility. Run existing POS workflows and installed
+POS plus Books together. Do not enable posting from the current snapshot export.
