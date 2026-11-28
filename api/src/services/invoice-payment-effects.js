@@ -1,5 +1,8 @@
 'use strict';
 // Deterministic projections for an already admitted ordinary invoice payment.
+const {BSON}=require('mongodb');
+const ordered=v=>Array.isArray(v)?v.map(ordered):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,ordered(v[k])])):v;
+const canonical=v=>JSON.stringify(ordered(BSON.EJSON.serialize(v,{relaxed:false})));
 const fail=()=>{throw new Error('Original payment effect differs; recover the original request');};
 function cents(value){
  if(!['string','number'].includes(typeof value)||!/^(0|[1-9][0-9]*)(\.[0-9]{1,2})?$/.test(String(value)))fail();
@@ -48,4 +51,12 @@ async function sale(collection,saleId,admission,saleSet,withCustomer){
  }
  fail();
 }
-module.exports={allocation,sale};
+async function insertOriginal(collection,row){
+ if(row?._id==null||!row.legacy_invoice_payment_id)fail();
+ try{await collection.insertOne(row);return row;}
+ catch(error){if(error.code!==11000)throw error;}
+ const original=await collection.findOne({_id:row._id});
+ if(!original||canonical(original)!==canonical(row))fail();
+ return original;
+}
+module.exports={allocation,sale,insertOriginal};

@@ -382,3 +382,18 @@ These are projection primitives, not a completed legacy retry route. Durable
 allocation creation, full source/ledger verification, orchestration, completion
 recovery and UI still require implementation before client release. New effect
 fields also need the outstanding authoritative sync design.
+
+### Stable ledger-row creation
+
+Ordinary admission allocates both money-in and potential new allocation ObjectIds
+before writes. New rows retain the command UUID. `insertOriginal` treats a duplicate
+ID as recovery only when the entire canonical BSON document matches the original;
+changed values/scopes fail. The allocation lookup now includes customer and branch,
+in addition to sale/license. Existing allocation updates retain their prior IDs.
+
+Real-Mongo tests interrupt after allocation creation commits, then concurrently
+replay both original row inserts. Exactly two rows remain; changed amounts and
+customer identities are refused. Ordinary/internal receipt integration suites and
+33 invoice unit tests pass. This closes row-creation identity, not the full legacy
+recovery route: source/ledger validation, orchestration, verified completion and
+UI still need to be connected. No historical backfill or sync acceptance.

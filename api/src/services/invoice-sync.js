@@ -211,7 +211,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
     return { status: false, data: null, message: 'Original invoice sale changed' };
   }
   const admission = { id: require('node:crypto').randomUUID(), invoiceId: String(invoice._id),
-    amount, method, reference, note, actor: userName, startedAt: now, before, walletBefore: sale.wallet_amount ?? 0, moneyId: new ObjectId() };
+    amount, method, reference, note, actor: userName, startedAt: now, before, walletBefore: sale.wallet_amount ?? 0, moneyId: new ObjectId(), allocationId: new ObjectId() };
   const unlocked = { books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false } };
   const admitted = await sales.updateOne({ _id: sale._id, ...unlocked,
     $expr: { $eq: ['$$ROOT', { $literal: sale }] } }, { $set: { legacy_invoice_payment_lock: admission } });
@@ -246,7 +246,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
       (method ? ' - ' + method : '') +
       (reference ? ' (' + reference + ')' : '');
     /* Payment received: the row the customer page's "add transaction" writes. */
-    await transactions.insertOne({
+    await require('./invoice-payment-effects').insertOriginal(transactions, {
       _id: admission.moneyId, legacy_invoice_payment_id: admission.id,
       sale_id: '',
       customer_id: customerId,
@@ -268,9 +268,10 @@ async function recordPayment(invoice, payment = {}, context = {}) {
     /* The sale's own row exists only for sales tendered as partial; an
        unpaid sale never wrote one. It must exist to carry the money
        consumed and the pending that remains. */
-    const own = await transactions.findOne({ sale_id: sale._id, license: sale.license });
+    const own = await transactions.findOne({ sale_id: sale._id, license: sale.license, customer_id: customerId, branch_id: sale.branch_id });
     if (!own) {
-      await transactions.insertOne({
+      await require('./invoice-payment-effects').insertOriginal(transactions, {
+        _id: admission.allocationId, legacy_invoice_payment_id: admission.id,
         sale_id: sale._id,
         customer_id: customerId,
         customer_name: String(sale.customer_name || ''),
