@@ -37,7 +37,7 @@ const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const docMath = require('../services/document-math');
-const receiptUnreserved = () => ({ books_receipt_lock: { $exists: false } });
+const receiptUnreserved = (mirror = false) => ({ books_receipt_lock: { $exists: false }, ...(mirror ? {} : {invoice_issue_lock:{$exists:false}}) });
 
 const STATUSES = Object.freeze(['draft', 'unpaid', 'partial', 'paid', 'cancelled']);
 /* Still authoring: the numbers may change. Once the sale exists they may not -
@@ -603,7 +603,7 @@ class InvoiceRepository extends BaseModel {
       if (status === 'paid' && !doc.paid_date) set.paid_date = now;
       if (status !== 'paid' && doc.paid_date) set.paid_date = null;
       const written = await collection.updateOne(
-        { _id: doc._id, ...wall, ...receiptUnreserved(), $expr: { $eq: ['$$ROOT', { $literal: doc }] } },
+        { _id: doc._id, ...wall, ...receiptUnreserved(true), $expr: { $eq: ['$$ROOT', { $literal: doc }] } },
         { $set: set }
       );
       if (!written.matchedCount) return { status: false, data: null, message: 'Invoice changed or has an unfinished payment; refresh before retrying' };

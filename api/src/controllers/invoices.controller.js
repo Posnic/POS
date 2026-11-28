@@ -242,6 +242,7 @@ module.exports = {
   async payment(req, res) {
     try {
       if (!can(req, 'write')) return fail(res, 'Unauthorized access', 403);
+      if(req.body?.commandId!==undefined&&!invoiceSync.requestIdValid(req.body.commandId))return fail(res,'Invalid original payment request identity');
       const ctx = contextOf(req);
       let found = await repository.getInvoice(req.params.id, ctx);
       if (!found.status) return fail(res, found.message, 404);
@@ -252,8 +253,8 @@ module.exports = {
         const original = await invoiceSync.paymentRequestStatus(inv, req.body.commandId, ctx);
         if (original.state !== 'saved') return fail(res, 'This invoice is already paid');
       }
-      if (!inv.sale_id) {
-        const issued = await invoiceBooking.issueInvoice(req.params.id, ctx);
+      if (!inv.sale_id || inv.invoice_issue_lock) {
+        const issued = await invoiceBooking.issueInvoice(req.params.id, ctx, {commandId:req.body?.commandId});
         if (!issued.status) return fail(res, issued.message);
         found = await repository.getInvoice(req.params.id, ctx);
         if (!found.status) return fail(res, found.message, 404);

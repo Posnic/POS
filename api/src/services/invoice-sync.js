@@ -172,6 +172,8 @@ const sameCashier = (original,context) => original.actorId
 async function recordPayment(invoice, payment = {}, context = {}) {
   if (payment.commandId !== undefined && !requestIdValid(payment.commandId))
     return {status:false,data:null,message:'Invalid original payment request identity'};
+  if(payment.commandId&&(invoice?.invoice_payment_stops||[]).some(row=>row.id===payment.commandId))return {status:false,data:null,message:'Original payment request was stopped'};
+  if(invoice?.invoice_issue_lock)return {status:false,data:null,message:'Finish original invoice issuance first'};
   if (!invoice || !invoice.sale_id) {
     return { status: false, data: null, message: 'Issue the invoice first' };
   }
@@ -424,7 +426,10 @@ async function recoverPayment(invoice,commandId,context={}){
 // Status must never recover effects or release admission: it is a read only query.
 async function paymentRequestStatus(invoice,commandId,context={}) {
  if(!requestIdValid(commandId))throw new Error('Original payment identity required');
- if(!invoice?.sale_id)return {state:'absent',commandId};
+ const draftStop=(invoice?.invoice_payment_stops||[]).find(row=>row.id===commandId);
+ if(draftStop)return {state:'stopped',commandId,canReplace:sameCashier(draftStop,context)};
+ if(invoice?.invoice_issue_lock)return {state:'issuance_pending',commandId,canRecover:false};
+ if(!invoice?.sale_id)return {state:'absent',commandId,canStop:invoice?.status==='draft'};
  const sale=await loadSale(invoice.sale_id);
  if(!sale||String(sale.license)!==String(context.licenseId)||String(sale.branch_id)!==String(context.branchId)||
     String(sale.source_invoice_id)!==String(invoice._id))throw new Error('Original payment unavailable');
@@ -445,8 +450,12 @@ async function paymentRequestStatus(invoice,commandId,context={}) {
 
 // Serialize stop against admission on the same sale. Never release admitted money.
 async function stopPaymentRequest(invoice,commandId,context={}) {
- if(!requestIdValid(commandId)||!invoice?.sale_id)throw new Error('Issued original invoice required');
+ if(!requestIdValid(commandId)||!invoice?._id)throw new Error('Original invoice required');
  const db=await BaseModel.getDb();
+ if(!invoice.sale_id){
+  const stopped=await require('./invoice-issue-admission').create({db}).stop(invoice._id,context,commandId);
+  return {state:'stopped',commandId,canReplace:sameCashier(stopped,context)};
+ }
  for(let attempt=0;attempt<5;attempt++){
   const sale=await loadSale(invoice.sale_id);
   if(!sale||String(sale.license)!==String(context.licenseId)||String(sale.branch_id)!==String(context.branchId)||
@@ -474,5 +483,6 @@ module.exports = {
   recoverPayment,
   paymentRequestStatus,
   stopPaymentRequest,
+  requestIdValid,
   _round2: round2,
 };

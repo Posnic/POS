@@ -199,13 +199,23 @@ async function buildSalePayload(invoice, context, itemRepository) {
  * Issue: draft -> the sale exists -> unpaid. Replay-safe: an invoice that
  * already has a sale answers with its current state and books nothing.
  */
-async function issueInvoice(invoiceId, context = {}) {
+async function issueInvoice(invoiceId, context = {}, options = {}) {
   const InvoiceRepository = require('../repositories/invoice.repository');
   const invoiceSync = require('./invoice-sync');
   const repo = new InvoiceRepository();
   const found = await repo.getInvoice(invoiceId, context);
   if (!found.status) return { status: false, data: null, message: found.message };
-  const invoice = found.data;
+  let invoice = found.data;
+  if(options.commandId&&(invoice.invoice_payment_stops||[]).some(row=>row.id===options.commandId))return {status:false,data:null,message:'Original payment request was stopped'};
+  const admission = require('./invoice-issue-admission').create({db:await BaseModel.getDb()});
+  if (invoice.invoice_issue_lock) {
+    const lock=invoice.invoice_issue_lock;
+    await admission.verifyBooked(invoiceId,context,lock);
+    const synced=await invoiceSync.syncSale(lock.saleId,{invoiceId:String(invoice._id)});
+    if(!synced.synced)return {status:false,data:null,message:'The original sale needs invoice mirror recovery'};
+    await admission.complete(invoiceId,context,lock.token,lock.saleId);
+    return {status:true,data:{sale_id:lock.saleId,...(synced.data||{}),already:true},message:'Original invoice issuance recovered'};
+  }
   if (invoice.sale_id) {
     const again = await invoiceSync.syncSale(invoice.sale_id, { invoiceId: String(invoice._id) });
     return {
@@ -223,6 +233,8 @@ async function issueInvoice(invoiceId, context = {}) {
     return { status: false, data: null, message: 'Only a draft can be issued' };
   }
 
+  const reserved = await admission.reserve(invoiceId,context,options.commandId);
+  invoice = reserved.invoice;
   const salesService = require('./sale.service');
   const ItemRepository = require('../repositories/item.repository');
   const itemRepository = new ItemRepository();
@@ -241,15 +253,16 @@ async function issueInvoice(invoiceId, context = {}) {
     branchSettings: {},
     branchState: '',
   };
-  saleContext = await salesService.enrichSaleContext(saleContext);
-
   let payload;
   try {
+    saleContext = await salesService.enrichSaleContext(saleContext);
     payload = await buildSalePayload(invoice, saleContext, itemRepository);
   } catch (e) {
+    await admission.preparingFailed(invoiceId,context,reserved.token);
     return { status: false, data: null, message: e.message };
   }
 
+  await admission.booking(invoiceId,context,reserved.token);
   const result = await salesService.processSale(payload, '', 'Add', saleContext);
   if (!result || result.status !== true) {
     return {
@@ -259,6 +272,7 @@ async function issueInvoice(invoiceId, context = {}) {
     };
   }
   const saleId = result.data && (result.data._id || result.data.sales_id);
+  await admission.booked(invoiceId,context,reserved.token,saleId);
   const synced = await invoiceSync.syncSale(saleId, { invoiceId: String(invoice._id) });
   if (!synced.synced) {
     /* the sale exists; the mirror will catch up on the next sync - say so */
@@ -272,6 +286,7 @@ async function issueInvoice(invoiceId, context = {}) {
       message: 'Sale ' + (result.data.sale_number || '') + ' booked; the invoice will refresh',
     };
   }
+  await admission.complete(invoiceId,context,reserved.token,saleId);
   return {
     status: true,
     data: {

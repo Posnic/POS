@@ -608,3 +608,33 @@ installation; sync integration is still unresolved, so no deployment is claimed.
 Limitation: a request rejected before invoice issuance has no sale to serialize
 against. It remains held; invoice-level stop/admission coordination is still needed.
 Customer-wide payment coordination and installed acceptance also remain open.
+
+### Invoice-level issuance admission and draft request stopping
+
+Issuance reserves the scoped original invoice before building/booking its sale.
+Draft edits, cancellation, deletion and receipt admission refuse this reservation.
+The marker moves from preparing to booking before the sale engine is called, then
+to booked with its acknowledged sale ID. Preparation failures release only their
+own preparing marker. Unknown engine outcomes remain held; retries do not book a
+second sale. A booked result can verify its original scoped sale, repair the invoice
+mirror and release admission without invoking the sale engine again.
+
+Draft request stops now serialize with issuance on the invoice document. Payment
+issuance checks its command ID against retained invoice stops; receipt collection
+also checks them after later manual issuance. The existing EN/AR absent-request
+stop/review flow applies to a draft when the server confirms eligibility. Invalid
+request IDs are rejected before issuance. Status identifies issuance_pending.
+
+Validation: 44 invoice unit tests and three paired Mongo integration suites pass.
+Issuance integration uses actual Mongo/repositories and a fixture sale engine:
+concurrent calls, preparation failure, unknown engine result, acknowledged mirror
+recovery, mutation guards, both draft-stop/issuance race orders and delayed stopped
+payment refusal. This does not prove the complete real stock/accounting engine's
+restart behavior. Owned 9kimgv/wCZWnV cleaned and independently absent. Attribution/
+diff checks pass. New issuance/stop metadata is authoritative local command state;
+invoice sync remains unresolved and no installer or deployment was produced.
+
+Remaining: recovery UI for issuance_pending and durable proof/recovery of unknown
+sale-engine effects, all customer writers, authoritative sync and installed paired
+acceptance. Earlier lack of any pre-issuance stop is superseded; an issuance that
+has entered booking is still held rather than cancelled or silently restarted.

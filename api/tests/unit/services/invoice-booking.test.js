@@ -48,6 +48,11 @@ jest.mock('../../../src/models/base.model', () => ({
   getDb: async () => ({ collection: (name) => collections[name] }),
 }));
 
+// Real invoice admission is covered in the paired Mongo integration suite.
+jest.mock('../../../src/services/invoice-issue-admission', () => ({create:()=>({
+ reserve:async()=>({invoice:(await mockGetInvoice()).data,token:'test-admission'}),
+ preparingFailed:async()=>{},booking:async()=>{},booked:async()=>{},complete:async()=>{},
+})}));
 const booking = require('../../../src/services/invoice-booking');
 const { ObjectId } = require('mongodb');
 

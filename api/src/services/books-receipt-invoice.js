@@ -21,6 +21,7 @@ function create({db}){
  const exact=invoice=>({_id:invoice._id,$expr:{$eq:['$$ROOT',{$literal:invoice}]}});
  async function load(context,sale){const typed=sale.books_receipt_lock.originalInvoice;return invoices.findOne({...wall(context),_id:typed.kind==='objectId'?new ObjectId(typed.value):typed.value});}
  function eligible(invoice,state){
+  if(invoice.invoice_issue_lock)fail('Finish original invoice issuance first');
   const basis=state.review.values.basis;
   if(!invoice||hash(identity(invoice.sale_id))!==hash(basis.sourceId))fail('Original invoice sale unavailable');
   if(!['partial','unpaid','issued'].includes(invoice.status)||minor(invoice.paid_amount)!==basis.paidMinor||minor(invoice.balance)!==basis.pendingMinor)fail('Original invoice payment balance differs');
