@@ -149,6 +149,7 @@
     "roles": "Role templates are managed on the installation where they were created. Effective grants are materialized into tenant-scoped users.access and replicate through the existing users lane; receiving tills enforce that snapshot without looking up a local role. Edit a shared user and its role on the same authority. Offline devices retain the last synchronized grants until reconnect."
   },
   "undecided": {
+    "invoices": "Required shared issued-document/payment evidence has no verified Gateway/agent transport. Receipt reservation fields are authority-local and must not replay. Keep receipt rollout blocked until originals, projection evidence, field exclusions and all-device conflict handling are implemented and tested.",
     "_note": "Shop data that today stays where it was written. Each needs a decision and, if synced, a check that rows carry branch_id and license and that deletes leave a tombstone. Until decided, a till and the cloud can disagree on these exactly as they did on tables.",
     "quotes": "a quote made on the till does not exist in the cloud, and the reverse",
     "coupons": "a coupon created in the cloud cannot be redeemed on a till",

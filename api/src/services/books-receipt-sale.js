@@ -74,6 +74,7 @@ function create({db,now}){
    if(state.state==='accepted'||state.state==='projected')return journal.accept(context,id,commandId,reviewHash,confirmed);
    if(!sameLock(sale.books_receipt_lock,state))fail('Reserve the original sale first');
    if(exported(sale).revision!==state.review.values.basis.revision||digest(sale)!==sale.books_receipt_lock.originalDigest)fail('Reserved source changed');
+   await require('./books-receipt-invoice').create({db}).verifyReserved(context,id,commandId);
    return journal.accept(context,id,commandId,reviewHash,confirmed);
   },
   async apply(context,id,commandId){
@@ -95,6 +96,11 @@ function create({db,now}){
    }
    fail('Sale changed while applying receipt');
   },
+  async verifyReserved(context,id,commandId){
+   const {state,sale}=await current(context,id,commandId),lock=sale.books_receipt_lock;
+   if(state.state!=='prepared'||!sameLock(lock,state)||exported(sale).revision!==state.review.values.basis.revision||digest(sale)!==lock.originalDigest)fail('Reserved source changed');
+   return {state,sale};
+  },
   async verifyApplied(context,id,commandId){
    const state=await journal.outcome(context,id,commandId),sale=await load(context,state.review.values.basis.sourceId),lock=sale.books_receipt_lock;
    if(state.state!=='accepted'||!sameLock(lock,state)||lock.receiptId!==state.receipt.id||
@@ -103,7 +109,7 @@ function create({db,now}){
    return {state,sale};
   },
   releaseStopped,
-  async stop(context,id,commandId,reviewHash){const result=await journal.stop(context,id,commandId,reviewHash);await releaseStopped(context,id,commandId);return result;}
+  async stop(context,id,commandId,reviewHash){const result=await journal.stop(context,id,commandId,reviewHash);await require('./books-receipt-invoice').create({db}).releaseStopped(context,id,commandId);await releaseStopped(context,id,commandId);return result;}
  };
 }
 module.exports={create,unreserved,mutable};

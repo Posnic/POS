@@ -230,3 +230,26 @@ POS invoice repository/service unit tests. Existing POS invoice functions were
 not changed. This remains unmounted: invoice admission before money acceptance,
 customer effects, final verification/release, normal competing writes and sync
 transport treatment are still required. No claim of full receipt completion.
+
+### Invoice admission before acceptance
+
+Sale acceptance now requires a matching reservation on the original typed invoice
+and unchanged invoice financial evidence. Invoice reserve uses whole-document
+atomic predicates, checks original paid/pending balances and links, and rechecks
+journal stop state after acquiring the lock. Sale stop releases the invoice first,
+then its sale reservation. Repeated/concurrent cleanup tolerates an already
+released lock; stopped requests never change invoice money. Invoice projection
+requires its original reservation and detects financial changes before writing.
+
+Standalone tests cover the new ordering, refusal after a changed printed total,
+unchanged original balances on refusal, invoice reserve/stop races and exact
+restoration of stopped records. Both sequence/projection suites and five manifest
+classification checks pass. Normal invoice writers still need common guards;
+these components remain disabled and do not constitute a complete receipt feature.
+
+Manifest review found `invoices` was previously unclassified. It is now explicitly
+recorded as unresolved, with required shared-document transport and authority-local
+lock separation. This records a rollout blocker, not sync completion. Gateway and
+actual agent changes, original-document immutability, cross-device reads and
+conflict/reconnect validation are still required. Do not claim the feature done
+because a classification test now reports the missing policy visibly.
