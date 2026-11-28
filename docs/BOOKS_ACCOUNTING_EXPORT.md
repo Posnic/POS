@@ -98,3 +98,33 @@ changed payload refusal, concurrent invoice/wallet collection, customer edits,
 original-source mutation, branch/tenant separation, disconnect/reconnect, and
 origin/cloud/other-till visibility. Run existing POS workflows and installed
 POS plus Books together. Do not enable posting from the current snapshot export.
+
+### Receipt command journal foundation
+
+`services/receipt-command-journal.js` implements internal request persistence in
+`books_receipt_commands`. It is deliberately not mounted or called by payment
+services. Exact versioned inputs bind request/review IDs, typed sale/invoice/
+customer references, original revision, AED minor amount and method. Journal keys
+bind installation, tenant and branch; a same-spelling string/ObjectId is distinct.
+Prepared commands can atomically accept or stop. Accepted commands can retain one
+verified completion result. Repeated identical requests return stored evidence;
+changed commands/results and invalid state changes are refused. No expiry removes
+accepted work, no TTL discards deduplication evidence, and no financial projection
+is performed by this module.
+
+The future coordinator must reserve all affected writers before calling accept,
+and verify all projections before complete. This helper does not enforce those
+cross-document preconditions itself and must not be exposed directly as an API.
+Source adoption, journal backup/recovery, UI, transport and coordinator integration
+are still required. The collection is classified local-only because execution
+belongs to the accepting installation. Shared immutable receipt reads remain a
+separate requirement. More precisely, the existing `transaction` and `payment`
+collections are in the manifest's **undecided** section, not an accepted local-only
+design; the classification test explicitly reports this existing gap.
+
+Real-Mongo Books opt-in integration verifies concurrent same/changed prepares,
+accept/stop races, stopped terminal replay, missing request refusal, immutable
+completion recovery, typed tenant/branch/installation separation, corrupted request
+refusal, and absence of sale/transaction writes. It re-creates the service over the
+same database; this is not a process-kill or installed recovery test. Five sync
+classification tests pass. Full money movement remains disabled/unimplemented.
