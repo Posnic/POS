@@ -5,6 +5,8 @@ const message =
 const paidMessage =
   'This restaurant bill is already paid. Use Return items to reverse the sale, or Correct payment to change the payment method.';
 async function mutable(db, sale) {
+  if (sale?.books_receipt_lock || sale?.legacy_invoice_payment_lock)
+    throw Object.assign(new Error('This sale has an unfinished payment. Recover the original payment first.'), { status: 409, statusCode: 409 });
   if (sale?.payment_correction_pending)
     throw Object.assign(new Error('Finish the pending payment correction first.'), { status: 409 });
   if (!sale?.captain_payment_plan) return;
@@ -59,6 +61,8 @@ async function beginEdit(db, sale) {
       license: sale.license,
       branch_id: sale.branch_id,
       captain_payment_plan: { $exists: false },
+      books_receipt_lock: { $exists: false },
+      legacy_invoice_payment_lock: { $exists: false },
       payment_correction_pending: { $exists: false },
       $or: [
         { captain_edit_until: { $exists: false } },

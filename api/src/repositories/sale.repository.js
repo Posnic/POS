@@ -2106,6 +2106,8 @@ class SalesRepository {
       sale.$where = {
         ...(sale.$where || {}),
         captain_payment_plan: { $exists: false },
+        books_receipt_lock: { $exists: false },
+        legacy_invoice_payment_lock: { $exists: false },
         seating_capacity_revision: expectedCapacity,
       };
     }
@@ -2121,6 +2123,8 @@ class SalesRepository {
         {
           _id: new mongoose.Types.ObjectId(saleId),
           license: BaseModel.license,
+          books_receipt_lock: { $exists: false },
+          legacy_invoice_payment_lock: { $exists: false },
         },
         {
           $set: {
@@ -7170,6 +7174,8 @@ class SalesRepository {
 
         // A Captain reservation must not be overwritten by legacy settlement.
         updateFilter.captain_payment_plan = { $exists: false };
+        updateFilter.books_receipt_lock = { $exists: false };
+        updateFilter.legacy_invoice_payment_lock = { $exists: false };
         const settled = await saleCollection.updateMany(updateFilter, {
           $set: {
             partial_balance: parseFloat(saleData.amount) + parseFloat(saleData.paidamount || 0),
@@ -7186,7 +7192,7 @@ class SalesRepository {
         });
 
         if (!settled.matchedCount)
-          throw new Error(require('../services/captain-payment-guard').message);
+          throw new Error('This sale changed or has a payment in progress. Reopen it to review the original payment.');
 
         // Build transaction filter
         const transactionFilter = {

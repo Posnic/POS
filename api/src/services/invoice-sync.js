@@ -167,6 +167,10 @@ async function recordPayment(invoice, payment = {}, context = {}) {
     return { status: false, data: null, message: 'The sale behind this invoice was not found' };
 
   if (sale.books_receipt_lock || sale.legacy_invoice_payment_lock) return { status: false, data: null, message: 'This sale has an unfinished payment; recover the original request' };
+  if (sale.captain_payment_plan || sale.payment_correction_pending || sale.return_refund_lock ||
+      new Date(sale.captain_edit_until || 0).getTime() >= Date.now()) {
+    return { status: false, data: null, message: 'Finish the existing payment, return or sale edit before collecting this invoice' };
+  }
   const before = snapshotFromSale(sale);
   if (!before) return { status: false, data: null, message: 'A parked cart cannot be paid' };
   if (before.balance <= 0) {

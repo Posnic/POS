@@ -417,3 +417,22 @@ passed. This does not establish complete ledger concurrency protection: unrelate
 wallet/ledger writers, full ledger baseline verification, authenticated recovery
 UI, sync exclusion/authority and installed paired acceptance remain outstanding.
 No installer or deployment was produced.
+
+### Competing ordinary sale writes
+
+Ordinary invoice collection now refuses active restaurant payment, correction,
+return and unexpired edit reservations before acquiring payment admission. The
+shared sale guard refuses Books and legacy invoice admissions. Existing model
+saves, wallet updates, settlement and enabled edit-lease acquisition now include
+atomic absence predicates for both admissions. Settlement reports a generic
+payment/change conflict rather than incorrectly identifying every conflict as a
+restaurant payment.
+
+Validation: 182 sale/invoice unit tests pass. Real Mongo tests cover both admission
+kinds, stale model saves, wallet refusal, reservations arriving between settlement
+read/write, stale edit acquisition and normal unreserved wallet/edit behavior.
+The existing ten-stage recovery regression passes in the same run. No extra data
+fields or transport lanes were introduced. The five sync classification checks
+pass but still report 12 undecided collections (including invoices, transaction,
+payment); this is not cross-device acceptance. Other direct writers and customer
+ledger coordination still require audit before connector activation.
