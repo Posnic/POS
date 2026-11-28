@@ -19,5 +19,11 @@ test('unknown private fields never leave the field allowlist, including nested d
  assert.equal(output.sourceJson.includes('SECRET'),false);assert.equal(Object.hasOwn(JSON.parse(output.sourceJson).values.payments[0],'id'),false);
 });
 test('tenant mismatch, invalid identities, unsafe numbers and unsupported shapes refuse export',()=>{
- for(const patch of [{license:'other'},{_id:5},{_id:''},{_id:'bad\nvalue'},{sales_total:Infinity},{paid_amount:Number.MAX_SAFE_INTEGER+1},{items:{}},{items:[null]},{items:Array(1001).fill({})},{customer_id:{name:'Unknown'}},{payments:[{amount:{secret:1}}]}])assert.throws(()=>exportSale({_id:'a',license:'shop',...patch},'shop'),{code:'accounting_source_unsupported'});
+ for(const patch of [{license:'other'},{_id:5},{_id:''},{_id:'bad\nvalue'},{sales_total:Infinity},{paid_amount:Number.MAX_SAFE_INTEGER+1},{items:{}},{items:[null]},{items:Array(1001).fill({})},{payments:[{amount:{secret:1}}]}])assert.throws(()=>exportSale({_id:'a',license:'shop',...patch},'shop'),{code:'accounting_source_unsupported'});
+});
+
+test('embedded customer contacts are redacted but remain unsupported',()=>{
+ const output=exportSale({_id:'a',license:'shop',customer_id:{name:'SECRET'},charges:[{name:'SECRET',amount:10}],payments:[{reference:'SECRET',amount:10}]},'shop');
+ assert.equal(output.sourceJson.includes('SECRET'),false);
+ assert.deepEqual(JSON.parse(output.sourceJson).customerReferences.customerId,{kind:'unsupported'});
 });

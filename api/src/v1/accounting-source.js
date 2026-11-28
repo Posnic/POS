@@ -14,6 +14,11 @@ function identity(value) {
   if (typeof value === 'string' && value.length > 0 && value.length <= 256 && !/[\x00-\x1f\x7f]/.test(value)) return { kind: 'string', value };
   return fail();
 }
+// Preserve an unsupported-reference signal without exporting embedded contact data.
+function customerIdentity(value) {
+  if (value == null) return null;
+  try { return identity(value); } catch { return { kind: 'unsupported' }; }
+}
 function pick(value, fields) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return fail();
   const result = {};
@@ -22,7 +27,7 @@ function pick(value, fields) {
 }
 const HEADER = '_id license branch_id sales_id invoice_id sales_date created_date updated_date sale_process sales_total sales_subtotal subtotal paid_amount payment_pending balance tax items_total items_return_total items_return_subtotal return_tax return_discount sale_extra_discount coupon_discount_value loyalty_redeem_value sales_round_off round_off tip_amount tip_in_total wallet_amount currencyCode currencyDigits source_invoice_id'.split(' ');
 const LINE = '_id item name item_name quantity qty price item_price selling_price total total_amount subtotal tax tax_amount tax_rate discount discount_type discount_amount return_quantity returned_quantity'.split(' ');
-const PAYMENT = 'id at method amount date created_date created_at reference return_obj_id return_id'.split(' ');
+const PAYMENT = 'id at method amount date created_date created_at return_obj_id return_id'.split(' ');
 function rows(value, select) {
   if (!Array.isArray(value) || value.length > 1000) return fail();
   return value.map(select);
@@ -46,10 +51,10 @@ function line(value) {
 function exportSale(sale, license) {
   if (typeof license !== 'string' || !license || license.length > 256 || scalar(sale?.license) !== license) return fail();
   const sourceId = identity(sale._id), values = pick(sale, HEADER);
-  for (const [key, select] of Object.entries({ items: line, charges: row => pick(row, ['name', 'amount', 'tax_amount', 'taxed', 'tax_rate']), payments: payment, captain_payments: payment, payment_corrections: payment, return_refund_transactions: payment })) {
+  for (const [key, select] of Object.entries({ items: line, charges: row => pick(row, ['amount', 'tax_amount', 'taxed', 'tax_rate']), payments: payment, captain_payments: payment, payment_corrections: payment, return_refund_transactions: payment })) {
     if (Object.hasOwn(sale, key)) values[key] = rows(sale[key], select);
   }
-  const customerReferences = { version: 1, customerId: sale.customer_id == null ? null : identity(sale.customer_id), legacyCustomer: sale.customer == null ? null : identity(sale.customer) };
+  const customerReferences = { version: 1, customerId: customerIdentity(sale.customer_id), legacyCustomer: customerIdentity(sale.customer) };
   const sourceJson = JSON.stringify({ schema: 'posnic.sale-source.v1', sourceId, customerReferences, values });
   if (Buffer.byteLength(sourceJson) > 256 * 1024) return fail();
   return { sourceId, revision: createHash('sha256').update(sourceJson).digest('hex'), sourceJson };

@@ -29,3 +29,22 @@ A real HTTP test using `protect`, `attachDb` and request-scoped tenant context r
 The same test exposed BSON license IDs reaching the export route. The route now scopes to canonical BSON/string representations of the authenticated license; exported license text stays compatible with Books. It never accepts a query-supplied license. Source identity remains typed, including string IDs that look like ObjectIds.
 
 The real-protect integration passes with two disposable Mongo databases, branch overrides, legacy/BSON sale licenses, concurrent shop requests, cross-shop tokens and revocation. The test host chooses the two tenant contexts; production shard routing and installed POS still require acceptance. All 82 existing tests across seven v1/token/auth/tenant suites pass; three additional scoped-principal unit regressions pass; the four serializer checks and attribution check pass. API dependencies were installed from the existing lockfile with lifecycle scripts disabled. The generated `.connector-npm-cache` remains because automatic approval review rejected both cleanup attempts with `blocked by policy`; it is not source or a release artifact.
+
+### Recovered connector compatibility — 28 November
+
+The existing v1 list cursor now preserves string versus ObjectId identity with
+`str:`/`oid:` prefixes inside its opaque base64url value. Date-first ordering is
+unchanged; a string boundary includes later ObjectIds at the same timestamp.
+Old untyped cursors remain accepted with their original string comparison
+semantics. Restart an old traversal to obtain typed cursors; historical cursors
+cannot distinguish a string key from an ObjectId with the same spelling.
+
+Accounting exports exclude charge labels and payment references. Embedded
+customer contacts become an explicit unsupported marker rather than leaking
+contact details or preventing review of the remaining sale evidence.
+
+Verification: 43 existing/relevant Jest unit tests, five exporter tests, and four
+Books cross-repository contract/HTTP/auth integration tests passed, including the
+full desktop/cloud connector contract with 27 scoped sales. Disposable databases
+were removed by the owned runner. Installed POS and live sync remain unverified.
+No persisted business fields or sync lanes changed; no release was built.

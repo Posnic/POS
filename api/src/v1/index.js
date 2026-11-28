@@ -87,26 +87,30 @@ function writeBranchId(user) {
   return null;
 }
 
-/* Cursor = base64url of "isoDate|id". Compound so equal timestamps can
-   neither skip nor repeat - the same rule the sync checkpoints use. */
+/* Preserve the BSON identity in compound date/id cursors. Legacy cursors
+   remain readable with their original string comparison semantics. */
 function encodeCursor(doc) {
   const ts = doc.updated_date instanceof Date ? doc.updated_date.toISOString() : '';
-  return Buffer.from(ts + '|' + String(doc._id)).toString('base64url');
+  const kind = doc._id && doc._id._bsontype === 'ObjectId' ? 'oid' : 'str';
+  return Buffer.from(kind + ':' + ts + '|' + String(doc._id)).toString('base64url');
 }
 
 function decodeCursor(raw) {
-  if (!raw || typeof raw !== 'string') return null;
-  let text;
-  try {
-    text = Buffer.from(raw, 'base64url').toString('utf8');
-  } catch (e) {
-    return null;
-  }
-  const i = text.indexOf('|');
+  if (typeof raw !== 'string' || !/^[A-Za-z0-9_-]{1,2048}$/.test(raw)) return null;
+  const text = Buffer.from(raw, 'base64url').toString('utf8');
+  if (Buffer.from(text).toString('base64url') !== raw) return null;
+  const typed = /^(oid|str):/.exec(text);
+  const value = typed ? text.slice(4) : text;
+  const i = value.indexOf('|');
   if (i < 0) return null;
-  const ts = new Date(text.slice(0, i));
+  const ts = new Date(value.slice(0, i));
   if (isNaN(ts.getTime())) return null;
-  return { ts, id: text.slice(i + 1) };
+  let id = value.slice(i + 1);
+  if (typed && typed[1] === 'oid') {
+    if (!/^[a-f0-9]{24}$/.test(id)) return null;
+    id = new (require('mongodb').ObjectId)(id);
+  }
+  return { ts, id, ...(typed ? { kind: typed[1] } : {}) };
 }
 
 /*
@@ -158,6 +162,8 @@ function buildListQuery(user, cursor) {
       $or: [
         { updated_date: { $gt: cursor.ts } },
         { updated_date: cursor.ts, _id: { $gt: cursor.id } },
+        // Mongo sorts strings before ObjectIds, but comparisons are type-bracketed.
+        ...(cursor.kind === 'str' ? [{ updated_date: cursor.ts, _id: { $type: 'objectId' } }] : []),
       ],
     });
   }

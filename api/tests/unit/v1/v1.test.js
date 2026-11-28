@@ -50,6 +50,20 @@ describe('cursor', () => {
     expect(c.ts.toISOString()).toBe('2026-08-18T10:00:00.000Z');
     expect(c.id).toBe('abc123');
   });
+  test('preserves native and same-spelling legacy identities', () => {
+    const id = new (require('mongodb').ObjectId)();
+    const date = new Date('2026-08-18T10:00:00.000Z');
+    const native = v1.decodeCursor(v1.encodeCursor({_id:id,updated_date:date}));
+    const legacy = v1.decodeCursor(v1.encodeCursor({_id:String(id),updated_date:date}));
+    expect(native.id.equals(id)).toBe(true);
+    expect(native.kind).toBe('oid');
+    expect(legacy.id).toBe(String(id));
+    expect(legacy.kind).toBe('str');
+    expect(v1.buildListQuery({license:'L'},legacy).$and[1].$or[2]._id).toEqual({$type:'objectId'});
+    const old = v1.decodeCursor(Buffer.from(date.toISOString()+'|abc').toString('base64url'));
+    expect(old.id).toBe('abc');
+    expect(old.kind).toBeUndefined();
+  });
   test('garbage cursors decode to null, never throw', () => {
     expect(v1.decodeCursor('not-a-cursor')).toBe(null);
     expect(v1.decodeCursor('')).toBe(null);
