@@ -582,6 +582,7 @@ PosnicPro.invoices = {
             $('#invoices_view_actions').html('<div class="q-actions">' + PosnicPro.invoices._actions(inv) + '</div>');
             PosnicPro.ACLForModule('sales');
             $('#invoices_view_card').show();
+            if (PosnicPro.invoices.paymentRecovery) PosnicPro.invoices.paymentRecovery.reopen(inv);
             if (PosnicPro.invoices._editable(inv)) { PosnicPro.invoices._pvInitSort(); }
         }, function () { PosnicPro.alert('error', PosnicPro.i18n.t('lang_could_not_load_the_invoice', 'Could not load the invoice')); });
     },

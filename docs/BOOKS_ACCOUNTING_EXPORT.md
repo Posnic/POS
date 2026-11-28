@@ -559,3 +559,27 @@ before implementation. Owned PTTrtq/9VkXP3 removed and independently absent.
 Attribution/diff checks pass. Next: connect the reviewed screen and persistent
 request store, then exercise the normal browser flow. Local request data is not
 synced business data; existing server sync/customer coordination gaps remain.
+
+### Connected invoice payment recovery UI
+
+The invoice asset map loads the request store and recovery controller. Record now
+persists the scoped original before POST; reopening an invoice restores unresolved
+requests, freezes original fields and offers read-only checking. Absent requests
+can be explicitly retried unchanged, pending requests explicitly continued, and
+permission/unavailable states remain held. Saved confirmation removes local evidence
+only after verified completion with no outstanding release. Replies for an account
+or invoice the user has left are ignored. EN/AR labels accompany the flow.
+
+Validation: 14 browser/store/existing invoice-print tests pass. Scenarios include
+lost response/reload, original-value retry despite changed form fields, permission
+holds, stale replies, storage failure, pending release and invalid amount refusal.
+Electron Chromium executes the production store/controller with the actual payment
+strip and fixture transport: Web Locks/local storage work, continuation requires a
+click and saved confirmation clears the request. This is not a running full POS
+server or installed paired acceptance. Owned wUGmIR removed and independently
+absent. Existing POS dependencies were read-only via NODE_PATH for DOM tests.
+Syntax/attribution/diff checks pass. No new navigation destination or synced fields.
+
+Unresolved requests remain held if the server rejects their original values; a
+server-confirmed stop/replacement protocol is still needed for that case. Customer
+writer coordination, authoritative sync and installed paired acceptance remain open.

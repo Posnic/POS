@@ -5294,5 +5294,18 @@
   "lang_your_time_or_expertise": "Your time or expertise",
   "lang_yourselecteddetails_title": "Selected details will be deleted",
   "lang_recorded_payment": "Recorded payment",
-  "lang_review_original_payment": "Review the original payment to make a correction."
+  "lang_review_original_payment": "Review the original payment to make a correction.",
+  "lang_payment_storage_review": "The saved payment request needs review. No new payment was sent.",
+  "lang_check_this_payment": "Check this payment",
+  "lang_check_saved_payment": "Check saved result",
+  "lang_retry_original_payment": "Retry original request",
+  "lang_finish_original_payment": "Finish original payment",
+  "lang_payment_result_unknown": "No confirmed result yet. Check before trying again.",
+  "lang_checking_payment": "Checking saved payment…",
+  "lang_payment_saved_confirmed": "Payment recorded. No further payment is needed.",
+  "lang_payment_original_unfinished": "The original payment is unfinished. Continue with the same amount and method.",
+  "lang_payment_original_absent": "This server has not recorded the request. Retry only the unchanged original.",
+  "lang_payment_original_review": "This payment needs review. Keep the saved request and check again.",
+  "lang_payment_working": "Saving the original payment…",
+  "lang_payment_amount_due": "Enter an amount greater than zero and no more than the invoice balance."
 }

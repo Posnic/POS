@@ -5547,5 +5547,18 @@
   "lang_units_sold": "الوحدات المباعة",
   "lang_website": "الموقع الإلكتروني",
   "lang_recorded_payment": "دفعة مسجلة",
-  "lang_review_original_payment": "راجع الدفعة الأصلية لإجراء تصحيح."
+  "lang_review_original_payment": "راجع الدفعة الأصلية لإجراء تصحيح.",
+  "lang_payment_storage_review": "الطلب المحفوظ يحتاج إلى مراجعة. لم يتم إرسال دفعة جديدة.",
+  "lang_check_this_payment": "التحقق من هذه الدفعة",
+  "lang_check_saved_payment": "التحقق من النتيجة المحفوظة",
+  "lang_retry_original_payment": "إعادة محاولة الطلب الأصلي",
+  "lang_finish_original_payment": "إكمال الدفعة الأصلية",
+  "lang_payment_result_unknown": "لم يتم تأكيد النتيجة بعد. تحقق قبل إعادة المحاولة.",
+  "lang_checking_payment": "جارٍ التحقق من الدفعة المحفوظة…",
+  "lang_payment_saved_confirmed": "تم تسجيل الدفعة. لا حاجة إلى دفعة أخرى.",
+  "lang_payment_original_unfinished": "الدفعة الأصلية غير مكتملة. تابع بنفس المبلغ والطريقة.",
+  "lang_payment_original_absent": "لم يسجل هذا الخادم الطلب. أعد محاولة الطلب الأصلي دون تغيير فقط.",
+  "lang_payment_original_review": "هذه الدفعة تحتاج إلى مراجعة. احتفظ بالطلب المحفوظ وتحقق مرة أخرى.",
+  "lang_payment_working": "جارٍ حفظ الدفعة الأصلية…",
+  "lang_payment_amount_due": "أدخل مبلغاً أكبر من الصفر ولا يتجاوز رصيد الفاتورة."
 }
