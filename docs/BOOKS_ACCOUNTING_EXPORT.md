@@ -179,3 +179,31 @@ must not be wired as a parallel payment path. Consolidate it after its remaining
 negative cases are covered by the restored coordinator. Both collections remain
 local-only execution state. The sequence has an explicit 500-command review limit;
 scalable archival and backup remain requirements, not implemented behavior.
+
+### Sale reservation and projection component
+
+`books-receipt-sale` now prepares original AED invoice-sale evidence, reserves a
+reviewed sale, accepts through the journal, and applies an accepted receipt once.
+Whole-document atomic predicates prevent overwriting a concurrent change. Sorted
+canonical BSON evidence (excluding only the reservation itself) detects changes
+outside the accounting export and survives Mongo field-order changes. Acceptance
+and application verify original evidence; retries verify the stored applied
+revision/digest. The original cashier is required, and known correction/refund/
+Captain edit holds block admission.
+
+The sale update preserves its total and original paid_amount, updates cumulative
+partial_balance/pending/status, and adds customer-linked wallet consumption once.
+It retains the reservation after application. Stopped unaccepted requests release
+without money changes, including reserve/stop races. Finalization is intentionally
+not implemented until customer/invoice effects can be verified.
+
+Two standalone-Mongo suites pass sequence/race/recovery and sale reservation/
+application, including a committed-but-lost sale reply and unexported-field
+changes. Five sync classification tests pass. This component is unmounted; normal
+POS writers do not yet all honor its `unreserved` predicate. Never enable it before
+that integration. The new `books_receipt_lock` is authority-local execution state
+embedded in a normally synced sale. Gateway/agent field handling and cross-device
+admission must be resolved before rollout; the existing sales lane alone is not
+approval to propagate a lock or replay its effects. No transport was changed or
+verified here. Customer admission, durable customer/invoice effects, source
+originals beyond the current export, backup and installed acceptance remain open.
