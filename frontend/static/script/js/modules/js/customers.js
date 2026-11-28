@@ -1113,14 +1113,12 @@ PosnicPro.transactiondetails = {
                         let salesPending = row.pending !== undefined ? row.pending : 0.00;
                         let saleTotal = row.sale_total !== undefined ? row.sale_total : 0.00;
                         let image_path = (row.transaction_image !== "category.svg") ? row.transaction_image : 'static/images/default/' + row.transaction_image;
-                        let deleteTransaction = '<span data-module="customers" data-access="delete" data-toggle="tooltip" title="Delete Transaction" data-t-title="lang_delete_transaction" onclick="return PosnicPro.transactiondetails.removeTransactionDetails(\'' + row._id + '\');" class="point-cursor mobile_tooltip text-danger"><i class="feather icon-trash"></i></a>';
-                        let deleteSaleTransaction = '<span data-module="customers" data-access="delete" data-toggle="tooltip" title="Connected with sale" data-t-title="lang_connected_with_sale" class="point-cursor mobile_tooltip text-secondary" style="cursor: default;"><i class="feather icon-link"></i></a>';
                         let row_no = (table.data('current_page') - 1) * table.data('per_page') + i + 1;
                         let type = (row.type === 'in') ? '<span class="badge badge-success-inverse"><lang class="lang_credit_title">Credit</lang></span>'
                                 : (row.type === 'out' && row.sale_id !== '') ? '<span class="badge badge-info-inverse"><lang class="lang_sale_debit">Sale - Debit</lang></span>'
                                 : (row.type === 'out') ? '<span class="badge badge-danger-inverse"><lang class="lang_debit_title">Debit</lang></span>'
                                 : '<span class="badge badge-warning-inverse"><lang class="lang_sale_due">Sale - Due</lang></span>';
-                        let trash = (row.sale_id !== '') ? deleteSaleTransaction : deleteTransaction;
+                        let trash = PosnicPro.transactiondetails.transactionAction(row);
                         let connect = (row.sale_id !== '') ? '<span class="badge badge-secondary"><lang class="lang_sale_bill">Sale Bill</lang></span>' : '';
                         let trow = '<tr> <td scope="row">' + row_no + '</td><td>' + row.string_date + '<br>' + connect + '</td><td class="text-center">' + (row.description || '') + '</td>\n\
                                     <td class="text-left">' + type + '</td><td class="text-center">' +
@@ -1449,3 +1447,23 @@ $(document).on('click', '#customers_filter_btn', function () {
     PosnicPro.customers.mountFilters(true);
     PosnicPro.listFilter.toggle('customers');
 });
+
+// Receipt references are protected even when the money row has no sale_id.
+PosnicPro.transactiondetails.transactionAction = function (row) {
+    const t = (key, fallback) => PosnicPro.i18n && PosnicPro.i18n.t ? PosnicPro.i18n.t(key, fallback) : fallback;
+    if (['invoice_id', 'legacy_invoice_payment_id', 'books_receipt_id'].some(key => Object.prototype.hasOwnProperty.call(row, key))) {
+        return $('<span>').addClass('text-secondary').append(
+            $('<span>').attr('data-t', 'lang_recorded_payment').text(t('lang_recorded_payment', 'Recorded payment')),
+            $('<small>').addClass('d-block').attr('data-t', 'lang_review_original_payment').text(t('lang_review_original_payment', 'Review the original payment to make a correction.'))
+        )[0].outerHTML;
+    }
+    if (row.sale_id) {
+        return $('<span>').addClass('text-secondary').attr('title', t('lang_connected_with_sale', 'Connected with sale'))
+            .attr('aria-label', t('lang_connected_with_sale', 'Connected with sale'))
+            .append($('<i>').addClass('feather icon-link').attr('aria-hidden', 'true'))[0].outerHTML;
+    }
+    return $('<button>').attr({type:'button', 'data-module':'customers', 'data-access':'delete',
+        title:t('lang_delete_transaction', 'Delete Transaction'), 'aria-label':t('lang_delete_transaction', 'Delete Transaction'),
+        onclick:'return PosnicPro.transactiondetails.removeTransactionDetails(' + JSON.stringify(String(row._id)) + ');'})
+        .addClass('btn btn-link text-danger p-0').append($('<i>').addClass('feather icon-trash').attr('aria-hidden', 'true'))[0].outerHTML;
+};

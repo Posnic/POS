@@ -497,3 +497,20 @@ independently absent. Attribution/diff checks pass. This is a server integrity
 fix; the ledger UI still needs to hide the delete action for protected receipt
 rows. Customer-wide admission and sync coordination remain incomplete. No new
 persisted fields, installer or deployment.
+
+### Customer receipt action state
+
+The ledger renderer now shows Recorded payment and a correction hint for invoice/
+Books receipt references, instead of the manual-entry delete action. English and
+Arabic labels are supplied. Sale-linked rows retain a non-action link indicator;
+manual entries have an accessible button with existing customer delete permission
+attributes. Identifiers are encoded into the handler attribute through DOM APIs.
+
+A bilingual narrow-screen mockup was prepared and inspected in Books before this
+change. Two DOM renderer tests pass with actual language dictionaries, receipt
+markers, manual action dispatch, accessible labels and markup-like identifiers.
+Tests used the existing C:/Users/Kayal/POS/node_modules read-only via NODE_PATH;
+no packages were installed in that checkout. Syntax, attribution and diff checks
+pass. This changes an existing action state, not a navigable destination; no
+universal-search destination or sync field was added. Full installed ledger visual
+acceptance and customer-wide admission remain pending.

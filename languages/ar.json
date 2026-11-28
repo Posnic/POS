@@ -5545,5 +5545,7 @@
   "lang_today": "اليوم",
   "lang_total_2": "· المجموع",
   "lang_units_sold": "الوحدات المباعة",
-  "lang_website": "الموقع الإلكتروني"
+  "lang_website": "الموقع الإلكتروني",
+  "lang_recorded_payment": "دفعة مسجلة",
+  "lang_review_original_payment": "راجع الدفعة الأصلية لإجراء تصحيح."
 }
