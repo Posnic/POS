@@ -964,3 +964,7 @@ Ordinary sale saves, wallet updates and legacy settlement, restaurant payment/re
 ### Legacy manual wallet reservation checks
 
 Manual add/delete reject unavailable or reserved customers (wallet, Books receipt and invoice receipt, including null locks). Balance completion compares the original customer; conflicts after a ledger effect return 409 and preserve the concurrent customer change. Real HTTP/standalone-Mongo tests verify ordinary add, held add/delete no-writes and both late-change paths. 194 controller tests pass. These legacy paths remain sequential and still need stable request/recovery integration before the wallet package is activated.
+
+### Settlement HTTP boundary (not registered)
+
+The explicit router factory requires authentication middleware, authenticated req.db, scoped business/branch/customer/cashier and effective customer read/write permissions. Mutations require confirmation; recovery/stop accept no replacement payload. Expected conflicts are 409; uncertain storage outcomes are sanitized 503 retaining the original request. Real HTTP/Mongo checks cover permission/scope denial, confirmation, actor ownership, replay, stop and lost committed-allocation acknowledgement recovery. Authentication is a fixture; live registration and production login acceptance remain open.
