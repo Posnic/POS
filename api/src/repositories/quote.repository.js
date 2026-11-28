@@ -32,6 +32,7 @@ const STATUSES = Object.freeze([
    it is the INVOICE that converts to the sale - which stamps the quote
    converted in turn, so the chain reads quote -> invoice -> sale. */
 const EDITABLE = Object.freeze(['open', 'draft', 'sent']);
+const settlementUnreserved = () => ({ wallet_entry_lock: { $exists: false } });
 
 class QuoteRepository extends BaseModel {
   constructor() {
@@ -183,7 +184,7 @@ class QuoteRepository extends BaseModel {
           return { status: false, data: null, message: 'Invalid quote id' };
         }
         const result = await collection.updateOne(
-          { _id: new ObjectId(String(id)), ...wall, status: { $in: EDITABLE } },
+          { _id: new ObjectId(String(id)), ...wall, ...settlementUnreserved(), status: { $in: EDITABLE } },
           { $set: doc }
         );
         if (!result.matchedCount) {
@@ -484,6 +485,15 @@ class QuoteRepository extends BaseModel {
       const collection = await this.getCollection(this.collectionName);
       const doc = await collection.findOne({ _id: new ObjectId(String(id)), ...wall });
       if (!doc) return { status: false, data: null, message: 'Quote not found' };
+      if (Object.hasOwn(doc, 'wallet_entry_lock'))
+        return { status: false, data: null, message: 'Quote has an unfinished settlement; recover the original request' };
+      const change = async (filter, update) => {
+        const result = await collection.updateOne({ ...filter, ...wall, ...settlementUnreserved(),
+          $expr: { $eq: ['$$ROOT', { $literal: doc }] },
+        }, update);
+        if (!result.matchedCount) throw new Error('Quote changed or has an unfinished settlement; refresh before retrying');
+      };
+
 
       if (action === 'cancel') {
         if (doc.status === 'converted' || doc.status === 'cancelled') {
@@ -496,7 +506,7 @@ class QuoteRepository extends BaseModel {
             message: 'This quote became an invoice - cancel the invoice instead',
           };
         }
-        await collection.updateOne(
+        await change(
           { _id: doc._id },
           { $set: { status: 'cancelled', updated_date: new Date() } }
         );
@@ -515,7 +525,7 @@ class QuoteRepository extends BaseModel {
         if (!EDITABLE.includes(doc.status)) {
           return { status: false, data: null, message: 'This quote is closed - nothing to send' };
         }
-        await collection.updateOne(
+        await change(
           { _id: doc._id },
           { $set: { status: 'sent', sent_date: new Date(), updated_date: new Date() } }
         );
@@ -533,7 +543,7 @@ class QuoteRepository extends BaseModel {
           };
         }
         const status = action === 'accept' ? 'accepted' : 'declined';
-        await collection.updateOne(
+        await change(
           { _id: doc._id },
           { $set: { status, [action + 'ed_date']: new Date(), updated_date: new Date() } }
         );
@@ -565,7 +575,7 @@ class QuoteRepository extends BaseModel {
             message: 'Only an open or accepted quote can become an invoice',
           };
         }
-        await collection.updateOne(
+        await change(
           { _id: doc._id },
           {
             $set: {
@@ -605,7 +615,7 @@ class QuoteRepository extends BaseModel {
             message: 'Only an open or accepted quote can be converted',
           };
         }
-        await collection.updateOne(
+        await change(
           { _id: doc._id },
           {
             $set: {
@@ -638,7 +648,7 @@ class QuoteRepository extends BaseModel {
       }
       const collection = await this.getCollection(this.collectionName);
       const result = await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall },
+        { _id: new ObjectId(String(id)), ...wall, ...settlementUnreserved() },
         {
           $set: {
             share: {
@@ -655,7 +665,7 @@ class QuoteRepository extends BaseModel {
       /* A shared quote has been SENT - open/draft move on; anything else
          (sent already, accepted, history) is left exactly as it is. */
       await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall, status: { $in: ['open', 'draft'] } },
+        { _id: new ObjectId(String(id)), ...wall, ...settlementUnreserved(), status: { $in: ['open', 'draft'] } },
         { $set: { status: 'sent', sent_date: new Date() } }
       );
       return { status: true, data: { rev: Number(share.rev) || 1 }, message: 'Share recorded' };
@@ -677,6 +687,7 @@ class QuoteRepository extends BaseModel {
       const result = await collection.deleteOne({
         _id: new ObjectId(String(id)),
         ...wall,
+        ...settlementUnreserved(),
         status: { $in: EDITABLE },
       });
       if (!result.deletedCount) {

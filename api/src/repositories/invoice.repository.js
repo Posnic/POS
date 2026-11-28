@@ -37,7 +37,7 @@ const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const docMath = require('../services/document-math');
-const receiptUnreserved = (mirror = false) => ({ books_receipt_lock: { $exists: false }, ...(mirror ? {} : {invoice_issue_lock:{$exists:false}}) });
+const receiptUnreserved = (mirror = false) => ({ books_receipt_lock: { $exists: false }, wallet_entry_lock: { $exists: false }, ...(mirror ? {} : {invoice_issue_lock:{$exists:false}}) });
 
 const STATUSES = Object.freeze(['draft', 'unpaid', 'partial', 'paid', 'cancelled']);
 /* Still authoring: the numbers may change. Once the sale exists they may not -
@@ -744,7 +744,7 @@ class InvoiceRepository extends BaseModel {
       }
       const collection = await this.getCollection(this.collectionName);
       const result = await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall },
+        { _id: new ObjectId(String(id)), ...wall, ...receiptUnreserved() },
         {
           $set: {
             share: {
@@ -759,7 +759,7 @@ class InvoiceRepository extends BaseModel {
       );
       if (!result.matchedCount) return { status: false, data: null, message: 'Invoice not found' };
       await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall, sent_date: { $exists: false } },
+        { _id: new ObjectId(String(id)), ...wall, ...receiptUnreserved(), sent_date: { $exists: false } },
         { $set: { sent_date: new Date() } }
       );
       return { status: true, data: { rev: Number(share.rev) || 1 }, message: 'Share recorded' };
