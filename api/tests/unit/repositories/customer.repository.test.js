@@ -577,7 +577,7 @@ describe('CustomerRepository (class, extends BaseModel)', () => {
   // ── softDelete ────────────────────────────────────────────────────────────
 
   describe('softDelete', () => {
-    test.each(['books_receipt_lock','legacy_invoice_payment_lock'])('refuses %s before backup or deletion', async key => {
+    test.each(['books_receipt_lock','legacy_invoice_payment_lock','wallet_entry_lock'])('refuses %s before backup or deletion', async key => {
       mockCollection.findOne.mockResolvedValueOnce({...FAKE_CUSTOMER,[key]:{id:'pending'}});
       await expect(repository.softDelete(FAKE_ID)).rejects.toThrow('unfinished payment');
       expect(mockRecycleCollection.insertOne).not.toHaveBeenCalled();expect(mockCollection.deleteOne).not.toHaveBeenCalled();

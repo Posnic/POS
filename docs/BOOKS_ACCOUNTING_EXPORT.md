@@ -777,3 +777,24 @@ authoritative local-only sync behavior. The engine currently supports two-decima
 single-branch ledgers only, max 10,000 rows/512 KiB and 100 completed requests; history
 archival and broader currency/branch support are outstanding. Uncoordinated writers
 can still race ledger verification. No live legacy route uses this engine yet.
+
+
+### Reciprocal wallet guards and ordinary response filtering
+
+Invoice customer admission atomically excludes wallet_entry_lock; Books receipt
+customer admission rejects any present wallet lock, including malformed/null
+markers. Customer repository edits and single/bulk deletion also refuse that lock.
+wallet_entry_lock and wallet_entry_requests are reserved API fields, so existing
+v1/invoice/customer/sale response filters and customer edit-key validation include
+them. Dedicated request-engine status still returns the original reviewed request.
+
+348 unit tests and four standalone-Mongo suites pass. Invoice refusal releases its
+sale admission without money; Books receipt refusal leaves customer admission
+unclaimed. HTTP tests verify wallet fields are private and cannot be overwritten.
+The first combined run found reused fixture directory names; the wallet suite now
+owns a distinct directory. mmWwbx/O5LS3f scratch removed and independently absent.
+
+The engine remains unmounted. Legacy wallet add/delete, other sale/customer ledger
+writers, authorized API/UI connection and authoritative sync are still required.
+These guards do not prove all writers are coordinated. No production schema change,
+installer, external service activation or release was performed.

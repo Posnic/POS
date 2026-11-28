@@ -6,6 +6,7 @@ const fields=Object.freeze([
  'legacy_invoice_payment_lock','legacy_invoice_payment_effects','legacy_invoice_payment_results',
  'legacy_invoice_payment_stops','legacy_invoice_payment_id',
  'invoice_issue_lock','invoice_payment_requests','invoice_payment_stops',
+ 'wallet_entry_lock','wallet_entry_requests',
 ]);
 const projection=Object.freeze(Object.fromEntries(fields.map(field=>[field,0])));
 // Follow API envelope containers only; do not rewrite arbitrary business text,

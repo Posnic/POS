@@ -268,7 +268,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   const customerKey = sale.customer_id && ObjectId.isValid(String(sale.customer_id))
     ? { _id: new ObjectId(String(sale.customer_id)), license: sale.license, branch_id: sale.branch_id } : null;
   if (customerKey) {
-    const held = await db.collection('customers').updateOne({ ...customerKey, ...unlocked },
+    const held = await db.collection('customers').updateOne({ ...customerKey, ...unlocked, wallet_entry_lock: { $exists: false } },
       { $set: { legacy_invoice_payment_lock: admission } });
     if (!held.matchedCount) {
       await sales.updateOne({ _id: sale._id, 'legacy_invoice_payment_lock.id': admission.id }, { $unset: { legacy_invoice_payment_lock: '' } });

@@ -227,6 +227,7 @@ class CustomerRepository extends BaseModel {
         is_deleted: { $ne: true },
         books_receipt_lock: { $exists: false },
         legacy_invoice_payment_lock: { $exists: false },
+        wallet_entry_lock: { $exists: false },
       },
       updateOperation,
       { returnDocument: 'after' }
@@ -252,7 +253,7 @@ class CustomerRepository extends BaseModel {
       throw new Error('Customer not found');
     }
 
-    if (Object.hasOwn(customer, 'books_receipt_lock') || Object.hasOwn(customer, 'legacy_invoice_payment_lock')) {
+    if (Object.hasOwn(customer, 'books_receipt_lock') || Object.hasOwn(customer, 'legacy_invoice_payment_lock') || Object.hasOwn(customer, 'wallet_entry_lock')) {
       throw new Error('Customer has an unfinished payment. Recover it before deleting the customer.');
     }
 
@@ -292,7 +293,7 @@ class CustomerRepository extends BaseModel {
 
     // Backup to recycle bin collection
     const recycleCollection = await this.getCollection(this.collectionName + '_recycle_bin');
-    if (customers.some(customer => Object.hasOwn(customer, 'books_receipt_lock') || Object.hasOwn(customer, 'legacy_invoice_payment_lock'))) {
+    if (customers.some(customer => Object.hasOwn(customer, 'books_receipt_lock') || Object.hasOwn(customer, 'legacy_invoice_payment_lock') || Object.hasOwn(customer, 'wallet_entry_lock'))) {
       throw new Error('A selected customer has an unfinished payment. Recover it before deleting customers.');
     }
     await require('../services/customer-delete-backup').saveMany(recycleCollection, customers, BaseModel.loggedUser);
