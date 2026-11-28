@@ -841,3 +841,31 @@ removed and independently absent. Component files are not yet registered in the
 normal customer page: the legacy wallet writer replacement and remaining shared
 writer guards must ship together with route/UI integration. Live browser/Web Locks,
 installed pairing, complete currency support and cross-device authority remain open.
+
+
+### Wallet evidence validation and remaining writer audit
+
+Wallet admission/status/recovery now reject malformed/null reservations, malformed
+or duplicate completed request history and contradictory saved states. Soft-deleted
+customers are excluded from the scoped query. Stored results must contain the same
+normalized request/action and usable entry identity; uncertainty cannot be treated
+as an absent request. Standalone Mongo checks pass for these refusals with unchanged
+customer/ledger evidence, alongside HTTP recovery coverage. Scratch vQCztB removed
+and independently absent.
+
+The next writer integration is concrete, not a generic sync task:
+- customers.controller transaction inserts a ledger row then separately aggregates
+  and updates balance; deleteTransaction deletes then separately recalculates. Both
+  must use durable original-request admission, not an unlocked preflight read.
+- sale.service processSale writes partial-customer allocations after sale/register
+  effects; admission must happen before those effects and persist across uncertain
+  outcomes. Adding a late wallet-lock check would leave a partially committed sale.
+- sale.repository salesPaymentCloseModel changes sale, allocation and wallet in
+  separate writes; it needs original identities and customer admission before the
+  first sale mutation, including batch outcomes.
+- sale.repository deleteSales removes transaction rows and separately recalculates
+  customer balances; cancellation recovery needs the same shared ownership rule.
+
+The unmounted wallet route cannot be enabled merely because its own tests pass.
+Normal-page integration remains paired with these writer changes and live authority
+verification. No application build or release was made.

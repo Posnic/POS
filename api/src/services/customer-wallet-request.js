@@ -22,21 +22,42 @@ function normalize(value){
 function scope(context){
  for(const key of ['license','branchId','customerId'])if(!ObjectId.isValid(String(context[key])))fail('Invalid wallet scope');
  if(typeof context.actorId!=='string'||!context.actorId)fail('Original cashier is required');
- return {_id:new ObjectId(String(context.customerId)),license:new ObjectId(String(context.license)),branch_id:new ObjectId(String(context.branchId))};
+ return {_id:new ObjectId(String(context.customerId)),license:new ObjectId(String(context.license)),branch_id:new ObjectId(String(context.branchId)),is_deleted:{$ne:true}};
 }
 function identity(id){if(typeof id!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(id))fail('A valid original request ID is required');}
 const sourceHash=customer=>hash(Object.fromEntries(Object.entries(customer).filter(([key])=>!['wallet_entry_lock','wallet_entry_requests'].includes(key))));
 function create({db}){
  const customers=db.collection('customers'),ledger=db.collection('transaction');
  const query=context=>scope(context);
+ function validateEvidence(customer){
+  if(Object.hasOwn(customer,'wallet_entry_requests')){
+   const history=customer.wallet_entry_requests;
+   if(!Array.isArray(history)||history.length>100)fail('Wallet request history needs review');
+   const ids=new Set();for(const item of history){
+    if(!item||typeof item!=='object')fail('Wallet request history needs review');identity(item.id);
+    if(ids.has(item.id)||typeof item.actorId!=='string'||!item.actorId||item.result?.state!=='saved'||item.result.commandId!==item.id||
+       hash(normalize(item.request))!==hash(item.request)||hash(item.result.request)!==hash(item.request)||item.result.kind!==item.request.kind||
+       !Number.isFinite(item.result.balance)||!ObjectId.isValid(item.result.entryId))fail('Wallet request history needs review');
+    ids.add(item.id);
+   }
+  }
+  if(Object.hasOwn(customer,'wallet_entry_lock')){
+   const lock=customer.wallet_entry_lock;
+   if(!lock||typeof lock!=='object'||typeof lock.actorId!=='string'||!lock.actorId||!Array.isArray(lock.baseline)||!lock.entry||
+      typeof lock.sourceHash!=='string'||!/^[a-f0-9]{64}$/.test(lock.sourceHash))fail('Wallet reservation needs review');
+   identity(lock.id);if(hash(normalize(lock.request))!==hash(lock.request))fail('Wallet reservation needs review');
+   if((customer.wallet_entry_requests||[]).some(item=>item.id===lock.id))fail('Wallet request has conflicting saved states');
+  }
+ }
+
  async function rows(context){const key=query(context);const result=await ledger.find({customer_id:key._id,license:key.license}).limit(10001).toArray();if(result.length>10000||BSON.calculateObjectSize({rows:result})>512*1024)fail('Ledger exceeds recovery limit');if(result.some(row=>String(row.branch_id)!==String(key.branch_id)))fail('Cross-branch wallet recovery requires review');balance(result);return result;}
  const ordered=value=>[...value].sort((a,b)=>canonical(a._id).localeCompare(canonical(b._id)));
- function saved(customer,context,id,request){const found=(customer.wallet_entry_requests||[]).find(item=>item.id===id);if(!found)return null;if(found.actorId!==context.actorId||(request&&hash(found.request)!==hash(request)))fail('Original wallet request differs');return found.result;}
- async function status(context,id){identity(id);const customer=await customers.findOne(query(context));if(!customer)fail('Customer not found');const result=saved(customer,context,id);if(result)return result;const lock=customer.wallet_entry_lock;if(lock?.id===id){if(lock.actorId!==context.actorId)fail('Only the original cashier can recover this request');return {state:'pending',commandId:id,request:lock.request};}return {state:lock||customer.books_receipt_lock||customer.legacy_invoice_payment_lock?'other_pending':'absent',commandId:id};}
+ function saved(customer,context,id,request){validateEvidence(customer);const found=(customer.wallet_entry_requests||[]).find(item=>item.id===id);if(!found)return null;if(found.actorId!==context.actorId||(request&&hash(found.request)!==hash(request)))fail('Original wallet request differs');return found.result;}
+ async function status(context,id){identity(id);const customer=await customers.findOne(query(context));if(!customer)fail('Customer not found');validateEvidence(customer);const result=saved(customer,context,id);if(result)return result;const lock=customer.wallet_entry_lock;if(lock?.id===id){if(lock.actorId!==context.actorId)fail('Only the original cashier can recover this request');return {state:'pending',commandId:id,request:lock.request};}return {state:['wallet_entry_lock','books_receipt_lock','legacy_invoice_payment_lock'].some(key=>Object.hasOwn(customer,key))?'other_pending':'absent',commandId:id};}
  async function submit(context,id,input){
   identity(id);const request=normalize(input),key=query(context);
   for(let attempt=0;attempt<8;attempt++){
-   const customer=await customers.findOne(key);if(!customer)fail('Customer not found');
+   const customer=await customers.findOne(key);if(!customer)fail('Customer not found');validateEvidence(customer);
    const result=saved(customer,context,id,request);if(result)return result;
    if(customer.wallet_entry_lock){const lock=customer.wallet_entry_lock;if(lock.id!==id||lock.actorId!==context.actorId||hash(lock.request)!==hash(request))fail('Another wallet request is unfinished');return resume(context,id);}
    if(Object.hasOwn(customer,'books_receipt_lock')||Object.hasOwn(customer,'legacy_invoice_payment_lock'))fail('Customer has an unfinished receipt');
@@ -54,7 +75,7 @@ function create({db}){
   fail('Customer changed while saving the original request');
  }
  async function resume(context,id){
-  identity(id);const key=query(context),customer=await customers.findOne(key);if(!customer)fail('Customer not found');const completed=saved(customer,context,id);if(completed)return completed;
+  identity(id);const key=query(context),customer=await customers.findOne(key);if(!customer)fail('Customer not found');validateEvidence(customer);const completed=saved(customer,context,id);if(completed)return completed;
   const lock=customer.wallet_entry_lock;if(!lock||lock.id!==id||lock.actorId!==context.actorId)fail('Original wallet admission unavailable');
   if(sourceHash(customer)!==lock.sourceHash)fail('Customer changed; keep the original request for review');
   const expected=lock.request.kind==='add'?[...lock.baseline,lock.entry]:lock.baseline.filter(row=>String(row._id)!==String(lock.entry._id));
