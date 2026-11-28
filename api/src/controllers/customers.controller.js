@@ -11,6 +11,7 @@ const { normalizeBoolean } = require('../helpers/customers.helper');
 const sessionFilterUtil = require('../utils/session-filter.util');
 
 const BaseModel = require('../models/base.model');
+const { publicResponse, fields: localAccountingFields } = require('../services/local-accounting-fields');
 
 /**
  * Customer Controller (Refactored)
@@ -132,7 +133,7 @@ class CustomerController extends BaseController {
         current_page: result.data.page || page,
         total_pages: result.data.totalPages || 0,
       };
-      return this.sendResponse(res, responseData, result.message, 200);
+      return this.sendResponse(res, publicResponse(responseData), result.message, 200);
     } else {
       return this.sendError(res, result.message, 400, null);
     }
@@ -157,7 +158,7 @@ class CustomerController extends BaseController {
     const result = await this.service.getCustomerById(id);
 
     if (result.status) {
-      return this.sendResponse(res, result.data, result.message, 200);
+      return this.sendResponse(res, publicResponse(result.data), result.message, 200);
     } else {
       return this.sendError(res, result.message, 404, null);
     }
@@ -289,7 +290,7 @@ class CustomerController extends BaseController {
     const result = await this.service.createCustomer(customerData);
 
     if (result.status) {
-      return this.sendResponse(res, result.data, result.message, 201);
+      return this.sendResponse(res, publicResponse(result.data), result.message, 201);
     } else {
       return this.sendError(res, result.message, 400, null);
     }
@@ -309,6 +310,12 @@ class CustomerController extends BaseController {
     }
 
     const { id } = req.params;
+
+    // Execution evidence can only be changed by its original recovery workflow.
+    // Include dotted paths because MongoDB interprets them as nested writes.
+    if (Object.keys(req.body || {}).some(key => localAccountingFields.includes(key.split('.')[0]))) {
+      return this.sendError(res, 'Payment recovery fields cannot be edited.', 400, null);
+    }
 
     // Extract update data
     const updateData = { ...req.body };
@@ -368,7 +375,7 @@ class CustomerController extends BaseController {
     const result = await this.service.updateCustomer(id, updateData);
 
     if (result.status) {
-      return this.sendResponse(res, result.data, result.message, 200);
+      return this.sendResponse(res, publicResponse(result.data), result.message, 200);
     } else {
       return this.sendError(res, result.message, 400, null);
     }
@@ -452,7 +459,7 @@ class CustomerController extends BaseController {
         list: result.data.data || [],
         total: result.data.total || 0,
       };
-      return this.sendResponse(res, responseData, result.message, 200);
+      return this.sendResponse(res, publicResponse(responseData), result.message, 200);
     } else {
       return this.sendError(res, result.message, 400, null);
     }
@@ -556,7 +563,7 @@ class CustomerController extends BaseController {
         list: result.data.data || [],
         total: result.data.total || 0,
       };
-      return this.sendResponse(res, responseData, result.message, 200);
+      return this.sendResponse(res, publicResponse(responseData), result.message, 200);
     } else {
       return this.sendError(res, result.message, 400, null);
     }
@@ -861,7 +868,7 @@ class CustomerController extends BaseController {
     const result = await this.service.updatePreferences(id, preferences);
 
     if (result.status) {
-      return this.sendResponse(res, result.data, result.message, 200);
+      return this.sendResponse(res, publicResponse(result.data), result.message, 200);
     } else {
       return this.sendError(res, result.message, 404, null);
     }

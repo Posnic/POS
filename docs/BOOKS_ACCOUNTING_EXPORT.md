@@ -676,3 +676,21 @@ context and the issuance sale engine are fixtures; live authentication, real eng
 restart and installed pairing remain unverified. Owned scratch IwQKPn was removed
 and independently confirmed absent. Legacy API endpoints outside invoices/v1 and
 Gateway/agent transport still require audit. No build or deployment was made.
+
+
+### Legacy customer record boundary
+
+Customer detail/list/search/tier and create/edit/preferences responses now remove
+local receipt/issuance evidence without changing stored records. Ordinary customer
+edits reject reserved recovery keys and dotted child paths before calling the
+service. Receipt references on the separate ledger response remain available for
+its protected-payment UI; this is not a global serialization filter.
+
+Validation: 172 customer controller tests pass. Standalone Mongo HTTP integration
+verifies customer read, all reserved-key and child-path refusals, ordinary name
+editing, retained balances and unchanged stored recovery evidence. The first run
+exposed an invalid fixture user ID; corrected to a valid BSON identity. Both failed
+and passing scratch roots (wRzEIN/Uu8Zty) were removed and independently absent.
+Authentication context remains a fixture. No stored schema or sync lane changed;
+Gateway/agent authority, remaining legacy sales/ledger surfaces and coordinated
+manual wallet writes remain open. No application was packaged or deployed.

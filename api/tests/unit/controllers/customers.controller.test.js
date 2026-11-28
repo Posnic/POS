@@ -1955,3 +1955,48 @@ describe('CustomerController — deleteTransaction', () => {
     expect(customers.updateOne.mock.calls[0][1].$set.balance).toBe(0);
   });
 });
+
+
+describe('Customer record response privacy', () => {
+  const fields = require('../../../src/services/local-accounting-fields').fields;
+  it.each([
+    ['getCustomer', 'getCustomerById', false],
+    ['updateCustomer', 'updateCustomer', false],
+    ['updatePreferences', 'updatePreferences', false],
+    ['createCustomer', 'createCustomer', false],
+    ['getCustomers', 'getAllCustomers', true],
+    ['searchCustomers', 'searchCustomers', true],
+    ['getCustomersByTier', 'getCustomersByTier', true],
+  ])('%s excludes execution evidence without mutating source records', async (method, dependency, list) => {
+    const original = {_id: VALID_ID, name: 'Original customer', balance: 25,
+      notes: 'Literal invoice_issue_lock text',
+      ...Object.fromEntries(fields.map(key => [key, {snapshot: 'private-original'}]))};
+    service[dependency].mockResolvedValue({status: true, message: 'Found',
+      data: list ? {data: [original], total: 1} : original});
+    const req = mockRequest({params: {id: VALID_ID, tier: 'gold'},
+      query: {id: VALID_ID, q: 'Original', branch_id: BRANCH_ID}});
+    const res = mockResponse();
+    await ctrl[method](req, res);
+    const body = res.json.mock.calls[0][0];
+    const value = list ? body.data.list[0] : body.data;
+    expect(value.name).toBe('Original customer');
+    expect(value.balance).toBe(25);
+    expect(value.notes).toBe('Literal invoice_issue_lock text');
+    for (const key of fields) {
+      expect(value).not.toHaveProperty(key);
+      expect(original[key]).toEqual({snapshot: 'private-original'});
+    }
+  });
+});
+
+
+describe('Customer update cannot overwrite local payment evidence', () => {
+  const fields = require('../../../src/services/local-accounting-fields').fields;
+  it.each(fields.flatMap(field => [field, field + '.commandId']))('rejects %s before calling the service', async key => {
+    const req = mockRequest({params: {id: VALID_ID}, body: {name: 'Edited', [key]: 'forged'}});
+    const res = mockResponse();
+    await ctrl.updateCustomer(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(service.updateCustomer).not.toHaveBeenCalled();
+  });
+});
