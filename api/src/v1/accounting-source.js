@@ -44,7 +44,7 @@ function line(value) {
 // A snapshot of selected stored evidence, not an assertion that a payment is
 // immutable, settled, or eligible for posting. No default money/currency values.
 function exportSale(sale, license) {
-  if (typeof license !== 'string' || !license || license.length > 256 || sale?.license !== license) return fail();
+  if (typeof license !== 'string' || !license || license.length > 256 || scalar(sale?.license) !== license) return fail();
   const sourceId = identity(sale._id), values = pick(sale, HEADER);
   for (const [key, select] of Object.entries({ items: line, charges: row => pick(row, ['name', 'amount', 'tax_amount', 'taxed', 'tax_rate']), payments: payment, captain_payments: payment, payment_corrections: payment, return_refund_transactions: payment })) {
     if (Object.hasOwn(sale, key)) values[key] = rows(sale[key], select);

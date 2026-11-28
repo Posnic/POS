@@ -108,3 +108,25 @@ describe('tenant context', () => {
     await expect(attachTenantContext(req, user)).rejects.toBeInstanceOf(TenantContextError);
   });
 });
+
+describe('scoped token branch authority', () => {
+  test('uses the active token grant and never a users row with the token ID', async () => {
+    const branchRead=jest.fn().mockResolvedValue({branch_name:'Branch'}),tokenRead=jest.fn().mockResolvedValue({_id:USER});
+    mongoose.connection.db={collection:jest.fn(name=>{if(name==='branches')return {findOne:branchRead};if(name==='api_tokens')return {findOne:tokenRead};throw Error('Must not authenticate the token as a user');})};
+    const req={isScopedApiToken:true,headers:{'x-branch-id':BRANCH}},user={_id:USER,license:LICENSE,api_token:true};
+    expect((await attachTenantContext(req,user)).validated).toBe(true);
+    const query=tokenRead.mock.calls[0][0];expect(query.active).toBe(true);expect(String(query._id)).toBe(USER);
+    expect(query.license.$in.map(String)).toEqual([LICENSE,LICENSE]);
+    expect(query.$or[0]).toEqual({branch_access:{$size:0}});
+    expect(query.$or[1]['branch_access.branch_id'].$in.map(String)).toEqual([BRANCH,BRANCH]);
+  });
+  test('a revoked or out-of-scope token cannot borrow a valid user row', async () => {
+    mongoose.connection.db={collection:name=>({findOne:jest.fn().mockResolvedValue(name==='api_tokens'?null:{_id:USER,branch_name:'Branch'})})};
+    await expect(attachTenantContext({isScopedApiToken:true,headers:{'x-branch-id':BRANCH}},{_id:USER,license:LICENSE,api_token:true})).rejects.toBeInstanceOf(TenantContextError);
+  });
+  test('the principal marker alone never changes normal user validation', async () => {
+    const called=[];mongoose.connection.db={collection:name=>{called.push(name);return {findOne:jest.fn().mockResolvedValue(name==='users'?null:{_id:USER,branch_name:'Branch'})};}};
+    await expect(attachTenantContext({headers:{'x-branch-id':BRANCH}},{_id:USER,license:LICENSE,api_token:true})).rejects.toBeInstanceOf(TenantContextError);
+    expect(called).toContain('users');expect(called).not.toContain('api_tokens');
+  });
+});

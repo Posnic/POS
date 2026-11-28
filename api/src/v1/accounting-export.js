@@ -3,14 +3,16 @@ const {createHash}=require('node:crypto');
 const {exportSale,identity,projection}=require('./accounting-source');
 const fail=(status,code)=>{throw Object.assign(new Error(code),{status,code});};
 function scope(user,branchFilter){
- if(typeof user?.license!=='string'||!user.license||user.license.length>256||user.access?.sales?.read!==true)fail(403,'forbidden');
+ if(user?.access?.sales?.read!==true)fail(403,'forbidden');
+ let license;try{license=identity(user.license).value;}catch{fail(403,'forbidden');}
  const branches=user.branch_access??[];
  if(!Array.isArray(branches))fail(403,'invalid_branch_scope');
  const ids=branches.map(row=>{try{return JSON.stringify(identity(row?.branch_id));}catch{fail(403,'invalid_branch_scope');}});
- const filter={license:user.license},branch=branchFilter(user);
+ const licenses=[license];if(/^[a-f0-9]{24}$/.test(license))licenses.push(new (require('mongodb').ObjectId)(license));
+ const filter={license:{$in:licenses}},branch=branchFilter(user);
  const query=branch?{$and:[filter,branch]}:filter;
- const key=createHash('sha256').update(JSON.stringify({license:user.license,branches:[...new Set(ids)].sort()})).digest('hex');
- return {query,key,license:user.license};
+ const key=createHash('sha256').update(JSON.stringify({license,branches:[...new Set(ids)].sort()})).digest('hex');
+ return {query,key,license};
 }
 function decode(value,key){
  if(typeof value!=='string'||value.length>2048||!/^[A-Za-z0-9_-]+$/.test(value))fail(400,'bad_cursor');

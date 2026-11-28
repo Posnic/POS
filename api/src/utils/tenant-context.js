@@ -156,19 +156,27 @@ async function attachTenantContext(req, user) {
   }
 
   const userId = toObjectId(user._id || user.id);
+  // Scoped tokens are principals of their own, not rows in users. Recheck
+  // their active stored grant for this branch; never borrow the creator's
+  // current session or widen the token's saved branch grant.
+  const scopedToken = req.isScopedApiToken === true && user.api_token === true;
+  const principalQuery = scopedToken
+    ? {
+        _id: userId,
+        active: true,
+        license: { $in: [licenseId, licenseId.toString()] },
+        $or: [
+          { branch_access: { $size: 0 } },
+          { 'branch_access.branch_id': { $in: [branchId, branchId.toString()] } },
+        ],
+      }
+    : { _id: userId, license: licenseId, 'branch_access.branch_id': branchId };
   const [branch, persistedUser] = await Promise.all([
     db
       .collection('branches')
       .findOne({ _id: branchId, license: licenseId }, { projection: { branch_name: 1 } }),
     userId
-      ? db.collection('users').findOne(
-          {
-            _id: userId,
-            license: licenseId,
-            'branch_access.branch_id': branchId,
-          },
-          { projection: { _id: 1 } }
-        )
+      ? db.collection(scopedToken ? 'api_tokens' : 'users').findOne(principalQuery, { projection: { _id: 1 } })
       : null,
   ]);
 
