@@ -659,3 +659,20 @@ scratch removed and independently absent; attribution/diff checks pass.
 Invoice request/issuance metadata is local command evidence. API filtering and
 cross-device authority/sync require audit before activation; no installed or
 production acceptance is claimed. Unknown engine outcomes remain held.
+
+
+### Public API response boundary for local receipt evidence
+
+General v1 list/detail/customer-update responses now exclude local payment locks,
+effects, saved results, stop records and issuance request snapshots. Invoice
+controller responses apply the same boundary without changing stored records,
+business balances, custom fields or the dedicated recovery status/actions.
+This is response filtering, not a replication or cross-device ownership protocol.
+
+Validation: 55 unit tests and three standalone-Mongo integration suites pass.
+HTTP checks cover both v1 aliases, customer update/create whitelist behavior,
+permission refusal, invoice responses and unchanged stored evidence. Authentication
+context and the issuance sale engine are fixtures; live authentication, real engine
+restart and installed pairing remain unverified. Owned scratch IwQKPn was removed
+and independently confirmed absent. Legacy API endpoints outside invoices/v1 and
+Gateway/agent transport still require audit. No build or deployment was made.

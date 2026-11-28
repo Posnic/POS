@@ -40,7 +40,7 @@ function can(req, perm) {
 const fail = (res, message, code = 400) =>
   res.status(code).json({ type: 'error', message, data: null });
 const ok = (res, data, message, meta) =>
-  res.json({ type: 'success', message, data, ...(meta ? { meta } : {}) });
+  res.json({ type: 'success', message, data: require('../services/local-accounting-fields').publicResponse(data), ...(meta ? { meta } : {}) });
 
 module.exports = {
   async create(req, res) {

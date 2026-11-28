@@ -27,7 +27,7 @@ const MAX_LIMIT = 200;
 const DEFAULT_LIMIT = 50;
 
 /* Fields that are ours, not the caller's. */
-const INTERNAL_FIELDS = { _syncMeta: 0, password: 0, token_hash: 0 };
+const INTERNAL_FIELDS = { _syncMeta: 0, password: 0, token_hash: 0, ...require('../services/local-accounting-fields').projection };
 
 function canRead(user, aclModule) {
   return !!(user && user.access && user.access[aclModule] && user.access[aclModule].read === true);

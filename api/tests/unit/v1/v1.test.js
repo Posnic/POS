@@ -171,3 +171,20 @@ describe('rate window', () => {
     expect(v1.rateLimited('tok2', t0)).toBe(false);
   });
 });
+
+
+describe('local accounting response evidence', () => {
+  test('removes command state through result/list envelopes without rewriting business values', () => {
+    const {fields,publicResponse}=require('../../../src/services/local-accounting-fields');
+    const date=new Date('2026-11-28T00:00:00Z');
+    const privateFields=Object.fromEntries(fields.map(field=>[field,{original:'local'}]));
+    const original={data:{list:[{_id:'invoice',...privateFields,created_date:date,custom_fields:{invoice_issue_lock:'Literal customer field'},notes:'invoice_issue_lock'}]}};
+    const clean=publicResponse(original),row=clean.data.list[0];
+    for(const field of fields)expect(row).not.toHaveProperty(field);
+    expect(row.created_date).toBe(date);
+    expect(row.custom_fields).toEqual({invoice_issue_lock:'Literal customer field'});
+    expect(row.notes).toBe('invoice_issue_lock');
+    expect(original.data.list[0]).toHaveProperty('invoice_issue_lock');
+    expect(publicResponse({result:{data:{...privateFields,commandId:'request',amount:25}}})).toEqual({result:{data:{commandId:'request',amount:25}}});
+  });
+});
