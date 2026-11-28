@@ -960,3 +960,7 @@ Invoice repository edits, payment mirrors/notes, cancellation, sharing and delet
 ### Sale/payment reservation guards
 
 Ordinary sale saves, wallet updates and legacy settlement, restaurant payment/restructure/transfer, paid-bill correction and deletion admission now refuse wallet_entry_lock. Books receipt reservation/mutability and ordinary invoice payment admission/status/stop do likewise, including null lock evidence. Nine POS suites pass 496 regression tests; two paired real-Mongo receipt suites pass held and late-admission cases; 14 paid-edit integration cases include no-change correction/deletion under wallet ownership. Remaining direct customer-ledger writers and activation/authority work remain open.
+
+### Legacy manual wallet reservation checks
+
+Manual add/delete reject unavailable or reserved customers (wallet, Books receipt and invoice receipt, including null locks). Balance completion compares the original customer; conflicts after a ledger effect return 409 and preserve the concurrent customer change. Real HTTP/standalone-Mongo tests verify ordinary add, held add/delete no-writes and both late-change paths. 194 controller tests pass. These legacy paths remain sequential and still need stable request/recovery integration before the wallet package is activated.

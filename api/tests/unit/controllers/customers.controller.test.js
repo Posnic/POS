@@ -1646,7 +1646,7 @@ describe('CustomerController — transaction success path', () => {
   it('inserts transaction and returns updated balance', async () => {
     const mockCustomerCol = {
       findOne: jest.fn().mockResolvedValue({ _id: VALID_ID, name: 'Alice', phone: '123' }),
-      updateOne: jest.fn().mockResolvedValue({}),
+      updateOne: jest.fn().mockResolvedValue({matchedCount:1}),
     };
     const mockTransactionCol = {
       insertOne: jest.fn().mockResolvedValue({ insertedId: 'newId' }),
@@ -1675,7 +1675,7 @@ describe('CustomerController — transaction success path', () => {
   it('defaults balance to 0 when aggregate returns empty array', async () => {
     const mockCustomerCol = {
       findOne: jest.fn().mockResolvedValue({ name: 'Alice' }),
-      updateOne: jest.fn().mockResolvedValue({}),
+      updateOne: jest.fn().mockResolvedValue({matchedCount:1}),
     };
     const mockTransactionCol = {
       insertOne: jest.fn().mockResolvedValue({}),
@@ -1693,7 +1693,7 @@ describe('CustomerController — transaction success path', () => {
   it('fetches branch_name from Branch model when user has branch_id but no branch_name', async () => {
     const mockCustomerCol = {
       findOne: jest.fn().mockResolvedValue({ name: 'Alice' }),
-      updateOne: jest.fn().mockResolvedValue({}),
+      updateOne: jest.fn().mockResolvedValue({matchedCount:1}),
     };
     const mockTransactionCol = {
       insertOne: jest.fn().mockResolvedValue({}),
@@ -1720,7 +1720,7 @@ describe('CustomerController — transaction success path', () => {
   it('swallows Branch.findById error and continues (line 1114 catch)', async () => {
     const mockCustomerCol = {
       findOne: jest.fn().mockResolvedValue({ name: 'Alice' }),
-      updateOne: jest.fn().mockResolvedValue({}),
+      updateOne: jest.fn().mockResolvedValue({matchedCount:1}),
     };
     const mockTransactionCol = {
       insertOne: jest.fn().mockResolvedValue({}),
@@ -1880,7 +1880,7 @@ describe('CustomerController — deleteTransaction', () => {
         toArray: jest.fn().mockResolvedValue(balance === null ? [] : [{ balance }]),
       }),
     };
-    const customers = { updateOne: jest.fn().mockResolvedValue({}) };
+    const customers = { findOne: jest.fn().mockResolvedValue({_id:CUST}), updateOne: jest.fn().mockResolvedValue({matchedCount:1}) };
     mockGetCollection.mockReset();
     mockGetCollection.mockResolvedValueOnce(txn).mockResolvedValueOnce(customers);
     return { txn, customers };

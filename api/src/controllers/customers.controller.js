@@ -1129,6 +1129,10 @@ class CustomerController extends BaseController {
         });
       }
 
+      if (customer.is_deleted === true || ['wallet_entry_lock','books_receipt_lock','legacy_invoice_payment_lock'].some(key=>Object.hasOwn(customer,key))) {
+        return res.status(409).json({type:'error',message:'Customer has an unfinished payment or is unavailable. Recover the original request first.',data:null});
+      }
+
       // Get transaction collection
       const transactionCollection = await new BaseModel('transaction').getCollection('transaction');
 
@@ -1205,10 +1209,12 @@ class CustomerController extends BaseController {
       const newBalance = aggregateResult.length > 0 ? aggregateResult[0].balance : 0;
 
       // Update customer balance
-      await customerCollection.updateOne(
-        { _id: new ObjectId(id), license: BaseModel.license },
+      const customerSaved = await customerCollection.updateOne(
+        { _id: new ObjectId(id), license: BaseModel.license, $expr: { $eq: ['$$ROOT', { $literal: customer }] } },
         { $set: { balance: newBalance, updated_date: new Date() } }
       );
+
+      if (!customerSaved.matchedCount) return res.status(409).json({type:'error',message:'Customer changed after the entry was saved. Review the original entry before trying again.',data:null});
 
       return res.status(200).json({
         type: 'success',
@@ -1292,6 +1298,11 @@ class CustomerController extends BaseController {
           data: null,
         });
       }
+      const customerCollection = await new BaseModel('customers').getCollection('customers');
+      const customer = await customerCollection.findOne({_id:new ObjectId(customer_id),license:BaseModel.license});
+      if (!customer || customer.is_deleted === true || ['wallet_entry_lock','books_receipt_lock','legacy_invoice_payment_lock'].some(key=>Object.hasOwn(customer,key))) {
+        return res.status(409).json({type:'error',message:'Customer has an unfinished payment or is unavailable. Recover the original request first.',data:null});
+      }
       // A payment reference or amount may change after the read. Delete only
       // the exact original row, never a newly linked receipt at the same ID.
       const removed = await transactionCollection.deleteOne({
@@ -1337,11 +1348,12 @@ class CustomerController extends BaseController {
 
       const newBalance = aggregateResult.length > 0 ? aggregateResult[0].balance : 0;
 
-      const customerCollection = await new BaseModel('customers').getCollection('customers');
-      await customerCollection.updateOne(
-        { _id: new ObjectId(customer_id), license: BaseModel.license },
+      const customerSaved = await customerCollection.updateOne(
+        { _id: new ObjectId(customer_id), license: BaseModel.license, $expr: { $eq: ['$$ROOT', { $literal: customer }] } },
         { $set: { balance: newBalance, updated_date: new Date() } }
       );
+
+      if (!customerSaved.matchedCount) return res.status(409).json({type:'error',message:'Customer changed after the entry was removed. Review the original entry before trying again.',data:null});
 
       return res.status(200).json({
         type: 'success',
