@@ -59,4 +59,4 @@ async function insertOriginal(collection,row){
  if(!original||canonical(original)!==canonical(row))fail();
  return original;
 }
-module.exports={allocation,sale,insertOriginal};
+module.exports={allocation,sale,insertOriginal,canonical};

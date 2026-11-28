@@ -73,6 +73,7 @@ beforeEach(() => {
     const row = await collections.sales.findOne();
     if (row && update.$set?.legacy_invoice_payment_lock) row.legacy_invoice_payment_lock = update.$set.legacy_invoice_payment_lock;
     if (row && update.$unset?.legacy_invoice_payment_lock !== undefined) delete row.legacy_invoice_payment_lock;
+    if (row && update.$push?.legacy_invoice_payment_results) (row.legacy_invoice_payment_results ||= []).push(update.$push.legacy_invoice_payment_results);
     return {matchedCount:1};
   }) };
   collections.transaction = {
@@ -87,7 +88,15 @@ beforeEach(() => {
       .fn()
       .mockReturnValue({ toArray: async () => [{ totalIn: 200, totalOut: 200 }] }),
   };
-  collections.customers = { updateOne: jest.fn().mockResolvedValue({matchedCount:1}) };
+  const customer = {};
+  collections.customers = {
+    findOne: jest.fn().mockImplementation(async () => customer),
+    updateOne: jest.fn().mockImplementation(async (_query, update) => {
+      if (update.$set?.legacy_invoice_payment_lock) customer.legacy_invoice_payment_lock = update.$set.legacy_invoice_payment_lock;
+      if (update.$unset?.legacy_invoice_payment_lock !== undefined) delete customer.legacy_invoice_payment_lock;
+      return {matchedCount:1};
+    }),
+  };
   mockApply.mockResolvedValue({ status: true, data: { status: 'paid' }, message: 'Invoice paid' });
   mockGetInvoice.mockResolvedValue({ status: true, data: { _id: new ObjectId(INVOICE) } });
   mockRecordPayment.mockResolvedValue({ status: true });
@@ -162,6 +171,20 @@ describe('syncSale', () => {
 });
 
 describe('recordPayment', () => {
+  test.each([
+    { legacy_invoice_payment_results: {} },
+    { legacy_invoice_payment_results: Array.from({length:1000}, (_,i)=>({id:String(i)})) },
+    { largeLegacyField: 'x'.repeat(512 * 1024) },
+  ])('refuses unbounded recovery evidence before any writes: %#', async (extra) => {
+    collections.sales.findOne.mockResolvedValue(sale(extra));
+    const result = await sync.recordPayment(invoice(), {amount:10}, {});
+    expect(result.status).toBe(false);
+    expect(result.message).toMatch(/recovery history/);
+    expect(collections.sales.updateOne).not.toHaveBeenCalled();
+    expect(collections.customers.updateOne).not.toHaveBeenCalled();
+    expect(collections.transaction.insertOne).not.toHaveBeenCalled();
+  });
+
   const invoice = () => ({
     _id: new ObjectId(INVOICE),
     invoice_id: 'INV-000009',

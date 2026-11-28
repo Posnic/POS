@@ -397,3 +397,23 @@ customer identities are refused. Ordinary/internal receipt integration suites an
 33 invoice unit tests pass. This closes row-creation identity, not the full legacy
 recovery route: source/ledger validation, orchestration, verified completion and
 UI still need to be connected. No historical backfill or sync acceptance.
+
+### Ordinary payment recovery orchestration
+
+An internal recoverPayment entry point resumes the original admission using its
+BSON source snapshot, original cashier, timestamp, amount and stable row IDs.
+Completion is retained before customer/sale lock release; lost completion and
+release replies return the original result. Older result recovery leaves newer
+admissions intact. Changed immutable sale data, tenant/branch, unknown commands
+and a different cashier for unfinished work are refused. Admission refuses
+malformed/1000-entry completion histories and source documents over 512 KiB before
+writes. No route or recovery UI has been mounted.
+
+Validation: 36 invoice unit tests; three real-Mongo integration suites covering
+invoice guards, ordinary recovery and Books receipt projections. Ordinary recovery
+covers ten committed-write interruptions, concurrent saved-result replays and
+scope/source refusals, with two ledger rows and one invoice note retained. All
+passed. This does not establish complete ledger concurrency protection: unrelated
+wallet/ledger writers, full ledger baseline verification, authenticated recovery
+UI, sync exclusion/authority and installed paired acceptance remain outstanding.
+No installer or deployment was produced.

@@ -210,8 +210,15 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   if (String(sale.source_invoice_id) !== String(invoice._id)) {
     return { status: false, data: null, message: 'Original invoice sale changed' };
   }
+  // Bound retained recovery evidence before acquiring either admission.
+  const results = sale.legacy_invoice_payment_results;
+  if ((results !== undefined && (!Array.isArray(results) || results.length >= 1000)) ||
+      require('mongodb').BSON.calculateObjectSize(sale) > 512 * 1024) {
+    return { status: false, data: null, message: 'Payment recovery history requires review before another payment' };
+  }
   const admission = { id: require('node:crypto').randomUUID(), invoiceId: String(invoice._id),
-    amount, method, reference, note, actor: userName, startedAt: now, before, walletBefore: sale.wallet_amount ?? 0, moneyId: new ObjectId(), allocationId: new ObjectId() };
+    amount, method, reference, note, actor: userName, startedAt: now, before, walletBefore: sale.wallet_amount ?? 0, moneyId: new ObjectId(), allocationId: new ObjectId(),
+    source: require('mongodb').BSON.deserialize(require('mongodb').BSON.serialize(sale)), invoiceNumber: String(invoice.invoice_id || '') };
   const unlocked = { books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false } };
   const admitted = await sales.updateOne({ _id: sale._id, ...unlocked,
     $expr: { $eq: ['$$ROOT', { $literal: sale }] } }, { $set: { legacy_invoice_payment_lock: admission } });
@@ -227,6 +234,32 @@ async function recordPayment(invoice, payment = {}, context = {}) {
     }
   }
 
+  return finishPayment(invoice,sale,admission,context,db);
+}
+
+async function releasePayment(db,sale,admission){
+ const targets=[];
+ if(sale.customer_id&&ObjectId.isValid(String(sale.customer_id)))targets.push(['customers',{_id:new ObjectId(String(sale.customer_id)),license:sale.license,branch_id:sale.branch_id}]);
+ targets.push(['sales',{_id:sale._id}]);
+ for(const [name,key] of targets){
+  const collection=db.collection(name);
+  await collection.updateOne({...key,'legacy_invoice_payment_lock.id':admission.id},{$unset:{legacy_invoice_payment_lock:''}});
+  const remaining=await collection.findOne(key);
+  if(remaining?.legacy_invoice_payment_lock?.id===admission.id)throw new Error('Payment completion release requires retry');
+ }
+}
+async function finishPayment(invoice,sale,admission,context,db){
+ const {amount,method,reference,note,before}=admission,now=new Date(admission.startedAt),userName=admission.actor;
+ const paidAfter=round2(before.paid_amount+amount),pendingAfter=round2(Math.max(0,before.total-paidAfter)),statusWord=pendingAfter>0?'Partialy Paid':'Paid';
+ const sales=db.collection('sales');
+ const customerKey=sale.customer_id&&ObjectId.isValid(String(sale.customer_id))?{_id:new ObjectId(String(sale.customer_id)),license:sale.license,branch_id:sale.branch_id}:null;
+ const current=await sales.findOne({_id:sale._id});
+ if(current?.legacy_invoice_payment_lock?.id!==admission.id)throw new Error('Original payment admission unavailable');
+ const unchanged=value=>Object.fromEntries(Object.entries(value).filter(([key])=>!['legacy_invoice_payment_lock','legacy_invoice_payment_effects','legacy_invoice_payment_results','partial_balance','payment_pending','payment_status','wallet_amount','updated_date','updated_by'].includes(key)));
+ const canonical=require('./invoice-payment-effects').canonical;
+ if(canonical(unchanged(current))!==canonical(unchanged(sale)))throw new Error('Original payment sale source changed');
+
+ if(customerKey){const customer=await db.collection('customers').findOne(customerKey);if(customer?.legacy_invoice_payment_lock?.id!==admission.id)throw new Error('Original customer admission unavailable');}
   const requireWrite = async operation => { const result = await operation; if (!result.matchedCount) throw new Error('Payment admission changed; recover the original request'); return result; };
   const saleSet = {
     partial_balance: paidAfter,
@@ -325,25 +358,44 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   if (!noted.status) throw new Error('Payment requires original-result recovery: invoice note was not confirmed');
   const synced = await syncSale(sale._id, { invoiceId: String(invoice._id) });
   if (!synced.synced) throw new Error('Payment requires original-result recovery: invoice balance was not confirmed');
-  if (customerKey) {
-    const released = await db.collection('customers').updateOne({ ...customerKey, 'legacy_invoice_payment_lock.id': admission.id }, { $unset: { legacy_invoice_payment_lock: '' } });
-    if (!released.matchedCount) throw new Error('Customer payment admission changed; recover the original request');
-  }
-  const released = await sales.updateOne({ _id: sale._id, 'legacy_invoice_payment_lock.id': admission.id }, { $unset: { legacy_invoice_payment_lock: '' } });
-  if (!released.matchedCount) throw new Error('Sale payment admission changed; recover the original request');
   /* the word comes from what was just written, not from the mirror's reply -
      the reply is the same truth a moment later, but the message must not
      depend on a round trip */
   const word = pendingAfter > 0 ? 'partial' : 'paid';
-  return {
+  const result = {
     status: true,
-    data: { amount, balance: pendingAfter, ...(synced.data || {}) },
+    data: { amount, balance: pendingAfter, ...(synced.data || {}), commandId: admission.id },
     message:
       'Payment of ' +
       amount.toFixed(2) +
       ' recorded - invoice ' +
       (word === 'partial' ? 'partially paid, ' + pendingAfter.toFixed(2) + ' still due' : word),
   };
+  await sales.updateOne({ _id:sale._id, 'legacy_invoice_payment_lock.id':admission.id,
+    'legacy_invoice_payment_results.id':{$ne:admission.id} },
+    {$push:{legacy_invoice_payment_results:{id:admission.id,result}}});
+  const saved=await sales.findOne({_id:sale._id});
+  const originals=(saved.legacy_invoice_payment_results||[]).filter(row=>row.id===admission.id);
+  if(originals.length!==1)throw new Error('Original completion was not saved; recover the original payment');
+  await releasePayment(db,sale,admission);
+  return originals[0].result;
+}
+
+async function recoverPayment(invoice,commandId,context={}){
+ if(typeof commandId!=='string'||!ObjectId.isValid(String(invoice?.sale_id)))throw new Error('Original payment identity required');
+ const db=await BaseModel.getDb(),sale=await loadSale(invoice.sale_id);
+ if(!sale||String(sale.license)!==String(context.licenseId)||String(sale.branch_id)!==String(context.branchId)||
+    String(sale.source_invoice_id)!==String(invoice._id))throw new Error('Original payment unavailable');
+ const completed=(sale.legacy_invoice_payment_results||[]).filter(row=>row.id===commandId);
+ if(completed.length>1)throw new Error('Original payment completion differs');
+ if(completed.length){
+  if(sale.legacy_invoice_payment_lock?.id===commandId)await releasePayment(db,sale,sale.legacy_invoice_payment_lock);
+  return completed[0].result;
+ }
+ const admission=sale.legacy_invoice_payment_lock;
+ if(!admission||admission.id!==commandId||!admission.source||admission.invoiceId!==String(invoice._id))throw new Error('Original payment admission unavailable');
+ if(context.userName!==admission.actor)throw new Error('Original cashier recovery required');
+ return finishPayment({...invoice,invoice_id:admission.invoiceNumber},admission.source,admission,context,db);
 }
 
 module.exports = {
@@ -352,5 +404,6 @@ module.exports = {
   afterSaleSaved,
   afterSaleSettled,
   recordPayment,
+  recoverPayment,
   _round2: round2,
 };
