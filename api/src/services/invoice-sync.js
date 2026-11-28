@@ -158,7 +158,20 @@ async function afterSaleSettled(saleId) {
  * The invoice keeps a NOTE of the payment (who, when, how, reference); the
  * money lives on the sale, and the mirror repeats it.
  */
+const requestIdValid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
+const originalRequest = payment => ({
+  amount: payment.amount === undefined || payment.amount === null || payment.amount === '' ? null : String(payment.amount),
+  method: String(payment.method || '').trim().slice(0,40),
+  reference: String(payment.reference || '').trim().slice(0,80),
+  note: String(payment.note || '').trim().slice(0,200),
+});
+const sameCashier = (original,context) => original.actorId
+  ? String(context.userId || '') === original.actorId
+  : context.userName === original.actor;
+
 async function recordPayment(invoice, payment = {}, context = {}) {
+  if (payment.commandId !== undefined && !requestIdValid(payment.commandId))
+    return {status:false,data:null,message:'Invalid original payment request identity'};
   if (!invoice || !invoice.sale_id) {
     return { status: false, data: null, message: 'Issue the invoice first' };
   }
@@ -166,6 +179,19 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   if (!sale)
     return { status: false, data: null, message: 'The sale behind this invoice was not found' };
 
+  if (payment.commandId) {
+    const completed = (sale.legacy_invoice_payment_results || []).filter(row => row.id === payment.commandId);
+    if (completed.length) {
+      if (completed.length !== 1 || !sameCashier(completed[0],context) ||
+          JSON.stringify(completed[0].request) !== JSON.stringify(originalRequest(payment)))
+        return {status:false,data:null,message:'Original payment request differs; review the saved result'};
+      return completed[0].result;
+    }
+    if (sale.legacy_invoice_payment_lock?.id === payment.commandId &&
+        (!sameCashier(sale.legacy_invoice_payment_lock,context) ||
+         JSON.stringify(sale.legacy_invoice_payment_lock.request) !== JSON.stringify(originalRequest(payment))))
+      return {status:false,data:null,message:'Original payment request differs; review the unfinished request'};
+  }
   if (sale.books_receipt_lock || sale.legacy_invoice_payment_lock) return { status: false, data: null, message: 'This sale has an unfinished payment; recover the original request' };
   if (sale.captain_payment_plan || sale.payment_correction_pending || sale.return_refund_lock ||
       new Date(sale.captain_edit_until || 0).getTime() >= Date.now()) {
@@ -220,7 +246,8 @@ async function recordPayment(invoice, payment = {}, context = {}) {
       require('mongodb').BSON.calculateObjectSize(sale) > 512 * 1024) {
     return { status: false, data: null, message: 'Payment recovery history requires review before another payment' };
   }
-  const admission = { id: require('node:crypto').randomUUID(), invoiceId: String(invoice._id),
+  const admission = { id: payment.commandId || require('node:crypto').randomUUID(),
+    request: originalRequest(payment), actorId: context.userId ? String(context.userId) : null, invoiceId: String(invoice._id),
     amount, method, reference, note, actor: userName, startedAt: now, before, walletBefore: sale.wallet_amount ?? 0, moneyId: new ObjectId(), allocationId: new ObjectId(),
     source: require('mongodb').BSON.deserialize(require('mongodb').BSON.serialize(sale)), invoiceNumber: String(invoice.invoice_id || '') };
   if(sale.customer_id && ObjectId.isValid(String(sale.customer_id)))
@@ -367,7 +394,7 @@ async function finishPayment(invoice,sale,admission,context,db){
   if(customerKey)await require('./invoice-payment-ledger').verify(db,sale,admission,true);
   await sales.updateOne({ _id:sale._id, 'legacy_invoice_payment_lock.id':admission.id,
     'legacy_invoice_payment_results.id':{$ne:admission.id} },
-    {$push:{legacy_invoice_payment_results:{id:admission.id,result}}});
+    {$push:{legacy_invoice_payment_results:{id:admission.id,result,request:admission.request,actor:admission.actor,actorId:admission.actorId}}});
   const saved=await sales.findOne({_id:sale._id});
   const originals=(saved.legacy_invoice_payment_results||[]).filter(row=>row.id===admission.id);
   if(originals.length!==1)throw new Error('Original completion was not saved; recover the original payment');
@@ -388,8 +415,28 @@ async function recoverPayment(invoice,commandId,context={}){
  }
  const admission=sale.legacy_invoice_payment_lock;
  if(!admission||admission.id!==commandId||!admission.source||admission.invoiceId!==String(invoice._id))throw new Error('Original payment admission unavailable');
- if(context.userName!==admission.actor)throw new Error('Original cashier recovery required');
+ if(!sameCashier(admission,context))throw new Error('Original cashier recovery required');
  return finishPayment({...invoice,invoice_id:admission.invoiceNumber},admission.source,admission,context,db);
+}
+
+// Status must never recover effects or release admission: it is a read only query.
+async function paymentRequestStatus(invoice,commandId,context={}) {
+ if(!requestIdValid(commandId))throw new Error('Original payment identity required');
+ if(!invoice?.sale_id)return {state:'absent',commandId};
+ const sale=await loadSale(invoice.sale_id);
+ if(!sale||String(sale.license)!==String(context.licenseId)||String(sale.branch_id)!==String(context.branchId)||
+    String(sale.source_invoice_id)!==String(invoice._id))throw new Error('Original payment unavailable');
+ const completed=(sale.legacy_invoice_payment_results||[]).filter(row=>row.id===commandId);
+ if(completed.length>1)throw new Error('Original payment completion differs');
+ if(completed.length)return {state:'saved',commandId,result:completed[0].result,releasePending:sale.legacy_invoice_payment_lock?.id===commandId};
+ const admission=sale.legacy_invoice_payment_lock;
+ if(admission?.id===commandId)return {
+  state:'pending',commandId,amount:admission.amount,method:admission.method,
+  reference:admission.reference,startedAt:admission.startedAt,
+  canRecover:!!admission.source&&sameCashier(admission,context)&&
+    (!admission.source.customer_id||!!admission.ledger),
+ };
+ return {state:admission||sale.books_receipt_lock?'other_pending':'absent',commandId};
 }
 
 module.exports = {
@@ -399,5 +446,6 @@ module.exports = {
   afterSaleSettled,
   recordPayment,
   recoverPayment,
+  paymentRequestStatus,
   _round2: round2,
 };

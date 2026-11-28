@@ -247,7 +247,11 @@ module.exports = {
       if (!found.status) return fail(res, found.message, 404);
       let inv = found.data;
       if (inv.status === 'cancelled') return fail(res, 'This invoice was cancelled');
-      if (inv.status === 'paid') return fail(res, 'This invoice is already paid');
+      if (inv.status === 'paid') {
+        if (!req.body?.commandId) return fail(res, 'This invoice is already paid');
+        const original = await invoiceSync.paymentRequestStatus(inv, req.body.commandId, ctx);
+        if (original.state !== 'saved') return fail(res, 'This invoice is already paid');
+      }
       if (!inv.sale_id) {
         const issued = await invoiceBooking.issueInvoice(req.params.id, ctx);
         if (!issued.status) return fail(res, issued.message);
@@ -260,6 +264,19 @@ module.exports = {
     } catch (error) {
       console.error('Error in invoices payment:', error);
       return fail(res, error.message, 500);
+    }
+  },
+
+  async paymentRequestStatus(req, res) {
+    try {
+      if (!req.user || !can(req, 'read')) return fail(res, 'Unauthorized access', 403);
+      const ctx = contextOf(req);
+      const found = await repository.getInvoice(req.params.id, ctx);
+      if (!found.status) return fail(res, found.message, 404);
+      const data = await invoiceSync.paymentRequestStatus(found.data, req.params.commandId, ctx);
+      return ok(res, data, 'Original payment status');
+    } catch (error) {
+      return fail(res, 'Original payment status is unavailable', 409);
     }
   },
 

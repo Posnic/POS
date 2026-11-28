@@ -514,3 +514,26 @@ no packages were installed in that checkout. Syntax, attribution and diff checks
 pass. This changes an existing action state, not a navigable destination; no
 universal-search destination or sync field was added. Full installed ledger visual
 acceptance and customer-wide admission remain pending.
+
+### Request identity and read-only invoice status
+
+Payment requests may supply a lowercase UUIDv4 commandId. Completion retains the
+normalized original request and cashier identity; identical completed requests
+return the original result, while changed values/cashiers fail. Newly recorded
+cashiers use user ID, with legacy name matching retained only for old admissions.
+The normal payment controller accepts exact completed replays even after the
+invoice becomes paid; it still refuses new collections on a paid invoice.
+
+GET /invoices/:id/payment-requests/:commandId uses existing authenticated invoice
+read scope and returns absent, pending, saved or other_pending without running
+recovery or releasing locks. Saved results report outstanding lock release.
+This is an internal API, with no new navigation destination. No recovery POST or
+client request persistence is connected yet.
+
+Validation: 36 invoice unit tests and actual-controller real-Mongo integration
+pass. Tests compare all four relevant collections before/after status at ten
+interruption stages, verify replay/changed-input refusal, stable cashier IDs,
+read permission/branch rejection, and exact replay of a fully paid invoice.
+Owned CbMjxA/z8SV82 removed and independently absent. Attribution/diff checks pass.
+The new request/cashier metadata is local command evidence; it must not be blindly
+replicated. Existing sync authority gaps and installed acceptance remain open.
