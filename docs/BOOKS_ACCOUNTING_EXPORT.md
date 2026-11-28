@@ -750,3 +750,30 @@ The prior limitation for an unchanged retained backup is closed. A genuinely
 changed customer still requires review; full original-request recovery after the
 customer deletion itself, manual wallet writes and cross-device authority remain
 open. This adds no persisted schema or sync lane, and does not establish deployment.
+
+
+### Manual wallet original-request engine (not mounted)
+
+Prepared and verified an EN/AR 390px recovery mockup for manual wallet addition and
+removal: saved-result checking, explicit unchanged continuation, changed-ledger
+hold and unavailable-connection state. Design-only controls are labelled. Added
+an unmounted original-request engine retaining request/cashier identity, a customer
+reservation, full bounded original ledger evidence and deterministic entry IDs.
+Completion saves the result and releases the reservation in one customer update.
+Saved results are historical outcomes, not promises of the current wallet balance.
+
+Real standalone-Mongo tests pass for committed insert/delete/completion reply
+losses, exact retry, duplicate concurrent delivery, different cashier/request
+refusal, existing receipt lock refusal, protected invoice-entry deletion and
+unrelated-ledger-change hold. Status does not change the stored customer. Design
+interaction checks and Arabic screenshot review pass. MvfJTV/46gaJY/X1tQSi scratch
+removed and independently absent; retained screenshot is small.
+
+This is NOT a connected or accepted feature. Before mounting: connect scoped
+read/write-authorized API routes and original UI storage; add reciprocal admission
+to all receipt/legacy wallet/customer writers; filter wallet_entry_lock and
+wallet_entry_requests from ordinary responses and reject client writes; establish
+authoritative local-only sync behavior. The engine currently supports two-decimal,
+single-branch ledgers only, max 10,000 rows/512 KiB and 100 completed requests; history
+archival and broader currency/branch support are outstanding. Uncoordinated writers
+can still race ledger verification. No live legacy route uses this engine yet.
