@@ -7,14 +7,12 @@ const {canonical}=require('./invoice-payment-effects');
 const fail=message=>{throw Object.assign(new Error(message),{code:'wallet_request_conflict'});};
 const hash=value=>createHash('sha256').update(canonical(value)).digest('hex');
 const exact=row=>({_id:row._id,license:row.license,$expr:{$eq:['$$ROOT',{$literal:row}]}});
-function cents(value){
- if(typeof value!=='number'||!Number.isFinite(value)||value<0||!Number.isSafeInteger(Math.round(value*100))||Math.abs(value*100-Math.round(value*100))>1e-7)fail('A valid two-decimal amount is required');
- return BigInt(Math.round(value*100));
-}
-function balance(rows){const total=rows.reduce((sum,row)=>{if(!['in','out'].includes(row.type))fail('Unsupported ledger entry');return sum+(row.type==='in'?cents(row.amount):-cents(row.amount));},0n);if(total>BigInt(Number.MAX_SAFE_INTEGER)||total< -BigInt(Number.MAX_SAFE_INTEGER))fail('Ledger total is too large');return Number(total)/100;}
+const decimal=require('../utils/wallet-decimal');
+function amount(value){try{return decimal.amount(value);}catch(error){fail(error.message);}}
+function balance(rows){try{return decimal.balance(rows);}catch(error){fail(error.message);}}
 function normalize(value){
  if(value?.kind==='remove'&&ObjectId.isValid(value.entryId)&&Object.keys(value).every(key=>['kind','entryId'].includes(key)))return {kind:'remove',entryId:String(value.entryId)};
- if(value?.kind!=='add'||!['in','out'].includes(value.type)||cents(value.amount)<=0n||Object.keys(value).some(key=>!['kind','amount','type','date','description','image'].includes(key)))fail('Invalid wallet request');
+ if(value?.kind!=='add'||!['in','out'].includes(value.type)||amount(value.amount).value<=0n||Object.keys(value).some(key=>!['kind','amount','type','date','description','image'].includes(key)))fail('Invalid wallet request');
  const date=new Date(value.date);if(typeof value.date!=='string'||!Number.isFinite(+date))fail('A valid date is required');
  for(const key of ['description','image'])if(value[key]!=null&&(typeof value[key]!=='string'||value[key].length>2048))fail('Invalid wallet entry details');
  return {kind:'add',amount:value.amount,type:value.type,date:date.toISOString(),description:value.description||'',image:value.image||''};
@@ -68,6 +66,7 @@ function create({db}){
     entry=baseline.find(row=>String(row._id)===request.entryId);if(!entry)fail('Original entry not found');
     if(entry.sale_id||['invoice_id','legacy_invoice_payment_id','books_receipt_id'].some(field=>Object.hasOwn(entry,field)))fail('A sale or invoice receipt cannot be removed');
    }else entry={_id:new ObjectId(),license:key.license,branch_id:key.branch_id,customer_id:key._id,customer_name:customer.name||'',sale_id:'',amount:request.amount,type:request.type,pending:0,description:request.description,transaction_image:request.image,date:new Date(request.date),created_date:new Date(),updated_date:new Date()};
+   balance(request.kind==='add'?[...baseline,entry]:baseline.filter(row=>String(row._id)!==String(entry._id)));
    const lock={id,actorId:context.actorId,request,baseline,entry,sourceHash:sourceHash(customer)};
    if(!(await customers.updateOne(exact(customer),{$set:{wallet_entry_lock:lock}})).matchedCount)continue;
    return resume(context,id);
@@ -79,6 +78,7 @@ function create({db}){
   const lock=customer.wallet_entry_lock;if(!lock||lock.id!==id||lock.actorId!==context.actorId)fail('Original wallet admission unavailable');
   if(sourceHash(customer)!==lock.sourceHash)fail('Customer changed; keep the original request for review');
   const expected=lock.request.kind==='add'?[...lock.baseline,lock.entry]:lock.baseline.filter(row=>String(row._id)!==String(lock.entry._id));
+  const resultBalance=balance(expected);
   let current=await rows(context);const same=(a,b)=>hash(ordered(a))===hash(ordered(b));
   if(!same(current,expected)){
    if(!same(current,lock.baseline))fail('Ledger changed; keep the original request for review');
@@ -87,7 +87,7 @@ function create({db}){
    }else await ledger.deleteOne(exact(lock.entry));
   }
   current=await rows(context);if(!same(current,expected))fail('Ledger changed while applying the original request');
-  const result={state:'saved',commandId:id,kind:lock.request.kind,request:lock.request,balance:balance(expected),entryId:String(lock.entry._id)};
+  const result={state:'saved',commandId:id,kind:lock.request.kind,request:lock.request,balance:resultBalance,entryId:String(lock.entry._id)};
   const changed=await customers.updateOne(exact(customer),{$set:{balance:result.balance,updated_date:new Date()},$unset:{wallet_entry_lock:''},$push:{wallet_entry_requests:{id,actorId:lock.actorId,request:lock.request,result}}});
   if(!changed.matchedCount){const latest=await customers.findOne(key);const done=latest&&saved(latest,context,id);if(done)return done;fail('Customer changed before wallet completion; keep the original request');}
   return result;

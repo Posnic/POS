@@ -30,7 +30,14 @@ test('unavailable, unreadable and silently failing storage prevents preparation'
  assert.throws(()=>create({storage:h.storage,randomUUID}).prepare(scope,input));
 });
 test('invalid input is never saved and failed cleanup keeps the original',async()=>{
- for(const amount of ['1.001','-1','NaN','1e3','0']){const f=fixture();await assert.rejects(f.store.prepare(scope,{...input,amount}));assert.equal(f.data.size,0);}
+ for(const amount of ['0.10000000000000001','-1','NaN','1e3','0']){const f=fixture();await assert.rejects(f.store.prepare(scope,{...input,amount}));assert.equal(f.data.size,0);}
  const f=fixture(),{record}=await f.store.prepare(scope,input);f.storage.removeItem=()=>{};
  await assert.rejects(f.store.complete(scope,record.commandId,saved(record)));assert.deepEqual(f.store.load(scope),record);
+});
+
+test('original storage preserves three/four decimals and small exact decimals',async()=>{
+ for(const raw of ['12.345','12.3456','0.0000001','.5','0001.2300']){
+  const f=fixture(),{record}=await f.store.prepare(scope,{...input,amount:raw});
+  assert.equal(record.request.amount,Number(raw));assert.deepEqual(f.store.load(scope),record);
+ }
 });

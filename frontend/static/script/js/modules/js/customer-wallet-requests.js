@@ -11,10 +11,19 @@
    return {kind:'remove',entryId:input.entryId};
   }
   if(input?.kind!=='add'||Object.keys(input).some(key=>!['kind','amount','type','date','description','image'].includes(key))||!['in','out'].includes(input.type))fail();
-  const raw=String(input.amount);if(!/^(0|[1-9][0-9]*)(\.[0-9]{1,2})?$/.test(raw))fail();
-  const [whole,fraction='']=raw.split('.'),minor=BigInt(whole)*100n+BigInt(fraction.padEnd(2,'0'));
-  if(minor<=0n||minor>BigInt(Number.MAX_SAFE_INTEGER))fail();const amount=Number(minor)/100;
-  if(Math.round(amount*100)!==Number(minor))fail();
+  function plain(text){
+   const match=/^(\d+)(?:\.(\d*))?(?:e([+-]?\d+))?$/i.exec(text);if(!match||text.length>400)fail();
+   const scale=(match[2]||'').length-Number(match[3]||0);if(Math.abs(scale)>324)fail();
+   let value=BigInt(match[1]+(match[2]||'')),digits=scale;
+   if(digits<0){value*=10n**BigInt(-digits);digits=0;}
+   while(digits>0&&value%10n===0n){value/=10n;digits--;}
+   return String(value)+':'+digits;
+  }
+  if(!['string','number'].includes(typeof input.amount))fail();
+  const raw=String(input.amount).trim();
+  if(typeof input.amount==='string'&&!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(raw))fail();
+  const original=raw.startsWith('.')?'0'+raw:raw,amount=Number(original);
+  if(!Number.isFinite(amount)||amount<=0||amount>Number.MAX_SAFE_INTEGER||plain(original)!==plain(String(amount)))fail();
   if(typeof input.date!=='string'||!Number.isFinite(Date.parse(input.date)))fail();
   for(const key of ['description','image'])if(input[key]!=null&&(typeof input[key]!=='string'||input[key].length>2048))fail();
   return {kind:'add',amount,type:input.type,date:new Date(input.date).toISOString(),description:input.description||'',image:input.image||''};

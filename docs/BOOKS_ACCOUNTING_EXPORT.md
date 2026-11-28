@@ -886,3 +886,27 @@ not shared admission or recovery. Compatibility evidence confirms that connectin
 the current two-decimal wallet engine to every legacy manual request would narrow
 existing functionality; monetary precision must be reconciled before replacement.
 No new persisted field or sync lane and no app release.
+
+
+### Exact decimal compatibility for wallet recovery
+
+Removed the unmounted engine/browser store's two-decimal restriction. Arithmetic
+now sums the decimal values of stored finite JavaScript numbers using scaled
+integers, without currency inference or rounding. Existing three/four-decimal and
+small decimal originals survive storage/reload. Input strings that would lose
+precision when converted to the existing numeric storage format are refused.
+Expected totals are checked for exact representability before customer admission
+or ledger mutation. Legacy balances that disagree with the exact ledger still hold
+for review; no silent migration or balance rewrite is performed.
+
+13 decimal/store/browser tests pass. Real Mongo checks verify .1+.2=.3,
+four-decimal addition/removal and unrepresentable-total refusal with unchanged
+customer/ledger. Real Chromium/HTTP/Mongo two-window/reload/lost-reply/removal test
+now uses 25.1234 and passes with preserved balances 25.1234 -> 40.1234 -> 25.1234.
+Auth remains a fixture. 80nyqh/qZ15UW scratch removed and independently absent.
+
+The general decimal compatibility restriction is closed for finite numeric ledger
+values within the storage range. Currency conversion, Decimal128 migration and
+reconciliation of already drifted legacy balances are not implemented. The engine
+is still unmounted pending legacy writer coordination and normal-page integration;
+branch restrictions, history archival and sync authority remain open.
