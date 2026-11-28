@@ -525,6 +525,18 @@ describe('CustomerRepository (class, extends BaseModel)', () => {
   // ── update ────────────────────────────────────────────────────────────────
 
   describe('update', () => {
+    test('refuses a customer whose atomic update did not match', async () => {
+      mockCollection.findOneAndUpdate.mockResolvedValueOnce(null);
+      await expect(repository.update(FAKE_ID, {balance: 900})).rejects.toThrow('unfinished payment');
+      expect(mockCollection.findOneAndUpdate.mock.calls[0][0]).toEqual(expect.objectContaining({
+        books_receipt_lock: {$exists:false}, legacy_invoice_payment_lock: {$exists:false}
+      }));
+    });
+    test.each(require('../../../src/services/local-accounting-fields').fields.flatMap(key => [key,key+'.id']))('rejects reserved key %s for internal callers too', async key => {
+      await expect(repository.update(FAKE_ID, {[key]:'forged'})).rejects.toThrow('cannot be edited');
+      expect(mockCollection.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
     test('unsets email when an update clears the optional value', async () => {
       await repository.update(FAKE_ID, { email: '' });
       const update = mockCollection.findOneAndUpdate.mock.calls[0][1];
@@ -565,6 +577,18 @@ describe('CustomerRepository (class, extends BaseModel)', () => {
   // ── softDelete ────────────────────────────────────────────────────────────
 
   describe('softDelete', () => {
+    test.each(['books_receipt_lock','legacy_invoice_payment_lock'])('refuses %s before backup or deletion', async key => {
+      mockCollection.findOne.mockResolvedValueOnce({...FAKE_CUSTOMER,[key]:{id:'pending'}});
+      await expect(repository.softDelete(FAKE_ID)).rejects.toThrow('unfinished payment');
+      expect(mockRecycleCollection.insertOne).not.toHaveBeenCalled();expect(mockCollection.deleteOne).not.toHaveBeenCalled();
+    });
+    test('does not report deletion when the original customer no longer matches', async () => {
+      mockCollection.findOne.mockResolvedValueOnce(FAKE_CUSTOMER);
+      mockCollection.deleteOne.mockResolvedValueOnce({deletedCount:0});
+      await expect(repository.softDelete(FAKE_ID)).rejects.toThrow('changed during deletion');
+      expect(mockCollection.deleteOne.mock.calls[0][0].$expr).toEqual({$eq:['$$ROOT',{$literal:FAKE_CUSTOMER}]});
+    });
+
     test('calls findOne to get customer before deletion', async () => {
       mockCollection.findOne.mockResolvedValueOnce(FAKE_CUSTOMER);
       await repository.softDelete(FAKE_ID);

@@ -710,3 +710,24 @@ sales is covered at the mocked-service controller boundary. Scratch 6LHP46 was
 removed and independently absent. This changes transport presentation only; legacy
 change feeds, other export/ledger paths and Gateway/agent ownership still require
 audit. It does not establish installed paired acceptance or real stock recovery.
+
+
+### Customer edits and deletion versus receipt admission
+
+Ordinary repository updates now reject reserved recovery keys (including dotted
+paths) and atomically require both Books and invoice payment reservations to be
+absent. A nonmatching update is an error, not an apparent successful edit. Single
+and bulk customer deletion refuse existing reservations and delete only exact
+original customer snapshots, protecting a reservation acquired during backup.
+Partial bulk deletion reports how many were deleted and says changed rows were kept.
+
+460 customer repository/service/controller tests pass. Standalone Mongo integration
+checks locked edit refusal, normal editing after explicit fixture release and both
+delete race paths with a reservation inserted during backup. Stored balances and
+locks survive refusal. The backup snapshot is intentionally retained after a race;
+the normal-delete check explicitly removes that fixture backup before retry, so it
+does not establish automatic backup-conflict recovery. That recovery remains open.
+Scratch sGBlrG/60NOY1 removed and independently absent. No new persisted fields or
+sync lanes; authoritative cross-device coordination remains unverified. Manual
+wallet addition/deletion still needs durable original-request admission and UI
+recovery. This guard does not complete that workflow or installed acceptance.

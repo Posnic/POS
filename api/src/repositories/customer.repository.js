@@ -205,6 +205,10 @@ class CustomerRepository extends BaseModel {
    * Update customer
    */
   async update(id, updateData) {
+    const reserved = require('../services/local-accounting-fields').fields;
+    if (Object.keys(updateData || {}).some(key => reserved.includes(key.split('.')[0]))) {
+      throw new Error('Payment recovery fields cannot be edited.');
+    }
     const collection = await this.getCollection(this.collectionName);
     const normalizedData = { ...updateData };
     const unsetEmail =
@@ -221,11 +225,14 @@ class CustomerRepository extends BaseModel {
         _id: new ObjectId(id),
         license: BaseModel.license,
         is_deleted: { $ne: true },
+        books_receipt_lock: { $exists: false },
+        legacy_invoice_payment_lock: { $exists: false },
       },
       updateOperation,
       { returnDocument: 'after' }
     );
 
+    if (!result) throw new Error('Customer changed or has an unfinished payment. Reopen the customer and recover the original payment before editing.');
     return result;
   }
 
@@ -245,6 +252,10 @@ class CustomerRepository extends BaseModel {
       throw new Error('Customer not found');
     }
 
+    if (Object.hasOwn(customer, 'books_receipt_lock') || Object.hasOwn(customer, 'legacy_invoice_payment_lock')) {
+      throw new Error('Customer has an unfinished payment. Recover it before deleting the customer.');
+    }
+
     // Backup to recycle bin collection
     const recycleCollection = await this.getCollection(this.collectionName + '_recycle_bin');
     await recycleCollection.insertOne({
@@ -257,7 +268,9 @@ class CustomerRepository extends BaseModel {
     const result = await collection.deleteOne({
       _id: new ObjectId(id),
       license: BaseModel.license,
+      $expr: { $eq: ['$$ROOT', { $literal: customer }] },
     });
+    if (!result.deletedCount) throw new Error('Customer changed during deletion. Reopen the customer before trying again.');
 
     return customer;
   }
@@ -283,6 +296,9 @@ class CustomerRepository extends BaseModel {
 
     // Backup to recycle bin collection
     const recycleCollection = await this.getCollection(this.collectionName + '_recycle_bin');
+    if (customers.some(customer => Object.hasOwn(customer, 'books_receipt_lock') || Object.hasOwn(customer, 'legacy_invoice_payment_lock'))) {
+      throw new Error('A selected customer has an unfinished payment. Recover it before deleting customers.');
+    }
     const backupDocs = customers.map((customer) => ({
       ...customer,
       deleted_date: new Date(),
@@ -294,7 +310,11 @@ class CustomerRepository extends BaseModel {
     const result = await collection.deleteMany({
       _id: { $in: objectIds },
       license: BaseModel.license,
+      $or: customers.map(customer => ({_id: customer._id, $expr: { $eq: ['$$ROOT', { $literal: customer }] }})),
     });
+    if (result.deletedCount !== customers.length) {
+      throw new Error(`${result.deletedCount} customers deleted; other selected customers changed and were kept. Reopen the list before trying again.`);
+    }
 
     return { deletedCount: result.deletedCount, modifiedCount: result.deletedCount };
   }
