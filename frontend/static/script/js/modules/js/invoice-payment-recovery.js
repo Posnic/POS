@@ -31,7 +31,7 @@
             .text(t('lang_check_saved_payment','Check saved result')).prop('disabled',candidate.busy).on('click',()=>check(candidate));
         panel.append(checkButton);
         if (action) panel.append($('<button>').attr({type:'button','data-module':'sales','data-access':'write'})
-            .addClass('btn btn-sm btn-success').text(action==='replace'?t('lang_review_new_payment','Review a new payment'):action==='retry'?t('lang_retry_original_payment','Retry original request'):t('lang_finish_original_payment','Finish original payment'))
+            .addClass('btn btn-sm btn-success').text(action==='recover-issuance'?t('lang_finish_invoice_preparation','Finish invoice preparation'):action==='replace'?t('lang_review_new_payment','Review a new payment'):action==='retry'?t('lang_retry_original_payment','Retry original request'):t('lang_finish_original_payment','Finish original payment'))
             .prop('disabled',candidate.busy).on('click',()=>send(candidate,action)));
         if(canStop)panel.append($('<button>').attr({type:'button','data-module':'sales','data-access':'write'})
             .addClass('btn btn-sm btn-light border ml-2').text(t('lang_stop_payment_request','Stop this request'))
@@ -55,6 +55,9 @@
             const status=response && response.type==='success' && response.data;
             if (!status || status.commandId!==candidate.record.request.commandId) { render(candidate,uncertain()); return; }
             candidate.status=status;
+            if(status.state==='issuance_pending'){
+                render(candidate,status.canFinishIssuance===true?t('lang_original_invoice_booked','The sale is booked. Finish updating the invoice before reviewing the original payment.'):t('lang_original_invoice_review','Invoice issuance needs review. Keep the original payment request.'),status.canFinishIssuance===true?'recover-issuance':null);return;
+            }
             if(status.state==='stopped' && status.canReplace===true){
                 render(candidate,t('lang_payment_request_stopped','The server stopped this request. Review new details before recording another payment.'),'replace');return;
             }
@@ -90,8 +93,8 @@
         }
         candidate.busy=true; ++sequence; render(candidate,t('lang_payment_working','Saving the original payment…'));
         const base='invoices/'+encodeURIComponent(candidate.scope.invoiceId);
-        P.post({url:['recover','stop'].includes(action)?base+'/payment-requests/'+record.request.commandId+'/'+action:base+'/payment',
-            data:JSON.stringify(['recover','stop'].includes(action)?{confirmed:true}:record.request)},function(response){
+        P.post({url:['recover','stop','recover-issuance'].includes(action)?base+'/payment-requests/'+record.request.commandId+'/'+action:base+'/payment',
+            data:JSON.stringify(['recover','stop','recover-issuance'].includes(action)?{confirmed:true}:record.request)},function(response){
             if(!current(candidate))return; candidate.busy=false;
             if(response && response.type==='success')check(candidate);else render(candidate,uncertain());
         },function(){if(current(candidate)){candidate.busy=false;render(candidate,uncertain());}});

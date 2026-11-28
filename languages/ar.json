@@ -5563,5 +5563,8 @@
   "lang_payment_amount_due": "أدخل مبلغاً أكبر من الصفر ولا يتجاوز رصيد الفاتورة.",
   "lang_review_new_payment": "مراجعة دفعة جديدة",
   "lang_stop_payment_request": "إيقاف هذا الطلب",
-  "lang_payment_request_stopped": "أوقف الخادم هذا الطلب. راجع التفاصيل الجديدة قبل تسجيل دفعة أخرى."
+  "lang_payment_request_stopped": "أوقف الخادم هذا الطلب. راجع التفاصيل الجديدة قبل تسجيل دفعة أخرى.",
+  "lang_finish_invoice_preparation": "إكمال إعداد الفاتورة",
+  "lang_original_invoice_booked": "تم تسجيل البيع. أكمل تحديث الفاتورة قبل مراجعة الدفعة الأصلية.",
+  "lang_original_invoice_review": "إصدار الفاتورة يحتاج إلى مراجعة. احتفظ بطلب الدفعة الأصلي."
 }

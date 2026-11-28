@@ -8,12 +8,17 @@ function create({db}){
   return {_id:new ObjectId(String(id)),license:new ObjectId(String(context.licenseId)),branch_id:new ObjectId(String(context.branchId))};
  };
  return {
-  async reserve(id,context,commandId){
+  async reserve(id,context,commandId,request){
    const key=scope(id,context),invoice=await invoices.findOne(key);
    if(!invoice||invoice.sale_id||invoice.status!=='draft'||invoice.books_receipt_lock||invoice.invoice_issue_lock)fail();
    if(commandId&&(invoice.invoice_payment_stops||[]).some(row=>row.id===commandId))fail();
-   const lock={token:randomUUID(),state:'preparing',actorId:context.userId?String(context.userId):null,startedAt:new Date()};
-   const result=await invoices.updateOne({...key,$expr:{$eq:['$$ROOT',{$literal:invoice}]}},{$set:{invoice_issue_lock:lock}});
+   const lock={token:randomUUID(),state:'preparing',commandId:commandId||null,actor:context.userName,actorId:context.userId?String(context.userId):null,startedAt:new Date()};
+   const requests=invoice.invoice_payment_requests||[];
+   if(!Array.isArray(requests)||requests.length>=1000)fail();
+   const existing=commandId&&requests.find(row=>row.id===commandId);
+   if(existing&&!require('./invoice-sync').invoiceRequestMatches(invoice,commandId,request,context))fail();
+   const record=commandId&&request&&!existing?{id:commandId,request,actor:context.userName,actorId:lock.actorId}:null;
+   const result=await invoices.updateOne({...key,$expr:{$eq:['$$ROOT',{$literal:invoice}]}},{$set:{invoice_issue_lock:lock},...(record?{$push:{invoice_payment_requests:record}}:{})});
    if(!result.matchedCount)fail();return {invoice,token:lock.token};
   },
   async stop(id,context,commandId){

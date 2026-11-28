@@ -254,7 +254,7 @@ module.exports = {
         if (original.state !== 'saved') return fail(res, 'This invoice is already paid');
       }
       if (!inv.sale_id || inv.invoice_issue_lock) {
-        const issued = await invoiceBooking.issueInvoice(req.params.id, ctx, {commandId:req.body?.commandId});
+        const issued = await invoiceBooking.issueInvoice(req.params.id, ctx, {commandId:req.body?.commandId,request:invoiceSync.originalRequest(req.body||{})});
         if (!issued.status) return fail(res, issued.message);
         found = await repository.getInvoice(req.params.id, ctx);
         if (!found.status) return fail(res, found.message, 404);
@@ -266,6 +266,16 @@ module.exports = {
       console.error('Error in invoices payment:', error);
       return fail(res, error.message, 500);
     }
+  },
+
+  async recoverIssuance(req, res) {
+    try {
+      if (!req.user || !can(req, 'read') || !can(req, 'write')) return fail(res, 'Unauthorized access', 403);
+      if (req.body?.confirmed !== true || Object.keys(req.body).some(key => key !== 'confirmed')) return fail(res, 'Confirm finishing the original invoice issuance', 400);
+      if (!invoiceSync.requestIdValid(req.params.commandId)) return fail(res, 'Original request identity required', 400);
+      const result=await invoiceBooking.issueInvoice(req.params.id,contextOf(req),{recoverOnly:true,commandId:req.params.commandId});
+      return result.status?ok(res,result.data,result.message):fail(res,result.message,409);
+    } catch(error) { return fail(res,'Invoice issuance still needs review. Keep the original request.',409); }
   },
 
   async stopPaymentRequest(req, res) {

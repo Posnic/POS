@@ -206,10 +206,13 @@ async function issueInvoice(invoiceId, context = {}, options = {}) {
   const found = await repo.getInvoice(invoiceId, context);
   if (!found.status) return { status: false, data: null, message: found.message };
   let invoice = found.data;
+  if(options.commandId&&!options.recoverOnly&&!invoiceSync.invoiceRequestMatches(invoice,options.commandId,options.request,context))return {status:false,data:null,message:'Original draft payment request differs'};
+  if(options.recoverOnly&&!invoice.invoice_issue_lock)return {status:false,data:null,message:'Check the original issuance result'};
   if(options.commandId&&(invoice.invoice_payment_stops||[]).some(row=>row.id===options.commandId))return {status:false,data:null,message:'Original payment request was stopped'};
   const admission = require('./invoice-issue-admission').create({db:await BaseModel.getDb()});
   if (invoice.invoice_issue_lock) {
     const lock=invoice.invoice_issue_lock;
+    if(options.recoverOnly&&(lock.commandId!==options.commandId||(lock.actorId?String(context.userId||'')!==lock.actorId:context.userName!==lock.actor)))return {status:false,data:null,message:'Original issuance identity required'};
     await admission.verifyBooked(invoiceId,context,lock);
     const synced=await invoiceSync.syncSale(lock.saleId,{invoiceId:String(invoice._id)});
     if(!synced.synced)return {status:false,data:null,message:'The original sale needs invoice mirror recovery'};
@@ -233,7 +236,7 @@ async function issueInvoice(invoiceId, context = {}, options = {}) {
     return { status: false, data: null, message: 'Only a draft can be issued' };
   }
 
-  const reserved = await admission.reserve(invoiceId,context,options.commandId);
+  const reserved = await admission.reserve(invoiceId,context,options.commandId,options.request);
   invoice = reserved.invoice;
   const salesService = require('./sale.service');
   const ItemRepository = require('../repositories/item.repository');

@@ -638,3 +638,24 @@ Remaining: recovery UI for issuance_pending and durable proof/recovery of unknow
 sale-engine effects, all customer writers, authoritative sync and installed paired
 acceptance. Earlier lack of any pre-issuance stop is superseded; an issuance that
 has entered booking is still held rather than cancelled or silently restarted.
+
+### Finish acknowledged issuance without collecting payment
+
+The original request/cashier is retained on issuance admission. Recovery-only
+issuance refuses new booking, wrong request/cashier and unacknowledged engine
+outcomes. Its authenticated confirmed endpoint is connected to an EN/AR action:
+finish the original mirror, then check the payment separately. It never submits
+money automatically. The original draft payment values are also retained on the
+invoice before issuance and verified on later issue/payment retries.
+
+Validation: 44 invoice unit tests, 12 browser/store tests and two standalone-Mongo
+suites pass. Actual controller/Mongo tests verify original request/cashier checks,
+no ledger money from mirror completion, changed draft-value refusal, separate
+subsequent collection and no second sale-engine invocation. Issuance uses a fixture
+sale engine; full stock/accounting engine recovery is still not established. The
+mockup's acknowledged/unknown issuance states pass EN/AR checks. itwMYV/NwQgDu
+scratch removed and independently absent; attribution/diff checks pass.
+
+Invoice request/issuance metadata is local command evidence. API filtering and
+cross-device authority/sync require audit before activation; no installed or
+production acceptance is claimed. Unknown engine outcomes remain held.

@@ -169,7 +169,12 @@ const sameCashier = (original,context) => original.actorId
   ? String(context.userId || '') === original.actorId
   : context.userName === original.actor;
 
+function invoiceRequestMatches(invoice,commandId,request,context){
+ const originals=(invoice?.invoice_payment_requests||[]).filter(row=>row.id===commandId);
+ return !originals.length||(originals.length===1&&sameCashier(originals[0],context)&&JSON.stringify(originals[0].request)===JSON.stringify(request));
+}
 async function recordPayment(invoice, payment = {}, context = {}) {
+  if(payment.commandId&&!invoiceRequestMatches(invoice,payment.commandId,originalRequest(payment),context))return {status:false,data:null,message:'Original draft payment request differs'};
   if (payment.commandId !== undefined && !requestIdValid(payment.commandId))
     return {status:false,data:null,message:'Invalid original payment request identity'};
   if(payment.commandId&&(invoice?.invoice_payment_stops||[]).some(row=>row.id===payment.commandId))return {status:false,data:null,message:'Original payment request was stopped'};
@@ -428,7 +433,7 @@ async function paymentRequestStatus(invoice,commandId,context={}) {
  if(!requestIdValid(commandId))throw new Error('Original payment identity required');
  const draftStop=(invoice?.invoice_payment_stops||[]).find(row=>row.id===commandId);
  if(draftStop)return {state:'stopped',commandId,canReplace:sameCashier(draftStop,context)};
- if(invoice?.invoice_issue_lock)return {state:'issuance_pending',commandId,canRecover:false};
+ if(invoice?.invoice_issue_lock)return {state:'issuance_pending',commandId,canRecover:false,canFinishIssuance:invoice.invoice_issue_lock.state==='booked'&&invoice.invoice_issue_lock.commandId===commandId&&sameCashier(invoice.invoice_issue_lock,context)};
  if(!invoice?.sale_id)return {state:'absent',commandId,canStop:invoice?.status==='draft'};
  const sale=await loadSale(invoice.sale_id);
  if(!sale||String(sale.license)!==String(context.licenseId)||String(sale.branch_id)!==String(context.branchId)||
@@ -484,5 +489,7 @@ module.exports = {
   paymentRequestStatus,
   stopPaymentRequest,
   requestIdValid,
+  originalRequest,
+  invoiceRequestMatches,
   _round2: round2,
 };

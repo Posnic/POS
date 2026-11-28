@@ -86,3 +86,18 @@ test('replacement waits for confirmed stop, survives a lost stop reply and never
   await f.app.payConfirm();assert.notEqual(JSON.parse(f.calls.posts[2].options.data).commandId,original.commandId);
  }finally{f.close();}
 });
+
+test('finishing acknowledged issuance does not automatically collect the original payment',async()=>{
+ const f=setup();try{
+  await f.app.payConfirm();const original=JSON.parse(f.calls.posts[0].options.data);f.calls.posts[0].fail();
+  f.$('#ie_payment_recovery button').first().trigger('click');
+  await f.calls.gets[0].ok({type:'success',data:{state:'issuance_pending',commandId:original.commandId,canFinishIssuance:false}});
+  assert.equal(f.$('#ie_payment_recovery button').length,1);
+  f.$('#ie_payment_recovery button').first().trigger('click');
+  await f.calls.gets[1].ok({type:'success',data:{state:'issuance_pending',commandId:original.commandId,canFinishIssuance:true}});
+  f.$('#ie_payment_recovery button').last().trigger('click');assert.ok(f.calls.posts[1].options.url.endsWith('/recover-issuance'));
+  assert.deepEqual(JSON.parse(f.calls.posts[1].options.data),{confirmed:true});
+  f.calls.posts[1].ok({type:'success'});await f.calls.gets[2].ok({type:'success',data:{state:'absent',commandId:original.commandId,canStop:true}});
+  assert.equal(f.calls.posts.length,2);assert.equal(f.data.size,1);
+ }finally{f.close();}
+});

@@ -41,6 +41,7 @@ jest.mock('../../../src/repositories/invoice.repository', () => {
 const mockSync = jest.fn();
 jest.mock('../../../src/services/invoice-sync', () => ({
   syncSale: (...a) => mockSync(...a),
+  invoiceRequestMatches:()=>true,
 }));
 
 const collections = {};

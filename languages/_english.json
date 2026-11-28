@@ -5310,5 +5310,8 @@
   "lang_payment_amount_due": "Enter an amount greater than zero and no more than the invoice balance.",
   "lang_review_new_payment": "Review a new payment",
   "lang_stop_payment_request": "Stop this request",
-  "lang_payment_request_stopped": "The server stopped this request. Review new details before recording another payment."
+  "lang_payment_request_stopped": "The server stopped this request. Review new details before recording another payment.",
+  "lang_finish_invoice_preparation": "Finish invoice preparation",
+  "lang_original_invoice_booked": "The sale is booked. Finish updating the invoice before reviewing the original payment.",
+  "lang_original_invoice_review": "Invoice issuance needs review. Keep the original payment request."
 }
