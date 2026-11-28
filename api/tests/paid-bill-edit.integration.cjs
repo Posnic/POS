@@ -85,3 +85,20 @@ test('enabled inventory log is written once when retried',async()=>{
  await db.collection('branches').updateOne({_id:branchId},{$set:{stock_management_log:true}});
  await apply();await apply();assert.equal(await db.collection('stocklogs').countDocuments(),1);
 });
+
+test('wallet settlement prevents correction and restaurant deletion without changing financial originals',async()=>{
+ const deletion=require('../src/services/restaurant-sale-delete');
+ await db.collection('sales').updateOne({_id:id},{$set:{captain_payment_version:1}});
+ await db.collection('captain_payment_plans').updateOne({_id:'plan'},{$set:{version:1,projectedVersion:1,sales:[old]}});
+ const names=['sales','items','cashregister','captain_payment_plans','transaction','stocklogs'];
+ const snapshot=()=>Promise.all(names.map(name=>db.collection(name).find({}).sort({_id:1}).toArray()));
+ for(const lock of [null,{kind:'sale-settlement',commandId:'original-request'}]){
+  await db.collection('sales').updateOne({_id:id},{$set:{wallet_entry_lock:lock}});
+  const original=await snapshot();
+  await assert.rejects(apply(),/bill changed/);
+  await assert.rejects(deletion.begin(db,await db.collection('sales').findOne({_id:id})),/changed|updated/);
+  assert.deepEqual(await snapshot(),original);
+ }
+ await db.collection('sales').updateOne({_id:id},{$unset:{wallet_entry_lock:''}});
+ const admitted=await deletion.begin(db,await db.collection('sales').findOne({_id:id}));assert.equal(typeof admitted.finish,'function');
+});

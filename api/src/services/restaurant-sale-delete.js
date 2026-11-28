@@ -76,6 +76,7 @@ async function begin(db, sale) {
       return_refund_lock: { $exists: false },
       books_receipt_lock: { $exists: false },
       legacy_invoice_payment_lock: { $exists: false },
+      wallet_entry_lock: { $exists: false },
       'return_refund_transactions.0': { $exists: false },
       'items_return.0': { $exists: false },
       'payment_corrections.0': { $exists: false },

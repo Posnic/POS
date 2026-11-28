@@ -184,6 +184,7 @@ async function reserve(db, scope, { requestId, actor, intent, sales }) {
           floor_closed_at: { $exists: false },
           books_receipt_lock: { $exists: false },
           legacy_invoice_payment_lock: { $exists: false },
+          wallet_entry_lock: { $exists: false },
           order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
           $and: [
             eligibility,

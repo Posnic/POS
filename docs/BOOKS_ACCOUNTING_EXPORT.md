@@ -956,3 +956,7 @@ Dedicated real-Mongo tests pass all 21 linked-document write interruptions plus 
 ### Ordinary document writer admission
 
 Invoice repository edits, payment mirrors/notes, cancellation, sharing and deletion now refuse wallet_entry_lock. Quotation edits/share/delete and transitions do likewise; transitions compare the scoped original and check matchedCount so late reservations cannot be reported as successful conversions. Real Mongo tests exercise 15 operations unreserved and reserved with object/null evidence, plus reservation between quote read/write. 72 invoice/quote repository tests pass. Direct issuance and remaining sale/customer writers, authenticated integration and ownership review remain open; the settlement coordinator is not activated.
+
+### Sale/payment reservation guards
+
+Ordinary sale saves, wallet updates and legacy settlement, restaurant payment/restructure/transfer, paid-bill correction and deletion admission now refuse wallet_entry_lock. Books receipt reservation/mutability and ordinary invoice payment admission/status/stop do likewise, including null lock evidence. Nine POS suites pass 496 regression tests; two paired real-Mongo receipt suites pass held and late-admission cases; 14 paid-edit integration cases include no-change correction/deletion under wallet ownership. Remaining direct customer-ledger writers and activation/authority work remain open.

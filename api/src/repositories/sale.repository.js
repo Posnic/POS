@@ -2108,6 +2108,7 @@ class SalesRepository {
         captain_payment_plan: { $exists: false },
         books_receipt_lock: { $exists: false },
         legacy_invoice_payment_lock: { $exists: false },
+        wallet_entry_lock: { $exists: false },
         seating_capacity_revision: expectedCapacity,
       };
     }
@@ -2125,6 +2126,7 @@ class SalesRepository {
           license: BaseModel.license,
           books_receipt_lock: { $exists: false },
           legacy_invoice_payment_lock: { $exists: false },
+          wallet_entry_lock: { $exists: false },
         },
         {
           $set: {
@@ -4905,6 +4907,7 @@ class SalesRepository {
           payment_correction_pending: { $exists: false },
           books_receipt_lock: { $exists: false },
           legacy_invoice_payment_lock: { $exists: false },
+          wallet_entry_lock: { $exists: false },
           $and: [
             {
               $or: [
@@ -7244,6 +7247,7 @@ class SalesRepository {
         updateFilter.captain_payment_plan = { $exists: false };
         updateFilter.books_receipt_lock = { $exists: false };
         updateFilter.legacy_invoice_payment_lock = { $exists: false };
+        updateFilter.wallet_entry_lock = { $exists: false };
         const settled = await saleCollection.updateMany({...updateFilter, $expr:{$eq:['$$ROOT',{$literal:saleDetails}]}}, {
           $set: {
             partial_balance: paidAfter,

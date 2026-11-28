@@ -201,7 +201,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
          JSON.stringify(sale.legacy_invoice_payment_lock.request) !== JSON.stringify(originalRequest(payment))))
       return {status:false,data:null,message:'Original payment request differs; review the unfinished request'};
   }
-  if (sale.books_receipt_lock || sale.legacy_invoice_payment_lock) return { status: false, data: null, message: 'This sale has an unfinished payment; recover the original request' };
+  if (sale.books_receipt_lock || sale.legacy_invoice_payment_lock || Object.hasOwn(sale,'wallet_entry_lock')) return { status: false, data: null, message: 'This sale has an unfinished payment; recover the original request' };
   if (sale.captain_payment_plan || sale.payment_correction_pending || sale.return_refund_lock ||
       new Date(sale.captain_edit_until || 0).getTime() >= Date.now()) {
     return { status: false, data: null, message: 'Finish the existing payment, return or sale edit before collecting this invoice' };
@@ -261,14 +261,14 @@ async function recordPayment(invoice, payment = {}, context = {}) {
     source: require('mongodb').BSON.deserialize(require('mongodb').BSON.serialize(sale)), invoiceNumber: String(invoice.invoice_id || '') };
   if(sale.customer_id && ObjectId.isValid(String(sale.customer_id)))
     admission.ledger = await require('./invoice-payment-ledger').capture(db,sale,before);
-  const unlocked = { books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false } };
+  const unlocked = { books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false }, wallet_entry_lock: { $exists: false } };
   const admitted = await sales.updateOne({ _id: sale._id, ...unlocked,
     $expr: { $eq: ['$$ROOT', { $literal: sale }] } }, { $set: { legacy_invoice_payment_lock: admission } });
   if (!admitted.matchedCount) return { status: false, data: null, message: 'Sale changed or has an unfinished payment; check the original request' };
   const customerKey = sale.customer_id && ObjectId.isValid(String(sale.customer_id))
     ? { _id: new ObjectId(String(sale.customer_id)), license: sale.license, branch_id: sale.branch_id } : null;
   if (customerKey) {
-    const held = await db.collection('customers').updateOne({ ...customerKey, ...unlocked, wallet_entry_lock: { $exists: false } },
+    const held = await db.collection('customers').updateOne({ ...customerKey, ...unlocked },
       { $set: { legacy_invoice_payment_lock: admission } });
     if (!held.matchedCount) {
       await sales.updateOne({ _id: sale._id, 'legacy_invoice_payment_lock.id': admission.id }, { $unset: { legacy_invoice_payment_lock: '' } });
@@ -450,7 +450,7 @@ async function paymentRequestStatus(invoice,commandId,context={}) {
   canRecover:!!admission.source&&sameCashier(admission,context)&&
     (!admission.source.customer_id||!!admission.ledger),
  };
- return {state:admission||sale.books_receipt_lock?'other_pending':'absent',commandId,canStop:!admission&&!sale.books_receipt_lock};
+ return {state:admission||sale.books_receipt_lock||Object.hasOwn(sale,'wallet_entry_lock')?'other_pending':'absent',commandId,canStop:!admission&&!sale.books_receipt_lock&&!Object.hasOwn(sale,'wallet_entry_lock')};
 }
 
 // Serialize stop against admission on the same sale. Never release admitted money.
@@ -469,7 +469,7 @@ async function stopPaymentRequest(invoice,commandId,context={}) {
   if(!Array.isArray(stops))throw new Error('Original stop history requires review');
   const stopped=stops.find(row=>row.id===commandId);
   if(stopped)return {state:'stopped',commandId,canReplace:sameCashier(stopped,context)};
-  if(sale.legacy_invoice_payment_lock||sale.books_receipt_lock||
+  if(sale.legacy_invoice_payment_lock||sale.books_receipt_lock||Object.hasOwn(sale,'wallet_entry_lock')||
      (sale.legacy_invoice_payment_results||[]).some(row=>row.id===commandId))throw new Error('Payment admitted or completed; check its original result');
   if(stops.length>=1000||require('mongodb').BSON.calculateObjectSize(sale)>512*1024)throw new Error('Original stop history requires review');
   const stoppedRequest={id:commandId,actor:context.userName,actorId:context.userId?String(context.userId):null,stoppedAt:new Date()};

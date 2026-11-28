@@ -426,6 +426,7 @@ async function amend(req, payload, saleContext, options = {}) {
       return_refund_lock: { $exists: false },
       books_receipt_lock: { $exists: false },
       legacy_invoice_payment_lock: { $exists: false },
+      wallet_entry_lock: { $exists: false },
       $or: [
         { captain_edit_until: { $exists: false } },
         { captain_edit_until: { $lt: new Date() } },
