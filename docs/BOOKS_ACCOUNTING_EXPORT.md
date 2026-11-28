@@ -968,3 +968,7 @@ Manual add/delete reject unavailable or reserved customers (wallet, Books receip
 ### Settlement HTTP boundary (not registered)
 
 The explicit router factory requires authentication middleware, authenticated req.db, scoped business/branch/customer/cashier and effective customer read/write permissions. Mutations require confirmation; recovery/stop accept no replacement payload. Expected conflicts are 409; uncertain storage outcomes are sanitized 503 retaining the original request. Real HTTP/Mongo checks cover permission/scope denial, confirmation, actor ownership, replay, stop and lost committed-allocation acknowledgement recovery. Authentication is a fixture; live registration and production login acceptance remain open.
+
+### Settlement browser original storage
+
+The bilingual recovery mockup is verified in the paired Books checkout (native Chromium, 390/960 widths, gold/green/dark, stop confirmation/race; screenshots visually inspected). The new browser store retains scoped UUID/selected sales before sending, serializes tabs through Web Locks, preserves exact numeric inputs and blocks replacement until verified saved/replaceable-stopped results. Four Node tests pass using simulated storage/locks, including reload, scope isolation, stale results, corruption/quota/silent failure and decimal inputs. Native browser persistence and component/page wiring remain required before activation.
