@@ -891,6 +891,30 @@ describe('SalesController', () => {
 
   // ── getOne ───────────────────────────────────────────────────────────────────
   describe('getOne', () => {
+    test.each(['wrapped', 'bare', 'return', 'latest', 'failed'])('keeps local receipt evidence out of %s sale responses', async shape => {
+      const fields = require('../../../src/services/local-accounting-fields').fields;
+      const row = {_id: VALID_ID, sales_total: 125, partial_balance: 25, items: [{item_name:'Tea', item_price:125}],
+        custom_fields: {invoice_issue_lock: 'Literal customer field'},
+        ...Object.fromEntries(fields.map(key => [key, {snapshot:'private-original'}]))};
+      const res = mockRes(), next = mockNext();
+      const req = mockReq({params:{id:VALID_ID}, query:{id:VALID_ID}});
+      if(shape === 'latest') {
+        salesService.getLatestSales.mockResolvedValue([row]);await ctrl.getLatestSales(req,res);
+      } else if(shape === 'return') {
+        salesService.getReturnSalesDetails.mockResolvedValue({status:true,data:row});await ctrl.getReturnSalesDetails(req,res);
+      } else {
+        salesService.getLegacySaleDetails.mockResolvedValue(shape === 'bare' ? row : {status:shape !== 'failed',data:row});
+        await ctrl.getOne(req,res,next);
+      }
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(shape === 'failed' ? 404 : 200);
+      const body = res.json.mock.calls[0][0];
+      const data = shape === 'latest' ? JSON.parse(body.data)[0] : shape === 'failed' ? body.data.data : body.data;
+      expect(data.sales_total).toBe(125);expect(data.partial_balance).toBe(25);
+      expect(data.items).toEqual(row.items);expect(data.custom_fields).toEqual(row.custom_fields);
+      for(const field of fields){expect(data).not.toHaveProperty(field);expect(row[field]).toEqual({snapshot:'private-original'});}
+    });
+
     test('200 with sale data', async () => {
       const res = mockRes();
       const next = mockNext();

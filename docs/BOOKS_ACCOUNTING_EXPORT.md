@@ -694,3 +694,19 @@ and passing scratch roots (wRzEIN/Uu8Zty) were removed and independently absent.
 Authentication context remains a fixture. No stored schema or sync lane changed;
 Gateway/agent authority, remaining legacy sales/ledger surfaces and coordinated
 manual wallet writes remain open. No application was packaged or deployed.
+
+
+### Legacy sale view response boundary
+
+Sale detail (including wrapped/bare service responses and failed-result data),
+return detail and recent-sale JSON-string responses exclude local recovery fields.
+Amounts, line items, custom fields and the legacy recent-sale response format are
+preserved. Stored records and internal repository recovery evidence remain intact.
+
+192 sales-controller tests pass. The expanded standalone-Mongo HTTP suite passes
+through actual sale detail/return controllers and repositories, checking preserved
+amounts and unchanged stored evidence. Authentication remains a fixture; recent
+sales is covered at the mocked-service controller boundary. Scratch 6LHP46 was
+removed and independently absent. This changes transport presentation only; legacy
+change feeds, other export/ledger paths and Gateway/agent ownership still require
+audit. It does not establish installed paired acceptance or real stock recovery.

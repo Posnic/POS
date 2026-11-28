@@ -1,3 +1,4 @@
+const { publicResponse } = require('../services/local-accounting-fields');
 const { reportableSales } = require('../helpers/reportable-sales');
 // src/controllers/sales_controller.js
 const BaseController = require('./base.controller');
@@ -1225,16 +1226,16 @@ class SalesController extends BaseController {
         Object.prototype.hasOwnProperty.call(result, 'status')
       ) {
         if (result.status === true && result.data != null) {
-          return this.success(res, result.data, SUCCESS_MESSAGES.GET_SUCCESSFULLY);
+          return this.success(res, publicResponse(result.data), SUCCESS_MESSAGES.GET_SUCCESSFULLY);
         }
-        return this.error(res, ERROR_MESSAGES.SALES_DETAILS_NOT_FOUND, 404, result);
+        return this.error(res, ERROR_MESSAGES.SALES_DETAILS_NOT_FOUND, 404, publicResponse(result));
       }
 
       if (!result) {
         return this.error(res, ERROR_MESSAGES.SALES_DETAILS_NOT_FOUND, 404);
       }
 
-      return this.success(res, result, SUCCESS_MESSAGES.GET_SUCCESSFULLY);
+      return this.success(res, publicResponse(result), SUCCESS_MESSAGES.GET_SUCCESSFULLY);
     } catch (error) {
       next(error);
     }
@@ -1441,7 +1442,7 @@ class SalesController extends BaseController {
       );
 
       // PHP model encodes the array as JSON string or returns 0
-      const latestSaleJson = latestSales.length > 0 ? JSON.stringify(latestSales) : 0;
+      const latestSaleJson = latestSales.length > 0 ? JSON.stringify(publicResponse(latestSales)) : 0;
 
       return res.status(200).json({
         type: 'success',
@@ -6205,7 +6206,7 @@ class SalesController extends BaseController {
       });
 
       if (result.status === true) {
-        return this.success(res, result.data, result.message);
+        return this.success(res, publicResponse(result.data), result.message);
       } else {
         return this.error(res, result.message, 404);
       }
