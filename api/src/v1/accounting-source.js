@@ -54,4 +54,5 @@ function exportSale(sale, license) {
   if (Buffer.byteLength(sourceJson) > 256 * 1024) return fail();
   return { sourceId, revision: createHash('sha256').update(sourceJson).digest('hex'), sourceJson };
 }
-module.exports = { exportSale, identity };
+const projection = Object.fromEntries([...HEADER, 'customer_id', 'customer', 'items', 'charges', 'payments', 'captain_payments', 'payment_corrections', 'return_refund_transactions'].map(key => [key, 1]));
+module.exports = { exportSale, identity, projection };

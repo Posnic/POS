@@ -220,6 +220,7 @@ function openapiSpec() {
     },
     security: [{ token: [] }],
     paths: {
+      ...require('./accounting-export').spec(),
       '/{entity}': {
         get: {
           summary: 'List records, oldest change first',
@@ -331,6 +332,8 @@ function registerV1({ app, protect }) {
     }
     next();
   });
+
+  require('./accounting-export').mount(router, { branchFilter });
 
   router.get('/:entity', async (req, res) => {
     const def = ENTITIES[req.params.entity];
