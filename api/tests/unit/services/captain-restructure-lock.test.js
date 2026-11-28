@@ -265,3 +265,12 @@ test('cancelling during acquisition removes a late reservation without reviving 
   ).toBe(0);
   expect((await locks.read(db, scope, input().requestId, 'staff-1')).stage).toBe('cancelled');
 });
+
+
+test.each(['books_receipt_lock', 'legacy_invoice_payment_lock'])('restructure cannot reserve a sale held by %s', async (field) => {
+  await db.collection('sales').updateOne({_id:sales[0]._id}, {$set:{[field]:{id:'original-payment'}}});
+  await expect(locks.reserve(db, scope, input())).rejects.toMatchObject({status:409});
+  const held = await db.collection('sales').findOne({_id:sales[0]._id});
+  expect(held[field]).toEqual({id:'original-payment'});
+  expect(held.captain_payment_plan).toBeUndefined();
+});

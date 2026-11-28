@@ -4903,6 +4903,8 @@ class SalesRepository {
           _id: saleObjectId,
           ...licenseFilter,
           payment_correction_pending: { $exists: false },
+          books_receipt_lock: { $exists: false },
+          legacy_invoice_payment_lock: { $exists: false },
           $and: [
             {
               $or: [

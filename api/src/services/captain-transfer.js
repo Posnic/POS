@@ -51,6 +51,8 @@ async function available(req, c) {
     payment_status: 'Unpaid',
     floor_closed_at: { $exists: false },
     captain_payment_plan: { $exists: false },
+    books_receipt_lock: { $exists: false },
+    legacy_invoice_payment_lock: { $exists: false },
     order_state: { $nin: ['pending', 'rejected', 'cancelled'] },
     $or: [{ captain_edit_until: { $exists: false } }, { captain_edit_until: { $lt: new Date() } }],
   });

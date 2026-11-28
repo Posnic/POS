@@ -436,3 +436,24 @@ fields or transport lanes were introduced. The five sync classification checks
 pass but still report 12 undecided collections (including invoices, transaction,
 payment); this is not cross-device acceptance. Other direct writers and customer
 ledger coordination still require audit before connector activation.
+
+### Reverse reservation checks
+
+Restaurant payment preparation, restructure admission, transfer eligibility,
+paid-bill correction admission, restaurant deletion admission and return/refund
+admission now require both Books and ordinary invoice payment locks to be absent.
+Books receipt admission also rejects a restaurant payment plan. These checks keep
+new competing operations from acquiring an already reserved sale; existing own
+operation recovery is retained.
+
+Validation: 357 tests across captain payments, restructure locks, transfers and
+sale repository pass using the owned scratch runner and existing Mongo binary.
+New real-Mongo tests inject each receipt lock immediately before restaurant plan
+admission and verify no plan/payment is acquired. Restructure reservation refuses
+both locks. Books receipt integration rejects restaurant/legacy/correction/return
+reservations and still completes its ordinary projection/recovery checks. Scratch
+3COHGC/bd63vT removed and independently absent. Attribution/diff checks pass.
+
+No sync schema or installer changes. Sale reservation coverage is improved, not
+complete cross-device/customer-ledger coordination. Public connector activation,
+full writer audit, ledger baseline checks, UI and installed acceptance remain open.

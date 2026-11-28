@@ -978,3 +978,34 @@ test('opted-in reference survives payment recovery and sale projection for repri
     service.record({ ...request, body: { ...request.body, printReference: false } })
   ).rejects.toThrow('already used');
 });
+
+
+test.each(['books_receipt_lock', 'legacy_invoice_payment_lock'])('payment preparation respects %s acquired after its sale read', async (field) => {
+  const sales = db.collection('sales');
+  const originalCollection = db.collection.bind(db);
+  const wrapped = {...req(), captainPaymentDesktop:true};
+  let injected = false;
+  wrapped.db = {collection(name) {
+    const col = originalCollection(name);
+    if (name !== 'sales') return col;
+    return new Proxy(col, {get(target,key) {
+      const value = target[key];
+      if (typeof value !== 'function') return value;
+      if (key !== 'updateOne') return value.bind(target);
+      return async (...args) => {
+        if (!injected && args[1]?.$set?.captain_payment_plan) {
+          injected = true;
+          await sales.updateOne({_id:sale._id}, {$set:{[field]:{id:'original-payment'}}});
+        }
+        return value.apply(target,args);
+      };
+    }});
+  }};
+  await expect(service.prepare(wrapped)).rejects.toMatchObject({status:409});
+  expect(injected).toBe(true);
+  const held = await sales.findOne({_id:sale._id});
+  expect(held[field]).toEqual({id:'original-payment'});
+  expect(held.captain_payment_plan).toBeUndefined();
+  expect(held.payment_status).toBe('Unpaid');
+  expect(await db.collection('payment').countDocuments()).toBe(0);
+});

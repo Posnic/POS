@@ -7,7 +7,7 @@ const source=require('../v1/accounting-source');
 const journalModule=require('./books-receipt-journal');
 const fail=message=>{throw Object.assign(new Error(message),{code:'books_receipt_sale_conflict',status:409});};
 const unreserved=()=>({books_receipt_lock:{$exists:false}});
-function competing(sale){if(sale.legacy_invoice_payment_lock||sale.payment_correction_pending||sale.return_refund_lock||new Date(sale.captain_edit_until||0).getTime()>=Date.now())fail('Sale has another payment or edit in progress');}
+function competing(sale){if(sale.captain_payment_plan||sale.legacy_invoice_payment_lock||sale.payment_correction_pending||sale.return_refund_lock||new Date(sale.captain_edit_until||0).getTime()>=Date.now())fail('Sale has another payment or edit in progress');}
 function mutable(sale){if(Object.hasOwn(sale,'books_receipt_lock'))fail('Sale has an unfinished receipt');}
 function minor(value){
  if(!['string','number'].includes(typeof value)||! /^(0|[1-9][0-9]*)(\.[0-9]{1,2})?$/.test(String(value)))fail('Invalid original payment amount');
