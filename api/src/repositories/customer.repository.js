@@ -258,11 +258,7 @@ class CustomerRepository extends BaseModel {
 
     // Backup to recycle bin collection
     const recycleCollection = await this.getCollection(this.collectionName + '_recycle_bin');
-    await recycleCollection.insertOne({
-      ...customer,
-      deleted_date: new Date(),
-      deleted_by: BaseModel.loggedUser || 'system',
-    });
+    await require('../services/customer-delete-backup').save(recycleCollection, customer, BaseModel.loggedUser);
 
     // Hard delete from main collection
     const result = await collection.deleteOne({
@@ -299,12 +295,7 @@ class CustomerRepository extends BaseModel {
     if (customers.some(customer => Object.hasOwn(customer, 'books_receipt_lock') || Object.hasOwn(customer, 'legacy_invoice_payment_lock'))) {
       throw new Error('A selected customer has an unfinished payment. Recover it before deleting customers.');
     }
-    const backupDocs = customers.map((customer) => ({
-      ...customer,
-      deleted_date: new Date(),
-      deleted_by: BaseModel.loggedUser || 'system',
-    }));
-    await recycleCollection.insertMany(backupDocs);
+    await require('../services/customer-delete-backup').saveMany(recycleCollection, customers, BaseModel.loggedUser);
 
     // Hard delete from main collection
     const result = await collection.deleteMany({

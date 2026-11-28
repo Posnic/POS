@@ -731,3 +731,22 @@ Scratch sGBlrG/60NOY1 removed and independently absent. No new persisted fields 
 sync lanes; authoritative cross-device coordination remains unverified. Manual
 wallet addition/deletion still needs durable original-request admission and UI
 recovery. This guard does not complete that workflow or installed acceptance.
+
+
+### Exact original customer backup retry
+
+Customer deletion now reuses an existing backup only after comparing the complete
+original BSON data (excluding the two deletion metadata fields). A different
+snapshot remains held; no backup is overwritten. Bulk duplicate-key recovery
+verifies each existing original and saves missing rows before attempting deletion.
+Unknown insert errors still stop the attempt; a later explicit retry verifies the
+saved original. Original deletion cashier/timestamp are retained.
+
+132 repository tests pass. Real Mongo checks cover a committed backup with lost
+reply, unchanged retry, changed-balance refusal, mixed existing/missing bulk backups
+and the earlier single/bulk receipt-admission race followed by successful retry
+without manually removing backups. Scratch 2tvxRv removed and independently absent.
+The prior limitation for an unchanged retained backup is closed. A genuinely
+changed customer still requires review; full original-request recovery after the
+customer deletion itself, manual wallet writes and cross-device authority remain
+open. This adds no persisted schema or sync lane, and does not establish deployment.
