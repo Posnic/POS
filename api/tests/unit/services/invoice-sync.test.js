@@ -69,9 +69,18 @@ const sale = (extra = {}) => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
-  collections.sales = { findOne: jest.fn(), updateOne: jest.fn().mockResolvedValue({matchedCount:1}) };
+  collections.sales = { findOne: jest.fn(), updateOne: jest.fn().mockImplementation(async (_query, update) => {
+    const row = await collections.sales.findOne();
+    if (row && update.$set?.legacy_invoice_payment_lock) row.legacy_invoice_payment_lock = update.$set.legacy_invoice_payment_lock;
+    if (row && update.$unset?.legacy_invoice_payment_lock !== undefined) delete row.legacy_invoice_payment_lock;
+    return {matchedCount:1};
+  }) };
   collections.transaction = {
-    findOne: jest.fn().mockResolvedValue(null),
+    findOne: jest.fn().mockImplementation(async () => {
+      if (collections.transaction.findOne.mock.calls.length === 1) return null;
+      const original = await collections.sales.findOne();
+      return {_id:'allocation',type:'out',amount:original.partial_balance || 0,pending:original.payment_pending};
+    }),
     insertOne: jest.fn().mockResolvedValue({}),
     updateOne: jest.fn().mockResolvedValue({matchedCount:1}),
     aggregate: jest
@@ -203,7 +212,7 @@ describe('recordPayment', () => {
 
   test('a part payment leaves the rest pending, on the sale and on the ledger row', async () => {
     collections.sales.findOne.mockResolvedValue(sale({ customer_id: new ObjectId(CUSTOMER) }));
-    collections.transaction.findOne.mockResolvedValue({ _id: 'existing' });
+    collections.transaction.findOne.mockResolvedValue({ _id: 'existing',type:'out',amount:0,pending:200 });
     const r = await sync.recordPayment(invoice(), { amount: 75, method: 'Cash' }, {});
     expect(r.status).toBe(true);
     expect(r.data).toMatchObject({ amount: 75, balance: 125 });

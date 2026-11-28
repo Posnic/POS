@@ -360,3 +360,25 @@ identities for recovery; allocation/wallet replay and the complete legacy recove
 orchestration/UI are still unfinished. Existing unidentified payment history is
 not backfilled or promoted to an immutable receipt. Sync remains unresolved for
 invoice/transaction evidence; these fields are not a deployment claim.
+
+### Ordinary allocation and wallet effect identity
+
+The ordinary invoice service now uses `invoice-payment-effects` for allocation
+and sale balance/wallet writes. Each atomic write includes a command-bound effect
+marker and exact-document predicate. Replay checks the recorded amount and current
+result before returning; changed commands, balances or stale originals fail.
+Wallet input is saved in admission, and requested sale values/actor/time must
+match the original admission. Decimal precision is checked before effect writes;
+no rounding is introduced by replay. Effects have an explicit 1,000-entry review
+limit; scalable archival remains required.
+
+Real-Mongo tests lose allocation and wallet replies after commit, replay each
+six times concurrently, and verify a single effect and unchanged amounts. Changed
+replay amounts are refused. Existing normal partial/full invoice tests pass
+(33 unit tests), alongside internal receipt integration. Unit mocks now retain
+admission state rather than pretending every read sees an untouched sale.
+
+These are projection primitives, not a completed legacy retry route. Durable
+allocation creation, full source/ledger verification, orchestration, completion
+recovery and UI still require implementation before client release. New effect
+fields also need the outstanding authoritative sync design.

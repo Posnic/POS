@@ -211,7 +211,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
     return { status: false, data: null, message: 'Original invoice sale changed' };
   }
   const admission = { id: require('node:crypto').randomUUID(), invoiceId: String(invoice._id),
-    amount, method, reference, note, actor: userName, startedAt: now, before, moneyId: new ObjectId() };
+    amount, method, reference, note, actor: userName, startedAt: now, before, walletBefore: sale.wallet_amount ?? 0, moneyId: new ObjectId() };
   const unlocked = { books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false } };
   const admitted = await sales.updateOne({ _id: sale._id, ...unlocked,
     $expr: { $eq: ['$$ROOT', { $literal: sale }] } }, { $set: { legacy_invoice_payment_lock: admission } });
@@ -287,14 +287,9 @@ async function recordPayment(invoice, payment = {}, context = {}) {
         updated_date: now,
       });
     }
-    await transactions.updateOne(
-      { sale_id: sale._id, license: sale.license },
-      {
-        $inc: { amount },
-        $set: { pending: pendingAfter, type: 'out', updated_date: now },
-      }
-    );
-    await requireWrite(sales.updateOne({ _id: sale._id, 'legacy_invoice_payment_lock.id': admission.id }, { $set: saleSet, $inc: { wallet_amount: amount } }));
+    const effects = require('./invoice-payment-effects');
+    await effects.allocation(transactions, { sale_id: sale._id, license: sale.license, customer_id: customerId, branch_id: sale.branch_id }, admission);
+    await effects.sale(sales, sale._id, admission, saleSet, true);
     /* customer balance = money in - money out, the same sum the customer
        page and the transaction endpoint compute */
     const filter = { customer_id: customerId, license: sale.license };
@@ -316,7 +311,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
       .collection('customers')
       .updateOne({ ...customerKey, 'legacy_invoice_payment_lock.id': admission.id }, { $set: { balance, updated_date: now } }));
   } else {
-    await requireWrite(sales.updateOne({ _id: sale._id, 'legacy_invoice_payment_lock.id': admission.id }, { $set: saleSet }));
+    await require('./invoice-payment-effects').sale(sales, sale._id, admission, saleSet, false);
   }
 
   const InvoiceRepository = require('../repositories/invoice.repository');
