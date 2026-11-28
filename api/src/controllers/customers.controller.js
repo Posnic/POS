@@ -1268,7 +1268,26 @@ class CustomerController extends BaseController {
         });
       }
 
-      await transactionCollection.deleteOne(scope);
+      if (['invoice_id', 'legacy_invoice_payment_id', 'books_receipt_id'].some(key => Object.hasOwn(existing, key))) {
+        return res.status(409).json({
+          type: 'error',
+          message: 'This transaction records an invoice payment. Review the original payment instead of deleting it.',
+          data: null,
+        });
+      }
+      // A payment reference or amount may change after the read. Delete only
+      // the exact original row, never a newly linked receipt at the same ID.
+      const removed = await transactionCollection.deleteOne({
+        ...scope,
+        $expr: { $eq: ['$$ROOT', { $literal: existing }] },
+      });
+      if (!removed.deletedCount) {
+        return res.status(409).json({
+          type: 'error',
+          message: 'This transaction changed. Reopen the customer ledger before trying again.',
+          data: null,
+        });
+      }
 
       // Recalculate customer balance from all transactions - the same
       // derivation the add path uses, so the two can never disagree.

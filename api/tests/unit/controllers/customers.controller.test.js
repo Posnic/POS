@@ -1887,7 +1887,8 @@ describe('CustomerController — deleteTransaction', () => {
     expect(scope).toHaveProperty('customer_id');
     expect(scope).toHaveProperty('license');
     // and the delete uses the same scope, not a looser one
-    expect(txn.deleteOne.mock.calls[0][0]).toEqual(scope);
+    expect(txn.deleteOne.mock.calls[0][0]).toMatchObject(scope);
+    expect(txn.deleteOne.mock.calls[0][0].$expr.$eq[1].$literal).toEqual({ _id: OID, amount: 50, type: 'in' });
   });
 
   test('a transaction belonging to a sale is refused, not deleted', async () => {
@@ -1901,6 +1902,26 @@ describe('CustomerController — deleteTransaction', () => {
     expect(txn.deleteOne).not.toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json.mock.calls[0][0].message).toMatch(/belongs to a sale/i);
+  });
+
+  test.each(['invoice_id', 'legacy_invoice_payment_id', 'books_receipt_id'])('preserves a receipt identified by %s even with an empty sale id', async (field) => {
+    const {txn,customers}=wire({_id:OID,sale_id:'',amount:50,type:'in',[field]:'original'});
+    const res=mkRes();
+    await ctrl.deleteTransaction({body:{id:OID,customer_id:CUST}},res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(txn.deleteOne).not.toHaveBeenCalled();
+    expect(txn.aggregate).not.toHaveBeenCalled();
+    expect(customers.updateOne).not.toHaveBeenCalled();
+  });
+
+  test('a changed row is not deleted or used to recalculate the balance', async () => {
+    const {txn,customers}=wire({_id:OID,amount:50,type:'in'});
+    txn.deleteOne.mockResolvedValue({deletedCount:0});
+    const res=mkRes();
+    await ctrl.deleteTransaction({body:{id:OID,customer_id:CUST}},res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(txn.aggregate).not.toHaveBeenCalled();
+    expect(customers.updateOne).not.toHaveBeenCalled();
   });
 
   test('a missing transaction is a 404, not a silent recalculation', async () => {

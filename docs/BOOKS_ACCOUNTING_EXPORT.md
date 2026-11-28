@@ -480,3 +480,20 @@ writer: a writer ignoring admission can still race between verification and a
 write. Customer-wide writer integration, authoritative sync and authenticated UX
 remain required before activation. Locks created without this baseline cannot be
 silently upgraded into a recoverable payment. No installer/public release.
+
+### Protect receipt rows from manual customer deletion
+
+Customer transaction deletion now refuses invoice_id, legacy_invoice_payment_id
+and books_receipt_id references even when sale_id is empty. Previously the empty
+sale ID made receipt money rows look like removable manual wallet entries. Manual
+row deletion uses an exact original-document predicate; a changed row returns
+409 without recalculating the balance.
+
+Validation: 141 customer-controller unit tests pass. Paired real-Mongo tests call
+the actual controller, refuse recorded invoice/Books receipts, inject a receipt
+reference after lookup but before deletion, and verify ordinary manual deletion.
+Existing original-payment recovery checks also pass. Owned QmddAO removed and
+independently absent. Attribution/diff checks pass. This is a server integrity
+fix; the ledger UI still needs to hide the delete action for protected receipt
+rows. Customer-wide admission and sync coordination remain incomplete. No new
+persisted fields, installer or deployment.
