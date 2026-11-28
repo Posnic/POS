@@ -66,7 +66,7 @@ function create({db}){
    }else await ledger.deleteOne(exact(lock.entry));
   }
   current=await rows(context);if(!same(current,expected))fail('Ledger changed while applying the original request');
-  const result={state:'saved',commandId:id,kind:lock.request.kind,balance:balance(expected),entryId:String(lock.entry._id)};
+  const result={state:'saved',commandId:id,kind:lock.request.kind,request:lock.request,balance:balance(expected),entryId:String(lock.entry._id)};
   const changed=await customers.updateOne(exact(customer),{$set:{balance:result.balance,updated_date:new Date()},$unset:{wallet_entry_lock:''},$push:{wallet_entry_requests:{id,actorId:lock.actorId,request:lock.request,result}}});
   if(!changed.matchedCount){const latest=await customers.findOne(key);const done=latest&&saved(latest,context,id);if(done)return done;fail('Customer changed before wallet completion; keep the original request');}
   return result;

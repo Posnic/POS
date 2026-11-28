@@ -820,3 +820,24 @@ The first test exposed a controller-import database side effect; removed by usin
 the shared access resolver directly. NCtgd0/DUFpMW scratch removed and independently
 absent. The adapter remains unregistered until browser storage/recovery, legacy
 writer replacement and authority/sync acceptance are ready together.
+
+
+### Browser wallet original storage and recovery component
+
+Added a scoped localStorage/Web Locks store and EN/AR DOM recovery component.
+Preparation persists before any send, concurrent tabs preserve one original,
+reopening never posts, absent status permits only unchanged retry and pending
+status permits confirmed original recovery. Completion verifies request ID, action,
+normalized original details and entry identity before clearing local evidence.
+Late results after account changes are ignored. Corrupt/unavailable storage holds
+submission. Completed-result copy asks for a refreshed ledger rather than displaying
+its historical balance as current. Server saved results now include the normalized
+original request for that check.
+
+10 wallet store/browser tests pass (jsdom/fixture transport, not installed UI).
+Five existing invoice-store tests also passed with the new store. Actual Express/
+Mongo recovery tests pass with the expanded result contract. Scratch nNGn3D was
+removed and independently absent. Component files are not yet registered in the
+normal customer page: the legacy wallet writer replacement and remaining shared
+writer guards must ship together with route/UI integration. Live browser/Web Locks,
+installed pairing, complete currency support and cross-device authority remain open.
