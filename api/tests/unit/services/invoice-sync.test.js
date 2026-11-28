@@ -39,6 +39,11 @@ jest.mock('../../../src/repositories/quote.repository', () => {
   };
 });
 
+// Ledger integrity is exercised with real Mongo in the paired connector suite.
+jest.mock('../../../src/services/invoice-payment-ledger', () => ({
+  capture: jest.fn(async () => ({rows:[],balance:0})),
+  verify: jest.fn(async () => 0),
+}));
 const collections = {};
 jest.mock('../../../src/models/base.model', () => ({
   getDb: async () => ({ collection: (name) => collections[name] }),

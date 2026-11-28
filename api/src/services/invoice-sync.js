@@ -223,6 +223,8 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   const admission = { id: require('node:crypto').randomUUID(), invoiceId: String(invoice._id),
     amount, method, reference, note, actor: userName, startedAt: now, before, walletBefore: sale.wallet_amount ?? 0, moneyId: new ObjectId(), allocationId: new ObjectId(),
     source: require('mongodb').BSON.deserialize(require('mongodb').BSON.serialize(sale)), invoiceNumber: String(invoice.invoice_id || '') };
+  if(sale.customer_id && ObjectId.isValid(String(sale.customer_id)))
+    admission.ledger = await require('./invoice-payment-ledger').capture(db,sale,before);
   const unlocked = { books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false } };
   const admitted = await sales.updateOne({ _id: sale._id, ...unlocked,
     $expr: { $eq: ['$$ROOT', { $literal: sale }] } }, { $set: { legacy_invoice_payment_lock: admission } });
@@ -264,6 +266,7 @@ async function finishPayment(invoice,sale,admission,context,db){
  if(canonical(unchanged(current))!==canonical(unchanged(sale)))throw new Error('Original payment sale source changed');
 
  if(customerKey){const customer=await db.collection('customers').findOne(customerKey);if(customer?.legacy_invoice_payment_lock?.id!==admission.id)throw new Error('Original customer admission unavailable');}
+ if(customerKey)await require('./invoice-payment-ledger').verify(db,sale,admission);
   const requireWrite = async operation => { const result = await operation; if (!result.matchedCount) throw new Error('Payment admission changed; recover the original request'); return result; };
   const saleSet = {
     partial_balance: paidAfter,
@@ -330,21 +333,7 @@ async function finishPayment(invoice,sale,admission,context,db){
     await effects.sale(sales, sale._id, admission, saleSet, true);
     /* customer balance = money in - money out, the same sum the customer
        page and the transaction endpoint compute */
-    const filter = { customer_id: customerId, license: sale.license };
-    if (sale.branch_id) filter.branch_id = sale.branch_id;
-    const agg = await transactions
-      .aggregate([
-        { $match: filter },
-        {
-          $group: {
-            _id: null,
-            totalIn: { $sum: { $cond: [{ $eq: ['$type', 'in'] }, '$amount', 0] } },
-            totalOut: { $sum: { $cond: [{ $eq: ['$type', 'out'] }, '$amount', 0] } },
-          },
-        },
-      ])
-      .toArray();
-    const balance = agg.length ? round2((agg[0].totalIn || 0) - (agg[0].totalOut || 0)) : 0;
+    const balance = await require('./invoice-payment-ledger').verify(db,sale,admission,true);
     await requireWrite(db
       .collection('customers')
       .updateOne({ ...customerKey, 'legacy_invoice_payment_lock.id': admission.id }, { $set: { balance, updated_date: now } }));
@@ -375,6 +364,7 @@ async function finishPayment(invoice,sale,admission,context,db){
       ' recorded - invoice ' +
       (word === 'partial' ? 'partially paid, ' + pendingAfter.toFixed(2) + ' still due' : word),
   };
+  if(customerKey)await require('./invoice-payment-ledger').verify(db,sale,admission,true);
   await sales.updateOne({ _id:sale._id, 'legacy_invoice_payment_lock.id':admission.id,
     'legacy_invoice_payment_results.id':{$ne:admission.id} },
     {$push:{legacy_invoice_payment_results:{id:admission.id,result}}});

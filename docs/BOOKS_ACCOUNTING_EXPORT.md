@@ -457,3 +457,26 @@ reservations and still completes its ordinary projection/recovery checks. Scratc
 No sync schema or installer changes. Sale reservation coverage is improved, not
 complete cross-device/customer-ledger coordination. Public connector activation,
 full writer audit, ledger baseline checks, UI and installed acceptance remain open.
+
+### Retained ordinary customer ledger
+
+Invoice admission now retains a bounded financial ledger baseline (10000 rows,
+512 KiB) scoped to the original customer/license/branch. Recovery verifies that
+baseline before effects, before customer balance projection and before saving
+completion. Only this command's deterministic money row and original/new sale
+allocation transitions are allowed. Missing prior allocations for already-paid
+sales, duplicate allocations, unrelated additions/deletions and changed financial
+values fail closed. Balance comes from the verified rows, replacing an unchecked
+aggregate over whatever happens to exist at retry time.
+
+Validation: 36 invoice unit tests pass (ledger boundary mocked there). Real-Mongo
+integration exercises the actual verifier, ten lost-write replies, changed/added/
+deleted prior rows, and two successive partial payments plus recovery of the older
+result without changing the newer balance. Owned Ph36jp/StbWdp/KqTgG0 roots removed
+and independently absent. Attribution/diff checks pass.
+
+This is detection and retained evidence, not atomic coordination of every customer
+writer: a writer ignoring admission can still race between verification and a
+write. Customer-wide writer integration, authoritative sync and authenticated UX
+remain required before activation. Locks created without this baseline cannot be
+silently upgraded into a recoverable payment. No installer/public release.
