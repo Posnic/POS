@@ -798,3 +798,25 @@ The engine remains unmounted. Legacy wallet add/delete, other sale/customer ledg
 writers, authorized API/UI connection and authoritative sync are still required.
 These guards do not prove all writers are coordinated. No production schema change,
 installer, external service activation or release was performed.
+
+
+### Wallet request HTTP adapter (not registered in production)
+
+Added a router factory requiring authentication middleware and an authenticated
+request database. Business/branch come from server context, customer from the path;
+branch membership and business consistency are checked. Reads require customer
+read, additions require write, removals require delete. Owners/admins retain their
+established authority; other roles need explicit effective customer permissions.
+Recovery accepts only confirmed:true, checks the saved action permission, and
+continues the original request without accepting replacement money fields.
+Expected conflicts return 409; unknown outcomes return a generic 503 preserving
+the request. No global/default database fallback or controller initialization.
+
+Standalone Mongo plus actual Express tests pass for read/write/delete separation,
+missing auth/database, wrong tenant/branch/cashier, confirmation/body validation,
+readonly status, unchanged recovery and a lost insert reply through HTTP. Fixture
+middleware supplies identity; live authentication/session lifecycle is unverified.
+The first test exposed a controller-import database side effect; removed by using
+the shared access resolver directly. NCtgd0/DUFpMW scratch removed and independently
+absent. The adapter remains unregistered until browser storage/recovery, legacy
+writer replacement and authority/sync acceptance are ready together.

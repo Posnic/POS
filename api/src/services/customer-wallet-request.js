@@ -4,7 +4,7 @@
 const {ObjectId,BSON}=require('mongodb');
 const {createHash}=require('node:crypto');
 const {canonical}=require('./invoice-payment-effects');
-const fail=message=>{throw new Error(message);};
+const fail=message=>{throw Object.assign(new Error(message),{code:'wallet_request_conflict'});};
 const hash=value=>createHash('sha256').update(canonical(value)).digest('hex');
 const exact=row=>({_id:row._id,license:row.license,$expr:{$eq:['$$ROOT',{$literal:row}]}});
 function cents(value){
@@ -66,7 +66,7 @@ function create({db}){
    }else await ledger.deleteOne(exact(lock.entry));
   }
   current=await rows(context);if(!same(current,expected))fail('Ledger changed while applying the original request');
-  const result={state:'saved',commandId:id,balance:balance(expected),entryId:String(lock.entry._id)};
+  const result={state:'saved',commandId:id,kind:lock.request.kind,balance:balance(expected),entryId:String(lock.entry._id)};
   const changed=await customers.updateOne(exact(customer),{$set:{balance:result.balance,updated_date:new Date()},$unset:{wallet_entry_lock:''},$push:{wallet_entry_requests:{id,actorId:lock.actorId,request:lock.request,result}}});
   if(!changed.matchedCount){const latest=await customers.findOne(key);const done=latest&&saved(latest,context,id);if(done)return done;fail('Customer changed before wallet completion; keep the original request');}
   return result;
