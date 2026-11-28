@@ -24,7 +24,11 @@ function commandOf(input){
    invoice:identity(input.invoice),customer:input.customer===null?null:identity(input.customer),
    sourceRevision:input.sourceRevision,currency:input.currency,amountMinor:input.amountMinor,method:input.method};
 }
-function createJournal(db,scope){
+function createJournal(db,scope,actor){
+ if(!exact(actor,'id name')||!text(actor.name))fail('receipt_actor_invalid');
+ const actorJson=JSON.stringify({id:identity(actor.id),name:actor.name});
+ const actorIdJson=JSON.stringify(identity(actor.id));
+ const originalActor=row=>JSON.stringify(JSON.parse(row.actorJson).id)===actorIdJson;
  const scopeJson=JSON.stringify(scopeOf(scope));
  const rows=db.collection('books_receipt_commands');
  function key(id){if(!uuid(id))fail('receipt_command_invalid');return hash(JSON.stringify([scopeJson,id]));}
@@ -35,16 +39,22 @@ function createJournal(db,scope){
   if(row._id!==key(id)||row.scopeJson!==scopeJson||command.requestId!==id||
      JSON.stringify(command)!==row.commandJson||hash(row.commandJson)!==row.commandHash||
      !['prepared','accepted','completed','stopped'].includes(row.state))fail('receipt_journal_corrupt');
+  try{
+   const savedActor=JSON.parse(row.actorJson);
+   if(!exact(savedActor,'id name')||!text(savedActor.name)||
+      JSON.stringify({id:identity(savedActor.id),name:savedActor.name})!==row.actorJson||hash(row.actorJson)!==row.actorHash)fail('receipt_journal_corrupt');
+  }catch{fail('receipt_journal_corrupt');}
   if(row.state==='completed'&&(!row.resultJson||hash(row.resultJson)!==row.resultHash))fail('receipt_journal_corrupt');
   return row;
  }
  async function read(id){return verify(await rows.findOne({_id:key(id),scopeJson}),id);}
  async function prepare(input){
   const command=commandOf(input),commandJson=JSON.stringify(command),commandHash=hash(commandJson),id=command.requestId;
-  try{await rows.updateOne({_id:key(id)},{$setOnInsert:{scopeJson,commandJson,commandHash,state:'prepared',createdAt:new Date()}},{upsert:true});}
+  try{await rows.updateOne({_id:key(id)},{$setOnInsert:{scopeJson,commandJson,commandHash,actorJson,actorHash:hash(actorJson),state:'prepared',createdAt:new Date()}},{upsert:true});}
   catch(error){if(error.code!==11000)throw error;}
   const saved=await read(id);
   if(!saved||saved.commandJson!==commandJson)fail('receipt_request_reused');
+  if(!originalActor(saved))fail('receipt_original_actor_required');
   return saved;
  }
  async function transition(input,from,to,extra={}){
@@ -52,7 +62,8 @@ function createJournal(db,scope){
   if(!saved)fail('receipt_request_missing');
   const commandJson=JSON.stringify(command);
   if(saved.commandJson!==commandJson)fail('receipt_request_reused');
-  await rows.updateOne({_id:key(id),scopeJson,commandJson,state:from},{$set:{state:to,...extra}});
+  if(!originalActor(saved))fail('receipt_original_actor_required');
+  await rows.updateOne({_id:key(id),scopeJson,commandJson,actorJson:saved.actorJson,state:from},{$set:{state:to,...extra}});
   const current=await read(id);
   if(!current||current.state!==to)fail('receipt_state_conflict');
   return current;

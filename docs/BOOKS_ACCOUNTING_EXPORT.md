@@ -128,3 +128,27 @@ completion recovery, typed tenant/branch/installation separation, corrupted requ
 refusal, and absence of sale/transaction writes. It re-creates the service over the
 same database; this is not a process-kill or installed recovery test. Five sync
 classification tests pass. Full money movement remains disabled/unimplemented.
+
+### Authenticated receipt identity recovery
+
+Restored internal `books-receipt-runtime`, `books-receipt-context` and connector
+settings authorization boundaries against the retained Books tests. Authority is
+a once-attached host capability held in a WeakMap, never app.locals, request data
+or a database copy. Every lookup rechecks valid protected identity and restart
+state, with sanitized provider errors. Context requires matching typed tenant
+license, authorized branch and explicit human `sale` permission; integration
+tokens may only read with `sales.read`. Connector settings require branch write
+permission and reject integration tokens.
+
+The command journal now requires a trusted actor at construction and preserves
+its original name and typed ID. Another actor can read a scoped record through
+this internal helper but cannot prepare/reuse, accept, stop or complete it. A
+later display-name correction for the same ID preserves the original evidence.
+The route layer must still authenticate and authorize every read. No host
+capability producer, routes, settings writes or financial coordinator is mounted.
+
+Seven retained identity tests and the expanded real-Mongo command-journal test
+pass. Original tests were redirected through BOOKS_TEST_POS_CHECKOUT; their
+assertions remain intact. No business write or sync transport changed. Existing
+full `pos-receipt-journal.integration.js` still needs the missing original journal
+and projection coordinator and is not claimed passing.
