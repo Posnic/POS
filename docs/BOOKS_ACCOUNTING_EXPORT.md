@@ -152,3 +152,30 @@ pass. Original tests were redirected through BOOKS_TEST_POS_CHECKOUT; their
 assertions remain intact. No business write or sync transport changed. Existing
 full `pos-receipt-journal.integration.js` still needs the missing original journal
 and projection coordinator and is not claimed passing.
+
+### Restored per-sale sequence journal
+
+`books-receipt-journal.js` restores the original coordinator-facing journal API:
+prepare, accept, stop, outcome and projected. One standalone-Mongo document owns
+the sale's sequence. Compare-and-swap on its revision prevents competing requests
+from admitting another receipt while work is prepared/accepted. A next collection
+requires the prior verified projected revision and exact balances. Reviews retain
+typed scope, original source balances, cashier and request; accepted receipts
+retain their UTC acceptance time, deterministic ID and exact resulting balances.
+History validation checks review hashes, amounts, receipt derivation, active
+command and transition-derived revision. Prepared requests can stop; accepted
+money cannot be stopped or silently replaced.
+
+The dedicated Books sequence test retains the journal-only portion of the
+original full recovery test and adds a committed-but-lost acceptance reply. It
+runs actual standalone MongoDB, not replica-set transactions. Original full test
+is untouched and still requires the missing sale/invoice/customer coordinator.
+Nine receipt/identity tests and five sync classification tests pass. No financial
+writes, API enablement or installed-device acceptance is implied.
+
+Use this per-sale API for the restored original coordinator. The earlier isolated
+`receipt-command-journal` primitive is not the per-sale admission authority and
+must not be wired as a parallel payment path. Consolidate it after its remaining
+negative cases are covered by the restored coordinator. Both collections remain
+local-only execution state. The sequence has an explicit 500-command review limit;
+scalable archival and backup remain requirements, not implemented behavior.
