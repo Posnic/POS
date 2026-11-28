@@ -5560,5 +5560,8 @@
   "lang_payment_original_absent": "لم يسجل هذا الخادم الطلب. أعد محاولة الطلب الأصلي دون تغيير فقط.",
   "lang_payment_original_review": "هذه الدفعة تحتاج إلى مراجعة. احتفظ بالطلب المحفوظ وتحقق مرة أخرى.",
   "lang_payment_working": "جارٍ حفظ الدفعة الأصلية…",
-  "lang_payment_amount_due": "أدخل مبلغاً أكبر من الصفر ولا يتجاوز رصيد الفاتورة."
+  "lang_payment_amount_due": "أدخل مبلغاً أكبر من الصفر ولا يتجاوز رصيد الفاتورة.",
+  "lang_review_new_payment": "مراجعة دفعة جديدة",
+  "lang_stop_payment_request": "إيقاف هذا الطلب",
+  "lang_payment_request_stopped": "أوقف الخادم هذا الطلب. راجع التفاصيل الجديدة قبل تسجيل دفعة أخرى."
 }

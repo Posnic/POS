@@ -180,6 +180,8 @@ async function recordPayment(invoice, payment = {}, context = {}) {
     return { status: false, data: null, message: 'The sale behind this invoice was not found' };
 
   if (payment.commandId) {
+    if ((sale.legacy_invoice_payment_stops || []).some(row => row.id === payment.commandId))
+      return {status:false,data:null,message:'This payment request was stopped; review a new request'};
     const completed = (sale.legacy_invoice_payment_results || []).filter(row => row.id === payment.commandId);
     if (completed.length) {
       if (completed.length !== 1 || !sameCashier(completed[0],context) ||
@@ -426,6 +428,8 @@ async function paymentRequestStatus(invoice,commandId,context={}) {
  const sale=await loadSale(invoice.sale_id);
  if(!sale||String(sale.license)!==String(context.licenseId)||String(sale.branch_id)!==String(context.branchId)||
     String(sale.source_invoice_id)!==String(invoice._id))throw new Error('Original payment unavailable');
+ const stopped=(sale.legacy_invoice_payment_stops||[]).find(row=>row.id===commandId);
+ if(stopped)return {state:'stopped',commandId,canReplace:sameCashier(stopped,context)};
  const completed=(sale.legacy_invoice_payment_results||[]).filter(row=>row.id===commandId);
  if(completed.length>1)throw new Error('Original payment completion differs');
  if(completed.length)return {state:'saved',commandId,result:completed[0].result,releasePending:sale.legacy_invoice_payment_lock?.id===commandId,canRecover:sale.legacy_invoice_payment_lock?.id===commandId&&sameCashier(completed[0],context)};
@@ -436,7 +440,29 @@ async function paymentRequestStatus(invoice,commandId,context={}) {
   canRecover:!!admission.source&&sameCashier(admission,context)&&
     (!admission.source.customer_id||!!admission.ledger),
  };
- return {state:admission||sale.books_receipt_lock?'other_pending':'absent',commandId};
+ return {state:admission||sale.books_receipt_lock?'other_pending':'absent',commandId,canStop:!admission&&!sale.books_receipt_lock};
+}
+
+// Serialize stop against admission on the same sale. Never release admitted money.
+async function stopPaymentRequest(invoice,commandId,context={}) {
+ if(!requestIdValid(commandId)||!invoice?.sale_id)throw new Error('Issued original invoice required');
+ const db=await BaseModel.getDb();
+ for(let attempt=0;attempt<5;attempt++){
+  const sale=await loadSale(invoice.sale_id);
+  if(!sale||String(sale.license)!==String(context.licenseId)||String(sale.branch_id)!==String(context.branchId)||
+     String(sale.source_invoice_id)!==String(invoice._id))throw new Error('Original payment unavailable');
+  const stops=sale.legacy_invoice_payment_stops||[];
+  if(!Array.isArray(stops))throw new Error('Original stop history requires review');
+  const stopped=stops.find(row=>row.id===commandId);
+  if(stopped)return {state:'stopped',commandId,canReplace:sameCashier(stopped,context)};
+  if(sale.legacy_invoice_payment_lock||sale.books_receipt_lock||
+     (sale.legacy_invoice_payment_results||[]).some(row=>row.id===commandId))throw new Error('Payment admitted or completed; check its original result');
+  if(stops.length>=1000||require('mongodb').BSON.calculateObjectSize(sale)>512*1024)throw new Error('Original stop history requires review');
+  const stoppedRequest={id:commandId,actor:context.userName,actorId:context.userId?String(context.userId):null,stoppedAt:new Date()};
+  const result=await db.collection('sales').updateOne({_id:sale._id,$expr:{$eq:['$$ROOT',{$literal:sale}]}},{$push:{legacy_invoice_payment_stops:stoppedRequest}});
+  if(result.matchedCount)return {state:'stopped',commandId,canReplace:true};
+ }
+ throw new Error('Original request changed; check again');
 }
 
 module.exports = {
@@ -447,5 +473,6 @@ module.exports = {
   recordPayment,
   recoverPayment,
   paymentRequestStatus,
+  stopPaymentRequest,
   _round2: round2,
 };

@@ -267,6 +267,19 @@ module.exports = {
     }
   },
 
+  async stopPaymentRequest(req, res) {
+    try {
+      if (!req.user || !can(req, 'read') || !can(req, 'write')) return fail(res, 'Unauthorized access', 403);
+      if (req.body?.confirmed !== true || Object.keys(req.body).some(key => key !== 'confirmed'))
+        return fail(res, 'Confirm stopping the original request', 400);
+      const ctx = contextOf(req), found = await repository.getInvoice(req.params.id, ctx);
+      if (!found.status) return fail(res, found.message, 404);
+      return ok(res, await invoiceSync.stopPaymentRequest(found.data, req.params.commandId, ctx), 'Original request stopped');
+    } catch (error) {
+      return fail(res, 'The original request could not be stopped. Check its saved result.', 409);
+    }
+  },
+
   async recoverPayment(req, res) {
     try {
       if (!req.user || !can(req, 'read') || !can(req, 'write')) return fail(res, 'Unauthorized access', 403);

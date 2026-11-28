@@ -5307,5 +5307,8 @@
   "lang_payment_original_absent": "This server has not recorded the request. Retry only the unchanged original.",
   "lang_payment_original_review": "This payment needs review. Keep the saved request and check again.",
   "lang_payment_working": "Saving the original payment…",
-  "lang_payment_amount_due": "Enter an amount greater than zero and no more than the invoice balance."
+  "lang_payment_amount_due": "Enter an amount greater than zero and no more than the invoice balance.",
+  "lang_review_new_payment": "Review a new payment",
+  "lang_stop_payment_request": "Stop this request",
+  "lang_payment_request_stopped": "The server stopped this request. Review new details before recording another payment."
 }

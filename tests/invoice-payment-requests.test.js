@@ -35,3 +35,14 @@ test('a stale confirmation cannot clear a newer request',async()=>{
  await assert.rejects(f.store.complete(scope,first.request.commandId,saved(first)));
  assert.deepEqual(f.store.load(scope),second);
 });
+
+test('only a server-confirmed stop permits a replacement request',async()=>{
+ const f=fixture(),record=(await f.store.prepare(scope,values)).record,id=record.request.commandId;
+ await assert.rejects(f.store.replaceStopped(scope,id,{state:'absent',commandId:id,canReplace:true}));
+ await assert.rejects(f.store.replaceStopped(scope,id,{state:'stopped',commandId:id,canReplace:false}));
+ assert.equal(f.data.size,1);
+ await f.store.replaceStopped(scope,id,{state:'stopped',commandId:id,canReplace:true});
+ const next=(await f.store.prepare(scope,values)).record;assert.notEqual(next.request.commandId,id);
+ await assert.rejects(f.store.replaceStopped(scope,id,{state:'stopped',commandId:id,canReplace:true}));
+ assert.deepEqual(f.store.load(scope),next);
+});

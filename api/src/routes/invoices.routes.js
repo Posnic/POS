@@ -21,6 +21,7 @@ router.post('/:id/transition', controller.transition);
 router.post('/:id/payment', controller.payment);
 router.get('/:id/payment-requests/:commandId', controller.paymentRequestStatus);
 router.post('/:id/payment-requests/:commandId/recover', controller.recoverPayment);
+router.post('/:id/payment-requests/:commandId/stop', controller.stopPaymentRequest);
 router.post('/:id/share', controller.share);
 router.delete('/:id', controller.remove);
 

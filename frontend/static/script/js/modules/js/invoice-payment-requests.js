@@ -34,6 +34,11 @@
    if(storage.getItem(scopeKey(scope))!==encoded)fail();
    return {created:true,record};
   });},
+  replaceStopped(scope,commandId,status){return exclusive(scope,()=>{
+   const record=load(scope);if(!record)return false;
+   if(record.request.commandId!==commandId||status?.state!=='stopped'||status.commandId!==commandId||status.canReplace!==true)fail();
+   storage.removeItem(scopeKey(scope));if(storage.getItem(scopeKey(scope))!==null)fail();return true;
+  });},
   complete(scope,commandId,status){return exclusive(scope,()=>{
    const record=load(scope);if(!record)return false;
    if(record.request.commandId!==commandId||status?.state!=='saved'||status.releasePending!==false||

@@ -19,7 +19,7 @@
         inputs(true);
         P.alert('error',t('lang_payment_storage_review','The saved payment request needs review. No new payment was sent.'));
     }
-    function render(candidate, message, action) {
+    function render(candidate, message, action, canStop=false) {
         if (!current(candidate)) return;
         inputs(true); $('#invoices_pay_strip').show(); $('#ie_payment_recovery').remove();
         const panel=$('<div>').attr('id','ie_payment_recovery').addClass('border rounded p-3 mt-2');
@@ -31,8 +31,11 @@
             .text(t('lang_check_saved_payment','Check saved result')).prop('disabled',candidate.busy).on('click',()=>check(candidate));
         panel.append(checkButton);
         if (action) panel.append($('<button>').attr({type:'button','data-module':'sales','data-access':'write'})
-            .addClass('btn btn-sm btn-success').text(action==='retry'?t('lang_retry_original_payment','Retry original request'):t('lang_finish_original_payment','Finish original payment'))
+            .addClass('btn btn-sm btn-success').text(action==='replace'?t('lang_review_new_payment','Review a new payment'):action==='retry'?t('lang_retry_original_payment','Retry original request'):t('lang_finish_original_payment','Finish original payment'))
             .prop('disabled',candidate.busy).on('click',()=>send(candidate,action)));
+        if(canStop)panel.append($('<button>').attr({type:'button','data-module':'sales','data-access':'write'})
+            .addClass('btn btn-sm btn-light border ml-2').text(t('lang_stop_payment_request','Stop this request'))
+            .prop('disabled',candidate.busy).on('click',()=>send(candidate,'stop')));
         $('#invoices_pay_strip').append(panel); P.ACLForModule('sales');
     }
     const uncertain=()=>t('lang_payment_result_unknown','No confirmed result yet. Check before trying again.');
@@ -51,6 +54,10 @@
             candidate.busy=false;
             const status=response && response.type==='success' && response.data;
             if (!status || status.commandId!==candidate.record.request.commandId) { render(candidate,uncertain()); return; }
+            candidate.status=status;
+            if(status.state==='stopped' && status.canReplace===true){
+                render(candidate,t('lang_payment_request_stopped','The server stopped this request. Review new details before recording another payment.'),'replace');return;
+            }
             if (status.state==='saved' && status.releasePending===false) {
                 try {
                     await requests().complete(candidate.scope,candidate.record.request.commandId,status);
@@ -64,17 +71,27 @@
             if ((status.state==='pending'||status.state==='saved') && status.canRecover===true) {
                 render(candidate,t('lang_payment_original_unfinished','The original payment is unfinished. Continue with the same amount and method.'),'recover');
             } else if (status.state==='absent') {
-                render(candidate,t('lang_payment_original_absent','This server has not recorded the request. Retry only the unchanged original.'),'retry');
+                render(candidate,t('lang_payment_original_absent','This server has not recorded the request. Retry only the unchanged original.'),'retry',status.canStop===true);
             } else render(candidate,t('lang_payment_original_review','This payment needs review. Keep the saved request and check again.'));
         },function(){if(current(candidate)&&ticket===sequence){candidate.busy=false;render(candidate,uncertain());}});
     }
-    function send(candidate,action) {
+    async function send(candidate,action) {
         if (!current(candidate)||candidate.busy) return;
         let record;try{record=held(candidate);}catch{failure();return;}
+        if(action==='replace'){
+            candidate.busy=true;
+            try{
+                await requests().replaceStopped(candidate.scope,record.request.commandId,candidate.status);
+                if(!current(candidate))return;
+                view=null;$('#ie_payment_recovery').remove();inputs(false);$('#invoices_pay_strip').hide();
+                invoices.showDetails(candidate.scope.invoiceId);
+            }catch{if(current(candidate)){candidate.busy=false;failure();}}
+            return;
+        }
         candidate.busy=true; ++sequence; render(candidate,t('lang_payment_working','Saving the original payment…'));
         const base='invoices/'+encodeURIComponent(candidate.scope.invoiceId);
-        P.post({url:action==='recover'?base+'/payment-requests/'+record.request.commandId+'/recover':base+'/payment',
-            data:JSON.stringify(action==='recover'?{confirmed:true}:record.request)},function(response){
+        P.post({url:['recover','stop'].includes(action)?base+'/payment-requests/'+record.request.commandId+'/'+action:base+'/payment',
+            data:JSON.stringify(['recover','stop'].includes(action)?{confirmed:true}:record.request)},function(response){
             if(!current(candidate))return; candidate.busy=false;
             if(response && response.type==='success')check(candidate);else render(candidate,uncertain());
         },function(){if(current(candidate)){candidate.busy=false;render(candidate,uncertain());}});

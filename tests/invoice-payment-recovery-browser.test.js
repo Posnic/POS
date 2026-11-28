@@ -69,3 +69,20 @@ test('invalid and above-balance input does not retain or send a new request',asy
   assert.equal(f.data.size,0);assert.equal(f.calls.posts.length,0);assert.equal(f.calls.alerts.length,4);
  }finally{f.close();}
 });
+
+test('replacement waits for confirmed stop, survives a lost stop reply and never automatically pays',async()=>{
+ const f=setup();try{
+  await f.app.payConfirm();const original=JSON.parse(f.calls.posts[0].options.data);f.calls.posts[0].fail();
+  f.$('#ie_payment_recovery button').first().trigger('click');
+  await f.calls.gets[0].ok({type:'success',data:{state:'absent',commandId:original.commandId,canStop:true}});
+  assert.equal(f.$('#ie_payment_recovery button').length,3);
+  f.$('#ie_payment_recovery button').last().trigger('click');
+  assert.ok(f.calls.posts[1].options.url.endsWith('/stop'));assert.deepEqual(JSON.parse(f.calls.posts[1].options.data),{confirmed:true});
+  f.calls.posts[1].fail();assert.equal(f.data.size,1);assert.equal(f.calls.posts.length,2);
+  f.$('#ie_payment_recovery button').first().trigger('click');
+  await f.calls.gets[1].ok({type:'success',data:{state:'stopped',commandId:original.commandId,canReplace:true}});
+  assert.equal(f.data.size,1);f.$('#ie_payment_recovery button').last().trigger('click');await tick();
+  assert.equal(f.data.size,0);assert.equal(f.calls.posts.length,2);assert.deepEqual(f.calls.refresh,['invoice']);
+  await f.app.payConfirm();assert.notEqual(JSON.parse(f.calls.posts[2].options.data).commandId,original.commandId);
+ }finally{f.close();}
+});

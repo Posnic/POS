@@ -583,3 +583,28 @@ Syntax/attribution/diff checks pass. No new navigation destination or synced fie
 Unresolved requests remain held if the server rejects their original values; a
 server-confirmed stop/replacement protocol is still needed for that case. Customer
 writer coordination, authoritative sync and installed paired acceptance remain open.
+
+### Stop before replacement for issued invoices
+
+An authenticated confirmed stop records the original request ID on the sale using
+an exact-document compare. Admission checks those retained stop records and uses
+the same document comparison: stop and payment admission cannot both win. Admitted
+or completed requests cannot be stopped. Repeated stop/status returns the saved
+outcome, including after a lost reply. History is bounded and never silently pruned.
+
+The EN/AR recovery screen offers Stop only for an absent request on an issued
+invoice. After checking a confirmed stopped outcome, Review a new payment clears
+only that original local request and reopens the invoice; it never submits new
+money. Late confirmations cannot clear newer requests. The mockup was extended
+and checked before implementation.
+
+Validation: 11 browser/store tests, 36 invoice unit tests and real-Mongo tests pass.
+Mongo coverage includes both stop/admission race orders, lost stop reply, admitted
+payment refusal, controller confirmation/permission checks and delayed payment
+refusal. Owned M8NCzu/bec3Wv/gPCwkU cleaned and independently absent. Attribution/
+diff checks pass. Local stop history must remain with its authoritative payment
+installation; sync integration is still unresolved, so no deployment is claimed.
+
+Limitation: a request rejected before invoice issuance has no sale to serialize
+against. It remains held; invoice-level stop/admission coordination is still needed.
+Customer-wide payment coordination and installed acceptance also remain open.
