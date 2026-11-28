@@ -428,7 +428,7 @@ async function paymentRequestStatus(invoice,commandId,context={}) {
     String(sale.source_invoice_id)!==String(invoice._id))throw new Error('Original payment unavailable');
  const completed=(sale.legacy_invoice_payment_results||[]).filter(row=>row.id===commandId);
  if(completed.length>1)throw new Error('Original payment completion differs');
- if(completed.length)return {state:'saved',commandId,result:completed[0].result,releasePending:sale.legacy_invoice_payment_lock?.id===commandId};
+ if(completed.length)return {state:'saved',commandId,result:completed[0].result,releasePending:sale.legacy_invoice_payment_lock?.id===commandId,canRecover:sale.legacy_invoice_payment_lock?.id===commandId&&sameCashier(completed[0],context)};
  const admission=sale.legacy_invoice_payment_lock;
  if(admission?.id===commandId)return {
   state:'pending',commandId,amount:admission.amount,method:admission.method,

@@ -537,3 +537,25 @@ read permission/branch rejection, and exact replay of a fully paid invoice.
 Owned CbMjxA/z8SV82 removed and independently absent. Attribution/diff checks pass.
 The new request/cashier metadata is local command evidence; it must not be blindly
 replicated. Existing sync authority gaps and installed acceptance remain open.
+
+### Explicit continuation and local request retention
+
+POST /invoices/:id/payment-requests/:commandId/recover requires invoice read/write
+access, the original cashier, and only {confirmed:true}; replacement amounts or
+other fields are refused. It loads the original request and continues its saved
+effects. Saved results with outstanding release also expose whether this cashier
+can finish release. Unknown or conflicting state remains held.
+
+A browser request-store factory retains scoped request identity before submission,
+requires Web Locks for same-origin tab coordination, and refuses corrupt/failed
+storage. Only a matching saved result with no pending release can remove the
+original; stale replies cannot remove a newer request. The factory is not yet
+connected to invoice payment buttons or the page asset map.
+
+Validation: 36 invoice unit tests, four request-store tests and actual-controller
+Mongo tests pass (confirmation, permission/cashier, altered body and continuation).
+The Books English/Arabic recovery mockup was checked at 390px and visually inspected
+before implementation. Owned PTTrtq/9VkXP3 removed and independently absent.
+Attribution/diff checks pass. Next: connect the reviewed screen and persistent
+request store, then exercise the normal browser flow. Local request data is not
+synced business data; existing server sync/customer coordination gaps remain.

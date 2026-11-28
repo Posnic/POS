@@ -267,6 +267,23 @@ module.exports = {
     }
   },
 
+  async recoverPayment(req, res) {
+    try {
+      if (!req.user || !can(req, 'read') || !can(req, 'write')) return fail(res, 'Unauthorized access', 403);
+      if (req.body?.confirmed !== true || Object.keys(req.body).some(key => key !== 'confirmed'))
+        return fail(res, 'Confirm continuation of the unchanged original payment', 400);
+      const ctx = contextOf(req);
+      const found = await repository.getInvoice(req.params.id, ctx);
+      if (!found.status) return fail(res, found.message, 404);
+      const original = await invoiceSync.paymentRequestStatus(found.data, req.params.commandId, ctx);
+      if (!original.canRecover) return fail(res, 'The original payment cannot be continued by this account', 409);
+      const result = await invoiceSync.recoverPayment(found.data, req.params.commandId, ctx);
+      return result.status ? ok(res, result.data, result.message) : fail(res, result.message, 409);
+    } catch (error) {
+      return fail(res, 'The original payment still needs review. Keep its request and check again.', 409);
+    }
+  },
+
   async paymentRequestStatus(req, res) {
     try {
       if (!req.user || !can(req, 'read')) return fail(res, 'Unauthorized access', 403);
