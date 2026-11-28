@@ -936,3 +936,9 @@ Legacy settlement now retains prior allocation (40 + 65 = 105), validates the se
 ### Server wallet settlement preflight
 
 The entire selected batch is checked before writes: scoped customer, no active or malformed reservation, unique sales, original allocations, exact customer/ledger agreement and enough credit. Cross-branch ledgers are held. Completion uses exact decimal balance and compares the original customer snapshot. Paired standalone-Mongo tests cover no-write refusals, decimal settlement and late customer change; 338 POS unit tests pass. The late-change test demonstrates remaining partial sale effects when customer completion is refused. Durable shared admission/recovery is still required; no wallet activation or release acceptance.
+
+### Durable batch settlement coordinator (not activated)
+
+customer-wallet-settlement retains a scoped original request, actor, customer/ledger/sale snapshots and deterministic effects in wallet_settlement_journal. It reserves customer and sales with wallet_entry_lock, records applying before financial writes, resumes exact effects, verifies balance and durably completes before releasing reservations. Historical results do not rewrite later records. Dedicated standalone-Mongo tests pass 14 committed-write lost replies, concurrent replay, original actor/request checks, exact decimal settlement and drift/result-corruption refusal.
+
+This engine is not connected to the live settlement endpoint. Invoice-linked sales are held before writes; original invoice/quote mirrors, stopping unaccepted requests, remaining legacy sale-writer guards, UI/route integration, sync/backup ownership and installed acceptance are still required. The journal is local execution evidence, not authority for replay on another device.
