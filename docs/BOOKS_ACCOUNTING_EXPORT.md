@@ -299,3 +299,24 @@ contexts, not full protected HTTP, installed software or cross-device evidence.
 Common legacy POS writer guards, normal authenticated routes, original full test
 compatibility, backup/restore and Gateway/agent transport remain required before
 activation. No receipt command is mounted or default-enabled by this change.
+
+### Existing invoice write admission
+
+The normal invoice repository now checks absence of a receipt reservation in the
+actual edit, payment-note, delete, cancel and sale-mirror write predicates.
+Cancellation also requires the document still be a draft. Mirroring compares the
+read document atomically and returns a conflict if a newer balance or reservation
+arrived; it no longer reports success for a failed update. Sharing metadata paths
+are unchanged. No new persisted fields or sync lanes were introduced by this guard.
+
+Real standalone-Mongo tests exercise all five repository operations, including
+locks inserted between read and write, concurrent issue versus cancellation,
+stale balance mirroring and unreserved successful behavior. Both this suite and
+the full internal receipt journey pass; 33 existing invoice repository/service
+unit tests pass. Repository database selection is injected into a disposable real
+database; full application auth/installed behavior remains unverified.
+
+This protects invoice records only. The ordinary invoice-payment service can
+still reach sale/customer writes before its mirror, and wallet/edit/delete paths
+still need the common admission protocol. Do not enable the new receipt route or
+claim competing-writer protection complete until those changes and tests pass.

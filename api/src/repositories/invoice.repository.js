@@ -37,6 +37,7 @@ const BaseModel = require('../models/base.model');
 const { ObjectId } = require('mongodb');
 const { ensureIndexOnce } = require('../db/ensure-index');
 const docMath = require('../services/document-math');
+const receiptUnreserved = () => ({ books_receipt_lock: { $exists: false } });
 
 const STATUSES = Object.freeze(['draft', 'unpaid', 'partial', 'paid', 'cancelled']);
 /* Still authoring: the numbers may change. Once the sale exists they may not -
@@ -244,7 +245,7 @@ class InvoiceRepository extends BaseModel {
         doc.balance = money.total;
         doc.paid_amount = 0;
         const result = await collection.updateOne(
-          { _id: new ObjectId(String(id)), ...wall, status: { $in: EDITABLE } },
+          { _id: new ObjectId(String(id)), ...wall, ...receiptUnreserved(), status: { $in: EDITABLE } },
           { $set: doc }
         );
         if (!result.matchedCount) {
@@ -601,7 +602,11 @@ class InvoiceRepository extends BaseModel {
       if (!doc.sale_id) set.issued_date = now;
       if (status === 'paid' && !doc.paid_date) set.paid_date = now;
       if (status !== 'paid' && doc.paid_date) set.paid_date = null;
-      await collection.updateOne({ _id: doc._id }, { $set: set });
+      const written = await collection.updateOne(
+        { _id: doc._id, ...wall, ...receiptUnreserved(), $expr: { $eq: ['$$ROOT', { $literal: doc }] } },
+        { $set: set }
+      );
+      if (!written.matchedCount) return { status: false, data: null, message: 'Invoice changed or has an unfinished payment; refresh before retrying' };
       return {
         status: true,
         data: { id: String(doc._id), status, paid_amount: paid, balance },
@@ -644,8 +649,8 @@ class InvoiceRepository extends BaseModel {
               ' instead',
           };
         }
-        await collection.updateOne(
-          { _id: doc._id },
+        const written = await collection.updateOne(
+          { _id: doc._id, ...wall, ...receiptUnreserved(), status: 'draft' },
           {
             $set: {
               status: 'cancelled',
@@ -657,6 +662,7 @@ class InvoiceRepository extends BaseModel {
             },
           }
         );
+        if (!written.matchedCount) return { status: false, data: null, message: 'Invoice changed or has an unfinished payment; refresh before retrying' };
         return { status: true, data: { id: String(doc._id) }, message: 'Invoice cancelled' };
       }
 
@@ -685,7 +691,7 @@ class InvoiceRepository extends BaseModel {
       }
       const collection = await this.getCollection(this.collectionName);
       const result = await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall },
+        { _id: new ObjectId(String(id)), ...wall, ...receiptUnreserved() },
         {
           $push: {
             payments: {
@@ -700,7 +706,7 @@ class InvoiceRepository extends BaseModel {
           $set: { updated_date: new Date() },
         }
       );
-      if (!result.matchedCount) return { status: false, data: null, message: 'Invoice not found' };
+      if (!result.matchedCount) return { status: false, data: null, message: 'Invoice not found or has an unfinished payment' };
       return { status: true, data: { id: String(id) }, message: 'Payment noted' };
     } catch (error) {
       console.error('Error in InvoiceRepository.recordPayment:', error);
@@ -758,6 +764,7 @@ class InvoiceRepository extends BaseModel {
       const result = await collection.deleteOne({
         _id: new ObjectId(String(id)),
         ...wall,
+        ...receiptUnreserved(),
         status: { $in: EDITABLE },
       });
       if (!result.deletedCount) {
