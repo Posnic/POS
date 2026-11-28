@@ -39,14 +39,14 @@ function create({db}){
  const savedResult=journal=>({state:'saved',commandId:journal._id,request:journal.request,balance:journal.plan.balance,sales:journal.request.sales.map(item=>item.id)});
  function validate(journal,key){
   if(!journal||!['_id','license','branch_id','customer_id','actor_id'].every(k=>same(journal[k],key[k])))fail('Original settlement belongs to another scope or cashier');
-  if(!['prepared','applying','completed'].includes(journal.state)||digest(journal.plan)!==journal.planHash||!same(normalize(journal.request),journal.request))fail('Original settlement evidence requires review');
+  if(!['prepared','reserving','applying','completed','stopped'].includes(journal.state)||digest(journal.plan)!==journal.planHash||!same(normalize(journal.request),journal.request))fail('Original settlement evidence requires review');
   if(!same(journal.plan.customer._id,key.customer_id)||!same(journal.plan.customer.license,key.license)||!same(journal.plan.customer.branch_id,key.branch_id))fail('Original customer differs');
   if(journal.state==='completed'&&!same(journal.result,savedResult(journal)))fail('Saved settlement result differs from its original plan');
   return journal;
  }
  async function current(key){return validate(await journals.findOne({_id:key._id}),key);}
  async function status(context,id){const key=scope(context,id),journal=await journals.findOne({_id:id});if(!journal)return {state:'absent',commandId:id};validate(journal,key);
-  return journal.state==='completed'?journal.result:{state:'pending',commandId:id,request:journal.request,phase:journal.state};}
+  return journal.state==='stopped'?{state:'stopped',commandId:id,canReplace:true}:journal.state==='completed'?journal.result:{state:'pending',commandId:id,request:journal.request,phase:journal.state};}
  async function submit(context,id,input){
   const key=scope(context,id),request=normalize(input),existing=await journals.findOne({_id:id});
   if(existing){validate(existing,key);if(!same(existing.request,request))fail('Original settlement request differs');return resume(context,id);}
@@ -91,15 +91,33 @@ function create({db}){
    if(!(await entry.collection.replaceOne(exact(row),entry.row)).matchedCount){const latest=await entry.collection.findOne({_id:row._id});if(same(latest?.wallet_entry_lock,lock(journal)))fail('Retry original settlement release');}
   }
  }
+ async function stop(context,id){
+  const key=scope(context,id);let journal=await current(key);
+  // Reservation and stopping compete on the same journal document. Once
+  // reservation starts, a delayed writer may still acquire a record: it is
+  // unsafe to release its locks or authorize a replacement from another worker.
+  if(journal.state==='prepared'){
+   await journals.updateOne({_id:id,state:'prepared',planHash:journal.planHash},{$set:{state:'stopped'}});
+   journal=await current(key);
+  }
+  if(journal.state!=='stopped')fail('Settlement reservation has started; recover the original request before replacement');
+  return {state:'stopped',commandId:id,canReplace:true};
+ }
  async function resume(context,id){
   const key=scope(context,id);let journal=await current(key);
+  if(journal.state==='stopped')return {state:'stopped',commandId:id,canReplace:true};
   if(journal.state==='completed'){await release(journal);return journal.result;}
   const plan=journal.plan;
   if(journal.state==='prepared'){
+   await journals.updateOne({_id:id,state:'prepared',planHash:journal.planHash},{$set:{state:'reserving'}});
+   journal=await current(key);
+  }
+  if(journal.state==='stopped')return {state:'stopped',commandId:id,canReplace:true};
+  if(journal.state==='reserving'){
    await replace(customers,plan.customer,held(plan.customer,journal));
    for(const effect of plan.effects)await replace(sales,effect.sale,held(effect.sale,journal));
    if(!same(await rows(key),plan.baseline))fail('Ledger changed before settlement admission');
-   await journals.updateOne({_id:id,state:'prepared',planHash:journal.planHash},{$set:{state:'applying'}});
+   await journals.updateOne({_id:id,state:'reserving',planHash:journal.planHash},{$set:{state:'applying'}});
    journal=await current(key);
   }
   if(journal.state==='completed'){await release(journal);return journal.result;}
@@ -122,6 +140,6 @@ function create({db}){
   journal=await current(key);if(journal.state!=='completed'||!same(journal.result,result))fail('Settlement completion requires review');
   await release(journal);return journal.result;
  }
- return {submit,status,resume};
+ return {submit,status,resume,stop};
 }
 module.exports={create};
