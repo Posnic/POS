@@ -49,6 +49,20 @@ function create({db}){
  }
  return {
   releaseStopped,
+  async releaseCompleted(context,id,commandId){
+   const state=await journal.outcome(context,id,commandId);
+   if(state.state!=='projected'||!state.effects)fail('Verified completion required');
+   if(state.effects.customer.required===false)return;
+   const held=await customers.find({'books_receipt_lock.journalId':id,'books_receipt_lock.commandId':commandId,license:context.license}).limit(2).toArray();
+   if(held.length>1)fail('Customer release identity differs');
+   for(const customer of held){
+    original(customer,state);
+    const saleScope={license:customer.license,branch_id:customer.branch_id,customer_id:customer._id};
+    if(hash(customer.books_receipt_effect)!==hash(state.effects.customer)||minor(customer.balance)!==BigInt(state.effects.customer.balanceMinor)||
+       hash(sorted(await ledger(saleScope)))!==state.effects.customer.ledgerHash)fail('Completed customer ledger changed');
+    if(!(await customers.updateOne(exact(customer),{$unset:{books_receipt_lock:''}})).matchedCount){const latest=await customers.findOne({_id:customer._id});if(latest&&owns(latest,state))fail('Customer release changed; retry recovery');}
+   }
+  },
   async reserve(context,id,commandId){
    for(let i=0;i<10;i++){
     const {state,sale}=await sales.verifyReserved(context,id,commandId);
@@ -72,7 +86,8 @@ function create({db}){
    const customer=await customers.findOne(customerQuery(sale)),lock=original(customer,state);
    if(hash(sorted(await ledger(sale)))!==lock.baselineHash||minor(customer.balance)!==BigInt(lock.balanceMinor))fail('Customer ledger changed');return lock;
   },
-  async apply(context,id,commandId){
+  async verify(context,id,commandId){return create({db}).apply(context,id,commandId,true);},
+  async apply(context,id,commandId,verifyOnly=false){
    for(let i=0;i<15;i++){
     const {state,sale}=await sales.verifyApplied(context,id,commandId);if(sale.customer_id==null)return {required:false};
     const customer=await customers.findOne(customerQuery(sale)),lock=original(customer,state),receipt=state.receipt;
@@ -84,6 +99,7 @@ function create({db}){
     const final=sorted([...lock.baseline.filter(row=>hash(row._id)!==hash(allocationId)),incoming,allocation]);
     const current=await ledger(sale),currentHash=hash(sorted(current)),finalHash=hash(final);
     if(minor(customer.balance)!==BigInt(lock.balanceMinor))fail('Customer balance changed');
+    if(verifyOnly&&currentHash!==finalHash)fail('All payment effects must be applied before completion');
     if(currentHash===lock.baselineHash){
      try{await transactions.insertOne({...incoming,date:new Date(receipt.at),created_date:new Date(receipt.at),updated_date:new Date(receipt.at),invoice_id:sale.source_invoice_id});}catch(e){if(e.code!==11000)throw e;}
      continue;
@@ -97,6 +113,7 @@ function create({db}){
     if(currentHash!==finalHash)fail('Customer ledger changed or allocation differs');
     const effect={journalId:id,commandId,receiptId:receipt.id,ledgerHash:finalHash,balanceMinor:lock.balanceMinor};
     if(customer.books_receipt_effect?.receiptId===receipt.id){if(hash(customer.books_receipt_effect)!==hash(effect))fail('Customer effect differs');return effect;}
+    if(verifyOnly)fail('All payment effects must be applied before completion');
     if((await customers.updateOne(exact(customer),{$set:{balance:money(lock.balanceMinor),books_receipt_effect:effect,updated_date:new Date(receipt.at)}})).matchedCount)return effect;
    }
    fail('Customer receipt busy; retry original recovery');

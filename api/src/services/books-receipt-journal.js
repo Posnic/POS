@@ -67,14 +67,19 @@ function validate(row){
   else if(['accepted','projected'].includes(command.state)){
    if(!timestamp(command.acceptedAt)||hash(command.receipt)!==hash(receipt(command)))fail('Invalid accepted receipt');
    if(command.state==='accepted'){revision+=2;active=command.commandId;if(command.projectedRevision)fail('Invalid accepted projection');}
-   else {revision+=3;if(!rev(command.projectedRevision))fail('Invalid projected revision');lastProjected=command;}
+   else {revision+=3;if(!rev(command.projectedRevision))fail('Invalid projected revision');
+    if(command.effects!==undefined&&(!command.effects||command.effects.invoice?.receiptId!==command.receipt.id||
+       !rev(command.effects.invoice.financialHash)||
+       !(command.effects.customer?.required===false||(command.effects.customer?.receiptId===command.receipt.id&&rev(command.effects.customer.ledgerHash)))||
+       hash(command.effects)!==command.effectsHash))fail('Invalid completed effects');
+    lastProjected=command;}
   }else fail('Invalid receipt state');
  }
  if(row.revision!==revision||row.active!==active)fail('Invalid receipt journal revision');
  return row;
 }
 const outcome=command=>({commandId:command.commandId,state:command.state,review:command.review,
- ...(command.receipt?{receipt:command.receipt}:{}),...(command.projectedRevision?{projectedRevision:command.projectedRevision}:{})});
+ ...(command.receipt?{receipt:command.receipt}:{}),...(command.projectedRevision?{projectedRevision:command.projectedRevision}:{}),...(command.effects?{effects:command.effects,effectsHash:command.effectsHash}:{})});
 function create({db,now=()=>new Date()}){
  const at=()=>{const value=now().toISOString();if(!timestamp(value))fail('Invalid receipt time');return value;};
  const rows=db.collection('books_receipt_journals');
@@ -134,8 +139,8 @@ function create({db,now=()=>new Date()}){
     const c=find(row,commandId);if(c.review.values.actor.id!==context.actorId)fail('Use the original payment actor');
     if(!['accepted','projected'].includes(c.state)||!proof||!rev(proof.revision)||proof.receiptId!==c.receipt.id||
       proof.paidMinor!==c.receipt.paidMinor||proof.pendingMinor!==c.receipt.pendingMinor)fail('Invalid payment projection proof');
-    if(c.state==='projected'){if(c.projectedRevision!==proof.revision)fail('Projection revision changed');return outcome(c);}
-    c.state='projected';c.projectedRevision=proof.revision;row.active=null;row.revision++;
+    if(c.state==='projected'){if(c.projectedRevision!==proof.revision||(proof.effects!==undefined&&hash(proof.effects)!==c.effectsHash))fail('Projection revision changed');return outcome(c);}
+    c.state='projected';c.projectedRevision=proof.revision;if(proof.effects!==undefined){c.effects=proof.effects;c.effectsHash=hash(proof.effects);}row.active=null;row.revision++;
    });
    return existing||outcome(find(await load(context,id),commandId));
   }

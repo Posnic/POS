@@ -278,3 +278,24 @@ Two standalone suites and five sync classification checks pass. Source-only:
 normal customer/wallet/POS writers must still honor admission, and private sync
 transport must separate local lock/effect state from required shared evidence.
 The manifest's invoice/transaction/payment gaps remain blockers, not accepted sync.
+
+### Verified completion and release recovery
+
+Sale finalization now reads/verifies the invoice and customer effects before
+storing their hashes and original result in the projected journal command. The
+verification paths refuse missing effects without writing them. Completion then
+releases customer, invoice and sale reservations in that order, with the sale
+last. Committed-but-lost replies at journal completion and each release resume
+from durable state. A repeat of an older completed receipt returns its original
+outcome without touching a newer reservation on that sale.
+
+The standalone journey now covers partial receipt → all effects → interrupted
+completion/release → recovery → second collection → fully paid. Original invoice
+total and notes survive, customer net credit remains correct and old completion
+cannot release the second command. Nine receipt/identity tests plus five manifest
+classification checks pass. These are local source tests with direct internal
+contexts, not full protected HTTP, installed software or cross-device evidence.
+
+Common legacy POS writer guards, normal authenticated routes, original full test
+compatibility, backup/restore and Gateway/agent transport remain required before
+activation. No receipt command is mounted or default-enabled by this change.

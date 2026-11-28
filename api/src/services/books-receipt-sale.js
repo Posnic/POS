@@ -97,6 +97,28 @@ function create({db,now}){
    }
    fail('Sale changed while applying receipt');
   },
+  async finalize(context,id,commandId){
+   let state=await journal.outcome(context,id,commandId);
+   const invoice=require('./books-receipt-invoice').create({db}),customer=require('./books-receipt-customer').create({db});
+   if(state.state==='accepted'){
+    const checked=await create({db}).verifyApplied(context,id,commandId);
+    const effects={invoice:await invoice.verify(context,id,commandId),customer:await customer.verify(context,id,commandId)};
+    state=await journal.projected(context,id,commandId,{receiptId:state.receipt.id,paidMinor:state.receipt.paidMinor,
+     pendingMinor:state.receipt.pendingMinor,revision:checked.sale.books_receipt_lock.appliedRevision,effects});
+   }
+   if(state.state!=='projected'||!state.effects)fail('All payment effects require verified completion');
+   let sale=await load(context,state.review.values.basis.sourceId);
+   if(!sameLock(sale.books_receipt_lock,state))return state;
+   await customer.releaseCompleted(context,id,commandId);
+   await invoice.releaseCompleted(context,id,commandId);
+   sale=await load(context,state.review.values.basis.sourceId);
+   if(!sameLock(sale.books_receipt_lock,state))return state;
+   if(exported(sale).revision!==state.projectedRevision||digest(sale)!==sale.books_receipt_lock.appliedDigest)fail('Completed sale changed');
+   if(!(await sales.updateOne(exact(sale),{$unset:{books_receipt_lock:''}})).matchedCount){
+    const latest=await load(context,state.review.values.basis.sourceId);if(sameLock(latest.books_receipt_lock,state))fail('Sale release changed; retry recovery');
+   }
+   return state;
+  },
   async verifyReserved(context,id,commandId){
    const {state,sale}=await current(context,id,commandId),lock=sale.books_receipt_lock;
    if(state.state!=='prepared'||!sameLock(lock,state)||exported(sale).revision!==state.review.values.basis.revision||digest(sale)!==lock.originalDigest)fail('Reserved source changed');

@@ -41,6 +41,19 @@ function create({db}){
  }
  return {
   releaseStopped,
+  async releaseCompleted(context,id,commandId){
+   const state=await journal.outcome(context,id,commandId);
+   if(state.state!=='projected'||!state.effects)fail('Verified completion required');
+   const typed=state.effects.invoice.invoiceId;
+   const invoice=await invoices.findOne({...wall(context),_id:typed.kind==='objectId'?new ObjectId(typed.value):typed.value});
+   if(!invoice)fail('Completed invoice unavailable');
+   if(!owns(invoice,state))return;
+   if(hash(financial(invoice))!==state.effects.invoice.financialHash)fail('Completed invoice differs');
+   const notes=(invoice.payments||[]).filter(row=>row.books_receipt_id===state.receipt.id);
+   if(notes.length!==1)fail('Completed invoice receipt differs');
+   const result=await invoices.updateOne(exact(invoice),{$unset:{books_receipt_lock:''}});
+   if(!result.matchedCount){const latest=await invoices.findOne({_id:invoice._id,...wall(context)});if(latest&&owns(latest,state))fail('Invoice release changed; retry recovery');}
+  },
   async reserve(context,id,commandId){
    for(let i=0;i<10;i++){
     const {state,sale}=await sales.verifyReserved(context,id,commandId),invoice=await load(context,sale);eligible(invoice,state);
@@ -60,7 +73,8 @@ function create({db}){
    if(!owns(invoice,state)||invoice.books_receipt_lock.originalHash!==hash(financial(invoice)))fail('Reserve the unchanged original invoice first');
    return invoice.books_receipt_lock;
   },
-  async apply(context,journalId,commandId){
+  async verify(context,id,commandId){return create({db}).apply(context,id,commandId,true);},
+  async apply(context,journalId,commandId,verifyOnly=false){
   for(let i=0;i<10;i++){
    const {state,sale}=await sales.verifyApplied(context,journalId,commandId),receipt=state.receipt,basis=state.review.values.basis;
    const typed=sale.books_receipt_lock.originalInvoice,invoice=await load(context,sale);
@@ -77,6 +91,7 @@ function create({db}){
     if(own.length!==1||own[0].journalId!==journalId||own[0].commandId!==commandId||notes.length!==1||hash(notes[0])!==hash(note)||own[0].financialHash!==hash(financial(invoice)))fail('Recorded invoice receipt differs');
     return {receiptId:receipt.id,invoiceId:typed,financialHash:own[0].financialHash};
    }
+   if(verifyOnly)fail('All payment effects must be applied before completion');
    if(invoice.books_receipt_lock.originalHash!==hash(financial(invoice)))fail('Reserved invoice values changed');
    if(notes.length||effects.length>=500||!['partial','unpaid','issued'].includes(invoice.status)||
       minor(invoice.paid_amount)!==basis.paidMinor||minor(invoice.balance)!==basis.pendingMinor)fail('Original invoice payment balance differs');
