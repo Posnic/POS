@@ -1095,6 +1095,18 @@ class CustomerController extends BaseController {
         });
       }
 
+      const amountText = typeof amount === 'string' ? amount.trim() : String(amount);
+      const parsedAmount = Number(amountText);
+      const transactionType = type || 'in';
+      const transactionDate = date ? new Date(date) : new Date();
+      if (!ObjectId.isValid(String(id)) || !['string', 'number'].includes(typeof amount) ||
+          !/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(amountText) || !Number.isFinite(parsedAmount) ||
+          parsedAmount <= 0 || parsedAmount > Number.MAX_SAFE_INTEGER ||
+          !['in', 'out'].includes(transactionType) ||
+          (date && typeof date !== 'string') || !Number.isFinite(transactionDate.getTime())) {
+        return res.status(400).json({type:'error', message:'Enter a valid customer, positive amount, transaction type and date.', data:null});
+      }
+
       // Set BaseModel context
       const BaseModel = require('../models/base.model');
       if (req.user && req.user.license) {
@@ -1121,8 +1133,6 @@ class CustomerController extends BaseController {
       const transactionCollection = await new BaseModel('transaction').getCollection('transaction');
 
       // Create transaction document
-      const transactionDate = date ? new Date(date) : new Date();
-
       // Fetch branch_name from DB if empty
       let branch_name = req.user?.branch_name || '';
       const userBranchId = req.user?.branch_id;
@@ -1150,8 +1160,8 @@ class CustomerController extends BaseController {
         customer_phone: customer.phone || '',
         branch_id: req.user?.branch_id ? new ObjectId(req.user.branch_id) : null,
         branch_name: branch_name,
-        amount: parseFloat(amount),
-        type: type || 'in',
+        amount: parsedAmount,
+        type: transactionType,
         pending: 0,
         description: description || 'Add transaction',
         transaction_image: transaction_image || '',

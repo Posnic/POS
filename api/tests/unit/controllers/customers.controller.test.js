@@ -1360,6 +1360,23 @@ describe('CustomerController — customerOutstandingReportTable', () => {
 // ─── transaction ─────────────────────────────────────────────────────────────
 
 describe('CustomerController — transaction (direct DB method)', () => {
+  it.each([
+    {amount:'12oops'}, {amount:'NaN'}, {amount:Infinity}, {amount:-1}, {amount:true},
+    {amount:[]}, {amount:' '}, {amount:'1e3'}, {amount:'9007199254740992'},
+    {amount:12,type:'refund'}, {amount:12,date:'not-a-date'}, {amount:12,date:12345},
+    {amount:12,id:'not-an-object-id'},
+  ])('refuses invalid input before any ledger access: %j', async values => {
+    const res=mockResponse();await ctrl.transaction(mockRequest({body:{id:VALID_ID,...values}}),res);
+    expect(res.status).toHaveBeenCalledWith(400);expect(mockGetCollection).not.toHaveBeenCalled();
+  });
+  it.each(['12.345','12.3456','0.25','.5','12.00000'])('preserves valid decimal input %s without imposing AED precision', async amount => {
+    const customers={findOne:jest.fn().mockResolvedValue({name:'Test'}),updateOne:jest.fn().mockResolvedValue({matchedCount:1})};
+    const ledger={insertOne:jest.fn().mockResolvedValue({}),aggregate:jest.fn().mockReturnValue({toArray:jest.fn().mockResolvedValue([{balance:Number(amount)}])})};
+    mockGetCollection.mockResolvedValueOnce(customers).mockResolvedValueOnce(ledger);
+    const res=mockResponse();await ctrl.transaction(mockRequest({body:{id:VALID_ID,amount,type:'in',date:'2026-11-28'}}),res);
+    expect(res.status).toHaveBeenCalledWith(200);expect(ledger.insertOne.mock.calls[0][0].amount).toBe(Number(amount));
+  });
+
   it('returns 400 when id is missing', async () => {
     const req = mockRequest({ body: { amount: 100 } });
     const res = mockResponse();

@@ -869,3 +869,20 @@ The next writer integration is concrete, not a generic sync task:
 The unmounted wallet route cannot be enabled merely because its own tests pass.
 Normal-page integration remains paired with these writer changes and live authority
 verification. No application build or release was made.
+
+
+### Manual-entry compatibility and input validation
+
+The live legacy manual-entry controller now validates customer ID, a finite positive
+complete decimal amount, in/out type and a valid supplied date before database
+access. It no longer accepts a numeric prefix from malformed text or inserts NaN
+and invalid dates. Valid decimal amounts retain their value without imposing AED's
+two-decimal limit on the general POS path.
+
+194 controller tests pass, including preserved three/four-decimal inputs. Actual
+Mongo HTTP checks prove invalid requests leave customer balances and ledger rows
+unchanged. Scratch sbvOZt removed and independently absent. This is validation only,
+not shared admission or recovery. Compatibility evidence confirms that connecting
+the current two-decimal wallet engine to every legacy manual request would narrow
+existing functionality; monetary precision must be reconciled before replacement.
+No new persisted field or sync lane and no app release.
