@@ -211,7 +211,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
     return { status: false, data: null, message: 'Original invoice sale changed' };
   }
   const admission = { id: require('node:crypto').randomUUID(), invoiceId: String(invoice._id),
-    amount, method, reference, note, actor: userName, startedAt: now, before };
+    amount, method, reference, note, actor: userName, startedAt: now, before, moneyId: new ObjectId() };
   const unlocked = { books_receipt_lock: { $exists: false }, legacy_invoice_payment_lock: { $exists: false } };
   const admitted = await sales.updateOne({ _id: sale._id, ...unlocked,
     $expr: { $eq: ['$$ROOT', { $literal: sale }] } }, { $set: { legacy_invoice_payment_lock: admission } });
@@ -247,6 +247,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
       (reference ? ' (' + reference + ')' : '');
     /* Payment received: the row the customer page's "add transaction" writes. */
     await transactions.insertOne({
+      _id: admission.moneyId, legacy_invoice_payment_id: admission.id,
       sale_id: '',
       customer_id: customerId,
       customer_name: String(sale.customer_name || ''),
@@ -322,7 +323,7 @@ async function recordPayment(invoice, payment = {}, context = {}) {
   const repo = new InvoiceRepository();
   const noted = await repo.recordPayment(
     String(invoice._id),
-    { amount, method, reference, note, date: now, by: userName },
+    { amount, method, reference, note, date: now, by: userName, commandId: admission.id },
     context
   );
   if (!noted.status) throw new Error('Payment requires original-result recovery: invoice note was not confirmed');

@@ -340,3 +340,23 @@ execution state on otherwise shared documents: transport exclusion/authoritative
 coordination remain rollout requirements. Wallet/other customer and sale writers
 still need admission. Recovery UI and deterministic resolution of interrupted
 legacy effects are unfinished; do not release this source as client-ready.
+
+### Stable ordinary-payment evidence
+
+Ordinary payment admission now allocates the incoming ledger ObjectId before
+writing money and retains it in the sale/customer admission. The money-in row
+carries that ID and the admission UUID. Invoice notes receive the same UUID and
+the original accepted date/cashier. Repository note writes atomically refuse a
+second note with that identity; an exact existing note is returned as the saved
+result. Changed amount/method/reference/note/date/cashier or duplicate identities
+are refused. Calls without a command ID retain their existing append behavior.
+Command-bearing calls require an explicit valid original Date.
+
+Real-Mongo tests cover eight concurrent identical note submissions, changed
+requests, missing original date and committed-but-lost note replies. The ordinary
+payment interruption test checks the money row against its saved admission ID.
+Three integration suites and 33 existing invoice unit tests pass. This establishes
+identities for recovery; allocation/wallet replay and the complete legacy recovery
+orchestration/UI are still unfinished. Existing unidentified payment history is
+not backfilled or promoted to an immutable receipt. Sync remains unresolved for
+invoice/transaction evidence; these fields are not a deployment claim.

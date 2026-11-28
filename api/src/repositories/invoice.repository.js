@@ -690,23 +690,40 @@ class InvoiceRepository extends BaseModel {
         return { status: false, data: null, message: 'Invalid invoice id' };
       }
       const collection = await this.getCollection(this.collectionName);
-      const result = await collection.updateOne(
-        { _id: new ObjectId(String(id)), ...wall, ...receiptUnreserved() },
-        {
-          $push: {
-            payments: {
-              amount: docMath.round2(Number(entry.amount) || 0),
-              method: String(entry.method || '').slice(0, 40),
-              reference: String(entry.reference || '').slice(0, 80),
-              note: String(entry.note || '').slice(0, 200),
-              date: entry.date instanceof Date ? entry.date : new Date(),
-              by: String(entry.by || context.userName || '').slice(0, 80),
-            },
-          },
-          $set: { updated_date: new Date() },
+      const commandId = entry.commandId;
+      if (commandId !== undefined && (typeof commandId !== 'string' ||
+          !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(commandId) ||
+          !(entry.date instanceof Date) || !Number.isFinite(entry.date.getTime()))) {
+        return { status: false, data: null, message: 'Original payment identity and date are required' };
+      }
+      const paymentNote = {
+        amount: docMath.round2(Number(entry.amount) || 0),
+        method: String(entry.method || '').slice(0, 40),
+        reference: String(entry.reference || '').slice(0, 80),
+        note: String(entry.note || '').slice(0, 200),
+        date: entry.date instanceof Date ? entry.date : new Date(),
+        by: String(entry.by || context.userName || '').slice(0, 80),
+        ...(commandId ? { legacy_invoice_payment_id: commandId } : {}),
+      };
+      const query = { _id: new ObjectId(String(id)), ...wall, ...receiptUnreserved(),
+        ...(commandId ? { 'payments.legacy_invoice_payment_id': { $ne: commandId } } : {}) };
+      const result = await collection.updateOne(query, {
+        $push: { payments: paymentNote }, $set: { updated_date: new Date() },
+      });
+      if (!result.matchedCount) {
+        if (commandId) {
+          const original = await collection.findOne({ _id: new ObjectId(String(id)), ...wall });
+          const matches = Array.isArray(original?.payments)
+            ? original.payments.filter(row => row.legacy_invoice_payment_id === commandId) : [];
+          const same = row => Object.keys(row).length === Object.keys(paymentNote).length &&
+            Object.entries(paymentNote).every(([key, value]) => value instanceof Date
+              ? row[key] instanceof Date && row[key].getTime() === value.getTime() : row[key] === value);
+          if (matches.length === 1 && same(matches[0])) {
+            return { status: true, data: { id: String(id) }, message: 'Payment noted' };
+          }
         }
-      );
-      if (!result.matchedCount) return { status: false, data: null, message: 'Invoice not found or has an unfinished payment' };
+        return { status: false, data: null, message: 'Invoice unavailable, reserved or original payment differs' };
+      }
       return { status: true, data: { id: String(id) }, message: 'Payment noted' };
     } catch (error) {
       console.error('Error in InvoiceRepository.recordPayment:', error);
