@@ -207,3 +207,26 @@ admission must be resolved before rollout; the existing sales lane alone is not
 approval to propagate a lock or replay its effects. No transport was changed or
 verified here. Customer admission, durable customer/invoice effects, source
 originals beyond the current export, backup and installed acceptance remain open.
+
+### Invoice receipt projection component
+
+`books-receipt-invoice` projects an accepted, already-applied sale receipt into
+its original typed invoice. Sale reservation now retains the original invoice
+identity, and `verifyApplied` validates the complete applied sale before any
+invoice write. An authorized recovery caller can replay deterministic projections;
+the note retains the original cashier, accepted time, amount, method and reference.
+Printed invoice totals/items/terms and quote linkage are preserved. Sale total is
+recorded separately. Whole-document predicates append one note and effect marker;
+retries verify financial state and exact note rather than appending again.
+Nonfinancial terms edits remain possible; altered financial/payment evidence is
+refused. Same-spelling BSON/string invoice keys never select the other document.
+Unpaid invoices without an existing payments array are supported.
+
+The standalone sale suite now includes committed-but-lost invoice replies,
+concurrent recovery by another authorized context, partial/full payments, original
+cashier retention, terms preservation, changed-note refusal, hidden branches and
+typed alias isolation. Both standalone sequence/sale suites pass, as do 33 existing
+POS invoice repository/service unit tests. Existing POS invoice functions were
+not changed. This remains unmounted: invoice admission before money acceptance,
+customer effects, final verification/release, normal competing writes and sync
+transport treatment are still required. No claim of full receipt completion.

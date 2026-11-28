@@ -60,6 +60,7 @@ function create({db,now}){
     if(sale.books_receipt_lock){if(!sameLock(sale.books_receipt_lock,state))fail('Sale reserved by another receipt');return sale.books_receipt_lock;}
     const lock={journalId:id,commandId,reviewHash:state.review.reviewHash,sourceRevision:state.review.values.basis.revision};
     lock.originalDigest=digest(sale);
+    lock.originalInvoice=source.identity(sale.source_invoice_id);
     const changed=await sales.updateOne(exact(sale),{$set:{books_receipt_lock:lock}});
     if(!changed.matchedCount)continue;
     const latest=await journal.outcome(context,id,commandId);
@@ -93,6 +94,13 @@ function create({db,now}){
     if((await sales.updateOne(exact(sale),{$set:set})).matchedCount)return {receiptId:state.receipt.id,paidMinor:state.receipt.paidMinor,pendingMinor:state.receipt.pendingMinor,revision};
    }
    fail('Sale changed while applying receipt');
+  },
+  async verifyApplied(context,id,commandId){
+   const state=await journal.outcome(context,id,commandId),sale=await load(context,state.review.values.basis.sourceId),lock=sale.books_receipt_lock;
+   if(state.state!=='accepted'||!sameLock(lock,state)||lock.receiptId!==state.receipt.id||
+      !lock.appliedRevision||exported(sale).revision!==lock.appliedRevision||digest(sale)!==lock.appliedDigest||
+      JSON.stringify(source.identity(sale.source_invoice_id))!==JSON.stringify(lock.originalInvoice))fail('Original invoice sale or applied values changed');
+   return {state,sale};
   },
   releaseStopped,
   async stop(context,id,commandId,reviewHash){const result=await journal.stop(context,id,commandId,reviewHash);await releaseStopped(context,id,commandId);return result;}
