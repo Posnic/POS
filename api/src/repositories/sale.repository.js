@@ -7164,6 +7164,32 @@ class SalesRepository {
         if (!saleDetails) continue;
         await require('../services/captain-payment-guard').mutable(db, saleDetails);
 
+        const decimal = require('../utils/wallet-decimal');
+        const amount = Number(saleData.amount);
+        decimal.amount(amount);
+        const paidBefore = Number(saleDetails.partial_balance || 0);
+        const pendingBefore = Number(saleDetails.payment_pending);
+        const walletBefore = Number(saleDetails.wallet_amount || 0);
+        if (amount <= 0 || amount !== pendingBefore ||
+            (saleData.paidamount !== undefined && Number(saleData.paidamount) !== paidBefore)) {
+          throw new Error('This sale balance changed. Reopen the customer ledger before settling it.');
+        }
+        const paidAfter = decimal.balance([{type:'in',amount:paidBefore},{type:'in',amount}]);
+        const walletAfter = decimal.balance([{type:'in',amount:walletBefore},{type:'in',amount}]);
+        const transactionFilter = {sale_id:saleDetails._id,license};
+        if (branch_id && ObjectId.isValid(branch_id)) transactionFilter.branch_id = new ObjectId(branch_id);
+        if (saleDetails.customer_id) transactionFilter.customer_id = saleDetails.customer_id;
+        if (saleDetails.customer_id && String(saleDetails.customer_id) !== String(data.id || '')) {
+          throw new Error('This sale belongs to another customer. Reopen the selected customer ledger.');
+        }
+        const allocations = await transactionCollection.find(transactionFilter).limit(2).toArray();
+        if (allocations.length > 1) throw new Error('The sale has multiple customer allocations. Review the original ledger.');
+        const allocation = allocations[0];
+        if (saleDetails.customer_id && (!allocation || allocation.type !== 'out' || allocation.amount !== walletBefore)) {
+          throw new Error('The original customer allocation differs. Review it before settling this sale.');
+        }
+        const allocationAfter = allocation ? decimal.balance([{type:'in',amount:allocation.amount},{type:'in',amount}]) : null;
+
         // Build update filter (same as query filter)
         const updateFilter = {
           _id: new ObjectId(saleData.id),
@@ -7178,9 +7204,11 @@ class SalesRepository {
         updateFilter.captain_payment_plan = { $exists: false };
         updateFilter.books_receipt_lock = { $exists: false };
         updateFilter.legacy_invoice_payment_lock = { $exists: false };
-        const settled = await saleCollection.updateMany(updateFilter, {
+        const settled = await saleCollection.updateMany({...updateFilter, $expr:{$eq:['$$ROOT',{$literal:saleDetails}]}}, {
           $set: {
-            partial_balance: parseFloat(saleData.amount) + parseFloat(saleData.paidamount || 0),
+            partial_balance: paidAfter,
+            paid_amount: paidAfter,
+            wallet_amount: walletAfter,
             payment_status: 'Paid',
             floor_lifecycle:
               saleDetails.floor_lifecycle === true || saleDetails.sale_process === 'KOT',
@@ -7196,33 +7224,13 @@ class SalesRepository {
         if (!settled.matchedCount)
           throw new Error('This sale changed or has a payment in progress. Reopen it to review the original payment.');
 
-        // Build transaction filter
-        const transactionFilter = {
-          sale_id: new ObjectId(saleData.id),
-          license,
-        };
-
-        if (branch_id && ObjectId.isValid(branch_id)) {
-          transactionFilter.branch_id = new ObjectId(branch_id);
+        if (allocation) {
+          const allocated = await transactionCollection.updateOne({
+            ...transactionFilter, _id: allocation._id,
+            $expr: {$eq:['$$ROOT',{$literal:allocation}]},
+          }, {$set:{description:'Edit sale',amount:allocationAfter,type:'out',pending:0,updated_date:new Date()}});
+          if (!allocated.matchedCount) throw new Error('The customer allocation changed after sale settlement. Review the original settlement before continuing.');
         }
-
-        // Update transaction
-        await transactionCollection.updateOne(transactionFilter, {
-          $set: {
-            description: 'Edit sale',
-            amount: parseFloat(saleData.amount),
-            type: 'out',
-            pending: 0.0,
-            updated_date: new Date(),
-          },
-        });
-
-        // Update wallet amount
-        await saleCollection.updateOne(updateFilter, {
-          $set: {
-            wallet_amount: (saleDetails.wallet_amount || 0) + parseFloat(saleData.amount),
-          },
-        });
 
         /* A settled sale that came from an invoice tells the invoice it is
            paid (INVOICING_MODULE_DESIGN) - fire-safe, after the sale's own

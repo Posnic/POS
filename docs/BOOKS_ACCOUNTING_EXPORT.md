@@ -928,3 +928,7 @@ refresh, manual deletion confirmation, changed customer/branch refusal and inval
 input. Store/recovery companion tests also passed during the work. No temporary
 profile/database created by these DOM tests. Full live route/page registration,
 legacy writer replacement and authority/sync acceptance remain open.
+
+### Cumulative legacy settlement regression
+
+Legacy settlement now retains prior allocation (40 + 65 = 105), validates the selected customer and pending amount, rejects ambiguous allocations, and compares original sale/allocation snapshots at writes. The paired Books real-Mongo payment-admission test and 338 POS repository/controller unit tests pass. This remains sequential settlement without durable customer-wide admission/recovery; wallet adapters remain unmounted and no installed or release acceptance is implied.
