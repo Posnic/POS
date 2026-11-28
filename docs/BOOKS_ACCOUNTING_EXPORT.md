@@ -253,3 +253,28 @@ lock separation. This records a rollout blocker, not sync completion. Gateway an
 actual agent changes, original-document immutability, cross-device reads and
 conflict/reconnect validation are still required. Do not claim the feature done
 because a classification test now reports the missing policy visibly.
+
+### Customer ledger admission and projection
+
+`books-receipt-customer` now reserves the original customer and scoped financial
+ledger before sale acceptance. It checks the customer balance against money-in
+minus allocations and validates the original sale allocation. Unknown/malformed,
+conflicting or oversized ledgers are held for review (10,000 rows / 512 KiB saved
+financial baseline). Reservations bind the journal review; financial snapshots
+retain typed IDs, not display names. Nonfinancial customer data is preserved.
+
+Accepted recovery uses a deterministic money-in ID, updates or creates one sale
+allocation, and records the verified customer effect. Expected original/interim/
+final ledger states detect changes and permit retry after any committed write.
+Customer credit balance stays unchanged because this receipt's incoming money is
+allocated to its sale once. A walk-in with no customer requires no ledger effect.
+Stopped requests release customer then invoice then sale; accepted work stays
+reserved. There is no financial finalization or normal route enablement yet.
+
+Standalone tests inject lost responses after incoming money, allocation and
+customer effect writes, then recover concurrently. Existing and absent allocation
+rows, corrupted prior ledger/customer balance and customer reserve/stop races pass.
+Two standalone suites and five sync classification checks pass. Source-only:
+normal customer/wallet/POS writers must still honor admission, and private sync
+transport must separate local lock/effect state from required shared evidence.
+The manifest's invoice/transaction/payment gaps remain blockers, not accepted sync.

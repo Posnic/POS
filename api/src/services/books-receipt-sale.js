@@ -75,6 +75,7 @@ function create({db,now}){
    if(!sameLock(sale.books_receipt_lock,state))fail('Reserve the original sale first');
    if(exported(sale).revision!==state.review.values.basis.revision||digest(sale)!==sale.books_receipt_lock.originalDigest)fail('Reserved source changed');
    await require('./books-receipt-invoice').create({db}).verifyReserved(context,id,commandId);
+   await require('./books-receipt-customer').create({db}).verifyReserved(context,id,commandId);
    return journal.accept(context,id,commandId,reviewHash,confirmed);
   },
   async apply(context,id,commandId){
@@ -109,7 +110,7 @@ function create({db,now}){
    return {state,sale};
   },
   releaseStopped,
-  async stop(context,id,commandId,reviewHash){const result=await journal.stop(context,id,commandId,reviewHash);await require('./books-receipt-invoice').create({db}).releaseStopped(context,id,commandId);await releaseStopped(context,id,commandId);return result;}
+  async stop(context,id,commandId,reviewHash){const result=await journal.stop(context,id,commandId,reviewHash);await require('./books-receipt-customer').create({db}).releaseStopped(context,id,commandId);await require('./books-receipt-invoice').create({db}).releaseStopped(context,id,commandId);await releaseStopped(context,id,commandId);return result;}
  };
 }
 module.exports={create,unreserved,mutable};
