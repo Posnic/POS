@@ -946,3 +946,9 @@ This engine is not connected to the live settlement endpoint. Invoice-linked sal
 ### Stop before reservation begins
 
 A prepared request now atomically chooses stopped or reserving before any record reservation. Stop is original-actor scoped and replay-safe, including a lost acknowledgement. It permits replacement only when stopped; reserving/applying/completed requests require original recovery. Controlled real-Mongo race tests cover both winners, stopped replay and fresh replacement, alongside all 15 write-interruption checkpoints. This does not release partial reservations or activate the coordinator; invoice/quote integration and remaining writer/UI/sync work remain open.
+
+### Settlement document mirrors (source only)
+
+The coordinator now captures invoice and quotation originals, including direct quotation links, and reserves/applies/releases their deterministic mirrors with the batch. It preserves printed totals, lines, terms and payment notes while tracking the sale total separately. Missing/cancelled/reserved documents, differing payment mirrors and conflicting links are refused before writes. Already converted matching quotations retain their conversion date.
+
+Dedicated real-Mongo tests pass all 21 linked-document write interruptions plus the 15 ordinary checkpoints; retained 104.85 printed/105 sale totals, replay, direct quotation history and changed-document holds are verified. Live legacy writer guards, route/UI integration and sync/backup ownership are still required before activation. No production or installed acceptance is implied.

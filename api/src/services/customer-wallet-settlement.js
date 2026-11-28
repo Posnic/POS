@@ -57,8 +57,6 @@ function create({db}){
   for(const item of request.sales){
    const sale=await sales.findOne({_id:new ObjectId(item.id),license:key.license,branch_id:key.branch_id});
    if(!sale||!same(sale.customer_id,key.customer_id)||sale.is_deleted===true||!['Add','Edit'].includes(sale.sale_process))fail('Original sale unavailable');available(sale);
-   // Invoice/quote mirrors require their own original snapshots before activation.
-   if(sale.source_invoice_id)fail('Invoice-linked settlement requires the invoice recovery adapter');
    if(sale.payment_pending!==item.amount||sale.partial_balance!==item.paidamount||
       (Object.hasOwn(sale,'paid_amount')&&sale.paid_amount!==item.paidamount))fail('Original sale balance changed');
    const allocation=baseline.filter(row=>same(row.sale_id,sale._id));
@@ -66,8 +64,14 @@ function create({db}){
    const paid=decimal.balance([{type:'in',amount:item.paidamount},{type:'in',amount:item.amount}]);
    if(sale.sales_total!==paid)fail('Sale total differs from its paid and pending amounts');
    const wallet=decimal.balance([{type:'in',amount:allocation[0].amount},{type:'in',amount:item.amount}]);
-   effects.push({sale,allocation:allocation[0],saleAfter:{...sale,partial_balance:paid,paid_amount:paid,wallet_amount:wallet,payment_pending:0,payment_status:'Paid',updated_date:startedAt,updated_by_id:key.actor_id},
+   const documents=await require('./wallet-settlement-documents').capture(db,sale,paid,startedAt);
+   effects.push({sale,documents,allocation:allocation[0],saleAfter:{...sale,partial_balance:paid,paid_amount:paid,wallet_amount:wallet,payment_pending:0,payment_status:'Paid',updated_date:startedAt,updated_by_id:key.actor_id},
     allocationAfter:{...allocation[0],amount:wallet,pending:0,updated_date:startedAt}});
+  }
+  const documentIds=new Set();
+  for(const effect of effects)for(const document of effect.documents){
+   const key=document.collection+':'+String(document.before._id);
+   if(documentIds.has(key))fail('Multiple selected sales share an original document');documentIds.add(key);
   }
   const expected=baseline.map(row=>effects.find(effect=>same(effect.allocation._id,row._id))?.allocationAfter||row);
   const plan={customer,baseline,effects,balance:decimal.balance(expected),startedAt};
@@ -83,7 +87,8 @@ function create({db}){
  async function release(journal){
   // Completion is durable before release; historical saved results never rewrite
   // records changed by a later request once their original lock has gone.
-  const releases=[...journal.plan.effects.map(e=>({collection:sales,row:e.saleAfter})),
+  const releases=[...journal.plan.effects.flatMap(e=>(e.documents||[]).map(d=>({collection:db.collection(d.collection),row:d.after}))),
+   ...journal.plan.effects.map(e=>({collection:sales,row:e.saleAfter})),
    {collection:customers,row:{...journal.plan.customer,balance:journal.plan.balance,updated_date:journal.plan.startedAt}}];
   for(const entry of releases){const row=await entry.collection.findOne({_id:entry.row._id});
    if(!same(row?.wallet_entry_lock,lock(journal)))continue;
@@ -115,7 +120,10 @@ function create({db}){
   if(journal.state==='stopped')return {state:'stopped',commandId:id,canReplace:true};
   if(journal.state==='reserving'){
    await replace(customers,plan.customer,held(plan.customer,journal));
-   for(const effect of plan.effects)await replace(sales,effect.sale,held(effect.sale,journal));
+   for(const effect of plan.effects){
+    await replace(sales,effect.sale,held(effect.sale,journal));
+    for(const document of effect.documents||[])await replace(db.collection(document.collection),document.before,held(document.before,journal));
+   }
    if(!same(await rows(key),plan.baseline))fail('Ledger changed before settlement admission');
    await journals.updateOne({_id:id,state:'reserving',planHash:journal.planHash},{$set:{state:'applying'}});
    journal=await current(key);
@@ -131,6 +139,7 @@ function create({db}){
   for(const effect of plan.effects){
    await replace(sales,held(effect.sale,journal),held(effect.saleAfter,journal));
    await replace(ledger,effect.allocation,effect.allocationAfter);
+   for(const document of effect.documents||[])await replace(db.collection(document.collection),held(document.before,journal),held(document.after,journal));
   }
   if(!same(await rows(key),sorted(expected)))fail('Settlement ledger verification failed');
   const customerAfter={...plan.customer,balance:plan.balance,updated_date:plan.startedAt};
